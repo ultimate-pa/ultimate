@@ -28,8 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
@@ -130,10 +131,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		// Get default preferences and settings
-		LassoRankerPreferences preferences = new LassoRankerPreferences();
-		TerminationAnalysisSettings termination_settings =
+		final LassoRankerPreferences preferences = new LassoRankerPreferences();
+		final TerminationAnalysisSettings termination_settings =
 				new TerminationAnalysisSettings();
-		NonTerminationAnalysisSettings nontermination_settings =
+		final NonTerminationAnalysisSettings nontermination_settings =
 				new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<Boolean>(
@@ -260,12 +261,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/**
 	 * @return the (global) LassoRanker preferences from the GUI
 	 */
-	public static LassoRankerPreferences getLassoRankerPreferences() {
+	public static LassoRankerPreferences getLassoRankerPreferences(final IUltimateServiceProvider services) {
 		// Get default preferences
-		LassoRankerPreferences preferences = new LassoRankerPreferences();
+		final LassoRankerPreferences preferences = new LassoRankerPreferences();
 		
-		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		preferences.enable_partitioneer = store.getBoolean(
 				LABEL_enable_partitioneer
 		);
@@ -293,12 +294,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/**
 	 * @return the (local) termination analysis settings from the GUI
 	 */
-	public static TerminationAnalysisSettings getTerminationAnalysisSettings() {
+	public static TerminationAnalysisSettings getTerminationAnalysisSettings(final IUltimateServiceProvider services) {
 		// Get default preferences
-		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
+		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
 		
-		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_termination_analysis,
 						AnalysisType.class);
@@ -324,13 +325,13 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * @return the (local) nontermination analysis settings from the GUI
 	 */
 	public static NonTerminationAnalysisSettings
-			getNonTerminationAnalysisSettings() {
+			getNonTerminationAnalysisSettings(final IUltimateServiceProvider services) {
 		// Get default preferences
-		NonTerminationAnalysisSettings settings =
+		final NonTerminationAnalysisSettings settings =
 				new NonTerminationAnalysisSettings();
 		
-		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);

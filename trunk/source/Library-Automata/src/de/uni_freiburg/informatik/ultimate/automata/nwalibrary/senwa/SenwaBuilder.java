@@ -105,7 +105,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 			resState = mNwa.getStateFactory().senwa(opEntry, opState);
 			op2res.put(opState, resState);
 			mResult2Operand.put(resState, opState);
-			STATE resEntry = op2res.get(opEntry);
+			final STATE resEntry = op2res.get(opEntry);
 			assert resEntry != null;
 			mSenwa.addState(resState, isInitial, mNwa.isFinal(opState), resEntry);
 		}
@@ -114,7 +114,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	private STATE getOperandState(STATE resState) {
 		assert mSenwa.getStates().contains(resState);
-		STATE opState = mResult2Operand.get(resState);
+		final STATE opState = mResult2Operand.get(resState);
 		assert opState != null;
 		return opState;
 	}
@@ -122,9 +122,9 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		Set<STATE> resInits = new HashSet<STATE>();
-		for (STATE opState : mNwa.getInitialStates()) {
-			STATE resSTATE = getOrConstructResultState(opState, opState, true);
+		final Set<STATE> resInits = new HashSet<STATE>();
+		for (final STATE opState : mNwa.getInitialStates()) {
+			final STATE resSTATE = getOrConstructResultState(opState, opState, true);
 			resInits.add(resSTATE);
 		}
 		return resInits;
@@ -132,13 +132,13 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 
 	@Override
 	public Iterable<STATE> visitAndGetInternalSuccessors(STATE resState) {
-		STATE resEntry = mSenwa.getEntry(resState);
-		STATE opEntry = getOperandState(resEntry);
-		Set<STATE> resSuccs = new HashSet<STATE>();
-		STATE opState = getOperandState(resState);
-		for (LETTER letter : mNwa.lettersInternal(opState)) {
-			for (STATE opSucc : mNwa.succInternal(opState, letter)) {
-				STATE resSucc = getOrConstructResultState(opEntry, opSucc, false);
+		final STATE resEntry = mSenwa.getEntry(resState);
+		final STATE opEntry = getOperandState(resEntry);
+		final Set<STATE> resSuccs = new HashSet<STATE>();
+		final STATE opState = getOperandState(resState);
+		for (final LETTER letter : mNwa.lettersInternal(opState)) {
+			for (final STATE opSucc : mNwa.succInternal(opState, letter)) {
+				final STATE resSucc = getOrConstructResultState(opEntry, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addInternalTransition(resState, letter, resSucc);
 			}
@@ -148,11 +148,11 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 
 	@Override
 	public Iterable<STATE> visitAndGetCallSuccessors(STATE resState) {
-		Set<STATE> resSuccs = new HashSet<STATE>();
-		STATE opState = getOperandState(resState);
-		for (LETTER letter : mNwa.lettersCall(opState)) {
-			for (STATE opSucc : mNwa.succCall(opState, letter)) {
-				STATE resSucc = getOrConstructResultState(opSucc, opSucc, false);
+		final Set<STATE> resSuccs = new HashSet<STATE>();
+		final STATE opState = getOperandState(resState);
+		for (final LETTER letter : mNwa.lettersCall(opState)) {
+			for (final STATE opSucc : mNwa.succCall(opState, letter)) {
+				final STATE resSucc = getOrConstructResultState(opSucc, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addCallTransition(resState, letter, resSucc);
 			}
@@ -163,14 +163,14 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	@Override
 	public Iterable<STATE> visitAndGetReturnSuccessors(STATE resState,
 			STATE resHier) {
-		STATE opState = getOperandState(resState);
-		STATE opHier = getOperandState(resHier);
-		STATE resHierEntry = mSenwa.getEntry(resHier);
-		STATE opHierEntry = getOperandState(resHierEntry);
-		Set<STATE> resSuccs = new HashSet<STATE>();
-		for (LETTER letter : mNwa.lettersReturn(opState)) {
-			for (STATE opSucc : mNwa.succReturn(opState, opHier, letter)) {
-				STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
+		final STATE opState = getOperandState(resState);
+		final STATE opHier = getOperandState(resHier);
+		final STATE resHierEntry = mSenwa.getEntry(resHier);
+		final STATE opHierEntry = getOperandState(resHierEntry);
+		final Set<STATE> resSuccs = new HashSet<STATE>();
+		for (final LETTER letter : mNwa.lettersReturn(opState)) {
+			for (final STATE opSucc : mNwa.succReturn(opState, opHier, letter)) {
+				final STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
 			}
@@ -178,6 +178,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 		return resSuccs;
 	}
 	
+	@Override
 	public Senwa<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return mSenwa;
 	}

@@ -61,9 +61,9 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		WrapperNode wn = (WrapperNode) root;
-		IASTNode tu = (IASTNode) wn.getBacking();
-		String filename = tu.getFileLocation().getFileName();
+		final WrapperNode wn = (WrapperNode) root;
+		final IASTNode tu = (IASTNode) wn.getBacking();
+		final String filename = tu.getFileLocation().getFileName();
 		if (mFilename == null) {
 			mFilename = filename;
 		} else {

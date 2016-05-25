@@ -3,10 +3,22 @@ package jdd.internal.hashtest;
 
 
 
-import jdd.util.math.*;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Choice;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
-import java.awt.*;
-import java.awt.event.*;
+import jdd.util.math.FastRandom;
+import jdd.util.math.HashFunctions;
 
 
 /**
@@ -17,14 +29,14 @@ import java.awt.event.*;
 public class HashTest extends Frame implements ActionListener, WindowListener {
 	private static final int MAX_SIZE = 102400;
 
-	private Histogram []histograms;
-	private HistogramPanel []hp;
+	private final Histogram []histograms;
+	private final HistogramPanel []hp;
 	private int size;
 	private Button bQuit, bRun;
 	private Choice cMapType, cHashType, cMixType, cSampleMulti;
-	private TextField []tfMin, tfMax;
+	private final TextField []tfMin, tfMax;
 	private TextField tfOutput, tfStatusbar;
-	private Panel []pTop;
+	private final Panel []pTop;
 
 
 	public HashTest () {
@@ -39,7 +51,7 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 
 		// -----------------------------------------------
 
-		Panel pNorth = new Panel( new GridLayout(5,1) );
+		final Panel pNorth = new Panel( new GridLayout(5,1) );
 		add(pNorth, BorderLayout.NORTH);
 
 
@@ -93,7 +105,7 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 		pTop[4].add(tfOutput = new TextField("128") );
 
 		for(int i = 0; i < 3; i++) {
-			Panel p = pTop[i+1];
+			final Panel p = pTop[i+1];
 			p.add(new Label("Input " + i + ": ")) ;
 
 			p.add(new Label("min=") );
@@ -104,7 +116,7 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 		}
 
 		// -------------------------------------------
-		Panel pCenter = new Panel( new GridLayout(4,1,2,2) );
+		final Panel pCenter = new Panel( new GridLayout(4,1,2,2) );
 
 		for(int i = 0; i < 4; i++) {
 			histograms[i] = new Histogram(1000);
@@ -124,18 +136,29 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 
 	// ------[ action handlers ] -----------------------------------
 
-	 public void actionPerformed(ActionEvent e) {
-		 Object src = e.getSource();
-		 if(src == bQuit) onQuit();
-		 else if(src == bRun) onRun();
+	 @Override
+	public void actionPerformed(ActionEvent e) {
+		 final Object src = e.getSource();
+		 if(src == bQuit) {
+			onQuit();
+		} else if(src == bRun) {
+			onRun();
+		}
  	}
 
+	@Override
 	public void windowActivated(WindowEvent e) { }
+	@Override
 	public void windowClosed(WindowEvent e) { }
+	@Override
 	public void windowClosing(WindowEvent e) { onQuit(); }
+	@Override
 	public void windowDeactivated(WindowEvent e) { }
+	@Override
 	public void windowDeiconified(WindowEvent e) { }
+	@Override
 	public void windowIconified(WindowEvent e) { }
+	@Override
 	public void windowOpened(WindowEvent e) { }
 
 	// -------------------------------------------------
@@ -150,10 +173,10 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 	private void onRun() {
 		message("hold on...");
 
-		int hash_type = cHashType.getSelectedIndex();
-		int mix_type = cMixType.getSelectedIndex();
+		final int hash_type = cHashType.getSelectedIndex();
+		final int mix_type = cMixType.getSelectedIndex();
 
-		int inputs = 1 + cMapType.getSelectedIndex();
+		final int inputs = 1 + cMapType.getSelectedIndex();
 
 
 
@@ -162,23 +185,27 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 			return;
 		}
 
-		int []starts = new int[3];
-		int []widths = new int[3];
-		int []in = new int[3];
+		final int []starts = new int[3];
+		final int []widths = new int[3];
+		final int []in = new int[3];
 
 		for(int i = 0; i < inputs; i++) {
-			int s = Integer.parseInt( tfMin[i].getText() );
-			int e = Integer.parseInt( tfMax[i].getText() );
-			if(s >= e || e > MAX_SIZE) message("invalid or too large input"+(i+1) );
+			final int s = Integer.parseInt( tfMin[i].getText() );
+			final int e = Integer.parseInt( tfMax[i].getText() );
+			if(s >= e || e > MAX_SIZE) {
+				message("invalid or too large input"+(i+1) );
+			}
 			starts[i] = s;
 			widths[i] = e - s;
 			histograms[i].resize(widths[i]);
 		}
-		int outputs = Integer.parseInt( tfOutput.getText() );
-		if(outputs <2 || outputs > MAX_SIZE ) message("invalid or too large output");
+		final int outputs = Integer.parseInt( tfOutput.getText() );
+		if(outputs <2 || outputs > MAX_SIZE ) {
+			message("invalid or too large output");
+		}
 		histograms[3].resize(outputs); // output size
 
-		int samples = outputs * Integer.parseInt( cSampleMulti.getSelectedItem() );
+		final int samples = outputs * Integer.parseInt( cSampleMulti.getSelectedItem() );
 		message(" processing " + samples + " samples");
 
 
@@ -188,9 +215,9 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 				in[j] = starts[j] + (FastRandom.mtrand() % widths[j] );
 				histograms[j].add( in[j] );
 			}
-			int hash = do_hash(in, inputs, hash_type);
+			final int hash = do_hash(in, inputs, hash_type);
 			// must be larger than 0!
-			int mixed = (do_mix(hash, mix_type) & ~0x80000000) % outputs;
+			final int mixed = (do_mix(hash, mix_type) & ~0x80000000) % outputs;
 			histograms[3].add( mixed);
 		}
 
@@ -203,8 +230,11 @@ public class HashTest extends Frame implements ActionListener, WindowListener {
 
 
 	private boolean can_do_hash(int in_count, int type) {
-		if(in_count == 2) return (type == 0 || type == 1);
-		else return true;
+		if(in_count == 2) {
+			return (type == 0 || type == 1);
+		} else {
+			return true;
+		}
 	}
 
 	private int do_hash(int []ins, int in_count, int type) {

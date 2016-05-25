@@ -63,6 +63,7 @@ public class TermTransformer extends NonRecursive {
 			mTerm = term;
 		}
 		
+		@Override
 		public String toString() {
 			return "Convert " + mTerm.toStringDirect();
 		}
@@ -78,8 +79,9 @@ public class TermTransformer extends NonRecursive {
 	 * @param terms the array of terms.
 	 */
 	protected final void pushTerms(Term[] terms) {
-		for (int i = terms.length - 1; i >= 0; i--)
+		for (int i = terms.length - 1; i >= 0; i--) {
 			pushTerm(terms[i]);
+		}
 	}
 	
 	/**
@@ -103,24 +105,27 @@ public class TermTransformer extends NonRecursive {
 		public AddCache(Term term) {
 			mOldTerm = term;
 		}
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
+			final TermTransformer transformer = (TermTransformer) engine;
 			transformer.mCache.getLast().put(
 					mOldTerm, transformer.mConverted.getLast());
 		}
 		
+		@Override
 		public String toString() {
 			return "AddCache[" + mOldTerm.toStringDirect() + "]";
 		}
 	}
 	
 	private void cacheConvert(Term term) {
-		Term newTerm = mCache.getLast().get(term);
+		final Term newTerm = mCache.getLast().get(term);
 		if (newTerm == null) {
 			enqueueWalker(new AddCache(term));
 			convert(term);
-		} else
+		} else {
 			setResult(newTerm);
+		}
 	}
 	
 	protected void beginScope() {
@@ -158,28 +163,30 @@ public class TermTransformer extends NonRecursive {
 			pushTerm(((QuantifiedFormula) term).getSubformula());
 			beginScope();
 		} else if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm annterm = (AnnotatedTerm) term;
+			final AnnotatedTerm annterm = (AnnotatedTerm) term;
 			enqueueWalker(new BuildAnnotation(annterm));
-			Annotation[] annots = annterm.getAnnotations();
+			final Annotation[] annots = annterm.getAnnotations();
 			for (int i = annots.length - 1; i >= 0; i--) {
-				Object value = annots[i].getValue();
-				if (value instanceof Term)
+				final Object value = annots[i].getValue();
+				if (value instanceof Term) {
 					pushTerm((Term) value);
-				else if (value instanceof Term[])
+				} else if (value instanceof Term[]) {
 					pushTerms((Term[]) value);
+				}
 			}
 			pushTerm(annterm.getSubterm());
 			return;
-		} else
+		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
+		}
 	}
 	
 	public void convertApplicationTerm(
 			ApplicationTerm appTerm, Term[] newArgs) {
 		Term newTerm = appTerm;
 		if (newArgs != appTerm.getParameters()) {
-			FunctionSymbol fun = appTerm.getFunction(); 
-			Theory theory = fun.getTheory();
+			final FunctionSymbol fun = appTerm.getFunction(); 
+			final Theory theory = fun.getTheory();
 			newTerm = theory.term(fun, newArgs);
 		}
 		setResult(newTerm);
@@ -204,8 +211,8 @@ public class TermTransformer extends NonRecursive {
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
 		Term newFormula = old;
 		if (newBody != old.getSubformula()) {
-			Theory theory = old.getTheory();
-			TermVariable[] vars = old.getVariables();
+			final Theory theory = old.getTheory();
+			final TermVariable[] vars = old.getVariables();
 			newFormula = old.getQuantifier() == QuantifiedFormula.EXISTS
 				? theory.exists(vars, newBody) : theory.forall(vars,newBody);
 		}
@@ -214,10 +221,11 @@ public class TermTransformer extends NonRecursive {
 
 	public void postConvertAnnotation(AnnotatedTerm old, 
 			Annotation[] newAnnots, Term newBody) {
-		Annotation[] annots = old.getAnnotations();
+		final Annotation[] annots = old.getAnnotations();
 		Term result = old;
-		if (newBody != old.getSubterm()	|| newAnnots != annots)
+		if (newBody != old.getSubterm()	|| newAnnots != annots) {
 			result = old.getTheory().annotatedTerm(newAnnots, newBody);
+		}
 		setResult(result);
 	}
 
@@ -255,10 +263,11 @@ public class TermTransformer extends NonRecursive {
 	protected final Term[] getConverted(Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
 		for (int i = oldArgs.length - 1; i >= 0; i--) {
-			Term newTerm = getConverted();
+			final Term newTerm = getConverted();
 			if (newTerm != oldArgs[i]) {
-				if (newArgs == oldArgs)
+				if (newArgs == oldArgs) {
 					newArgs = oldArgs.clone();
+				}
 				newArgs[i] = newTerm;
 			}
 		}
@@ -279,14 +288,16 @@ public class TermTransformer extends NonRecursive {
 			mAppTerm = term;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
+			final TermTransformer transformer = (TermTransformer) engine;
 			/* collect args and check if they have been changed */
-			Term[] oldArgs = mAppTerm.getParameters();
-			Term[] newArgs = transformer.getConverted(oldArgs);
+			final Term[] oldArgs = mAppTerm.getParameters();
+			final Term[] newArgs = transformer.getConverted(oldArgs);
 			transformer.convertApplicationTerm(mAppTerm, newArgs);
 		}
 
+		@Override
 		public String toString() {
 			return mAppTerm.getFunction().getApplicationString();
 		}
@@ -304,12 +315,14 @@ public class TermTransformer extends NonRecursive {
 			mLetTerm = term;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
-			Term[] values = transformer.getConverted(mLetTerm.getValues());
+			final TermTransformer transformer = (TermTransformer) engine;
+			final Term[] values = transformer.getConverted(mLetTerm.getValues());
 			transformer.preConvertLet(mLetTerm, values);
 		}
 
+		@Override
 		public String toString() {
 			return "let" + Arrays.toString(mLetTerm.getVariables());
 		}
@@ -330,13 +343,15 @@ public class TermTransformer extends NonRecursive {
 			mNewValues = newValues;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
-			Term newBody = transformer.getConverted();
+			final TermTransformer transformer = (TermTransformer) engine;
+			final Term newBody = transformer.getConverted();
 			transformer.postConvertLet(mLetTerm, mNewValues, newBody);
 			transformer.endScope();
 		}
 
+		@Override
 		public String toString() {
 			return "let" + Arrays.toString(mLetTerm.getVariables());
 		}
@@ -357,13 +372,15 @@ public class TermTransformer extends NonRecursive {
 			mQuant = term;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
-			Term sub = transformer.getConverted();
+			final TermTransformer transformer = (TermTransformer) engine;
+			final Term sub = transformer.getConverted();
 			transformer.postConvertQuantifier(mQuant, sub);
 			transformer.endScope();
 		}
 
+		@Override
 		public String toString() {
 			return mQuant.getQuantifier() == QuantifiedFormula.EXISTS
 					? "exists" : "forall";
@@ -385,34 +402,39 @@ public class TermTransformer extends NonRecursive {
 			mAnnotatedTerm = term;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			TermTransformer transformer = (TermTransformer) engine;
-			Annotation[] annots = mAnnotatedTerm.getAnnotations();
+			final TermTransformer transformer = (TermTransformer) engine;
+			final Annotation[] annots = mAnnotatedTerm.getAnnotations();
 			Annotation[] newAnnots = annots;
 			for (int i = annots.length - 1; i >= 0; i--) {
-				Object value = annots[i].getValue();
+				final Object value = annots[i].getValue();
 				Object newValue;
-				if (value instanceof Term)
+				if (value instanceof Term) {
 					newValue = transformer.getConverted();
-				else if (value instanceof Term[])
+				} else if (value instanceof Term[]) {
 					newValue = transformer.getConverted((Term[]) value);
-				else
+				} else {
 					newValue = value;
+				}
 				if (newValue != value) {
-					if (annots == newAnnots)
+					if (annots == newAnnots) {
 						newAnnots = annots.clone();
+					}
 					newAnnots[i] = new Annotation(annots[i].getKey(), newValue);
 				}
 			}
-			Term sub = transformer.getConverted();
+			final Term sub = transformer.getConverted();
 			transformer.postConvertAnnotation(mAnnotatedTerm, newAnnots, sub);
 		}
 		
+		@Override
 		public String toString() {
 			return "annotate";
 		}
 	}
 	
+	@Override
 	public void reset() {
 		super.reset();
 		mConverted.clear();

@@ -137,20 +137,20 @@ public class Svcomp_Reach_PreciseMemoryModel_HeuristicEvaluation extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase("AutomizerC.xml", 
 					setting, 
 					mSVCOMP_Examples);
 		}
 		
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					setting,
 					mUltimateRepository,
 				    new String[] {".bpl"});
 		}
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase(
 					"AutomizerC.xml",
 					setting,

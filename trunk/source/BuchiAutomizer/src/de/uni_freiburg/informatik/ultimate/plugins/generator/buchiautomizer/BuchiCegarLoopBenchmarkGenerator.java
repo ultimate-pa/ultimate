@@ -69,7 +69,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	
 	@Override
 	public String[] getStopwatches() {
-		ArrayList<String> al = new ArrayList<String>();
+		final ArrayList<String> al = new ArrayList<String>();
 		al.addAll(Arrays.asList(super.getStopwatches()));
 		al.add(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		al.add(BuchiCegarLoopBenchmark.s_BuchiClosure);
@@ -98,7 +98,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		case BuchiCegarLoopBenchmark.s_LassoAnalysisTime:
 			try {
 				return getElapsedTime(key);
-			} catch (StopwatchStillRunningException e) {
+			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
 		case BuchiCegarLoopBenchmark.s_HighestRank:
@@ -129,11 +129,11 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	}
 
 	public void reportLassoAnalysis(LassoChecker lassoChecker) {
-		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
+		final LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		mPreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
 		mTerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
 		mNonterminationAnalysisBenchmarks.addAll(lassoChecker.getNonterminationAnalysisBenchmarks());
-		for (NonterminationAnalysisBenchmark nab : mNonterminationAnalysisBenchmarks) {
+		for (final NonterminationAnalysisBenchmark nab : mNonterminationAnalysisBenchmarks) {
 			switch (nab.getConstraintsSatisfiability()) {
 			case SAT:
 				mLassoNonterminationAnalysisSAT++;
@@ -149,7 +149,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			}
 			mLassoNonterminationAnalysisTime += nab.getTime();
 		}
-		ContinueDirective cd = lcr.getContinueDirective();
+		final ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 
 		case REFINE_BOTH:

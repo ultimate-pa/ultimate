@@ -60,7 +60,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	public Term[] getInterpolants(Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition);
 
-		Term[] interpolants = readInterpolants(partition.length - 1);
+		final Term[] interpolants = readInterpolants(partition.length - 1);
 		return interpolants;
 	}
 
@@ -69,13 +69,13 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition, startOfSubtree);
 
-		Term[] interpolants = readInterpolants(partition.length - 1);
+		final Term[] interpolants = readInterpolants(partition.length - 1);
 		return interpolants;
 	}
 
 	private void sendInterpolationCommand(Term[] partition) throws AssertionError {
-		StringBuilder command = new StringBuilder();
-		PrintTerm pt = new PrintTerm();
+		final StringBuilder command = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
 		case IZ3:
 			command.append("(get-interpolant ");
@@ -88,7 +88,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			throw new AssertionError("unknown mExternalInterpolator");
 		}
 		String sep = "";
-		for (Term t : partition) {
+		for (final Term t : partition) {
 			command.append(sep);
 			pt.append(command, t);
 			sep = " ";
@@ -98,8 +98,8 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	}
 
 	private void sendInterpolationCommand(Term[] partition, int[] startOfSubtree) throws AssertionError {
-		StringBuilder command = new StringBuilder();
-		PrintTerm pt = new PrintTerm();
+		final StringBuilder command = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
 		case IZ3:
 			command.append("(get-interpolant ");
@@ -119,8 +119,9 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 				prevStart = startOfSubtree[prevStart - 1];
 			}
 			command.append(' ');
-			if (startOfSubtree[i] == i)
+			if (startOfSubtree[i] == i) {
 				command.append('(');
+			}
 			pt.append(command, partition[i]);
 		}
 		command.append(')');

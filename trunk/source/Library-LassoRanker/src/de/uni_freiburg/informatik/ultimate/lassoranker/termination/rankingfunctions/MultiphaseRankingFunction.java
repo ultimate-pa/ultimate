@@ -64,8 +64,8 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : mranking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
@@ -77,7 +77,7 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mranking.length);
 		sb.append("-phase ranking function:\n");
 		for (int i = 0; i < phases; ++i) {
@@ -98,8 +98,8 @@ public class MultiphaseRankingFunction extends RankingFunction {
 		Term value = mranking[mranking.length - 1].asTerm(script);
 		for (int i = mranking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term f_term = mranking[i].asTerm(script);
-			Term cond = script.term(">", f_term,
+			final Term f_term = mranking[i].asTerm(script);
+			final Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
 			value = script.term("ite", cond, f_term, value);
@@ -111,7 +111,7 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < phases; ++i) {
-			Rational r = mranking[i].evaluate(assignment);
+			final Rational r = mranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				return o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}

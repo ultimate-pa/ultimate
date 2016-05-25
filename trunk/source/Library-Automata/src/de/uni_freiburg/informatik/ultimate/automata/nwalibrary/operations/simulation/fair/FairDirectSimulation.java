@@ -182,7 +182,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			throws AutomataOperationCanceledException {
 		// Use previous calculated direct simulation results as optimization
 		if (getGameGraph() instanceof FairDirectGameGraph) {
-			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
+			final FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 			// If states direct simulate each other (in both directions) we can
 			// safely merge without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(firstState, secondState, false))
@@ -212,7 +212,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			final STATE dest, final STATE invoker) throws AutomataOperationCanceledException {
 		// Use previous calculated direct simulation results as optimization
 		if (getGameGraph() instanceof FairDirectGameGraph) {
-			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
+			final FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 			// If invoker direct simulates the destination we can safely remove
 			// the transition without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(dest, invoker, false))) {
@@ -264,13 +264,13 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 
 		// First calculate direct simulation
 		if (getGameGraph() instanceof FairDirectGameGraph) {
-			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
+			final FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 
 			// Do direct simulation
 			getLogger().debug("Starting direct simulation...");
 			mIsCurrentlyDirectSimulation = true;
 			game.transformToDirectGameGraph();
-			DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getProgressTimer(),
+			final DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getProgressTimer(),
 					getLogger(), isUsingSCCs(), getStateFactory(), game);
 			directSim.doSimulation();
 
@@ -298,8 +298,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
 
-		SimulationPerformance fairPerformance = super.getSimulationPerformance();
-		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY,
+		final SimulationPerformance fairPerformance = super.getSimulationPerformance();
+		final long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY,
 				EMultipleDataOption.ADDITIVE);
 		if (durationFairSimOnly != SimulationPerformance.NO_TIME_RESULT) {
 			mPerformance.addTimeMeasureValue(ETimeMeasure.SIMULATION_ONLY, durationFairSimOnly);
@@ -308,7 +308,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
+		final long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
 				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;

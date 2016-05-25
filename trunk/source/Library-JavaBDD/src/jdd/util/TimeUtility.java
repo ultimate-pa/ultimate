@@ -1,7 +1,7 @@
 
 package jdd.util;
 
-import java.util.*;
+import java.util.Date;
 
 /**
  * A Simple utility for getting time of the day
@@ -16,32 +16,42 @@ public class TimeUtility {
      * new yatch, sometime around the year 10000.</i>
      */ 
 	public static String getShortTimeString() {
-		StringBuffer sb = new StringBuffer();
-		Date now = new Date();
+		final StringBuffer sb = new StringBuffer();
+		final Date now = new Date();
 
 		int tmp = now.getYear();
-		if(tmp < 200) tmp += 1900;
+		if(tmp < 200) {
+			tmp += 1900;
+		}
 		sb.append(tmp);
 
 		tmp = now.getMonth();
-		if(tmp < 10) sb.append('0');
+		if(tmp < 10) {
+			sb.append('0');
+		}
 		sb.append(tmp);
 
 		tmp = now.getDay();
-		if(tmp < 10) sb.append('0');
+		if(tmp < 10) {
+			sb.append('0');
+		}
 		sb.append(tmp);
 
 		sb.append('-');
 
 
 		tmp = now.getHours();
-		if(tmp < 10) sb.append('0');
+		if(tmp < 10) {
+			sb.append('0');
+		}
 		sb.append(tmp);
 
 		sb.append(':');
 
 		tmp = now.getMinutes();
-		if(tmp < 10) sb.append('0');
+		if(tmp < 10) {
+			sb.append('0');
+		}
 		sb.append(tmp);
 
 

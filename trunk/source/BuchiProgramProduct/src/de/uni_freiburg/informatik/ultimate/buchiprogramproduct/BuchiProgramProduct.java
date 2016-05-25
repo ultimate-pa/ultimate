@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 /**
@@ -75,7 +74,7 @@ public class BuchiProgramProduct implements IGenerator {
 			return null;
 		}
 
-		List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<String>();
 		filenames.add("LTL+Program Product");
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
@@ -111,11 +110,14 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final List<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG
-					&& new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
-				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage));
+					&& mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+							.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
+				final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
+				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage, rewriteAssumes));
 			}
 
 			if (mUseBuchiProductObserver) {
@@ -174,7 +176,7 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
+		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Expression.class);

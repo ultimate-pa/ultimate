@@ -65,7 +65,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
 		sb.append(urd);
@@ -76,7 +76,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	@Override
 	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
 			String resultMessage, IUltimateServiceProvider services, ILogger testlogger) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
 		sb.append(result);
@@ -107,7 +107,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 					+ " to " + mLogFile.getAbsolutePath());
 			fw.append(logmessage);
 			fw.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.fatal("Could not write " + getDescriptiveLogName() + " to file", e);
 		}
 	}

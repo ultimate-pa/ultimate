@@ -34,7 +34,7 @@ import java.util.Set;
 
 public class LinkedScopedHashSet<E> implements Set<E> {
 
-	private LinkedScopedHashMap<E, Object> mBacking;
+	private final LinkedScopedHashMap<E, Object> mBacking;
 	
 	public LinkedScopedHashSet() {
 		mBacking = new LinkedScopedHashMap<E, Object>();
@@ -56,7 +56,7 @@ public class LinkedScopedHashSet<E> implements Set<E> {
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
 		boolean changed = false;
-		for (E e : c) {
+		for (final E e : c) {
 			changed |= add(e);
 		}
 		return changed;
@@ -74,9 +74,10 @@ public class LinkedScopedHashSet<E> implements Set<E> {
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		for (Object o : c) {
-			if (!contains(o))
+		for (final Object o : c) {
+			if (!contains(o)) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -107,8 +108,9 @@ public class LinkedScopedHashSet<E> implements Set<E> {
 	@Override
 	public boolean removeAll(Collection<?> c) {
 		boolean res = false;
-		for (Object o : c)
+		for (final Object o : c) {
 			res |= remove(o);
+		}
 		return res;
 	}
 
@@ -124,26 +126,29 @@ public class LinkedScopedHashSet<E> implements Set<E> {
 
 	@Override
 	public Object[] toArray() {
-		Object [] res = new Object[size()];
+		final Object [] res = new Object[size()];
 		int pos = -1;
-		Iterator<E> it = iterator();
-		while (it.hasNext())
+		final Iterator<E> it = iterator();
+		while (it.hasNext()) {
 			res[++pos] = it.next();
+		}
 		return res;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T[] toArray(T[] a) {
-		int s = size();
-		T[] res = a.length >= s ? a : Arrays.copyOf(a, s);
+		final int s = size();
+		final T[] res = a.length >= s ? a : Arrays.copyOf(a, s);
 		int pos = -1;
-		Iterator<E> it = iterator();
-		while (it.hasNext())
+		final Iterator<E> it = iterator();
+		while (it.hasNext()) {
 			res[++pos] = (T)it.next();
+		}
 		return res;
 	}
 
+	@Override
 	public String toString() {
 		return mBacking.keySet().toString();
 	}

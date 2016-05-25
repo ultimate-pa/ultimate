@@ -133,12 +133,13 @@ public class RootAnnot extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "locNodes")
+		if (field == "locNodes") {
 			return mLocNodes;
-		else if (field == "loopEntry")
+		} else if (field == "loopEntry") {
 			return mLoopLocations;
-		else
+		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
+		}
 	}
 
 	public Map<String, Map<String, ProgramPoint>> getProgramPoints() {
@@ -147,7 +148,7 @@ public class RootAnnot extends AbstractAnnotations {
 
 	public int getNumberOfProgramPoints() {
 		int result = 0;
-		for (String proc : getProgramPoints().keySet()) {
+		for (final String proc : getProgramPoints().keySet()) {
 			result += getProgramPoints().get(proc).size();
 		}
 		return result;
@@ -167,7 +168,7 @@ public class RootAnnot extends AbstractAnnotations {
 
 	public int getNumberOfErrorNodes() {
 		int result = 0;
-		for (String proc : getErrorNodes().keySet()) {
+		for (final String proc : getErrorNodes().keySet()) {
 			result += getErrorNodes().get(proc).size();
 		}
 		return result;

@@ -171,7 +171,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	public MultiLineTextFieldEditor(String name, String labelText, int width,
 			Composite parent) {
 		this(name, labelText, width, VALIDATE_ON_KEY_STROKE, parent);
-		this.compTitle = labelText;
+		compTitle = labelText;
 	}
 
 	/**
@@ -205,7 +205,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	@Override
 	protected void adjustForNumColumns(int numColumns) {
-		GridData gd = (GridData) textField.getLayoutData();
+		final GridData gd = (GridData) textField.getLayoutData();
 		gd.horizontalSpan = numColumns - 1;
 		// We only grab excess space if we have to
 		// If another field editor has more columns then
@@ -221,13 +221,15 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	protected boolean checkState() {
 		boolean result = false;
-		if (emptyStringAllowed)
+		if (emptyStringAllowed) {
 			result = true;
+		}
 
-		if (textField == null)
+		if (textField == null) {
 			result = false;
+		}
 
-		String txt = textField.getText();
+		final String txt = textField.getText();
 
 		if (txt == null) {
 			result = false;
@@ -238,10 +240,11 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 		// call hook for subclasses
 		result = result && doCheckState();
 
-		if (result)
+		if (result) {
 			clearErrorMessage();
-		else
+		} else {
 			showErrorMessage(errorMessage);
+		}
 
 		return result;
 	}
@@ -274,12 +277,12 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 
 		title = new Label(parent, SWT.UP);
 		title.setFont(parent.getFont());
-		this.compTitle = getLabelText();
-		title.setText(this.compTitle);
+		compTitle = getLabelText();
+		title.setText(compTitle);
 		title.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
 		textField = getTextControl(parent);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+		final GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.widthHint = 100;
 		gd.heightHint = 70;
 		textField.setLayoutData(gd);
@@ -297,7 +300,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	@Override
 	protected void doLoad() {
 		if (textField != null) {
-			String value = getPreferenceStore().getString(getPreferenceName());
+			final String value = getPreferenceStore().getString(getPreferenceName());
 			textField.setText(value);
 			oldValue = value;
 		}
@@ -314,7 +317,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	@Override
 	protected void doLoadDefault() {
 		if (textField != null) {
-			String value = getPreferenceStore().getDefaultString(
+			final String value = getPreferenceStore().getDefaultString(
 					getPreferenceName());
 			textField.setText(value);
 		}
@@ -357,8 +360,9 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * @return the current value
 	 */
 	public String getStringValue() {
-		if (textField != null)
+		if (textField != null) {
 			return textField.getText();
+		}
 		return getPreferenceStore().getString(getPreferenceName());
 	}
 
@@ -431,6 +435,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 			default:
 			}
 			textField.addDisposeListener(new DisposeListener() {
+				@Override
 				public void widgetDisposed(DisposeEvent event) {
 					textField = null;
 				}
@@ -531,7 +536,9 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	public void setStringValue(String value) {
 		if (textField != null) {
 			if (value == null)
+			 {
 				value = ""; //$NON-NLS-1$
+			}
 			oldValue = textField.getText();
 			if (!oldValue.equals(value)) {
 				textField.setText(value);
@@ -549,8 +556,9 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	public void setTextLimit(int limit) {
 		textLimit = limit;
-		if (textField != null)
+		if (textField != null) {
 			textField.setTextLimit(limit);
+		}
 	}
 
 	/**
@@ -592,13 +600,14 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	protected void valueChanged() {
 		setPresentsDefaultValue(false);
-		boolean oldState = isValid;
+		final boolean oldState = isValid;
 		refreshValidState();
 
-		if (isValid != oldState)
+		if (isValid != oldState) {
 			fireStateChanged(IS_VALID, oldState, isValid);
+		}
 
-		String newValue = textField.getText();
+		final String newValue = textField.getText();
 		if (!newValue.equals(oldValue)) {
 			fireValueChanged(VALUE, oldValue, newValue);
 			oldValue = newValue;

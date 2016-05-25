@@ -117,7 +117,7 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 
 		@Override
 		public String prettyprint(Object o) {
-			return mPrettyprinter.apply(this.name()).apply(o);
+			return mPrettyprinter.apply(name()).apply(o);
 		}
 
 		@Override

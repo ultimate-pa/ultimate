@@ -105,6 +105,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		return "NwaList_result:"+automataCollection.size();
 	}*/
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;

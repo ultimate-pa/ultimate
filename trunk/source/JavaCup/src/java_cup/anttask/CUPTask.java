@@ -21,15 +21,15 @@
 
 package java_cup.anttask;
 
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.BuildException;
-
-import java.util.List;
-import java.util.ArrayList;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
 
 import java_cup.version;
 
@@ -65,15 +65,20 @@ public class CUPTask extends Task
      *
      */
 
+    @Override
     public void execute() throws BuildException 
     {
-        List<String> sc = new ArrayList<String>();  // sc = simulated commandline
+        final List<String> sc = new ArrayList<String>();  // sc = simulated commandline
 	// here, we parse our elements
 	if (parser!=null)  { sc.add("-parser"); sc.add(parser);}
-        else parser="parser"; // set the default name to check actuality
+	else {
+	      parser="parser"; // set the default name to check actuality
+	    }
 	if (_package!=null){ sc.add("-package"); sc.add(_package); }
-	if (symbols!=null) { sc.add("-symbols"); sc.add(symbols); }
-        else symbols="sym";
+	if (symbols!=null) { sc.add("-symbols"); sc.add(symbols); } else
+	  {
+	      symbols="sym";
+	    }
 	if (expect!=null)  {  sc.add("-expect"); sc.add(expect); }
 	if (java15)        {  sc.add("-java15"); }
 	if (_interface)    {  sc.add("-interface"); }
@@ -90,53 +95,95 @@ public class CUPTask extends Task
 	if (debug)         {  sc.add("-debug"); }
 	if (nopositions)   {  sc.add("-nopositions"); }
 	if (noscanner)     {  sc.add("-noscanner"); }
-	if (!quiet) log ("This is "+version.title_str);
-        if (!quiet) log ("Authors : "+version.author_str);
-	if (!quiet) log ("Bugreports to petter@cs.tum.edu");
+	if (!quiet)
+	  {
+	      log ("This is "+version.title_str);
+	    }
+        if (!quiet)
+	  {
+	      log ("Authors : "+version.author_str);
+	    }
+	if (!quiet)
+	  {
+	      log ("Bugreports to petter@cs.tum.edu");
+	    }
 
 	// look for package name and add to destdir
-	String packagename = inspect(srcfile);
+	final String packagename = inspect(srcfile);
 	
 
 	// now, that's sweet:
 	if (destdir==null) {
 	    destdir=System.getProperty("user.dir");
-	    if (!quiet) log("No destination directory specified; using working directory: "+destdir);
+	    if (!quiet)
+	      {
+		  log("No destination directory specified; using working directory: "+destdir);
+		}
 	}
-	File dest = new File(destdir+packagename);
+	final File dest = new File(destdir+packagename);
 	if (!(dest).exists()) {
-	    if (!quiet) log("Destination directory didn't exist; creating new one: "+destdir+packagename);
+	    if (!quiet)
+	      {
+		  log("Destination directory didn't exist; creating new one: "+destdir+packagename);
+		}
 	    dest.mkdirs();
 	    force=true;
 	}
 	else {
 	    if (force&& !quiet) { log("anyway, this generation will be processed because of option force set to \"true\""); }
-	    else { if (!quiet) log("checking, whether this run is necessary"); }
+	    else { if (!quiet)
+	      {
+		  log("checking, whether this run is necessary");
+		} }
 	    // let's check, whether there exists any Parser fragment...
-	    File parserfile = new File(destdir+packagename,parser+".java");
-	    File symfile    = new File(destdir+packagename,symbols+".java");
-	    File cupfile    = new File(srcfile);
+	    final File parserfile = new File(destdir+packagename,parser+".java");
+	    final File symfile    = new File(destdir+packagename,symbols+".java");
+	    final File cupfile    = new File(srcfile);
 	    
 	    if (!parserfile.exists() || !symfile.exists()) {
-		if (!quiet) log("Either Parserfile or Symbolfile didn't exist");
+		if (!quiet)
+		  {
+		      log("Either Parserfile or Symbolfile didn't exist");
+		    }
 		force=true;	    
-	    }else { if (!quiet) log("Parserfile and symbolfile are existing"); }
+	    }else { if (!quiet)
+	      {
+		  log("Parserfile and symbolfile are existing");
+		} }
 	    
 	    
 	    if (parserfile.lastModified()<=cupfile.lastModified()) {
-		if (!quiet) log("Parserfile "+parserfile+" isn't actual");
+		if (!quiet)
+		  {
+		      log("Parserfile "+parserfile+" isn't actual");
+		    }
 		force=true;
-	    }else { if (!quiet) log("Parserfile "+parserfile+" is actual"); }
+	    }else { if (!quiet)
+	      {
+		  log("Parserfile "+parserfile+" is actual");
+		} }
 	    
 	    if (symfile.lastModified()<=cupfile.lastModified()) {
-		if (!quiet) log("Symbolfile "+symfile+" isn't actual");
+		if (!quiet)
+		  {
+		      log("Symbolfile "+symfile+" isn't actual");
+		    }
 		force=true;
-	    }else { if (!quiet) log("Symbolfile"+symfile+" is actual"); }
+	    }else { if (!quiet)
+	      {
+		  log("Symbolfile"+symfile+" is actual");
+		} }
 	    
 	    
 	    if (!force) {
-		if (!quiet) log("skipping generation of "+srcfile);
-		if (!quiet) log("use option force=\"true\" to override");
+		if (!quiet)
+		  {
+		      log("skipping generation of "+srcfile);
+		    }
+		if (!quiet)
+		  {
+		      log("use option force=\"true\" to override");
+		    }
 		return;
 	    }
 	}
@@ -145,17 +192,26 @@ public class CUPTask extends Task
         sc.add(dest.getAbsolutePath());
         
         // also catch the not existing input file
-	if (srcfile==null) throw new BuildException("Input file needed: Specify <cup srcfile=\"myfile.cup\"> ");
-	if (!(new File(srcfile)).exists()) throw new BuildException("Input file not found: srcfile=\""+srcfile+"\" ");
+	if (srcfile==null)
+	  {
+	      throw new BuildException("Input file needed: Specify <cup srcfile=\"myfile.cup\"> ");
+	    }
+	if (!(new File(srcfile)).exists())
+	  {
+	      throw new BuildException("Input file not found: srcfile=\""+srcfile+"\" ");
+	    }
 	
         sc.add(srcfile);
-	String[] args = new String[sc.size()];
-        for (int i=0;i<args.length;i++) args[i]=(String)sc.get(i);
+	final String[] args = new String[sc.size()];
+        for (int i=0;i<args.length;i++)
+	  {
+	      args[i]=sc.get(i);
+	    }
         
 
 	try {
             java_cup.Main.main(args);
-        }catch(Exception e){
+        }catch(final Exception e){
             log("CUP error occured int CUP task: "+e);
         }
     }
@@ -169,9 +225,9 @@ public class CUPTask extends Task
      */
     protected String inspect(String cupfile){
 	try{
-	BufferedReader br = new BufferedReader(new FileReader(cupfile));
+	final BufferedReader br = new BufferedReader(new FileReader(cupfile));
 	while (br.ready()){
-	    String line = br.readLine();
+	    final String line = br.readLine();
 	    if ((line.startsWith("package"))&&(line.indexOf(";")!=-1))
 		{
 		    String result = line.substring(8,line.indexOf(";"));
@@ -180,7 +236,7 @@ public class CUPTask extends Task
 		}
 	    
 	}
-	}catch (IOException ioe){
+	}catch (final IOException ioe){
 	}
 	return "";
     }
@@ -191,7 +247,7 @@ public class CUPTask extends Task
      * @return the value of quiet
      */
     public boolean getQuiet()  {
-	return this.quiet;
+	return quiet;
     }
 
     /**
@@ -200,7 +256,7 @@ public class CUPTask extends Task
      * @param arg_quiet Value to assign to this.quiet
      */
     public void setQuiet(boolean argquiet) {
-	this.quiet = argquiet;
+	quiet = argquiet;
     }
     /**
      * Gets the value of force
@@ -208,7 +264,7 @@ public class CUPTask extends Task
      * @return the value of force
      */
     public boolean getForce()  {
-	return this.force;
+	return force;
     }
 
     /**
@@ -217,7 +273,7 @@ public class CUPTask extends Task
      * @param arg_package Value to assign to this.force
      */
     public void setForce(boolean argforce) {
-	this.force = argforce;
+	force = argforce;
     }
     /**
      * Gets the value of _package
@@ -225,7 +281,7 @@ public class CUPTask extends Task
      * @return the value of _package
      */
     public String getPackage()  {
-	return this._package;
+	return _package;
     }
 
     /**
@@ -234,7 +290,7 @@ public class CUPTask extends Task
      * @param arg_package Value to assign to this._package
      */
     public void setPackage(String arg_package) {
-	this._package = arg_package;
+	_package = arg_package;
     }
 
     /**
@@ -243,7 +299,7 @@ public class CUPTask extends Task
      * @return the value of destdir
      */
     public String getDestdir()  {
-	return this.destdir;
+	return destdir;
     }
 
     /**
@@ -261,7 +317,7 @@ public class CUPTask extends Task
      * @return the value of _interface
      */
     public boolean isJava15()  {
-	return this.java15;
+	return java15;
     }
 
     /**
@@ -270,7 +326,7 @@ public class CUPTask extends Task
      * @param arg_java15 Value to assign to this.java15
      */
     public void setJava15(boolean arg_java15) {
-	this.java15 = arg_java15;
+	java15 = arg_java15;
     }
 
     /**
@@ -279,7 +335,7 @@ public class CUPTask extends Task
      * @return the value of _interface
      */
     public boolean isInterface()  {
-	return this._interface;
+	return _interface;
     }
 
     /**
@@ -288,7 +344,7 @@ public class CUPTask extends Task
      * @param arg_interface Value to assign to this._interface
      */
     public void setInterface(boolean arg_interface) {
-	this._interface = arg_interface;
+	_interface = arg_interface;
     }
 
     /**
@@ -304,7 +360,7 @@ public class CUPTask extends Task
      * @param newSrcfile The new Srcfile value.
      */
     public void setSrcfile(String newSrcfile) {
-	this.srcfile = newSrcfile;
+	srcfile = newSrcfile;
     }
 
   
@@ -315,7 +371,7 @@ public class CUPTask extends Task
      * @return the value of parser
      */
     public String getParser() {
-	return this.parser;
+	return parser;
     }
 
     /**
@@ -324,7 +380,7 @@ public class CUPTask extends Task
      * @param argParser Value to assign to this.parser
      */
     public void setParser(String argParser){
-	this.parser = argParser;
+	parser = argParser;
     }
 
     /**
@@ -333,7 +389,7 @@ public class CUPTask extends Task
      * @return the value of symbols
      */
     public String getSymbols() {
-	return this.symbols;
+	return symbols;
     }
 
     /**
@@ -342,7 +398,7 @@ public class CUPTask extends Task
      * @param argSymbols Value to assign to this.symbols
      */
     public void setSymbols(String argSymbols){
-	this.symbols = argSymbols;
+	symbols = argSymbols;
     }
 
     /**
@@ -351,7 +407,7 @@ public class CUPTask extends Task
      * @return the value of nonterms
      */
     public boolean isNonterms() {
-	return this.nonterms;
+	return nonterms;
     }
 
     /**
@@ -360,7 +416,7 @@ public class CUPTask extends Task
      * @param argNonterms Value to assign to this.nonterms
      */
     public void setNonterms(boolean argNonterms){
-	this.nonterms = argNonterms;
+	nonterms = argNonterms;
     }
 
     /**
@@ -369,7 +425,7 @@ public class CUPTask extends Task
      * @return the value of expect
      */
     public String getExpect() {
-	return this.expect;
+	return expect;
     }
 
     /**
@@ -378,7 +434,7 @@ public class CUPTask extends Task
      * @param argExpect Value to assign to this.expect
      */
     public void setExpect(String argExpect){
-	this.expect = argExpect;
+	expect = argExpect;
     }
 
     /**
@@ -387,7 +443,7 @@ public class CUPTask extends Task
      * @return the value of compact_red
      */
     public boolean isCompact_red() {
-	return this.compact_red;
+	return compact_red;
     }
 
     /**
@@ -396,7 +452,7 @@ public class CUPTask extends Task
      * @param argCompact_red Value to assign to this.compact_red
      */
     public void setCompact_red(boolean argCompact_red){
-	this.compact_red = argCompact_red;
+	compact_red = argCompact_red;
     }
 
     /**
@@ -405,7 +461,7 @@ public class CUPTask extends Task
      * @return the value of nowarn
      */
     public boolean isNowarn() {
-	return this.nowarn;
+	return nowarn;
     }
 
     /**
@@ -414,7 +470,7 @@ public class CUPTask extends Task
      * @param argNowarn Value to assign to this.nowarn
      */
     public void setNowarn(boolean argNowarn){
-	this.nowarn = argNowarn;
+	nowarn = argNowarn;
     }
 
     /**
@@ -423,7 +479,7 @@ public class CUPTask extends Task
      * @return the value of nosummary
      */
     public boolean isNosummary() {
-	return this.nosummary;
+	return nosummary;
     }
 
     /**
@@ -432,7 +488,7 @@ public class CUPTask extends Task
      * @param argNosummary Value to assign to this.nosummary
      */
     public void setNosummary(boolean argNosummary){
-	this.nosummary = argNosummary;
+	nosummary = argNosummary;
     }
 
     /**
@@ -441,7 +497,7 @@ public class CUPTask extends Task
      * @return the value of progress
      */
     public boolean isProgress() {
-	return this.progress;
+	return progress;
     }
 
     /**
@@ -450,7 +506,7 @@ public class CUPTask extends Task
      * @param argProgress Value to assign to this.progress
      */
     public void setProgress(boolean argProgress){
-	this.progress = argProgress;
+	progress = argProgress;
     }
 
     /**
@@ -459,7 +515,7 @@ public class CUPTask extends Task
      * @return the value of dump_grammar
      */
     public boolean isDump_grammar() {
-	return this.dump_grammar;
+	return dump_grammar;
     }
 
     /**
@@ -468,7 +524,7 @@ public class CUPTask extends Task
      * @param argDump_grammar Value to assign to this.dump_grammar
      */
     public void setDump_grammar(boolean argDump_grammar){
-	this.dump_grammar = argDump_grammar;
+	dump_grammar = argDump_grammar;
     }
 
     /**
@@ -477,7 +533,7 @@ public class CUPTask extends Task
      * @return the value of dump_states
      */
     public boolean isDump_states() {
-	return this.dump_states;
+	return dump_states;
     }
 
     /**
@@ -486,7 +542,7 @@ public class CUPTask extends Task
      * @param argDump_states Value to assign to this.dump_states
      */
     public void setDump_states(boolean argDump_states){
-	this.dump_states = argDump_states;
+	dump_states = argDump_states;
     }
 
     /**
@@ -495,7 +551,7 @@ public class CUPTask extends Task
      * @return the value of dump_tables
      */
     public boolean isDump_tables() {
-	return this.dump_tables;
+	return dump_tables;
     }
 
     /**
@@ -504,7 +560,7 @@ public class CUPTask extends Task
      * @param argDump_tables Value to assign to this.dump_tables
      */
     public void setDump_tables(boolean argDump_tables){
-	this.dump_tables = argDump_tables;
+	dump_tables = argDump_tables;
     }
 
     /**
@@ -513,7 +569,7 @@ public class CUPTask extends Task
      * @return the value of dump
      */
     public boolean isDump() {
-	return this.dump;
+	return dump;
     }
 
     /**
@@ -522,7 +578,7 @@ public class CUPTask extends Task
      * @param argDump Value to assign to this.dump
      */
     public void setDump(boolean argDump){
-	this.dump = argDump;
+	dump = argDump;
     }
 
     /**
@@ -531,7 +587,7 @@ public class CUPTask extends Task
      * @return the value of time
      */
     public boolean isTime() {
-	return this.time;
+	return time;
     }
 
     /**
@@ -540,7 +596,7 @@ public class CUPTask extends Task
      * @param argTime Value to assign to this.time
      */
     public void setTime(boolean argTime){
-	this.time = argTime;
+	time = argTime;
     }
 
     /**
@@ -549,7 +605,7 @@ public class CUPTask extends Task
      * @return the value of debug
      */
     public boolean isDebug() {
-	return this.debug;
+	return debug;
     }
 
     /**
@@ -558,7 +614,7 @@ public class CUPTask extends Task
      * @param argDebug Value to assign to this.debug
      */
     public void setDebug(boolean argDebug){
-	this.debug = argDebug;
+	debug = argDebug;
     }
 
     /**
@@ -567,7 +623,7 @@ public class CUPTask extends Task
      * @return the value of nopositions
      */
     public boolean isNopositions() {
-	return this.nopositions;
+	return nopositions;
     }
 
     /**
@@ -576,7 +632,7 @@ public class CUPTask extends Task
      * @param argNopositions Value to assign to this.nopositions
      */
     public void setNopositions(boolean argNopositions){
-	this.nopositions = argNopositions;
+	nopositions = argNopositions;
     }
 
     /**
@@ -585,7 +641,7 @@ public class CUPTask extends Task
      * @return the value of noscanner
      */
     public boolean isNoscanner() {
-	return this.noscanner;
+	return noscanner;
     }
 
     /**
@@ -594,7 +650,7 @@ public class CUPTask extends Task
      * @param argNoscanner Value to assign to this.noscanner
      */
     public void setNoscanner(boolean argNoscanner){
-	this.noscanner = argNoscanner;
+	noscanner = argNoscanner;
     }
 
 

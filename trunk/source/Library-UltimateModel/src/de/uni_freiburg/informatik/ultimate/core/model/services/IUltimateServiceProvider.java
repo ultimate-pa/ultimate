@@ -27,10 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 
 /**
+ * {@link IUltimateServiceProvider} is a facade for all services provided by UlimateCore.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface IUltimateServiceProvider {
@@ -45,4 +47,5 @@ public interface IUltimateServiceProvider {
 
 	<T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType);
 
+	IPreferenceProvider getPreferenceProvider(String pluginId);
 }

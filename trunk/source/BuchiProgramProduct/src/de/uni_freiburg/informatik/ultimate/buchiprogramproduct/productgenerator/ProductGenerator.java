@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
@@ -709,7 +709,7 @@ public class ProductGenerator {
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(productSourceLoc, targetpp,
 					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
 
-			tfb.addTransitionFormulas((CodeBlock) seq, ((ProgramPoint) summary.getSource()).getProcedure());
+			tfb.addTransitionFormulas(seq, ((ProgramPoint) summary.getSource()).getProcedure());
 
 			sumAndSs.add(createNewSummaryEdge(productSourceLoc, summary, targetpp));
 			sumAndSs.add(seq);

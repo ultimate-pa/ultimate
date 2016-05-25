@@ -80,13 +80,13 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = Origin.IMPLEMENTATION;
-		this.addStatement(st);
+		addStatement(st);
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = origin;
-		this.addStatement(st);
+		addStatement(st);
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
@@ -95,7 +95,7 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 		mStatements.addAll(stmts);
 		mOrigin = origin;
 		mPrettyPrintedStatements = "";
-		for (Statement st : stmts) {
+		for (final Statement st : stmts) {
 			mPrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 		}
 	}
@@ -134,6 +134,7 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 		return mStatements;
 	}
 
+	@Override
 	public String getPrettyPrintedStatements() {
 		return mPrettyPrintedStatements;
 	}
@@ -144,8 +145,8 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (Statement st : mStatements) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Statement st : mStatements) {
 			sb.append(BoogiePrettyPrinter.print(st));
 		}
 		return sb.toString();

@@ -49,8 +49,8 @@ public class PrimeVisitor implements TermVisitor,
 		ZNameVisitor,
 		QntPredVisitor {
 
-	private Factory factory;
-	private HashSet<String> bounded;
+	private final Factory factory;
+	private final HashSet<String> bounded;
 
 	public PrimeVisitor() {
 		factory = new Factory();
@@ -62,10 +62,11 @@ public class PrimeVisitor implements TermVisitor,
 	 * 
 	 * @see net.sourceforge.czt.base.visitor.TermVisitor#visitTerm(net.sourceforge.czt.base.ast.Term)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public Object visitTerm(Term zedObject) {
-		Object[] children = zedObject.getChildren();
-		for (Object child : children) {
+		final Object[] children = zedObject.getChildren();
+		for (final Object child : children) {
 			if (child instanceof Term) {
 				((Term) child).accept(this);
 			}
@@ -78,6 +79,7 @@ public class PrimeVisitor implements TermVisitor,
 	 * 
 	 * @see net.sourceforge.czt.z.visitor.ZNameVisitor#visitZName(net.sourceforge.czt.z.ast.ZName)
 	 */
+	@Override
 	public Object visitZName(ZName term) {
 		if (term.getOperatorName() == null && 
 		        !bounded.contains(term.getWord()) &&
@@ -93,10 +95,10 @@ public class PrimeVisitor implements TermVisitor,
     @SuppressWarnings("unchecked")
     @Override
     public Object visitQntPred(QntPred pred) {
-        HashSet<String> newBounded = new HashSet<String>();
-        for (Decl decl : pred.getZSchText().getZDeclList()) {
+        final HashSet<String> newBounded = new HashSet<String>();
+        for (final Decl decl : pred.getZSchText().getZDeclList()) {
             if(decl instanceof VarDecl) {
-                for (Name name : ((VarDecl)decl).getZNameList()) {
+                for (final Name name : ((VarDecl)decl).getZNameList()) {
                     if(name instanceof ZName &&
                             !bounded.contains(name)) {
                         newBounded.add(((ZName)name).getWord());
@@ -105,8 +107,9 @@ public class PrimeVisitor implements TermVisitor,
             }
         }
         bounded.addAll(newBounded);
-        if(pred.getZSchText().getPred() != null)
-            pred.getZSchText().getPred().accept(this);
+        if(pred.getZSchText().getPred() != null) {
+			pred.getZSchText().getPred().accept(this);
+		}
         pred.getPred().accept(this);
         bounded.removeAll(newBounded);
         return null;

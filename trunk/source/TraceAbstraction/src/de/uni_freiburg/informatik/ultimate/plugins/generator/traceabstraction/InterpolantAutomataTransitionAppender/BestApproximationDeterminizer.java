@@ -88,10 +88,10 @@ public class BestApproximationDeterminizer
 	
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> initialState() {
-		DeterminizedState<CodeBlock, IPredicate> detState = 
+		final DeterminizedState<CodeBlock, IPredicate> detState = 
 			new DeterminizedState<CodeBlock, IPredicate>(mNwa);
 		//FIXME add all at once
-		for (IPredicate initialState : mNwa.getInitialStates()) {
+		for (final IPredicate initialState : mNwa.getInitialStates()) {
 			detState.addPair(mNwa.getEmptyStackState(), initialState, mNwa);
 		}
 		return detState;
@@ -102,11 +102,11 @@ public class BestApproximationDeterminizer
 			DeterminizedState<CodeBlock, IPredicate>  detState,
 			CodeBlock symbol) {
 		
-		DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
 			new DeterminizedState<CodeBlock, IPredicate> (mNwa);
-		for (IPredicate  downState : detState.getDownStates()) {
-			for (IPredicate  upState : detState.getUpStates(downState)) {
-				for (IPredicate  upSucc : getInternalSuccs(upState,symbol)) {
+		for (final IPredicate  downState : detState.getDownStates()) {
+			for (final IPredicate  upState : detState.getUpStates(downState)) {
+				for (final IPredicate  upSucc : getInternalSuccs(upState,symbol)) {
 					succDetState.addPair(downState, upSucc, mNwa);
 				}
 			}
@@ -127,11 +127,11 @@ public class BestApproximationDeterminizer
 			DeterminizedState<CodeBlock, IPredicate>  detState, 
 			CodeBlock symbol) {
 		
-		DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
 				new DeterminizedState<CodeBlock, IPredicate> (mNwa);
-		for (IPredicate  downState : detState.getDownStates()) {
-			for (IPredicate  upState : detState.getUpStates(downState)) {
-				for (IPredicate  upSucc : getCallSuccs(upState,(Call) symbol)) {
+		for (final IPredicate  downState : detState.getDownStates()) {
+			for (final IPredicate  upState : detState.getUpStates(downState)) {
+				for (final IPredicate  upSucc : getCallSuccs(upState,(Call) symbol)) {
 					succDetState.addPair(upState, upSucc, mNwa);
 				}
 			}
@@ -154,19 +154,21 @@ public class BestApproximationDeterminizer
 			DeterminizedState<CodeBlock, IPredicate>  detLinPred,
 			CodeBlock symbol) {
 		
-		DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
 				new DeterminizedState<CodeBlock, IPredicate> (mNwa);
 		
-		for (IPredicate  downLinPred : 
+		for (final IPredicate  downLinPred : 
 												detLinPred.getDownStates()) {
-			for (IPredicate  upLinPred : 
+			for (final IPredicate  upLinPred : 
 									detLinPred.getUpStates(downLinPred)) {
-				Set<IPredicate > upStates = 
+				final Set<IPredicate > upStates = 
 										detState.getUpStates(upLinPred);
-				if (upStates == null) continue;
-				for (IPredicate  upState : upStates) {
-					Return returnSymbol = (Return) symbol;
-					for (IPredicate  upSucc : 
+				if (upStates == null) {
+					continue;
+				}
+				for (final IPredicate  upState : upStates) {
+					final Return returnSymbol = (Return) symbol;
+					for (final IPredicate  upSucc : 
 							getReturnSuccs(upState,upLinPred, returnSymbol)) {
 						succDetState.addPair(downLinPred, upSucc, mNwa);
 					}
@@ -202,9 +204,10 @@ public class BestApproximationDeterminizer
 		Set<IPredicate> succs = getInternalSuccsCache(state, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
-			for (IPredicate succCandidate : mNwa.getStates()) {
-				if (isInductiveInternalSuccessor(state, symbol, succCandidate))
+			for (final IPredicate succCandidate : mNwa.getStates()) {
+				if (isInductiveInternalSuccessor(state, symbol, succCandidate)) {
 					succs.add(succCandidate);
+				}
 			}
 			putInternalSuccsCache(state, symbol, succs);
 		}
@@ -239,12 +242,12 @@ public class BestApproximationDeterminizer
 	private Set<IPredicate> getInternalSuccsCache(
 			IPredicate state,
 			CodeBlock symbol) {
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
 			mInductiveSuccsCache.get(state);
 		if (symbol2succs == null) {
 			return null;
 		}
-		Set<IPredicate> succs = symbol2succs.get(symbol);
+		final Set<IPredicate> succs = symbol2succs.get(symbol);
 		if (succs == null) {
 			return null;
 		}
@@ -264,9 +267,10 @@ public class BestApproximationDeterminizer
 		Set<IPredicate> succs = getCallSuccsCache(state, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
-			for (IPredicate succCandidate : mNwa.getStates()) {
-				if (inductiveCallSuccessor(state, symbol, succCandidate))
+			for (final IPredicate succCandidate : mNwa.getStates()) {
+				if (inductiveCallSuccessor(state, symbol, succCandidate)) {
 					succs.add(succCandidate);
+				}
 			}
 			putCallSuccsCache(state, symbol, succs);
 		}
@@ -302,12 +306,12 @@ public class BestApproximationDeterminizer
 	private Set<IPredicate> getCallSuccsCache(
 			IPredicate state,
 			CodeBlock symbol) {
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
 			mInductiveCallSuccsCache.get(state);
 		if (symbol2succs == null) {
 			return null;
 		}
-		Set<IPredicate> succs = symbol2succs.get(symbol);
+		final Set<IPredicate> succs = symbol2succs.get(symbol);
 		if (succs == null) {
 			return null;
 		}
@@ -329,15 +333,15 @@ public class BestApproximationDeterminizer
 			IPredicate  state,
 			CodeBlock symbol,
 			IPredicate  succ) {
-		for (IPredicate succInt : mNwa.succInternal(state, symbol)) {
+		for (final IPredicate succInt : mNwa.succInternal(state, symbol)) {
 			if (succInt.equals(succ)) {
 				mAnswerInternalAutomaton++;
 				return true;
 			}
 		}
-		IPredicate presentPs = state;
-		IPredicate succPs = succ;
-		Validity sat = mHoareTriplechecker.checkInternal(presentPs, (IInternalAction) symbol, succPs);
+		final IPredicate presentPs = state;
+		final IPredicate succPs = succ;
+		final Validity sat = mHoareTriplechecker.checkInternal(presentPs, (IInternalAction) symbol, succPs);
 		mAnswerInternalSolver++;
 		if (sat == Validity.VALID) {
 			mNwa.addInternalTransition(state, symbol, succ);
@@ -363,15 +367,15 @@ public class BestApproximationDeterminizer
 			IPredicate  state,
 			Call symbol,
 			IPredicate  succ) {
-		for (IPredicate succCall : mNwa.succCall(state,symbol)) {
+		for (final IPredicate succCall : mNwa.succCall(state,symbol)) {
 			if (succCall.equals(succ)) {
 				mAnswerCallAutomaton++;
 				return true;
 			}
 		}
-		IPredicate presentPs = state;
-		IPredicate succPs = succ;
-		Validity sat = mHoareTriplechecker.checkCall(presentPs, symbol, succPs);
+		final IPredicate presentPs = state;
+		final IPredicate succPs = succ;
+		final Validity sat = mHoareTriplechecker.checkCall(presentPs, symbol, succPs);
 		mAnswerCallSolver++;
 		if (sat == Validity.VALID) {
 			return true;
@@ -393,9 +397,10 @@ public class BestApproximationDeterminizer
 		Set<IPredicate> succs = getReturnSuccsCache(state, linPred, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
-			for (IPredicate succCandidate : mNwa.getStates()) {
-				if (isInductiveReturnSuccessor(state, linPred, symbol, succCandidate))
+			for (final IPredicate succCandidate : mNwa.getStates()) {
+				if (isInductiveReturnSuccessor(state, linPred, symbol, succCandidate)) {
 					succs.add(succCandidate);
+				}
 			}
 			putReturnSuccsCache(state, linPred, symbol, succs);
 		}
@@ -440,17 +445,17 @@ public class BestApproximationDeterminizer
 			IPredicate state,
 			IPredicate linPred, 
 			CodeBlock symbol) {
-		Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs = 
+		final Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs = 
 			mInductiveReturnSuccsCache.get(state);
 		if (linPred2symbol2succs == null) {
 			return null;
 		}
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
 			linPred2symbol2succs.get(linPred);
 		if (symbol2succs == null) {
 			return null;
 		}
-		Set<IPredicate> succs = symbol2succs.get(symbol);
+		final Set<IPredicate> succs = symbol2succs.get(symbol);
 		if (succs == null) {
 			return null;
 		}
@@ -474,16 +479,16 @@ public class BestApproximationDeterminizer
 			IPredicate  callerState,
 			Return symbol,
 			IPredicate  succ) {
-		for (IPredicate succRet : mNwa.succReturn(state,callerState, symbol)) {
+		for (final IPredicate succRet : mNwa.succReturn(state,callerState, symbol)) {
 			if (succRet.equals(succ)) {
 				mAnswerReturnAutomaton++;
 				return true;
 			}
 		}
-		IPredicate presentPs = state;
-		IPredicate callerPs = callerState;
-		IPredicate succPs = succ;
-		Validity sat = 
+		final IPredicate presentPs = state;
+		final IPredicate callerPs = callerState;
+		final IPredicate succPs = succ;
+		final Validity sat = 
 			mHoareTriplechecker.checkReturn(presentPs, callerPs, symbol, succPs);
 		mAnswerReturnSolver++;
 		if (sat == Validity.VALID) {

@@ -98,7 +98,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	
 	@Override
 	public String toString(){
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("AlternatingAutomaton(" + mName + "): + [");
 		builder.append(" #int_alph: ");
 		builder.append(alphabet.size());

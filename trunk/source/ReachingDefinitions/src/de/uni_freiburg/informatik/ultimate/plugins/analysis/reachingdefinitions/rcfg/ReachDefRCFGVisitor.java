@@ -111,7 +111,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 			mCurrentSourceNode = edge.getSource();
 		}
 
-		for (Statement s : edge.getStatements()) {
+		for (final Statement s : edge.getStatements()) {
 			ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(s);
 			if (annot == null) {
 				annot = new ReachDefStatementAnnotation();
@@ -120,17 +120,17 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 				// fixpoint
 				somethingChanged = true;
 			}
-			ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
+			final ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
 			try {
-				boolean gen = generator.annotate(s,edge.getTransitionFormula());
+				final boolean gen = generator.annotate(s,edge.getTransitionFormula());
 				if (mLogger.isDebugEnabled()) {
-					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
+					final String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Def: " + annot.getDefAsString());
 				}
 
 				somethingChanged = gen || somethingChanged;
-			} catch (Throwable e) {
+			} catch (final Throwable e) {
 				// Fail fast after fatal error
 				mLogger.fatal("Fatal error occured", e);
 				mFixpointReached = true;
@@ -166,12 +166,12 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		Collection<ReachDefStatementAnnotation> predecessors;
 
-		int currentIndex = currentSeq.getStatements().indexOf(currentStmt);
+		final int currentIndex = currentSeq.getStatements().indexOf(currentStmt);
 		if (currentIndex != 0) {
 			// its not the first statement, so we only need the straight line
 			// predecessor
 			predecessors = new ArrayList<>();
-			predecessors.add((ReachDefStatementAnnotation) mStatementProvider.getAnnotation(currentSeq.getStatements()
+			predecessors.add(mStatementProvider.getAnnotation(currentSeq.getStatements()
 					.get(currentIndex - 1)));
 		} else {
 			// it is the first statement, we only need loop predecessors

@@ -42,31 +42,35 @@ public class NumericSortInterpretation implements SortInterpretation {
 	}
 
 	public int extend(Rational rat) {
-		if (mValues.containsVal(rat))
+		if (mValues.containsVal(rat)) {
 			return mValues.get(rat);
-		int idx = mValues.size();
+		}
+		final int idx = mValues.size();
 		mValues.add(idx, rat);
-		if (rat.compareTo(mBiggest) >= 0)
+		if (rat.compareTo(mBiggest) >= 0) {
 			mBiggest = rat.ceil().add(Rational.ONE);
+		}
 		return idx;
 	}
 	
 	@Override
 	public int extendFresh() {
-		int idx = mValues.size();
+		final int idx = mValues.size();
 		mValues.add(idx, mBiggest);
 		mBiggest = mBiggest.add(Rational.ONE);
 		return idx;
 	}
 
+	@Override
 	public String toString() {
 		return mValues.toString();
 	}
 
 	@Override
 	public int ensureCapacity(int numValues) {
-		while (mValues.size() < numValues)
+		while (mValues.size() < numValues) {
 			extendFresh();
+		}
 		return mValues.size();
 	}
 
@@ -77,9 +81,10 @@ public class NumericSortInterpretation implements SortInterpretation {
 
 	@Override
 	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mValues.size())
+		if (idx < 0 || idx >= mValues.size()) {
 			throw new IndexOutOfBoundsException();
-		Rational rat = mValues.get(idx);
+		}
+		final Rational rat = mValues.get(idx);
 		return rat.toTerm(s);
 	}
 	

@@ -77,15 +77,15 @@ public class SolverBuilder {
 
 	private static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String command) throws IOException {
-		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
-		Script script = new Scriptor(command, solverLogger, services, storage, "External");
+		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		final Script script = new Scriptor(command, solverLogger, services, storage, "External");
 		return script;
 	}
 
 	private static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services,
 			IToolchainStorage storage, String command, ExternalInterpolator externalInterpolator) throws IOException {
-		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
-		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
+		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		final Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
 				"ExternalInterpolator");
 		return script;
 	}
@@ -110,7 +110,7 @@ public class SolverBuilder {
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(IUltimateServiceProvider services, IToolchainStorage storage, Settings settings) {
-		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script result;
 		if (settings.useExternalSolver()) {
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
@@ -123,7 +123,7 @@ public class SolverBuilder {
 					result = createExternalSolverWithInterpolation(services, storage,
 							settings.getCommandExternalSolver(), settings.getExternalInterpolator());
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				solverLogger.fatal("Unable to construct solver");
 				throw new RuntimeException(e);
 			}
@@ -135,7 +135,7 @@ public class SolverBuilder {
 			try {
 				result = new LoggingScript(result, settings.constructFullPathOfDumpedScript(), true);
 				solverLogger.info("Dumping SMT script to " + settings.constructFullPathOfDumpedScript());
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				solverLogger.error("Unable dump SMT script to " + settings.constructFullPathOfDumpedScript());
 				throw new RuntimeException(e);
 			}
@@ -341,8 +341,8 @@ public class SolverBuilder {
 //				Sort boolSort = result.sort("Bool");
 //				Sort boolArraySort = result.sort("Array", indexSort, boolSort);
 //				result.declareFun("array-ext", new Sort[] { boolArraySort, boolArraySort }, indexSort);
-				Sort intSort = result.sort("Int");
-				Sort intArraySort = result.sort("Array", indexSort, intSort);
+				final Sort intSort = result.sort("Int");
+				final Sort intArraySort = result.sort("Array", indexSort, intSort);
 				result.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
 			} else if (logicForExternalSolver.endsWith("BV")) {
 				// do nothing. several have to be added here
@@ -364,7 +364,7 @@ public class SolverBuilder {
 			throw new AssertionError("unknown solver");
 		}
 
-		String advertising = System.lineSeparator() + "    SMT script generated on "
+		final String advertising = System.lineSeparator() + "    SMT script generated on "
 				+ (new SimpleDateFormat("yyyy/MM/dd")).format(new Date())
 				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator();
 		result.setInfo(":source", advertising);
@@ -379,10 +379,10 @@ public class SolverBuilder {
 			public void destroy() {
 				try {
 					theScript.exit();
-				} catch (SMTLIBException ex) {
+				} catch (final SMTLIBException ex) {
 					// DD 2015-11-18: If we store all created solvers during a toolchain execution, we should also
 					// suppress broken solver exceptions if the solver was already killed by the user
-				} catch(ToolchainCanceledException ex){
+				} catch(final ToolchainCanceledException ex){
 					//DD 2016-05-13: Same as above.
 				}
 			}

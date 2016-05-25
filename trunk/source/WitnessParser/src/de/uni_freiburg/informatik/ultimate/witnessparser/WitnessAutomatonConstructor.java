@@ -174,9 +174,9 @@ public class WitnessAutomatonConstructor {
 					file);
 			reader.init();
 			return reader.readGraph();
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (GraphIOException e) {
+		} catch (final GraphIOException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -302,7 +302,7 @@ public class WitnessAutomatonConstructor {
 		}
 		try {
 			return Enum.valueOf(clazz, entry.toUpperCase());
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			mLogger.error("Your witness contains an illegal value for " + key + " in element type "
 					+ data.getMetadataType() + ": \"" + entry + "\". Assuming default value \"" + defaultValue + "\"");
 			return defaultValue;
@@ -317,7 +317,7 @@ public class WitnessAutomatonConstructor {
 		if (entry != null) {
 			try {
 				value = Integer.valueOf(entry);
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				value = -1;
 			}
 		} else {

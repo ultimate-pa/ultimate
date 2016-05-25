@@ -33,11 +33,10 @@
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.AbstractMap.SimpleEntry;
-
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
-
 import java.util.List;
 import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 /**
  * @author Markus Lindenmann

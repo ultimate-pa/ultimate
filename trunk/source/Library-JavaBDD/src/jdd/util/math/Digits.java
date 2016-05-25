@@ -1,7 +1,8 @@
 
 package jdd.util.math;
 
-import jdd.util.*;
+import jdd.util.JDDConsole;
+import jdd.util.Test;
 
 /**
  * some common simple operations involving numbers are gathered here
@@ -12,16 +13,17 @@ public class Digits {
 
 	public static int log2_ceil(int x) {
 		int ret = 1;
-		while( (1L << ret) < x)
+		while( (1L << ret) < x) {
 			ret++;
+		}
 		return ret;
 	}
 
 
 	public static int closest_log2(int x) {
-		int lg2 = log2_ceil(x);
-		long d1 = (1L << lg2) - x;
-		long d2 = x - (1L << (lg2 -1));
+		final int lg2 = log2_ceil(x);
+		final long d1 = (1L << lg2) - x;
+		final long d2 = x - (1L << (lg2 -1));
 		return d1 < d2 ? lg2 : lg2-1;
 	}
 
@@ -29,8 +31,12 @@ public class Digits {
 
 	/** given a set of n elements, return the number of unique pairs */
 	public static int maxUniquePairs(int n) {
-		if(n == 0 || n == 1) return 0;
-		if(n == 2) return 1;
+		if(n == 0 || n == 1) {
+			return 0;
+		}
+		if(n == 2) {
+			return 1;
+		}
 		return (n-1) + maxUniquePairs(n-1);
 	}
 
@@ -42,7 +48,7 @@ public class Digits {
 
 	/** get number x with n decimals */
 	public static double getWithDecimals(double x, int n) {
-		double dec = Math.pow(10, n);
+		final double dec = Math.pow(10, n);
 		return Math.round( x * dec) / dec;
 	}
 
@@ -59,11 +65,20 @@ public class Digits {
 		final long g_ =  k_ * m_;
 		final long t_ =  k_ * g_;
 
-		if(n > t_)  JDDConsole.out.print(numberDivided(n,t_)  +"T ");	else
-		if(n > g_)  JDDConsole.out.print(numberDivided(n,g_)  +"G ");	else
-		if(n > m_)  JDDConsole.out.print(numberDivided(n,m_)  +"M ");	else
-		if(n > k_)  JDDConsole.out.print(numberDivided(n,k_)  +"k ");	else
-		JDDConsole.out.print(n + " ");
+		if(n > t_) {
+			JDDConsole.out.print(numberDivided(n,t_)  +"T ");
+		} else
+		if(n > g_) {
+			JDDConsole.out.print(numberDivided(n,g_)  +"G ");
+		} else
+		if(n > m_) {
+			JDDConsole.out.print(numberDivided(n,m_)  +"M ");
+		} else
+		if(n > k_) {
+			JDDConsole.out.print(numberDivided(n,k_)  +"k ");
+		} else {
+			JDDConsole.out.print(n + " ");
+		}
 	}
 
 
@@ -71,7 +86,7 @@ public class Digits {
 	 * return <tt>n'</tt> in as  n' = n * div, with two decimals
 	 */
 	public static double numberDivided(double n, long div) {
-		int i = (int) (100 * ( n + div / 200) / div); // 2 for rounding, 100 for two decimals
+		final int i = (int) (100 * ( n + div / 200) / div); // 2 for rounding, 100 for two decimals
 		return ((double)i) / 100;
 	}
 

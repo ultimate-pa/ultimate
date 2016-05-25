@@ -124,19 +124,19 @@ public class BoogieDeclarations {
 	
 	public BoogieDeclarations(Unit unit, ILogger logger) {
 		mLogger = logger;
-		for (Declaration decl : unit.getDeclarations()) {
-			if (decl instanceof Axiom)
+		for (final Declaration decl : unit.getDeclarations()) {
+			if (decl instanceof Axiom) {
 				mAxioms.add((Axiom) decl);
-			else if (decl instanceof TypeDeclaration)
+			} else if (decl instanceof TypeDeclaration) {
 				mTypeDeclarations.add((TypeDeclaration) decl);
-			else if (decl instanceof ConstDeclaration)
+			} else if (decl instanceof ConstDeclaration) {
 				mConstDeclarations.add((ConstDeclaration) decl);
-			else if (decl instanceof FunctionDeclaration)
+			} else if (decl instanceof FunctionDeclaration) {
 				mFunctionDeclarations.add((FunctionDeclaration) decl);
-			else if (decl instanceof VariableDeclaration)
+			} else if (decl instanceof VariableDeclaration) {
 				mGlobalVarDeclarations.add((VariableDeclaration) decl);
-			else if (decl instanceof Procedure) {
-				Procedure proc = (Procedure) decl;
+			} else if (decl instanceof Procedure) {
+				final Procedure proc = (Procedure) decl;
 				if (proc.getSpecification() != null && proc.getBody() != null) {
 					mLogger.info(String.format(
 							"Specification and implementation of procedure %s given in one single declaration",
@@ -160,10 +160,11 @@ public class BoogieDeclarations {
 						mProcImplementation.put(proc.getIdentifier(), proc);
 					}
 				}
-			} else
+			} else {
 				throw new AssertionError("Unknown Declaration" + decl);
+			}
 		}
-		for (Procedure proc : mProcSpecification.values()) {
+		for (final Procedure proc : mProcSpecification.values()) {
 			extractContract(proc.getIdentifier());
 		}
 	}
@@ -174,8 +175,8 @@ public class BoogieDeclarations {
 	 * mRequiresNonFree and mModifiedVars.
 	 */
 	private void extractContract(String procId) {
-		Procedure procSpec = mProcSpecification.get(procId);
-		Procedure procImpl = mProcImplementation.get(procId);
+		final Procedure procSpec = mProcSpecification.get(procId);
+		final Procedure procImpl = mProcImplementation.get(procId);
 		
 		Specification[] specifications;
 		if (procSpec != procImpl && procImpl != null) {
@@ -184,30 +185,30 @@ public class BoogieDeclarations {
 			 * of the specification to make them compatible with the variables
 			 * of the implementation.
 			 */
-			RenameProcedureSpec renamer = new RenameProcedureSpec();
+			final RenameProcedureSpec renamer = new RenameProcedureSpec();
 			specifications = renamer.renameSpecs(procSpec, procImpl);
 		} else {
 			specifications = procSpec.getSpecification();
 		}
 
-		List<EnsuresSpecification> ensures = 
+		final List<EnsuresSpecification> ensures = 
 				new ArrayList<EnsuresSpecification>();
-		List<EnsuresSpecification> ensuresNonFree = 
+		final List<EnsuresSpecification> ensuresNonFree = 
 				new ArrayList<EnsuresSpecification>();
-		List<RequiresSpecification> requires = 
+		final List<RequiresSpecification> requires = 
 				new ArrayList<RequiresSpecification>();
-		List<RequiresSpecification> requiresNonFree = 
+		final List<RequiresSpecification> requiresNonFree = 
 				new ArrayList<RequiresSpecification>();
-		Set<String> modifiedVars = new HashSet<String>();
-		for (Specification spec : specifications) {
+		final Set<String> modifiedVars = new HashSet<String>();
+		for (final Specification spec : specifications) {
 			if (spec instanceof EnsuresSpecification) {
-				EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
+				final EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
 				ensures.add(ensSpec);
 				if (!ensSpec.isFree()) {
 					ensuresNonFree.add(ensSpec);
 				}
 			} else if (spec instanceof RequiresSpecification) {
-				RequiresSpecification recSpec = (RequiresSpecification) spec;
+				final RequiresSpecification recSpec = (RequiresSpecification) spec;
 				requires.add(recSpec);
 				if (!recSpec.isFree()) {
 					requiresNonFree.add(recSpec);
@@ -218,9 +219,9 @@ public class BoogieDeclarations {
 				throw new IllegalArgumentException(
 						"LoopInvariantSpecification may not occur in procedure constract");
 			} else if (spec instanceof ModifiesSpecification) {
-				ModifiesSpecification modSpec = (ModifiesSpecification) spec;
-				for (VariableLHS var : modSpec.getIdentifiers()) {
-					String ident = var.getIdentifier();
+				final ModifiesSpecification modSpec = (ModifiesSpecification) spec;
+				for (final VariableLHS var : modSpec.getIdentifiers()) {
+					final String ident = var.getIdentifier();
 					modifiedVars.add(ident);
 				}
 			} else {

@@ -78,18 +78,6 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
  */
 public class GraphProperties {
 
-//	private static GraphProperties instance = new GraphProperties();
-//
-//	private VisualizationViewer<VisualizationNode, VisualizationEdge> vv;
-//
-//	public VisualizationViewer<VisualizationNode, VisualizationEdge> getVVforLayout() {
-//		return vv;
-//	}
-//
-//	public static GraphProperties getInstance() {
-//		return instance;
-//	}
-
 	/**
 	 * Sets all graph properties necessary to paint the graph.
 	 * 
@@ -108,14 +96,14 @@ public class GraphProperties {
 	public static void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode,
 			final ArrayList<LinkedHashSet<Object>> errorTraces) {
-		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
 		final FontRenderContext frc = vv.getFontMetrics(font).getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();
 
 		//set node shape and label
 		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_NODES)) {
-			String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
+			final String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
 			Transformer<VisualizationNode, Shape> vertexShapeTransformer;
 			vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<VisualizationNode>());
 
@@ -123,9 +111,9 @@ public class GraphProperties {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					@Override
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
-						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength,
+						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
+						final int vertexShapeLength = (int) bounds.getWidth() + 2;
+						final Shape vertexShape = new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength,
 								20, 8, 8);
 						return vertexShape;
 					}
@@ -134,9 +122,9 @@ public class GraphProperties {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					@Override
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
-						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
+						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
+						final int vertexShapeLength = (int) bounds.getWidth() + 2;
+						final Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
 						return vertexShape;
 					}
 				};
@@ -144,9 +132,9 @@ public class GraphProperties {
 				vertexShapeTransformer = new EllipseVertexShapeTransformer<VisualizationNode>() {
 					@Override
 					public Shape transform(VisualizationNode n) {
-						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
-						int vertexShapeLength = (int) bounds.getWidth() + 2;
-						Shape vertexShape = new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
+						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
+						final int vertexShapeLength = (int) bounds.getWidth() + 2;
+						final Shape vertexShape = new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
 						return vertexShape;
 					}
 
@@ -165,7 +153,7 @@ public class GraphProperties {
 		final Color nodePickedColor = new Color(rgb.red, rgb.green, rgb.blue);
 
 		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_BACKGROUND));
-		Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
+		final Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
 		vv.setBackground(backgroundColor);
 
 		vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<VisualizationNode, Paint>() {
@@ -195,7 +183,7 @@ public class GraphProperties {
 			}
 
 			private boolean isPartOfCex(Object backing) {
-				for (LinkedHashSet<Object> trace : errorTraces) {
+				for (final LinkedHashSet<Object> trace : errorTraces) {
 					if (trace.contains(backing)) {
 						return true;
 					}
@@ -230,7 +218,7 @@ public class GraphProperties {
 		vv.getRenderContext().getEdgeLabelRenderer().setRotateEdgeLabels(false);
 
 		// set preferred Graph Layout, default Layout = KKLayout
-		String prefLayout = store.getString(JungPreferenceValues.LABEL_LAYOUT);
+		final String prefLayout = store.getString(JungPreferenceValues.LABEL_LAYOUT);
 		if (prefLayout.equalsIgnoreCase("FRLayout")) {
 			layout = new FRLayout<VisualizationNode, VisualizationEdge>(graph);
 		} else if (prefLayout.equalsIgnoreCase("FRLayout2")) {
@@ -242,12 +230,13 @@ public class GraphProperties {
 			((KKLayout<VisualizationNode, VisualizationEdge>) layout).setMaxIterations(400);
 		} else {
 			@SuppressWarnings("rawtypes")
+			final
 			MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<>(graph,
 					new DelegateForest<VisualizationNode, VisualizationEdge>(),
 					DelegateTree.<VisualizationNode, VisualizationEdge> getFactory(), new ConstantTransformer(1.0));
 
-			Forest<VisualizationNode, VisualizationEdge> tree = prim.getForest();
-			Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<VisualizationNode, VisualizationEdge>(
+			final Forest<VisualizationNode, VisualizationEdge> tree = prim.getForest();
+			final Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<VisualizationNode, VisualizationEdge>(
 					tree);
 			layout = new StaticLayout<VisualizationNode, VisualizationEdge>(graph, layout1);
 		}

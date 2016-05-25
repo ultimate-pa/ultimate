@@ -107,8 +107,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 			else {			
 				isFinal = mNwa1.isFinal(state1) && mNwa2.isFinal(state2);
 			}
-			STATE content1 = state1;
-			STATE content2 = state2;
+			final STATE content1 = state1;
+			final STATE content2 = state2;
 			state = mContentFactory.getContentOnConcurrentProduct(
 															content1,content2);
 			mResult.addState(isInitial, isFinal, state);
@@ -122,40 +122,40 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	
 	private void constructOutgoingTransitions(STATE state1,	STATE state2) {
-		STATE state = getState(state1,state2,false);
-		HashSet<LETTER> commonOutSymbols = 
+		final STATE state = getState(state1,state2,false);
+		final HashSet<LETTER> commonOutSymbols = 
 				new HashSet<LETTER>(mNwa1.lettersInternal(state1));
 		commonOutSymbols.retainAll(mNwa2.lettersInternal(state2));
-		HashSet<LETTER> state1OnlySymbols = 
+		final HashSet<LETTER> state1OnlySymbols = 
 				new HashSet<LETTER>(mNwa1.lettersInternal(state1));
 		state1OnlySymbols.removeAll(mSynchronizationAlphabet);
-		HashSet<LETTER> state2OnlySymbols = 
+		final HashSet<LETTER> state2OnlySymbols = 
 				new HashSet<LETTER>(mNwa2.lettersInternal(state2));
 		state2OnlySymbols.removeAll(mSynchronizationAlphabet);
 		
-		for (LETTER symbol : commonOutSymbols) {
-			Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
-			Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
-			for (STATE succ1 : succ1s) {
-				for (STATE succ2 : succ2s) {
-					STATE succ = getState(succ1, succ2, false);
+		for (final LETTER symbol : commonOutSymbols) {
+			final Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
+			final Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
+			for (final STATE succ1 : succ1s) {
+				for (final STATE succ2 : succ2s) {
+					final STATE succ = getState(succ1, succ2, false);
 					mResult.addInternalTransition(state, symbol, succ);
 				}
 			}
 		}
 		
-		for (LETTER symbol : state1OnlySymbols) {
-			Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
-			for (STATE succ1 : succ1s) {
-					STATE succ = getState(succ1, state2, false);
+		for (final LETTER symbol : state1OnlySymbols) {
+			final Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
+			for (final STATE succ1 : succ1s) {
+					final STATE succ = getState(succ1, state2, false);
 					mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
 		
-		for (LETTER symbol : state2OnlySymbols) {
-			Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
-			for (STATE succ2 : succ2s) {
-					STATE succ = getState(state1, succ2, false);
+		for (final LETTER symbol : state2OnlySymbols) {
+			final Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
+			for (final STATE succ2 : succ2s) {
+					final STATE succ = getState(state1, succ2, false);
 					mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
@@ -164,8 +164,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 	}
 
 	public void constructInitialStates() {
-		for (STATE state1 : mNwa1.getInitialStates()) {
-			for (STATE state2 : mNwa2.getInitialStates()) {
+		for (final STATE state1 : mNwa1.getInitialStates()) {
+			for (final STATE state2 : mNwa2.getInitialStates()) {
 				getState(state1, state2, true);
 			}
 		}
@@ -195,7 +195,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 		mSynchronizationAlphabet = new HashSet<LETTER>(nwa1.getInternalAlphabet());
 		mSynchronizationAlphabet.retainAll(nwa2.getInternalAlphabet());
-		Set<LETTER> commonAlphabet = new HashSet<LETTER>(nwa1.getInternalAlphabet());
+		final Set<LETTER> commonAlphabet = new HashSet<LETTER>(nwa1.getInternalAlphabet());
 		commonAlphabet.addAll(nwa2.getInternalAlphabet());
 		mResult = new NestedWordAutomaton<LETTER,STATE>(
 				mServices, commonAlphabet,
@@ -205,8 +205,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 		constructInitialStates();
 		while (!mWorklist.isEmpty()) {
 			mWorklist.dequeuePair();
-			STATE state1 = mWorklist.getDequeuedPairFst();
-			STATE state2 = mWorklist.getDequeuedPairSnd();
+			final STATE state1 = mWorklist.getDequeuedPairFst();
+			final STATE state2 = mWorklist.getDequeuedPairSnd();
 			constructOutgoingTransitions(state1,state2);
 		}
 	}
@@ -225,7 +225,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 			new HashMap<STATE, Map<STATE,STATE>>();
 		
 		public STATE get(STATE state1, STATE state2) {
-			Map<STATE,STATE> snd2result = backingMap.get(state1);
+			final Map<STATE,STATE> snd2result = backingMap.get(state1);
 			if (snd2result == null) {
 				return null;
 			}
@@ -271,12 +271,12 @@ public class ConcurrentProduct<LETTER,STATE> {
 		public void dequeuePair() {
 			assert (mDequeuedPairFst == null && mDequeuedPairSnd == null) : 
 				"Results from last dequeue not yet collected!";
-			Iterator<STATE> it1 = mQueue.keySet().iterator();
+			final Iterator<STATE> it1 = mQueue.keySet().iterator();
 			mDequeuedPairFst = it1.next();
 			assert (mQueue.get(mDequeuedPairFst) !=  null);
-			Set<STATE> secondComponets = mQueue.get(mDequeuedPairFst);
+			final Set<STATE> secondComponets = mQueue.get(mDequeuedPairFst);
 			assert (secondComponets != null);
-			Iterator<STATE> it2 = secondComponets.iterator();
+			final Iterator<STATE> it2 = secondComponets.iterator();
 			mDequeuedPairSnd = it2.next();
 			
 			secondComponets.remove(mDequeuedPairSnd);
@@ -287,14 +287,14 @@ public class ConcurrentProduct<LETTER,STATE> {
 		
 		public STATE getDequeuedPairFst() {
 			assert (mDequeuedPairFst != null) : "No pair dequeued";
-			STATE result = mDequeuedPairFst;
+			final STATE result = mDequeuedPairFst;
 			mDequeuedPairFst = null;
 			return result;
 		}
 
 		public STATE getDequeuedPairSnd() {
 			assert (mDequeuedPairSnd != null) : "No pair dequeued";
-			STATE result = mDequeuedPairSnd;
+			final STATE result = mDequeuedPairSnd;
 			mDequeuedPairSnd = null;
 			return result;
 		}

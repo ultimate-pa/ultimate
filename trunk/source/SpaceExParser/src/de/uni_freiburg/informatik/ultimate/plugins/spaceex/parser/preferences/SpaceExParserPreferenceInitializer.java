@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
@@ -39,24 +38,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
  */
 public class SpaceExParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public SpaceExParserPreferenceInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
-
 	public enum Mode {
 		Default
 	}
 
 	private static final String sMode = "Mode";
+	
+	public SpaceExParserPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] { new UltimatePreferenceItem<Mode>(sMode, Mode.Default,
 				PreferenceType.Combo, Mode.values()), };
 	}
-
-	public static Mode getMode() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
-	}
-
 }

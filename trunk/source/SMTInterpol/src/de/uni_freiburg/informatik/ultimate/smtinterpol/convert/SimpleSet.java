@@ -52,22 +52,26 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable {
 		mElementObjects = (E[]) new Object[initialSize];
 	}
 
+	@Override
 	public int size() {
 		return mCount;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public boolean add(E element) {
-		if (element == null)
+		if (element == null) {
 			throw new NullPointerException();
+		}
 
 		for (int i = 0; i < mCount; i++) {
-			if (element.equals(mElementObjects[i]))
+			if (element.equals(mElementObjects[i])) {
 				return false;
+			}
 		}
 		
 		if (mCount == mElementObjects.length) {
-			E[] newArray = (E[]) new Object[(mCount + 1) * 2];
+			final E[] newArray = (E[]) new Object[(mCount + 1) * 2];
 			System.arraycopy(mElementObjects,0,newArray,0,mCount);
 			mElementObjects = newArray;
 		}
@@ -75,33 +79,39 @@ public class SimpleSet<E> extends AbstractSet<E> implements Cloneable {
 		return true;
 	}
 		
+	@Override
 	@SuppressWarnings("unchecked")
 	public Object clone() {
 		try {
-			SimpleSet<E> other = (SimpleSet<E>) super.clone();
-			other.mElementObjects = (E[]) mElementObjects.clone();
+			final SimpleSet<E> other = (SimpleSet<E>) super.clone();
+			other.mElementObjects = mElementObjects.clone();
 			return other;
-		} catch (CloneNotSupportedException ex) {
+		} catch (final CloneNotSupportedException ex) {
 			throw new InternalError("Clone?");
 		}
 	}
 
+	@Override
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
 			int mPos = 0;
 
+			@Override
 			public boolean hasNext() {
 				return mPos < mCount;
 			}
 			
+			@Override
 			public E next() {
 				return mElementObjects[mPos++];
 			}
 		  
+			@Override
 			public void remove() {
-				if (mPos < mCount)
+				if (mPos < mCount) {
 					System.arraycopy(mElementObjects, mPos, 
 									 mElementObjects, mPos - 1, mCount - mPos);
+				}
 				mCount--;
 				mPos--;
 			}

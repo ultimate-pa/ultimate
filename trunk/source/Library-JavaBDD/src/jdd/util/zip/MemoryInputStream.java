@@ -1,7 +1,7 @@
 
 package jdd.util.zip;
 
-import java.io.*;
+import java.io.InputStream;
 
 /**
  * a MemoryInputStream is an InputStream that gets its  data from chunks of memory.
@@ -12,7 +12,8 @@ import java.io.*;
 
 public class MemoryInputStream extends InputStream {
 	private MemoryChunk root, curr_read;
-	private int pos, remaining, remaining_save;
+	private int pos, remaining;
+	private final int remaining_save;
 
 	/**
 	 * Create a memory stream where read bytes are taken from the given memory chunk
@@ -27,7 +28,9 @@ public class MemoryInputStream extends InputStream {
 	 * free the memory occupied by this objects. makes it invalid for subsequent use!
 	 */
 	public void free() {
-		if(root != null) root.free();
+		if(root != null) {
+			root.free();
+		}
 		root = curr_read = null;
 	}
 
@@ -35,6 +38,7 @@ public class MemoryInputStream extends InputStream {
 	 * is more data available?
 	 * @return true the number of available bytes
 	 */
+	@Override
 	public int available() {
 		return remaining;
 	}
@@ -42,6 +46,7 @@ public class MemoryInputStream extends InputStream {
 	/**
 	 * re-start from the start of the file again
 	 */
+	@Override
 	public void reset() {
 		curr_read = root;
 		pos = 0;
@@ -53,15 +58,19 @@ public class MemoryInputStream extends InputStream {
 	 * @return one byte data or -1 if nothing available
 	 * @see #available
 	 */
+	@Override
 	public int read() {
 		while( pos >= curr_read.curr) {
-			if(curr_read.next == null) return -1; // EOF
+			if(curr_read.next == null)
+			 {
+				return -1; // EOF
+			}
 			pos = 0;
 			curr_read = curr_read.next;
 		}
 
 		remaining --;
-		return ((int) curr_read.data[pos++]) & 0xFF;
+		return (curr_read.data[pos++]) & 0xFF;
 	}
 }
 

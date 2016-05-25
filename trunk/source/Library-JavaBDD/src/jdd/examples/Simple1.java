@@ -1,7 +1,7 @@
 
 package jdd.examples;
 
-import jdd.bdd.*;
+import jdd.bdd.BDD;
 
 
 /**
@@ -22,7 +22,7 @@ public class Simple1 {
 		// 1. The first thing we need to do is to create _one_ BDD object.
 		// In JDD, the BDD object is some kind of "manager" for all BDD operations
 		// (don't confuse this with a single BDD tree!)
-		BDD bdd = new BDD(1000,100);
+		final BDD bdd = new BDD(1000,100);
 		// The two arguments we passed were the initial size of the node-table and
 		// operation cache. If you work with large example you might need to increase
 		// the numbers but 1000 and 100 are good for most simple applications.
@@ -34,10 +34,10 @@ public class Simple1 {
 		// remember that a BDD was a functions f: 2^V --> {0, 1} where V was a set
 		// of boolean variables? Well, these are variables we are going to create now.
 		// Lets have four variables, v1 to v4.
-		int v1 = bdd.createVar();
-		int v2 = bdd.createVar();
-		int v3 = bdd.createVar();
-		int v4 = bdd.createVar();
+		final int v1 = bdd.createVar();
+		final int v2 = bdd.createVar();
+		final int v3 = bdd.createVar();
+		final int v4 = bdd.createVar();
 
 		// Notice that the variables are created as Java "integers". The JDD package uses
 		// numbers to internally identify BDD trees. Please not that if you pass a bad
@@ -69,7 +69,7 @@ public class Simple1 {
 		tmp1 = bdd.and( v1, v2);	// first we create (v1 AND v2)
 		bdd.ref(tmp1);								// Now, we must call BDD.ref() as soon as we have one of these.
 
-		int f1 = bdd.or( tmp1, v3);  // This is equal to (v1 AND v2) OR v3.
+		final int f1 = bdd.or( tmp1, v3);  // This is equal to (v1 AND v2) OR v3.
 		bdd.ref(f1);								// Yes, we must "ref" this BDD too!
 		bdd.deref(tmp1);							// We don't need tmp anymore, so lets free it.
 
@@ -78,14 +78,14 @@ public class Simple1 {
 		// Observe that you can combine BDD and ref operations in this way:
 		tmp1 = bdd.ref ( bdd.or(v1, v2) );  //  compute the intermediate BDD and "ref"-it
 		tmp2 = bdd.ref ( bdd.or(v3, v4) );	// dito...
-		int f2 = bdd.ref ( bdd.or(tmp1, tmp2) );
+		final int f2 = bdd.ref ( bdd.or(tmp1, tmp2) );
 		bdd.deref(tmp1);			// We wont need these two anymore
 		bdd.deref(tmp2);
 
 
 		// Now, its time for the third function
 		tmp1 = bdd.ref( bdd.not(v4) ); 		// computes and ref:s (NOT v4)
-		int f3 = bdd.ref( bdd.xor(tmp1, v1) );	// and then [ (NOT v4)	 OR v1];
+		final int f3 = bdd.ref( bdd.xor(tmp1, v1) );	// and then [ (NOT v4)	 OR v1];
 		bdd.deref(tmp1); // ...and free memory.
 
 

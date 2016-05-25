@@ -49,10 +49,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -122,7 +121,7 @@ public class WitnessPrinter implements IOutput {
 	@Override
 	public void init() {
 		mMode = Mode.NO_WITNESS;
-		if (!new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.LABEL_WITNESS_GEN)) {
+		if (!mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.LABEL_WITNESS_GEN)) {
 			mLogger.info("Witness generation is disabled");
 			return;
 		}

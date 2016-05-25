@@ -73,8 +73,8 @@ public class InductivityCheck {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.nwa = mNwa;
-		this.mHoareTripleChecker = hoareTripleChecker;
+		nwa = mNwa;
+		mHoareTripleChecker = hoareTripleChecker;
 		this.mAntiInductivity = mAntiInductivity;
 		this.mAssertInductivity = mAssertInductivity;
 		mResult = checkInductivity();
@@ -91,7 +91,7 @@ public class InductivityCheck {
 			mLogger.debug("Start checking inductivity of automaton");
 		}
 
-		boolean result = true;
+		final boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
 		// yield[1] is the number of edges whose inductiveness could be
@@ -101,24 +101,24 @@ public class InductivityCheck {
 		// yield[3] is the number of edges whose inductiveness could be
 		// neither proven nor refuted because there were no interpolants
 
-		for (IPredicate state : nwa.getStates()) {
-			for (CodeBlock cb : nwa.lettersInternal(state)) {
-				for (OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state, cb)) {
-					Validity inductivity = mHoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
+		for (final IPredicate state : nwa.getStates()) {
+			for (final CodeBlock cb : nwa.lettersInternal(state)) {
+				for (final OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state, cb)) {
+					final Validity inductivity = mHoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (CodeBlock cb : nwa.lettersCall(state)) {
-				for (OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
-					Validity inductivity = mHoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
+			for (final CodeBlock cb : nwa.lettersCall(state)) {
+				for (final OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
+					final Validity inductivity = mHoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (CodeBlock cb : nwa.lettersReturn(state)) {
-				for (IPredicate hier : nwa.hierPred(state, cb)) {
-					for (OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSucccessors(state, hier,
+			for (final CodeBlock cb : nwa.lettersReturn(state)) {
+				for (final IPredicate hier : nwa.hierPred(state, cb)) {
+					for (final OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSucccessors(state, hier,
 							cb)) {
-						Validity inductivity = mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
+						final Validity inductivity = mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
 						evaluateResult(inductivity, state, outTrans);
 					}
 				}

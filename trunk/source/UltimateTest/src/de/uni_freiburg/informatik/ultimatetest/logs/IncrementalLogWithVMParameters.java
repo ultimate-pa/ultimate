@@ -37,7 +37,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	private boolean mFirstRun;
 	private int mCountTotal;
 	private int mCountCurrent;
-	private long mDeadline;
+	private final long mDeadline;
 
 	public IncrementalLogWithVMParameters(Class<? extends UltimateTestSuite> ultimateTestSuite, long deadline) {
 		super(ultimateTestSuite);
@@ -54,8 +54,8 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
 		mCountCurrent++;
-		StringBuilder sb = new StringBuilder();
-		String indent = "\t";
+		final StringBuilder sb = new StringBuilder();
+		final String indent = "\t";
 		if (mFirstRun) {
 			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 			sb.append(" First run of ");

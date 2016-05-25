@@ -1,8 +1,9 @@
 
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
+import jdd.bdd.BDD;
+import jdd.util.Configuration;
+import jdd.util.Test;
 
 /**
 The only function of the class is to verify the integrity of your BDD app by doing extensive
@@ -17,12 +18,14 @@ public class DebugBDD extends BDD {
 		// Options.verbose = true;
 	}
 
+	@Override
 	public int and(int a, int b) {
 		check_node(a, "AND a");
 		check_node(b, "AND b");
 
 		return super.and(a,b);
 	}
+	@Override
 	public int or(int a, int b) {
 		check_node(a, "OR a");
 		check_node(b, "OR b");
@@ -30,6 +33,7 @@ public class DebugBDD extends BDD {
 		return super.or(a,b);
 	}
 
+	@Override
 	public int xor(int a, int b) {
 		check_node(a, "xor a");
 		check_node(b, "xor b");
@@ -37,6 +41,7 @@ public class DebugBDD extends BDD {
 		return super.xor(a,b);
 	}
 
+	@Override
 	public int biimp(int a, int b) {
 		check_node(a, "biimp a");
 		check_node(b, "biimp b");
@@ -44,12 +49,14 @@ public class DebugBDD extends BDD {
 		return super.biimp(a,b);
 	}
 
+	@Override
 	public int imp(int a, int b) {
 		check_node(a, "imp a");
 		check_node(b, "imp b");
 
 		return super.imp(a,b);
 	}
+	@Override
 	public int nor(int a, int b) {
 		check_node(a, "nor a");
 		check_node(b, "nor b");
@@ -57,6 +64,7 @@ public class DebugBDD extends BDD {
 		return super.nor(a,b);
 	}
 
+	@Override
 	public int nand(int a, int b) {
 		check_node(a, "nand a");
 		check_node(b, "nand b");
@@ -64,6 +72,7 @@ public class DebugBDD extends BDD {
 		return super.nand(a,b);
 	}
 
+	@Override
 	public int ite(int a, int b, int c) {
 		check_node(a, "ite a");
 		check_node(b, "ite b");
@@ -73,10 +82,12 @@ public class DebugBDD extends BDD {
 	}
 
 
+	@Override
 	public int not(int a) {
 		check_node(a, "not a");
 		return super.not(a);
 	}
+	@Override
 	public int relProd(int u1, int u2, int c) {
 		check_node(u1, "relProd u1");
 		check_node(u2, "relProd u2");
@@ -85,12 +96,14 @@ public class DebugBDD extends BDD {
 	}
 	// ----------------------------------------------------
 
+	@Override
 	public void check_node(int n, String str) {
 		Test.check( getRef(n) > 0, "Unrefrenced node in a call, '" + str + "'");
 		super.check_node(n,str);
 	}
 	// ----------------------------------------------------
 
+	@Override
 	protected void post_removal_callbak() {
 		super.post_removal_callbak();
 		// TODO: add the other caches here:

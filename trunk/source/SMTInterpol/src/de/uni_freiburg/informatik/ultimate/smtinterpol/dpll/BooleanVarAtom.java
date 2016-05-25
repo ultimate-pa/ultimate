@@ -29,14 +29,17 @@ public class BooleanVarAtom extends DPLLAtom {
 		mVariable = var;
 	}
 	
+	@Override
 	public String toString() {
 		return mVariable.toString();
 	}
 
+	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		return mVariable;
 	}
 	
+	@Override
 	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
 		return other instanceof BooleanVarAtom 
 			&& ((BooleanVarAtom) other).mVariable == mVariable;

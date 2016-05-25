@@ -36,12 +36,13 @@ public class AtomicProposition extends AstNode {
 		this.addOutgoing(child);
 	}
 	
+	@Override
 	public String toString()
 	{
-		return ident + " : " + this.getOutgoingNodes().get(0).toString(); 
+		return ident + " : " + getOutgoingNodes().get(0).toString(); 
 	}
 	
 	public String getIdent()
-	{ return this.ident; }
+	{ return ident; }
 
 }

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an {@link Expression} as a set of if-free expression.
@@ -269,7 +269,7 @@ public final class IfExpressionTree {
 			assert !suffix.isLeaf();
 			mThenCondition = suffix.mThenCondition;
 			mElseCondition = suffix.mElseCondition;
-			Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
+			final Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
 			mThenChild = suffix.mThenChild.deepCopy();
 			mThenChild.mapLeafExprs(curriedFunction);
 			mElseChild = suffix.mElseChild.deepCopy();
@@ -311,7 +311,7 @@ public final class IfExpressionTree {
 		List<OctDomainState> elseStates;
 
 		final int maxParallelStates = postOp.getMaxParallelStates();
-		OctAssumeProcessor ap = postOp.getAssumeProcessor();
+		final OctAssumeProcessor ap = postOp.getAssumeProcessor();
 		thenStates = ap.assume(mThenCondition, OctPostOperator.deepCopy(oldStates));
 		elseStates = ap.assume(mElseCondition, oldStates); // oldStates may be modified
 
@@ -337,6 +337,7 @@ public final class IfExpressionTree {
 		return thenLeafs;
 	}
 
+	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();
 		toString("", strBuilder);

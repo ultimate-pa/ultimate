@@ -77,7 +77,7 @@ public class GuiLoggingWindowAppender {
 		if (reference == null) {
 			try {
 				window.getActivePage().showView(LoggingView.ID);
-			} catch (PartInitException pie) {
+			} catch (final PartInitException pie) {
 				MessageDialog.openError(window.getShell(), "Error opening LoggingEditor", pie.getMessage());
 				return null;
 			}

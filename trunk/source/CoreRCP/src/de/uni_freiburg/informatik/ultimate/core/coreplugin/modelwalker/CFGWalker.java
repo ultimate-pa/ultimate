@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class CFGWalker extends BaseWalker {
 
-	private HashSet<IWalkable> mVisitedNodes = new HashSet<IWalkable>();
+	private final HashSet<IWalkable> mVisitedNodes = new HashSet<IWalkable>();
 
 	public CFGWalker(ILogger logger) {
 		super(logger);
@@ -48,7 +48,7 @@ public class CFGWalker extends BaseWalker {
 	protected void runObserver(IElement element, IUnmanagedObserver observer) throws Throwable {
 		IElement tobeproccessed = element;
 		if (element instanceof WrapperNode) {
-			WrapperNode wnode = (WrapperNode) element;
+			final WrapperNode wnode = (WrapperNode) element;
 			if (wnode.getBacking() instanceof IElement) {
 				tobeproccessed = (IElement) wnode.getBacking();
 			}
@@ -56,15 +56,15 @@ public class CFGWalker extends BaseWalker {
 
 		if (observer.process(tobeproccessed)) {
 			if (element instanceof IWalkable) {
-				IWalkable node = (IWalkable) element;
+				final IWalkable node = (IWalkable) element;
 
 				if (mVisitedNodes.contains(node)) {
 					return;
 				} else {
 					mVisitedNodes.add(node);
-					List<IWalkable> outgoings = node.getSuccessors();
+					final List<IWalkable> outgoings = node.getSuccessors();
 					if (outgoings != null) {
-						for (IWalkable i : outgoings) {
+						for (final IWalkable i : outgoings) {
 							runObserver(i, observer);
 						}
 					}

@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
  * Implements standard fallback controller for the command-line.
@@ -86,12 +85,12 @@ public class CommandlineController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
+	public int init(final ICore<ToolchainListType> core) {
 		if (core == null) {
 			return -1;
 		}
 
-		mLogger = loggingService.getLogger(Activator.PLUGIN_ID);
+		mLogger = core.getCoreLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLogger.info("Initializing CommandlineController...");
 
 		// parse command line parameters and select ultimate mode
@@ -113,21 +112,21 @@ public class CommandlineController implements IController<ToolchainListType> {
 
 		try {
 			mToolchain = parseToolFile(cmdParser.getToolFile(), core);
-		} catch (FileNotFoundException e1) {
+		} catch (final FileNotFoundException e1) {
 			mLogger.fatal("Toolchain file not found. Path was: " + cmdParser.getToolFile());
 			return -1;
-		} catch (JAXBException e1) {
+		} catch (final JAXBException e1) {
 			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile());
 			mLogger.fatal(e1);
 			return -1;
-		} catch (SAXException e1) {
+		} catch (final SAXException e1) {
 			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile());
 			mLogger.fatal(e1);
 			return -1;
 		}
-		ArrayList<File> inputFiles = new ArrayList<>();
-		for (String inputfilePath : cmdParser.getInputFile()) {
-			File inputFile = new File(inputfilePath);
+		final ArrayList<File> inputFiles = new ArrayList<>();
+		for (final String inputfilePath : cmdParser.getInputFile()) {
+			final File inputFile = new File(inputfilePath);
 			if (!inputFile.exists() || !inputFile.canRead()) {
 				mLogger.fatal("Input file not found. Paths were: " + String.join(",", cmdParser.getInputFile()));
 				return -1;
@@ -136,13 +135,13 @@ public class CommandlineController implements IController<ToolchainListType> {
 		}
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
+			final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
 					inputFiles.toArray(new File[0]));
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
 
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			mLogger.error("Exception in Toolchain", e);
 			return -1;
 		}
@@ -152,7 +151,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 
 	@Override
 	public ISource selectParser(Collection<ISource> parser) {
-		Object[] parsers = parser.toArray();
+		final Object[] parsers = parser.toArray();
 
 		System.out.println("Index\tParser ID");
 
@@ -161,21 +160,21 @@ public class CommandlineController implements IController<ToolchainListType> {
 		}
 
 		System.out.println("Please choose a parser manually:");
-		InputStreamReader inp = new InputStreamReader(System.in);
-		BufferedReader br = new BufferedReader(inp);
+		final InputStreamReader inp = new InputStreamReader(System.in);
+		final BufferedReader br = new BufferedReader(inp);
 
 		while (true) {
 			try {
-				String str = br.readLine();
-				int selection = Integer.valueOf(str);
+				final String str = br.readLine();
+				final int selection = Integer.valueOf(str);
 				if (selection < parsers.length) {
 					return ((ISource) parsers[selection]);
 				} else {
 					System.err.println("Please make a valid selection.");
 				}
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				System.err.println("Please make a valid selection.");
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				System.err.println("There was problem opening your console.");
 			}
 		}
@@ -198,7 +197,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 
 	@Override
 	public List<String> selectModel(List<String> modelNames) {
-		ArrayList<String> return_list = new ArrayList<String>();
+		final ArrayList<String> return_list = new ArrayList<String>();
 
 		System.out.println("Index\tModel ID");
 
@@ -206,17 +205,17 @@ public class CommandlineController implements IController<ToolchainListType> {
 			System.out.println(String.valueOf(i) + "\t" + modelNames.get(i));
 		}
 
-		InputStreamReader inp = new InputStreamReader(System.in);
-		BufferedReader br = new BufferedReader(inp);
+		final InputStreamReader inp = new InputStreamReader(System.in);
+		final BufferedReader br = new BufferedReader(inp);
 
 		while (true) {
 
 			try {
-				String str = br.readLine();
-				String[] tokens = str.trim().split(" ");
+				final String str = br.readLine();
+				final String[] tokens = str.trim().split(" ");
 
-				for (String s : tokens) {
-					int foo = Integer.valueOf(s);
+				for (final String s : tokens) {
+					final int foo = Integer.valueOf(s);
 					if (foo > modelNames.size()) {
 						System.err.println("Please make a valid selection!");
 						continue;
@@ -224,9 +223,9 @@ public class CommandlineController implements IController<ToolchainListType> {
 						return_list.add(modelNames.get(foo));
 					}
 				}
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				System.err.println("Please make a valid selection.");
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				System.err.println("Console couldn't be openend.");
 			}
 		}

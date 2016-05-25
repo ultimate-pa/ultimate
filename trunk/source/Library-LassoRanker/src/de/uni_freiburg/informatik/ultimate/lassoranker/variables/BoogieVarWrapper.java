@@ -54,6 +54,7 @@ public class BoogieVarWrapper extends RankVar {
 		return mBoogieVar.getGloballyUniqueId();
 	}
 	
+	@Override
 	public String toString() {
 		return mBoogieVar.toString();
 	}

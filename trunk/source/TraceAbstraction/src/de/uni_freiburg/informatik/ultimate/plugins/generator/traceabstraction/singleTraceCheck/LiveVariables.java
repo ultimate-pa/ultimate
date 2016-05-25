@@ -115,12 +115,13 @@ public class LiveVariables {
 	 */
 	private Collection<Term>[] fetchConstantsForEachPosition() {
 		@SuppressWarnings("unchecked")
+		final
 		Collection<Term>[] result = new Collection[mTraceWithConstants.getTrace().length() + 2];
 		// Add constants for the precondition
 		result[0] = extractVarConstants(
 				mTraceWithConstants.getPrecondition().values());
 		// add constants for the post-condition
-		int lastPosition = mTraceWithConstants.getTrace().length() + 1;
+		final int lastPosition = mTraceWithConstants.getTrace().length() + 1;
 		result[lastPosition] = extractVarConstants(
 				mTraceWithConstants.getPostcondition().values());
 		for (int i = 0; i < mTraceWithConstants.getTrace().length(); i++) {
@@ -140,7 +141,7 @@ public class LiveVariables {
 				if (mTraceWithConstants.getTrace().isPendingReturn(i)) {
 					throw new AssertionError("not yet implemented");
 				} else {
-					int call_pos = mTraceWithConstants.getTrace().getCallPosition(i);
+					final int call_pos = mTraceWithConstants.getTrace().getCallPosition(i);
 					result[i+1] = extractVarConstants(
 							mTraceWithConstants.getFormulaFromNonCallPos(i).values(),
 							mTraceWithConstants.getLocalVarAssignment(call_pos).values(),
@@ -163,9 +164,9 @@ public class LiveVariables {
 	 */
 	@SafeVarargs
 	private final Set<Term> extractVarConstants(Collection<Term>... collections) {
-		Set<Term> result = new HashSet<Term>();
-		for (Collection<Term> terms : collections) {
-			for (Term term : terms) {
+		final Set<Term> result = new HashSet<Term>();
+		for (final Collection<Term> terms : collections) {
+			for (final Term term : terms) {
 				if (mConstants2BoogieVar.containsKey(term)) {
 					// constant represents a BoogieVar
 					result.add(term);
@@ -195,22 +196,23 @@ public class LiveVariables {
 		//   in a prefix of the trace)
 		// - take care for contexts, calls returns
 		@SuppressWarnings("unchecked")
+		final
 		Set<Term>[] result = new Set[mTraceWithConstants.getTrace().length() + 1];
 		{
-			HashSet<Term> liveConstants = new HashSet<Term>(mConstantsForEachPosition[result.length]);
+			final HashSet<Term> liveConstants = new HashSet<Term>(mConstantsForEachPosition[result.length]);
 			removeConstantsWithIndex_i(liveConstants, result.length - 1);
 			result[result.length - 1] = liveConstants;
 		}
 		for (int i = result.length - 2; i >= 0; i--) {
-			HashSet<Term> liveConstants = new HashSet<Term>();
+			final HashSet<Term> liveConstants = new HashSet<Term>();
 			if (mTraceWithConstants.getTrace().isCallPosition(i)) {
-				String caller = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
+				final String caller = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
 				if (mTraceWithConstants.getTrace().isPendingCall(i)) {
 					addGlobals(liveConstants, result[i+1]);
 					addGlobals(liveConstants, mConstantsForEachPosition[i+1]);
 					addLocals(caller, liveConstants, mConstantsForEachPosition[i+1]);
 				} else {
-					int returnPos = mTraceWithConstants.getTrace().getReturnPosition(i);
+					final int returnPos = mTraceWithConstants.getTrace().getReturnPosition(i);
 					addLocals(caller, liveConstants, result[returnPos+1]);
 					addLocals(caller, liveConstants, mConstantsForEachPosition[returnPos+1]);
 					removeConstantsWithIndex_i(liveConstants, returnPos);
@@ -219,7 +221,7 @@ public class LiveVariables {
 
 				}
 			} else if (mTraceWithConstants.getTrace().isReturnPosition(i)) {
-				String callee = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
+				final String callee = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
 				addGlobals(liveConstants, result[i+1]);
 				addGlobals(liveConstants, mConstantsForEachPosition[i+1]);
 				addLocals(callee, liveConstants, mConstantsForEachPosition[i+1]);
@@ -239,8 +241,8 @@ public class LiveVariables {
 	 * global BoogieVars.
 	 */
 	private void addGlobals(HashSet<Term> writeSet, Collection<Term> readCollection) {
-		for (Term term : readCollection) {
-			BoogieVar bv = mConstants2BoogieVar.get(term);
+		for (final Term term : readCollection) {
+			final BoogieVar bv = mConstants2BoogieVar.get(term);
 			if (bv.isGlobal()) {
 				writeSet.add(term);
 			}
@@ -252,8 +254,8 @@ public class LiveVariables {
 	 * local BoogieVars of procedure proc
 	 */
 	private void addLocals(String proc, HashSet<Term> writeSet, Collection<Term> readCollection) {
-		for (Term term : readCollection) {
-			BoogieVar bv = mConstants2BoogieVar.get(term);
+		for (final Term term : readCollection) {
+			final BoogieVar bv = mConstants2BoogieVar.get(term);
 			if (!bv.isGlobal()) {
 				if (bv.getProcedure().equals(proc)) {
 					writeSet.add(term);
@@ -266,11 +268,11 @@ public class LiveVariables {
 	 * Remove from set all constants whose index is i.
 	 */
 	private void removeConstantsWithIndex_i(HashSet<Term> set, int i) {
-		Iterator<Term> it = set.iterator();
+		final Iterator<Term> it = set.iterator();
 		while (it.hasNext()) {
-			Term term = it.next();
-			BoogieVar bv = mConstants2BoogieVar.get(term);
-			Map<Integer, Term> indexedVar = mIndexedVarRepresentative.get(bv);
+			final Term term = it.next();
+			final BoogieVar bv = mConstants2BoogieVar.get(term);
+			final Map<Integer, Term> indexedVar = mIndexedVarRepresentative.get(bv);
 			if (indexedVar.get(i) == term) {
 				it.remove();
 			}
@@ -287,8 +289,9 @@ public class LiveVariables {
 	 */
 	private Set<BoogieVar>[] computeLiveVariables() {
 		@SuppressWarnings("unchecked")
+		final
 		Set<BoogieVar>[] result = new Set[mTraceWithConstants.getTrace().length() + 1];
-		ScopedHashSet<BoogieVar> globalVarsBetweenCallAndReturn = 
+		final ScopedHashSet<BoogieVar> globalVarsBetweenCallAndReturn = 
 				new ScopedHashSet<BoogieVar>();
 		for (int i = 0; i < result.length; i++) {
 			if (i > 0 && i < result.length-1 && 
@@ -304,9 +307,9 @@ public class LiveVariables {
 					 globalVarsBetweenCallAndReturn.endScope();
 				 }
 			}
-			Set<BoogieVar> liveVars = new HashSet<BoogieVar>();
-			for (Term t : mLiveConstants[i]) {
-				BoogieVar bv = mConstants2BoogieVar.get(t);
+			final Set<BoogieVar> liveVars = new HashSet<BoogieVar>();
+			for (final Term t : mLiveConstants[i]) {
+				final BoogieVar bv = mConstants2BoogieVar.get(t);
 				if (!globalVarsBetweenCallAndReturn.isEmptyScope() && bv.isGlobal()) {
 					globalVarsBetweenCallAndReturn.add(bv);
 				} else {

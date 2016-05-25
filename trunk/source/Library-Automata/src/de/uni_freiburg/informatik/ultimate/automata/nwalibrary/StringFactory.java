@@ -38,29 +38,30 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.StateWit
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class StringFactory extends StateFactory<String> {
 
 	@Override
 	public String intersection(String s1, String s2) {
-  		StringBuilder sb = new StringBuilder("[");
+  		final StringBuilder sb = new StringBuilder("[");
   		sb.append(s1).append(", ").append(s2).append("]");
   		return sb.toString();
 	}
 	
+	@Override
 	public String intersectBuchi(String s1, String s2, int track) {
-		StringBuilder sb = new StringBuilder("[");
+		final StringBuilder sb = new StringBuilder("[");
 		sb.append(s1).append(", ").append(s2).append(", track").append(track).append("]");
 		return sb.toString();
 	}
 
 	@Override
 	public String determinize(Map<String, Set<String>> down2up) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		for (String down : down2up.keySet()) {
-			Iterator<String> it = down2up.get(down).iterator();
+		for (final String down : down2up.keySet()) {
+			final Iterator<String> it = down2up.get(down).iterator();
 			String up = it.next();
 			sb.append("(").append(down).append(",").append(up).append(")");
 			while (it.hasNext()) {
@@ -107,10 +108,10 @@ public class StringFactory extends StateFactory<String> {
 	
 	@Override
 	public String getContentOnPetriNet2FiniteAutomaton(Marking<?, String> marking) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean firstElement = true;
-		for (Place<?, String> place  : marking) {
+		for (final Place<?, String> place  : marking) {
 			if (firstElement) {
 				firstElement = false;
 			}
@@ -143,10 +144,10 @@ public class StringFactory extends StateFactory<String> {
 		
 		final boolean isNestedWordAutomaton = 
 				!compl.getOperand().getCallAlphabet().isEmpty();
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		for (StateWithRankInfo<String> down : compl.getDownStates()) {
-			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
+		for (final StateWithRankInfo<String> down : compl.getDownStates()) {
+			for (final StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				sb.append("(");
 				if (isNestedWordAutomaton) {
 					sb.append(down.getState());
@@ -186,13 +187,13 @@ public class StringFactory extends StateFactory<String> {
 			return compl.toString();
 		}
 		
-		List<Pair<StateWithRankInfo<String>,String>> n = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
-		List<Pair<StateWithRankInfo<String>,String>> c = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
-		List<Pair<StateWithRankInfo<String>,String>> s = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
-		List<Pair<StateWithRankInfo<String>,String>> b = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		final List<Pair<StateWithRankInfo<String>,String>> n = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		final List<Pair<StateWithRankInfo<String>,String>> c = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		final List<Pair<StateWithRankInfo<String>,String>> s = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		final List<Pair<StateWithRankInfo<String>,String>> b = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
 		
-		for (StateWithRankInfo<String> down : compl.getDownStates()) {
-			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
+		for (final StateWithRankInfo<String> down : compl.getDownStates()) {
+			for (final StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				if (up.hasRank()) {
 					if (up.getRank() == 3) {
 						n.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
@@ -213,7 +214,7 @@ public class StringFactory extends StateFactory<String> {
 		}
 		final boolean isNestedWordAutomaton = 
 				!compl.getOperand().getCallAlphabet().isEmpty();
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(");
 		sb.append(prettyprintCollectionOfStates(n,isNestedWordAutomaton));
 		sb.append(",");
@@ -232,10 +233,10 @@ public class StringFactory extends StateFactory<String> {
 		if (collection.isEmpty()) {
 			return "{}";
 		} else {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("{");
 			boolean isFirst = true;
-			for (Pair<StateWithRankInfo<String>,String> dd : collection) {
+			for (final Pair<StateWithRankInfo<String>,String> dd : collection) {
 				if (isFirst) {
 					isFirst = false;
 				} else {
@@ -278,8 +279,8 @@ public class StringFactory extends StateFactory<String> {
 		if(states == null) {
 			return "{}";
 		}
-		StringBuilder sb = new StringBuilder("{");
-		for(Iterator<String> it = states.iterator(); it.hasNext(); ) {
+		final StringBuilder sb = new StringBuilder("{");
+		for(final Iterator<String> it = states.iterator(); it.hasNext(); ) {
 			sb.append(it.next());
 			if(it.hasNext()) {
 				sb.append(", ");
@@ -295,7 +296,7 @@ public class StringFactory extends StateFactory<String> {
 
 	@Override
 	public String constructBuchiSVWState(Integer stateNb, Integer tmaNb) {
-		StringBuilder sb = new StringBuilder("(");
+		final StringBuilder sb = new StringBuilder("(");
 		sb.append(stateNb);
 		sb.append(",");
 		sb.append(tmaNb);
@@ -310,7 +311,7 @@ public class StringFactory extends StateFactory<String> {
 	
 	@Override
 	public String senwa(String entry, String state) {
-		String result = state + " (entry " + entry + ")";
+		final String result = state + " (entry " + entry + ")";
 		return result;
 	}
 	

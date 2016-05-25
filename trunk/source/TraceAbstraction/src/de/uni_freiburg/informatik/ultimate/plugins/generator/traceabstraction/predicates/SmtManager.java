@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -88,7 +87,7 @@ public class SmtManager {
 	private ScopedHashMap<String, Term> mIndexedConstants;
 	Set<BoogieVar> mAssignedVars;
 
-	private int mTrivialSatQueries = 0;
+	private final int mTrivialSatQueries = 0;
 	private int mNontrivialSatQueries = 0;
 
 	private int mTrivialCoverQueries = 0;
@@ -98,16 +97,16 @@ public class SmtManager {
 	// int mTrivialEdgeCheckQueries = 0;
 	// int mNontrivialEdgeCheckQueries = 0;
 
-	private int mVarSetMinimalSolverQueries = 0;
-	private long mVarSetMinimalComputationTime = 0;
+	private final int mVarSetMinimalSolverQueries = 0;
+	private final long mVarSetMinimalComputationTime = 0;
 
 	long mSatCheckTime = 0;
 	private long mSatCheckSolverTime = 0;
-	private long mTraceCheckTime = 0;
+	private final long mTraceCheckTime = 0;
 	private long mInterpolQuriesTime = 0;
 	private int mInterpolQueries = 0;
 
-	private int mFreshVariableCouter = 0;
+	private final int mFreshVariableCouter = 0;
 
 //	private long mTraceCheckStartTime = Long.MIN_VALUE;
 
@@ -259,19 +258,19 @@ public class SmtManager {
 	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
 	public TermVarsProc getOldVarsEquality(String proc, ModifiableGlobalVariableManager modGlobVarManager) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		final Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Term term = getScript().term("true");
-		for (BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
+		for (final BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			BoogieVar bvOld = ((BoogieNonOldVar) bv).getOldVar();
+			final BoogieVar bvOld = ((BoogieNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
-			TermVariable tv = bv.getTermVariable();
-			TermVariable tvOld = bvOld.getTermVariable();
-			Term equality = getScript().term("=", tv, tvOld);
+			final TermVariable tv = bv.getTermVariable();
+			final TermVariable tvOld = bvOld.getTermVariable();
+			final Term equality = getScript().term("=", tv, tvOld);
 			term = Util.and(getScript(), term, equality);
 		}
-		String[] procs = new String[0];
-		TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
+		final String[] procs = new String[0];
+		final TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
 				getScript()));
 		return result;
 
@@ -335,7 +334,7 @@ public class SmtManager {
 	}
 	
 	private boolean interpolationModeSwitchNeeded() {
-		SolverMode solver = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final SolverMode solver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;
@@ -365,11 +364,11 @@ public class SmtManager {
 	// }
 
 	LBool checkSatisfiable(Term f) {
-		long startTime = System.nanoTime();
+		final long startTime = System.nanoTime();
 		LBool result = null;
 		try {
 			assertTerm(f);
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				return LBool.UNKNOWN;
 			} else {
@@ -380,12 +379,12 @@ public class SmtManager {
 		mSatCheckSolverTime += (System.nanoTime() - startTime);
 		mNontrivialSatQueries++;
 		if (result == LBool.UNKNOWN) {
-			Object info = mScript.getInfo(":reason-unknown");
+			final Object info = mScript.getInfo(":reason-unknown");
 			if (!(info instanceof ReasonUnknown)) {
 				mScript.getInfo(":reason-unknown");
 			}
-			ReasonUnknown reason = (ReasonUnknown) info;
-			Object test = mScript.getInfo(":reason-unknown");
+			final ReasonUnknown reason = (ReasonUnknown) info;
+			final Object test = mScript.getInfo(":reason-unknown");
 			switch (reason) {
 			case CRASHED:
 				throw new AssertionError("Solver crashed");
@@ -399,7 +398,7 @@ public class SmtManager {
 	}
 
 	public LBool assertTerm(Term term) {
-		long startTime = System.nanoTime();
+		final long startTime = System.nanoTime();
 		LBool result = null;
 		result = mScript.assertTerm(term);
 		mSatCheckSolverTime += (System.nanoTime() - startTime);
@@ -407,16 +406,16 @@ public class SmtManager {
 	}
 
 	public Term[] computeInterpolants(Term[] interpolInput, int[] startOfSubtree) {
-		long startTime = System.nanoTime();
-		Term[] result = mScript.getInterpolants(interpolInput, startOfSubtree);
+		final long startTime = System.nanoTime();
+		final Term[] result = mScript.getInterpolants(interpolInput, startOfSubtree);
 		mInterpolQuriesTime += (System.nanoTime() - startTime);
 		mInterpolQueries++;
 		return result;
 	}
 
 	public Term[] computeInterpolants(Term[] interpolInput) {
-		long startTime = System.nanoTime();
-		Term[] result = mScript.getInterpolants(interpolInput);
+		final long startTime = System.nanoTime();
+		final Term[] result = mScript.getInterpolants(interpolInput);
 		mInterpolQuriesTime += (System.nanoTime() - startTime);
 		mInterpolQueries++;
 		return result;
@@ -441,15 +440,15 @@ public class SmtManager {
 	 *         the theorem prover was not able to give an answer.
 	 */
 	public LBool isCovered(IPredicate ps1, IPredicate ps2) {
-		long startTime = System.nanoTime();
+		final long startTime = System.nanoTime();
 
 		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
 			mTrivialCoverQueries++;
 			return Script.LBool.UNKNOWN;
 		}
 
-		Term formula1 = ps1.getFormula();
-		Term formula2 = ps2.getFormula();
+		final Term formula1 = ps1.getFormula();
+		final Term formula2 = ps2.getFormula();
 		LBool result = null;
 		// tivial case
 		if (formula1 == False() || formula2 == True()) {
@@ -462,10 +461,10 @@ public class SmtManager {
 
 			// replace all vars by constants
 			{
-				TermVariable[] vars = new TermVariable[ps1.getVars().size()];
-				Term[] values = new Term[vars.length];
+				final TermVariable[] vars = new TermVariable[ps1.getVars().size()];
+				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (BoogieVar var : ps1.getVars()) {
+				for (final BoogieVar var : ps1.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -474,10 +473,10 @@ public class SmtManager {
 			}
 
 			{
-				TermVariable[] vars = new TermVariable[ps2.getVars().size()];
-				Term[] values = new Term[vars.length];
+				final TermVariable[] vars = new TermVariable[ps2.getVars().size()];
+				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (BoogieVar var : ps2.getVars()) {
+				for (final BoogieVar var : ps2.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -496,7 +495,7 @@ public class SmtManager {
 
 	public Validity isCovered(Object caller, Term formula1, Term formula2) {
 		assert (mManagedScript.isLockOwner(caller)) : "only lock owner may call";
-		long startTime = System.nanoTime();
+		final long startTime = System.nanoTime();
 
 		final Validity result;
 		// tivial case
@@ -506,7 +505,7 @@ public class SmtManager {
 		} else {
 			mScript.push(1);
 			assertTerm(formula1);
-			Term negFormula2 = mScript.term("not", formula2);
+			final Term negFormula2 = mScript.term("not", formula2);
 			assertTerm(negFormula2);
 			result = IHoareTripleChecker.lbool2validity(mScript.checkSat());
 			mNontrivialCoverQueries++;
@@ -531,19 +530,19 @@ public class SmtManager {
 	// }
 
 	public Term substituteRepresentants(Set<BoogieVar> boogieVars, Map<BoogieVar, TermVariable> substitution, Term term) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (BoogieVar var : boogieVars) {
-			TermVariable representant = var.getTermVariable();
+		for (final BoogieVar var : boogieVars) {
+			final TermVariable representant = var.getTermVariable();
 			assert representant != null;
-			Term substitute = substitution.get(var);
+			final Term substitute = substitution.get(var);
 			assert substitute != null;
 			replacees.add(representant);
 			replacers.add(substitute);
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
@@ -551,36 +550,36 @@ public class SmtManager {
 
 	public Term substituteToRepresentants(Set<BoogieVar> boogieVars, Map<BoogieVar, TermVariable> boogieVar2TermVar,
 			Term term) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (BoogieVar var : boogieVars) {
-			TermVariable representant = boogieVar2TermVar.get(var);
+		for (final BoogieVar var : boogieVars) {
+			final TermVariable representant = boogieVar2TermVar.get(var);
 			assert representant != null;
-			Term substitute = var.getTermVariable();
+			final Term substitute = var.getTermVariable();
 			assert substitute != null;
 			replacees.add(representant);
 			replacers.add(substitute);
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
 	}
 
 	public Term substituteTermVariablesByTerms(Map<TermVariable, Term> substitution, Term term) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (TermVariable tv : substitution.keySet()) {
-			Term replacer = substitution.get(tv);
+		for (final TermVariable tv : substitution.keySet()) {
+			final Term replacer = substitution.get(tv);
 			assert replacer != null;
 			replacees.add(tv);
 			replacers.add(replacer);
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
@@ -669,7 +668,7 @@ public class SmtManager {
 	private Integer quantifiersContainedInFormula(Term formula, Set<TermVariable> quantifiedVariables) {
 		Integer quantifier = null;
 		if (formula instanceof ApplicationTerm) {
-			Term[] parameters = ((ApplicationTerm) formula).getParameters();
+			final Term[] parameters = ((ApplicationTerm) formula).getParameters();
 			for (int i = 0; i < parameters.length; i++) {
 				quantifier = quantifiersContainedInFormula(parameters[i], quantifiedVariables);
 			}
@@ -689,27 +688,27 @@ public class SmtManager {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
 
-		Set<BoogieVar> allVars = ps.getVars();
-		Set<BoogieVar> varsOfRenamed = new HashSet<BoogieVar>();
+		final Set<BoogieVar> allVars = ps.getVars();
+		final Set<BoogieVar> varsOfRenamed = new HashSet<BoogieVar>();
 		varsOfRenamed.addAll(allVars);
-		Set<BoogieVar> globalVars = new HashSet<BoogieVar>();
-		for (BoogieVar var : allVars) {
+		final Set<BoogieVar> globalVars = new HashSet<BoogieVar>();
+		for (final BoogieVar var : allVars) {
 			if (var.isGlobal()) {
 				globalVars.add(var);
 				varsOfRenamed.remove(var);
 			}
 		}
-		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (BoogieVar globalBoogieVar : globalVars) {
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final BoogieVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
+				final BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
 				varsOfRenamed.add(oldBoogieVar);
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
 		Term renamedFormula = (new SafeSubstitution(mScript, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices);
-		IPredicate result = this.getPredicateFactory().newPredicate(renamedFormula);
+		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}
 
@@ -752,7 +751,7 @@ public class SmtManager {
 	}
 
 	public LBool checkSatWithFreeVars(Term negation) {
-		LBool result = Util.checkSat(mScript, negation);
+		final LBool result = Util.checkSat(mScript, negation);
 		// if (result == LBool.UNKNOWN) {
 		// Object[] reason = mScript.getInfo(":reason-unknown");
 		// }

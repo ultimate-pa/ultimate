@@ -55,8 +55,9 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 		mStateSequence = new ArrayList<STATE>(1);
 		mStateSequence.add(state);
 		@SuppressWarnings("unchecked")
+		final
 		LETTER[] word =  (LETTER[])new Object[] { };
-		int[] nestingRelation = {};
+		final int[] nestingRelation = {};
 		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
 	}
 
@@ -73,8 +74,9 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 			throw new IllegalArgumentException();
 		}
 		@SuppressWarnings("unchecked")
+		final
 		LETTER[] word = (LETTER[])new Object[] {symbol};
-		int[] nestingRelation = { position };
+		final int[] nestingRelation = { position };
 		mNestedWord = new NestedWord<LETTER>(word,nestingRelation);
 		mStateSequence = new ArrayList<STATE>(2);
 		mStateSequence.add(q0);
@@ -83,6 +85,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	
 		
 	
+	@Override
 	public NestedWord<LETTER> getWord() {
 		return this.mNestedWord;
 	}
@@ -96,6 +99,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	/**
 	 * Length of this runs state sequence.
 	 */	
+	@Override
 	public int getLength() {
 		return this.mStateSequence.size();
 	}
@@ -139,14 +143,14 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	}
 
 	public NestedRun<LETTER,STATE> concatenate(NestedRun<LETTER,STATE> run) {
-		STATE lastStateOfThis = mStateSequence.get(mStateSequence.size()-1);
-		STATE firstStateOfRun = run.mStateSequence.get(0);
+		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size()-1);
+		final STATE firstStateOfRun = run.mStateSequence.get(0);
 		
 		if (lastStateOfThis.equals(firstStateOfRun)) {
 	
-		NestedWord<LETTER> concatNestedWord =
+		final NestedWord<LETTER> concatNestedWord =
 			mNestedWord.concatenate(run.getWord());
-			ArrayList<STATE> concatStateSeq =
+			final ArrayList<STATE> concatStateSeq =
 					new ArrayList<STATE>(mStateSequence);
 			for (int i=1; i<run.getStateSequence().size(); i++) {
 				concatStateSeq.add(run.getStateSequence().get(i));
@@ -167,14 +171,16 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 		return mStateSequence.get(i);
 	}
 	
+	@Override
 	public LETTER getSymbol(int i) {
 		return mNestedWord.getSymbolAt(i);
 	}
 	
 
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i<mNestedWord.length(); i++) {
 			sb.append(getStateAtPosition(i) + " ");
 			if (mNestedWord.isInternalPosition(i)) {

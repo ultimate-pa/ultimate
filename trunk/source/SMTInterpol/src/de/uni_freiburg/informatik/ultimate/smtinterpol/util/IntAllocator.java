@@ -32,8 +32,8 @@ public class IntAllocator {
 		int mLow,mUp;
 		IntervalNode mLeft,mRight;
 		public IntervalNode(int low,int up) {
-			this.mLow = low;
-			this.mUp = up;
+			mLow = low;
+			mUp = up;
 			mLeft = mRight = null;
 		}
 	}
@@ -54,20 +54,21 @@ public class IntAllocator {
 	 * @return Lowest unallocated integer.
 	 */
 	public int alloc() {
-		if (mRoot.mLow == mRoot.mUp)
+		if (mRoot.mLow == mRoot.mUp) {
 			throw new RuntimeException("Allocation on empty IntAllocator");
+		}
 		IntervalNode allocNode = mRoot;
 		IntervalNode parent = null;
 		while (allocNode.mLeft != null) {
 			parent = allocNode;
 			allocNode = allocNode.mLeft;
 		}
-		int res = allocNode.mLow++;
+		final int res = allocNode.mLow++;
 		if (allocNode.mLow == allocNode.mUp) {
-			if (parent == null)
+			if (parent == null) {
 				// empty allocator
 				mRoot = allocNode.mRight;
-			else {
+			} else {
 				parent.mLeft = allocNode.mRight;
 			}
 		}
@@ -79,9 +80,10 @@ public class IntAllocator {
 	 * @return Allocated integers.
 	 */
 	public int[] alloc(int n) {
-		int[] res = new int[n];
-		for (int i = 0; i < n; ++i)
+		final int[] res = new int[n];
+		for (int i = 0; i < n; ++i) {
 			res[i] = alloc();
+		}
 		return res;
 	}
 	/**
@@ -124,13 +126,15 @@ public class IntAllocator {
 	 * @param vals Sequence to free.
 	 */
 	public void free(int[] vals) {
-		for (int val : vals)
+		for (final int val : vals) {
 			free(val);
+		}
 	}
 	private void joinLeft(IntervalNode insert) {
 		IntervalNode prev = insert.mLeft;
-		if (prev == null)
+		if (prev == null) {
 			return;
+		}
 		IntervalNode parent = insert;
 		while (prev.mRight != null) {
 			parent = prev;
@@ -139,16 +143,18 @@ public class IntAllocator {
 		if (insert.mLow == prev.mUp) {
 			insert.mLow = prev.mLow;
 			// Remove prev
-			if (parent == insert)
+			if (parent == insert) {
 				parent.mLeft = prev.mLeft;
-			else
+			} else {
 				parent.mRight = prev.mLeft;
+			}
 		}
 	}
 	private void joinRight(IntervalNode insert) {
 		IntervalNode next = insert.mRight;
-		if (next == null)
+		if (next == null) {
 			return;
+		}
 		IntervalNode parent = insert;
 		while (next.mLeft != null) {
 			parent = next;
@@ -157,10 +163,11 @@ public class IntAllocator {
 		if (insert.mUp == next.mLow) {
 			insert.mUp = next.mUp;
 			// Remove next
-			if (parent == insert)
+			if (parent == insert) {
 				parent.mRight = next.mRight;
-			else
+			} else {
 				parent.mLeft = next.mRight;
+			}
 		}
 	}
 	/**
@@ -168,11 +175,13 @@ public class IntAllocator {
 	 * @return Highest allocated value.
 	 */
 	public int peekLast() {
-		if (mRoot.mLow == mRoot.mUp)
+		if (mRoot.mLow == mRoot.mUp) {
 			return mRoot.mLow - 1;
+		}
 		IntervalNode allocNode = mRoot;
-		while (allocNode.mRight != null)
+		while (allocNode.mRight != null) {
 			allocNode = allocNode.mRight;
+		}
 		return allocNode.mLow - 1;
 	}
 }

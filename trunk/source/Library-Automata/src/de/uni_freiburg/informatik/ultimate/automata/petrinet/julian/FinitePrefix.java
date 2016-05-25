@@ -48,7 +48,7 @@ public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, true, false);
+		final PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, true, false);
 		mResult = unf.getFinitePrefix();
 		mLogger.info(exitMessage());
 	}

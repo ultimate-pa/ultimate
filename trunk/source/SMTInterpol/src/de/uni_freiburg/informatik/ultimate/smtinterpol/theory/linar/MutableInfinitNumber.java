@@ -138,28 +138,32 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 	/// --- Comparing ---
 	@Override
 	public int compareTo(MutableInfinitNumber arg0) {
-		int ac = mA.compareTo(arg0.mA);
-		if (ac == 0)
+		final int ac = mA.compareTo(arg0.mA);
+		if (ac == 0) {
 			return mEps - arg0.mEps;
+		}
 		return ac;
 	}
 	public int compareTo(InfinitNumber other) {
-		int ac = mA.compareTo(other.mA);
-		if (ac == 0)
+		final int ac = mA.compareTo(other.mA);
+		if (ac == 0) {
 			return mEps - other.mEps;
+		}
 		return ac;
 	}
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof InfinitNumber) {
-			InfinitNumber n = (InfinitNumber)o;
+			final InfinitNumber n = (InfinitNumber)o;
 			return mA.equals(n.mA) && mEps == n.mEps;
 		}
 		if (o instanceof MutableInfinitNumber) {
-			MutableInfinitNumber n = (MutableInfinitNumber) o;
+			final MutableInfinitNumber n = (MutableInfinitNumber) o;
 			return mA.equals(n.mA) && mEps == n.mEps;
 		}
 		return false;
 	}
+	@Override
 	public int hashCode() {
 		return mA.hashCode() + 257 * mEps;
 	}
@@ -168,9 +172,11 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 		return mA.equals(Rational.POSITIVE_INFINITY) || mA.equals(Rational.NEGATIVE_INFINITY);
 	}
 	
+	@Override
 	public String toString() {
-		if (mEps == 0)
+		if (mEps == 0) {
 			return mA.toString();
+		}
 		return mA + (mEps > 0 ? "+" : "-") + "eps";
 	}
 

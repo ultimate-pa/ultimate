@@ -154,7 +154,7 @@ public class FlowSensitiveFaultLocalizer {
 		
 		// Create a Map of Programpoints in the CFG to States of the CFG.
 		final Map <ProgramPoint,IPredicate> programPoint_StateMap = new HashMap<>();
-		for (IPredicate cfgState : cfg.getStates()) {
+		for (final IPredicate cfgState : cfg.getStates()) {
 			final ISLPredicate islState  = (ISLPredicate) cfgState;
 			final ProgramPoint programPoint = islState.getProgramPoint();
 			programPoint_StateMap.put(programPoint, cfgState);
@@ -184,7 +184,7 @@ public class FlowSensitiveFaultLocalizer {
 			//Immediate successors of of the state in CFG
 			final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> immediateSuccesors = 
 					cfg.internalSuccessors(startStateInCfg);
-			for(OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
+			for(final OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
 				final ProgramPoint programPointOfImmediateSucc = 
 						((ISLPredicate)immediateSuccesor).getProgramPoint();
@@ -207,7 +207,7 @@ public class FlowSensitiveFaultLocalizer {
 						final List<Integer> endPosition = computeEndpointOfAlternativePath(
 								counterexample, posOfStartState, lastStateOfAlternativePath);
 						
-						for(Integer i:endPosition){
+						for(final Integer i:endPosition){
 							final int[] pair = new int[2];
 							//position OUT-BRANCH in the counterexample.
 							pair[0] = posOfStartState;
@@ -251,7 +251,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private List<Integer> computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
-		List<Integer>  endPoints = new ArrayList<Integer>();
+		final List<Integer>  endPoints = new ArrayList<Integer>();
 		for(int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
 			final IPredicate stateAtPosJ = counterexample.getStateAtPosition(j);
 			final ProgramPoint programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
@@ -308,7 +308,7 @@ public class FlowSensitiveFaultLocalizer {
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = false;
 		}
-		Boolean[] relevanceCriterionVariables = new Boolean[]{relevanceCriterionUC,relevanceCriterionGF };
+		final Boolean[] relevanceCriterionVariables = new Boolean[]{relevanceCriterionUC,relevanceCriterionGF };
 		return relevanceCriterionVariables;
 	}
 	
@@ -361,7 +361,7 @@ public class FlowSensitiveFaultLocalizer {
 						counterexampleWord, rc, smtManager);
 				
 
-				Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 				final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
 
@@ -401,7 +401,7 @@ public class FlowSensitiveFaultLocalizer {
 			int branchOut=0;
 			int branchIn=0;
 			//Find out if the current position is a branchOut position.
-			for(Integer brachInPosition:informationFromCFG.keySet()){
+			for(final Integer brachInPosition:informationFromCFG.keySet()){
 				if(informationFromCFG.get(brachInPosition).contains(i)){
 					subBranch = true;
 					branchOut = i;
@@ -412,7 +412,7 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			if(subBranch){
 				 // The current statement is a branch out and it's branch-in is with in the current branch.
-				TransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
+				final TransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
 						informationFromCFG,smtManager);
 				combinedTransitionFormula = TransFormula.sequentialComposition(mLogger, mServices, 
 						smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,subBranchMarkhorFormula);
@@ -500,7 +500,7 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			final IPredicate weakestPreconditionRight = weakestPreconditionLeft;
 			if (branchOutPosition != null) {
-				int positionBranchIn = position;
+				final int positionBranchIn = position;
 				position = branchOutPosition;
 				final TransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn, 
 						counterexampleWord,informationFromCFG, smtManager);
@@ -542,10 +542,10 @@ public class FlowSensitiveFaultLocalizer {
 				final ERelevanceStatus relevance = computeRelevance(position,action,pre,weakestPreconditionRight,
 						weakestPreconditionLeft,null,counterexampleWord,
 						rc,smtManager);
-				Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
-				RelevanceInformation ri = new RelevanceInformation(
+				final RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1UC(), 
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(), 
@@ -572,11 +572,11 @@ public class FlowSensitiveFaultLocalizer {
 			relevance = rc.relevanceInternal(pre, internal, 
 					smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
 		}else if(action instanceof ICallAction){
-			ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
+			final ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceCall(pre, call, 
 					smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
 		}else if(action instanceof IReturnAction){
-			IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
+			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
 			assert counterexampleWord.isReturnPosition(position);
 			assert !counterexampleWord.isPendingReturn(position) : "pending returns not supported";
 			final IPredicate callPredecessor;
@@ -653,7 +653,7 @@ public class FlowSensitiveFaultLocalizer {
 		try {
 			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), cfg, 
 					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
-		} catch (AutomataOperationCanceledException e) {
+		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass());
 		}
 	}

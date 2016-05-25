@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 
 /**

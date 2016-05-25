@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
  */
 public class WrapperNode extends ModifiableAST<WrapperNode> {
 	private static final long serialVersionUID = 203486790200450017L;
-	private Object mBacking;
+	private final Object mBacking;
 
 	public WrapperNode(WrapperNode parent, Object backing) {
 		this(parent, backing, null);
@@ -47,7 +47,7 @@ public class WrapperNode extends ModifiableAST<WrapperNode> {
 
 	public WrapperNode(WrapperNode parent, Object backing, IPayload payload) {
 		super(parent, payload);
-		this.mBacking = backing;
+		mBacking = backing;
 	}
 
 	public Object getBacking() {

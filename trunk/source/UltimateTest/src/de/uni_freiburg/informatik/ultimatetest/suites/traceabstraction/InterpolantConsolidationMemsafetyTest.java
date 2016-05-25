@@ -82,20 +82,20 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		
-		for (String setting : mSettings) {
-			for (String toolchain : mBoogieToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mBoogieToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}
@@ -106,13 +106,13 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
 						new ColumnDefinition(
 								"Overall time", "Avg. runtime",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	

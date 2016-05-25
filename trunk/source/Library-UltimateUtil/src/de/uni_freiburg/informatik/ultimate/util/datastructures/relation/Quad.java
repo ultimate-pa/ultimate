@@ -75,33 +75,44 @@ public class Quad<E1, E2, E3, E4> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final Quad<?, ?, ?, ?> other = (Quad<?, ?, ?, ?>) obj;
 		if (mFirst == null) {
-			if (other.mFirst != null)
+			if (other.mFirst != null) {
 				return false;
-		} else if (!mFirst.equals(other.mFirst))
+			}
+		} else if (!mFirst.equals(other.mFirst)) {
 			return false;
+		}
 		if (mFourth == null) {
-			if (other.mFourth != null)
+			if (other.mFourth != null) {
 				return false;
-		} else if (!mFourth.equals(other.mFourth))
+			}
+		} else if (!mFourth.equals(other.mFourth)) {
 			return false;
+		}
 		if (mSecond == null) {
-			if (other.mSecond != null)
+			if (other.mSecond != null) {
 				return false;
-		} else if (!mSecond.equals(other.mSecond))
+			}
+		} else if (!mSecond.equals(other.mSecond)) {
 			return false;
+		}
 		if (mThird == null) {
-			if (other.mThird != null)
+			if (other.mThird != null) {
 				return false;
-		} else if (!mThird.equals(other.mThird))
+			}
+		} else if (!mThird.equals(other.mThird)) {
 			return false;
+		}
 		return true;
 	}
 

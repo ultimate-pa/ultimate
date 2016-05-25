@@ -44,7 +44,7 @@ public class CaseStudyToTCS {
 
     public static void main(String[] args) {
         try {
-            PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);
+            final PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);
             PhaseEventAutomata[] systemPeas = xml2jconverter
                     .convert(CaseStudyToTCS.PATH
                             + "pea/modelchecking/CaseStudy/Environment.xml");
@@ -72,18 +72,18 @@ public class CaseStudyToTCS {
             for (int i = 0; i < systemPeas.length; i++) {
                 toTCS = toTCS.parallel(systemPeas[i]);
             }
-            PhaseEventAutomata[] propertyPeas = xml2jconverter
+            final PhaseEventAutomata[] propertyPeas = xml2jconverter
                     .convert(CaseStudyToTCS.PATH
                             + "pea/modelchecking/CaseStudy/BothNoEBNet0.xml");
             for (int i = 0; i < propertyPeas.length; i++) {
                 toTCS = toTCS.parallel(propertyPeas[i]);
             }
-            PEA2TCSJ2XMLConverter pea2tcsConverter = new PEA2TCSJ2XMLConverter();
-            PhaseEventAutomata[] toTCSArray = new PhaseEventAutomata[1];
+            final PEA2TCSJ2XMLConverter pea2tcsConverter = new PEA2TCSJ2XMLConverter();
+            final PhaseEventAutomata[] toTCSArray = new PhaseEventAutomata[1];
             toTCS.dump();
             toTCSArray[0] = toTCS;
             pea2tcsConverter.convert(toTCSArray, "pea/modelchecking/CaseStudy/toCheckAsTCS.xml", false);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

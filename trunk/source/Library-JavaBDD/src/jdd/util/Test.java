@@ -7,11 +7,13 @@ public class Test {
 
 	public static void start(String module) {
 		// truely stupid way of gettting the calles Class name
-		Throwable t = new Throwable();
-		StackTraceElement [] stack = t.getStackTrace();
-		String name = stack[1].getClassName().replace('.', '/');
+		final Throwable t = new Throwable();
+		final StackTraceElement [] stack = t.getStackTrace();
+		final String name = stack[1].getClassName().replace('.', '/');
 		JDDConsole.out.print( name );
-		for(int i = name.length(); i < 50; i++) JDDConsole.out.print(' ');
+		for(int i = name.length(); i < 50; i++) {
+			JDDConsole.out.print(' ');
+		}
 
 		// JDDConsole.out.flush();
 
@@ -31,7 +33,9 @@ public class Test {
 	public static void check(boolean c, String s) {
 		count++; // DEBUG
 		if(!c) {
-			if(s != null) System.err.println("ASSERTATION FAILED: " + s + "     ");
+			if(s != null) {
+				System.err.println("ASSERTATION FAILED: " + s + "     ");
+			}
 			show_stack_trace();
 			System.exit(20);
 		}
@@ -44,7 +48,9 @@ public class Test {
 		count++; // DEBUG
 		if( a != b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " != " + b + "    ");
 			show_stack_trace();
 
@@ -56,7 +62,9 @@ public class Test {
 		count++; // DEBUG
 		if( a != b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " != " + b + "    ");
 			show_stack_trace();
 			System.exit(20);
@@ -67,7 +75,9 @@ public class Test {
 		count++; // DEBUG
 		if( a != b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " != " + b + "    ");
 			show_stack_trace();
 			System.exit(20);
@@ -80,7 +90,9 @@ public class Test {
 		count++; // DEBUG
 		if( a == b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " == " + b + "    ");
 			show_stack_trace();
 			System.exit(20);
@@ -93,7 +105,9 @@ public class Test {
 		count++; // DEBUG
 		if( a >= b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " >= " + b + "    ");
 			show_stack_trace();
 			System.exit(20);
@@ -105,7 +119,9 @@ public class Test {
 		count++; // DEBUG
 		if( a <= b) {
 			System.err.print("ASSERTATION FAILED: ");
-			if(s != null) System.err.print(s + " ");
+			if(s != null) {
+				System.err.print(s + " ");
+			}
 			System.err.println(""+ a + " >= " + b + "    ");
 			show_stack_trace();
 			System.exit(20);

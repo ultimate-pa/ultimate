@@ -1,7 +1,7 @@
 
 package jdd.util;
 
-import jdd.util.math.*;
+import jdd.util.math.FastRandom;
 
 
 
@@ -28,8 +28,10 @@ public final class Array {
 	 * the <tt>old_size</tt> old members are copied to the new array
 	 */
 	public static final int [] resize(final int [] old, int old_size, int new_size) {
-		int [] ret = Allocator.allocateIntArray(new_size);
-		if(old_size > new_size) old_size = new_size;
+		final int [] ret = Allocator.allocateIntArray(new_size);
+		if(old_size > new_size) {
+			old_size = new_size;
+		}
 		fast_copy(old, 0, ret, 0, old_size);
 		return ret;
 	}
@@ -40,8 +42,10 @@ public final class Array {
 	 * the <tt>old_size</tt> old members are copied to the new array
 	 */
 	public static final short [] resize(final short [] old, int old_size, int new_size) {
-		short [] ret = Allocator.allocateShortArray(new_size);
-		if(old_size > new_size) old_size = new_size;
+		final short [] ret = Allocator.allocateShortArray(new_size);
+		if(old_size > new_size) {
+			old_size = new_size;
+		}
 		fast_copy(old, 0, ret, 0, old_size);
 		return ret;
 	}
@@ -83,8 +87,9 @@ public final class Array {
 	 * may/may not overlap without creating any problems
 	 */
 	private static final void fast_copy_foward( int [] y, int o1, int []x, int o2, int len) {
-		for(int i = 0; i < len; i++)
+		for(int i = 0; i < len; i++) {
 			x[o2+i] = y[o1+i];
+		}
 	}
 
 
@@ -93,8 +98,9 @@ public final class Array {
 	 * may/may not overlap without creating any problems
 	 */
 	private static final void fast_copy_foward( short [] y, int o1, short []x, int o2, int len) {
-		for(int i = 0; i < len; i++)
+		for(int i = 0; i < len; i++) {
 			x[o2+i] = y[o1+i];
+		}
 	}
 	// -------------------------------------------------------------------------------------------
 
@@ -118,13 +124,13 @@ public final class Array {
 
 	/** cone an array of integers and its members */
 	public static final int [] clone(int [] old) {
-		int [] ret = Allocator.allocateIntArray(old.length);
+		final int [] ret = Allocator.allocateIntArray(old.length);
 		fast_copy(old, 0, ret, 0, old.length);
 		return ret;
 	}
 
 	public static final boolean [] clone(boolean [] old) {
-		boolean [] ret =new boolean[old.length];
+		final boolean [] ret =new boolean[old.length];
 		System.arraycopy(old, 0, ret, 0, old.length);
 		return ret;
 	}
@@ -139,36 +145,51 @@ public final class Array {
 
 	/** set the first "length" elements of "x" to "val" (faster than  for(...) x[i] = val; )*/
 	public static final void set(int [] x, int val, int length) {
-		for(int i = length; i != 0; ) x[--i] = val; // BACKWARD
+		for(int i = length; i != 0; )
+		 {
+			x[--i] = val; // BACKWARD
+		}
 	}
 	// --------------------------------------------------
 
 	/** set the members of the array x to val */
 	public static final void set(boolean [] x, boolean val) {
-		for(int i = x.length; i != 0; ) x[--i] = val; // BACKWARD
+		for(int i = x.length; i != 0; )
+		 {
+			x[--i] = val; // BACKWARD
+		}
 	}
 
 	// [ count ]------------------------------------------------
 	/** count the number of times <tt>val</tt> is seen in the array x */
 	public static final int count(final int [] x, int val) {
 		int ret = 0;
-		for(int i = x.length; i != 0; ) if(x[--i] == val) ret ++;
+		for(int i = x.length; i != 0; ) {
+			if(x[--i] == val) {
+				ret ++;
+			}
+		}
 		return ret;
 	}
 	/** count the number of times <tt>val</tt> is seen in the array x */
 	public static final int count(final boolean [] x, boolean val) {
-		int len = x.length, ret = 0;
-		for(int i = 0; i < len; i++) if(x[i] == val) ret ++;
+		final int len = x.length;
+		int ret = 0;
+		for(int i = 0; i < len; i++) {
+			if(x[i] == val) {
+				ret ++;
+			}
+		}
 		return ret;
 	}
 	// ---- [reverse]-------------------------------------------------
 	/** reverse some list */
 	public static void reverse(Object [] variables, int size) {
-		int len = size / 2;
+		final int len = size / 2;
 		size--;
 		for(int j = 0; j < len; j++) {
-			int i = size - j;
-			Object tmp = variables[i];
+			final int i = size - j;
+			final Object tmp = variables[i];
 			variables[i] = variables[j];
 			variables[j] =  tmp;
 		}
@@ -176,22 +197,22 @@ public final class Array {
 
 	/** reverse an array of ints */
 	public static void reverse(int [] variables, int size) {
-		int len = size / 2;
+		final int len = size / 2;
 		size--;
 		for(int j = 0; j < len; j++) {
-			int i = size - j;
-			int tmp = variables[i];
+			final int i = size - j;
+			final int tmp = variables[i];
 			variables[i] = variables[j];
 			variables[j] =  tmp;
 		}
 	}
 	/** reverse an array of doubles */
 	public static void reverse(double[] variables, int size) {
-		int len = size / 2;
+		final int len = size / 2;
 		size--;
 		for(int j = 0; j < len; j++) {
-			int i = size - j;
-			double tmp = variables[i];
+			final int i = size - j;
+			final double tmp = variables[i];
 			variables[i] = variables[j];
 			variables[j] =  tmp;
 		}
@@ -204,8 +225,8 @@ public final class Array {
 	/** shuffle the first <tt>len</tt> members of an array */
 	public static final void shuffle(int x[], int len) {
 		for(int i = 0; i < len; i++) {
-			int j = FastRandom.mtrand() % len;
-			int tmp = x[i]; x[i] = x[j]; x[j] = tmp;
+			final int j = FastRandom.mtrand() % len;
+			final int tmp = x[i]; x[i] = x[j]; x[j] = tmp;
 		}
 	}
 
@@ -214,14 +235,15 @@ public final class Array {
 	 * @see #shuffle(int[], int)
 	 */
 	public static final void disturb(int []x, int len) {
-		if(len < 16) shuffle(x, len);
-		else {
+		if(len < 16) {
+			shuffle(x, len);
+		} else {
 			// just swap "times" number of elements
 			int times = Math.max(4, len / 20); // 5%, at least 4
 			while( times-- > 0) {
-				int j = FastRandom.mtrand() % len;
-				int i = FastRandom.mtrand() % len;
-				int tmp = x[i]; x[i] = x[j]; x[j] = tmp;
+				final int j = FastRandom.mtrand() % len;
+				final int i = FastRandom.mtrand() % len;
+				final int tmp = x[i]; x[i] = x[j]; x[j] = tmp;
 			}
 		}
 	}
@@ -231,8 +253,10 @@ public final class Array {
 	 * create a permutation from {0, ... , size-1} to {0, ... , size-1}.
 	 */
 	public static final int [] permutation(int size) {
-		int [] ret = new int[size];
-		for(int i = 0; i < size; i++) ret[i] = i;
+		final int [] ret = new int[size];
+		for(int i = 0; i < size; i++) {
+			ret[i] = i;
+		}
 		shuffle(ret);
 		return ret;
 	}
@@ -244,7 +268,11 @@ public final class Array {
 	 * @return true of the first <tt>len</tt> members of v1 and v2 are equal
 	 */
 	public static final boolean equals(boolean []v1, boolean []v2, int len) {
-		for(int i = 0; i < len; i++) if(v1[i] != v2[i]) return false;
+		for(int i = 0; i < len; i++) {
+			if(v1[i] != v2[i]) {
+				return false;
+			}
+		}
 		return true;
 	}
 
@@ -253,7 +281,11 @@ public final class Array {
 	 * @return true of the first <tt>len</tt> members of v1 and v2 are equal
 	 */
 	public static final boolean equals(short []v1, short []v2, int len) {
-			for(int i = 0; i < len; i++) if(v1[i] != v2[i]) return false;
+			for(int i = 0; i < len; i++) {
+				if(v1[i] != v2[i]) {
+					return false;
+				}
+			}
 			return true;
 	}
 
@@ -262,7 +294,11 @@ public final class Array {
 	 * @return true of the first <tt>len</tt> members of v1 and v2 are equal
 	 */
 	public static final boolean equals(byte []v1, byte []v2, int len) {
-			for(int i = 0; i < len; i++) if(v1[i] != v2[i]) return false;
+			for(int i = 0; i < len; i++) {
+				if(v1[i] != v2[i]) {
+					return false;
+				}
+			}
 			return true;
 	}
 
@@ -271,7 +307,11 @@ public final class Array {
 	 * @return true of the first <tt>len</tt> members of v1 and v2 are equal
 	 */
 	public static final boolean equals(int []v1, int []v2, int len) {
-			for(int i = 0; i < len; i++) if(v1[i] != v2[i]) return false;
+			for(int i = 0; i < len; i++) {
+				if(v1[i] != v2[i]) {
+					return false;
+				}
+			}
 			return true;
 	}
 
@@ -283,23 +323,27 @@ public final class Array {
 
 
 		// check array resizing
-		int [] x = new int[]{2,3};
-		int [] x2 = resize(x, 2, 5);
+		final int [] x = new int[]{2,3};
+		final int [] x2 = resize(x, 2, 5);
 		Test.check(x2.length == 5, "new array size OK");
 		Test.check(x2[0] == 2 && x2[1] == 3, "old data copied");
 
-		int [] x3 = resize(x, 2, 1);
+		final int [] x3 = resize(x, 2, 1);
 		Test.check(x3.length == 1, "new array size OK, even when decreasing");
 
 
 		// check set
 		set(x2, 5);
-		for(int i = 0; i < x2.length; i++) Test.check(x2[i] == 5, "array set");
+		for(int i = 0; i < x2.length; i++) {
+			Test.check(x2[i] == 5, "array set");
+		}
 
 		// check copy() !!!
 		final int size = 1024;
-		int [] a = new int[size];
-		for(int i = 0; i < size; i++) a[i] = i;
+		final int [] a = new int[size];
+		for(int i = 0; i < size; i++) {
+			a[i] = i;
+		}
 		Test.checkEquality(a[0], 0, "Im an idiot");
 		copy(a, a, size-1, 0, 1);
 		Test.checkEquality(a[0], 0, "Im still an idiot");

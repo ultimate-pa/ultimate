@@ -36,8 +36,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IteratorConcatenation;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
@@ -73,13 +73,13 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	private List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
 	private NestedLassoRun<LETTER, STATE> mNestedLassoRun;
-	private SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> mSccComputation;
+	private final SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> mSccComputation;
 	
 	private int mAcceptingBalls = 0;
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private StronglyConnectedComponentWithAcceptanceInformation_Factory mScComponentFactory;
-	private InSumCaSuccessorProvider mNWARSSuccessorProvider;
+	private final StronglyConnectedComponentWithAcceptanceInformation_Factory mScComponentFactory;
+	private final InSumCaSuccessorProvider mNWARSSuccessorProvider;
 	Set<StateContainer<LETTER, STATE>> getStatesOfAllSCCs() {
 		return mAllStatesOfSccsWithoutCallAndReturn;
 	}
@@ -104,9 +104,9 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		this.nestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
 		mScComponentFactory = new StronglyConnectedComponentWithAcceptanceInformation_Factory(this.nestedWordAutomatonReachableStates);
 		mNWARSSuccessorProvider = new InSumCaSuccessorProvider(nestedWordAutomatonReachableStates, allStates);
-		Set<StateContainer<LETTER, STATE>> startNodes = new HashSet<StateContainer<LETTER, STATE>>();
-		for (STATE state : startStates) {
-			StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
+		final Set<StateContainer<LETTER, STATE>> startNodes = new HashSet<StateContainer<LETTER, STATE>>();
+		for (final STATE state : startStates) {
+			final StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
 			startNodes.add(sc);
 		}
 		mSccComputation = new SccComputationNonRecursive<>(mLogger, mNWARSSuccessorProvider, mScComponentFactory, allStates.size(), startNodes);
@@ -115,7 +115,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 
 		
-		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : mSccComputation.getBalls()) {
+		for (final StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : mSccComputation.getBalls()) {
 			if (scc.isAccepting()) {
 				mAllStatesOfSccsWithoutCallAndReturn.addAll(scc.getNodes());
 				mAcceptingBalls++;
@@ -134,34 +134,34 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		if (onePerScc) {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
-		List<NestedLassoRun<LETTER, STATE>> nestedLassoRuns = new ArrayList<NestedLassoRun<LETTER, STATE>>();
-		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
+		final List<NestedLassoRun<LETTER, STATE>> nestedLassoRuns = new ArrayList<NestedLassoRun<LETTER, STATE>>();
+		for (final StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
 			if (scc.isAccepting()) {
-				for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
-					NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(mServices, 
+				for (final StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
+					final NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(mServices, 
 							nestedWordAutomatonReachableStates, fin, scc)).getNestedLassoRun();
 					if (mUseAlternativeLassoConstruction) {
-						int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
-						NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
+						final int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
+						final NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
 								mServices, nestedWordAutomatonReachableStates, fin)).getNestedLassoRun();
-						int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
-						NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor<LETTER, STATE>(mServices, 
+						final int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
+						final NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor<LETTER, STATE>(mServices, 
 								nestedWordAutomatonReachableStates, fin, scc, mAcceptingSummaries))
 								.getNestedLassoRun();
-						int nlr3Size = nlr3.getStem().getLength() + nlr3.getLoop().getLength();
+						final int nlr3Size = nlr3.getStem().getLength() + nlr3.getLoop().getLength();
 					}
 					nestedLassoRuns.add(nlr2);
 				}
-				for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSummariesOfSCC().getDomain()) {
-					Set<Summary<LETTER, STATE>> summaries = scc.getAcceptingSummariesOfSCC().getImage(sumPred);
-					for (Summary<LETTER, STATE> summary : summaries) {
-						NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(mServices, 
+				for (final StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSummariesOfSCC().getDomain()) {
+					final Set<Summary<LETTER, STATE>> summaries = scc.getAcceptingSummariesOfSCC().getImage(sumPred);
+					for (final Summary<LETTER, STATE> summary : summaries) {
+						final NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(mServices, 
 								nestedWordAutomatonReachableStates, summary, scc)).getNestedLassoRun();
 						if (mUseAlternativeLassoConstruction) {
-							NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
+							final NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
 									mServices, nestedWordAutomatonReachableStates, sumPred)).getNestedLassoRun();
-							int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
-							int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
+							final int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
+							final int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
 						}
 						nestedLassoRuns.add(nlr2);
 					}
@@ -175,9 +175,9 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		StateContainer<LETTER, STATE> lowestSerialNumber = null;
 		StateContainer<LETTER, STATE> newlowestSerialNumber = null;
 		StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> sccOfLowest = null;
-		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
+		for (final StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
 			if (scc.isAccepting()) {
-				StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
+				final StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
 				newlowestSerialNumber = StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
 				if (newlowestSerialNumber != lowestSerialNumber) {
 					lowestSerialNumber = newlowestSerialNumber;
@@ -185,27 +185,27 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 				}
 			}
 		}
-		NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<LETTER, STATE>(mServices, 
+		final NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<LETTER, STATE>(mServices, 
 				nestedWordAutomatonReachableStates, lowestSerialNumber, sccOfLowest)).getNestedLassoRun();
 		mLogger.debug("Method4: stem" + method4.getStem().getLength() + " loop" + method4.getLoop().getLength());
 		if (mUseAlternativeLassoConstruction) {
-			NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor<LETTER, STATE>(mServices, 
+			final NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor<LETTER, STATE>(mServices, 
 					nestedWordAutomatonReachableStates, sccOfLowest.getStateWithLowestSerialNumber(),
 					sccOfLowest, mAcceptingSummaries)).getNestedLassoRun();
 			mLogger.debug("Method0: stem" + method0.getStem().getLength() + " loop"
 					+ method0.getLoop().getLength());
-			NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<LETTER, STATE>(mServices, 
+			final NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<LETTER, STATE>(mServices, 
 					nestedWordAutomatonReachableStates, lowestSerialNumber, sccOfLowest, mAcceptingSummaries))
 					.getNestedLassoRun();
 			mLogger.debug("Method1: stem" + method1.getStem().getLength() + " loop"
 					+ method1.getLoop().getLength());
-			NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor<LETTER, STATE>(
+			final NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor<LETTER, STATE>(
 					mServices, nestedWordAutomatonReachableStates, lowestSerialNumber)).getNestedLassoRun();
 			mLogger.debug("Method2: stem" + method2.getStem().getLength() + " loop"
 					+ method2.getLoop().getLength());
-			int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
-			int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
-			int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
+			final int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
+			final int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
+			final int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
 			mLogger.debug("Method0size" + method0size + " Method1size" + method1size + " Method2size"
 					+ method2size);
 		}
@@ -292,15 +292,16 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			}
 		}
 
+		@Override
 		public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
 			if (mRootNode != null) {
 				throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 			}
-			this.mRootNode = rootNode;
+			mRootNode = rootNode;
 			// TODO: Optimization: compute this only if there is no
 			// accepting state in SCC
-			for (StateContainer<LETTER, STATE> pred : mHasOutgoingAcceptingSum) {
-				for (Summary<LETTER, STATE> summary : nestedWordAutomatonReachableStates.getAcceptingSummariesComputation().getAcceptingSummaries().getImage(pred)) {
+			for (final StateContainer<LETTER, STATE> pred : mHasOutgoingAcceptingSum) {
+				for (final Summary<LETTER, STATE> summary : nestedWordAutomatonReachableStates.getAcceptingSummariesComputation().getAcceptingSummaries().getImage(pred)) {
 					if (mNodes.contains(summary.getSucc())) {
 						mAcceptingWithLowestSerialNumber = StateContainer.returnLower(
 								mAcceptingWithLowestSerialNumber, pred);
@@ -345,8 +346,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		 * project.
 		 */
 		public Set<STATE> getAllStates() {
-			Set<STATE> result = new HashSet<>();
-			for (StateContainer<LETTER, STATE> sc : mNodes) {
+			final Set<STATE> result = new HashSet<>();
+			for (final StateContainer<LETTER, STATE> sc : mNodes) {
 				result.add(sc.getState());
 			}
 			return result;
@@ -428,21 +429,21 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		@Override
 		public Iterator<StateContainer<LETTER, STATE>> getSuccessors(final StateContainer<LETTER, STATE> sc) {
 
-			Iterator<StateContainer<LETTER,STATE>> internalTransitionsIterator = 
+			final Iterator<StateContainer<LETTER,STATE>> internalTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
 							sc.internalSuccessors(), mTransitionFilter.getInternalSuccessorPredicate()).iterator());
 
-			Iterator<StateContainer<LETTER,STATE>> returnSummaryTransitionsIterator = 
+			final Iterator<StateContainer<LETTER,STATE>> returnSummaryTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
 							mNestedWordAutomatonReachableStates.returnSummarySuccessor(sc.getState()), mTransitionFilter.getReturnSummaryPredicate()).iterator());
 
 
-			Iterator<StateContainer<LETTER,STATE>> callTransitionsIterator = 
+			final Iterator<StateContainer<LETTER,STATE>> callTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
 							sc.callSuccessors(), mTransitionFilter.getCallSuccessorPredicate()).iterator());
 
 
-			Iterator<StateContainer<LETTER,STATE>>[] iterators = (Iterator<StateContainer<LETTER, STATE>>[]) 
+			final Iterator<StateContainer<LETTER,STATE>>[] iterators = (Iterator<StateContainer<LETTER, STATE>>[]) 
 					new Iterator<?>[] { internalTransitionsIterator, returnSummaryTransitionsIterator, callTransitionsIterator };
 			return new IteratorConcatenation<StateContainer<LETTER,STATE>>(Arrays.asList(iterators));
 		}

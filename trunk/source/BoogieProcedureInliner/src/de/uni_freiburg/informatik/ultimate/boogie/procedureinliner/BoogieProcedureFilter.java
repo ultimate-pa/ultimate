@@ -27,12 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -51,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class BoogieProcedureFilter {
 
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	/** All Procedures with a (possibly empty) specification. Their identifiers are used as keys. */
 	private Map<String, Procedure> mDeclarations;
@@ -95,7 +99,7 @@ public class BoogieProcedureFilter {
 		mDeclarations = new HashMap<String, Procedure>();
 		mImplementations = new HashMap<String, Procedure>();
 		mNonProcedureDeclarations = new HashSet<Declaration>();
-		for (Declaration decl : astUnit.getDeclarations()) {
+		for (final Declaration decl : astUnit.getDeclarations()) {
 			if (decl instanceof Procedure) {
 				filterProcedure((Procedure) decl);
 			} else {
@@ -147,8 +151,8 @@ public class BoogieProcedureFilter {
 	 * @param proc Procedure to be filtered.
 	 */
 	private void filterProcedure(Procedure proc) {
-		Specification[] specs = proc.getSpecification();
-		Body body = proc.getBody();
+		final Specification[] specs = proc.getSpecification();
+		final Body body = proc.getBody();
 		if (specs != null) {
 			addDeclaration(proc);
 		}
@@ -159,7 +163,7 @@ public class BoogieProcedureFilter {
 
 	private void addDeclaration(Procedure declaration) {
 		assert declaration.getSpecification() != null;
-		Procedure oldEntry = mDeclarations.put(declaration.getIdentifier(), declaration);
+		final Procedure oldEntry = mDeclarations.put(declaration.getIdentifier(), declaration);
 		if (oldEntry != null) {
 			multiDeclarationsError(declaration);
 		}
@@ -167,7 +171,7 @@ public class BoogieProcedureFilter {
 	
 	private void addImplementation(Procedure implementation) {
 		assert implementation.getBody() != null;
-		Procedure oldEntry = mImplementations.put(implementation.getIdentifier(), implementation);
+		final Procedure oldEntry = mImplementations.put(implementation.getIdentifier(), implementation);
 		if (oldEntry != null) {
 			multiImplementationsError(implementation);
 		}
@@ -181,26 +185,26 @@ public class BoogieProcedureFilter {
 	}
 	
 	private void checkForMissingDeclarations() {
-		for (String procId : mImplementations.keySet()) {
+		for (final String procId : mImplementations.keySet()) {
 			if (!mDeclarations.containsKey(procId)) {
-				Procedure implMissingDecl = mImplementations.get(procId);
+				final Procedure implMissingDecl = mImplementations.get(procId);
 				missingDeclarationError(implMissingDecl);
 			}
 		}
 	}
 
 	private void multiDeclarationsError(Procedure procDecl) {
-		String description = "Procedure was already declared: " + procDecl.getIdentifier();
+		final String description = "Procedure was already declared: " + procDecl.getIdentifier();
 		syntaxError(procDecl.getLocation(), description);
 	}
 	
 	private void multiImplementationsError(Procedure procImpl) {
-		String description = "Multiple procedure implementations aren't supported: " + procImpl.getIdentifier();
+		final String description = "Multiple procedure implementations aren't supported: " + procImpl.getIdentifier();
 		unsupportedSyntaxError(procImpl.getLocation(), description);
 	}
 
 	private void missingDeclarationError(Procedure implementation) {
-		String description = "Missing declaration for procedure implementation: " + implementation.getIdentifier();
+		final String description = "Missing declaration for procedure implementation: " + implementation.getIdentifier();
 		syntaxError(implementation.getLocation(), description);
 	}
 	
@@ -220,7 +224,7 @@ public class BoogieProcedureFilter {
 	 * @param error Error result.
 	 */
 	private void errorAndAbort(ILocation location, String description, IResult error) {
-		String pluginId = Activator.PLUGIN_ID;
+		final String pluginId = Activator.PLUGIN_ID;
 		mServices.getLoggingService().getLogger(pluginId).error(location + ": " + description);
 		mServices.getResultService().reportResult(pluginId, error);
 		mServices.getProgressMonitorService().cancelToolchain();

@@ -111,28 +111,28 @@ public class InferredType implements IType {
      */
     public InferredType(ASTType at) {
         if (isPointerType(at)) {
-            this.type = Type.Pointer;
+            type = Type.Pointer;
         } else if (at instanceof ArrayType) {
-            InferredType it = new InferredType(((ArrayType) at).getValueType());
-            this.type = it.getType();
+            final InferredType it = new InferredType(((ArrayType) at).getValueType());
+            type = it.getType();
         } else if (at instanceof StructType) {
-            this.type = Type.Struct;
+            type = Type.Struct;
         } else { // Primitive Type
             if (at == null) {
-                this.type = Type.Unknown;
+                type = Type.Unknown;
             } else {
                 String s = at.toString();
                 s = s.replaceFirst(at.getClass().getSimpleName(), SFO.EMPTY);
                 s = s.replace("[", SFO.EMPTY);
                 s = s.replace("]", SFO.EMPTY);
                 if (s.equals(SFO.BOOL)) {
-                    this.type = Type.Boolean;
+                    type = Type.Boolean;
                 } else if (s.equals(SFO.INT)) {
-                    this.type = Type.Integer;
+                    type = Type.Integer;
                 } else if (s.equals(SFO.REAL)) {
-                    this.type = Type.Real;
+                    type = Type.Real;
                 } else {
-                    this.type = Type.Unknown;
+                    type = Type.Unknown;
                 }
             }
         }
@@ -223,15 +223,19 @@ public class InferredType implements IType {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		InferredType other = (InferredType) obj;
-		if (type != other.type)
+		}
+		final InferredType other = (InferredType) obj;
+		if (type != other.type) {
 			return false;
+		}
 		return true;
 	}
     

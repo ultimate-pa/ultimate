@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
 /**
@@ -64,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferenc
 public class CDTController implements IController<ToolchainListType> {
 
 	private ILogger mLogger;
-	private UltimateCChecker mChecker;
+	private final UltimateCChecker mChecker;
 
 	private ICore<ToolchainListType> mCore;
 	private UltimateThread mUltimateThread;
@@ -82,10 +81,10 @@ public class CDTController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
+	public int init(ICore<ToolchainListType> core) {
 		// we use init() only to create the preference pages and safe a core
 		// reference
-		mLogger = loggingService.getControllerLogger();
+		mLogger = core.getCoreLoggingService().getControllerLogger();
 		new UltimatePreferencePageFactory(core).createPreferencePages();
 		mCore = core;
 		// now we wait for the exit command
@@ -115,7 +114,7 @@ public class CDTController implements IController<ToolchainListType> {
 			mUltimateReady.acquireUninterruptibly();
 		} else if (!mUltimateThread.isRunning()) {
 			// can only happen if there was an exception
-			Exception ex = mUltimateThread.getInnerException();
+			final Exception ex = mUltimateThread.getInnerException();
 			complete();
 			close();
 			throw ex;
@@ -138,8 +137,8 @@ public class CDTController implements IController<ToolchainListType> {
 
 	@Override
 	public List<String> selectModel(List<String> modelNames) {
-		ArrayList<String> returnList = new ArrayList<String>();
-		for (String model : modelNames) {
+		final ArrayList<String> returnList = new ArrayList<String>();
+		for (final String model : modelNames) {
 			if (model
 					.contains(de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator.PLUGIN_ID)) {
 				returnList.add(model);
@@ -200,17 +199,17 @@ public class CDTController implements IController<ToolchainListType> {
 		}
 
 		public void startUltimate() {
-			Thread t = new Thread(new Runnable() {
+			final Thread t = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					mIsRunning = true;
 					// initialize ultimate core in its own thread, which then
 					// delegates control to init and should stay there until
 					// close() is called
-					UltimateCore core = new UltimateCore();
+					final UltimateCore core = new UltimateCore();
 					try {
-						core.start(mController, true);
-					} catch (Exception e) {
+						core.startManually(mController);
+					} catch (final Exception e) {
 						mUltimateException = e;
 					}
 					mIsRunning = false;

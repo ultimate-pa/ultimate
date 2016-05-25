@@ -63,11 +63,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		// so we have the two edges
 		// e1 = (q1,st1,q2)
 		// e2 = (q2,st2,q3)
-		RCFGEdge predEdge = target.getIncomingEdges().get(0);
-		RCFGEdge succEdge = target.getOutgoingEdges().get(0);
+		final RCFGEdge predEdge = target.getIncomingEdges().get(0);
+		final RCFGEdge succEdge = target.getOutgoingEdges().get(0);
 
-		ProgramPoint pred = (ProgramPoint) predEdge.getSource();
-		ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
+		final ProgramPoint pred = (ProgramPoint) predEdge.getSource();
+		final ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return

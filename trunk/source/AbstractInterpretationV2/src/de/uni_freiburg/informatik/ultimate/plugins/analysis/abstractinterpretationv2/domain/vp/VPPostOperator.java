@@ -82,7 +82,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPDomainState, Code
 		// assert !oldstate.isBottom();
 		assert transition != null;
 
-		List<VPDomainState> currentStates = new ArrayList<>();
+		final List<VPDomainState> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		
 		transition.getTransitionFormula();

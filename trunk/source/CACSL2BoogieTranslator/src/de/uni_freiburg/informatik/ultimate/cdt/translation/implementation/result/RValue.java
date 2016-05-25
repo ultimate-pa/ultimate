@@ -68,8 +68,9 @@ public class RValue extends LRValue {
 		this.value = value;
 	}
 
+	@Override
 	public Expression getValue() {
-		return this.value;
+		return value;
 	}
 	
 	public void checkType(CType type) {

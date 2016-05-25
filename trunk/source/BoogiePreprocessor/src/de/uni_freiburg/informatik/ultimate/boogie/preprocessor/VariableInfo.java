@@ -68,6 +68,7 @@ public class VariableInfo {
 		this.declarationInformation = declarationInformation;
 	}
 	
+	@Override
 	public String toString() {
 		return name + ":" + type;
 	}

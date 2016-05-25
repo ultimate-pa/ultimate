@@ -67,7 +67,7 @@ public class ApplicationTermFinder extends NonRecursive {
 					return;
 				}
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new FindWalker(t));
 			}
 		}

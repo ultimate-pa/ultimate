@@ -91,7 +91,7 @@ public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomai
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 
-		final SignDomainState newState = (SignDomainState) first.copy();
+		final SignDomainState newState = first.copy();
 
 		final Map<String, IBoogieVar> variables = first.getVariables();
 		final Map<String, SignDomainValue> firstValues = first.getValues();

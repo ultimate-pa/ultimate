@@ -102,7 +102,7 @@ public class BoogiePrinter implements IOutput {
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new BoogiePrinterObserver(mServices.getLoggingService().getLogger(sPLUGIN_ID));
-		return Collections.singletonList((IObserver) this.mObserver);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override

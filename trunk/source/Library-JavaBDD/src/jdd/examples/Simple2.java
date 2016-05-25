@@ -1,7 +1,7 @@
 
 package jdd.examples;
 
-import jdd.bdd.*;
+import jdd.bdd.BDD;
 
 
 /**
@@ -29,13 +29,13 @@ public class Simple2 {
 
 		// 1. These parts are explained in the first example (Simple1.java), so we wont
 		// explain them again
-		BDD bdd = new BDD(1000,100);
-		int v1 = bdd.createVar();
-		int v2 = bdd.createVar();
-		int v3 = bdd.createVar();
+		final BDD bdd = new BDD(1000,100);
+		final int v1 = bdd.createVar();
+		final int v2 = bdd.createVar();
+		final int v3 = bdd.createVar();
 
-		int tmp = bdd.ref( bdd.or(v1, v2) );
-		int f = bdd.ref( bdd.or( tmp, v3) );
+		final int tmp = bdd.ref( bdd.or(v1, v2) );
+		final int f = bdd.ref( bdd.or( tmp, v3) );
 		bdd.deref( tmp);
 
 
@@ -44,7 +44,7 @@ public class Simple2 {
 		// In JDD, this term is identifies as the logical "cube" of the involved variables.
 		// in simple words, a cube is a conjunction (AND) of a list of variables.
 		// in our case, cube = v1 AND v2.
-			int cube = bdd.ref ( bdd.and(v1, v2) );
+			final int cube = bdd.ref ( bdd.and(v1, v2) );
 
 		// in the calls to the BDD functions forall() and exists(), we will send this
 		// new BDD "cube" instead of v1 and v2. Notice that a cube is nothing but a
@@ -54,7 +54,7 @@ public class Simple2 {
 
 
 		// 3. Now, we will first try the universal quantifier, forall:
-		int b = bdd.ref ( bdd.forall(f, cube) ); // Don't forget to ref()!
+		final int b = bdd.ref ( bdd.forall(f, cube) ); // Don't forget to ref()!
 
 		// This will yield the value FALSE, since in logic "(forall v1,v2) (v1 OR v2 OR v3)" equals
 		// "[v1 OR ( (v2 OR v3) AND (NOT v2 OR v3))] AND [NOT v1 OR ( (v2 OR v3) AND (NOT v2 OR v3))]"
@@ -65,7 +65,7 @@ public class Simple2 {
 		bdd.printCubes(b);
 
 		// 4. The existential quantifier work very much in the same way:
-		int a = bdd.ref ( bdd.exists(f, cube) ); // Don't forget to ref()!
+		final int a = bdd.ref ( bdd.exists(f, cube) ); // Don't forget to ref()!
 
 		// Now, this one will be equal to logical true, since no matter what value "v3"
 		// has, the "exists" some way for the function "f" to become true:

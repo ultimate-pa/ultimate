@@ -70,7 +70,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
@@ -78,7 +78,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(SizeBenchmark.class);
 
-		ColumnDefinition[] columnDef = getColumnDefinitions();
+		final ColumnDefinition[] columnDef = getColumnDefinitions();
 
 		return new ITestSummary[] { new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),

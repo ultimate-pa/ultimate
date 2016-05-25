@@ -37,7 +37,7 @@ public class SVCOMP14TestSummary extends OldTestSummary {
 
 	private int mCount;
 
-	private String mCategoryName;
+	private final String mCategoryName;
 
 	public SVCOMP14TestSummary(String categoryName, Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
@@ -56,7 +56,7 @@ public class SVCOMP14TestSummary extends OldTestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		int total = 0;
 		mCount = 0;
 
@@ -64,15 +64,15 @@ public class SVCOMP14TestSummary extends OldTestSummary {
 				.append(" #################").append("\n");
 
 		sb.append(getSummaryLog(getSummaryMap(TestResult.SUCCESS), "SUCCESSFUL TESTS"));
-		int success = mCount;
+		final int success = mCount;
 		total = total + mCount;
 		mCount = 0;
 		sb.append(getSummaryLog(getSummaryMap(TestResult.UNKNOWN), "UNKNOWN TESTS"));
-		int unknown = mCount;
+		final int unknown = mCount;
 		total = total + mCount;
 		mCount = 0;
 		sb.append(getSummaryLog(getSummaryMap(TestResult.FAIL), "FAILED TESTS"));
-		int fail = mCount;
+		final int fail = mCount;
 		total = total + mCount;
 		sb.append("\n");
 		sb.append("====== SUMMARY for ").append(mCategoryName)
@@ -85,12 +85,12 @@ public class SVCOMP14TestSummary extends OldTestSummary {
 	}
 
 	private String getSummaryLog(Map<String, Summary> map, String title) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("====== ").append(title).append(" =====").append("\n");
-		for (Entry<String, Summary> entry : map.entrySet()) {
+		for (final Entry<String, Summary> entry : map.entrySet()) {
 			sb.append("\t").append(entry.getKey()).append("\n");
 
-			for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage()
+			for (final Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage()
 					.entrySet()) {
 				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ")
 						.append(fileMsgPair.getValue()).append("\n");

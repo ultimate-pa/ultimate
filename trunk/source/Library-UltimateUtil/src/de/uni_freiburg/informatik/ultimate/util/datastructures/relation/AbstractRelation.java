@@ -85,11 +85,11 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 */
 	public boolean removePair(D domainElem, R rangeElem) {
 		final boolean result;
-		Set<R> rangeElems = mMap.get(domainElem);
+		final Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			result = false;
 		} else {
-			result = rangeElems.remove(rangeElems);
+			result = rangeElems.remove(rangeElem);
 			if (rangeElems.isEmpty()) {
 				mMap.remove(domainElem);
 			}
@@ -103,7 +103,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * necessary.
 	 */
 	public void addAll(AbstractRelation<D,R,?> rel) {
-		for (Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
+		for (final Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
 			Set<R> rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
 				rangeElems = newSet();
@@ -118,7 +118,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * relation.
 	 */
 	public boolean containsPair(D domainElem, R rangeElem) {
-		Set<R> rangeElems = mMap.get(domainElem);
+		final Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			return false;
 		} else {
@@ -139,7 +139,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * domainElem, the pair (domainElem, r) is in the relation.
 	 */
 	public Set<R> getImage(D domainElem) {
-		Set<R> set = mMap.get(domainElem);
+		final Set<R> set = mMap.get(domainElem);
 		if (set == null) {
 			return null;
 		} else {
@@ -152,7 +152,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 */
 	public int size() {
 		int result = 0;
-		for (Set<R> rangeSet : mMap.values()) {
+		for (final Set<R> rangeSet : mMap.values()) {
 			result += rangeSet.size();
 		}
 		return result;

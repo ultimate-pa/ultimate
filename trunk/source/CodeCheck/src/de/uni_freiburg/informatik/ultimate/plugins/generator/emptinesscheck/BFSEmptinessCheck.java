@@ -71,6 +71,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * @param mLogger 
 	 * @return
 	 */
+	@Override
 	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
 		openNodes = new ArrayDeque<BFSEmptinessCheck.AppDoubleDecker>();
 		visitedNodes = new HashSet<BFSEmptinessCheck.AppDoubleDecker>();
@@ -80,22 +81,23 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		summaryEdgeToReturnSucc =
 				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker>();
 
-		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
+		final EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 
 		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol, 
 				new Stack<Call>(), new Stack<AnnotatedProgramPoint>()));
 		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
 
 		while (!openNodes.isEmpty() && returnedPath == null) {
-			AppDoubleDecker currentAdd = openNodes.pollFirst();
+			final AppDoubleDecker currentAdd = openNodes.pollFirst();
 			visitedNodes.add(currentAdd);
 
-			for (AnnotatedProgramPoint app : currentAdd.top.getOutgoingNodes()) {
+			for (final AnnotatedProgramPoint app : currentAdd.top.getOutgoingNodes()) {
 //				CodeBlock edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
-				CodeBlock edge = null;
+				final CodeBlock edge = null;
 
-				if (edge instanceof Summary)//we are computing our own summaries
+				if (edge instanceof Summary) {
 					continue;
+				}
 
 				AppDoubleDecker newAdd = null;
 
@@ -104,8 +106,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					newAdd = new AppDoubleDecker(app, currentAdd.bot,
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
-					if (returnedPath == null)
+					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+					}
 
 				} else if (edge instanceof Call) {
 
@@ -115,8 +118,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					newAdd.callStack.add((Call) edge);
 					newAdd.callPredStack.add(currentAdd.bot);
 
-					if (returnedPath == null)
+					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+					}
 
 				} else if (edge instanceof Return) {
 					//only take return edges that return to the current callpredecessor
@@ -125,37 +129,41 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 ////							old: "!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))"
 //						continue;
 
-					Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
-					Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
+					final Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
+					final Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
 
-					Call poppedCall = currentCallStack.pop();
-					AnnotatedProgramPoint callPredPred = currentCpStack.pop();
+					final Call poppedCall = currentCallStack.pop();
+					final AnnotatedProgramPoint callPredPred = currentCpStack.pop();
 
-					if (!((Return) edge).getCorrespondingCall().equals(poppedCall))
+					if (!((Return) edge).getCorrespondingCall().equals(poppedCall)) {
 						continue;
+					}
 
 					newAdd = new AppDoubleDecker(app, callPredPred, currentCallStack, currentCpStack);
 
 					addSummaryEdge(currentAdd.bot, app);
-					Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd = 
+					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd = 
 							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app); //rausgezogen fuer debugging
 					summaryEdgeToReturnSucc.put(pairToAdd, newAdd);
 //					System.out.println("--------------- " + pairToAdd + " --> " + pairToAdd.hashCode());
-					if (returnedPath == null)
+					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+					}
 				}
 			}
 
 			//also unwind summaryEdges
-			HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(currentAdd.top);
+			final HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(currentAdd.top);
 			if (targets != null) {
-				for (AnnotatedProgramPoint target : targets) {
-					AppDoubleDecker	newAdd = new AppDoubleDecker(
+				for (final AnnotatedProgramPoint target : targets) {
+					final AppDoubleDecker	newAdd = new AppDoubleDecker(
 							target, currentAdd.bot, 
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
+					 {
 						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(mLogger), newAdd);//convention: AddEdges which are summaries are labeled "null"
+					}
 				}
 			}
 		}
@@ -169,8 +177,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	private void addSummaryEdge(AnnotatedProgramPoint bot,
 			AnnotatedProgramPoint app) {
 		HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(bot);
-		if (targets == null)
+		if (targets == null) {
 			targets = new HashSet<AnnotatedProgramPoint>();
+		}
 		targets.add(app);
 		summaryEdges.put(bot, targets);
 	}
@@ -180,13 +189,14 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			AppDoubleDecker currentAdd, AnnotatedProgramPoint app,
 			CodeBlock edge, AppDoubleDecker newAdd) {
 		if (!visitedNodes.contains(newAdd)){
-			AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
+			final AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
 			newAdd.inEdge = newAddEdge;
 			currentAdd.outEdges.add(newAddEdge);
 			newAdd.setPathToRoot();
 
-			if (app.isErrorLocation())
+			if (app.isErrorLocation()) {
 				return reconstructPath(newAdd);
+			}
 
 			openNodes.add(newAdd);
 		}
@@ -210,18 +220,18 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		}
 		errorPath.addFirst(currentAdd.top);
 
-		Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace = 
+		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace = 
 				expandSummaries(errorTrace, errorPath);
 
 		errorPath = newErrorPathAndTrace.getFirst();
 		errorTrace = newErrorPathAndTrace.getSecond();
 
-		CodeBlock[] errorTraceArray = new CodeBlock[errorTrace.size()];
+		final CodeBlock[] errorTraceArray = new CodeBlock[errorTrace.size()];
 		errorTrace.toArray(errorTraceArray);
-		NestedWord<CodeBlock> errorNW = new NestedWord<CodeBlock>(
+		final NestedWord<CodeBlock> errorNW = new NestedWord<CodeBlock>(
 				errorTraceArray, computeNestingRelation(errorTraceArray));
 
-		AnnotatedProgramPoint[] errorPathArray = new AnnotatedProgramPoint[errorPath.size()];
+		final AnnotatedProgramPoint[] errorPathArray = new AnnotatedProgramPoint[errorPath.size()];
 		errorPath.toArray(errorPathArray);
 
 		return new Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>>(errorPathArray, errorNW);
@@ -236,17 +246,17 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 		while (repeat) {
 			repeat = false;
-			ArrayDeque<CodeBlock> newErrorTrace = new ArrayDeque<CodeBlock>();
-			ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<AnnotatedProgramPoint>();
+			final ArrayDeque<CodeBlock> newErrorTrace = new ArrayDeque<CodeBlock>();
+			final ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<AnnotatedProgramPoint>();
 
-			Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
-			Iterator<CodeBlock> traceIt = oldErrorTrace.iterator();
+			final Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
+			final Iterator<CodeBlock> traceIt = oldErrorTrace.iterator();
 
 			AnnotatedProgramPoint nextApp = pathIt.next();			
 
 			while (traceIt.hasNext()) {
-				CodeBlock currentCodeBlock = traceIt.next();
-				AnnotatedProgramPoint previousApp = nextApp;
+				final CodeBlock currentCodeBlock = traceIt.next();
+				final AnnotatedProgramPoint previousApp = nextApp;
 
 				newErrorPath.add(previousApp);
 				newErrorTrace.add(currentCodeBlock);
@@ -258,23 +268,26 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					
 					newErrorTrace.removeLast();
 
-					Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget = 
+					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget = 
 							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(previousApp, nextApp);
 
 					AppDoubleDecker toInsertAdd = summaryEdgeToReturnSucc.get(sourceAndTarget);
 
-					LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
-					LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
+					final LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
+					final LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
 
 					while (!(toInsertAdd.inEdge.label instanceof Call)) { //is this exit condition adequate? -- mb via source and target? 
-						if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) 
+						if (toInsertAdd.inEdge.label instanceof DummyCodeBlock)
+						 {
 							repeat = true;// this happens, we have a nested summary --> we need to expand the result again 
+						}
 						traceToInsert.add(toInsertAdd.inEdge.label);
 						pathToInsert.add(toInsertAdd.inEdge.source.top);
 						toInsertAdd = toInsertAdd.inEdge.source;
 					}
-					if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) 
+					if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) {
 						repeat = true;
+					}
 					traceToInsert.add(toInsertAdd.inEdge.label);
 					
 					Collections.reverse(pathToInsert);
@@ -300,9 +313,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * return-index, non-matching-call index}
 	 */
 	private static int[] computeNestingRelation(CodeBlock[] errorPath) {
-		int [] nr = new int[errorPath.length];
-		Stack<Call> callStack = new Stack<Call>();
-		Stack<Integer> callStackIndizes = new Stack<Integer>();
+		final int [] nr = new int[errorPath.length];
+		final Stack<Call> callStack = new Stack<Call>();
+		final Stack<Integer> callStackIndizes = new Stack<Integer>();
 		for (int i = 0; i < nr.length; i++) {
 			if (errorPath[i] instanceof Call) {
 				nr[i] = -2;
@@ -313,7 +326,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					nr[i] = NestedWord.MINUS_INFINITY;
 					break;
 				}
-				Call matchingCall = callStack.pop();
+				final Call matchingCall = callStack.pop();
 				if (((Return) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
 					nr[nr[i]] = i;	
@@ -326,8 +339,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			}
 		}
 		//calls that are still on the stack are pending
-		for (Integer i : callStackIndizes)
+		for (final Integer i : callStackIndizes) {
 			nr[i] = NestedWord.PLUS_INFINITY;
+		}
 		return nr;
 	}
 
@@ -353,23 +367,27 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		//added for debugging purposes
 		void setPathToRoot() {
 			pathToRoot.addAll(inEdge.source.pathToRoot);
-			pathToRoot.add(this.top);
+			pathToRoot.add(top);
 			//			if (pathToRoot.size() > 2)
 			//				reconstructPath(this);
 		}
 
+		@Override
 		public int hashCode() {
 			return HashUtils.hashJenkins(top.hashCode(), bot.hashCode());
 		}
 
+		@Override
 		public boolean equals(Object add) {
-			if (add instanceof AppDoubleDecker) 
-				return this.top.equals(((AppDoubleDecker)add).top) && 
-						this.bot.equals(((AppDoubleDecker)add).bot);
-			else
+			if (add instanceof AppDoubleDecker) {
+				return top.equals(((AppDoubleDecker)add).top) && 
+						bot.equals(((AppDoubleDecker)add).bot);
+			} else {
 				return false;
+			}
 		}
 
+		@Override
 		public String toString() {
 			return "(" + top + "|" + bot + ")";
 		}
@@ -389,6 +407,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			this.label = label;
 		}
 
+		@Override
 		public String toString() {
 			return source + "--" + label + "-->" + target;
 		}
@@ -402,13 +421,16 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			super((IPredicate) null, (ProgramPoint) null);
 		}
 
+		@Override
 		public boolean equals(Object o) {
-			if (o instanceof EmptyStackSymbol)
+			if (o instanceof EmptyStackSymbol) {
 				return true;
-			else
+			} else {
 				return false;
+			}
 		}
 
+		@Override
 		public String toString() {
 			return "E";
 		}

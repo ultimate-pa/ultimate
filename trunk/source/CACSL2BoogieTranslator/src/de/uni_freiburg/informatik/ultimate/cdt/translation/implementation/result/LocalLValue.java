@@ -64,6 +64,7 @@ public class LocalLValue extends LRValue {
 		return lhs;
 	}
 
+	@Override
 	public Expression getValue() {
 		return CHandler.convertLHSToExpression(lhs);
 	}

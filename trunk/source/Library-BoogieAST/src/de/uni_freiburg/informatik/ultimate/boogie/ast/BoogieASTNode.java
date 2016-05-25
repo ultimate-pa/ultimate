@@ -54,8 +54,8 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	}
 
 	protected BoogieASTNode createSpecialChild(String name, Object[] childs) {
-		BoogieASTWrapper parent = new BoogieASTWrapper(null, name);
-		for (Object obj : childs) {
+		final BoogieASTWrapper parent = new BoogieASTWrapper(null, name);
+		for (final Object obj : childs) {
 			parent.getOutgoingNodes().add(createSpecialChild(obj));
 		}
 		return parent;
@@ -72,8 +72,8 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 	@Override
 	public List<IWalkable> getSuccessors() {
-		ArrayList<IWalkable> rtr = new ArrayList<>();
-		for (BoogieASTNode node : getOutgoingNodes()) {
+		final ArrayList<IWalkable> rtr = new ArrayList<>();
+		for (final BoogieASTNode node : getOutgoingNodes()) {
 			rtr.add(node);
 		}
 		return rtr;
@@ -87,7 +87,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	private class BoogieASTWrapper extends BoogieASTNode {
 
 		private static final long serialVersionUID = 1L;
-		private Object mBacking;
+		private final Object mBacking;
 
 		public BoogieASTWrapper(ILocation location, Object backing) {
 			super(location);

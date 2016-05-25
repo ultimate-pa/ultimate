@@ -1,8 +1,9 @@
 
 package jdd.examples;
 
-import jdd.bdd.*;
-import jdd.util.*;
+import jdd.bdd.BDD;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
 
 
 
@@ -25,13 +26,13 @@ public class Adder
 //	extends ProfiledBDD2
 	extends BDD
 {
-	private int N;
-	private int [] ainp;
-	private int [] binp;
-	private int [] not_ainp;
-	private int [] not_binp;
-	private int [] co;
-	private int [] xout;
+	private final int N;
+	private final int [] ainp;
+	private final int [] binp;
+	private final int [] not_ainp;
+	private final int [] not_binp;
+	private final int [] co;
+	private final int [] xout;
 
 	/** create an N-bit adder */
 
@@ -39,12 +40,12 @@ public class Adder
 		super(505 + N,2000);
 		this.N = N;
 
-		this.ainp = new int[N];
-		this.binp = new int[N];
-		this.not_ainp = new int[N];
-		this.not_binp = new int[N];
-		this.co   = new int[N];
-		this.xout = new int[N];
+		ainp = new int[N];
+		binp = new int[N];
+		not_ainp = new int[N];
+		not_binp = new int[N];
+		co   = new int[N];
+		xout = new int[N];
 
 
 		for(int n = 0; n < N; n++) {
@@ -67,13 +68,13 @@ public class Adder
 				deref(tmp1);
 
 				tmp1 = ref( and(ainp[n], binp[n]) );
-				int tmp2 = ref( and(ainp[n], co[n-1]) );
-				int tmp4 = ref( or(tmp1, tmp2) );
+				final int tmp2 = ref( and(ainp[n], co[n-1]) );
+				final int tmp4 = ref( or(tmp1, tmp2) );
 				deref(tmp1);
 				deref(tmp2);
 
 
-				int tmp3 = ref( and(binp[n], co[n-1]) );
+				final int tmp3 = ref( and(binp[n], co[n-1]) );
 				co[n] = ref( or(tmp4, tmp3) );
 				deref(tmp3);
 				deref(tmp4);
@@ -113,7 +114,7 @@ public class Adder
 			int resv = ref( and(av, bv));
 			resv = andTo(resv, xout[n]);
 
-			boolean fail = ((resv == 0 && (res &1) != 0) || (resv != 0 && (res & 1) == 0));
+			final boolean fail = ((resv == 0 && (res &1) != 0) || (resv != 0 && (res & 1) == 0));
 			deref(resv);
 
 			if(fail) {
@@ -126,16 +127,18 @@ public class Adder
 	}
 
 	public boolean  test_adder() {
-		int m = 1 << N;
+		final int m = 1 << N;
 		for(int a = 0; a < m; a++) {
 			for(int b = 0; b < m; b++) {
-				int av = setval(a, true);
-				int bv = setval(b, false);
+				final int av = setval(a, true);
+				final int bv = setval(b, false);
 
-				boolean ret = test_vector(av,bv,a,b);
+				final boolean ret = test_vector(av,bv,a,b);
 				deref(av);
 				deref(bv);
-				if(!ret) return false;
+				if(!ret) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -148,19 +151,26 @@ public class Adder
 			boolean test = false, dump = false, verbose = false;;
 			int n = -1;
 			for(int i = 0; i < args.length; i++) {
-				if(args[i].equals("-t")) test = true;
-				else if(args[i].equals("-d")) dump = true;
-				else if(args[i].equals("-v")) verbose = true;
-				else n = Integer.parseInt(args[i]);
+				if(args[i].equals("-t")) {
+					test = true;
+				} else if(args[i].equals("-d")) {
+					dump = true;
+				} else if(args[i].equals("-v")) {
+					verbose = true;
+				} else {
+					n = Integer.parseInt(args[i]);
+				}
 			}
 
 			Options.verbose = verbose;
 
 			if(n > 0) {
 				JDDConsole.out.print("" + n + "-bit adder, ");
-				long c1 = System.currentTimeMillis();
-				Adder adder = new Adder(n);
-				if(dump) adder.dump();
+				final long c1 = System.currentTimeMillis();
+				final Adder adder = new Adder(n);
+				if(dump) {
+					adder.dump();
+				}
 
 				if(test) {
 					// uncomment these lines to test the adder, beware that it is very slow...
@@ -169,10 +179,12 @@ public class Adder
 				}
 
 
-				long c2 = System.currentTimeMillis();
+				final long c2 = System.currentTimeMillis();
 				JDDConsole.out.println(" " + (c2-c1) + " [ms]");
 
-				if(verbose) adder.showStats();
+				if(verbose) {
+					adder.showStats();
+				}
 				adder.cleanup();
 
 				return;

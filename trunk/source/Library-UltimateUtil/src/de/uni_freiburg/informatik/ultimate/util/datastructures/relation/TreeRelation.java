@@ -31,8 +31,6 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.util.relation.AbstractRelation;
-
 /**
  * Implementation of the AbstractRelation that uses a TreeMap.
  * @author Matthias Heizmann

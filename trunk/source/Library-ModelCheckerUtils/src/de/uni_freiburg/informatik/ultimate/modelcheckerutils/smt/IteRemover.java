@@ -80,24 +80,24 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	private Term removeIteTerm(Term term, ApplicationTerm iteTerm) {
 		assert iteTerm.getFunction().getName().equals("ite");
 		assert iteTerm.getParameters().length == 3;
-		Term condition = iteTerm.getParameters()[0];
-		Term ifTerm = iteTerm.getParameters()[1];
-		Term elseTerm = iteTerm.getParameters()[2];
+		final Term condition = iteTerm.getParameters()[0];
+		final Term ifTerm = iteTerm.getParameters()[1];
+		final Term elseTerm = iteTerm.getParameters()[2];
 		Term replacedWithIf;
 		{
-			Map<Term, Term> substitutionMapping = 
+			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, ifTerm);
 			replacedWithIf = (new SafeSubstitutionWithLocalSimplification(
 					mScript, substitutionMapping)).transform(term);
 		}
 		Term replacedWithElse;
 		{
-			Map<Term, Term> substitutionMapping = 
+			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, elseTerm);
 			replacedWithElse = (new SafeSubstitutionWithLocalSimplification(
 					mScript, substitutionMapping)).transform(term);
 		}
-		Term withoutThisIte = Util.or(mScript, 
+		final Term withoutThisIte = Util.or(mScript, 
 				Util.and(mScript, condition, replacedWithIf), 
 				Util.and(mScript, SmtUtils.not(mScript, condition), replacedWithElse)
 				);

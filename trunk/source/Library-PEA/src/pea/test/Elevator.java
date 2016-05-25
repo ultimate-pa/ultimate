@@ -1,7 +1,18 @@
 package pea.test;
-import pea.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+
 import org.apache.log4j.PropertyConfigurator;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.CounterTrace;
+import pea.EventDecision;
+import pea.Phase;
+import pea.PhaseEventAutomata;
+import pea.RangeDecision;
+import pea.TimedAutomata;
+import pea.Trace2PEACompiler;
 
 /**
  * Class to create an automaton from a counter example trace.
@@ -46,7 +57,7 @@ public class Elevator {
     public static void main(String[] param) {
 	PropertyConfigurator.configure
 	    (ClassLoader.getSystemResource("pea/test/TestLog.config"));
-	Elevator elev = new Elevator();
+	final Elevator elev = new Elevator();
 
 	elev.buildZPart();
 	elev.buildCSPPart();
@@ -55,13 +66,13 @@ public class Elevator {
 	//elev.csppart.dump();
 	//elev.zpart.dump();
 	//elev.dcpart.dump();
-	PhaseEventAutomata all = 
+	final PhaseEventAutomata all = 
 	    elev.csppart.parallel(elev.zpart).parallel(elev.dcpart);
 
 // 	elev.csppart.parallel(elev.zpart).dump();
 	all.dump();
 
-	CDD outOfRange = RangeDecision.create("floor", RangeDecision.OP_LT, 
+	final CDD outOfRange = RangeDecision.create("floor", RangeDecision.OP_LT, 
 					      minFloor)
 	    .or(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
 
@@ -87,15 +98,15 @@ public class Elevator {
     }
     
     public void buildZPart() {
-	Phase[] phases = new Phase[(maxFloor - minFloor + 3)*2*2
+	final Phase[] phases = new Phase[(maxFloor - minFloor + 3)*2*2
 				   << (maxFloor - minFloor + 1)];
 	Phase[] initPhases;
 	int floor, rs, dir, doors;
 	int phasenr, destnr;
 	CDD inv1, inv2, inv3, inv4;
 
-	String[] noresets = new String[0];
-	CDD noevents = 
+	final String[] noresets = new String[0];
+	final CDD noevents = 
 	    EventDecision.create('/', "openDoor").
 	    and(EventDecision.create('/',"closeDoor")).
 	    and(EventDecision.create('/',"request")).
@@ -110,12 +121,13 @@ public class Elevator {
 		RangeDecision.create("reqset", RangeDecision.OP_EQ, rs);
 
 	    for (floor = minFloor-1; floor <= maxFloor+1; floor++) {
-		if (floor < minFloor)
-		    inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_LT, minFloor));
-		else if (floor > maxFloor)
-		    inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
-		else
-		    inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_EQ, floor));
+		if (floor < minFloor) {
+			inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_LT, minFloor));
+		} else if (floor > maxFloor) {
+			inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
+		} else {
+			inv2 = inv1.and(RangeDecision.create("floor", RangeDecision.OP_EQ, floor));
+		}
 
 		for (dir = 0; dir < 2; dir ++) {
 		    inv3 = inv2.and(dir == 0 ? dirdown : dirup);
@@ -154,8 +166,9 @@ public class Elevator {
 			for (int f = minFloor; f <= maxFloor; f++) {
 			    destnr = getPhaseNr
 				(rs | (1<< (f-minFloor)), floor, dir, doors);
-			    if (doors == 1 && floor == f)
-				destnr = phasenr;
+			    if (doors == 1 && floor == f) {
+					destnr = phasenr;
+				}
 			    phases[phasenr].addTransition(phases[destnr],
 							  event, noresets);
 			}
@@ -186,17 +199,18 @@ public class Elevator {
 			    and(EventDecision.create('/',"stop"));
 			
 			if ((rs & ~(1 << (floor - minFloor))) != 0) {
-			    boolean candown =
+			    final boolean candown =
 				(rs & ((1 << (floor - minFloor)) - 1)) != 0;
-			    boolean canup =
+			    final boolean canup =
 				(rs & ~((1 << (floor+1 - minFloor)) - 1)) != 0;
 			    int newdir;
-			    if (dir == 0 && candown)
-				newdir = 0;
-			    else if (dir == 1 && canup)
-				newdir = 1;
-			    else
-				newdir = 1 - dir;
+			    if (dir == 0 && candown) {
+					newdir = 0;
+				} else if (dir == 1 && canup) {
+					newdir = 1;
+				} else {
+					newdir = 1 - dir;
+				}
 
 			    destnr = getPhaseNr(rs, floor, newdir, 0);
 			    phases[phasenr].addTransition(phases[destnr],
@@ -213,14 +227,16 @@ public class Elevator {
 			    and(EventDecision.create('/',"stop"));
 			
 			destnr = getPhaseNr(rs, floor + 1, dir, 1);
-			if (floor > maxFloor)
-			    destnr = phasenr;
+			if (floor > maxFloor) {
+				destnr = phasenr;
+			}
 			phases[phasenr].addTransition(phases[destnr],
 						      event, noresets);
 
-			if (floor < minFloor) 
-			    phases[phasenr].addTransition(phases[phasenr],
+			if (floor < minFloor) {
+				phases[phasenr].addTransition(phases[phasenr],
 							  event, noresets);
+			}
 
 			event = 
 			    EventDecision.create('/', "openDoor").
@@ -243,9 +259,10 @@ public class Elevator {
 			    and(EventDecision.create("up")).
 			    and(EventDecision.create('/',"down")).
 			    and(EventDecision.create('/',"stop"));
-			if (dir == 1)
-			    phases[phasenr].addTransition(phases[phasenr],
+			if (dir == 1) {
+				phases[phasenr].addTransition(phases[phasenr],
 							  event, noresets);
+			}
 
 			event = 
 			    (EventDecision.create('/', "openDoor").
@@ -256,9 +273,10 @@ public class Elevator {
 			     and(EventDecision.create('/',"up")).
 			     and(EventDecision.create("down")).
 			     and(EventDecision.create('/',"stop")));
-			if (dir == 0)
-			    phases[phasenr].addTransition(phases[phasenr],
+			if (dir == 0) {
+				phases[phasenr].addTransition(phases[phasenr],
 							  event, noresets);
+			}
 
 			event =
 			    (EventDecision.create('/', "openDoor").
@@ -269,9 +287,10 @@ public class Elevator {
 			     and(EventDecision.create('/',"up")).
 			     and(EventDecision.create('/',"down")).
 			     and(EventDecision.create("stop")));
-			if ((rs & (1 << (floor - minFloor))) != 0)
-			    phases[phasenr].addTransition(phases[phasenr],
+			if ((rs & (1 << (floor - minFloor))) != 0) {
+				phases[phasenr].addTransition(phases[phasenr],
 							  event, noresets);
+			}
 			
 		    }
 		}
@@ -282,8 +301,8 @@ public class Elevator {
     }
 
     public void buildCSPPart() {
-	String[] noresets = new String[0];
-	Phase[] p = new Phase[] { 
+	final String[] noresets = new String[0];
+	final Phase[] p = new Phase[] { 
 	    new Phase("c0", CDD.TRUE, CDD.TRUE),
 	    new Phase("c1", CDD.TRUE, CDD.TRUE),
 	    new Phase("c2", CDD.TRUE, CDD.TRUE),
@@ -361,7 +380,7 @@ public class Elevator {
     }
 
     public void buildDCPart() {
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
+	final Trace2PEACompiler compiler = new Trace2PEACompiler();
 	PhaseEventAutomata dc1, dc2, dc3, dc4, dc5, dc6;
 	dc1 = compiler.compile("DC1", 
 			     new CounterTrace(new CounterTrace.DCPhase[] {

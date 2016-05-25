@@ -48,7 +48,7 @@ public class ArrayEquality {
 		if (!(term instanceof ApplicationTerm)) {
 			throw new ArrayEqualityException("no ApplicationTerm");
 		}
-		ApplicationTerm eqAppTerm = (ApplicationTerm) term;
+		final ApplicationTerm eqAppTerm = (ApplicationTerm) term;
 		if (!eqAppTerm.getFunction().getName().equals("=")) {
 			throw new ArrayEqualityException("no equality");
 		}
@@ -56,8 +56,8 @@ public class ArrayEquality {
 			throw new ArrayEqualityException("no binary equality");
 		}
 		mOriginalTerm = term;
-		Term lhsTerm = eqAppTerm.getParameters()[0];
-		Term rhsTerm = eqAppTerm.getParameters()[1];
+		final Term lhsTerm = eqAppTerm.getParameters()[0];
+		final Term rhsTerm = eqAppTerm.getParameters()[1];
 		if (!(lhsTerm.getSort().isArraySort())) {
 			throw new ArrayEqualityException("no array");
 		}
@@ -110,11 +110,11 @@ public class ArrayEquality {
 		private final List<Term> remainingTerms = new ArrayList<Term>();
 
 		public ArrayEqualityExtractor(Term[] terms) {
-			for (Term term : terms) {
+			for (final Term term : terms) {
 				ArrayEquality au;
 				try {
 					au = new ArrayEquality(term);
-				} catch (ArrayEqualityException e) {
+				} catch (final ArrayEqualityException e) {
 					au = null;
 				}
 				if (au == null) {

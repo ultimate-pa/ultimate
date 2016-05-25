@@ -77,7 +77,7 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 
 	@Override
 	public E next() {
-		E result = mNext;
+		final E result = mNext;
 		mNext = getNext();
 		return result;
 	}

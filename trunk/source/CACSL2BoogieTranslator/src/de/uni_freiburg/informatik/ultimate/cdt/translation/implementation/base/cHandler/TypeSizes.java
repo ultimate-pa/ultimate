@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.SIGNEDNESS;
 
@@ -74,7 +74,7 @@ public class TypeSizes {
 			new LinkedHashMap<>();
 	
 
-	public TypeSizes(RcpPreferenceProvider ups) {
+	public TypeSizes(IPreferenceProvider ups) {
 		mUseFixedTypeSizes = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		sizeOfVoidType = 1;
@@ -98,7 +98,7 @@ public class TypeSizes {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		sizeOfPointerType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		SIGNEDNESS signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.class);
+		final SIGNEDNESS signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.class);
 		if (signednessOfChar == SIGNEDNESS.UNSIGNED) {
 			throw new UnsupportedOperationException("char == uchar is not supported yet");
 		}
@@ -140,7 +140,7 @@ public class TypeSizes {
 	
 	
 	public Integer getSize(PRIMITIVE cPrimitive) {
-		Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
+		final Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
 		if (result == null) {
 			throw new IllegalArgumentException("unknown type " + cPrimitive);
 		} else {
@@ -161,7 +161,7 @@ public class TypeSizes {
 	}
 	
 	public BigInteger getMaxValueOfPrimitiveType(CPrimitive cPrimitive) {
-		int byteSize = getSize(cPrimitive.getType());
+		final int byteSize = getSize(cPrimitive.getType());
 		BigInteger maxValue;
 		if (cPrimitive.isUnsigned()) {
 			maxValue = new BigInteger("2").pow(byteSize * 8);
@@ -173,7 +173,7 @@ public class TypeSizes {
 	}
 	
 	public BigInteger getMinValueOfPrimitiveType(CPrimitive cPrimitive) {
-		int byteSize = getSize(cPrimitive.getType());
+		final int byteSize = getSize(cPrimitive.getType());
 		BigInteger minValue;
 		if (cPrimitive.isUnsigned()) {
 			minValue = BigInteger.ZERO;
@@ -184,7 +184,7 @@ public class TypeSizes {
 	}
 	
 	public BigInteger getMaxValueOfPointer() {
-		int byteSize = sizeOfPointerType;
+		final int byteSize = sizeOfPointerType;
 		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
 		maxValue = maxValue.subtract(BigInteger.ONE);
 		return maxValue;

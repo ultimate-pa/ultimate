@@ -42,9 +42,9 @@ public class ReqCheck extends Check {
 
 	public ReqCheck(ReqSpec type, int[] reqNrs, Translator trans) {
 		super(Check.Spec.UNKNOWN);
-		this.mType = type;
-		this.mReqNrs = reqNrs;
-		this.mTranslator = trans;
+		mType = type;
+		mReqNrs = reqNrs;
+		mTranslator = trans;
 	}
 
 	public int getStartLine() {
@@ -55,6 +55,7 @@ public class ReqCheck extends Check {
 		return mReqNrs[mReqNrs.length - 1] + 1;
 	}
 
+	@Override
 	public String getPositiveMessage() {
 		switch (mType) {
 		case RTINCONSISTENT:
@@ -70,15 +71,17 @@ public class ReqCheck extends Check {
 		}
 	}
 
+	@Override
 	public String getNegativeMessage() {
 		switch (mType) {
 		case RTINCONSISTENT:
 			assert (mType == ReqSpec.RTINCONSISTENT);
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("Requirement");
-			if (mReqNrs.length != 1)
+			if (mReqNrs.length != 1) {
 				sb.append("s");
-			for (int nr : mReqNrs) {
+			}
+			for (final int nr : mReqNrs) {
 				sb.append(" ").append(mTranslator.getRequirement(nr));
 			}
 			sb.append(" are rt-inconsistent");

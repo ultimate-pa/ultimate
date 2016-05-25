@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
  */
 public class LoadSettingsAction extends Action implements IWorkbenchAction {
 
-	private ICore<?> mCore;
-	private IWorkbenchWindow mWindow;
+	private final ICore<?> mCore;
+	private final IWorkbenchWindow mWindow;
 
 	public LoadSettingsAction(final IWorkbenchWindow window, final ICore<?> icore) {
 		setId(getClass().getName());
@@ -56,7 +56,7 @@ public class LoadSettingsAction extends Action implements IWorkbenchAction {
 
 	@Override
 	public void run() {
-		FileDialog fd = new FileDialog(mWindow.getShell(), SWT.OPEN);
+		final FileDialog fd = new FileDialog(mWindow.getShell(), SWT.OPEN);
 		fd.setFilterExtensions(new String[] { "*.epf", "*.*" });
 		fd.setFilterNames(new String[] { "Eclipse preference file (*.epf)", "All (*.*)" });
 		fd.setText("Load settings from...");

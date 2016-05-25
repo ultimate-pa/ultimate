@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinte
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  */
 public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
 	IElement mGraphrootOfUltimateModelOfLastPrintedAutomaton;
 
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	public AutomataScriptInterpreterObserver(IUltimateServiceProvider services) {
 		assert services != null;
@@ -63,7 +63,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		
 		AssignableTest.initPrimitiveTypes();
-		TestFileInterpreter ti = new TestFileInterpreter(mServices);
+		final TestFileInterpreter ti = new TestFileInterpreter(mServices);
 		ti.interpretTestFile((AtsASTNode) root);
 
 		IAutomaton<?, ?> printAutomaton = ti.getLastPrintedAutomaton();
@@ -72,7 +72,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 		}
 		try {
 			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices), printAutomaton);
-		} catch (AutomataOperationCanceledException e) {
+		} catch (final AutomataOperationCanceledException e) {
 			mLogger.warn("Nothing visualized because of timeout");
 		}
 		return false;
@@ -101,7 +101,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	}
 
 	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
-		NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
+		final NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
 				new AutomataLibraryServices(mServices), new HashSet<String>(0), null, null, new StringFactory());
 		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
 				+ " for visualization");

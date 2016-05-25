@@ -51,6 +51,7 @@ public class BidiMap<E> {
 			return mVal;
 		}
 		
+		@Override
 		public String toString() {
 			return "[" + mIdx + "," + mVal + "]";
 		}
@@ -130,12 +131,13 @@ public class BidiMap<E> {
 	 * @throws NullPointerException If <code>val</code> is <code>null</code>.
 	 */
 	public boolean add(int idx, E val) {
-		int hash = hash(val);
-		Entry<E> newEntry = new Entry<E>(idx, val, hash);
+		final int hash = hash(val);
+		final Entry<E> newEntry = new Entry<E>(idx, val, hash);
 		if (canInsert(newEntry)) {
 			mLastEntry = null;
-			if (++mSize >= mThreshold)
+			if (++mSize >= mThreshold) {
 				grow();
+			}
 			insertInt(newEntry);
 			insertVal(newEntry);
 			return true;
@@ -147,24 +149,25 @@ public class BidiMap<E> {
 	@SuppressWarnings("unchecked")
 	private void grow() {
 		int newCapacity = mIntTable.length << 1;
-		if (newCapacity > MAXIMUM_CAPACITY)
+		if (newCapacity > MAXIMUM_CAPACITY) {
 			newCapacity = MAXIMUM_CAPACITY;
+		}
 		mThreshold = (int) (newCapacity * mLoadFactor);
 		// Rehashing
-		Entry<E>[] oldIntTable = mIntTable;
-		Entry<E>[] oldValTable = mValTable;
+		final Entry<E>[] oldIntTable = mIntTable;
+		final Entry<E>[] oldValTable = mValTable;
 		mIntTable = new Entry[newCapacity];
 		mValTable = new Entry[newCapacity];
 		for (int i = 0; i < oldIntTable.length; ++i) {
 			for (Entry<E> bucket = oldIntTable[i]; bucket != null; ) {
-				Entry<E> reinsert = bucket;
+				final Entry<E> reinsert = bucket;
 				bucket = bucket.mNextIdx;
 				insertInt(reinsert);
 			}
 		}
 		for (int i = 0; i < oldValTable.length; ++i) {
 			for (Entry<E> bucket = oldValTable[i]; bucket != null; ) {
-				Entry<E> reinsert = bucket;
+				final Entry<E> reinsert = bucket;
 				bucket = bucket.mNextVal;
 				insertVal(reinsert);
 			}
@@ -172,23 +175,25 @@ public class BidiMap<E> {
 	}
 	
 	private Entry<E> getEntryByIdx(int idx) {
-		int b = intBucketIdx(idx);
+		final int b = intBucketIdx(idx);
 		for (Entry<E> bucket = mIntTable[b]; bucket != null;
 				bucket = bucket.mNextIdx) {
-			if (bucket.mIdx == idx)
+			if (bucket.mIdx == idx) {
 				return mLastEntry = bucket;
+			}
 		}
 		return null;
 	}
 	
 	private Entry<E> getEntryByVal(E val) {
-		int hash = hash(val);
-		int b = valBucketIdx(hash);
+		final int hash = hash(val);
+		final int b = valBucketIdx(hash);
 		for (Entry<E> bucket = mValTable[b]; bucket != null;
 				bucket = bucket.mNextVal) {
 			// Compare on full hash to reduce equals comparisons
-			if (bucket.mHash == hash && bucket.mVal.equals(val))
+			if (bucket.mHash == hash && bucket.mVal.equals(val)) {
 				return mLastEntry = bucket;
+			}
 		}
 		return null;
 	}
@@ -199,33 +204,36 @@ public class BidiMap<E> {
 	}
 	
 	private void insertInt(Entry<E> newEntry) {
-		int idx = intBucketIdx(newEntry.mIdx);
+		final int idx = intBucketIdx(newEntry.mIdx);
 		newEntry.mNextIdx = mIntTable[idx];
 		mIntTable[idx] = newEntry;
 	}
 	
 	private void insertVal(Entry<E> newEntry) {
-		int idx = valBucketIdx(newEntry.mHash);
+		final int idx = valBucketIdx(newEntry.mHash);
 		newEntry.mNextVal = mValTable[idx];
 		mValTable[idx] = newEntry;
 	}
 	
 	public E get(int idx) {
-		if (mLastEntry != null && mLastEntry.mIdx == idx)
+		if (mLastEntry != null && mLastEntry.mIdx == idx) {
 			return mLastEntry.getValue();
-		Entry<E> bucket = getEntryByIdx(idx);
+		}
+		final Entry<E> bucket = getEntryByIdx(idx);
 		return bucket == null ? null : bucket.getValue();
 	}
 	
 	public int get(E val) {
 		if (mLastEntry != null) {
-			int hash = hash(val);
-			if (mLastEntry.mHash == hash && mLastEntry.mVal.equals(val))
+			final int hash = hash(val);
+			if (mLastEntry.mHash == hash && mLastEntry.mVal.equals(val)) {
 				return mLastEntry.getIdx();
+			}
 		}
-		Entry<E> bucket = getEntryByVal(val);
-		if (bucket == null)
+		final Entry<E> bucket = getEntryByVal(val);
+		if (bucket == null) {
 			throw new NoSuchElementException();
+		}
 		return bucket.getIdx();
 	}
 	
@@ -237,10 +245,11 @@ public class BidiMap<E> {
 		return getEntryByVal(val) != null;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append('{');
-		for (Entry<E> outer : mIntTable) {
+		for (final Entry<E> outer : mIntTable) {
 			for (Entry<E> bucket = outer; bucket != null;
 					bucket = bucket.mNextIdx) {
 				sb.append(bucket);

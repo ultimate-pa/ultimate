@@ -30,9 +30,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -109,7 +109,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			// correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput)
 			// == null);
 			assert correct;
-			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = 
+			final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = 
 					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
 					mServices, (INestedWordAutomatonOldApi) mInput, false, false, false,
 					false)).getResult();
@@ -119,34 +119,34 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			correct &=
 			ResultChecker.isSubset(mResult.getStates(),reachalbeStatesCopy.getStates());
 			assert correct;
-			for (STATE state : reachalbeStatesCopy.getStates()) {
-				for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
+			for (final STATE state : reachalbeStatesCopy.getStates()) {
+				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
 					correct &= mResult.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
+				for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
 					correct &= mResult.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
 					correct &= mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
+				for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				Set<STATE> rCSdownStates = reachalbeStatesCopy
+				final Set<STATE> rCSdownStates = reachalbeStatesCopy
 						.getDownStates(state);
-				Set<STATE> rCAdownStates = mResult.getDownStates(state);
+				final Set<STATE> rCAdownStates = mResult.getDownStates(state);
 				correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 				assert correct;
 				correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);

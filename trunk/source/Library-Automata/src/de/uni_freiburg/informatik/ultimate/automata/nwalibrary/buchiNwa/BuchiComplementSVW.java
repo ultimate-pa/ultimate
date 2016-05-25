@@ -53,8 +53,8 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
-	private BuchiComplementAutomatonSVW<LETTER,STATE> mResult;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+	private final BuchiComplementAutomatonSVW<LETTER,STATE> mResult;
 
 	
 	@Override

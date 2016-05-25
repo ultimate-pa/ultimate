@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class GroupEntry extends TreeViewEntry {
 
-	private List<TreeViewEntry> mEntries;
+	private final List<TreeViewEntry> mEntries;
 
 	public GroupEntry(String entryName, GroupEntry parent) {
 		super(entryName, parent);

@@ -59,8 +59,9 @@ public class FunctionInfo {
 		this.sig = sig;
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(declaration.getIdentifier()).append(sig);
 		return sb.toString();
 	}

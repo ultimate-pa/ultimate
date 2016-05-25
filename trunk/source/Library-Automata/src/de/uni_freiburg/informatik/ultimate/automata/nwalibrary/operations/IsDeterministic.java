@@ -45,8 +45,8 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final TotalizeNwa<LETTER, STATE> mTotalized;
-	private NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
-	private boolean mResult;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private final boolean mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
 	
@@ -96,7 +96,7 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (mResult) {
 			mLogger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 			// should recognize same language as old computation
 			correct &= (ResultChecker.nwaLanguageInclusion(mServices, operandOldApi, mReach, sf) == null);
 			assert correct;

@@ -76,9 +76,10 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return
 	 */
 	public boolean containsAny(Collection<Place<S, C>> places) {
-		for (Place<S, C> place : places) {
-			if (mPlaces.contains(place))
+		for (final Place<S, C> place : places) {
+			if (mPlaces.contains(place)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -95,6 +96,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return
 	 * @see java.util.Set#iterator()
 	 */
+	@Override
 	public Iterator<Place<S, C>> iterator() {
 		return mPlaces.iterator();
 	}
@@ -115,18 +117,23 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Marking<S, C> other = (Marking<S, C>) obj;
+		}
+		final Marking<S, C> other = (Marking<S, C>) obj;
 		if (mPlaces == null) {
-			if (other.mPlaces != null)
+			if (other.mPlaces != null) {
 				return false;
-		} else if (!mPlaces.equals(other.mPlaces))
+			}
+		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -150,9 +157,10 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 */
 	public boolean isTransitionEnabled(ITransition<S, C> transition) {
 		if (transition instanceof InhibitorTransition<?, ?>) {
-			InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
-			if (containsAny(it.getInhibitors()))
+			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
+			if (containsAny(it.getInhibitors())) {
 				return false;
+			}
 		}
 		return mPlaces.containsAll(transition.getPredecessors());
 	}
@@ -174,7 +182,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return
 	 */
 	public Marking<S, C> fireTransition(ITransition<S, C> transition) {
-		HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(mPlaces);
+		final HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(mPlaces);
 		resultSet.removeAll(transition.getPredecessors());
 		resultSet.addAll(transition.getSuccessors());
 		return new Marking<S, C>(resultSet);
@@ -186,8 +194,9 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return true if the
 	 */
 	public boolean undoTransition(ITransition<S, C> transition) {
-		if (!mPlaces.containsAll(transition.getSuccessors()))
+		if (!mPlaces.containsAll(transition.getSuccessors())) {
 			return false;
+		}
 		mPlaces.removeAll(transition.getSuccessors());
 		mPlaces.addAll(transition.getPredecessors());
 		return true;
@@ -203,6 +212,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		return mPlaces;
 	}
 	
+	@Override
 	public String toString() {
 		return this.mPlaces.toString();
 	}

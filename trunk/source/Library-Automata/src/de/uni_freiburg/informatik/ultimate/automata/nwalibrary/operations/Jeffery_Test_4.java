@@ -61,13 +61,13 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException, IOException{
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
 		timeBuffer1 = (new Date()).getTime();
-		IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+		final IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 		for(int i=1;i<b.size();i++){
 			IIC1.addSubtrahend(b.get(i));
 		}
 		timeBuffer1=(new Date()).getTime()-timeBuffer1;
 		timeBuffer2 = (new Date()).getTime();
-		IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+		final IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 		for(int i=1;i<b.size();i++){
 			IIC4.addSubtrahend(b.get(i));
 		}
@@ -80,9 +80,9 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			y=1;
 		}
 		if(y>x*10){
-			FileWriter fw = new FileWriter(folder+"faster_"+faster_i+".ats");
+			final FileWriter fw = new FileWriter(folder+"faster_"+faster_i+".ats");
 			faster_i++;
-			BufferedWriter bw = new BufferedWriter(fw);
+			final BufferedWriter bw = new BufferedWriter(fw);
 			bw.write("//Result:"+IIC1.getResult());
 			bw.newLine();
 			bw.write("//Difference: Time:"+timeBuffer1+" Total states:"+IIC1.size());
@@ -99,9 +99,9 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.close();
 			fw.close();
 		}else if(x>y*10){
-			FileWriter fw = new FileWriter(folder+"slower_"+slower_i+".ats");
+			final FileWriter fw = new FileWriter(folder+"slower_"+slower_i+".ats");
 			slower_i++;
-			BufferedWriter bw = new BufferedWriter(fw);
+			final BufferedWriter bw = new BufferedWriter(fw);
 			bw.write("//Result:"+IIC1.getResult());
 			bw.newLine();
 			bw.write("//Difference: Time:"+timeBuffer1+" Total states:"+IIC1.size());
@@ -125,13 +125,13 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b, String folderInput) throws AutomataLibraryException, IOException{
 		folder = folderInput;
 		timeBuffer1 = (new Date()).getTime();
-		IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+		final IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 		for(int i=1;i<b.size();i++){
 			IIC1.addSubtrahend(b.get(i));
 		}
 		timeBuffer1=(new Date()).getTime()-timeBuffer1;
 		timeBuffer2 = (new Date()).getTime();
-		IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+		final IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 		for(int i=1;i<b.size();i++){
 			IIC4.addSubtrahend(b.get(i));
 		}
@@ -144,9 +144,9 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			y=1;
 		}
 		if(y>x*10){
-			FileWriter fw = new FileWriter(folder+"faster_"+faster_i+".ats");
+			final FileWriter fw = new FileWriter(folder+"faster_"+faster_i+".ats");
 			faster_i++;
-			BufferedWriter bw = new BufferedWriter(fw);
+			final BufferedWriter bw = new BufferedWriter(fw);
 			bw.write("//Result:"+IIC1.getResult());
 			bw.newLine();
 			bw.write("//Difference: Time:"+timeBuffer1+" Total states:"+IIC1.size());
@@ -163,9 +163,9 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.close();
 			fw.close();
 		}else if(x>y*10){
-			FileWriter fw = new FileWriter(folder+"slower_"+slower_i+".ats");
+			final FileWriter fw = new FileWriter(folder+"slower_"+slower_i+".ats");
 			slower_i++;
-			BufferedWriter bw = new BufferedWriter(fw);
+			final BufferedWriter bw = new BufferedWriter(fw);
 			bw.write("//Result:"+IIC1.getResult());
 			bw.newLine();
 			bw.write("//Difference: Time:"+timeBuffer1+" Total states:"+IIC1.size());
@@ -202,13 +202,14 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
 	@Override
 	public String getResult(){
-		String log = "Output cases:\r\nfaster:"+faster_i+"\r\nslower:"+slower_i;
+		final String log = "Output cases:\r\nfaster:"+faster_i+"\r\nslower:"+slower_i;
 		return log;
 	}
 	/*public String getResult() throws OperationCanceledException {
 		return "Jeffery_Test_4_result:"+automataCollection.size();
 	}*/
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;

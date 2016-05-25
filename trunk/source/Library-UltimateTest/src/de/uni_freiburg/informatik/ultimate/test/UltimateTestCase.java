@@ -111,13 +111,13 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 				result = TestResult.FAIL;
 			}
 
-		} catch (LivecycleException lex) {
+		} catch (final LivecycleException lex) {
 			// if this happens, mStarter, mLogger, etc. are not initialized
 			th = lex;
 			result = mDecider.getTestResult(null, lex);
 			lex.printStackTrace();
 			livecycleFailure = true;
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			th = e;
 			result = mDecider.getTestResult(mStarter.getServices(), e);
 			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);

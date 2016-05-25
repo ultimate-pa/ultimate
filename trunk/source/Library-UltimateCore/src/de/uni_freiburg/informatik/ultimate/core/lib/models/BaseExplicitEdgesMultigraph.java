@@ -142,6 +142,7 @@ public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultig
 		mIncomingEdges = new ArrayList<E>();
 		if (predecessor != null) {
 			@SuppressWarnings("unchecked")
+			final
 			E e = (E) new BaseMultigraphEdge<V, E, VL, EL>(predecessor, (V) this, payload) {
 				private static final long serialVersionUID = 1L;
 
@@ -177,9 +178,9 @@ public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultig
 	 * @return A fresh list containing all direct successor nodes of this node.
 	 */
 	public List<V> getOutgoingNodes() {
-		ArrayList<V> rtr = new ArrayList<V>();
-		for (E e : mOutgoingEdges) {
-			V target = e.getTarget();
+		final ArrayList<V> rtr = new ArrayList<V>();
+		for (final E e : mOutgoingEdges) {
+			final V target = e.getTarget();
 			if (target != null) {
 				rtr.add(target);
 			}
@@ -199,9 +200,9 @@ public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultig
 	 * @return A fresh list containing all direct predecessor nodes of this node.
 	 */
 	public List<V> getIncomingNodes() {
-		ArrayList<V> rtr = new ArrayList<V>();
-		for (E e : getIncomingEdges()) {
-			V source = e.getSource();
+		final ArrayList<V> rtr = new ArrayList<V>();
+		for (final E e : getIncomingEdges()) {
+			final V source = e.getSource();
 			if (source != null) {
 				rtr.add(source);
 			}

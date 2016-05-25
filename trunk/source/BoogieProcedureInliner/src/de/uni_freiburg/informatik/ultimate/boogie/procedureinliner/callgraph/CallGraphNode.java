@@ -103,7 +103,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	 * @see CallGraphEdgeLabel#getInlineFlag()
 	 */
 	public boolean hasInlineFlags() {
-		for (CallGraphEdgeLabel edgeLabel : getOutgoingEdgeLabels()) {
+		for (final CallGraphEdgeLabel edgeLabel : getOutgoingEdgeLabels()) {
 			if (edgeLabel.getInlineFlag()) {
 				return true;
 			}
@@ -113,7 +113,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mId);
 		sb.append('{');
 		sb.append(isImplemented() ? "impl" : "unimpl");

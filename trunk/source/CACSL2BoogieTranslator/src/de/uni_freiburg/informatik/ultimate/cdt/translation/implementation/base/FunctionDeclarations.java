@@ -79,7 +79,7 @@ public class FunctionDeclarations {
 		} else {
 			resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 		}
-		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
+		final ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
 			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
@@ -95,12 +95,12 @@ public class FunctionDeclarations {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
 
-		VarList[] inParams = new VarList[paramASTTypes.length];
+		final VarList[] inParams = new VarList[paramASTTypes.length];
 		for (int i=0; i<paramASTTypes.length; i++) {
 			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
 		}
-		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
-		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
+		final VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
+		final FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
 		mDeclaredFunctions.put(prefixedFunctionName, d);
 	}
 
@@ -109,9 +109,9 @@ public class FunctionDeclarations {
 	}
 	
 	public String computeBitvectorSuffix(ILocation loc, CPrimitive... paramCTypes) {
-		CPrimitive firstParam = paramCTypes[0];
-		Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
-		int bitsize = bytesize * 8;
+		final CPrimitive firstParam = paramCTypes[0];
+		final Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
+		final int bitsize = bytesize * 8;
 		
 		return String.valueOf(bitsize);
 	}
@@ -122,8 +122,8 @@ public class FunctionDeclarations {
 	 * @return true iff all CPrimitives in cPrimitives are equivalent.
 	 */
 	public boolean checkParameters(CPrimitive... cPrimitives) {
-		PRIMITIVE type = cPrimitives[0].getType();
-		for (CPrimitive t : cPrimitives) {
+		final PRIMITIVE type = cPrimitives[0].getType();
+		for (final CPrimitive t : cPrimitives) {
 			if (!t.getType().equals(type)) {
 				return false;
 			}

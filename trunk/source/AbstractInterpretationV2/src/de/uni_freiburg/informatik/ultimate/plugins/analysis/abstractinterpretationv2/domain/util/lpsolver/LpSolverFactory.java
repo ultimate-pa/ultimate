@@ -31,8 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.ojalgo.OjAlgoSolver;
 
@@ -51,10 +52,10 @@ public class LpSolverFactory {
 
 	private final Type mType;
 
-	public LpSolverFactory(ILogger logger) {
+	public LpSolverFactory(ILogger logger,IUltimateServiceProvider services) {
 		mLogger = logger;
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		final String type = ups.getString(LpSolverPreferences.LABEL_LPSOLVER_NUMBER_TYPE);
+		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		final String type = prefs.getString(LpSolverPreferences.LABEL_LPSOLVER_NUMBER_TYPE);
 
 		if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_BIGDECIMAL)) {
 			mType = Type.BIGDECIMAL;

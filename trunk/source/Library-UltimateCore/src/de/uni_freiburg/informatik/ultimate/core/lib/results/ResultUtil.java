@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 public class ResultUtil {
 
 	public static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
-		List<ILocation> result = new ArrayList<>();
+		final List<ILocation> result = new ArrayList<>();
 		for (int i = 0; i < pe.getLength(); i++) {
-			AtomicTraceElement<TE> te = pe.getTraceElement(i);
+			final AtomicTraceElement<TE> te = pe.getTraceElement(i);
 			result.add(te.getTraceElement().getPayload().getLocation());
 		}
 		return result;
@@ -66,12 +66,13 @@ public class ResultUtil {
 	 */
 	public static <E extends IResult> Collection<E> filterResults(Map<String, List<IResult>> ultimateIResults,
 			Class<E> resClass) {
-		ArrayList<E> filteredList = new ArrayList<E>();
-		for (Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
-			for (IResult res : entry.getValue()) {
+		final ArrayList<E> filteredList = new ArrayList<E>();
+		for (final Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
+			for (final IResult res : entry.getValue()) {
 				if (resClass.isAssignableFrom(res.getClass())) {
 					// if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
+					final
 					E benchmarkResult = (E) res;
 					filteredList.add(benchmarkResult);
 				}
@@ -109,7 +110,7 @@ public class ResultUtil {
 		if (loc == null) {
 			return null;
 		}
-		ILocation origin = loc.getOrigin();
+		final ILocation origin = loc.getOrigin();
 		if (origin == null) {
 			return null;
 		}

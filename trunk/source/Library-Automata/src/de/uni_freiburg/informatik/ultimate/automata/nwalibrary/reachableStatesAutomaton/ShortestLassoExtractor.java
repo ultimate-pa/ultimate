@@ -34,8 +34,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
@@ -100,14 +100,14 @@ class ShortestLassoExtractor<LETTER, STATE> {
 		mLogger.debug("Loop " + mLoop);
 		try {
 			assert (new BuchiAccepts<LETTER, STATE>(mServices, nwars, mnlr.getNestedLassoWord())).getResult();
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
 	}
 
 	private StackOfFlaggedStates addInitialStack(StateContainer<LETTER, STATE> goal) {
-		StackOfFlaggedStates initialStack = new StackOfFlaggedStates(goal, false);
-		Set<StackOfFlaggedStates> initialStacks = new HashSet<StackOfFlaggedStates>();
+		final StackOfFlaggedStates initialStack = new StackOfFlaggedStates(goal, false);
+		final Set<StackOfFlaggedStates> initialStacks = new HashSet<StackOfFlaggedStates>();
 		initialStacks.add(initialStack);
 		mIterations.add(initialStacks);
 		return initialStack;
@@ -120,10 +120,10 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	void findPath(final int startingIteration) {
 		int i = startingIteration;
 		while (mGoalFoundIteration == -1 || mInitFoundIteration == -1) {
-			Set<StackOfFlaggedStates> currentStacks = mIterations.get(i-1);
-			Set<StackOfFlaggedStates> preceedingStacks = new HashSet<StackOfFlaggedStates>();
+			final Set<StackOfFlaggedStates> currentStacks = mIterations.get(i-1);
+			final Set<StackOfFlaggedStates> preceedingStacks = new HashSet<StackOfFlaggedStates>();
 			mIterations.add(preceedingStacks);
-			for (StackOfFlaggedStates stack  : currentStacks) {
+			for (final StackOfFlaggedStates stack  : currentStacks) {
 				addPreceedingStacks(i, preceedingStacks, stack);
 			}
 			i++;
@@ -138,30 +138,30 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	private void addPreceedingStacks(int i,
 			Set<StackOfFlaggedStates> preceedingStacks,
 			StackOfFlaggedStates stack) {
-		StateContainer<LETTER, STATE> cont = stack.getTopmostState();
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
-			StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
-			boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
+		final StateContainer<LETTER, STATE> cont = stack.getTopmostState();
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
+			final StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
+			final boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
 			if (finalOnPathToHonda && stack.height() > 1 && !stack.getSecondTopmostFlag()) {
 				continue;
 			}
-			StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
+			final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
 			preceedingStacks.add(predStack);
 			checkIfGoalOrInitReached(i, predStack, predCont);
 		}
 		if (stack.height() == 1) {
 			// call is pending
-			for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
-				StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
-				boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
-				StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
+			for (final IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
+				final StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
+				final boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
+				final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
 				preceedingStacks.add(predStack);
 				checkIfGoalOrInitReached(i, predStack, predCont);
 			}
 		} else {			
-			for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
-				StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
-				boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
+			for (final IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
+				final StateContainer<LETTER, STATE> predCont = mNwars.obtainSC(inTrans.getPred());
+				final boolean finalOnPathToHonda = stack.getTopmostFlag() || mNwars.isFinal(inTrans.getPred());
 				if (!stack.getSecondTopmostState().getState().equals(inTrans.getPred())) {
 					// call predecessor does not match state on stack
 					continue;
@@ -170,28 +170,28 @@ class ShortestLassoExtractor<LETTER, STATE> {
 					// information about finalOnPathToHonda does not match
 					continue;
 				}
-				StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
+				final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
 				preceedingStacks.add(predStack);
 				checkIfGoalOrInitReached(i, predStack, predCont);
 			}
 		}
 
 		// TODO: Optimization (you can ignore stacks like (q0,false)  (q0,false)  (q1,true)
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 			// note that goal or init can never be reached 
 			// (backwards) with empty stack directly after return.
-			int oldPreceedingStackSize = preceedingStacks.size();
+			final int oldPreceedingStackSize = preceedingStacks.size();
 			if (stack.getTopmostFlag()) {
-				StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, true);
+				final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, true);
 				preceedingStacks.add(predStack);
 			} else {
-				boolean linPredIsFinal = mNwars.isFinal(inTrans.getLinPred());
+				final boolean linPredIsFinal = mNwars.isFinal(inTrans.getLinPred());
 				{
-					StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, linPredIsFinal);
+					final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, linPredIsFinal);
 					preceedingStacks.add(predStack);
 				}
 				if (!mNwars.isFinal(inTrans.getHierPred()) && !linPredIsFinal) {
-					StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, linPredIsFinal);
+					final StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, linPredIsFinal);
 					preceedingStacks.add(predStack);
 				}
 			}
@@ -201,14 +201,14 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	
 	void constructStem() {
 		assert mConstructedNestedRun == null;
-		Set<StackOfFlaggedStates> initIteration = mIterations.get(mInitFoundIteration);
+		final Set<StackOfFlaggedStates> initIteration = mIterations.get(mInitFoundIteration);
 		StackOfFlaggedStates stack = new StackOfFlaggedStates(mFirstFoundInitialState, true);
 		if (!initIteration.contains(stack)) { 
 			stack = new StackOfFlaggedStates(mFirstFoundInitialState, false);
 		}
 
 		assert initIteration.contains(stack);
-		StateContainer<LETTER, STATE> cont = mFirstFoundInitialState;
+		final StateContainer<LETTER, STATE> cont = mFirstFoundInitialState;
 		mConstructedNestedRun = new NestedRun<LETTER, STATE>(cont.getState());
 		for (int i = mInitFoundIteration-1; i>=0; i--) {
 			stack = getSuccessorStack(stack, mIterations.get(i));
@@ -218,13 +218,13 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	}
 	
 	void constructLoop() {
-		Set<StackOfFlaggedStates> hondaIteration = mIterations.get(mGoalFoundIteration);
+		final Set<StackOfFlaggedStates> hondaIteration = mIterations.get(mGoalFoundIteration);
 		StackOfFlaggedStates stack = new StackOfFlaggedStates(mGoal, true);
 		if (!hondaIteration.contains(stack)) {
 			stack = new StackOfFlaggedStates(mGoal, false);
 		}
 		assert hondaIteration.contains(stack);
-		StateContainer<LETTER, STATE> cont = mGoal;
+		final StateContainer<LETTER, STATE> cont = mGoal;
 		mConstructedNestedRun = new NestedRun<LETTER, STATE>(cont.getState());
 		mLoop = new NestedRun<LETTER, STATE>(cont.getState());
 		for (int i = mGoalFoundIteration-1; i>=0; i--) {
@@ -236,21 +236,21 @@ class ShortestLassoExtractor<LETTER, STATE> {
 
 	
 	StackOfFlaggedStates getSuccessorStack(StackOfFlaggedStates sofs, Set<StackOfFlaggedStates> succCandidates) {
-		StateContainer<LETTER, STATE> cont = sofs.getTopmostState();
+		final StateContainer<LETTER, STATE> cont = sofs.getTopmostState();
 		if (sofs.getTopmostFlag()) {
-			for (OutgoingInternalTransition<LETTER, STATE> outTrans : cont.internalSuccessors()) {
-				StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, true);
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : cont.internalSuccessors()) {
+				final StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, true);
 				if (succCandidates.contains(succStack)) {
-					NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+					final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 							cont.getState(), outTrans.getLetter(), NestedWord.INTERNAL_POSITION, outTrans.getSucc());
 					mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 					return succStack;
 				}
 			}
-			for (OutgoingCallTransition<LETTER, STATE> outTrans : cont.callSuccessors()) {
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : cont.callSuccessors()) {
 				StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, true, false);
 				if (succCandidates.contains(succStack)) {
-					NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+					final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 							cont.getState(), outTrans.getLetter(), NestedWord.PLUS_INFINITY, outTrans.getSucc());
 					mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 					return succStack;
@@ -259,7 +259,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 					//check also for pending calls
 					succStack = new StackOfFlaggedStates(sofs, outTrans, true, true);
 					if (succCandidates.contains(succStack)) {
-						NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+						final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 								cont.getState(), outTrans.getLetter(), NestedWord.PLUS_INFINITY, outTrans.getSucc());
 						mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 						return succStack;
@@ -268,11 +268,11 @@ class ShortestLassoExtractor<LETTER, STATE> {
 				}
 			}
 			if (sofs.height() > 1) {
-				for (OutgoingReturnTransition<LETTER, STATE> outTrans : cont.returnSuccessors()) {
+				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : cont.returnSuccessors()) {
 					if (sofs.getSecondTopmostState().getState().equals(outTrans.getHierPred())) {
-						StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, true);
+						final StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, true);
 						if (succCandidates.contains(succStack)) {
-							NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+							final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 									cont.getState(), outTrans.getLetter(), NestedWord.MINUS_INFINITY, outTrans.getSucc());
 							mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 							return succStack;
@@ -281,19 +281,19 @@ class ShortestLassoExtractor<LETTER, STATE> {
 				}
 			}
 		}
-		for (OutgoingInternalTransition<LETTER, STATE> outTrans : cont.internalSuccessors()) {
-			StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, false);
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : cont.internalSuccessors()) {
+			final StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, false);
 			if (succCandidates.contains(succStack)) {
-				NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+				final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 						cont.getState(), outTrans.getLetter(), NestedWord.INTERNAL_POSITION, outTrans.getSucc());
 				mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 				return succStack;
 			}
 		}
-		for (OutgoingCallTransition<LETTER, STATE> outTrans : cont.callSuccessors()) {
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : cont.callSuccessors()) {
 			StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, false, false);
 			if (succCandidates.contains(succStack)) {
-				NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+				final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 						cont.getState(), outTrans.getLetter(), NestedWord.PLUS_INFINITY, outTrans.getSucc());
 				mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 				return succStack;
@@ -302,7 +302,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 				//check also for pending calls
 				succStack = new StackOfFlaggedStates(sofs, outTrans, false, true);
 				if (succCandidates.contains(succStack)) {
-					NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+					final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 							cont.getState(), outTrans.getLetter(), NestedWord.PLUS_INFINITY, outTrans.getSucc());
 					mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 					return succStack;
@@ -311,11 +311,11 @@ class ShortestLassoExtractor<LETTER, STATE> {
 			}
 		}
 		if (sofs.height() > 1) {
-			for (OutgoingReturnTransition<LETTER, STATE> outTrans : cont.returnSuccessors()) {
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : cont.returnSuccessors()) {
 				if (sofs.getSecondTopmostState().getState().equals(outTrans.getHierPred())) {
-					StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, false);
+					final StackOfFlaggedStates succStack = new StackOfFlaggedStates(sofs, outTrans, false);
 					if (succCandidates.contains(succStack)) {
-						NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
+						final NestedRun<LETTER, STATE> runSegment = new NestedRun<LETTER, STATE>(
 								cont.getState(), outTrans.getLetter(), NestedWord.MINUS_INFINITY, outTrans.getSucc());
 						mConstructedNestedRun = mConstructedNestedRun.concatenate(runSegment);
 						return succStack;
@@ -471,26 +471,35 @@ class ShortestLassoExtractor<LETTER, STATE> {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			StackOfFlaggedStates other = (StackOfFlaggedStates) obj;
-			if (!getOuterType().equals(other.getOuterType()))
+			}
+			final StackOfFlaggedStates other = (StackOfFlaggedStates) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
-			if (!Arrays.equals(mFlagStack, other.mFlagStack))
+			}
+			if (!Arrays.equals(mFlagStack, other.mFlagStack)) {
 				return false;
-			if (!Arrays.equals(mStateStack, other.mStateStack))
+			}
+			if (!Arrays.equals(mStateStack, other.mStateStack)) {
 				return false;
-			if (mTopmostFlag != other.mTopmostFlag)
+			}
+			if (mTopmostFlag != other.mTopmostFlag) {
 				return false;
+			}
 			if (mTopmostState == null) {
-				if (other.mTopmostState != null)
+				if (other.mTopmostState != null) {
 					return false;
-			} else if (!mTopmostState.equals(other.mTopmostState))
+				}
+			} else if (!mTopmostState.equals(other.mTopmostState)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -500,7 +509,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 
 		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			for (int i=0; i<mStateStack.length; i++) {
 				sb.append("(" + mStateStack[i].getState() + "," + mFlagStack[i] + ")  ");
 			}

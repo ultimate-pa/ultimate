@@ -34,10 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 
@@ -64,7 +64,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public ModelQuery getModelQuery() {
-		RcpPreferenceProvider ups = new RcpPreferenceProvider(getPluginID());
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(getPluginID());
 		return ups.getEnum(JungPreferenceValues.LABEL_WHICH_MODEL, ModelQuery.class);
 	}
 

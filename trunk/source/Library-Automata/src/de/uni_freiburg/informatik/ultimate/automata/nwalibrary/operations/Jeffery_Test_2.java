@@ -67,7 +67,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 2:
 			result1 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC2.addSubtrahend(b.get(i));
 			}
@@ -75,7 +75,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 3:
 			result1 = (new IncrementalInclusionCheck3<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck3<LETTER,STATE> IIC3 = (new IncrementalInclusionCheck3<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck3<LETTER,STATE> IIC3 = (new IncrementalInclusionCheck3<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC3.addSubtrahend(b.get(i));
 			}
@@ -83,7 +83,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 4:
 			result1 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC4.addSubtrahend(b.get(i));
 			}
@@ -91,7 +91,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 5:
 			result1 = (new IncrementalInclusionCheck5<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck5<LETTER,STATE> IIC5 = (new IncrementalInclusionCheck5<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck5<LETTER,STATE> IIC5 = (new IncrementalInclusionCheck5<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC5.addSubtrahend(b.get(i));
 			}
@@ -99,7 +99,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 32:
 			result1 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck3_2<LETTER,STATE> IIC3_2 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck3_2<LETTER,STATE> IIC3_2 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC3_2.addSubtrahend(b.get(i));
 			}
@@ -107,7 +107,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 42:
 			result1 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck4_2<LETTER,STATE> IIC4_2 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck4_2<LETTER,STATE> IIC4_2 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC4_2.addSubtrahend(b.get(i));
 			}
@@ -115,7 +115,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 52:
 			result1 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b)).getResult();
-			IncrementalInclusionCheck5_2<LETTER,STATE> IIC5_2 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck5_2<LETTER,STATE> IIC5_2 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC5_2.addSubtrahend(b.get(i));
 			}
@@ -148,6 +148,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		return "Jeffery_Test_2_result:"+automataCollection.size();
 	}*/
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;

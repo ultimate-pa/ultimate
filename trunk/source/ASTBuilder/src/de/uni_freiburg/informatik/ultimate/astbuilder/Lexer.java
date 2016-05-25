@@ -25,10 +25,11 @@
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
-import java.io.Reader;
 import java.io.IOException;
-import java_cup.runtime.Symbol;
+import java.io.Reader;
+
 import java_cup.runtime.Scanner;
+import java_cup.runtime.Symbol;
 
 public class Lexer implements Scanner {
     boolean eof = false;
@@ -39,7 +40,7 @@ public class Lexer implements Scanner {
     Reader reader;
 
     public Lexer (Reader r) throws IOException {
-        this.reader = r;
+        reader = r;
         line = 1;
         col = 0;
         advance();
@@ -50,17 +51,19 @@ public class Lexer implements Scanner {
     }
 
     public void advance() throws IOException {
-        int i = reader.read();
+        final int i = reader.read();
         if (lookahead == '\n') {
             line++;
             col = 1;
-        } else
-            col++;
+        } else {
+			col++;
+		}
 
-        if (i < 0)
-            eof = true;
-        else
-            lookahead = (char) i;
+        if (i < 0) {
+			eof = true;
+		} else {
+			lookahead = (char) i;
+		}
 
         if (lastCR && lookahead == '\n') {
             /* Ignore LF after CR */
@@ -69,18 +72,20 @@ public class Lexer implements Scanner {
             return;
         } 
         lastCR = (lookahead == '\r');
-        if (lastCR)
-            /* map CR to LF */
+        if (lastCR) {
+			/* map CR to LF */
             lookahead = '\n';
+		}
     }
 
     private void skipWhiteSpace() throws IOException {
-        while (Character.isWhitespace(lookahead) && !eof)
-            advance();
+        while (Character.isWhitespace(lookahead) && !eof) {
+			advance();
+		}
     }
 
     private String parseIdentifier() throws IOException {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         do {
             sb.append(lookahead);
             advance();
@@ -92,18 +97,20 @@ public class Lexer implements Scanner {
         advance();
         if (lookahead != '*') {
             do {
-                while (lookahead != '*' && !eof)
-                    advance();
+                while (lookahead != '*' && !eof) {
+					advance();
+				}
                 advance();
             } while (lookahead != '/' && !eof);
             advance();
             return null;
         }
-        while (lookahead == '*' && !eof)
-            advance();
+        while (lookahead == '*' && !eof) {
+			advance();
+		}
         skipWhiteSpace();
 
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         boolean needsSpace = false;
         boolean lastWord = false;
         do {
@@ -119,8 +126,9 @@ public class Lexer implements Scanner {
                     }
                     lastWord = false;
                 } else {
-                    if (needsSpace)
-                        sb.append(' ');
+                    if (needsSpace) {
+						sb.append(' ');
+					}
                     sb.append(lookahead);
                     needsSpace = false;
                     lastWord = true;
@@ -129,22 +137,26 @@ public class Lexer implements Scanner {
             }
             advance();
         } while (lookahead != '/' && !eof);
-        if (eof)
-          return null;
+        if (eof) {
+			return null;
+		}
 
-        while (Character.isWhitespace(sb.charAt(sb.length()-1)))
-            sb.setLength(sb.length()-1);
+        while (Character.isWhitespace(sb.charAt(sb.length()-1))) {
+			sb.setLength(sb.length()-1);
+		}
         advance();
         return sb.toString();
     }
 
-    public Symbol next_token() throws IOException {
+    @Override
+	public Symbol next_token() throws IOException {
         for (;;) {
             skipWhiteSpace();
-            if (eof)
-                return new Symbol(sym.EOF, getLineCol(), getLineCol());
+            if (eof) {
+				return new Symbol(sym.EOF, getLineCol(), getLineCol());
+			}
             
-            int left = getLineCol();
+            final int left = getLineCol();
             switch (lookahead) {
             case '*':
                 advance();
@@ -199,11 +211,13 @@ public class Lexer implements Scanner {
             case '/':
                 {
                     advance();
-                    if (lookahead != '*')
-                        return new Symbol(sym.error, left, getLineCol());
-                    String comment = parseComment();
-                    if (comment == null)
-                        continue;
+                    if (lookahead != '*') {
+						return new Symbol(sym.error, left, getLineCol());
+					}
+                    final String comment = parseComment();
+                    if (comment == null) {
+						continue;
+					}
                     return new Symbol(sym.DOCCOMMENT, left, getLineCol(),
                                       comment);
                 }
@@ -218,16 +232,17 @@ public class Lexer implements Scanner {
                 return new Symbol(sym.OPTIONAL, left, getLineCol());
             default:
                 if (Character.isUnicodeIdentifierStart(lookahead)) {
-                    String ident = parseIdentifier();
-                    if (ident.equals("package"))
-                        return new Symbol(sym.PACKAGE, left, getLineCol());
-                    else if (ident.equals("import"))
-                        return new Symbol(sym.IMPORT, left, getLineCol());
-                    else if (ident.equals("implements"))
-                        return new Symbol(sym.IMPLEMENTS, left, getLineCol());
-                    else
-                        return new Symbol(sym.IDENT, left, getLineCol(), 
+                    final String ident = parseIdentifier();
+                    if (ident.equals("package")) {
+						return new Symbol(sym.PACKAGE, left, getLineCol());
+					} else if (ident.equals("import")) {
+						return new Symbol(sym.IMPORT, left, getLineCol());
+					} else if (ident.equals("implements")) {
+						return new Symbol(sym.IMPLEMENTS, left, getLineCol());
+					} else {
+						return new Symbol(sym.IDENT, left, getLineCol(), 
                                           ident);
+					}
                 }
                 System.err.println("Unexpected Character: "+lookahead
                                    +" ("+(int)lookahead+")");

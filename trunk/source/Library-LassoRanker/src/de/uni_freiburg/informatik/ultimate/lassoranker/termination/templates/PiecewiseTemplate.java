@@ -72,8 +72,8 @@ public class PiecewiseTemplate extends RankingTemplate {
 	private static final String s_name_pred = "pred";
 	
 	private Term mdelta;
-	private AffineFunctionGenerator[] mfgens; // functions
-	private AffineFunctionGenerator[] mpgens; // discriminatory predicates
+	private final AffineFunctionGenerator[] mfgens; // functions
+	private final AffineFunctionGenerator[] mpgens; // discriminatory predicates
 	
 	/**
 	 * @param numfunctions number of pieces
@@ -103,7 +103,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(size);
 		sb.append("-piece template:\n");
 		sb.append("   delta > 0\n");
@@ -132,16 +132,16 @@ public class PiecewiseTemplate extends RankingTemplate {
 	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
 		// /\_i /\_j g_i(x) < 0 \/ g_j(x') < 0 \/ f_j(x') < f_i(x) - delta
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {
-				List<LinearInequality> disjunction =
+				final List<LinearInequality> disjunction =
 						new ArrayList<LinearInequality>();
 				
-				LinearInequality li1 = mpgens[i].generate(inVars);
+				final LinearInequality li1 = mpgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
 				li1.motzkin_coefficient = sBlueAtoms && i == j ?
@@ -149,17 +149,17 @@ public class PiecewiseTemplate extends RankingTemplate {
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
 				
-				LinearInequality li2 = mpgens[j].generate(outVars);
+				final LinearInequality li2 = mpgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
 				li2.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li2);
 				
-				LinearInequality li3 = mfgens[i].generate(inVars);
-				LinearInequality li4 = mfgens[j].generate(outVars);
+				final LinearInequality li3 = mfgens[i].generate(inVars);
+				final LinearInequality li4 = mfgens[j].generate(outVars);
 				li4.negate();
 				li3.add(li4);
-				AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
+				final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
 				li3.motzkin_coefficient = sRedAtoms ?
@@ -172,7 +172,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		
 		// /\_i f_i(x) > 0
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
@@ -180,9 +180,9 @@ public class PiecewiseTemplate extends RankingTemplate {
 		}
 		
 		// \/_i g_i(x) >= 0
-		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+		final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = mpgens[i].generate(inVars);
+			final LinearInequality li = mpgens[i].generate(inVars);
 			li.setStrict(false);
 			li.motzkin_coefficient = sRedAtoms && i == 0 ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -197,7 +197,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
+		final Collection<Term> list = new ArrayList<Term>();
 		list.add(mdelta);
 		for (int i = 0; i < size; ++i) {
 			list.addAll(mfgens[i].getVariables());
@@ -215,8 +215,8 @@ public class PiecewiseTemplate extends RankingTemplate {
 			gcd_f = gcd_f.gcd(mfgens[i].getGcd(val));
 		}
 		
-		AffineFunction[] fs = new AffineFunction[size];
-		AffineFunction[] gs = new AffineFunction[size];
+		final AffineFunction[] fs = new AffineFunction[size];
+		final AffineFunction[] gs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
 			fs[i] = mfgens[i].extractAffineFunction(val, gcd_f);
 			gs[i] = mpgens[i].extractAffineFunction(val);
@@ -226,7 +226,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	
 	@Override
 	public List<String> getAnnotations() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {
 				annotations.add("transition from piece " + i + " to piece " + j);

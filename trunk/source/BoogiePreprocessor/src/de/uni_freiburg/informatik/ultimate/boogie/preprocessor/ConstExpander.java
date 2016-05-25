@@ -68,17 +68,17 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			ArrayList<Declaration> newDecls = new ArrayList<Declaration>();
-			for (Declaration decl : unit.getDeclarations()) {
+			final Unit unit = (Unit) root;
+			final ArrayList<Declaration> newDecls = new ArrayList<Declaration>();
+			for (final Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof ConstDeclaration) {
-					ConstDeclaration constDecl = (ConstDeclaration) decl;
+					final ConstDeclaration constDecl = (ConstDeclaration) decl;
 					if (!constDecl.isUnique() && constDecl.getParentInfo() == null) {
 						newDecls.add(constDecl);
 					} else {
-						VarList vl = constDecl.getVarList();
+						final VarList vl = constDecl.getVarList();
 						addConstDeclaration(vl.getType().getBoogieType(), constDecl);
-						ConstDeclaration newDecl = new ConstDeclaration(constDecl.getLocation(),
+						final ConstDeclaration newDecl = new ConstDeclaration(constDecl.getLocation(),
 								constDecl.getAttributes(), false, vl, null, false);
 						newDecls.add(newDecl);
 						mBacktranslator.addMapping(constDecl, newDecl);
@@ -88,7 +88,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 				}
 			}
 
-			for (List<ConstDeclaration> cdlist : mConstDecls.values()) {
+			for (final List<ConstDeclaration> cdlist : mConstDecls.values()) {
 				addUniquenessAxioms(newDecls, cdlist);
 				addPartOrderAxioms(newDecls, cdlist);
 			}
@@ -101,53 +101,55 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	private void addPartOrderAxioms(ArrayList<Declaration> newDecls, List<ConstDeclaration> cdlist) {
 		//TODO: PartOrderAxioms are currently not considered for back translation (its unclear how they should be treated) 
 		
-		HashMap<String, List<String>> childrens = new HashMap<String, List<String>>();
-		HashMap<String, List<String>> uniqueChildrens = new HashMap<String, List<String>>();
-		HashSet<String> uniqueValues = new HashSet<String>();
-		ASTType asttype = cdlist.get(0).getVarList().getType();
-		IType type = asttype.getBoogieType();
-		IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$",
+		final HashMap<String, List<String>> childrens = new HashMap<String, List<String>>();
+		final HashMap<String, List<String>> uniqueChildrens = new HashMap<String, List<String>>();
+		final HashSet<String> uniqueValues = new HashSet<String>();
+		final ASTType asttype = cdlist.get(0).getVarList().getType();
+		final IType type = asttype.getBoogieType();
+		final IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$",
 		/*
 		 * FIXME : ask Jochen about storage class
 		 */null);
-		IdentifierExpression var2 = new IdentifierExpression(asttype.getLocation(), type, "$$2",
+		final IdentifierExpression var2 = new IdentifierExpression(asttype.getLocation(), type, "$$2",
 		/*
 		 * FIXME : ask Jochen about storage class
 		 */null);
-		for (ConstDeclaration c : cdlist) {
-			ParentEdge[] parents = c.getParentInfo();
-			for (String child : c.getVarList().getIdentifiers()) {
-				if (c.isUnique())
+		for (final ConstDeclaration c : cdlist) {
+			final ParentEdge[] parents = c.getParentInfo();
+			for (final String child : c.getVarList().getIdentifiers()) {
+				if (c.isUnique()) {
 					uniqueValues.add(child);
+				}
 
 				if (parents != null) {
-					IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
+					final IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
 					/*
 					 * FIXME : ask Jochen about storage class
 					 */null);
 					Expression polist = null;
-					for (ParentEdge p : parents) {
-						String parent = p.getIdentifier();
-						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
+					for (final ParentEdge p : parents) {
+						final String parent = p.getIdentifier();
+						final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, cid, pid);
-						if (polist == null)
+						if (polist == null) {
 							polist = partorder;
-						else
+						} else {
 							polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICAND, partorder, polist);
+						}
 					}
 					if (polist != null) {
 						newDecls.add(new Axiom(c.getLocation(), new Attribute[0], polist));
 					}
 					polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, cid, var);
-					for (ParentEdge p : parents) {
-						String parent = p.getIdentifier();
-						IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
+					for (final ParentEdge p : parents) {
+						final String parent = p.getIdentifier();
+						final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
@@ -165,18 +167,18 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 							}
 							childList.add(child);
 						}
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, pid, var);
 						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, cid, var);
-					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
-					VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
-					Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
+					final VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
+					final Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
+					final Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -184,35 +186,36 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 			}
 		}
 
-		for (ConstDeclaration c : cdlist) {
+		for (final ConstDeclaration c : cdlist) {
 			if (c.isComplete()) {
-				for (String parent : c.getVarList().getIdentifiers()) {
-					IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
+				for (final String parent : c.getVarList().getIdentifiers()) {
+					final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
 					/*
 					 * FIXME : ask Jochen about storage class
 					 */null);
 					Expression polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, var, pid);
 					List<String> childList = childrens.get(parent);
-					if (childList == null)
+					if (childList == null) {
 						childList = Collections.emptyList();
-					for (String child : childList) {
-						IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
+					}
+					for (final String child : childList) {
+						final IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, cid);
 						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, var, pid);
-					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
-					VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
-					Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
+					final VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
+					final Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
+					final Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -220,18 +223,20 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 			}
 		}
 
-		Collection<String> uniqueParents = uniqueChildrens.keySet();
-		for (String p1 : uniqueParents) {
-			IdentifierExpression p1id = new IdentifierExpression(null, type, p1,
+		final Collection<String> uniqueParents = uniqueChildrens.keySet();
+		for (final String p1 : uniqueParents) {
+			final IdentifierExpression p1id = new IdentifierExpression(null, type, p1,
 			/*
 			 * FIXME : ask Jochen about storage class
 			 */null);
 			Collection<String> p2list = uniqueParents;
-			if (uniqueValues.contains(p1))
+			if (uniqueValues.contains(p1)) {
 				p2list = Collections.singleton(p1);
-			for (String p2 : p2list) {
-				if (!uniqueValues.contains(p2) && p1.compareTo(p2) > 0)
+			}
+			for (final String p2 : p2list) {
+				if (!uniqueValues.contains(p2) && p1.compareTo(p2) > 0) {
 					continue;
+				}
 				IdentifierExpression p2id;
 				Expression pre;
 				if (p1.equals(p2)) {
@@ -245,45 +250,48 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 					pre = new BinaryExpression(null, PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, p1id,
 							p2id);
 				}
-				for (String c1 : uniqueChildrens.get(p1)) {
-					IdentifierExpression c1id = new IdentifierExpression(null, type, c1,
+				for (final String c1 : uniqueChildrens.get(p1)) {
+					final IdentifierExpression c1id = new IdentifierExpression(null, type, c1,
 					/*
 					 * FIXME : ask Jochen about storage class
 					 */null);
-					for (String c2 : uniqueChildrens.get(p2)) {
-						if (p1.equals(p2) && c1.compareTo(c2) >= 0 || c1.equals(c2))
+					for (final String c2 : uniqueChildrens.get(p2)) {
+						if (p1.equals(p2) && c1.compareTo(c2) >= 0 || c1.equals(c2)) {
 							continue;
-						IdentifierExpression c2id = new IdentifierExpression(null, type, c2,
+						}
+						final IdentifierExpression c2id = new IdentifierExpression(null, type, c2,
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
 						Expression pre2 = pre;
 						if (!uniqueValues.contains(c1) || !uniqueValues.contains(c2)) {
-							Expression neq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+							final Expression neq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.COMPNEQ, c1id, c2id);
-							if (pre == null)
+							if (pre == null) {
 								pre2 = neq;
-							else
+							} else {
 								pre2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 										BinaryExpression.Operator.LOGICAND, pre, neq);
+							}
 						}
-						Expression po1 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression po1 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, c1id);
-						Expression po2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression po2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var2, c2id);
-						Expression lhs = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression lhs = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICAND, po1, po2);
-						Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPNEQ, var, var2);
-						Expression impl = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression impl = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICIMPLIES, lhs, diseq);
-						VarList vl = new VarList(null, new String[] { "$$", "$$2" }, asttype);
-						Trigger trigger = new Trigger(null, new Expression[] { po1, po2 });
+						final VarList vl = new VarList(null, new String[] { "$$", "$$2" }, asttype);
+						final Trigger trigger = new Trigger(null, new Expression[] { po1, po2 });
 						Expression ax = new QuantifierExpression(null, PrimitiveType.TYPE_BOOL, true, new String[0],
 								new VarList[] { vl }, new Attribute[] { trigger }, impl);
-						if (pre2 != null)
+						if (pre2 != null) {
 							ax = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICIMPLIES, pre2, ax);
+						}
 
 						newDecls.add(new Axiom(null, new Attribute[0], ax));
 					}
@@ -301,12 +309,12 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	 * @param cdlist
 	 */
 	private void addUniquenessAxioms(ArrayList<Declaration> newDecls, List<ConstDeclaration> cdlist) {
-		ArrayList<String> identifiers = new ArrayList<String>();
-		HashMap<String, VarList> nodeMap = new HashMap<>();
-		IType type = cdlist.get(0).getVarList().getType().getBoogieType();
-		for (ConstDeclaration c : cdlist) {
+		final ArrayList<String> identifiers = new ArrayList<String>();
+		final HashMap<String, VarList> nodeMap = new HashMap<>();
+		final IType type = cdlist.get(0).getVarList().getType().getBoogieType();
+		for (final ConstDeclaration c : cdlist) {
 			if (c.isUnique()) {
-				for (String id : c.getVarList().getIdentifiers()) {
+				for (final String id : c.getVarList().getIdentifiers()) {
 					identifiers.add(id);
 					nodeMap.put(id, c.getVarList());
 				}
@@ -316,20 +324,20 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		assert nodeMap.size() == identifiers.size();
 
 		for (int i = 0; i < identifiers.size(); i++) {
-			DeclarationInformation declInfo = new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL,
+			final DeclarationInformation declInfo = new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL,
 					null);
-			String ident1 = identifiers.get(i);
-			IdentifierExpression id1 = new IdentifierExpression(null, type, ident1, declInfo);
+			final String ident1 = identifiers.get(i);
+			final IdentifierExpression id1 = new IdentifierExpression(null, type, ident1, declInfo);
 			for (int j = i + 1; j < identifiers.size(); j++) {
-				String ident2 = identifiers.get(j);
-				IdentifierExpression id2 = new IdentifierExpression(null, type, ident2, declInfo);
-				Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+				final String ident2 = identifiers.get(j);
+				final IdentifierExpression id2 = new IdentifierExpression(null, type, ident2, declInfo);
+				final Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 						BinaryExpression.Operator.COMPNEQ, id1, id2);
 				/*
 				 * Add the axioms one by one. This prevents the syntax tree from
 				 * getting too deep.
 				 */
-				Axiom newAxiom = new Axiom(null, new Attribute[0], diseq);
+				final Axiom newAxiom = new Axiom(null, new Attribute[0], diseq);
 				mBacktranslator.addMapping(nodeMap.get(ident1), newAxiom);
 				mBacktranslator.addMapping(nodeMap.get(ident2), newAxiom);
 				newDecls.add(newAxiom);

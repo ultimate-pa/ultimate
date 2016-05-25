@@ -52,8 +52,8 @@ public class RewriteTrueFalse extends TransformerPreprocessor {
 	@Override
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
+		final Term old_term = oldTF.getFormula();
+		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
 				script.term("distinct", old_term, new_term));
 	}
@@ -75,7 +75,7 @@ public class RewriteTrueFalse extends TransformerPreprocessor {
 		@Override
 		protected void convert(Term term) {
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appt = (ApplicationTerm) term;
+				final ApplicationTerm appt = (ApplicationTerm) term;
 				if (appt.getFunction().getName().equals("true")) {
 					assert(appt.getParameters().length == 0);
 					setResult(mScript.term(">=", mScript.decimal("0"),

@@ -134,6 +134,7 @@ public class SortSymbol {
 	 * used for declare-sort command.
 	 * @return the string representation.
 	 */
+	@Override
 	public String toString() {
 		return "(" + PrintTerm.quoteIdentifier(mName) + " " + mNumParams + ")";
 	}
@@ -148,12 +149,14 @@ public class SortSymbol {
 	 * do not match.
 	 */
 	public void checkArity(BigInteger[] indices, int arity) {
-		if (indices != null)
+		if (indices != null) {
 			throw new IllegalArgumentException(
 					"Indexed Sort " + mName + " undefined");
-		if (arity != ((mFlags & TYPEPARAM) == 0 ? mNumParams : 0))
-				throw new IllegalArgumentException(
-						"Wrong number of arguments for sort " + mName);
+		}
+		if (arity != ((mFlags & TYPEPARAM) == 0 ? mNumParams : 0)) {
+			throw new IllegalArgumentException(
+					"Wrong number of arguments for sort " + mName);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -172,17 +175,18 @@ public class SortSymbol {
 	 */
 	public Sort getSort(BigInteger[] indices, Sort... args) {
 		checkArity(indices, args.length);
-		if ((mFlags & INDEXED) == 0 && args.length == 0)
+		if ((mFlags & INDEXED) == 0 && args.length == 0) {
 			return (Sort) mSorts;
-		UnifyHash<Sort> sortCache = (UnifyHash<Sort>) mSorts;
-		int hash = Arrays.hashCode(indices) ^ Arrays.hashCode(args);
-		for (Sort sort : sortCache.iterateHashCode(hash)) {
+		}
+		final UnifyHash<Sort> sortCache = (UnifyHash<Sort>) mSorts;
+		final int hash = Arrays.hashCode(indices) ^ Arrays.hashCode(args);
+		for (final Sort sort : sortCache.iterateHashCode(hash)) {
 			if (Arrays.equals(sort.getArguments(), args)
 				&& Arrays.equals(sort.getIndices(), indices)) {
 				return sort;
 			}
 		}
-		Sort sort = new Sort(this, indices, args);
+		final Sort sort = new Sort(this, indices, args);
 		sortCache.put(hash, sort);
 		return sort;
 	}
@@ -209,6 +213,7 @@ public class SortSymbol {
 		return (mFlags & ARRAY) != 0;
 	}
 	
+	@Override
 	public int hashCode() {
 		return mName.hashCode();
 	}

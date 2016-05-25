@@ -60,15 +60,15 @@ public class AutomataScriptParser implements ISource {
 	private IUltimateServiceProvider mServices;
 
 	private IElement parseFile(File file) throws Exception {
-		Lexer lexer = new Lexer(new FileReader(file));
-		Parser parser = new Parser(lexer, mLogger);
+		final Lexer lexer = new Lexer(new FileReader(file));
+		final Parser parser = new Parser(lexer, mLogger);
 		parser.setFileName(file.getName());
 		parser.setFilePath(file.getAbsolutePath());
 
 		Object result = null;
 		try {
 			result = parser.parse().value;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			ILocation location = parser.getErrorLocation();
 			if (location == null) {
 				mLogger.debug("Error without location");
@@ -89,19 +89,19 @@ public class AutomataScriptParser implements ISource {
 
 		mLogger.debug("'" + file.getName() + "' successfully parsed");
 		if (result instanceof AutomataTestFileAST) {
-			AutomataTestFileAST ats = (AutomataTestFileAST) result;
-			AutomataDefinitionsAST autDefs = ats.getAutomataDefinitions();
+			final AutomataTestFileAST ats = (AutomataTestFileAST) result;
+			final AutomataDefinitionsAST autDefs = ats.getAutomataDefinitions();
 			// parser contains files to parse, if the operation
 			// parseAutomata(pathToFile) was called at least
 			// once.
 			if (parser.containsOtherAutomataFilesToParse()) {
-				String baseDir = parser.getFilePath()
+				final String baseDir = parser.getFilePath()
 						.substring(0, parser.getFilePath().lastIndexOf(File.separator) + 1);
-				List<AutomatonAST> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(
+				final List<AutomatonAST> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(
 						parser.getFilesToParse(), baseDir);
 				// Check if automata from other files, were already defined in
 				// current file.
-				for (AutomatonAST a : automataDefinitionsFromOtherFiles) {
+				for (final AutomatonAST a : automataDefinitionsFromOtherFiles) {
 					if (autDefs.hasAutomaton(a)) {
 						mLogger.debug("Automaton \"" + a.getName() + "\" was already declared in file \""
 								+ file.getName() + "\".");
@@ -129,10 +129,10 @@ public class AutomataScriptParser implements ISource {
 	 * @return list of automata, which are parsed from given files.
 	 */
 	private List<AutomatonAST> parseAutomataDefinitions(List<String> filesToParse, String baseDir) {
-		List<AutomatonAST> parsedAutomata = new ArrayList<AutomatonAST>();
-		for (String fileToParse : filesToParse) {
+		final List<AutomatonAST> parsedAutomata = new ArrayList<AutomatonAST>();
+		for (final String fileToParse : filesToParse) {
 			Lexer lexer = null;
-			String fileSeparatorOfFileToParse = getFileSeparator(fileToParse);
+			final String fileSeparatorOfFileToParse = getFileSeparator(fileToParse);
 			File file = null;
 			if (fileSeparatorOfFileToParse != null) {
 				file = openFile(adaptFileSeparators(fileToParse, fileSeparatorOfFileToParse), baseDir);
@@ -146,26 +146,26 @@ public class AutomataScriptParser implements ISource {
 			}
 			try {
 				lexer = new Lexer(new FileReader(file));
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				mLogger.debug("File \"" + fileToParse + "\" doesn't exist or couldn't open!");
 				continue;
 			}
-			Parser p = new Parser(lexer,mLogger);
+			final Parser p = new Parser(lexer,mLogger);
 			p.setFileName(fileToParse);
 			p.setFilePath(fileToParse);
 			Object result = null;
 			try {
 				result = p.parse().value;
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				mLogger.debug("Parsing file \"" + fileToParse + "\" failed!");
 				continue;
 			}
 			if ((result != null) && (result instanceof AutomataTestFileAST)) {
-				AutomataTestFileAST ats = (AutomataTestFileAST) result;
+				final AutomataTestFileAST ats = (AutomataTestFileAST) result;
 				if (!ats.getAutomataDefinitions().isEmpty()) {
-					List<AutomatonAST> newAutomataDefinitions = ats.getAutomataDefinitions()
+					final List<AutomatonAST> newAutomataDefinitions = ats.getAutomataDefinitions()
 							.getListOfAutomataDefinitions();
-					for (AutomatonAST a : newAutomataDefinitions) {
+					for (final AutomatonAST a : newAutomataDefinitions) {
 						if (parsedAutomata.contains(a)) {
 							mLogger.debug("Automaton \"" + a.getName() + "\" from file \"" + fileToParse
 									+ " already declared in other file.");
@@ -270,7 +270,7 @@ public class AutomataScriptParser implements ISource {
 		if (mServices == null) {
 			throw new IllegalStateException();
 		}
-		SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
+		final SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 		mLogger.info(shortMessage + " " + longMessage);
 	}
@@ -283,8 +283,8 @@ public class AutomataScriptParser implements ISource {
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, this.mFileNames);
-		} catch (Exception ex) {
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
+		} catch (final Exception ex) {
 			mLogger.fatal(ex.getMessage());
 			return null;
 		}
@@ -306,7 +306,7 @@ public class AutomataScriptParser implements ISource {
 
 	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -316,9 +316,10 @@ public class AutomataScriptParser implements ISource {
 
 	@Override
 	public boolean parseable(File file) {
-		for (String s : getFileTypes()) {
-			if (file.getName().endsWith(s))
+		for (final String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
 				return true;
+			}
 		}
 		return false;
 	}

@@ -67,19 +67,19 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 				mOperand.getReturnAlphabet(), mStateFactory);
 		
 		final ResultStateConstructor resStateConstructor = new ResultStateConstructor();
-		for (STATE inputState : mOperand.getStates()) {
+		for (final STATE inputState : mOperand.getStates()) {
 			final STATE resultState = resStateConstructor.getOrConstructResultState(inputState); 
-			for (OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(inputState)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 				mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
 			}
 			
-			for (OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(inputState)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 				mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
 			}
 			
-			for (OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(inputState)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 				final STATE resultHierPred = resStateConstructor.getOrConstructResultState(trans.getHierPred());
 				mResult.addReturnTransition(resultState, resultHierPred, trans.getLetter(), resultSucc);

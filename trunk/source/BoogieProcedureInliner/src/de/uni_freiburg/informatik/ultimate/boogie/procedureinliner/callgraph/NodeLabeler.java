@@ -44,7 +44,7 @@ import java.util.Set;
  */
 public class NodeLabeler {
 
-	private Collection<String> mEntryProcedures;
+	private final Collection<String> mEntryProcedures;
 	
 	private Map<String, CallGraphNode> mCallGraph;
 	private Set<CallGraphEdgeLabel> mVisitedEdges;
@@ -69,8 +69,8 @@ public class NodeLabeler {
 	public Set<String> label(Map<String, CallGraphNode> callGraph) {
 		reset();
 		mCallGraph = callGraph;
-		for (String entryId : mEntryProcedures) {
-			CallGraphNode entryNode = callGraph.get(entryId);
+		for (final String entryId : mEntryProcedures) {
+			final CallGraphNode entryNode = callGraph.get(entryId);
 			if (entryNode != null) {
 				entryNode.setLabel(CallGraphNodeLabel.ENTRY);
 				mEntryAndReEntryProcedures.add(entryId);
@@ -88,14 +88,15 @@ public class NodeLabeler {
 	}
 
 	private void visitChilds(CallGraphNode source) {
-		Iterator<CallGraphEdgeLabel> arcs = source.getOutgoingEdgeLabels().iterator();
-		Iterator<CallGraphNode> targets = source.getOutgoingNodes().iterator();
+		final Iterator<CallGraphEdgeLabel> arcs = source.getOutgoingEdgeLabels().iterator();
+		final Iterator<CallGraphNode> targets = source.getOutgoingNodes().iterator();
 		while (arcs.hasNext() && targets.hasNext()) {
-			CallGraphNode target = targets.next();
-			CallGraphEdgeLabel arc = arcs.next();
-			boolean arcAlreadyVisited = !mVisitedEdges.add(arc);
-			if (arcAlreadyVisited || target.getLabel() != null)
+			final CallGraphNode target = targets.next();
+			final CallGraphEdgeLabel arc = arcs.next();
+			final boolean arcAlreadyVisited = !mVisitedEdges.add(arc);
+			if (arcAlreadyVisited || target.getLabel() != null) {
 				continue;
+			}
 			if (!arc.getInlineFlag()) {
 				target.setLabel(CallGraphNodeLabel.RE_ENTRY);
 				mEntryAndReEntryProcedures.add(target.getId());
@@ -105,7 +106,7 @@ public class NodeLabeler {
 	}
 	
 	private void labelNonLabeledNodesAsDead() {
-		for (CallGraphNode node : mCallGraph.values()) {
+		for (final CallGraphNode node : mCallGraph.values()) {
 			if (node.getLabel() == null) {
 				node.setLabel(CallGraphNodeLabel.DEAD);
 			}

@@ -83,8 +83,9 @@ public class Node {
     /**
      * Returns a textual description of this object.
      */
-    public String toString() {
-        StringBuffer sb = new StringBuffer();
+    @Override
+	public String toString() {
+        final StringBuffer sb = new StringBuffer();
         sb.append("Node").append('[');
         sb.append(name);
         sb.append(',').append(parent);
@@ -98,7 +99,9 @@ public class Node {
         } else {
             sb.append('[');
             for(int i1 = 0; i1 < parameters.length; i1++) {
-                if (i1 > 0) sb.append(',');
+                if (i1 > 0) {
+					sb.append(',');
+				}
                     sb.append(parameters[i1]);
             }
             sb.append(']');

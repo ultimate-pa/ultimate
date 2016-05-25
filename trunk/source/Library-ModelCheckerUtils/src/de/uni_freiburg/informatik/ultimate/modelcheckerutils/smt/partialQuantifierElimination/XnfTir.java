@@ -93,15 +93,15 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
 			List<Term> nextDisjuncts = new ArrayList<Term>();
-			TermVariable eliminatee = it.next();
+			final TermVariable eliminatee = it.next();
 			if (!eliminatee.getSort().isNumericSort()) {
 				// this technique is not applicable
 				nextDisjuncts = currentDisjuncts;
 				continue;
 			}
 			boolean unableToRemoveEliminatee = false;
-			for (Term oldDisjunct : currentDisjuncts) {
-				List<Term> elimResultDisjuncts = tryToEliminate_singleDisjuct(quantifier, oldDisjunct, eliminatee);
+			for (final Term oldDisjunct : currentDisjuncts) {
+				final List<Term> elimResultDisjuncts = tryToEliminate_singleDisjuct(quantifier, oldDisjunct, eliminatee);
 				if (elimResultDisjuncts == null) {
 					// unable to eliminate
 					unableToRemoveEliminatee = true;
@@ -124,8 +124,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 	private List<Term> tryToEliminate_singleDisjuct(int quantifier, Term disjunct,
 			TermVariable eliminatee) {
-		Term[] conjuncts = PartialQuantifierElimination.getXjunctsInner(quantifier, disjunct);
-		List<Term> result = tryToEliminate_Conjuncts(quantifier, conjuncts, eliminatee);
+		final Term[] conjuncts = PartialQuantifierElimination.getXjunctsInner(quantifier, disjunct);
+		final List<Term> result = tryToEliminate_Conjuncts(quantifier, conjuncts, eliminatee);
 //		Following lines used for debugging - remove them
 //		Term term = SmtUtils.or(mScript, (Collection<Term>) result);
 //		term = SmtUtils.simplify(mScript, term, mServices);
@@ -136,13 +136,13 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	
 	private List<Term> tryToEliminate_Conjuncts(int quantifier, Term[] inputAtoms,
 			TermVariable eliminatee) {
-		List<Term> termsWithoutEliminatee = new ArrayList<Term>();
-		List<Bound> upperBounds = new ArrayList<Bound>();
-		List<Bound> lowerBounds = new ArrayList<Bound>();
-		List<Term> antiDer = new ArrayList<Term>();
+		final List<Term> termsWithoutEliminatee = new ArrayList<Term>();
+		final List<Bound> upperBounds = new ArrayList<Bound>();
+		final List<Bound> lowerBounds = new ArrayList<Bound>();
+		final List<Term> antiDer = new ArrayList<Term>();
 
 		
-		for (Term term : inputAtoms) {
+		for (final Term term : inputAtoms) {
 			if (!Arrays.asList(term.getFreeVars()).contains(eliminatee)) {
 				termsWithoutEliminatee.add(term);
 			} else {
@@ -158,7 +158,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 						throw new AssertionError("unknown quantifier");
 					}
 					 rel = new AffineRelation(mScript, term, transform);
-				} catch (NotAffineException e) {
+				} catch (final NotAffineException e) {
 					// no chance to eliminate the variable
 					return null;
 				}
@@ -168,7 +168,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				}
 				try {
 					eliminateeOnLhs = rel.onLeftHandSideOnly(mScript, eliminatee);
-				} catch (NotAffineException e) {
+				} catch (final NotAffineException e) {
 					// no chance to eliminate the variable
 					return null;
 				}
@@ -178,7 +178,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				try {
-					BinaryNumericRelation bnr = new BinaryNumericRelation(eliminateeOnLhs);
+					final BinaryNumericRelation bnr = new BinaryNumericRelation(eliminateeOnLhs);
 					switch (bnr.getRelationSymbol()) {
 					case DISTINCT:
 						if (quantifier == QuantifiedFormula.EXISTS) {
@@ -211,20 +211,20 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					default:
 						throw new AssertionError();
 					}
-				} catch (NoRelationOfThisKindException e) {
+				} catch (final NoRelationOfThisKindException e) {
 					throw new AssertionError();
 				}
 			}
 		}
-		BuildingInstructions bi = new BuildingInstructions(quantifier,
+		final BuildingInstructions bi = new BuildingInstructions(quantifier,
 				eliminatee.getSort(),
 				termsWithoutEliminatee, 
 				upperBounds, 
 				lowerBounds, 
 				antiDer);
-		List<Term> resultAtoms = new ArrayList<Term>();
-		for (Bound lowerBound : lowerBounds) {
-			for (Bound upperBound : upperBounds) {
+		final List<Term> resultAtoms = new ArrayList<Term>();
+		for (final Bound lowerBound : lowerBounds) {
+			for (final Bound upperBound : upperBounds) {
 				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
 			}
 		}
@@ -232,12 +232,12 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final List<Term> resultDisjunctions;
 		if (antiDer.isEmpty()) {
 			resultDisjunctions = new ArrayList<Term>();
-			Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
+			final Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
 			resultDisjunctions.add(tmp);
 		} else {
 			resultAtoms.add(bi.computeAdDisjunction());
-			Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
+			final Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = (new Dnf(mScript, mServices, mFreshTermVariableConstructor)).transform(tmp);
@@ -256,9 +256,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	 * 	@return true iff tv is subterm of some select term in term. 
 	 */
 	private boolean occursInsideSelectTerm(Term term, TermVariable tv) {
-		List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
-		for (MultiDimensionalSelect mds : selectTerms) {
-			for (Term index : mds.getIndex()) {
+		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
+		for (final MultiDimensionalSelect mds : selectTerms) {
+			for (final Term index : mds.getIndex()) {
 				if (Arrays.asList(index.getFreeVars()).contains(tv)) {
 					return true;
 				}
@@ -274,11 +274,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	private Term buildInequality(String symbol, Term lhs, Term rhs) {
-		Term term = mScript.term(symbol, lhs, rhs);
+		final Term term = mScript.term(symbol, lhs, rhs);
 		AffineRelation rel;
 		try {
 			rel = new AffineRelation(mScript, term);
-		} catch (NotAffineException e) {
+		} catch (final NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}
 		return rel.positiveNormalForm(mScript);
@@ -297,12 +297,12 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
-		String symbol = (isStrict ? "<" : "<=");
-		Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
+		final String symbol = (isStrict ? "<" : "<=");
+		final Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
 		AffineRelation rel;
 		try {
 			rel = new AffineRelation(mScript, term);
-		} catch (NotAffineException e) {
+		} catch (final NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}
 		return rel.positiveNormalForm(mScript);
@@ -330,35 +330,35 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		
 
 		Term computeAdDisjunction() {
-			ArrayList<Term> resultXJuncts = new ArrayList<Term>();
+			final ArrayList<Term> resultXJuncts = new ArrayList<Term>();
 			for (int i=0; i<Math.pow(2,mantiDer.size()); i++) {
-				ArrayList<Term> resultAtoms = new ArrayList<Term>();
-				ArrayList<Bound> adLowerBounds = new ArrayList<Bound>();
-				ArrayList<Bound> adUpperBounds = new ArrayList<Bound>();
+				final ArrayList<Term> resultAtoms = new ArrayList<Term>();
+				final ArrayList<Bound> adLowerBounds = new ArrayList<Bound>();
+				final ArrayList<Bound> adUpperBounds = new ArrayList<Bound>();
 				for (int k=0; k<mantiDer.size(); k++) {
 					// zero means lower -  one means upper
 					if (BigInteger.valueOf(i).testBit(k)) {
-						Bound upperBound = computeBound(mantiDer.get(k), 
+						final Bound upperBound = computeBound(mantiDer.get(k), 
 								mquantifier, BoundType.UPPER);
 						adUpperBounds.add(upperBound);
 					} else {
-						Bound lowerBound = computeBound(mantiDer.get(k), 
+						final Bound lowerBound = computeBound(mantiDer.get(k), 
 								mquantifier, BoundType.LOWER);
 						adLowerBounds.add(lowerBound);
 
 					}
 				}
 				
-				for (Bound adLower : adLowerBounds) {
-					for (Bound adUpper : adUpperBounds) {
+				for (final Bound adLower : adLowerBounds) {
+					for (final Bound adUpper : adUpperBounds) {
 						resultAtoms.add(buildInequality(mquantifier, adLower, adUpper));
 					}
-					for (Bound upperBound : mUpperBounds) {
+					for (final Bound upperBound : mUpperBounds) {
 						resultAtoms.add(buildInequality(mquantifier, adLower, upperBound));
 					}
 				}
-				for (Bound adUpper : adUpperBounds) {
-					for (Bound lowerBound : mLowerBounds) {
+				for (final Bound adUpper : adUpperBounds) {
+					for (final Bound lowerBound : mLowerBounds) {
 						resultAtoms.add(buildInequality(mquantifier, lowerBound, adUpper));
 					}
 				}
@@ -383,7 +383,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					throw new AssertionError("unknown quantifier");
 				}
 			} else if (term.getSort().getName().equals("Int")) {
-				Term one = mScript.numeral(BigInteger.ONE);
+				final Term one = mScript.numeral(BigInteger.ONE);
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					// transform terms such that
 					//     lower < x /\ x < upper
@@ -442,8 +442,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		 */
 		private ArrayList<Term> add(ArrayList<Term> terms, Term summand) {
 			assert summand.getSort().getName().equals("Int");
-			ArrayList<Term> result = new ArrayList<Term>();
-			for (Term term : terms) {
+			final ArrayList<Term> result = new ArrayList<Term>();
+			for (final Term term : terms) {
 				assert term.getSort().getName().equals("Int");
 				result.add(mScript.term("+", term, summand));
 			}

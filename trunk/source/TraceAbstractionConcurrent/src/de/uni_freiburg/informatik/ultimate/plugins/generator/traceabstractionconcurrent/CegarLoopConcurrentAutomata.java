@@ -38,7 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
@@ -88,7 +87,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
+		final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
 				mServices, new InCaReAlphabet<CodeBlock>(mAbstraction), mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
@@ -101,8 +100,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 	@Override
 	protected void getInitialAbstraction() {
-		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref);
-		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mServices);
+		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref);
+		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mServices);
 		mAbstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -114,15 +113,15 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
-		Collection<IPredicate> states = automaton.getStates();
-		Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<Set<ProgramPoint>, Set<IPredicate>>();
-		for (IPredicate p : states) {
-			IMLPredicate mp = (IMLPredicate) p;
+		final Collection<IPredicate> states = automaton.getStates();
+		final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<Set<ProgramPoint>, Set<IPredicate>>();
+		for (final IPredicate p : states) {
+			final IMLPredicate mp = (IMLPredicate) p;
 			pigeonHole(pp2p, mp);
 		}
-		Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
-		for (Set<ProgramPoint> pps : pp2p.keySet()) {
-			Set<IPredicate> statesWithSamePP = pp2p.get(pps);
+		final Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+		for (final Set<ProgramPoint> pps : pp2p.keySet()) {
+			final Set<IPredicate> statesWithSamePP = pp2p.get(pps);
 			partition.add(statesWithSamePP);
 		}
 		mLogger.info("Finished computation of initial partition.");
@@ -152,26 +151,26 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
+		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
-		PredicateFactoryForInterpolantAutomata predicateFactory = (PredicateFactoryForInterpolantAutomata) mAbstraction.getStateFactory();
+		final PredicateFactoryForInterpolantAutomata predicateFactory = (PredicateFactoryForInterpolantAutomata) mAbstraction.getStateFactory();
 
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
-		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
-		Map<IPredicate, IPredicate> context2entry = null;
-		IHoareTripleChecker htc = getEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(), 
+		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+		final Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
+		final Map<IPredicate, IPredicate> context2entry = null;
+		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(), 
 				mSmtManager, mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 //		assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
+		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				mServices, mSmtManager, mModGlobVarManager, htc, oldAbstraction, mInterpolAutomaton,
 				mInterpolantGenerator.getPredicateUnifier(), mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
-		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
@@ -189,7 +188,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		if (REMOVE_DEAD_ENDS) {
 			if (mComputeHoareAnnotation) {
-				Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
+				final Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
 				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 			}
 			diff.removeDeadEnds();
@@ -198,17 +197,17 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			}
 		}
 
-		mAbstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+		mAbstraction = diff.getResult();
 		// mDeadEndRemovalTime = diff.getDeadEndRemovalTime();
 		if (mPref.dumpAutomata()) {
-			String filename = "InterpolantAutomaton_Iteration" + mIteration;
+			final String filename = "InterpolantAutomaton_Iteration" + mIteration;
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
 		mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
-		Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.minimize();
 		switch (minimization) {
 		case NONE:
 			break;
@@ -220,7 +219,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			throw new AssertionError();
 		}
 
-		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
+		final boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
 		if (stillAccepted) {

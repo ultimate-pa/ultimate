@@ -77,7 +77,7 @@ public class LiteralCollection {
 	}
 
 	private BigDecimal getNextNumberPositive(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator();
+		final ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator();
 
 		while (it.hasNext()) {
 			final BigDecimal current = it.next();
@@ -91,7 +91,7 @@ public class LiteralCollection {
 	}
 
 	private BigDecimal getNextNumberNegative(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator(mSortedNumbersSet.size());
+		final ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator(mSortedNumbersSet.size());
 
 		while (it.hasPrevious()) {
 			final BigDecimal current = it.previous();

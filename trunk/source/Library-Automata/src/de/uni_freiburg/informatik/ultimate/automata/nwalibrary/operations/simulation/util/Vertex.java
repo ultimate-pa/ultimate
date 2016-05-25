@@ -130,26 +130,35 @@ public class Vertex<LETTER, STATE> {
 	 */
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		@SuppressWarnings("rawtypes")
+		final
 		Vertex other = (Vertex) obj;
-		if (b != other.b)
+		if (b != other.b) {
 			return false;
+		}
 		if (q0 == null) {
-			if (other.q0 != null)
+			if (other.q0 != null) {
 				return false;
-		} else if (!q0.equals(other.q0))
+			}
+		} else if (!q0.equals(other.q0)) {
 			return false;
+		}
 		if (q1 == null) {
-			if (other.q1 != null)
+			if (other.q1 != null) {
 				return false;
-		} else if (!q1.equals(other.q1))
+			}
+		} else if (!q1.equals(other.q1)) {
 			return false;
+		}
 		return true;
 	}
 

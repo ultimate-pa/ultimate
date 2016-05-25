@@ -51,19 +51,19 @@ public class ConnectionPartition {
 	List<Term> mTermWithoutTvs = new ArrayList<Term>();
 	
 	public ConnectionPartition(Collection<Term> parameters) {
-		for (Term term : parameters) {
+		for (final Term term : parameters) {
 			addTerm(term);
 		}
 	}
 
 	private void addTerm(Term term) {
-		Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
+		final Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
 		if (symbols.size() == 0) {
 			mTermWithoutTvs.add(term);
 			return;
 		}
 		NonTheorySymbol<?> last = null;
-		for (NonTheorySymbol<?> symbol : symbols) {
+		for (final NonTheorySymbol<?> symbol : symbols) {
 			add(term, symbol);
 			if (unionFind.find(symbol) == null) {
 				unionFind.makeEquivalenceClass(symbol);
@@ -109,7 +109,7 @@ public class ConnectionPartition {
 
 					@Override
 					public Set<Term> next() {
-						Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(mIt.next());
+						final Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(mIt.next());
 						return getTermsOfConnectedVariables(eqMembers);
 					}
 
@@ -124,8 +124,8 @@ public class ConnectionPartition {
 	}
 	
 	Set<Term> getTermsOfConnectedVariables(Set<NonTheorySymbol<?>> eqMembers) {
-		Set<Term> result = new HashSet<Term>();
-		for (NonTheorySymbol<?> symbol : eqMembers) {
+		final Set<Term> result = new HashSet<Term>();
+		for (final NonTheorySymbol<?> symbol : eqMembers) {
 			result.addAll(mSymbol2Terms.get(symbol));
 		}
 		return result;

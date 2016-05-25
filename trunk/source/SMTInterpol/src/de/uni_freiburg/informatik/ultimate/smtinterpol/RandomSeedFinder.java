@@ -27,11 +27,12 @@ public final class RandomSeedFinder {
 	}
 	
 	private static boolean testSeed(long seed, int timesTillRandomSplit) {
-		Random random = new Random(seed);
+		final Random random = new Random(seed);
 		for (int i = 0; i < timesTillRandomSplit; ++i) {
-			int val = random.nextInt(Config.RANDOM_SPLIT_BASE);
-			if (val <= Config.RANDOM_SPLIT_FREQ)
+			final int val = random.nextInt(Config.RANDOM_SPLIT_BASE);
+			if (val <= Config.RANDOM_SPLIT_FREQ) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -41,11 +42,12 @@ public final class RandomSeedFinder {
 	 */
 	public static void main(String[] args) {
 		if (args.length == 1) {
-			int timesTillRandomSplit = Integer.parseInt(args[0]);
-			if (testSeed(Config.RANDOM_SEED, timesTillRandomSplit))
+			final int timesTillRandomSplit = Integer.parseInt(args[0]);
+			if (testSeed(Config.RANDOM_SEED, timesTillRandomSplit)) {
 				System.out.println("Current seed is good...");
-			else
+			} else {
 				System.out.println("Current seed is bad...");
+			}
 			// This might take a while...
 			for (long seed = 0; seed < Long.MAX_VALUE; ++seed) {
 				if (testSeed(seed, timesTillRandomSplit)) {

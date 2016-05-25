@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility functions for BigDecimal calculations, i.e.
@@ -36,9 +36,9 @@ public class NumUtil {
 	 * @throws ArithmeticException if {@code b = 0}
 	 */
 	public static BigDecimal euclideanDivision(BigDecimal a, BigDecimal b) {
-		BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
+		final BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
 		BigDecimal quotient = quotientAndRemainder[0];
-		BigDecimal remainder = quotientAndRemainder[1];
+		final BigDecimal remainder = quotientAndRemainder[1];
 		if (remainder.signum() != 0) {
 			if (a.signum() < 0) { // sig(a) != 0, since "remainder != 0"
 				if (b.signum() < 0) { // sig(b) != 0, since "a / 0" throws an exception
@@ -61,7 +61,7 @@ public class NumUtil {
 	 * @throws ArithmeticException if {@code b} is a not a divisor of {@code a}.
 	 */
 	public static BigDecimal exactDivison(BigDecimal a, BigDecimal b) {
-		BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
+		final BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
 		if (quotientAndRemainder[1].signum() == 0) {
 			return quotientAndRemainder[0];
 		}

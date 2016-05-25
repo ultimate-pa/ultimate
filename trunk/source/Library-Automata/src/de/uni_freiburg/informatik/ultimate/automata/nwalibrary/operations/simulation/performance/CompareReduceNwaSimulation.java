@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -122,62 +122,62 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
-		ILogger logger = getLogger();
-		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
+		final ILogger logger = getLogger();
+		final IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;
 		boolean outOfMemory = false;
 		Object method = null;
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer, logger,
+				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer, logger,
 						operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
+				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer, logger,
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer, logger,
 						operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger, useSCCs,
+				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger, operand,
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger, operand,
 						stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
+				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
-				long startTime = System.currentTimeMillis();
+				final long startTime = System.currentTimeMillis();
 				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
-				long startTime = System.currentTimeMillis();
+				final long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
-				long startTime = System.currentTimeMillis();
+				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaMaxSAT<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
-		} catch (AutomataOperationCanceledException e) {
+		} catch (final AutomataOperationCanceledException e) {
 			logger.info("Method timed out.");
 			timedOut = true;
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			e.printStackTrace();
-		} catch (OutOfMemoryError e) {
+		} catch (final OutOfMemoryError e) {
 			logger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
 		try {
 			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			e.printStackTrace();
 		}
 	}

@@ -64,17 +64,17 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	
 	@Override
 	protected void _init() {
-		for (ComposableTemplate t : mParts) {
+		for (final ComposableTemplate t : mParts) {
 			t.init(mtas);
 		}
 	}
 	
 	@Override
 	public String getName() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("lex(");
 		boolean first = true;
-		for (ComposableTemplate t : mParts) {
+		for (final ComposableTemplate t : mParts) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -88,14 +88,14 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<List<List<LinearInequality>>>> constraints =
+		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
 		// \/_i T_i^<
 		{
-			List<List<List<LinearInequality>>> disjunction =
+			final List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
-			for (ComposableTemplate t : mParts) {
+			for (final ComposableTemplate t : mParts) {
 				disjunction.add(t.getConstraintsDec(inVars, outVars));
 			}
 			constraints.add(disjunction);
@@ -103,7 +103,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		
 		// /\_{i<k-1} (T_i^≤ \/ \/_{j < i} T_j^<)
 		for (int i = 0; i < mParts.length - 1; ++i) {
-			List<List<List<LinearInequality>>> disjunction =
+			final List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
 			disjunction.add(mParts[i].getConstraintsNonInc(inVars, outVars));
 			for (int j = 0; j < i; ++j) {
@@ -112,7 +112,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 			constraints.add(disjunction);
 		}
 		
-		List<List<LinearInequality>> cnf =
+		final List<List<LinearInequality>> cnf =
 				TemplateComposition.distribute(constraints);
 		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
@@ -122,11 +122,11 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<List<List<LinearInequality>>>> constraints =
+		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		// /\_i (T_i^≤ \/ \/_{j < i} T_j^<)
 		for (int i = 0; i < mParts.length; ++i) {
-			List<List<List<LinearInequality>>> disjunction =
+			final List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
 			disjunction.add(mParts[i].getConstraintsNonInc(inVars, outVars));
 			for (int j = 0; j < i; ++j) {
@@ -135,7 +135,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 			constraints.add(disjunction);
 		}
 		
-		List<List<LinearInequality>> cnf =
+		final List<List<LinearInequality>> cnf =
 				TemplateComposition.distribute(constraints);
 		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
@@ -144,23 +144,23 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<List<List<LinearInequality>>>> constraints =
+		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
 		// /\_i T_i^{>0}
-		for (ComposableTemplate t : mParts) {
+		for (final ComposableTemplate t : mParts) {
 			constraints.add(Collections.singletonList(
 					t.getConstraintsBounded(inVars, outVars)));
 		}
 		
-		List<List<LinearInequality>> cnf =
+		final List<List<LinearInequality>> cnf =
 				TemplateComposition.distribute(constraints);
 		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
 	}
 
 	private List<String> blankAnnotations(int size) {
-		List<String> annotations = new ArrayList<String>(size);
+		final List<String> annotations = new ArrayList<String>(size);
 		for (int i = 0; i < size; ++i) {
 			annotations.add("");
 		}
@@ -170,7 +170,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsDec() {
 		// TODO
-		Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<RankVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsDec(empty, empty).size());
 	}
 
@@ -178,14 +178,14 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsNonInc() {
 		// TODO
-		Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<RankVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsNonInc(empty, empty).size());
 	}
 
 	@Override
 	public List<String> getAnnotationsBounded() {
 		// TODO
-		Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<RankVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsBounded(empty, empty).size());
 	}
 	
@@ -196,8 +196,8 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	
 	@Override
 	public Collection<Term> getVariables() {
-		List<Term> variables = new ArrayList<Term>();
-		for (ComposableTemplate t : mParts) {
+		final List<Term> variables = new ArrayList<Term>();
+		for (final ComposableTemplate t : mParts) {
 			variables.addAll(t.getVariables());
 		}
 		return variables;
@@ -205,7 +205,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public int getDegree() {
-		Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<RankVar, Term> empty = Collections.emptyMap();
 		return TemplateComposition.computeDegree(getConstraintsBounded(empty, empty))
 				+ TemplateComposition.computeDegree(getConstraintsDec(empty, empty));
 	}
@@ -213,7 +213,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		RankingFunction[] rfs = new RankingFunction[mParts.length];
+		final RankingFunction[] rfs = new RankingFunction[mParts.length];
 		for (int i = 0; i < mParts.length; ++i) {
 			rfs[i] = mParts[i].extractRankingFunction(val);
 		}

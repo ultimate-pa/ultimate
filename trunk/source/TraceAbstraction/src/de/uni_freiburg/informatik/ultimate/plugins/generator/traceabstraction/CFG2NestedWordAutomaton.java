@@ -83,13 +83,13 @@ public class CFG2NestedWordAutomaton {
 							RootNode rootNode,
 							StateFactory<IPredicate> tAContentFactory,
 							Collection<ProgramPoint> errorLocs) {
-		Set<ProgramPoint> initialNodes = new HashSet<ProgramPoint>();
-		Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
+		final Set<ProgramPoint> initialNodes = new HashSet<ProgramPoint>();
+		final Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 		
-		Map<ProgramPoint,IPredicate> nodes2States = 
+		final Map<ProgramPoint,IPredicate> nodes2States = 
 					new HashMap<ProgramPoint, IPredicate>();
 		
-		Map<String, Procedure> implementations = 
+		final Map<String, Procedure> implementations = 
 			rootNode.getRootAnnot().getBoogieDeclarations().getProcImplementation();
 		
 		if (implementations.containsKey(mStartProcedure)) {
@@ -104,11 +104,11 @@ public class CFG2NestedWordAutomaton {
 		mLogger.debug("Step: put all LocationNodes into mNodes");
 		
 		// put all LocationNodes into mNodes
-		LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
-		for (RCFGNode node : rootNode.getOutgoingNodes()) {
-			ProgramPoint locNode = (ProgramPoint) node;
+		final LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
+		for (final RCFGNode node : rootNode.getOutgoingNodes()) {
+			final ProgramPoint locNode = (ProgramPoint) node;
 			// add only LocationNodes of implementations
-			String procName = locNode.getProcedure();
+			final String procName = locNode.getProcedure();
 
 			if (implementations.containsKey(procName)) {
 				if (!mMainMode || procName.equals(mStartProcedure)) {
@@ -119,10 +119,10 @@ public class CFG2NestedWordAutomaton {
 			}
 		}
 		while (!queue.isEmpty()) {
-			ProgramPoint currentNode = queue.removeFirst();
+			final ProgramPoint currentNode = queue.removeFirst();
 			if (currentNode.getOutgoingNodes() != null) {
-				for (RCFGNode node : currentNode.getOutgoingNodes()) {
-					ProgramPoint nextNode = (ProgramPoint) node;
+				for (final RCFGNode node : currentNode.getOutgoingNodes()) {
+					final ProgramPoint nextNode = (ProgramPoint) node;
 					if ( !allNodes.contains(nextNode)) {
 						allNodes.add(nextNode);
 						queue.add(nextNode);
@@ -134,46 +134,47 @@ public class CFG2NestedWordAutomaton {
 		
 		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
-		Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
 		
-		for (ProgramPoint locNode : allNodes) {
-			if (locNode.getOutgoingNodes() != null)
-			for (RCFGEdge edge : locNode.getOutgoingEdges()) {
-				if (edge instanceof Call) {
-					if (mInterprocedural) {
-						callAlphabet.add( ((Call) edge));
-					}
-				} else if (edge instanceof Return) {
-					if (mInterprocedural) {
-						returnAlphabet.add( 
-								((Return) edge));
-					}
-				} else if (edge instanceof Summary) {
-					Summary summaryEdge = (Summary) edge;
-					Summary annot = summaryEdge;
-					if (annot.calledProcedureHasImplementation()) {
-						//do nothing if analysis is interprocedural
-						//add summary otherwise
-						if (!mInterprocedural) {
+		for (final ProgramPoint locNode : allNodes) {
+			if (locNode.getOutgoingNodes() != null) {
+				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
+					if (edge instanceof Call) {
+						if (mInterprocedural) {
+							callAlphabet.add( ((Call) edge));
+						}
+					} else if (edge instanceof Return) {
+						if (mInterprocedural) {
+							returnAlphabet.add( 
+									((Return) edge));
+						}
+					} else if (edge instanceof Summary) {
+						final Summary summaryEdge = (Summary) edge;
+						final Summary annot = summaryEdge;
+						if (annot.calledProcedureHasImplementation()) {
+							//do nothing if analysis is interprocedural
+							//add summary otherwise
+							if (!mInterprocedural) {
+								internalAlphabet.add(annot);
+							}
+						}
+						else {
 							internalAlphabet.add(annot);
 						}
+					} else if (edge instanceof CodeBlock) {
+						internalAlphabet.add(((CodeBlock) edge));
+					} else {
+						throw new UnsupportedOperationException("unknown edge" + edge);
 					}
-					else {
-						internalAlphabet.add(annot);
-					}
-				} else if (edge instanceof CodeBlock) {
-					internalAlphabet.add(((CodeBlock) edge));
-				} else {
-					throw new UnsupportedOperationException("unknown edge" + edge);
 				}
 			}
 		}
 		
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
-		NestedWordAutomaton<CodeBlock, IPredicate> nwa =
+		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
 			new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 					internalAlphabet,
 					callAlphabet,
@@ -182,12 +183,12 @@ public class CFG2NestedWordAutomaton {
 		
 		mLogger.debug("Step: add states");
 		// add states
-		for (ProgramPoint locNode : allNodes) {
-			boolean isInitial = initialNodes.contains(locNode);
-			boolean isErrorLocation = errorLocs.contains(locNode);
+		for (final ProgramPoint locNode : allNodes) {
+			final boolean isInitial = initialNodes.contains(locNode);
+			final boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
-			Term trueTerm = mSmtManager.getScript().term("true");
+			final Term trueTerm = mSmtManager.getScript().term("true");
 			if (mStoreHistory) {
 				automatonState = mSmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {
@@ -215,48 +216,49 @@ public class CFG2NestedWordAutomaton {
 		
 		mLogger.debug("Step: add transitions");
 		// add transitions
-		for (ProgramPoint locNode : allNodes) {
-			IPredicate state = 
+		for (final ProgramPoint locNode : allNodes) {
+			final IPredicate state = 
 				nodes2States.get(locNode);
-			if (locNode.getOutgoingNodes() != null)
-			for (RCFGEdge edge : locNode.getOutgoingEdges()) {
-				ProgramPoint succLoc = (ProgramPoint) edge.getTarget();
-				IPredicate succState = 
-					nodes2States.get(succLoc); 
-				if (edge instanceof Call) {
-					if (mInterprocedural) {
-						CodeBlock symbol = 
-								((Call) edge);
-							nwa.addCallTransition(state,symbol, succState);
-					}
-				} else if (edge instanceof Return) {
-					if (mInterprocedural) {
-						Return returnEdge = (Return) edge;
-						CodeBlock symbol = returnEdge;
-						ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
-						if (nodes2States.containsKey(callerLocNode)) {
-							nwa.addReturnTransition(state,
-								nodes2States.get(callerLocNode), symbol, succState);
-						} else {
-							mLogger.debug("Ommited insertion of " + symbol + 
-									" because callerNode" + callerLocNode + " is deadcode");
+			if (locNode.getOutgoingNodes() != null) {
+				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
+					final ProgramPoint succLoc = (ProgramPoint) edge.getTarget();
+					final IPredicate succState = 
+						nodes2States.get(succLoc); 
+					if (edge instanceof Call) {
+						if (mInterprocedural) {
+							final CodeBlock symbol = 
+									((Call) edge);
+								nwa.addCallTransition(state,symbol, succState);
 						}
-					}
-				} else if (edge instanceof Summary) {
-					Summary summaryEdge = (Summary) edge;
-					if (summaryEdge.calledProcedureHasImplementation()) {
-						if (!mInterprocedural) {
-							nwa.addInternalTransition(state,summaryEdge, succState);
+					} else if (edge instanceof Return) {
+						if (mInterprocedural) {
+							final Return returnEdge = (Return) edge;
+							final CodeBlock symbol = returnEdge;
+							final ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
+							if (nodes2States.containsKey(callerLocNode)) {
+								nwa.addReturnTransition(state,
+									nodes2States.get(callerLocNode), symbol, succState);
+							} else {
+								mLogger.debug("Ommited insertion of " + symbol + 
+										" because callerNode" + callerLocNode + " is deadcode");
+							}
 						}
+					} else if (edge instanceof Summary) {
+						final Summary summaryEdge = (Summary) edge;
+						if (summaryEdge.calledProcedureHasImplementation()) {
+							if (!mInterprocedural) {
+								nwa.addInternalTransition(state,summaryEdge, succState);
+							}
+						}
+						else {
+							nwa.addInternalTransition(state, summaryEdge, succState);
+						}
+					} else if (edge instanceof CodeBlock) {
+						final CodeBlock symbol = ((CodeBlock) edge);
+							nwa.addInternalTransition(state,symbol, succState);
+					} else {
+						throw new UnsupportedOperationException("unknown edge" + edge);
 					}
-					else {
-						nwa.addInternalTransition(state, summaryEdge, succState);
-					}
-				} else if (edge instanceof CodeBlock) {
-					CodeBlock symbol = ((CodeBlock) edge);
-						nwa.addInternalTransition(state,symbol, succState);
-				} else {
-					throw new UnsupportedOperationException("unknown edge" + edge);
 				}
 			}
 		}

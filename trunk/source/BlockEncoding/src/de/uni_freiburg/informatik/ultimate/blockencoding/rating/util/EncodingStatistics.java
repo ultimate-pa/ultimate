@@ -182,7 +182,7 @@ public class EncodingStatistics {
 	}
 	
 	public static String reportStatistics() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Total Rating Value: " + totalRCFGRating + "\n");
 		sb.append("Number of Edges in the RCFG: " + edgesInRCFG + "\n");
 		return sb.toString();

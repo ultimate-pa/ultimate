@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class CallSymbolAST {
-	private String mSymbol;
+	private final String mSymbol;
 	public CallSymbolAST(String sym) {
 		mSymbol = sym;
 	}

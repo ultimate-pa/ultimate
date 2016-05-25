@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePrefe
 public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferencePage
 		implements IWorkbenchPreferencePage {
 
-	private ScopedPreferenceStore mPreferenceStore;
+	private final ScopedPreferenceStore mPreferenceStore;
 
 	public LoggingExternalToolsPreferencePage() {
 		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, CorePreferenceInitializer.PLUGINID);
@@ -67,7 +67,7 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 
 	@Override
 	protected void setThePreference(String[] items) {
-		StringBuffer buffer = new StringBuffer();
+		final StringBuffer buffer = new StringBuffer();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
@@ -89,10 +89,10 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 	 * Converts ICorePreferenceStore.VALUE_DELIMITER_LOGGING_PREF delimited String to a String array.
 	 */
 	private static String[] convert(String preferenceValue) {
-		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
+		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
 				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
-		int tokenCount = tokenizer.countTokens();
-		String[] elements = new String[tokenCount];
+		final int tokenCount = tokenizer.countTokens();
+		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
 			elements[i] = tokenizer.nextToken();
 		}

@@ -143,21 +143,21 @@ public class AutomatonSccComputation<LETTER, STATE> {
 		@Override
 		public IteratorConcatenation<STATE> getSuccessors(final STATE state) {
 			
-			Iterator<STATE> internalTransitionsIterator = 
+			final Iterator<STATE> internalTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
 							mNestedWordAutomaton.internalSuccessors(state), mTransitionFilter.getInternalSuccessorPredicate()).iterator());
 			
-			Iterator<STATE> returnSummaryTransitionsIterator = 
+			final Iterator<STATE> returnSummaryTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
 							mNestedWordAutomaton.returnSummarySuccessor(state), mTransitionFilter.getReturnSummaryPredicate()).iterator());
 			
 			
-			Iterator<STATE> callTransitionsIterator = 
+			final Iterator<STATE> callTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
 							mNestedWordAutomaton.callSuccessors(state), mTransitionFilter.getCallSuccessorPredicate()).iterator());
 
 			
-			Iterator<STATE>[] iterators = (Iterator<STATE>[]) 
+			final Iterator<STATE>[] iterators = (Iterator<STATE>[]) 
 					new Iterator<?>[] { internalTransitionsIterator, returnSummaryTransitionsIterator, callTransitionsIterator };
 			return new IteratorConcatenation<STATE>(Arrays.asList(iterators));
 		}

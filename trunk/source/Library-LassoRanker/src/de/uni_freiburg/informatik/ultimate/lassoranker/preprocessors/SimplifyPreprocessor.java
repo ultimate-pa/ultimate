@@ -72,14 +72,14 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		final Term simplified;
 		if (mUseSMTInterpolForSimplification) {
-			Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
-			Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
+			final Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
+			final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
-			TermTransferrer towards = new TermTransferrer(simplificationScript);
-			Term foreign = towards.transform(tf.getFormula());
-			Term foreignsimplified = SmtUtils.simplify(simplificationScript, foreign, mServices);
+			final TermTransferrer towards = new TermTransferrer(simplificationScript);
+			final Term foreign = towards.transform(tf.getFormula());
+			final Term foreignsimplified = SmtUtils.simplify(simplificationScript, foreign, mServices);
 			simplificationScript.exit();
-			TermTransferrer back = new TermTransferrer(script);
+			final TermTransferrer back = new TermTransferrer(script);
 			simplified = back.transform(foreignsimplified);
 		} else {
 			simplified = SmtUtils.simplify(script, tf.getFormula(), mServices);

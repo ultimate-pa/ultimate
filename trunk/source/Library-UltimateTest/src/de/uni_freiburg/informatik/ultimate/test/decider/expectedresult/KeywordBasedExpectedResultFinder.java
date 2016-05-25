@@ -31,11 +31,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-
-import java.util.Set;
 
 /**
  * Find the expected result for a file using keywords that occur in
@@ -83,26 +82,26 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 
 	@Override
 	public void findExpectedResult(UltimateRunDefinition ultimateRunDefinition) {
-		File file = ultimateRunDefinition.selectPrimaryInputFile();
-		Set<OVERALL_RESULT> expectedResult = new HashSet<OVERALL_RESULT>();
+		final File file = ultimateRunDefinition.selectPrimaryInputFile();
+		final Set<OVERALL_RESULT> expectedResult = new HashSet<OVERALL_RESULT>();
 		if (file != null) {
-			String filename = file.getName();
-			for (Entry<String, OVERALL_RESULT> entry : mFilenameKeywords.entrySet()) {
+			final String filename = file.getName();
+			for (final Entry<String, OVERALL_RESULT> entry : mFilenameKeywords.entrySet()) {
 				if (filename.matches(entry.getKey())) {
 					expectedResult.add(entry.getValue());
 				}
 			}
-			String folder = file.getParent();
-			for (Entry<String, OVERALL_RESULT> entry : mPathKeywords.entrySet()) {
+			final String folder = file.getParent();
+			for (final Entry<String, OVERALL_RESULT> entry : mPathKeywords.entrySet()) {
 				if (folder.contains(entry.getKey())) {
 					expectedResult.add(entry.getValue());
 				}
 			}
-			String firstline = TestUtil.extractFirstLine(file);
+			final String firstline = TestUtil.extractFirstLine(file);
 			// 2015-10-04 Matthias: firstline != null is a workaround that I used
 			// for emtpy files (SV-COMP benchmark set contained empty files).
 			if (firstline != null) {
-				for (Entry<String, OVERALL_RESULT> entry : mFirstlineKeywords.entrySet()) {
+				for (final Entry<String, OVERALL_RESULT> entry : mFirstlineKeywords.entrySet()) {
 					if (firstline.contains(entry.getKey())) {
 						expectedResult.add(entry.getValue());
 					}

@@ -75,7 +75,7 @@ public final class VertexUpState<STATE> {
 		if (!(obj instanceof VertexUpState)) {
 			return false;
 		}
-		VertexUpState<?> other = (VertexUpState<?>) obj;
+		final VertexUpState<?> other = (VertexUpState<?>) obj;
 		if (mLeftUpState == null) {
 			if (other.mLeftUpState != null) {
 				return false;

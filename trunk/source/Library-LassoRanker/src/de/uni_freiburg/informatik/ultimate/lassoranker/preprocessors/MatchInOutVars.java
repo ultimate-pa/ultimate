@@ -75,9 +75,9 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 
 	private void addMissingInVars(TransFormulaLR tf) {
-		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
-				TermVariable inVar = mVariableManager.constructFreshTermVariable(
+				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);
@@ -87,9 +87,9 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 	
 	private void addMissingOutVars(TransFormulaLR tf) {
-		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
-				TermVariable inVar = mVariableManager.constructFreshTermVariable(
+				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);
@@ -107,7 +107,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	 * preprocessing steps.
 	 */
 	private boolean eachInVarHasOutVar(TransFormulaLR tf) {
-		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				assert false : "no outVar for inVar " + entry.getKey();
 				return false;

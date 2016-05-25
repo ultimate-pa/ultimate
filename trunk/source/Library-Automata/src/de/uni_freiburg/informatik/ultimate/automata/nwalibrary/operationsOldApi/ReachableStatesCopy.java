@@ -33,8 +33,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
@@ -111,24 +111,24 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	private void makeAutomatonTotal() {
-		STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
-		boolean isInitial = false; //mInput.getInitial().isEmpty();
-		boolean isFinal = mComplement;
+		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
+		final boolean isInitial = false; //mInput.getInitial().isEmpty();
+		final boolean isFinal = mComplement;
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
 		
-		for (STATE state : mTraversedNwa.getStates()) {
-			for (LETTER letter : mTraversedNwa.getInternalAlphabet()) {				
+		for (final STATE state : mTraversedNwa.getStates()) {
+			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {				
 				if (!mTraversedNwa.succInternal(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(state, letter, sinkState);
 				}
 			}
-			for (LETTER letter : mTraversedNwa.getCallAlphabet()) {				
+			for (final LETTER letter : mTraversedNwa.getCallAlphabet()) {				
 				if (!mTraversedNwa.succCall(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(state, letter, sinkState);
 				}
 			}
-			for (LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
-				for (STATE hier : mTraversedNwa.getStates()) {
+			for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
+				for (final STATE hier : mTraversedNwa.getStates()) {
 					if (!mTraversedNwa.succReturn(state,hier,symbol).iterator().hasNext()) {
 						((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(state, hier, symbol, sinkState);
 					}
@@ -156,9 +156,9 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		Collection<STATE> newInitialStates = new ArrayList<STATE>(mInput.getInitialStates().size());
-		for (STATE oldUpState : mInput.getInitialStates()) {
-			STATE newState = constructOrGetResState(oldUpState, true);
+		final Collection<STATE> newInitialStates = new ArrayList<STATE>(mInput.getInitialStates().size());
+		for (final STATE oldUpState : mInput.getInitialStates()) {
+			final STATE newState = constructOrGetResState(oldUpState, true);
 			newInitialStates.add(newState);
 		}
 		return newInitialStates;
@@ -171,7 +171,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		STATE newState = mold2new.get(oldUp);
 		if (newState == null) {
 			newState = oldUp;
-			boolean isAccepting = mInput.isFinal(oldUp) ^ mComplement;
+			final boolean isAccepting = mInput.isFinal(oldUp) ^ mComplement;
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isAccepting, newState);
 			mold2new.put(oldUp, newState);
 			mnew2old.put(newState, oldUp);
@@ -182,12 +182,12 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(DoubleDecker<STATE> doubleDecker) {
-		ArrayList<STATE> succs = new ArrayList<STATE>();
-		STATE newUpState = doubleDecker.getUp();
-		STATE oldUpState = mnew2old.get(newUpState);
-		for (LETTER symbol : mInput.lettersInternal(oldUpState)) {
-			for (STATE oldSucc : mInput.succInternal(oldUpState, symbol)) {
-				STATE newSucc = constructOrGetResState(oldSucc, false);
+		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final STATE newUpState = doubleDecker.getUp();
+		final STATE oldUpState = mnew2old.get(newUpState);
+		for (final LETTER symbol : mInput.lettersInternal(oldUpState)) {
+			for (final STATE oldSucc : mInput.succInternal(oldUpState, symbol)) {
+				final STATE newSucc = constructOrGetResState(oldSucc, false);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(newUpState, symbol, newSucc);
 				succs.add(newSucc);
 			}
@@ -197,18 +197,18 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	protected Collection<STATE> buildReturnSuccessors(DoubleDecker<STATE> doubleDecker) {
-		ArrayList<STATE> succs = new ArrayList<STATE>();
-		STATE newDownState = doubleDecker.getDown();
+		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final STATE newDownState = doubleDecker.getDown();
 		if (newDownState == mTraversedNwa.getEmptyStackState()) {
 			return succs;
 		}
-		STATE newUpState = doubleDecker.getUp();
-		STATE oldUpState = mnew2old.get(newUpState);
-		STATE oldDownState = mnew2old.get(newDownState);
+		final STATE newUpState = doubleDecker.getUp();
+		final STATE oldUpState = mnew2old.get(newUpState);
+		final STATE oldDownState = mnew2old.get(newDownState);
 
-		for (LETTER symbol : mInput.lettersReturn(oldUpState)) {
-			for (STATE oldSucc : mInput.succReturn(oldUpState, oldDownState, symbol)) {
-				STATE newSucc = constructOrGetResState(oldSucc, false);
+		for (final LETTER symbol : mInput.lettersReturn(oldUpState)) {
+			for (final STATE oldSucc : mInput.succReturn(oldUpState, oldDownState, symbol)) {
+				final STATE newSucc = constructOrGetResState(oldSucc, false);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newUpState, newDownState, symbol, newSucc);
 				succs.add(newSucc);
 			}
@@ -218,12 +218,12 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	protected Collection<STATE> buildCallSuccessors(DoubleDecker<STATE> doubleDecker) {
-		ArrayList<STATE> succs = new ArrayList<STATE>();
-		STATE newUpState = doubleDecker.getUp();
-		STATE oldUpState = mnew2old.get(newUpState);
-		for (LETTER symbol : mInput.lettersCall(oldUpState)) {
-			for (STATE oldSucc : mInput.succCall(oldUpState, symbol)) {
-				STATE newSucc = constructOrGetResState(oldSucc, false);
+		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final STATE newUpState = doubleDecker.getUp();
+		final STATE oldUpState = mnew2old.get(newUpState);
+		for (final LETTER symbol : mInput.lettersCall(oldUpState)) {
+			for (final STATE oldSucc : mInput.succCall(oldUpState, symbol)) {
+				final STATE newSucc = constructOrGetResState(oldSucc, false);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(newUpState, symbol, newSucc);
 				succs.add(newSucc);
 			}
@@ -232,6 +232,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
+	@Override
 	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}
@@ -253,10 +254,10 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 				}
 			} else {
 				// intersection of operand and result should be empty
-				INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
+				final INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 						(new IntersectDD<LETTER, STATE>(mServices, mInput, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-				INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = 
+				final INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = 
 						(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mInput)).getResult();
 				// should recognize same language as old computation
 				correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultSadd, mTraversedNwa, stateFactory) == null);

@@ -67,14 +67,14 @@ public class SMTPrettyPrinter {
 	private static String print(Term term, int indentation) {
 		assert(indentation >= 0);
 		
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (term instanceof ConstantTerm) {
 			return term.toString();
 		} else if (term instanceof TermVariable) {
 			return term.toString();
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
-			String fname = appt.getFunction().getName();
+			final ApplicationTerm appt = (ApplicationTerm) term;
+			final String fname = appt.getFunction().getName();
 			
 			if (appt.getParameters().length == 0) {
 				return fname;
@@ -93,7 +93,7 @@ public class SMTPrettyPrinter {
 			// Recursively convert parameters
 			sb.append("(");
 			boolean infix = false;
-			for (String infix_fname : s_infix_functions) {
+			for (final String infix_fname : s_infix_functions) {
 				if (fname.equals(infix_fname)) {
 					infix = true; // write the function symbol in infix notation
 				}
@@ -128,8 +128,8 @@ public class SMTPrettyPrinter {
 			}
 			sb.append(")");
 		} else if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm annot = (AnnotatedTerm) term;
-			for (Annotation a : annot.getAnnotations()) {
+			final AnnotatedTerm annot = (AnnotatedTerm) term;
+			for (final Annotation a : annot.getAnnotations()) {
 				indent(sb, indentation);
 				sb.append("{");
 				sb.append(a.getKey());

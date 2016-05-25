@@ -28,7 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -55,7 +56,7 @@ public class TAPreferences {
 	private final Concurrency mConcurrency;
 	private final boolean mSeperateViolationCheck = true;
 	private final HoareTripleChecks mHoareTripleChecks;
-	private RcpPreferenceProvider mPrefs;
+	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 
 	public enum Artifact {
@@ -75,9 +76,9 @@ public class TAPreferences {
 		FINITE_AUTOMATA, PETRI_NET
 	}
 
-	public TAPreferences() {
+	public TAPreferences(IUltimateServiceProvider services) {
 
-		mPrefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		mInterprocedural = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
@@ -158,7 +159,7 @@ public class TAPreferences {
 	}
 	
 	public String logicForExternalSolver() {
-		String logicForExternalSolver = mPrefs
+		final String logicForExternalSolver = mPrefs
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		return logicForExternalSolver;
 	}

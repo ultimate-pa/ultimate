@@ -34,9 +34,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -85,15 +85,15 @@ public class ProgramExecutionFormatter<TE, E> {
 		}
 
 		for (int i = 0; i < execution.getLength(); i++) {
-			String lineNumber = lineNumerColumn.get(i);
-			String stepInfo = stepInfoColum.get(i);
+			final String lineNumber = lineNumerColumn.get(i);
+			final String stepInfo = stepInfoColum.get(i);
 
 			addFixedLength(sb, lineNumber, lineNumberColumnLength, fillChar);
 			addFixedLength(sb, stepInfo, stepInfoColumLength, fillChar);
 			if (relevanceInfoColum != null) {
 				addFixedLength(sb, relevanceInfoColum.get(i), relevanceInfoColumnLength, fillChar);
 			}
-			AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
+			final AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
 			appendStepAsString(sb, currentATE, false);
 
 			sb.append(lineSeparator);
@@ -109,10 +109,10 @@ public class ProgramExecutionFormatter<TE, E> {
 	}
 
 	private void appendStepAsString(StringBuilder sb, AtomicTraceElement<TE> currentATE, boolean witness) {
-		TE currentStep = currentATE.getStep();
-		String str = mStringProvider.getStringFromStep(currentStep);
+		final TE currentStep = currentATE.getStep();
+		final String str = mStringProvider.getStringFromStep(currentStep);
 
-		boolean witnessMode = witness
+		final boolean witnessMode = witness
 				&& (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || currentATE
 						.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
 
@@ -138,7 +138,7 @@ public class ProgramExecutionFormatter<TE, E> {
 			return null;
 		}
 
-		List<E> keys = new ArrayList<>(programState.getVariables());
+		final List<E> keys = new ArrayList<>(programState.getVariables());
 		if (keys.size() == 0) {
 			return null;
 		}
@@ -151,14 +151,14 @@ public class ProgramExecutionFormatter<TE, E> {
 			}
 		});
 
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		int i = 0;
-		for (E variable : keys) {
+		for (final E variable : keys) {
 			i++;
-			String varName = mStringProvider.getStringFromExpression(variable);
-			Collection<E> values = programState.getValues(variable);
-			for (E value : values) {
+			final String varName = mStringProvider.getStringFromExpression(variable);
+			final Collection<E> values = programState.getValues(variable);
+			for (final E value : values) {
 				sb.append(varName);
 				sb.append("=");
 				sb.append(mStringProvider.getStringFromExpression(value));
@@ -180,7 +180,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		if (length <= 0) {
 			return "";
 		}
-		StringBuffer outputBuffer = new StringBuffer(length);
+		final StringBuffer outputBuffer = new StringBuffer(length);
 		for (int i = 0; i < length; i++) {
 			outputBuffer.append(string);
 		}
@@ -189,8 +189,8 @@ public class ProgramExecutionFormatter<TE, E> {
 
 	private int getMaxLength(List<String> lineNumerColumn) {
 		int max = 0;
-		for (String s : lineNumerColumn) {
-			int length = s.length();
+		for (final String s : lineNumerColumn) {
+			final int length = s.length();
 			if (length > max) {
 				max = length;
 			}
@@ -199,13 +199,13 @@ public class ProgramExecutionFormatter<TE, E> {
 	}
 
 	private List<String> getStepInfoColum(IProgramExecution<TE, E> execution) {
-		List<String> rtr = new ArrayList<>();
+		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < execution.getLength(); ++i) {
-			AtomicTraceElement<TE> elem = execution.getTraceElement(i);
+			final AtomicTraceElement<TE> elem = execution.getTraceElement(i);
 			if (elem.hasStepInfo(StepInfo.NONE)) {
 				rtr.add("");
 			} else {
-				String str = elem.getStepInfo().toString();
+				final String str = elem.getStepInfo().toString();
 				rtr.add(str.substring(1, str.length() - 1));
 			}
 		}
@@ -213,12 +213,12 @@ public class ProgramExecutionFormatter<TE, E> {
 	}
 
 	private List<String> getLineNumberColumn(IProgramExecution<TE, E> execution) {
-		List<String> rtr = new ArrayList<>();
+		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < execution.getLength(); ++i) {
-			AtomicTraceElement<TE> elem = execution.getTraceElement(i);
-			StringBuilder sb = new StringBuilder();
-			int start = mStringProvider.getStartLineNumberFromStep(elem.getStep());
-			int end = mStringProvider.getEndLineNumberFromStep(elem.getStep());
+			final AtomicTraceElement<TE> elem = execution.getTraceElement(i);
+			final StringBuilder sb = new StringBuilder();
+			final int start = mStringProvider.getStartLineNumberFromStep(elem.getStep());
+			final int end = mStringProvider.getEndLineNumberFromStep(elem.getStep());
 
 			if (start < 0) {
 				// skip this line number

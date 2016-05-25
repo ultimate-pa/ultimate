@@ -68,8 +68,8 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
-		Term normalized2 = (new CommuhashNormalForm(mServices, script)).transform(normalized1);
+		final Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
+		final Term normalized2 = (new CommuhashNormalForm(mServices, script)).transform(normalized1);
 		tf.setFormula(normalized2);
 		return tf;
 	}
@@ -86,29 +86,31 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 		@Override
 		protected void convert(Term term) {
 			if (term instanceof ConstantTerm) {
-				ConstantTerm ct = (ConstantTerm) term;
+				final ConstantTerm ct = (ConstantTerm) term;
 				if (ct.getValue() instanceof BigInteger) {
-					Rational rat = Rational.valueOf(
+					final Rational rat = Rational.valueOf(
 							(BigInteger) ct.getValue(), BigInteger.ONE); 
 					setResult(rat.toTerm(term.getSort()));
 				} else if (ct.getValue() instanceof BigDecimal) {
-					BigDecimal decimal = (BigDecimal) ct.getValue();
+					final BigDecimal decimal = (BigDecimal) ct.getValue();
 					Rational rat;
 					if (decimal.scale() <= 0) {
-						BigInteger num = decimal.toBigInteger();
+						final BigInteger num = decimal.toBigInteger();
 						rat = Rational.valueOf(num, BigInteger.ONE);
 					} else {
-						BigInteger num = decimal.unscaledValue();
-						BigInteger denom = BigInteger.TEN.pow(decimal.scale());
+						final BigInteger num = decimal.unscaledValue();
+						final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
 						rat = Rational.valueOf(num, denom);
 					}
 					setResult(rat.toTerm(term.getSort()));
-				} else if (ct.getValue() instanceof Rational)
+				} else if (ct.getValue() instanceof Rational) {
 					setResult(ct);
-				else
+				} else {
 					setResult(term);
-			} else
+				}
+			} else {
 				super.convert(term);
+			}
 		}
 		
 	}

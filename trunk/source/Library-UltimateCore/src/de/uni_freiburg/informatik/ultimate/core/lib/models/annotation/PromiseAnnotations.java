@@ -61,12 +61,13 @@ public class PromiseAnnotations implements IAnnotations {
 			mtarget = f;
 			mtarget.setAccessible(true);
 		}
+		@Override
 		public Object evaluate(PromiseAnnotations pa) {
 			try {
 				return mtarget.get(pa);
-			} catch (IllegalArgumentException e) {
+			} catch (final IllegalArgumentException e) {
 				e.printStackTrace(System.err);
-			} catch (IllegalAccessException e) {
+			} catch (final IllegalAccessException e) {
 				e.printStackTrace(System.err);
 			}
 			return null;
@@ -78,14 +79,15 @@ public class PromiseAnnotations implements IAnnotations {
 			mtarget = ma;
 			mtarget.setAccessible(true);
 		}
+		@Override
 		public Object evaluate(PromiseAnnotations pa) {
 			try {
 				return mtarget.invoke(pa, (Object[])null);
-			} catch (IllegalArgumentException e) {
+			} catch (final IllegalArgumentException e) {
 				e.printStackTrace(System.err);
-			} catch (IllegalAccessException e) {
+			} catch (final IllegalAccessException e) {
 				e.printStackTrace(System.err);
-			} catch (InvocationTargetException e) {
+			} catch (final InvocationTargetException e) {
 				e.printStackTrace(System.err);
 			}
 			return null;
@@ -94,7 +96,7 @@ public class PromiseAnnotations implements IAnnotations {
 	/**
 	 * Backing store for the representation.
 	 */
-	private Map<String, IPromise> mrep;
+	private final Map<String, IPromise> mrep;
 	/**
 	 * Default constructor to initialize the internal representation.
 	 */
@@ -110,11 +112,11 @@ public class PromiseAnnotations implements IAnnotations {
 	 */
 	public void registerVariable(String key,String varname) {
 		try {
-			Field f = getClass().getDeclaredField(varname);
+			final Field f = getClass().getDeclaredField(varname);
 			mrep.put(key, new MemberPromise(f));
-		} catch (SecurityException e) {
+		} catch (final SecurityException e) {
 			throw new RuntimeException(e);
-		} catch (NoSuchFieldException e) {
+		} catch (final NoSuchFieldException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -126,11 +128,11 @@ public class PromiseAnnotations implements IAnnotations {
 	 */
 	public void registerFunction(String key,String funname) {
 		try {
-			Method m = getClass().getDeclaredMethod(funname, (Class[])null);
+			final Method m = getClass().getDeclaredMethod(funname, (Class[])null);
 			mrep.put(key, new MemfunPromise(m));
-		} catch (SecurityException e) {
+		} catch (final SecurityException e) {
 			throw new RuntimeException(e);
-		} catch (NoSuchMethodException e) {
+		} catch (final NoSuchMethodException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -141,25 +143,26 @@ public class PromiseAnnotations implements IAnnotations {
 	 * removed.
 	 */
 	public void registerAllVariables() {
-		Field[] fields = getClass().getDeclaredFields();
-		for (Field f : fields) {
+		final Field[] fields = getClass().getDeclaredFields();
+		for (final Field f : fields) {
 			String key = f.getName();
 			// Remove coding convention prefix
-			if (key.length() > 2 && key.charAt(1) == '_')
+			if (key.length() > 2 && key.charAt(1) == '_') {
 				key = key.substring(2);
+			}
 			mrep.put(key,new MemberPromise(f));
 		}
 	}
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		return new AbstractMap<String, Object>() {
-			private Set<Entry<String, Object>> mentrySet = 
+			private final Set<Entry<String, Object>> mentrySet = 
 				new AbstractSet<Entry<String, Object>>() {
 
 				@Override
 				public Iterator<Entry<String, Object>> iterator() {
 					return new Iterator<Entry<String,Object>>() {
-						private Iterator<Entry<String,IPromise>> mit = 
+						private final Iterator<Entry<String,IPromise>> mit = 
 							mrep.entrySet().iterator(); 
 						@Override
 						public boolean hasNext() {
@@ -168,7 +171,7 @@ public class PromiseAnnotations implements IAnnotations {
 
 						@Override
 						public Entry<String, Object> next() {
-							Entry<String, IPromise> n = mit.next();
+							final Entry<String, IPromise> n = mit.next();
 							return 
 								new AbstractMap.SimpleImmutableEntry<String,Object>(
 										n.getKey(),

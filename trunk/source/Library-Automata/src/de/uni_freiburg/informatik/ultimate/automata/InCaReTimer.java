@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata;
 public class InCaReTimer {
 	
 	private long mInternal;
-	private long mCall;
-	private long mReturn;
+	private final long mCall;
+	private final long mReturn;
 	
 	private long mStartTime;
 	
@@ -90,13 +90,14 @@ public class InCaReTimer {
 	}
 	
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time/1000000000;
-		long tenthDigit = (time/100000000) % 10;
+		final long seconds = time/1000000000;
+		final long tenthDigit = (time/100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(prettyprintNanoseconds(mInternal));
 		sb.append("In");
 		sb.append(prettyprintNanoseconds(mCall));

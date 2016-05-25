@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
@@ -107,14 +107,14 @@ public final class AbstractInterpreter {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			return run(root, initials, timer, services, true);
-		} catch (OutOfMemoryError oom) {
+		} catch (final OutOfMemoryError oom) {
 			throw oom;
-		} catch (IllegalArgumentException iae) {
+		} catch (final IllegalArgumentException iae) {
 			throw iae;
-		} catch (ToolchainCanceledException tce) {
+		} catch (final ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
 			return null;
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
 			return null;
 		}
@@ -139,7 +139,7 @@ public final class AbstractInterpreter {
 			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
 					services, root.getRootAnnot());
 			return runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services);
-		} catch (ToolchainCanceledException tce) {
+		} catch (final ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
 			logger.warn("Abstract interpretation run out of time");
 			return null;
@@ -235,7 +235,7 @@ public final class AbstractInterpreter {
 			}
 			logger.info(result.getBenchmark());
 			return result;
-		} catch (ToolchainCanceledException c) {
+		} catch (final ToolchainCanceledException c) {
 			throw c;
 		}
 	}
@@ -303,8 +303,8 @@ public final class AbstractInterpreter {
 	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(RootNode root,
 			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
 			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		final String selectedDomain = ups.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
+		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// use the literal collector result if you need it
 		// new LiteralCollector(root).getResult();
@@ -314,9 +314,9 @@ public final class AbstractInterpreter {
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new SignDomain(services);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new IntervalDomain(logger, symbolTable, literalCollector.create().getLiteralCollection());
+			return new IntervalDomain(logger, symbolTable, literalCollector.create().getLiteralCollection(), services);
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new OctagonDomain(logger, symbolTable, literalCollector);
+			return new OctagonDomain(logger, symbolTable, literalCollector, services);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(root);
 			if (logger.isDebugEnabled()) {
@@ -328,22 +328,23 @@ public final class AbstractInterpreter {
 			return new CongruenceDomain(logger, symbolTable);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
 			@SuppressWarnings("rawtypes")
+			final
 			List<IAbstractDomain> domainList = new ArrayList<>();
-			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
+			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
 				domainList.add(new EmptyDomain<>());
 			}
-			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
+			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
 				domainList.add(new SignDomain(services));
 			}
-			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
+			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
 				domainList.add(new CongruenceDomain(logger, symbolTable));
 			}
-			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
-				domainList
-						.add(new IntervalDomain(logger, symbolTable, literalCollector.create().getLiteralCollection()));
+			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
+				domainList.add(new IntervalDomain(logger, symbolTable, literalCollector.create().getLiteralCollection(),
+						services));
 			}
-			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
-				domainList.add(new OctagonDomain(logger, symbolTable, literalCollector));
+			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
+				domainList.add(new OctagonDomain(logger, symbolTable, literalCollector, services));
 			}
 			return new CompoundDomain(services, domainList, rootAnnotation);
 		}

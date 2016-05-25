@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.external;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
  * Use this exception to signal that Ultimate encountered a serious error before

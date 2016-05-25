@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.Witnes
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Evaluate the overall result of a safety checker.
@@ -63,16 +63,17 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 	private SafetyCheckerOverallResult mOverallResult;
 	private Set<IResult> mMostSignificantResults;
 
+	@Override
 	public void evaluateOverallResult(IResultService resultService) {
-		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
-			for (IResult result : entry.getValue()) {
-				SafetyCheckerOverallResult category = detectResultCategory(result);
+		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+			for (final IResult result : entry.getValue()) {
+				final SafetyCheckerOverallResult category = detectResultCategory(result);
 				mCategory2Results.addPair(category, result);
 			}
 		}
 		//@formatter:off
 		//categories are ordered by priority, with the first being the lowest 
-		SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
+		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
 				SafetyCheckerOverallResult.SAFE,
 				SafetyCheckerOverallResult.TIMEOUT,
 				SafetyCheckerOverallResult.UNKNOWN,
@@ -87,7 +88,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		};
 		//@formatter:on
 
-		for (SafetyCheckerOverallResult category : categoriesOrderedBySignificance) {
+		for (final SafetyCheckerOverallResult category : categoriesOrderedBySignificance) {
 			if (mCategory2Results.getDomain().contains(category)) {
 				mOverallResult = category;
 			}
@@ -104,8 +105,8 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		if (result instanceof AllSpecificationsHoldResult) {
 			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof CounterExampleResult) {
-			CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
-			Spec spec = cer.getCheckedSpecification().getSpec();
+			final CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
+			final Spec spec = cer.getCheckedSpecification().getSpec();
 			switch (spec) {
 			case ARRAY_INDEX:
 			case MEMORY_DEREFERENCE:
@@ -182,8 +183,8 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 	}
 
 	private String concatenateShortDescriptions(Set<IResult> iresults) {
-		StringBuilder sb = new StringBuilder();
-		for (IResult iResult : iresults) {
+		final StringBuilder sb = new StringBuilder();
+		for (final IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());
 			sb.append(" ");
 			if (iResult instanceof UnprovableResult) {

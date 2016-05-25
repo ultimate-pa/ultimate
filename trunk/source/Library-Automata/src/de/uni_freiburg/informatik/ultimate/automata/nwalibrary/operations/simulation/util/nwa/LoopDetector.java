@@ -126,8 +126,8 @@ public final class LoopDetector<LETTER, STATE> {
 			final Vertex<LETTER, STATE> toAvoid) throws AutomataOperationCanceledException {
 		// Solve if 'vertex' can reach 'destination' without visiting 'toAvoid'.
 		// We do so by using a breadth-first search.
-		Queue<Vertex<LETTER, STATE>> queue = new LinkedList<>();
-		Set<Vertex<LETTER, STATE>> processedElements = new HashSet<>();
+		final Queue<Vertex<LETTER, STATE>> queue = new LinkedList<>();
+		final Set<Vertex<LETTER, STATE>> processedElements = new HashSet<>();
 
 		// Add root element
 		queue.add(vertex);
@@ -135,7 +135,7 @@ public final class LoopDetector<LETTER, STATE> {
 		// Process queue
 		boolean destinationFound = false;
 		while (!queue.isEmpty() && !destinationFound) {
-			Vertex<LETTER, STATE> element = queue.poll();
+			final Vertex<LETTER, STATE> element = queue.poll();
 			if (element == null) {
 				continue;
 			}
@@ -144,12 +144,12 @@ public final class LoopDetector<LETTER, STATE> {
 				destinationFound = true;
 			}
 
-			boolean wasAlreadyProcessed = !processedElements.add(element);
-			boolean isToAvoid = element.equals(toAvoid);
+			final boolean wasAlreadyProcessed = !processedElements.add(element);
+			final boolean isToAvoid = element.equals(toAvoid);
 
 			if (!destinationFound && !wasAlreadyProcessed && !isToAvoid) {
 				// Add successors to queue
-				Set<Vertex<LETTER, STATE>> successors = mGameGraph.getSuccessors(element);
+				final Set<Vertex<LETTER, STATE>> successors = mGameGraph.getSuccessors(element);
 				if (successors != null) {
 					queue.addAll(mGameGraph.getSuccessors(element));
 				}

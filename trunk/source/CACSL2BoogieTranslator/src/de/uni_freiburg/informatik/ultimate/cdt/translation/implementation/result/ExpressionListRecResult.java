@@ -74,7 +74,7 @@ public class ExpressionListRecResult extends ExpressionResult {
     public ExpressionListRecResult(String field) {
         super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
         this.field = field;
-        this.list = new ArrayList<ExpressionListRecResult>();
+        list = new ArrayList<ExpressionListRecResult>();
     }
 
     /**
@@ -112,7 +112,7 @@ public class ExpressionListRecResult extends ExpressionResult {
             List<Overapprox> overappr) {
         super(stmt, lrVal, decl, auxVars, overappr);
         this.field = field;
-        this.list = new ArrayList<ExpressionListRecResult>();
+        list = new ArrayList<ExpressionListRecResult>();
     }
     
     
@@ -120,14 +120,15 @@ public class ExpressionListRecResult extends ExpressionResult {
     public ExpressionListRecResult switchToRValueIfNecessary(Dispatcher main,
     		MemoryHandler memoryHandler, StructHandler structHandler,
     		ILocation loc) {
-    	ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+    	final ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
     	
-    	ArrayList<ExpressionListRecResult> newList = new ArrayList<ExpressionListRecResult>();
+    	final ArrayList<ExpressionListRecResult> newList = new ArrayList<ExpressionListRecResult>();
     	if (list != null) {
-    		for (ExpressionListRecResult innerRerl : this.list) 
-    			newList.add(innerRerl.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
+    		for (final ExpressionListRecResult innerRerl : list) {
+				newList.add(innerRerl.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
+			}
     	}
-    	ExpressionListRecResult rerl = new ExpressionListRecResult(this.field,
+    	final ExpressionListRecResult rerl = new ExpressionListRecResult(field,
     	        re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);
     	rerl.list.addAll(newList);
     	return rerl;

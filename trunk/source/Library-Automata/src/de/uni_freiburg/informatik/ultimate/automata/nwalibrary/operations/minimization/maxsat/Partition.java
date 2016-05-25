@@ -70,21 +70,27 @@ final class Partition {
 	 * @return <code>true</code> iff the input Classes is consistent
 	 */
 	public static boolean checkConsistency(Partition eq) {
-		if (eq.numClasses < 0)
+		if (eq.numClasses < 0) {
 			return false;
+		}
 
-		for (int x : eq.classOf)
-			if (x < 0 || x >= eq.numClasses)
+		for (final int x : eq.classOf) {
+			if (x < 0 || x >= eq.numClasses) {
 				return false;
+			}
+		}
 
-		boolean[] hasMembers = new boolean[eq.numClasses];
+		final boolean[] hasMembers = new boolean[eq.numClasses];
 
-		for (int x : eq.classOf)
+		for (final int x : eq.classOf) {
 			hasMembers[x] = true;
+		}
 
-		for (boolean x : hasMembers)
-			if (!x)
+		for (final boolean x : hasMembers) {
+			if (!x) {
 				return false;
+			}
+		}
 
 		return true;
 	}
@@ -108,13 +114,14 @@ final class Partition {
 	 * @return a <code>Partition</code> carrying the compressed array
 	 */
 	public static Partition compress(int[] root) {
-		for (int i = 0; i < root.length; i++)
+		for (int i = 0; i < root.length; i++) {
 			assert 0 <= root[i] && root[i] < root.length;
+		}
 
 		int numClasses = 0;
-		int[] classOf = new int[root.length];
-		int[] newName = new int[root.length];
-		boolean[] seen = new boolean[root.length];
+		final int[] classOf = new int[root.length];
+		final int[] newName = new int[root.length];
+		final boolean[] seen = new boolean[root.length];
 
 		for (int i = 0; i < root.length; i++) {
 			if (!seen[root[i]]) {
@@ -123,10 +130,11 @@ final class Partition {
 			}
 		}
 
-		for (int i = 0; i < root.length; i++)
+		for (int i = 0; i < root.length; i++) {
 			classOf[i] = newName[root[i]];
+		}
 
-		Partition result = new Partition(numClasses, classOf);
+		final Partition result = new Partition(numClasses, classOf);
 		assert Partition.checkConsistency(result);
 
 		return result;
@@ -134,7 +142,7 @@ final class Partition {
 
 	/** "test" the thing */
 	public static void main(String[] args) {
-		Writer writer = new PrintWriter(new OutputStreamWriter(System.err));
+		final Writer writer = new PrintWriter(new OutputStreamWriter(System.err));
 		Partition partition = null;
 
 		partition = Partition.compress(new int[] { 1, 1, 0, 5, 0, 0 });
@@ -143,14 +151,16 @@ final class Partition {
 		assert partition.classOf[0] == partition.classOf[1];
 		assert partition.classOf[2] == partition.classOf[4];
 		assert partition.classOf[2] == partition.classOf[5];
-		for (int i = 0; i < partition.classOf.length; i++)
+		for (int i = 0; i < partition.classOf.length; i++) {
 			assert(i == 3 || partition.classOf[i] != partition.classOf[3]);
+		}
 
 		partition = Partition.compress(new int[] { 1, 1, 1, 1 });
 		Print.printPartition(writer, partition);
 		assert partition.numClasses == 1;
 		assert partition.classOf.length == 4;
-		for (int c : partition.classOf)
+		for (final int c : partition.classOf) {
 			assert c == 0;
+		}
 	}
 }

@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
  */
 public class PetriNetRun<S,C> implements IRun<S,C> {
 	
-	private Word<S> mWord;
-	private ArrayList<Marking<S,C>> mMarkingSequence;
+	private final Word<S> mWord;
+	private final ArrayList<Marking<S,C>> mMarkingSequence;
 	
 	/**
 	 * Construct PetriNet run of length 0
@@ -77,10 +77,12 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 		mWord = word;
 	}
 
+	@Override
 	public S getSymbol(int i) {
 		return mWord.getSymbol(i);
 	}
 	
+	@Override
 	public Word<S> getWord() {
 		return mWord;
 	}
@@ -99,8 +101,8 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	 * This is not changed.
 	 */
 	public PetriNetRun<S,C> concatenate(PetriNetRun<S,C> run2) {
-		Word<S> concatWord = mWord.concatenate(run2.getWord());
-		ArrayList<Marking<S, C>> concatMarkingSequence = 
+		final Word<S> concatWord = mWord.concatenate(run2.getWord());
+		final ArrayList<Marking<S, C>> concatMarkingSequence = 
 												new ArrayList<Marking<S,C>>();
 		for (int i=0; i<this.mMarkingSequence.size(); i++){
 			concatMarkingSequence.add(this.getMarking(i));
@@ -121,8 +123,9 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 		return mMarkingSequence.size();
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i<mWord.length(); i++) {
 			sb.append(mMarkingSequence.get(i) + " ");
 			sb.append(mWord.getSymbol(i)+" ");

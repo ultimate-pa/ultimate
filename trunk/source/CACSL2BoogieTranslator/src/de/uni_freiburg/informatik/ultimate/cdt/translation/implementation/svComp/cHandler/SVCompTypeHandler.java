@@ -56,10 +56,10 @@ public class SVCompTypeHandler extends TypeHandler {
 
 	@Override
     public Result visit(Dispatcher main, IASTNamedTypeSpecifier node) {
-        ILocation loc = LocationFactory.createCLocation(node);
+        final ILocation loc = LocationFactory.createCLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {
-            node = (CASTTypedefNameSpecifier) node;
-            String cId = node.getName().toString();
+            node = node;
+            final String cId = node.getName().toString();
             
             // quick solution --> TODO: maybe make this dependent on includes, 
             // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
@@ -76,7 +76,7 @@ public class SVCompTypeHandler extends TypeHandler {
             	return super.visit(main, node);
             }
         }
-        String msg = "Unknown or unsupported type! " + node.toString();
+        final String msg = "Unknown or unsupported type! " + node.toString();
         throw new UnsupportedSyntaxException(loc, msg);
     }
 }

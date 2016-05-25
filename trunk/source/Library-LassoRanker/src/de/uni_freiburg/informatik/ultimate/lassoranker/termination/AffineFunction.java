@@ -137,9 +137,9 @@ public class AffineFunction implements Serializable {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
+		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
 			if (!first) {
 				sb.append(entry.getValue().compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
@@ -181,8 +181,8 @@ public class AffineFunction implements Serializable {
 	 * @throws SMTLIBException
 	 */
 	public Term asTerm(Script script) throws SMTLIBException {
-		ArrayList<Term> summands = new ArrayList<Term>();
-		for (Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
+		final ArrayList<Term> summands = new ArrayList<Term>();
+		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
 			summands.add(constructSummand(script,
 					entry.getKey().getDefinition(), entry.getValue()));
 		}
@@ -198,7 +198,7 @@ public class AffineFunction implements Serializable {
 	 * @return the generated expression
 	 */
 	public Expression asExpression(Script script, Term2Expression smt2boogie) {
-		Term formula = asTerm(script);
+		final Term formula = asTerm(script);
 		return smt2boogie.translate(formula);
 	}
 	
@@ -208,8 +208,8 @@ public class AffineFunction implements Serializable {
 	 * @return the value of the function
 	 */
 	public Rational evaluate(Map<RankVar, Rational> assignment) {
-		Rational r = Rational.ZERO;
-		for (Map.Entry<RankVar, BigInteger> entry
+		final Rational r = Rational.ZERO;
+		for (final Map.Entry<RankVar, BigInteger> entry
 				: mcoefficients.entrySet()) {
 			Rational val = assignment.get(entry.getKey());
 			if (val == null) {

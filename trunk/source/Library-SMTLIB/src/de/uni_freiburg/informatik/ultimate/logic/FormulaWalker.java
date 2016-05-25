@@ -80,24 +80,27 @@ public class FormulaWalker {
 		return recursivewalk(term);
 	}
 	private Term recursivewalk(Term term) throws SMTLIBException {
-		Term res = mVisitor.term(term);
-		if (res != null)
+		final Term res = mVisitor.term(term);
+		if (res != null) {
 			return res;
+		}
 		if (term instanceof LetTerm) {
-			LetTerm let = (LetTerm) term;
-			Term[] values = let.getValues();
+			final LetTerm let = (LetTerm) term;
+			final Term[] values = let.getValues();
 			Term[] newvalues = new Term[values.length];
 			boolean changed = false;
 			for (int i = 0; i < values.length; i++) {
 				newvalues[i] = recursivewalk(values[i]);
-				if (newvalues[i] != values[i])
+				if (newvalues[i] != values[i]) {
 					changed = true;
+				}
 			}
-			if (!changed)
+			if (!changed) {
 				newvalues = values;
+			}
 			mVisitor.let(let.getVariables(), newvalues);
 			try {
-				Term newsub = recursivewalk(let.getSubTerm());
+				final Term newsub = recursivewalk(let.getSubTerm());
 				return mVisitor.unlet() ? newsub
 					: newvalues == values && newsub == let.getSubTerm() ? let 
 						: mScript.let(let.getVariables(), newvalues, newsub);
@@ -105,13 +108,13 @@ public class FormulaWalker {
 				mVisitor.endscope(let.getVariables());
 			}
 		} else if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula qf = (QuantifiedFormula)term;
-			int quantifier = qf.getQuantifier();
-			TermVariable[] vars = qf.getVariables();
+			final QuantifiedFormula qf = (QuantifiedFormula)term;
+			final int quantifier = qf.getQuantifier();
+			final TermVariable[] vars = qf.getVariables();
 			mVisitor.quantifier(vars);
 			try {
-				Term msub = recursivewalk(qf.getSubformula());
-				boolean changed = msub != qf.getSubformula();
+				final Term msub = recursivewalk(qf.getSubformula());
+				final boolean changed = msub != qf.getSubformula();
 				return changed ? qf : mScript.quantifier(
 						quantifier, vars, msub);
 
@@ -119,32 +122,35 @@ public class FormulaWalker {
 				mVisitor.endscope(vars);
 			}
 		} else if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm annterm = (AnnotatedTerm) term;
-			Term sub = recursivewalk(annterm.getSubterm());
-			Annotation[] annots = annterm.getAnnotations();
+			final AnnotatedTerm annterm = (AnnotatedTerm) term;
+			final Term sub = recursivewalk(annterm.getSubterm());
+			final Annotation[] annots = annterm.getAnnotations();
 			Annotation[] newAnnots = annots;
 			for (int i = 0; i < annots.length; i++) {
-				Object value = annots[i].getValue();
+				final Object value = annots[i].getValue();
 				Object newValue;
-				if (value instanceof Term)
+				if (value instanceof Term) {
 					newValue = recursivewalk((Term) value);
-				else if (value instanceof Term[])
+				} else if (value instanceof Term[]) {
 					newValue = recursivewalk((Term[]) value);
-				else
+				} else {
 					newValue = value;
+				}
 				if (newValue != value) {
-					if (annots == newAnnots)
+					if (annots == newAnnots) {
 						newAnnots = annots.clone();
+					}
 					newAnnots[i] = new Annotation(annots[i].getKey(), newValue);
 				}
 			}
-			if (sub == annterm.getSubterm()	&& newAnnots == annots)
+			if (sub == annterm.getSubterm()	&& newAnnots == annots) {
 				return term;
+			}
 			return mScript.annotate(sub, newAnnots);
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm at = (ApplicationTerm) term;
-			Term[] args = at.getParameters();
-			Term[] nargs = recursivewalk(args);
+			final ApplicationTerm at = (ApplicationTerm) term;
+			final Term[] args = at.getParameters();
+			final Term[] nargs = recursivewalk(args);
 			mVisitor.done(term);
 			return args == nargs ? term : mScript.term(
 					at.getFunction().getName(),nargs);
@@ -154,12 +160,13 @@ public class FormulaWalker {
 	}
 
 	private Term[] recursivewalk(Term[] args) throws SMTLIBException {
-		Term[] nargs = new Term[args.length];
+		final Term[] nargs = new Term[args.length];
 		boolean changed = false;
 		for (int i = 0; i < args.length; ++i) {
 			nargs[i] = recursivewalk(args[i]);
-			if (nargs[i] != args[i])
+			if (nargs[i] != args[i]) {
 				changed = true;
+			}
 		}
 		return changed ? nargs : args;
 	}

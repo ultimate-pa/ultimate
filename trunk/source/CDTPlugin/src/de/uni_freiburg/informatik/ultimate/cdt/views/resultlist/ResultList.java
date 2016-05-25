@@ -75,20 +75,20 @@ public class ResultList extends ViewPart implements ISelectionListener {
 	 */
 	@Override
 	public void createPartControl(Composite parent) {
-		Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
+		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
-		TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
+		final TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
 		column1.setAlignment(SWT.LEFT);
 		column1.setText("Line Nr.");
 		column1.setWidth(60);
-		TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
+		final TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
 		column2.setAlignment(SWT.LEFT);
 		column2.setText("Description");
 		column2.setWidth(120);
-		TreeColumn column3 = new TreeColumn(variableTree, SWT.RIGHT);
+		final TreeColumn column3 = new TreeColumn(variableTree, SWT.RIGHT);
 		column3.setAlignment(SWT.LEFT);
 		column3.setText("Location");
 		column3.setWidth(120);
@@ -120,13 +120,13 @@ public class ResultList extends ViewPart implements ISelectionListener {
 		// First we check the Selection of the Editor
 		// Second is the Selection of the ProjectExplorer
 		if (selection instanceof ITextSelection && part instanceof EditorPart) {
-			EditorPart edPart = (EditorPart) part;
+			final EditorPart edPart = (EditorPart) part;
 			IFile file = null;
 			// Because we store the results per file, we need the correct
 			// results
 			// ---> so we need to get the original file from the system
 			if (edPart.getEditorInput() instanceof IFileEditorInput) {
-				IFileEditorInput fei = (IFileEditorInput) edPart
+				final IFileEditorInput fei = (IFileEditorInput) edPart
 						.getEditorInput();
 				file = fei.getFile();
 			}
@@ -137,29 +137,29 @@ public class ResultList extends ViewPart implements ISelectionListener {
 			}
 		} else if (selection instanceof ITreeSelection
 				&& part instanceof CommonNavigator) {
-			CommonNavigator navi = (CommonNavigator) part;
+			final CommonNavigator navi = (CommonNavigator) part;
 			// we only delete our Selection if Linking with Navigator is enabled
 			if (navi.isLinkingEnabled()) {
 				if (((ITreeSelection) selection).getFirstElement() != null) {
 					IFile file = null;
-					Object firstElement = ((ITreeSelection) selection)
+					final Object firstElement = ((ITreeSelection) selection)
 							.getFirstElement();
 					if (firstElement instanceof TranslationUnit) {
 						file = ((TranslationUnit) firstElement).getFile();
 					}
 					// get all current opened files, we only show results for
 					// them
-					HashSet<String> currentFilesOpened = new HashSet<String>();
-					for (IEditorReference ed : this.getSite().getPage()
+					final HashSet<String> currentFilesOpened = new HashSet<String>();
+					for (final IEditorReference ed : getSite().getPage()
 							.getEditorReferences()) {
 						try {
 							if (ed.getEditorInput() instanceof IFileEditorInput) {
-								IFileEditorInput fei = (IFileEditorInput) ed
+								final IFileEditorInput fei = (IFileEditorInput) ed
 										.getEditorInput();
 								currentFilesOpened.add(fei.getFile()
 										.getLocation().toOSString());
 							}
-						} catch (PartInitException e) {
+						} catch (final PartInitException e) {
 							e.printStackTrace();
 						}
 					}

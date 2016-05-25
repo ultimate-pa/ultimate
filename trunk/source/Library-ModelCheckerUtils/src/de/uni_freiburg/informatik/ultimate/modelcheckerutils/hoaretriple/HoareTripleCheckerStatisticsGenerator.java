@@ -103,8 +103,9 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 	public Collection<String> getKeys() {
 		return HoareTripleCheckerStatisticsType.getInstance().getKeys();
 	}
+	@Override
 	public Object getValue(String key) {
-		HoareTripleCheckerStatisticsDefinitions keyEnum = Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
+		final HoareTripleCheckerStatisticsDefinitions keyEnum = Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SDtfs:
 			return mSDtfsCounter;

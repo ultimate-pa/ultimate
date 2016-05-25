@@ -86,7 +86,7 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -94,6 +94,7 @@ public class TraceAbstraction implements IGenerator {
 		return mObservers;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt
@@ -104,7 +105,7 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.mObserver.getRootOfNewModel();
+		return mObserver.getRootOfNewModel();
 	}
 
 	@Override

@@ -54,7 +54,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 
 /**
@@ -91,7 +93,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		// This Default-Constructor is needed to start up the application
 	}
 
-	public final Object start(final IController<ToolchainListType> controller, boolean isGraphical) throws Exception {
+	public final Object startManually(final IController<ToolchainListType> controller) throws Exception {
 		setCurrentController(controller);
 		return start(null);
 	}
@@ -119,7 +121,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		Job.getJobManager().addJobChangeListener(mJobChangeAdapter);
 		mLogger.info("--------------------------------------------------------------------------------");
 
-		//loading default settings 
+		// loading default settings
 		mSettingsManager = new SettingsManager(mLogger);
 		mSettingsManager.registerPlugin(this);
 
@@ -133,7 +135,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 			// at this point a controller is already selected. We delegate
 			// control
 			// to this controller.
-			Object rtrCode = activateController();
+			final Object rtrCode = activateController();
 
 			// Ultimate is closing here
 			mToolchainManager.close();
@@ -161,7 +163,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		}
 		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
-		final int returnCode = getCurrentController().init(this, mLoggingService);
+		final int returnCode = getCurrentController().init(this);
 		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 		return returnCode;
 	}
@@ -183,7 +185,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 
 	@Override
 	public String[] getRegisteredUltimatePluginIDs() {
-		List<String> rtr = mPluginFactory.getPluginIds();
+		final List<String> rtr = mPluginFactory.getPluginIds();
 		return rtr.toArray(new String[rtr.size()]);
 	}
 
@@ -245,12 +247,12 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		return getCurrentController().getPluginID();
 	}
 
-	public static String[] getPluginNames() {
+	public static synchronized String[] getPluginNames() {
 		if (sPluginNames == null) {
-			List<String> lil = new ArrayList<>();
-			for (String ep : ExtensionPoints.PLUGIN_EPS) {
-				for (IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
-					String classname = elem.getAttribute("class");
+			final List<String> lil = new ArrayList<>();
+			for (final String ep : ExtensionPoints.PLUGIN_EPS) {
+				for (final IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
+					final String classname = elem.getAttribute("class");
 					lil.add(classname.substring(0, classname.lastIndexOf(".")));
 				}
 			}
@@ -291,7 +293,17 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		return new CorePreferenceInitializer();
 	}
 
-	private final static class UltimateJobChangeAdapter extends JobChangeAdapter {
+	@Override
+	public ILoggingService getCoreLoggingService() {
+		return mCoreStorage.getLoggingService();
+	}
+
+	@Override
+	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+		return mCoreStorage.getPreferenceProvider(pluginId);
+	}
+
+	private static final class UltimateJobChangeAdapter extends JobChangeAdapter {
 		private final ILogger mLogger;
 
 		private UltimateJobChangeAdapter(final ILogger logger) {
@@ -310,10 +322,6 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 				return;
 			}
 			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
-			if (Platform.inDebugMode() || Platform.inDevelopmentMode()) {
-				event.getResult().getException().printStackTrace();
-			}
 		}
 	}
-
 }

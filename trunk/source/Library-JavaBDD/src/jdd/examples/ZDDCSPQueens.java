@@ -1,8 +1,12 @@
 
 package jdd.examples;
 
-import jdd.util.*;
-import jdd.zdd.*;
+import jdd.util.Array;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.Test;
+import jdd.zdd.ZDD;
+import jdd.zdd.ZDDCSP;
 
 /**
  * <pre>
@@ -18,12 +22,13 @@ import jdd.zdd.*;
  */
 
 public class ZDDCSPQueens extends ZDDCSP implements Queens {
-	private int n, sols;
-	private int [] x, xv;
+	private final int n, sols;
+	private final int [] x, xv;
 	private int get(int i, int j) { return x[ i + j * n]; }
 	private int getVar(int i, int j) { return xv[ i + j * n]; }
-	private boolean [] solvec;
-	private long time, memory;
+	private final boolean [] solvec;
+	private long time;
+	private final long memory;
 
 	public ZDDCSPQueens(int n) {
 		super(1+Math.max(1000, (int) (Math.pow(2, n-5))*800), 10000);
@@ -32,7 +37,7 @@ public class ZDDCSPQueens extends ZDDCSP implements Queens {
 		this.n = n;
 		x = new int[ n * n];
 		xv = new int[ n * n];
-		boolean[] mark = new boolean[n * n];
+		final boolean[] mark = new boolean[n * n];
 		for(int i = 0; i < n * n; i++) {
 			xv[i] = createVar();
 			x[i] = ref( change(1, xv[i]) );
@@ -42,14 +47,16 @@ public class ZDDCSPQueens extends ZDDCSP implements Queens {
 
 		// compute G1
 		int G1 = 0;
-		for(int i = 0; i < n; i++) G1 = unionWith(G1, get(0, i) );
+		for(int i = 0; i < n; i++) {
+			G1 = unionWith(G1, get(0, i) );
+		}
 
 		// compute the rest
 		int last_G = G1;
 		for(int i = 1; i < n; i++) {
 			int F = 0;
 			for(int j = 0; j < n; j++)  {
-				int bld = build(i, j, last_G, mark);
+				final int bld = build(i, j, last_G, mark);
 				F = unionWith( F, bld );
 				deref(bld);
 			}
@@ -63,16 +70,22 @@ public class ZDDCSPQueens extends ZDDCSP implements Queens {
 		sols = count(last_G);
 		deref(last_G);
 		time = System.currentTimeMillis() - time;
-		if(Options.verbose) showStats();
+		if(Options.verbose) {
+			showStats();
+		}
 		memory = getMemoryUsage();
 		cleanup();
 	}
 
 	// --- [Queens interface ] ---------------------------------------------
+	@Override
 	public int getN() { return n; }
+	@Override
 	public double numberOfSolutions() { return sols; }
+	@Override
 	public long getTime() { return time; }
 	public long getMemory() { return memory; }
+	@Override
 	public boolean [] getOneSolution() { return solvec; }
 
 	// --- [ internal stuff ] --------------------------------------------------
@@ -81,40 +94,47 @@ public class ZDDCSPQueens extends ZDDCSP implements Queens {
 	private int build(int i, int j, int G, boolean []mark) {
 		Array.set(mark, false);
 
-		for(int k = 0; k < i; k++)  mark[ k + n * j] = true;
+		for(int k = 0; k < i; k++) {
+			mark[ k + n * j] = true;
+		}
 		for(int k = 1; k <= i; k++)  {
-			int a = j - k, b = i - k;
-			if(valid(b, a)) mark[b + n * a] = true;
+			int a = j - k;
+			final int b = i - k;
+			if(valid(b, a)) {
+				mark[b + n * a] = true;
+			}
 			a = j + k;
-			if(valid(b, a)) mark[b + n * a] = true;
+			if(valid(b, a)) {
+				mark[b + n * a] = true;
+			}
 		}
 
 
 		int C = 0;
 		for(int k = 0; k < n * n; k++) {
 			if(mark[k]) {
-				int a = k / n, b = k % n;
+				final int a = k / n, b = k % n;
 				C = unionWith(C, get(b, a) );
 			}
 		}
 
-		int tmp = ref( exclude(G,C) );
+		final int tmp = ref( exclude(G,C) );
 		deref(C);
-		int ret = ref( mul( tmp, get(i,j)) );
+		final int ret = ref( mul( tmp, get(i,j)) );
 		deref(tmp);
 		return ret;
 	}
 
 	// -------------------------------------------------------------
 	private int unionWith(int a, int b) {
-		int tmp = ref( union(a,b) );
+		final int tmp = ref( union(a,b) );
 		deref(a);
 		return tmp;
 	}
 
 	public static void main(String [] args) {
 		if(args.length == 1) {
-			ZDDCSPQueens q = new ZDDCSPQueens( Integer.parseInt( args[0] ) );
+			final ZDDCSPQueens q = new ZDDCSPQueens( Integer.parseInt( args[0] ) );
 			JDDConsole.out.println("There are " + q.numberOfSolutions() + " solutions (time: " + q.getTime() + ")");
 		}
 	}
@@ -122,9 +142,9 @@ public class ZDDCSPQueens extends ZDDCSP implements Queens {
 	/** testbench. do not call */
 	public static void internal_test() {
 		Test.start("ZDDCSPQueens");
-		int [] correct = { 1, 0,0,2, 10, 4, 40,  92 ,  352, 724, 2680 /* , 14200  */ };
+		final int [] correct = { 1, 0,0,2, 10, 4, 40,  92 ,  352, 724, 2680 /* , 14200  */ };
 		for(int i = 0; i < correct.length; i++) {
-			ZDDCSPQueens q = new ZDDCSPQueens( i + 1 );
+			final ZDDCSPQueens q = new ZDDCSPQueens( i + 1 );
 			// System.out.println("Q"+ (i + 1) + " --> " + q.numberOfSolutions());
 			Test.check(q.numberOfSolutions() == correct[i], "correct solutions for " + (i + 1) + " queens");
 		}

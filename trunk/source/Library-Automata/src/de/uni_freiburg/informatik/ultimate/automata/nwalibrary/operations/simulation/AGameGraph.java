@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.VertexValueContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Abstract class for game graphs which are needed for simulation calculation.
@@ -503,7 +503,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return All {@link Vertex} objects the game graph has.
 	 */
 	public Set<Vertex<LETTER, STATE>> getVertices() {
-		HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(mSpoilerVertices);
+		final HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(mSpoilerVertices);
 		result.addAll(mDuplicatorVertices);
 		return result;
 	}
@@ -654,8 +654,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return Representation of the graph in the <tt>ats</tt> file format.
 	 */
 	public String toAtsFormat() {
-		StringBuilder result = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
+		final StringBuilder result = new StringBuilder();
+		final String lineSeparator = System.lineSeparator();
 		// Header
 		result.append("NestedWordAutomaton nwa = (");
 		result.append(lineSeparator + "\tcallAlphabet = { },");
@@ -664,11 +664,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 		// States
 		result.append(lineSeparator + "\tstates = {");
-		StringBuilder states = new StringBuilder();
+		final StringBuilder states = new StringBuilder();
 		boolean isFirstVertex = true;
 		// Creates states in the following format:
 		// {"state1" "state2" "state3" ...}
-		for (Vertex<LETTER, STATE> vertex : getVertices()) {
+		for (final Vertex<LETTER, STATE> vertex : getVertices()) {
 			if (!isFirstVertex) {
 				states.append(" ");
 			}
@@ -684,11 +684,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 		result.append(lineSeparator + "\tcallTransitions = { },");
 		result.append(lineSeparator + "\tinternalTransitions = {");
 
-		for (Vertex<LETTER, STATE> pred : getVertices()) {
+		for (final Vertex<LETTER, STATE> pred : getVertices()) {
 			if (!hasSuccessors(pred)) {
 				continue;
 			}
-			for (Vertex<LETTER, STATE> succ : getSuccessors(pred)) {
+			for (final Vertex<LETTER, STATE> succ : getSuccessors(pred)) {
 				// Creates a transition in the following format:
 				// ("pred" "a" "succ")
 				result.append(lineSeparator).append("\t\t(\"").append(pred.getName()).append("\" \"a\" \"")
@@ -712,20 +712,20 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
+		final StringBuilder result = new StringBuilder();
+		final String lineSeparator = System.lineSeparator();
 		// Header
 		result.append("GameGraph gg = (");
 
 		// Vertices
 		result.append(lineSeparator + "\tSpoilerVertices = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), p:"
 					+ getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 		result.append(lineSeparator + "\tDuplicatorVertices = {");
-		for (DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
 					+ "), p:" + getPriority(vertex) + ">");
 		}
@@ -733,16 +733,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 		// Edges
 		result.append(lineSeparator + "\tedges = {");
-		for (Vertex<LETTER, STATE> vertex : getNonDeadEndVertices()) {
-			for (Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
+		for (final Vertex<LETTER, STATE> vertex : getNonDeadEndVertices()) {
+			for (final Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
 				result.append(lineSeparator + "\t\t(" + vertex.getQ0() + ", " + vertex.getQ1());
 				if (vertex instanceof DuplicatorVertex) {
-					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
+					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")\t--> (" + succ.getQ0() + ", " + succ.getQ1());
 				if (succ instanceof DuplicatorVertex) {
-					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
+					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")");
@@ -769,13 +769,13 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo edge changes
-		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
 				.getChangedEdges();
-		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
-			Vertex<LETTER, STATE> src = changedEdge.getFirst();
-			Vertex<LETTER, STATE> dest = changedEdge.getSecond();
-			EGameGraphChangeType type = changedEdge.getThird();
+			final Vertex<LETTER, STATE> src = changedEdge.getFirst();
+			final Vertex<LETTER, STATE> dest = changedEdge.getSecond();
+			final EGameGraphChangeType type = changedEdge.getThird();
 			// If added before, remove and vice versa
 			if (type.equals(EGameGraphChangeType.ADDITION)) {
 				removeEdge(src, dest);
@@ -785,10 +785,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo vertex changes
-		HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
-		for (Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
-			Vertex<LETTER, STATE> vertex = changedVertex.getKey();
-			EGameGraphChangeType type = changedVertex.getValue();
+		final HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
+		for (final Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
+			final Vertex<LETTER, STATE> vertex = changedVertex.getKey();
+			final EGameGraphChangeType type = changedVertex.getValue();
 			// If added before, remove and vice versa
 			if (type.equals(EGameGraphChangeType.ADDITION)) {
 				if (vertex.isDuplicatorVertex()) {
@@ -806,10 +806,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo vertex value changes
-		HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes.getRememberedVertexValues();
-		for (Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues : changedVertexValues.entrySet()) {
-			Vertex<LETTER, STATE> vertex = changedValues.getKey();
-			VertexValueContainer values = changedValues.getValue();
+		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes.getRememberedVertexValues();
+		for (final Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues : changedVertexValues.entrySet()) {
+			final Vertex<LETTER, STATE> vertex = changedValues.getKey();
+			final VertexValueContainer values = changedValues.getValue();
 			// Only undo if there actually is a changed value stored
 			// Undo PM
 			if (VertexValueContainer.isValueValid(values.getProgressMeasure())) {

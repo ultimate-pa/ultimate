@@ -144,8 +144,8 @@ public class BoogieParser implements ISource {
 	public IElement parseAST(File[] files) throws IOException {
 		final WrapperNode dirRoot = new WrapperNode(null, null);
 
-		for (File f : files) {
-			Unit node = parseFile(f);
+		for (final File f : files) {
+			final Unit node = parseFile(f);
 			dirRoot.addOutgoing(new WrapperNode(dirRoot, node));
 		}
 		return dirRoot;
@@ -186,7 +186,7 @@ public class BoogieParser implements ISource {
 	 */
 	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -204,9 +204,10 @@ public class BoogieParser implements ISource {
 	 */
 	@Override
 	public boolean parseable(File file) {
-		for (String s : getFileTypes()) {
-			if (file.getName().endsWith(s))
+		for (final String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -229,7 +230,7 @@ public class BoogieParser implements ISource {
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
@@ -244,7 +245,7 @@ public class BoogieParser implements ISource {
 	 * @return an INode containing the AST
 	 */
 	private Unit reflectiveParse(String fileName) throws IOException {
-		BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
+		final BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
 		Lexer lexer;
 		Parser parser;
 		Unit mainFile;
@@ -255,18 +256,18 @@ public class BoogieParser implements ISource {
 		parser.setFileName(fileName);
 		try {
 			mainFile = (Unit) parser.parse().value;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.fatal("syntax error: ", e);
 			// TODO: Declare to throw a parser exception
 			throw new RuntimeException(e);
 		}
 		if (mPreludeUnit != null) {
-			Declaration[] prel = mPreludeUnit.getDeclarations();
-			Declaration[] main = mainFile.getDeclarations();
-			Declaration[] allDecls = new Declaration[prel.length + main.length];
+			final Declaration[] prel = mPreludeUnit.getDeclarations();
+			final Declaration[] main = mainFile.getDeclarations();
+			final Declaration[] allDecls = new Declaration[prel.length + main.length];
 			System.arraycopy(prel, 0, allDecls, 0, prel.length);
 			System.arraycopy(main, 0, allDecls, prel.length, main.length);
-			ILocation dummyLocation = new BoogieLocation(parser.mFilename, -1, -1, -1, -1, false);
+			final ILocation dummyLocation = new BoogieLocation(parser.mFilename, -1, -1, -1, -1, false);
 			mainFile = new Unit(dummyLocation, allDecls);
 		}
 		return mainFile;
@@ -275,16 +276,17 @@ public class BoogieParser implements ISource {
 	@Override
 	public void setPreludeFile(File prelude) {
 		mPreludeUnit = null;
-		if (prelude == null)
+		if (prelude == null) {
 			return;
+		}
 		try {
-			BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
-			Lexer lexer = new Lexer(new FileInputStream(prelude));
+			final BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
+			final Lexer lexer = new Lexer(new FileInputStream(prelude));
 			lexer.setSymbolFactory(symFactory);
-			Parser parser = new Parser(lexer, symFactory);
+			final Parser parser = new Parser(lexer, symFactory);
 			parser.setFileName(prelude.getPath());
 			mPreludeUnit = (Unit) parser.parse().value;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.fatal("syntax error: ", e);
 			throw new RuntimeException(e);
 		}

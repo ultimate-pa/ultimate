@@ -41,7 +41,7 @@ public class parse_reduce_table {
 
   /** How many rows/states in the machine/table. */
   protected int _numstates;
-  private int _numnonterm;
+  private final int _numnonterm;
 
   /** How many rows/states in the machine/table. */
   public int numstates() {return _numstates;}
@@ -61,43 +61,57 @@ public class parse_reduce_table {
    */
   public short[] compress()
     {
-      BitSet used = new BitSet();
-      TreeSet<CombRow> rows = new TreeSet<CombRow>();
+      final BitSet used = new BitSet();
+      final TreeSet<CombRow> rows = new TreeSet<CombRow>();
       for (int i = 0; i < _numstates; i++)
 	{
 	  int len = 0;
 	  for (int j = 0; j < _numnonterm; j++)
-	    if (table[i][j] != null)
-	      len++;
+	    {
+		if (table[i][j] != null)
+		  {
+		  len++;
+		}
+	      }
 	  if (len == 0)
-	    continue;
+	    {
+		continue;
+	      }
 	  
 	  used.set(i);
-	  int[] rowidx = new int[len];
+	  final int[] rowidx = new int[len];
 	  len = 0;
 	  for (int j = 0; j < _numnonterm; j++)
-	    if (table[i][j] != null)
-	      rowidx[len++] = j;
-	  CombRow row = new CombRow(i, rowidx);
+	    {
+		if (table[i][j] != null)
+		  {
+		  rowidx[len++] = j;
+		}
+	      }
+	  final CombRow row = new CombRow(i, rowidx);
 	  rows.add(row);
 	}
       
-      for (CombRow row : rows)
+      for (final CombRow row : rows)
 	{
 	  row.fitInComb(used);
 	}
       int maxbase = used.size();
       while (!used.get(maxbase-1))
-	maxbase--;
+	{
+	    maxbase--;
+	  }
 
-      short[] compressed = new short[maxbase];
+      final short[] compressed = new short[maxbase];
       /* initialize compressed table with 1 (shortest UTF-8 encoding) */
       for (int i = 0; i < maxbase; i++)
-	compressed[i] = (short) 1;
-	
-      for (CombRow row : rows)
 	{
-	  int base = row.base;
+	    compressed[i] = (short) 1;
+	  }
+	
+      for (final CombRow row : rows)
+	{
+	  final int base = row.base;
 	  compressed[row.index] = (short) base;
 	  for (int j = 0; j < row.comb.length; j++)
 	    {
@@ -109,9 +123,10 @@ public class parse_reduce_table {
     }
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder();
+      final StringBuilder result = new StringBuilder();
       lalr_state goto_st;
       int cnt;
 
@@ -141,7 +156,10 @@ public class parse_reduce_table {
 		}
 	    }
           /* finish the line if we haven't just done that */
-	  if (cnt != 0) result.append("\n");
+	  if (cnt != 0)
+	    {
+		result.append("\n");
+	      }
 	}
       result.append("-----------------------------");
 

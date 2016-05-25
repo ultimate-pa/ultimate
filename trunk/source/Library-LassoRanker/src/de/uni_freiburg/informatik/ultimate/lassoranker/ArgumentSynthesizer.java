@@ -144,7 +144,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @throws IOException 
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
-		LBool lBool = do_synthesis();
+		final LBool lBool = do_synthesis();
 		msynthesis_successful = (lBool == LBool.SAT);
 		return lBool;
 	}
@@ -180,6 +180,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * Perform cleanup actions
 	 */
+	@Override
 	public void close() {
 		if (!mclosed) {
 			mscript.exit();
@@ -187,10 +188,11 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		}
 	}
 
+	@Override
 	protected void finalize() {
 		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
-		this.close();
+		close();
 	}
 }

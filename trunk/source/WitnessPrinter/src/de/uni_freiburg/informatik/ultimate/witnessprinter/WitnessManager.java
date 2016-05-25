@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -89,7 +89,7 @@ public class WitnessManager {
 	 */
 	public void run(final Collection<Supplier<Triple<IResult, String, String>>> funsResultSupplier)
 			throws IOException, InterruptedException {
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		int cexNo = 0;
 		String suffix = null;
@@ -143,7 +143,7 @@ public class WitnessManager {
 		if (filename == null) {
 			return;
 		}
-		File file = new File(filename);
+		final File file = new File(filename);
 		if (!file.delete()) {
 			mLogger.warn("File " + filename + " could not be deleted");
 		}
@@ -154,7 +154,7 @@ public class WitnessManager {
 		final String fileending = ".graphml";
 		final String separator = "-";
 
-		StringBuilder filename = new StringBuilder();
+		final StringBuilder filename = new StringBuilder();
 		if (origInputFile != null) {
 			filename.append(origInputFile).append(separator).append(suffix);
 		} else {
@@ -167,9 +167,9 @@ public class WitnessManager {
 		filename.append(fileending);
 
 		try {
-			File file = CoreUtil.writeFile(filename.toString(), svcompWitness);
+			final File file = CoreUtil.writeFile(filename.toString(), svcompWitness);
 			mLogger.info("Wrote witness to " + file.getAbsolutePath());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.fatal("Something went wrong during writing of a witness", e);
 			return null;
 		}
@@ -185,7 +185,7 @@ public class WitnessManager {
 	private boolean checkWitness(String svcompWitnessFile, IResult cex, String originalFile, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final PreferenceInitializer.WitnessVerifierType type = ups.getEnum(PreferenceInitializer.LABEL_WITNESS_VERIFIER,
 				PreferenceInitializer.WitnessVerifierType.class);
 		final String command = ups.getString(PreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
@@ -207,7 +207,7 @@ public class WitnessManager {
 					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		int timeoutInS = ups.getInt(PreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
 		final String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
@@ -215,7 +215,7 @@ public class WitnessManager {
 				timeoutInS);
 		timeoutInS++;
 		mLogger.info(StringUtils.join(cmdArray, " "));
-		MonitoredProcess cpaCheckerProcess = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
+		final MonitoredProcess cpaCheckerProcess = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
 		final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
 		final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
 
@@ -225,7 +225,7 @@ public class WitnessManager {
 		// wait for timeoutInS seconds for the witness checker, then kill it
 		// forcefully
 		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
-		MonitoredProcessState cpaCheckerState = cpaCheckerProcess.impatientWaitUntilTime(timeoutInS * 1000L);
+		final MonitoredProcessState cpaCheckerState = cpaCheckerProcess.impatientWaitUntilTime(timeoutInS * 1000L);
 		mLogger.info("Return code was " + cpaCheckerState.getReturnCode());
 
 		// TODO: interpret error and output
@@ -252,7 +252,7 @@ public class WitnessManager {
 	}
 
 	private boolean checkOutputForSuccess(String output) {
-		for (String line : output.split(CoreUtil.getPlatformLineSeparator())) {
+		for (final String line : output.split(CoreUtil.getPlatformLineSeparator())) {
 			if (line.startsWith("Verification result: FALSE.")) {
 				return true;
 			}
@@ -292,7 +292,7 @@ public class WitnessManager {
 				out.append(line).append(CoreUtil.getPlatformLineSeparator());
 			}
 			reader.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// suppress all exceptions
 		}
 		return out.toString();

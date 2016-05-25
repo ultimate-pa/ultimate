@@ -80,10 +80,12 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	}
 
 	
+	@Override
 	public AtsASTNode getIncomingNode() {
 		return mparent;
 	}
 
+	@Override
 	public List<AtsASTNode> getOutgoingNodes() {
 		return mchildren;
 	}
@@ -98,7 +100,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	public boolean addOutgoingNode(AtsASTNode element) {
 		mchildren.add(element);
 		if (element != null) {
-			((AtsASTNode) element).addIncomingNode(this);
+			element.addIncomingNode(this);
 		}
 		return true;
 	}
@@ -140,8 +142,8 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	 * @return String representation of this AtsASTNode
 	 */
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder();
-		for (AtsASTNode n : mchildren) {
+		final StringBuilder builder = new StringBuilder();
+		for (final AtsASTNode n : mchildren) {
 			builder.append(n.getAsString());
 		}
 		return builder.toString();

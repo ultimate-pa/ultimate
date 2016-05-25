@@ -1,7 +1,7 @@
 
 package jdd.examples;
 
-import jdd.bdd.*;
+import jdd.bdd.DoubleCache;
 
 
 
@@ -33,10 +33,13 @@ public class Fibonacci  {
 	 *
 	 */
 	public static double fibonacci(int n) {
-		if(n < 0) return -1; // INVALID n!
+		if(n < 0)
+		 {
+			return -1; // INVALID n!
+		}
 
 		dc = new DoubleCache("fibonacci", n + 3);
-		double ret = fibonacci_rec(n);
+		final double ret = fibonacci_rec(n);
 		dc.showStats(); // DEBUG
 		dc = null;
 		return ret;
@@ -46,12 +49,16 @@ public class Fibonacci  {
 	private static double fibonacci_rec(int n) {
 		// terminate when n = either 0 or 1, you see this in the BDD code too,
 		// but there, we are dealing with the terminal nodes ONE and ZERO
-		if(n < 2) return n;
+		if(n < 2) {
+			return n;
+		}
 
-		if(dc.lookup(n)) return dc.answer;
-		int hash = dc.hash_value;
+		if(dc.lookup(n)) {
+			return dc.answer;
+		}
+		final int hash = dc.hash_value;
 
-		double ret = fibonacci_rec(n-1) + fibonacci_rec(n-2);
+		final double ret = fibonacci_rec(n-1) + fibonacci_rec(n-2);
 
 		dc.insert(hash, n, ret);
 		return ret;
@@ -63,9 +70,9 @@ public class Fibonacci  {
 			System.err.println("      n must be a positive integer.");
 			System.err.println("      if n is too large, you will see a java.lang.StackOverflowError :(");
 		} else {
-			int n = Integer.parseInt( args[0] );
+			final int n = Integer.parseInt( args[0] );
 			long t = System.currentTimeMillis();
-			double f = fibonacci(n);
+			final double f = fibonacci(n);
 			t = System.currentTimeMillis() - t;
 			System.out.println("In " + t + " ms:  F(" + n + ") = " + f );
 		}

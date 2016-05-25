@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
@@ -68,7 +68,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 			mSccs = mReach.getOrComputeAcceptingComponents();
 			mResult = mSccs.buchiIsEmpty();
-		} catch (AutomataOperationCanceledException oce) {
+		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		mLogger.info(exitMessage());

@@ -55,10 +55,11 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 		mProcessedEdges = new HashSet<>();
 	}
 
+	@Override
 	public void startFrom(RootNode node)
 	{
 		level(node);
-		for (RCFGEdge edge : node.getOutgoingEdges()) {
+		for (final RCFGEdge edge : node.getOutgoingEdges()) {
 			mRemainingEdges.add(edge);
 		}
 		processMethods();
@@ -71,18 +72,18 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 				return;
 			}
 			
-			RCFGEdge currentEdge = mRemainingEdges.poll();
+			final RCFGEdge currentEdge = mRemainingEdges.poll();
 			level(currentEdge);
 			mProcessedEdges.add(currentEdge);
 
-			RCFGNode currentNode = currentEdge.getTarget();
+			final RCFGNode currentNode = currentEdge.getTarget();
 			level(currentNode);
 			
 			if(mDispatcher.abortCurrentBranch()){
 				continue;
 			}
 
-			for (RCFGEdge nextEdge : currentNode.getOutgoingEdges()) {
+			for (final RCFGEdge nextEdge : currentNode.getOutgoingEdges()) {
 				if (!mProcessedEdges.contains(nextEdge)) {
 					mRemainingEdges.add(nextEdge);
 				}

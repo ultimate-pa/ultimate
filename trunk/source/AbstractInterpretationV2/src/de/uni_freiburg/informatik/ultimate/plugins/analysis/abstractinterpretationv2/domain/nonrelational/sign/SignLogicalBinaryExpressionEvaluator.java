@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
         implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	private BooleanValue mBooleanValue = new BooleanValue(false);
+	private final BooleanValue mBooleanValue = new BooleanValue(false);
 
 	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
 		super(services, type);
@@ -52,10 +52,10 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
 		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -114,14 +114,14 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
 		if (firstResult.getValue().equals(Values.BOTTOM) || secondResult.getValue().equals(Values.BOTTOM)) {
-			SignDomainState newState = currentState.copy();
+			final SignDomainState newState = currentState.copy();
 			newState.setToBottom();
 			return newState;
 		}
 
 		SignDomainState newState = currentState.copy();
 
-		boolean compResult = evaluateComparisonOperators(firstResult, secondResult);
+		final boolean compResult = evaluateComparisonOperators(firstResult, secondResult);
 
 		switch (mOperator) {
 		case LOGICIFF:
@@ -153,8 +153,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 				// Compute new state, only of the form x == 3 or 3 == x for now.
 				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator
 				        && !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
-					SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
-					SignDomainState intersecterino = currentState.copy();
+					final SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
+					final SignDomainState intersecterino = currentState.copy();
 					// SignDomainState<CodeBlock, IBoogieVar> rightState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// secondLogicalInterpretation;
 					// intersecterino.setValue(leftie.mVariableName, rightState.getValues().get(leftie.mVariableName));
@@ -162,8 +162,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 					newState = newState.intersect(intersecterino);
 				} else if (!(mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)
 				        && mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
-					SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
-					SignDomainState intersecterino = currentState.copy();
+					final SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
+					final SignDomainState intersecterino = currentState.copy();
 					// SignDomainState<CodeBlock, IBoogieVar> leftState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// firstLogicalInterpretation;
 					// intersecterino.setValue(rightie.mVariableName, leftState.getValues().get(rightie.mVariableName));
@@ -181,7 +181,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case ARITHMINUS:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		default:
-			mLogger.warn("Loss of precision while interpreting the logical expression " + this.toString());
+			mLogger.warn("Loss of precision while interpreting the logical expression " + toString());
 			return currentState.copy();
 		// throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}

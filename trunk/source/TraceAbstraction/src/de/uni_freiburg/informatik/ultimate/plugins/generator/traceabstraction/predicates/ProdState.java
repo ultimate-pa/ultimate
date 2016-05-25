@@ -64,10 +64,11 @@ public class ProdState extends BasicPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "Predicates")
+		if (field == "Predicates") {
 			return mPredicates;
-		else 
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 
 	public void addPredicate(IPredicate Predicate) {

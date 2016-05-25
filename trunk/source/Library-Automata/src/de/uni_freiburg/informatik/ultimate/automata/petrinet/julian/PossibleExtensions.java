@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
 public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 
-	private PriorityQueue<Event<S, C>> mPe;
-	private BranchingProcess<S, C> mBranchingProcess;
+	private final PriorityQueue<Event<S, C>> mPe;
+	private final BranchingProcess<S, C> mBranchingProcess;
 
 	public PossibleExtensions(BranchingProcess<S, C> branchingProcess,
 			Comparator<Event<S, C>> order) {
@@ -59,8 +59,8 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 
 	@Override
 	public void update(Event<S, C> e) {
-		Collection<Candidate<S, C>> candidates = computeCandidates(e);
-		for (Candidate<S, C> candidate : candidates) {
+		final Collection<Candidate<S, C>> candidates = computeCandidates(e);
+		for (final Candidate<S, C> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
 	}
@@ -80,8 +80,8 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 			mPe.add(new Event<S, C>(cand.mChosen, cand.mt));
 			return;
 		}
-		Place<S, C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
-		for (Condition<S, C> c : mBranchingProcess.place2cond(p)) {
+		final Place<S, C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
+		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
 			assert cand.mt.getPredecessors().contains(c.getPlace());
 			assert c.getPlace() == p;
 			assert !cand.mChosen.contains(c);
@@ -102,14 +102,14 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * successors of {@code Event} e
 	 */
 	private Collection<Candidate<S, C>> computeCandidates(Event<S, C> e) {
-		int initCapacity = 2 
+		final int initCapacity = 2 
 				* e.getSuccessorConditions().size()
 				* e.getSuccessorConditions().iterator().next()
 						.getPlace().getSuccessors().size();
 		final Map<ITransition<S, C>, Candidate<S, C>> candidates = 
 				new HashMap<ITransition<S, C>, Candidate<S, C>>(initCapacity);
-		for (Condition<S, C> c0 : e.getSuccessorConditions()) {
-			for (ITransition<S, C> t : c0.getPlace().getSuccessors()) {
+		for (final Condition<S, C> c0 : e.getSuccessorConditions()) {
+			for (final ITransition<S, C> t : c0.getPlace().getSuccessors()) {
 				Candidate<S, C> current;
 				if (!candidates.containsKey(t)) {
 					current = new Candidate<S, C>((Transition<S, C>)t);

@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -85,7 +84,7 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	protected File[] getLastInputFiles() {
-		final String lastInputFilePath = new RcpPreferenceProvider(GuiController.PLUGIN_ID)
+		final String lastInputFilePath = mCore.getPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTPATH);
 		if (lastInputFilePath == null || lastInputFilePath.isEmpty()) {
 			// there is no last input file saved
@@ -108,7 +107,7 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	protected IToolchainData<ToolchainListType> getLastToolchainData() {
-		final String toolchainxml = new RcpPreferenceProvider(GuiController.PLUGIN_ID)
+		final String toolchainxml = mCore.getPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTTOOLCHAINPATH);
 		if (toolchainxml == null || toolchainxml.isEmpty()) {
 			// there is no last toolchain saved
@@ -130,7 +129,7 @@ public abstract class RunToolchainAction extends Action {
 		names.add("All");
 
 		for (final ISource source : getAvailableSourcePlugins()) {
-			for (String s : source.getFileTypes()) {
+			for (final String s : source.getFileTypes()) {
 				extensions.add("*." + s);
 				names.add(source.getPluginName() + " (*." + s + ")");
 			}
@@ -157,7 +156,7 @@ public abstract class RunToolchainAction extends Action {
 				sb.append(path).append(File.separator).append(name).append(File.pathSeparator);
 			}
 			sb.delete(sb.length() - 1, sb.length());
-			new RcpPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTPATH, sb.toString());
+			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTPATH, sb.toString());
 		}
 
 		final List<File> rtr = new ArrayList<>();
@@ -171,18 +170,18 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {
-		ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
-		IExtensionRegistry reg = Platform.getExtensionRegistry();
+		final ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
+		final IExtensionRegistry reg = Platform.getExtensionRegistry();
 
-		IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
+		final IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
 		// iterate through every config element
-		for (IConfigurationElement element : configElements_source) {
+		for (final IConfigurationElement element : configElements_source) {
 			try {
 				// create class from plugin
-				ISource source = (ISource) element.createExecutableExtension("class");
+				final ISource source = (ISource) element.createExecutableExtension("class");
 				// and add to plugin ArrayList
 				sourceplugins.add(source);
-			} catch (CoreException e) {
+			} catch (final CoreException e) {
 				mLogger.error("Cannot create extension " + element, e);
 			}
 		}

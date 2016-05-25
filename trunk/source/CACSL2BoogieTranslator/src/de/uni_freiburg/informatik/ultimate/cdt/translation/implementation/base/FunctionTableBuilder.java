@@ -39,25 +39,27 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 public class FunctionTableBuilder extends ASTVisitor {
 
-	private LinkedHashMap<String, IASTNode> fT;    
+	private final LinkedHashMap<String, IASTNode> fT;    
 
     public FunctionTableBuilder() {
-        this.shouldVisitDeclarations = true;
-        this.fT = new LinkedHashMap<String, IASTNode>();
+        shouldVisitDeclarations = true;
+        fT = new LinkedHashMap<String, IASTNode>();
     }
 	@Override
     public int visit(IASTDeclaration declaration) {
-		if (!(declaration.getParent() instanceof IASTTranslationUnit))
+		if (!(declaration.getParent() instanceof IASTTranslationUnit)) {
 			return super.visit(declaration);
+		}
         if (declaration instanceof CASTSimpleDeclaration) {
-            CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
-            for (IASTDeclarator d : cd.getDeclarators()) {
-                String key = d.getName().toString();
+            final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
+            for (final IASTDeclarator d : cd.getDeclarators()) {
+                final String key = d.getName().toString();
                 if (d instanceof IASTFunctionDeclarator) {
                 	// we only update the table with a declaration, if there is no entry for that name yet.
                 	// otherwise we might only keep the declaration and omit the implementation from reachableDeclarations.
-                	if (!fT.containsKey(key))
-                		fT.put(key, d);
+                	if (!fT.containsKey(key)) {
+						fT.put(key, d);
+					}
                 }
 
             }
@@ -67,7 +69,7 @@ public class FunctionTableBuilder extends ASTVisitor {
 			while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
 				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
 			}
-			String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
+			final String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
 			fT.put(nameOfInnermostDeclarator, declaration);
         }
         return super.visit(declaration);

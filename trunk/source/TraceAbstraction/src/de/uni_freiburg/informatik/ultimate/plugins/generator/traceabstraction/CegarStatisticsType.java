@@ -43,8 +43,8 @@ public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefi
 
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 

@@ -109,8 +109,8 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	 */
 	@Override
 	public LBool checkEquivalence(Term termA, Term termB) {
-		Term equivalentTestTerm = mScript.term("=", termA, termB);
-		LBool areTermsEquivalent = 
+		final Term equivalentTestTerm = mScript.term("=", termA, termB);
+		final LBool areTermsEquivalent = 
 				Util.checkSat(mScript, Util.not(mScript, equivalentTestTerm));
 		return areTermsEquivalent;
 	}
@@ -126,8 +126,9 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		mInputTerm = inputTerm;
 //		mLogger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
-		if (!inputTerm.getSort().getName().equals("Bool"))
+		if (!inputTerm.getSort().getName().equals("Bool")) {
 			return inputTerm;
+		}
 //		int lvl = 0;// Java requires initialization
 //		assert (lvl = PushPopChecker.currentLevel(mScript)) >= -1;
 		Term term = inputTerm;
@@ -135,8 +136,9 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		mScript.push(1);
 		final TermVariable[] vars = term.getFreeVars();
 		final Term[] values = new Term[vars.length];
-		for (int i = 0; i < vars.length; i++)
+		for (int i = 0; i < vars.length; i++) {
 			values[i] = termVariable2constant(mScript, vars[i]);
+		}
 		term = mScript.let(vars, values, term);
 
 		term = new FormulaUnLet().unlet(term);
@@ -154,9 +156,11 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		term = new TermTransformer() {
 			@Override
 			public void convert(Term term) {
-				for (int i = 0; i < vars.length; i++)
-					if (term == values[i])
+				for (int i = 0; i < vars.length; i++) {
+					if (term == values[i]) {
 						term = vars[i];
+					}
+				}
 				super.convert(term);
 			}
 		}.transform(term);// NOCHECKSTYLE

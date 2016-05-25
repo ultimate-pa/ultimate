@@ -63,7 +63,7 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
@@ -74,7 +74,7 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = new ArrayList<>();
+		final List<Setting> rtr = new ArrayList<>();
 //		rtr.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, "Size of a code block",
 //				new String[] { PrefStrings.s_RCFG_VALUE_Single }, false,
 //				new String[] { PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq,

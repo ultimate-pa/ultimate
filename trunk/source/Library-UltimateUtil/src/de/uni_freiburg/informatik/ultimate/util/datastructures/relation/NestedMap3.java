@@ -54,7 +54,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 	
 	public V get(K1 key1, K2 key2, K3 key3) {
-		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
+		final NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
 		if (k2tok3toV == null) {
 			return null;
 		} else {
@@ -63,7 +63,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 	
 	public Map<K3, V> get(K1 key1, K2 key2) {
-		NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3V.get(key1);
+		final NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3V.get(key1);
 		if (k2toV == null) {
 			return null;
 		} else {

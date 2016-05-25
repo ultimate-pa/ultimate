@@ -74,7 +74,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	private INestedWordAutomatonOldApi<LETTER,STATE> fstOperand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> fstOperand;
 
 	public IntersectNodd (AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa, INestedWordAutomatonOldApi<LETTER,STATE> nwa2) {
@@ -87,6 +87,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
+	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return mresult;
 	}
@@ -119,22 +120,22 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private void buildProduct() {
 		// Intersect alphabets
-		Set<LETTER> newInternals = new HashSet<LETTER>();
+		final Set<LETTER> newInternals = new HashSet<LETTER>();
 		newInternals.addAll(fstOperand.getInternalAlphabet());
 		newInternals.retainAll(sndOperand.getInternalAlphabet());
-		Set<LETTER> newCalls = new HashSet<LETTER>();
+		final Set<LETTER> newCalls = new HashSet<LETTER>();
 		newCalls.addAll(fstOperand.getCallAlphabet());
 		newCalls.retainAll(sndOperand.getCallAlphabet());
-		Set<LETTER> newReturns = new HashSet<LETTER>();
+		final Set<LETTER> newReturns = new HashSet<LETTER>();
 		newReturns.addAll(fstOperand.getReturnAlphabet());
 		newReturns.retainAll(sndOperand.getReturnAlphabet());
 		
 		
 		mresult = new NestedWordAutomaton<LETTER,STATE>(mServices, 
 				newInternals, newCalls, newReturns, fstOperand.getStateFactory());
-		for (STATE fst : fstOperand.getInitialStates()) {
-			for (STATE snd : sndOperand.getInitialStates()) {
-				STATE ps = getProductState(fst, snd);
+		for (final STATE fst : fstOperand.getInitialStates()) {
+			for (final STATE snd : sndOperand.getInitialStates()) {
+				final STATE ps = getProductState(fst, snd);
 				mtoprocess.add(ps);
 				mvisited.add(ps);
 			}
@@ -142,33 +143,33 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		
 		while (!mtoprocess.isEmpty()) {
-			STATE ps = mtoprocess.removeFirst();
-			STATE fst = mpsTos1.get(ps);
-			STATE snd = mpsTos2.get(ps);
-			for (LETTER symbol : fstOperand.lettersInternal(fst)) {
-				Iterable<STATE> succSet1 = fstOperand.succInternal(fst, symbol);
-				Iterable<STATE> succSet2 = sndOperand.succInternal(snd, symbol);
+			final STATE ps = mtoprocess.removeFirst();
+			final STATE fst = mpsTos1.get(ps);
+			final STATE snd = mpsTos2.get(ps);
+			for (final LETTER symbol : fstOperand.lettersInternal(fst)) {
+				final Iterable<STATE> succSet1 = fstOperand.succInternal(fst, symbol);
+				final Iterable<STATE> succSet2 = sndOperand.succInternal(snd, symbol);
 				addInternalTransition(ps, symbol, succSet1, succSet2);
 			}
-			for (LETTER symbol : fstOperand.lettersCall(fst)) {
-				Iterable<STATE> succSet1 = fstOperand.succCall(fst, symbol);
-				Iterable<STATE> succSet2 = sndOperand.succCall(snd, symbol);
+			for (final LETTER symbol : fstOperand.lettersCall(fst)) {
+				final Iterable<STATE> succSet1 = fstOperand.succCall(fst, symbol);
+				final Iterable<STATE> succSet2 = sndOperand.succCall(snd, symbol);
 				addCallTransition(ps, symbol, succSet1, succSet2);
 			}
-			for (LETTER symbol : fstOperand.lettersReturn(fst)) {
-				Iterable<STATE> linPredSet1 = fstOperand.hierPred(fst, symbol); 
-				Iterable<STATE> linPredSet2 = sndOperand.hierPred(snd, symbol);
+			for (final LETTER symbol : fstOperand.lettersReturn(fst)) {
+				final Iterable<STATE> linPredSet1 = fstOperand.hierPred(fst, symbol); 
+				final Iterable<STATE> linPredSet2 = sndOperand.hierPred(snd, symbol);
 				addReturns(ps, fst, snd, symbol, linPredSet1, linPredSet2);
 			}
 		}
 		mLogger.debug("Processing at least "+mReturnTransitionQueue.size()+ " return transitions.");
-		for (STATE s1linPred : mReturnTransitionQueue.keySet()) {
-			Map<STATE, STATE> s2linPred2ps = mpair2ps.get(s1linPred);
+		for (final STATE s1linPred : mReturnTransitionQueue.keySet()) {
+			final Map<STATE, STATE> s2linPred2ps = mpair2ps.get(s1linPred);
 			if (s2linPred2ps != null) {
-				for (STATE s2linPred : mReturnTransitionQueue.get(s1linPred).keySet()) {
-					STATE plinPred = s2linPred2ps.get(s2linPred);
+				for (final STATE s2linPred : mReturnTransitionQueue.get(s1linPred).keySet()) {
+					final STATE plinPred = s2linPred2ps.get(s2linPred);
 					if (plinPred != null) {
-						for (ReturnTransition retTrans : mReturnTransitionQueue.get(s1linPred).get(s2linPred)) {
+						for (final ReturnTransition retTrans : mReturnTransitionQueue.get(s1linPred).get(s2linPred)) {
 							mresult.addReturnTransition(retTrans.getPred(), plinPred, retTrans.getSymbol(), retTrans.getSucc());
 						}
 					}
@@ -189,9 +190,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			s2ToPs = new HashMap<STATE, STATE>();
 			mpair2ps.put(s1, s2ToPs);
 		}
-		STATE newState = fstOperand.getStateFactory().intersection(s1, s2);
-		boolean isFinal = fstOperand.isFinal(s1) && sndOperand.isFinal(s2);
-		boolean isInitial = fstOperand.getInitialStates().contains(s1) && sndOperand.getInitialStates().contains(s2);
+		final STATE newState = fstOperand.getStateFactory().intersection(s1, s2);
+		final boolean isFinal = fstOperand.isFinal(s1) && sndOperand.isFinal(s2);
+		final boolean isInitial = fstOperand.getInitialStates().contains(s1) && sndOperand.getInitialStates().contains(s2);
 		mresult.addState(isInitial, isFinal, newState);
 		s2ToPs.put(s2,newState);
 		mpsTos1.put(newState, s1);
@@ -207,9 +208,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (succSet2 == null) {
 			return;
 		}
-		for (STATE s1 : succSet1) {
-			for (STATE s2 : succSet2) {
-				STATE ps = getProductState(s1, s2);
+		for (final STATE s1 : succSet1) {
+			for (final STATE s2 : succSet2) {
+				final STATE ps = getProductState(s1, s2);
 				mresult.addInternalTransition(state, symbol, ps);
 				if (!mvisited.contains(ps)) {
 					mvisited.add(ps);
@@ -227,9 +228,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (succSet2 == null) {
 			return;
 		}
-		for (STATE s1 : succSet1) {
-			for (STATE s2 : succSet2) {
-				STATE ps = getProductState(s1, s2);
+		for (final STATE s1 : succSet1) {
+			for (final STATE s2 : succSet2) {
+				final STATE ps = getProductState(s1, s2);
 				mresult.addCallTransition(state, symbol, ps);
 				if (!mvisited.contains(ps)) {
 					mvisited.add(ps);
@@ -249,11 +250,11 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (linPredSet2 == null) {
 			return;
 		}
-		for (STATE s1linPred : linPredSet1) {
-			for (STATE s2linPred : linPredSet2) {
+		for (final STATE s1linPred : linPredSet1) {
+			for (final STATE s2linPred : linPredSet2) {
 //				IState<LETTER,STATE> psLinPred = getProductState(s1linPred, s2linPred);
-				Iterable<STATE> succSet1 = fstOperand.succReturn(fst, s1linPred, symbol);
-				Iterable<STATE> succSet2 = sndOperand.succReturn(snd, s2linPred, symbol);
+				final Iterable<STATE> succSet1 = fstOperand.succReturn(fst, s1linPred, symbol);
+				final Iterable<STATE> succSet2 = sndOperand.succReturn(snd, s2linPred, symbol);
 				addReturnTransitionIfNecessary(ps, s1linPred, s2linPred, symbol, succSet1, succSet2);
 				}
 			}
@@ -265,9 +266,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 									 LETTER symbol,
 									 Iterable<STATE> succSet1,
 									 Iterable<STATE> succSet2) {
-		for (STATE s1 : succSet1) {
-			for (STATE s2 : succSet2) {
-				STATE psSucc = getProductState(s1, s2);
+		for (final STATE s1 : succSet1) {
+			for (final STATE s2 : succSet2) {
+				final STATE psSucc = getProductState(s1, s2);
 				enqueueReturnTransition(s1linPred,s2linPred, new ReturnTransition(ps,symbol,psSucc));
 //				mresult.addReturnTransition(ps, psLinPred,symbol, psSucc);
 				if (!mvisited.contains(psSucc)) {

@@ -33,8 +33,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.util.relation.AbstractRelation;
-
 /**
  * @author musab@informatik.uni-freiburg.de
  *

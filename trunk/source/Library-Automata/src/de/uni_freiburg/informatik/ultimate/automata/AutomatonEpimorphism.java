@@ -52,7 +52,7 @@ public class AutomatonEpimorphism<STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private HashMap<STATE, STATE> mepimorphism;
+	private final HashMap<STATE, STATE> mepimorphism;
 
 	public AutomatonEpimorphism(AutomataLibraryServices services) {
 		mServices = services;
@@ -77,11 +77,11 @@ public class AutomatonEpimorphism<STATE> {
 			
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
+		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
 		// traversing the states
-		for (String state1 : a1.getStates()) {
+		for (final String state1 : a1.getStates()) {
 			if (state1.contains("_")) {
 
 				// check that "_" is not the last char in the string
@@ -90,7 +90,7 @@ public class AutomatonEpimorphism<STATE> {
 				}
 
 				// get the name of the epimorph state
-				String epimorphState = state1
+				final String epimorphState = state1
 						.substring(state1.indexOf("_") + 1);
 
 				// check that "_" does not occur multiple times
@@ -100,7 +100,7 @@ public class AutomatonEpimorphism<STATE> {
 
 				// search the state in a2
 				String state2 = null;
-				for (String s : a2.getStates()) {
+				for (final String s : a2.getStates()) {
 					if (s.equals(epimorphState)) {
 						state2 = s;
 					}
@@ -135,7 +135,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	public void Print() 
 	{
-		for(Entry<STATE, STATE> e : mepimorphism.entrySet())
+		for(final Entry<STATE, STATE> e : mepimorphism.entrySet())
 		{
 			mLogger.debug(e.getKey().toString() + " --> " + e.getValue());
 		}		

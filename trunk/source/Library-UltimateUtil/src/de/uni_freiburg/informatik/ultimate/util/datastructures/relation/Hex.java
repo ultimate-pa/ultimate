@@ -114,7 +114,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 		if (!(obj instanceof Hex)) {
 			return false;
 		}
-		Hex<?, ?, ?, ?, ?, ?> other = (Hex<?, ?, ?, ?, ?, ?>) obj;
+		final Hex<?, ?, ?, ?, ?, ?> other = (Hex<?, ?, ?, ?, ?, ?>) obj;
 		if (mFifth == null) {
 			if (other.mFifth != null) {
 				return false;

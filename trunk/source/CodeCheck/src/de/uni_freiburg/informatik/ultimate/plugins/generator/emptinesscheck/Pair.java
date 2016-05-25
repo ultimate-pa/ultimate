@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class Pair<T,U> {
 	private final T mFirst;
-	private U mSecond;
+	private final U mSecond;
 	
 	public Pair(T e1, U e2) {
 		mFirst = e1;
@@ -54,17 +54,21 @@ public class Pair<T,U> {
 		return false;
 	}
 	
+	@Override
 	public boolean equals(Object pair2) {
-		if (pair2 instanceof Pair<?,?>)
+		if (pair2 instanceof Pair<?,?>) {
 			return this.equals((Pair<T,U>) pair2);
-		else 
+		} else {
 			return false;
+		}
 	}
 	
+	@Override
 	public int hashCode() {
 		return HashUtils.hashJenkins(mFirst.hashCode(), mSecond.hashCode());
     }
 	
+	@Override
 	public String toString() {
 		return "(" + mFirst + "," + mSecond + ")";
 	}

@@ -85,7 +85,7 @@ public class NestedMap7<K1, K2, K3, K4, K5, K6, K7, V> {
 	 * @return The value stored at the given position.
 	 */
 	public V get(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, K6 key6, K7 key7) {
-		NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = mK1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
+		final NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = mK1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
 		if (k2tok3tok4tok5tok6tok7toV == null) {
 			return null;
 		} else {

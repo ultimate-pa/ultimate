@@ -87,18 +87,12 @@ public class GuiController implements IController<ToolchainListType> {
 	 * @return the exit code for the application
 	 */
 	@Override
-	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
-		if (loggingService == null) {
-			throw new IllegalArgumentException("loggingService may not be null");
-		}
-		mLoggingService = loggingService;
-		mLogger = loggingService.getControllerLogger();
-
+	public int init(final ICore<ToolchainListType> core) {
 		if (core == null) {
-			mLogger.fatal("Initialization failed because no ICore<ToolchainListType> instance was supplied");
-			return -1;
+			throw new IllegalArgumentException("core may not be null");
 		}
-
+		mLoggingService = core.getCoreLoggingService();
+		mLogger = mLoggingService.getControllerLogger();
 		mCore = core;
 		mDisplay = PlatformUI.createDisplay();
 
@@ -115,7 +109,7 @@ public class GuiController implements IController<ToolchainListType> {
 				returnCode = PlatformUI.createAndRunWorkbench(mDisplay, workbenchAdvisor);
 				mLogger.debug("GUI return code: " + returnCode);
 				return returnCode;
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				mLogger.fatal("An exception occured", ex);
 				return returnCode;
 			} finally {
@@ -136,7 +130,7 @@ public class GuiController implements IController<ToolchainListType> {
 		mDisplay.syncExec(new Runnable() {
 			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				mParser = new ParserChooseDialog(shell, parsers).open();
 			}
 		});
@@ -156,12 +150,12 @@ public class GuiController implements IController<ToolchainListType> {
 				final Shell shell = new Shell(mDisplay);
 				try {
 					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous, mCore).open();
-				} catch (FileNotFoundException e) {
+				} catch (final FileNotFoundException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
-				} catch (JAXBException e) {
+				} catch (final JAXBException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be validated.");
-				} catch (SAXException e) {
+				} catch (final SAXException e) {
 					MessageDialog.openError(shell, "An error occured",
 							"Toolchain XML file could not be properly parsed.");
 				}
@@ -175,7 +169,7 @@ public class GuiController implements IController<ToolchainListType> {
 		mDisplay.syncExec(new Runnable() {
 			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
 			}
 		});

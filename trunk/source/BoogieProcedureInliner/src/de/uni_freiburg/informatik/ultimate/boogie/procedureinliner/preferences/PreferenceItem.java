@@ -102,17 +102,9 @@ public enum PreferenceItem {
 		return mDefaultValue;
 	}
 	
-	public Boolean getBooleanValue() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(mName);
-	}
-	
-	public String getStringValue() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(mName);
-	}
-	
 	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
 	public List<String> getStringValueTokens() {
-		String trimmedStringValue = getStringValue().trim();
+		final String trimmedStringValue = new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(mName).trim();
 		if (trimmedStringValue.isEmpty()) {
 			return Collections.emptyList();
 		} else {
@@ -120,10 +112,6 @@ public enum PreferenceItem {
 		}
 	}
 	
-	public UserListType getUserListTypeValue() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(mName, UserListType.class);
-	}
-
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {
 		return new UltimatePreferenceItem<Object>(mName, mDefaultValue, mType, mChoices);
 	}

@@ -83,7 +83,7 @@ public class ContainsSubterm extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
 			}
 		}

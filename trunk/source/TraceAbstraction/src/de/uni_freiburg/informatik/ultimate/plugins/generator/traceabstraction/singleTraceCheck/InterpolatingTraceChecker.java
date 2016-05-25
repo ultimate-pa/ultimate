@@ -123,12 +123,12 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
 		for (int i = 0; i < mInterpolants.length; i++) {
-			IPredicate itp = mInterpolants[i];
-			Set<BoogieVar> vars = itp.getVars();
-			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
-			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
+			final IPredicate itp = mInterpolants[i];
+			final Set<BoogieVar> vars = itp.getVars();
+			final Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
+			final Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
 				mLogger.warn("forward relevant variables wrong");
 				result = false;
@@ -141,6 +141,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		return result;
 	}
 
+	@Override
 	public IPredicate[] getInterpolants() {
 		if (isCorrect() == LBool.UNSAT) {
 			if (mInterpolants == null) {
@@ -153,6 +154,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 	}
 
+	@Override
 	public final PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}

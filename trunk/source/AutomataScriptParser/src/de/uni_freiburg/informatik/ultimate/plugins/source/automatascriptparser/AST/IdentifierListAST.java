@@ -45,7 +45,7 @@ public class IdentifierListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -7741847124495330627L;
-	private List<String> midList;
+	private final List<String> midList;
 	
 	
 	public IdentifierListAST(ILocation loc) {
@@ -81,8 +81,8 @@ public class IdentifierListAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder();
-		for (String id : midList) {
+		final StringBuilder builder = new StringBuilder();
+		for (final String id : midList) {
 			builder.append(id + " ");
 		}
 		return builder.toString();

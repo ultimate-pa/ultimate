@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public abstract class CodeChecker {
 
@@ -76,14 +76,14 @@ public abstract class CodeChecker {
 	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
 			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
 		mLogger = logger;
-		this.msmtManager = smtManager;
-		this.moriginalRoot = originalRoot;
-		this.mgraphRoot = graphRoot;
+		msmtManager = smtManager;
+		moriginalRoot = originalRoot;
+		mgraphRoot = graphRoot;
 
-		this._edgeChecker = edgeChecker;
-		this.mpredicateUnifier = predicateUnifier;
+		_edgeChecker = edgeChecker;
+		mpredicateUnifier = predicateUnifier;
 
-		this._graphWriter = graphWriter;
+		_graphWriter = graphWriter;
 	}
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
@@ -110,7 +110,7 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		Term tvp = msmtManager.getPredicateFactory().and(a, b);
+		final Term tvp = msmtManager.getPredicateFactory().and(a, b);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -121,7 +121,7 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
-		Term tvp = msmtManager.getPredicateFactory().not(a);
+		final Term tvp = msmtManager.getPredicateFactory().not(a);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -200,9 +200,10 @@ public abstract class CodeChecker {
 		if (!visited.contains(node)) {
 			visited.add(node);
 			debugNode(node);
-			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
-			for (AnnotatedProgramPoint child : adj)
+			final AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
+			for (final AnnotatedProgramPoint child : adj) {
 				dfs(child);
+			}
 		}
 		return false;
 	}

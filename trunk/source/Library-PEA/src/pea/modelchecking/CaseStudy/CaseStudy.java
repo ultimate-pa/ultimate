@@ -49,7 +49,7 @@ public class CaseStudy {
     public static void main(String[] args) {
    
     	try {
-            PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);
+            final PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);
             PhaseEventAutomata[] systemPeas = xml2jconverter
                     .convert(CaseStudy.PATH
                             + "src/pea/modelchecking/CaseStudy/Environment.xml");
@@ -77,21 +77,21 @@ public class CaseStudy {
             for (int i = 0; i < systemPeas.length; i++) {
                 toUppaal = toUppaal.parallel(systemPeas[i]);
             }
-            PhaseEventAutomata[] propertyPeas = xml2jconverter
+            final PhaseEventAutomata[] propertyPeas = xml2jconverter
                     .convert(CaseStudy.PATH
                             + "src/pea/modelchecking/CaseStudy/BothNoEBNet0.xml");
             for (int i = 0; i < propertyPeas.length; i++) {
                 toUppaal = toUppaal.parallel(propertyPeas[i]);
             }
-            PEAJ2UPPAALConverter j2uppaalConverter = new PEAJ2UPPAALConverter();
-            PhaseEventAutomata[] toUppaalArray = new PhaseEventAutomata[1];
+            final PEAJ2UPPAALConverter j2uppaalConverter = new PEAJ2UPPAALConverter();
+            final PhaseEventAutomata[] toUppaalArray = new PhaseEventAutomata[1];
             toUppaal.dump();
             toUppaalArray[0] = toUppaal;
-            Document uppaalDoc = j2uppaalConverter.convert(toUppaalArray);
-            XMLWriter writer = new XMLWriter();
+            final Document uppaalDoc = j2uppaalConverter.convert(toUppaalArray);
+            final XMLWriter writer = new XMLWriter();
             writer.writeXMLDocumentToFile(uppaalDoc,
                     "src/pea/modelchecking/CaseStudy/toCheck.xml");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

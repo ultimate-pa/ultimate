@@ -35,9 +35,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -138,15 +138,15 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		simulation.doSimulation();
 		mResult = simulation.getResult();
 
-		boolean compareWithNonSccResult = false;
+		final boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
+			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
+			final DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
 					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
+			final INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

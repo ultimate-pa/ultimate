@@ -29,46 +29,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefer
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public RcfgPreferenceInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
-
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT,
-						DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
-						DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
-						DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
-						DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize,
-						DEF_CodeBlockSize, PreferenceType.Combo, CodeBlockSize.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_Simplify,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_CNF,
-						true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpUnsatCoreTrackBenchmark,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpMainTrackBenchmark,
-						false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_Path,
-						DEF_Path, PreferenceType.Directory),
-		};
+	public enum CodeBlockSize {
+		SingleStatement, SequenceOfStatements, LoopFreeBlock
 	}
 
 	// some solver commands
@@ -95,10 +65,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 
-	public enum CodeBlockSize {
-		SingleStatement, SequenceOfStatements, LoopFreeBlock
-	};
-
 	public static final CodeBlockSize DEF_CodeBlockSize = CodeBlockSize.LoopFreeBlock;
 	public static final String LABEL_Simplify = "Simplify code blocks";
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
@@ -109,5 +75,34 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Path = "To the following directory";
 	public static final String DEF_Path = "";
 	public static final String LABEL_BitvectorWorkaround = "Translate Boogie integers to SMT bitvectors";
+
+	public RcfgPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+
+	@Override
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
+						SolverMode.values()),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize, DEF_CodeBlockSize, PreferenceType.Combo,
+						CodeBlockSize.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_Simplify, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_CNF, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpMainTrackBenchmark, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_Path, DEF_Path, PreferenceType.Directory), };
+	}
+	
+	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services){
+		return services.getPreferenceProvider(Activator.PLUGIN_ID);
+	}
 
 }

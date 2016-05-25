@@ -35,7 +35,7 @@ public class PrivateTester<T> {
 	public T call(Object instance, String methodName, Object... args) 
 			throws PrivateInvocationException {
 		
-		Class<?> cls = instance.getClass();
+		final Class<?> cls = instance.getClass();
 		Method method;
 		Object ret;
 		
@@ -45,7 +45,7 @@ public class PrivateTester<T> {
 			method.setAccessible(true); 
 			ret = method.invoke(instance, args);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw (PrivateInvocationException) 
 				new PrivateInvocationException().initCause(e);
 		}
@@ -57,7 +57,7 @@ public class PrivateTester<T> {
 	public T getField(Object instance, String fieldName) 
 			 throws PrivateInvocationException {
 		
-		Class<?> cls = instance.getClass();
+		final Class<?> cls = instance.getClass();
 		Field field;
 		Object ret;
 		
@@ -67,7 +67,7 @@ public class PrivateTester<T> {
 			field.setAccessible(true);
 			ret = field.get(instance);
 			
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw (PrivateInvocationException)
 				new PrivateInvocationException().initCause(e);
 		}

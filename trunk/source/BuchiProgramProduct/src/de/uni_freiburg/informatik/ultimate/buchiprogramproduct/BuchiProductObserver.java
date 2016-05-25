@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -90,9 +90,9 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Initial RCFG", mRcfg);
 
 		mLogger.info("Beginning generation of product automaton");
-		RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		try {
-			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
+			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
 					mBacktranslator).getProductRcfg();
 			mLogger.info("Finished generation of product automaton successfully");
@@ -131,7 +131,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			}
 			reportSizeBenchmark("Optimized Product", mProduct);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.error(String.format(
 					"BuchiProgramProduct encountered an error during product automaton generation:\n %s", e));
 			throw e;
@@ -139,35 +139,35 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return;
 	}
 
-	private boolean optimizeRemoveSinkStates(RcpPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveSinkStates(IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
-			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
+			final RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
 			mProduct = rss.getResult();
 			continueOptimization = continueOptimization || rss.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeRemoveInfeasibleEdges(RcpPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveInfeasibleEdges(IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
-			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
+			final RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
 			mProduct = opt1.getResult();
 			continueOptimization = continueOptimization || opt1.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeMaximizeFinalStates(RcpPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeMaximizeFinalStates(IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
-			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
+			final MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
 			mProduct = opt2.getResult();
 			continueOptimization = continueOptimization || opt2.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeMinimizeStates(RcpPreferenceProvider ups, boolean continueOptimization) {
-		MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
+	private boolean optimizeMinimizeStates(IPreferenceProvider ups, boolean continueOptimization) {
+		final MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
 				MinimizeStates.class);
 
 		if (minimizeStates != MinimizeStates.NONE) {
@@ -192,9 +192,9 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeSimplifyAssumes(RcpPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeSimplifyAssumes(IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
+			final BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
 			mProduct = opt4.getResult();
 			continueOptimization = continueOptimization || opt4.isGraphChanged();
 		}

@@ -200,28 +200,37 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final UltimateRunDefinition other = (UltimateRunDefinition) obj;
 		if (mInput == null) {
-			if (other.mInput != null)
+			if (other.mInput != null) {
 				return false;
-		} else if (!mInput.equals(other.mInput))
+			}
+		} else if (!mInput.equals(other.mInput)) {
 			return false;
+		}
 		if (mSettings == null) {
-			if (other.mSettings != null)
+			if (other.mSettings != null) {
 				return false;
-		} else if (!mSettings.equals(other.mSettings))
+			}
+		} else if (!mSettings.equals(other.mSettings)) {
 			return false;
+		}
 		if (mToolchain == null) {
-			if (other.mToolchain != null)
+			if (other.mToolchain != null) {
 				return false;
-		} else if (!mToolchain.equals(other.mToolchain))
+			}
+		} else if (!mToolchain.equals(other.mToolchain)) {
 			return false;
+		}
 		return true;
 	}
 

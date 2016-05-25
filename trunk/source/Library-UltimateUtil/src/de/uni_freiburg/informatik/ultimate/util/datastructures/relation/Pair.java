@@ -72,7 +72,7 @@ public class Pair<E1, E2> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Pair<?, ?> other = (Pair<?, ?>) obj;
+		final Pair<?, ?> other = (Pair<?, ?>) obj;
 		if (mFirstElement == null) {
 			if (other.mFirstElement != null) {
 				return false;

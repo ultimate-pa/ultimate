@@ -88,7 +88,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	@Override
 	public String toString() {
-		ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
+		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
 				new BoogieBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
@@ -97,7 +97,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		return new IValuation() {
 			@Override
 			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index) {
-				ProgramState<Expression> ps = getProgramState(index);
+				final ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
 					return getEmtpyProgramState();
 				} else {
@@ -110,18 +110,18 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			}
 
 			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
-				Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
-				for (Expression var : ps.getVariables()) {
-					String varString = backtranslationWorkaround(translatorSequence, var);
-					List<String> valuesString = exprSet2StringList(ps.getValues(var));
+				final Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
+				for (final Expression var : ps.getVariables()) {
+					final String varString = backtranslationWorkaround(translatorSequence, var);
+					final List<String> valuesString = exprSet2StringList(ps.getValues(var));
 					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
 				}
 				return result;
 			}
 
 			private List<String> exprSet2StringList(Collection<Expression> expressions) {
-				List<String> result = new ArrayList<String>(expressions.size());
-				for (Expression expr : expressions) {
+				final List<String> result = new ArrayList<String>(expressions.size());
+				for (final Expression expr : expressions) {
 					result.add(backtranslationWorkaround(translatorSequence, expr));
 				}
 				return result;
@@ -137,7 +137,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	 * @return a string corresponding to the backtranslated expression
 	 */
 	private static <SE> String backtranslationWorkaround(List<ITranslator<?, ?, ?, ?>> translatorSequence, SE expr) {
-		Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
+		final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
 				translatorSequence.toArray(new ITranslator[0]));
 
 		// If the result is a Boogie expression, we use the Boogie pretty

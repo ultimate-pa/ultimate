@@ -14,7 +14,7 @@ public class Flags {
 	/** create a Flag object with the given value */
 
 	public Flags(int f) {
-		this.flags = f;
+		flags = f;
 	}
 
 	/** create an empty Flag object  */
@@ -35,7 +35,7 @@ public class Flags {
 
 	/** copy FROM the <tt>f</tt> object */
 	public void copyFlags(final Flags f) {
-		this.flags = f.flags;
+		flags = f.flags;
 	}
 
 	// --------------------------------
@@ -51,8 +51,11 @@ public class Flags {
 
 	/** set the flag <tt>flag</tt> to <tt>set</tt> */
 	public void set(int f, boolean set) {
-		if(set) set(f);
-		else		reset(f);
+		if(set) {
+			set(f);
+		} else {
+			reset(f);
+		}
 	}
 
 	/** get the value of <tt>flag</tt> */
@@ -66,7 +69,7 @@ public class Flags {
 	public static void internal_test() {
 		Test.start("Flags");
 
-		Flags f = new Flags();
+		final Flags f = new Flags();
 
 		f.set(0, true);
 		f.set(1, true);
@@ -77,10 +80,14 @@ public class Flags {
 		Test.checkEquality( f.get(2), true, "get (3)");
 
 		f.setAll(0);
-		for(int i = 0; i < 32; i++) Test.checkEquality( f.get(i), false, "get FALSE (i)");
+		for(int i = 0; i < 32; i++) {
+			Test.checkEquality( f.get(i), false, "get FALSE (i)");
+		}
 
 		f.setAll(-1);
-		for(int i = 0; i < 32; i++) Test.checkEquality( f.get(i), true, "get TRUE (i)");
+		for(int i = 0; i < 32; i++) {
+			Test.checkEquality( f.get(i), true, "get TRUE (i)");
+		}
 
 		Test.end();
 	}

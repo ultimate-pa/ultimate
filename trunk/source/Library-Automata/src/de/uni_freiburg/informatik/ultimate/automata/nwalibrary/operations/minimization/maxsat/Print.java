@@ -28,9 +28,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-import java.io.Writer;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 
 /**
@@ -44,20 +44,23 @@ final class Print {
 	static void printPartition(Writer writer, Partition partition) {
 		assert Partition.checkConsistency(partition);
 
-		ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
+		final ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
 
-		for (int i = 0; i < partition.numClasses; i++)
+		for (int i = 0; i < partition.numClasses; i++) {
 			classes.add(new ArrayList<Integer>());
+		}
 
-		for (int i = 0; i < partition.classOf.length; i++)
+		for (int i = 0; i < partition.classOf.length; i++) {
 			classes.get(partition.classOf[i]).add(i);
+		}
 
-		PrintWriter out = new PrintWriter(writer);
+		final PrintWriter out = new PrintWriter(writer);
 
-		for (ArrayList<Integer> cls : classes) {
+		for (final ArrayList<Integer> cls : classes) {
 			out.print("{");
-			for (int i : cls)
+			for (final int i : cls) {
 				out.printf(" %d", i);
+			}
 			out.print(" }");
 		}
 
@@ -72,10 +75,10 @@ final class Print {
 	 * @param out
 	 */
 	static void printNWA(Writer writer, NWA nwa) {
-		ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
-		ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
+		final ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
+		final ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
 
-		PrintWriter p = new PrintWriter(writer);
+		final PrintWriter p = new PrintWriter(writer);
 
 		p.printf("numStates %d\n", nwa.numStates);
 		p.printf("numISyms %d\n",  nwa.numISyms);
@@ -87,28 +90,33 @@ final class Print {
 		p.printf("numCTrans %d\n", nwa.cTrans.length);
 		p.printf("numRTrans %d\n", nwa.rTrans.length);
 
-		for (int i : initialStates)
+		for (final int i : initialStates) {
 			p.printf("initial %d\n", i);
-		for (int i : finalStates)
+		}
+		for (final int i : finalStates) {
 			p.printf("final %d\n", i);
-		for (ITrans x : nwa.iTrans)
+		}
+		for (final ITrans x : nwa.iTrans) {
 			p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (CTrans x : nwa.cTrans)
+		}
+		for (final CTrans x : nwa.cTrans) {
 			p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (RTrans x : nwa.rTrans)
+		}
+		for (final RTrans x : nwa.rTrans) {
 			p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
+		}
 
 		p.flush();
 	}
 
 	static String makeString(Partition cls) {
-		StringWriter w = new StringWriter();
+		final StringWriter w = new StringWriter();
 		Print.printPartition(w,  cls);
 		return w.toString();
 	}
 
 	static String makeString(NWA nwa) {
-		StringWriter w = new StringWriter();
+		final StringWriter w = new StringWriter();
 		Print.printNWA(w,  nwa);
 		return w.toString();
 	}

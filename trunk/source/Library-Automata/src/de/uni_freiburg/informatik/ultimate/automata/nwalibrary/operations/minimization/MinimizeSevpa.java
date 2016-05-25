@@ -41,8 +41,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -172,7 +172,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					throws AutomataOperationCanceledException {
 		
 		// intermediate container for the states
-		StatesContainer states = new StatesContainer(mOperand);
+		final StatesContainer states = new StatesContainer(mOperand);
 		
 		// cancel if signal is received
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -210,7 +210,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					assertStatesSeparation(equivalenceClasses));
 			mPartition = new Partition(mOperand, states.size());
 			
-			for (Set<STATE> ecSet : equivalenceClasses) { 
+			for (final Set<STATE> ecSet : equivalenceClasses) { 
 				assert ecSet.size() > 0; 
 				mPartition.addEquivalenceClass( 
 						new EquivalenceClass(ecSet, 
@@ -278,7 +278,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					computeHashSetCapacity(mOperand.getFinalStates().size()));
 			nonfinals = new HashSet<STATE>(computeHashSetCapacity(
 					mOperand.size() - mOperand.getFinalStates().size()));
-			for (STATE state : mOperand.getStates()) {
+			for (final STATE state : mOperand.getStates()) {
 				if (mOperand.isFinal(state)) {
 					finals.add(state);
 				}
@@ -289,20 +289,20 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		}
 		
 		// create partition object
-		Partition partition =
+		final Partition partition =
 				new Partition(mOperand, finals.size() + nonfinals.size());
 		
 		// set up the initial equivalence classes
 		
 		// final states
 		if (finals.size() > 0) {
-			EquivalenceClass finalsP = new EquivalenceClass(finals, true, true);
+			final EquivalenceClass finalsP = new EquivalenceClass(finals, true, true);
 			partition.addEquivalenceClass(finalsP);
 		}
 		
 		// non-final states (initially not in work list)
 		if (nonfinals.size() > 0) {
-			EquivalenceClass nonfinalsP =
+			final EquivalenceClass nonfinalsP =
 								new EquivalenceClass(nonfinals, false, true);
 			partition.addEquivalenceClass(nonfinalsP);
 		}
@@ -333,22 +333,22 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			while (! mPartition.workListIsEmpty()) {
 				
 				// A = next equivalence class from W, also called target set
-				TargetSet a = new TargetSet(mPartition.popFromWorkList());
+				final TargetSet a = new TargetSet(mPartition.popFromWorkList());
 				assert !a.isEmpty();
 				
 				// collect all incoming letters (and outgoing returns)
 				HashSet<LETTER> internalLetters, callLetters,
 								returnLettersOutgoing;
-				HashSet<LETTER> returnLetters = new HashSet<LETTER>();
+				final HashSet<LETTER> returnLetters = new HashSet<LETTER>();
 				
 				if (naiveSplit) {
 					internalLetters = new HashSet<LETTER>();
 					callLetters = new HashSet<LETTER>();
 					returnLettersOutgoing = new HashSet<LETTER>();
 					
-					Iterator<STATE> iterator = a.iterator();
+					final Iterator<STATE> iterator = a.iterator();
 					while (iterator.hasNext()) {
-						STATE state = iterator.next();
+						final STATE state = iterator.next();
 						
 						internalLetters.addAll(
 								mOperand.lettersInternalIncoming(state));
@@ -365,9 +365,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					callLetters = null;
 					returnLettersOutgoing = null;
 					
-					Iterator<STATE> iterator = a.iterator();
+					final Iterator<STATE> iterator = a.iterator();
 					while (iterator.hasNext()) {
-						STATE state = iterator.next();
+						final STATE state = iterator.next();
 						
 						returnLetters.addAll(
 								mOperand.lettersReturnIncoming(state));
@@ -435,13 +435,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	private void findXByInternalOrCall(TargetSet a, Partition partition,
 						final Collection<LETTER> alphabet,
 						final APredecessorSetFinder predecessorFinder) {
-		for (LETTER letter : alphabet) {
+		for (final LETTER letter : alphabet) {
 			
 			/*
 			 * X = predecessor set of A = all states s1
 			 * with transition (s1, l, s2) for letter l and s2 in A
 			 */
-			PredecessorSet x = predecessorFinder.find(letter);
+			final PredecessorSet x = predecessorFinder.find(letter);
 			
 			searchY(partition, a, x);
 		}
@@ -476,19 +476,19 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	private void findXByLinPred(TargetSet a, Partition partition,
 			final Collection<LETTER> alphabet) {
-		for (LETTER letter : alphabet) {
+		for (final LETTER letter : alphabet) {
 			
 			// trivial split: every linear predecessor is different
 			if (msplitAllReturnsLin) {
-				ReturnPredecessorLinSetFinder finder =
+				final ReturnPredecessorLinSetFinder finder =
 						new ReturnPredecessorLinSetFinder(partition, a);
-				PredecessorSet x = finder.find(letter);
-				Iterator<STATE> iterator = x.iterator();
+				final PredecessorSet x = finder.find(letter);
+				final Iterator<STATE> iterator = x.iterator();
 				while (iterator.hasNext()) {
-					HashSet<STATE> hashSet =
+					final HashSet<STATE> hashSet =
 							new HashSet<STATE>(computeHashSetCapacity(1));
 					hashSet.add(iterator.next());
-					PredecessorSet x2 = new PredecessorSet(hashSet);
+					final PredecessorSet x2 = new PredecessorSet(hashSet);
 					
 					searchY(partition, a, x2);
 				}
@@ -502,22 +502,22 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				 * maps equivalence class EC of hierarchical predecessors
 				 * to set of linear predecessors
 				 */
-				HashMap<EquivalenceClass, HashSet<STATE>> ec2linSet =
+				final HashMap<EquivalenceClass, HashSet<STATE>> ec2linSet =
 						new HashMap<EquivalenceClass, HashSet<STATE>>();
 				
-				Iterator<STATE> iterator = a.iterator();
+				final Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
-					STATE state = iterator.next();
-					for (IncomingReturnTransition<LETTER, STATE> inTrans : 
+					final STATE state = iterator.next();
+					for (final IncomingReturnTransition<LETTER, STATE> inTrans : 
 								partition.hierPredIncoming(state, letter)) {
-						EquivalenceClass ec = partition.getEquivalenceClass(
+						final EquivalenceClass ec = partition.getEquivalenceClass(
 								inTrans.getHierPred());
 						HashSet<STATE> linSet = ec2linSet.get(ec);
 						if (linSet == null) {
 							linSet = new HashSet<STATE>();
 							ec2linSet.put(ec, linSet);
 						}
-						for (IncomingReturnTransition<LETTER, STATE> inTransInner :
+						for (final IncomingReturnTransition<LETTER, STATE> inTransInner :
 								partition.linPredIncoming(state,
 									inTrans.getHierPred(), letter)) {
 							linSet.add(inTransInner.getLinPred());							
@@ -529,8 +529,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				 * for each equivalence class of hierarchical predecessors
 				 * split the linear predecessors
 				 */
-				for (HashSet<STATE> set : ec2linSet.values()) {
-					PredecessorSet x = new PredecessorSet(set);
+				for (final HashSet<STATE> set : ec2linSet.values()) {
+					final PredecessorSet x = new PredecessorSet(set);
 					
 					searchY(partition, a, x);
 				}
@@ -547,25 +547,25 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	private void findXByHierPred(TargetSet a, Partition partition,
 			final Collection<LETTER> alphabet) {
-		for (LETTER letter : alphabet) {
+		for (final LETTER letter : alphabet) {
 			
 			// trivial split: every linear predecessor is different
 			if (msplitAllReturnsHier) {
 				// find all hierarchical predecessors of the states in A
-				Iterator<STATE> iterator = a.iterator();
-				Collection<STATE> hierPreds = new HashSet<STATE>();
+				final Iterator<STATE> iterator = a.iterator();
+				final Collection<STATE> hierPreds = new HashSet<STATE>();
 				while (iterator.hasNext()) {
-					for (IncomingReturnTransition<LETTER, STATE> inTrans : 
+					for (final IncomingReturnTransition<LETTER, STATE> inTrans : 
 							partition.hierPredIncoming(iterator.next(), letter)) {
 						hierPreds.add(inTrans.getHierPred());
 					}
 				}
 				
-				for (STATE hier : hierPreds) {
-					HashSet<STATE> hashSet =
+				for (final STATE hier : hierPreds) {
+					final HashSet<STATE> hashSet =
 							new HashSet<STATE>(computeHashSetCapacity(1));
 					hashSet.add(hier);
-					PredecessorSet x = new PredecessorSet(hashSet);
+					final PredecessorSet x = new PredecessorSet(hashSet);
 					
 					searchY(partition, a, x);
 				}
@@ -576,16 +576,16 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			 */
 			else {
 				// distinguish linear predecessors by equivalence classes
-				HashMap<EquivalenceClass, HashSet<STATE>> ec2hierSet =
+				final HashMap<EquivalenceClass, HashSet<STATE>> ec2hierSet =
 						new HashMap<EquivalenceClass, HashSet<STATE>>();
-				Iterator<STATE> iterator = a.iterator();
+				final Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
-					STATE state = iterator.next();
-					for (IncomingReturnTransition<LETTER, STATE> inTrans :
+					final STATE state = iterator.next();
+					for (final IncomingReturnTransition<LETTER, STATE> inTrans :
 							partition.hierPredIncoming(state, letter)) {
-						STATE hier = inTrans.getHierPred();
-						STATE lin = inTrans.getLinPred();
-						EquivalenceClass ec =
+						final STATE hier = inTrans.getHierPred();
+						final STATE lin = inTrans.getLinPred();
+						final EquivalenceClass ec =
 								partition.getEquivalenceClass(lin);
 						HashSet<STATE> set = ec2hierSet.get(ec);
 						if (set == null) {
@@ -600,8 +600,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				 * for each equivalence class of linear predecessors
 				 * split hierarchical predecessors
 				 */
-				for (HashSet<STATE> set : ec2hierSet.values()) {
-					PredecessorSet x = new PredecessorSet(set);
+				for (final HashSet<STATE> set : ec2hierSet.values()) {
+					final PredecessorSet x = new PredecessorSet(set);
 					
 					searchY(partition, a, x);
 				}
@@ -623,31 +623,31 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	private void findXByDownStates(TargetSet a, Partition partition,
 									Collection<LETTER> alphabet) {
-		for (LETTER letter : alphabet) {
+		for (final LETTER letter : alphabet) {
 			
 			// maps hierarchical states to linear states to return transitions
-			HashMap<EquivalenceClass,
+			final HashMap<EquivalenceClass,
 				HashMap<EquivalenceClass, List<Set<ReturnTransition>>>>
 					hier2lin2trans = new HashMap<EquivalenceClass,
 					HashMap<EquivalenceClass, List<Set<ReturnTransition>>>>();
 			
-			Iterator<STATE> iterator = a.iterator();
+			final Iterator<STATE> iterator = a.iterator();
 			// for each successor state 'state' in A:
 			while (iterator.hasNext()) {
-				STATE state = iterator.next();
-				HashSet<STATE> hierVisited = new HashSet<STATE>();
+				final STATE state = iterator.next();
+				final HashSet<STATE> hierVisited = new HashSet<STATE>();
 				
 				// for each hierarchical predecessor 'hier' of 'state':
-				for (IncomingReturnTransition<LETTER, STATE> inTrans :
+				for (final IncomingReturnTransition<LETTER, STATE> inTrans :
 						partition.hierPredIncoming(state, letter)) {
-					STATE hier = inTrans.getHierPred();
+					final STATE hier = inTrans.getHierPred();
 					
 					// new change: ignore duplicate work
 					if (! hierVisited.add(hier)) {
 						continue;
 					}
 					
-					EquivalenceClass ecHier =
+					final EquivalenceClass ecHier =
 							partition.getEquivalenceClass(hier);
 					
 					HashMap<EquivalenceClass, List<Set<ReturnTransition>>>
@@ -659,10 +659,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					}
 					
 					// for each linear predecessor 'lin' of 'state' and 'hier':
-					for (IncomingReturnTransition<LETTER, STATE> inTransInner :
+					for (final IncomingReturnTransition<LETTER, STATE> inTransInner :
 							partition.linPredIncoming(state, hier, letter)) {
-						STATE lin = inTransInner.getLinPred();
-						EquivalenceClass ecLin =
+						final STATE lin = inTransInner.getLinPred();
+						final EquivalenceClass ecLin =
 								partition.getEquivalenceClass(lin);
 						
 						// list of similar sets
@@ -675,7 +675,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 						}
 						
 						// return transition considered
-						ReturnTransition transition =
+						final ReturnTransition transition =
 								new ReturnTransition(lin, hier, state);
 						
 						// find fitting set of similar return transitions
@@ -709,11 +709,11 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	private Set<ReturnTransition> getSimilarSet(
 			Partition partition, ReturnTransition transition,
 			LETTER letter, List<Set<ReturnTransition>> similarSetsList) {
-		for (Set<ReturnTransition> result : similarSetsList) {
+		for (final Set<ReturnTransition> result : similarSetsList) {
 			boolean found = true;
 			
 			// compare with each transition in the set
-			for (ReturnTransition trans : result) {
+			for (final ReturnTransition trans : result) {
 				if (! transition.isSimilar(partition, trans, letter)) {
 					found = false;
 					break;
@@ -741,17 +741,17 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			TargetSet a, Partition partition,
 			HashMap<EquivalenceClass, HashMap<EquivalenceClass,
 				List<Set<ReturnTransition>>>> hier2lin2trans) {
-		for (HashMap<EquivalenceClass, List<Set<ReturnTransition>>> lin2trans :
+		for (final HashMap<EquivalenceClass, List<Set<ReturnTransition>>> lin2trans :
 				hier2lin2trans.values()) {
-			for (List<Set<ReturnTransition>> similarSetsList :
+			for (final List<Set<ReturnTransition>> similarSetsList :
 					lin2trans.values()) {
 				// for each set of similar states perform a split
-				for (Set<ReturnTransition> similarSet : similarSetsList) {
+				for (final Set<ReturnTransition> similarSet : similarSetsList) {
 					// set up linear and hierarchical predecessor sets
-					int size = computeHashSetCapacity(similarSet.size());
-					HashSet<STATE> lins = new HashSet<STATE>(size);
-					HashSet<STATE> hiers = new HashSet<STATE>(size);
-					for (ReturnTransition trans : similarSet) {
+					final int size = computeHashSetCapacity(similarSet.size());
+					final HashSet<STATE> lins = new HashSet<STATE>(size);
+					final HashSet<STATE> hiers = new HashSet<STATE>(size);
+					for (final ReturnTransition trans : similarSet) {
 						lins.add(trans.getLin());
 						hiers.add(trans.getHier());
 					}
@@ -779,12 +779,12 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	private void findXByOutgoingReturn(TargetSet a, Partition partition,
 			final Collection<LETTER> alphabet,
 			final ReturnSuccessorSetFinder predecessorFinder) {
-		for (LETTER letter : alphabet) {
+		for (final LETTER letter : alphabet) {
 			/*
 			 * X = predecessor set of A in hierarchical view
 			 * = all states h with transition (s1, l, h, s2) for s1 in A
 			 */
-			PredecessorSet x = predecessorFinder.find(letter);
+			final PredecessorSet x = predecessorFinder.find(letter);
 			
 			searchY(partition, a, x);
 		}
@@ -805,16 +805,16 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		/*
 		 * list of split equivalence classes
 		 */
-		LinkedList<EquivalenceClass> intersected =
+		final LinkedList<EquivalenceClass> intersected =
 				new LinkedList<EquivalenceClass>();
 		
 		// iteratively splits equivalence classes with elements from X
-		Iterator<STATE> iterator = x.iterator();
+		final Iterator<STATE> iterator = x.iterator();
 		while (iterator.hasNext()) {
-			STATE state = iterator.next();
+			final STATE state = iterator.next();
 			
 			// find equivalence class Y
-			EquivalenceClass y = partition.getEquivalenceClass(state);
+			final EquivalenceClass y = partition.getEquivalenceClass(state);
 			assert y != null;
 			
 			// move state from Y to Y \cap X
@@ -844,7 +844,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * put one or two of {'Y \cap X', 'Y \ X'} in W,
 		 * but only if Y was split, i.e., 'Y \ X != {}'
 		 */
-		for (EquivalenceClass ec : intersected) {
+		for (final EquivalenceClass ec : intersected) {
 			/*
 			 * if Y is empty, then the intersection is not needed
 			 * and the states can be restored 
@@ -853,7 +853,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				++msplitsWithChange;
 				
 				// create new equivalence class
-				EquivalenceClass intersection = ec.split(partition);
+				final EquivalenceClass intersection = ec.split(partition);
 				
 				/*
 				 * if Y was in the target set, the split equivalence class
@@ -913,7 +913,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	private void putAllToWorkList(Partition partition, boolean naiveSplit) {
 		// only collect equivalence classes, which have been split lately
 		if (naiveSplit) {
-			for (EquivalenceClass ec : partition.getEquivalenceClasses()) {
+			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
 				if (ec.wasSplitDuringSecondPhase()) {
 					partition.addToWorkList(ec);
 				}
@@ -921,7 +921,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		}
 		// only collect equivalence classes with incoming return transitions
 		else {
-			for (EquivalenceClass ec : partition.getEquivalenceClasses()) {
+			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
 				if (ec.hasIncomingReturns(partition)) {
 					partition.addToWorkList(ec);
 				}
@@ -936,7 +936,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	private NestedWordAutomaton<LETTER, STATE> merge() {
 		// initialize result automaton
-		NestedWordAutomaton<LETTER, STATE> result =
+		final NestedWordAutomaton<LETTER, STATE> result =
 			new NestedWordAutomaton<LETTER, STATE>(mServices, 
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
 				mOperand.getReturnAlphabet(), mOperand.getStateFactory());
@@ -948,7 +948,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		mPartition.setUpRepresentatives();
 		
 		// use representatives as states
-		for (EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
+		for (final EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
 			if (ec.size() > 0) {
 				result.addState(ec.misInitial, ec.misFinal,
 								ec.getRepresentative());
@@ -957,13 +957,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		
 		// for all states add all outgoing transitions,
 		// but now from representative to representative
-		for (EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
+		for (final EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
 			final STATE stateFirst = ec.getCollection().iterator().next();
-			STATE representative = mPartition.getRepresentative(stateFirst);
+			final STATE representative = mPartition.getRepresentative(stateFirst);
 			
 			// internal successors
-			for (LETTER l : mOperand.lettersInternal(stateFirst)) {
-				for (OutgoingInternalTransition<LETTER, STATE> trans :
+			for (final LETTER l : mOperand.lettersInternal(stateFirst)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> trans :
 						mPartition.succInternal(stateFirst, l)) {
 					final STATE next = trans.getSucc();
 					result.addInternalTransition(
@@ -974,8 +974,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			}
 			
 			// call successors
-			for (LETTER l : mOperand.lettersCall(stateFirst)) {
-				for (OutgoingCallTransition<LETTER, STATE> trans :
+			for (final LETTER l : mOperand.lettersCall(stateFirst)) {
+				for (final OutgoingCallTransition<LETTER, STATE> trans :
 						mPartition.succCall(stateFirst, l)) {
 					final STATE next = trans.getSucc();
 					result.addCallTransition(
@@ -990,10 +990,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			 * NOTE: Here we need to iterate over all states as return
 			 * transitions need not be possible from all states.
 			 */
-			for (STATE stateRet : ec.getCollection()) {
-				for (LETTER l : mOperand.lettersReturn(stateRet)) {
-					for (STATE hier : mPartition.hierPred(stateRet, l)) {
-						for (OutgoingReturnTransition<LETTER, STATE> trans :
+			for (final STATE stateRet : ec.getCollection()) {
+				for (final LETTER l : mOperand.lettersReturn(stateRet)) {
+					for (final STATE hier : mPartition.hierPred(stateRet, l)) {
+						for (final OutgoingReturnTransition<LETTER, STATE> trans :
 								mPartition.succReturn(stateRet, hier, l)) {
 							final STATE next = trans.getSucc();
 							result.addReturnTransition(
@@ -1026,7 +1026,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * represents a return transition without the letter
 	 */
 	protected class ReturnTransition {
-		private STATE mlin, mhier, msucc;
+		private final STATE mlin, mhier, msucc;
 		
 		/**
 		 * @param lin linear predecessor state
@@ -1123,7 +1123,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				Partition partition,
 				Iterable<OutgoingReturnTransition<LETTER, STATE>> iterable,
 				EquivalenceClass equivalenceClass) {
-			for (OutgoingReturnTransition<LETTER, STATE> candidate : iterable) {
+			for (final OutgoingReturnTransition<LETTER, STATE> candidate : iterable) {
 				final STATE succ = candidate.getSucc();
 				if (partition.getEquivalenceClass(succ).equals(
 						equivalenceClass)) {
@@ -1173,10 +1173,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * @return predecessor set X
 		 */
 		protected PredecessorSet find(LETTER letter) {
-			PredecessorSet x = new PredecessorSet();
-			Iterator<STATE> iterator = ma.iterator();
+			final PredecessorSet x = new PredecessorSet();
+			final Iterator<STATE> iterator = ma.iterator();
 			while (iterator.hasNext()) {
-				STATE state = iterator.next();
+				final STATE state = iterator.next();
 				addPred(state, letter, x);
 			}
 			return x;
@@ -1270,7 +1270,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		@Override
 		protected void addPred(STATE state, LETTER letter, PredecessorSet x) {
-			for (IncomingReturnTransition<LETTER, STATE> inTrans :
+			for (final IncomingReturnTransition<LETTER, STATE> inTrans :
 					mpartition.hierPredIncoming(state, letter)) {
 				mpartition.addPredReturnLin(state, letter,
 						inTrans.getHierPred(), x);
@@ -1392,7 +1392,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			else {
 				this.mcollection = new HashSet<STATE>(computeHashSetCapacity(
 														collection.size()));
-				for (STATE state : collection) {
+				for (final STATE state : collection) {
 					this.mcollection.add(state);
 				}
 			}
@@ -1580,14 +1580,14 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * @return split equivalence class
 		 */
 		public EquivalenceClass split(Partition partition) {
-			EquivalenceClass intersection =
+			final EquivalenceClass intersection =
 					new EquivalenceClass(getIntersection(null), isFinal(),
 														isInWorkList());
 			partition.addEquivalenceClass(intersection);
 			mwasSplit = true;
 						
 			// refresh state mapping
-			for (STATE state : intersection.getCollection()) {
+			for (final STATE state : intersection.getCollection()) {
 				partition.setEquivalenceClass(state, intersection);
 			}
 			
@@ -1607,7 +1607,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				mwasSplit = false;
 				
 				mincomingReturns = false;
-				for (STATE state : mcollection) {
+				for (final STATE state : mcollection) {
 					if (partition.hasIncomingReturns(state)) {
 						mincomingReturns = true;
 						break;
@@ -1637,10 +1637,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		@Override
 		public String toString() {
-			StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder();
 			
 			builder.append("[");
-			for (STATE state : mcollection) {
+			for (final STATE state : mcollection) {
 				builder.append(state.toString());
 				builder.append(", ");
 			}
@@ -1665,13 +1665,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	public class Partition {
 		// original nested word automaton
-		private INestedWordAutomaton<LETTER, STATE> mparentOperand;
+		private final INestedWordAutomaton<LETTER, STATE> mparentOperand;
 		// equivalence classes
-		private LinkedList<EquivalenceClass> mequivalenceClasses;
+		private final LinkedList<EquivalenceClass> mequivalenceClasses;
 		// work list (W) with equivalence classes still to refine
-		private WorkList mworkList;
+		private final WorkList mworkList;
 		// mapping 'state -> equivalence class'
-		private HashMap<STATE,EquivalenceClass> mmapState2EquivalenceClass;
+		private final HashMap<STATE,EquivalenceClass> mmapState2EquivalenceClass;
 		
 		/**
 		 * @param operand original nested word automaton
@@ -1700,8 +1700,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			 * if an equivalence class contains an initial state,
 			 * the whole equivalence class should be initial
 			 */
-			for (STATE state : mparentOperand.getInitialStates()) {
-				EquivalenceClass ec = mmapState2EquivalenceClass.get(state);
+			for (final STATE state : mparentOperand.getInitialStates()) {
+				final EquivalenceClass ec = mmapState2EquivalenceClass.get(state);
 				// null check needed in case state was removed beforehand
 				if (ec != null) {
 					assert (ec.size() > 0);
@@ -1710,7 +1710,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			}
 			
 			// inserts a new state with sensible naming
-			for (EquivalenceClass ec : mequivalenceClasses) {
+			for (final EquivalenceClass ec : mequivalenceClasses) {
 				ec.setUpRepresentative();
 			}
 		}
@@ -1730,7 +1730,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			if (equivalenceClass.isInWorkList()) {
 				mworkList.add(equivalenceClass);
 			}
-			for (STATE state : equivalenceClass.getCollection()) {
+			for (final STATE state : equivalenceClass.getCollection()) {
 				mmapState2EquivalenceClass.put(state, equivalenceClass);
 			}
 		}
@@ -1784,21 +1784,21 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * 			added to the work list
 		 */
 		void addReturnsToWorkList(EquivalenceClass equivalenceClass) {
-			Collection<STATE> collection = equivalenceClass.getCollection();
-			Iterator<STATE> iterator = collection.iterator();
+			final Collection<STATE> collection = equivalenceClass.getCollection();
+			final Iterator<STATE> iterator = collection.iterator();
 			while (iterator.hasNext()) {
-				STATE state = iterator.next();
+				final STATE state = iterator.next();
 				
 				// successors via linear edge
-				for (LETTER letter : mparentOperand.lettersReturn(state)) {
-					Iterable<STATE> hierPreds = hierPred(state, letter);
-					for (STATE hier : hierPreds) {
-						Iterable<OutgoingReturnTransition<LETTER, STATE>> succStates =
+				for (final LETTER letter : mparentOperand.lettersReturn(state)) {
+					final Iterable<STATE> hierPreds = hierPred(state, letter);
+					for (final STATE hier : hierPreds) {
+						final Iterable<OutgoingReturnTransition<LETTER, STATE>> succStates =
 								succReturn(state, hier, letter);
-						for (OutgoingReturnTransition<LETTER, STATE> trans :
+						for (final OutgoingReturnTransition<LETTER, STATE> trans :
 								succStates) {
 							final STATE succ = trans.getSucc();
-							EquivalenceClass ec = getEquivalenceClass(succ);
+							final EquivalenceClass ec = getEquivalenceClass(succ);
 							if (! ec.isInWorkList()) {
 								addToWorkList(ec);
 							}
@@ -1807,15 +1807,15 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				}
 				
 				// successors via hierarchical edge
-				for (LETTER letter :
+				for (final LETTER letter :
 					mparentOperand.lettersReturnSummary(state)) {
-					Iterable<SummaryReturnTransition<LETTER, STATE>>
+					final Iterable<SummaryReturnTransition<LETTER, STATE>>
 					succs =
 					mparentOperand.returnSummarySuccessor(
 							letter, state);
-					for (SummaryReturnTransition<LETTER, STATE> t :
+					for (final SummaryReturnTransition<LETTER, STATE> t :
 						succs) {
-						EquivalenceClass ec = getEquivalenceClass(
+						final EquivalenceClass ec = getEquivalenceClass(
 								t.getSucc());
 						if (! ec.isInWorkList()) {
 							addToWorkList(ec);
@@ -1829,7 +1829,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * @return next equivalence class in the work list
 		 */
 		EquivalenceClass popFromWorkList() {
-			EquivalenceClass ec = mworkList.pop();
+			final EquivalenceClass ec = mworkList.pop();
 			ec.setInWorkList(false);
 			return ec;
 		}
@@ -1849,8 +1849,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * @param states set of target states
 		 */
 		private Collection<STATE> neighbors(Iterable<STATE> states) {
-			LinkedList<STATE> result = new LinkedList<STATE>();
-			for (STATE s : states) {
+			final LinkedList<STATE> result = new LinkedList<STATE>();
+			for (final STATE s : states) {
 				if (mmapState2EquivalenceClass.get(s) != null) {
 					result.add(s);
 				}
@@ -1889,7 +1889,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		private void addNeighbors(Iterable<STATE> states,
 				PredecessorSet x) {
-			for (STATE s : states) {
+			for (final STATE s : states) {
 				if (mmapState2EquivalenceClass.get(s) != null) {
 					x.add(s);
 				}
@@ -1904,7 +1904,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		private void addNeighborsEfficient(Iterable<STATE> states,
 				PredecessorSet x) {
-			for (STATE s : states) {
+			for (final STATE s : states) {
 				x.add(s);
 			}
 		}
@@ -1912,7 +1912,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		private void addNeighborsEfficientLin(
 				Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
 					PredecessorSet x) {
-			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
+			for (final IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
 				x.add(inTrans.getLinPred());
 			}
 		}
@@ -1920,7 +1920,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		private void addNeighborsEfficientHier(
 				Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
 					PredecessorSet x) {
-			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
+			for (final IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
 				x.add(inTrans.getHierPred());
 			}
 		}
@@ -1945,8 +1945,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 						mparentOperand.returnPredecessors(letter, state), x);
 		}
 		void addSuccReturnHier(STATE state, LETTER letter, PredecessorSet x) {
-			HashSet<STATE> hierSet = new HashSet<STATE>();
-			for (STATE hier : mparentOperand.hierPred(state, letter)) {
+			final HashSet<STATE> hierSet = new HashSet<STATE>();
+			for (final STATE hier : mparentOperand.hierPred(state, letter)) {
 				hierSet.add(hier);
 			}
 			addNeighborsEfficient(hierSet, x);
@@ -2011,10 +2011,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		@Override
 		public String toString() {
-			StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder();
 			
 			builder.append("{ ");
-			for (EquivalenceClass ec : mequivalenceClasses) {
+			for (final EquivalenceClass ec : mequivalenceClasses) {
 				builder.append(ec.toString());
 				builder.append(",\n");
 			}
@@ -2059,7 +2059,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		Iterator<STATE> iterator() {
 			return new Iterator<STATE>() {
-				private ListIterator<EquivalenceClass> listIterator =
+				private final ListIterator<EquivalenceClass> listIterator =
 										mequivalenceClasses.listIterator();
 				private Iterator<STATE> equivalenceClassIterator = null;
 				private STATE next = initialize();
@@ -2074,7 +2074,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					assert next != null;
 					
 					// next element already computed before
-					STATE result = next;
+					final STATE result = next;
 					
 					// compute next element
 					computeNext();
@@ -2128,7 +2128,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * delete object and reset flag in equivalence class objects
 		 */
 		void delete() {
-			for (EquivalenceClass ec : mequivalenceClasses) {
+			for (final EquivalenceClass ec : mequivalenceClasses) {
 				ec.setInTargetSet(false);
 			}
 			
@@ -2147,10 +2147,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		@Override
 		public String toString() {
-			StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder();
 			builder.append("{");
 			
-			for (EquivalenceClass ec : mequivalenceClasses) {
+			for (final EquivalenceClass ec : mequivalenceClasses) {
 				builder.append(ec.toString());
 				builder.append("\n");
 			}
@@ -2215,7 +2215,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		@Override
 		public String toString() {
-			StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder();
 			
 			builder.append("{");
 			builder.append(mqueue.toString());
@@ -2306,12 +2306,12 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 */
 	class StatesContainer {
 		// original nested word automaton
-		private INestedWordAutomaton<LETTER, STATE> mparentOperand;
+		private final INestedWordAutomaton<LETTER, STATE> mparentOperand;
 		// states
 		private HashSet<STATE> mfinals;
 		private HashSet<STATE> mnonfinals;
 		// true iff a real copy is made
-		private StatesContainerMode mmode;
+		private final StatesContainerMode mmode;
 		
 		/**
 		 * constructor
@@ -2391,7 +2391,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					return mnonfinals.iterator();
 				case saveRemoved :
 					return new Iterator<STATE>() {
-						private Iterator<STATE> iterator =
+						private final Iterator<STATE> iterator =
 								mparentOperand.getStates().iterator();
 						private STATE next = computeNext();
 						
@@ -2405,7 +2405,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 							assert next != null;
 							
 							// next element already computed before
-							STATE result = next;
+							final STATE result = next;
 							
 							// compute next element
 							next = computeNext();
@@ -2465,7 +2465,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				return mfinals.iterator();
 			case saveRemoved :
 				return new Iterator<STATE>() {
-					private Iterator<STATE> iterator =
+					private final Iterator<STATE> iterator =
 							mparentOperand.getFinalStates().iterator();
 					private STATE next = computeNext();
 					
@@ -2479,7 +2479,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 						assert next != null;
 						
 						// next element already computed before
-						STATE result = next;
+						final STATE result = next;
 						
 						// compute next element
 						next = computeNext();
@@ -2540,8 +2540,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				case makeCopy :
 					return mnonfinals;
 				case saveRemoved :
-					LinkedList<STATE> result = new LinkedList<STATE>();
-					Iterator<STATE> iterator = getNonfinalsIterator();
+					final LinkedList<STATE> result = new LinkedList<STATE>();
+					final Iterator<STATE> iterator = getNonfinalsIterator();
 					while (iterator.hasNext()) {
 						result.add(iterator.next());
 					}
@@ -2625,7 +2625,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		public void addAll(Collection<STATE> states) {
 			switch (mmode) {
 				case makeCopy :
-					for (STATE state : states) {
+					for (final STATE state : states) {
 						addState(state);
 					}
 					return;
@@ -2718,7 +2718,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			throw new IllegalStateException();
 		}
 		
-		Map<STATE,STATE> oldState2newState = new Map<STATE,STATE>() {
+		final Map<STATE,STATE> oldState2newState = new Map<STATE,STATE>() {
 
 			@Override
 			public int size() {
@@ -2742,7 +2742,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 
 			@Override
 			public STATE get(Object key) {
-				EquivalenceClass eqClass =
+				final EquivalenceClass eqClass =
 						mPartition.mmapState2EquivalenceClass.get(key);
 				if (eqClass == null) {
 					return null;

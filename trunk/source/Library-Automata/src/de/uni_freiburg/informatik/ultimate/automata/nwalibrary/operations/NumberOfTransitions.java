@@ -65,8 +65,8 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		int number = 0;
-		for (STATE state : mNwa.getStates()) {
-			for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+		for (final STATE state : mNwa.getStates()) {
+			for (@SuppressWarnings("unused") final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
 				number++;
 			}
 		}

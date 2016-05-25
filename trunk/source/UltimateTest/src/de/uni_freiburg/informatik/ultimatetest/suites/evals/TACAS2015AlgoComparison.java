@@ -63,7 +63,7 @@ public class TACAS2015AlgoComparison extends TACAS2015 {
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
-		String[] directories = {
+		final String[] directories = {
 			"examples/svcomp/locks/",
 			"examples/svcomp/recursive/",
 			"examples/svcomp/ntdrivers-simplified/",

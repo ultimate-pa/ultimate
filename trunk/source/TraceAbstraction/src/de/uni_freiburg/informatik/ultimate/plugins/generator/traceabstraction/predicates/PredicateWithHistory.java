@@ -47,7 +47,7 @@ public class PredicateWithHistory extends SPredicate {
 			String[] procedures, Term formula,
 			Set<BoogieVar> vars, Term closedFormula, Map<Integer,Term> history) {
 		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);
-		this.mHistory = history;
+		mHistory = history;
 	}
 
 	/**
@@ -65,15 +65,16 @@ public class PredicateWithHistory extends SPredicate {
 	
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "History")
+		if (field == "History") {
 			return mHistory;
-		else 
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 	
 	public Map<Integer,Term> getCopyOfHistory() {
-		Map<Integer,Term> result = new HashMap<Integer,Term>();
-		for (Integer i : mHistory.keySet()) {
+		final Map<Integer,Term> result = new HashMap<Integer,Term>();
+		for (final Integer i : mHistory.keySet()) {
 			result.put(i, mHistory.get(i));
 		}
 		return result;

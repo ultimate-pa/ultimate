@@ -176,18 +176,23 @@ public class ArrayIndex implements List<Term> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		ArrayIndex other = (ArrayIndex) obj;
+		}
+		final ArrayIndex other = (ArrayIndex) obj;
 		if (mIndexEntries == null) {
-			if (other.mIndexEntries != null)
+			if (other.mIndexEntries != null) {
 				return false;
-		} else if (!mIndexEntries.equals(other.mIndexEntries))
+			}
+		} else if (!mIndexEntries.equals(other.mIndexEntries)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -201,7 +206,7 @@ public class ArrayIndex implements List<Term> {
 	 * index.
 	 */
 	public ArrayIndex getFirst(int k) {
-		List<Term> indexEntries = new ArrayList<>();
+		final List<Term> indexEntries = new ArrayList<>();
 		for (int i=0; i<k; i++) {
 			indexEntries.add(mIndexEntries.get(i));
 		}
@@ -220,8 +225,8 @@ public class ArrayIndex implements List<Term> {
 	 * of tvSet.
 	 */
 	public boolean freeVarsAreSubset(Set<TermVariable> tvSet) {
-	for (Term term : mIndexEntries) {
-		for (TermVariable tv : term.getFreeVars()) {
+	for (final Term term : mIndexEntries) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			if (!tvSet.contains(tv)) {
 				return false;
 			} 

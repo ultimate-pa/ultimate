@@ -46,15 +46,15 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 				Collections.<LETTER>emptySet(),
 				alternatingAutomaton.getStateFactory()
 			);
-		LinkedList<BitSet> newStates = new LinkedList<BitSet>();
+		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		while(!newStates.isEmpty()){
-			BitSet state = newStates.getFirst();
-			boolean isInitial = (state == alternatingAutomaton.getFinalStatesBitVector());
-			boolean isFinal = alternatingAutomaton.getAcceptingFunction().getResult(state);
+			final BitSet state = newStates.getFirst();
+			final boolean isInitial = (state == alternatingAutomaton.getFinalStatesBitVector());
+			final boolean isFinal = alternatingAutomaton.getAcceptingFunction().getResult(state);
 			resultAutomaton.addState(isInitial, isFinal, state);
-			for(LETTER letter : alternatingAutomaton.getAlphabet()){
-				BitSet nextState = (BitSet) state.clone();
+			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
 				resultAutomaton.addInternalTransition(state, letter, nextState);
 				if(!resultAutomaton.getStates().contains(nextState)){
@@ -66,7 +66,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 			newStates.removeFirst();
 		}
 	}
-	private NestedWordAutomaton<LETTER, BitSet> resultAutomaton;
+	private final NestedWordAutomaton<LETTER, BitSet> resultAutomaton;
 	
 	@Override
 	public String operationName(){

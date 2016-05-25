@@ -63,7 +63,7 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 		
 		tools.add(new Tool(PrefStrings.s_automatascriptinterpreter));
 		
@@ -72,7 +72,7 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = new ArrayList<>();
+		final List<Setting> rtr = new ArrayList<>();
 
 		rtr.add(new Setting("/" + PrefStrings.s_automatascriptinterpreter, Setting.SettingType.INTEGER, "Timeout",
 				"10", true));

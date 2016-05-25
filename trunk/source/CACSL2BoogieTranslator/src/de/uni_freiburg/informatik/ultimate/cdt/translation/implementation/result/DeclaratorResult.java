@@ -49,6 +49,7 @@ public class DeclaratorResult extends Result {
 		return mDecl;
 	}
 	
+	@Override
 	public String toString() {
 		return mDecl.toString();
 	}

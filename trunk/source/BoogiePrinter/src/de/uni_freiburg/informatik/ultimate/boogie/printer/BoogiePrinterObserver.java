@@ -42,13 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * @author hoenicke
  */
 public class BoogiePrinterObserver implements IUnmanagedObserver {
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
 	public BoogiePrinterObserver(ILogger logger){
 		mLogger = logger;
@@ -58,10 +59,10 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
-			PrintWriter writer = openTempFile(root);
+			final PrintWriter writer = openTempFile(root);
 			if (writer != null) {
-				Unit unit = (Unit) root;
-				BoogieOutput output = new BoogieOutput(writer);
+				final Unit unit = (Unit) root;
+				final BoogieOutput output = new BoogieOutput(writer);
 				output.printBoogieProgram(unit);
 				writer.close();
 			}
@@ -76,25 +77,30 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 		String filename;
 		File f;
 
-		if (PreferenceInitializer.getSaveInSourceDirectory()) {
+		if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
 			path = new File(root.getPayload().getLocation().getFileName())
 					.getParent();
 			if(path == null){
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = PreferenceInitializer.getDumpPath();
+				path = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 			}
 		} else {
-			path = PreferenceInitializer.getDumpPath();
+			path = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+			.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 		}
 
 		try {
-			if (PreferenceInitializer.getUseUniqueFilename()) {
+			if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
+			.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
 				f = File.createTempFile("BoogiePrinter_"
 						+ new File(root.getPayload().getLocation()
 								.getFileName()).getName() + "_UID", ".bpl",
 						new File(path));
 			} else {
-				filename = PreferenceInitializer.getFilename();
+				filename = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PreferenceInitializer.FILE_NAME_LABEL);
 				f = new File(path + File.separatorChar + filename);
 				if (f.isFile() && f.canWrite() || !f.exists()) {
 					if (f.exists()) {
@@ -110,7 +116,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 			mLogger.info("Writing to file " + f.getAbsolutePath());
 			return new PrintWriter(new FileWriter(f));
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.fatal("Cannot open file", e);
 			return null;
 		}

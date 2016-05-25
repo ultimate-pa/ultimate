@@ -98,7 +98,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public static final int MINUS_INFINITY = Integer.MIN_VALUE;
 	
 
-	private int[] mNestingRelation;
+	private final int[] mNestingRelation;
 
 	private Set<Integer> mCallPositions;
 	
@@ -129,14 +129,14 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 				"plus infinity, minus infinity or internal position";
 		assert (nestingEdgesDoNotCross(nestingRelation)) : 
 				"nesting edges must not cross";
-		this.mWord = word;
+		mWord = word;
 	    this.mNestingRelation = nestingRelation;	
 	}
 	
 	public NestedWord() {
-		ArrayList<LETTER> al = new ArrayList<LETTER>(0);
-		this.mWord = (LETTER[]) al.toArray();
-		int[] nr = { };
+		final ArrayList<LETTER> al = new ArrayList<LETTER>(0);
+		mWord = (LETTER[]) al.toArray();
+		final int[] nr = { };
 		this.mNestingRelation = nr;
 	}
 	
@@ -151,10 +151,10 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			throw new IllegalArgumentException(
 					"only position has to be either internal, pending call, or pending return");
 		}
-		ArrayList<LETTER> al = new ArrayList<LETTER>(1);
+		final ArrayList<LETTER> al = new ArrayList<LETTER>(1);
 		al.add(letter);
-		this.mWord = (LETTER[]) al.toArray();
-		int[] nr = { internalORcallORreturn };
+		mWord = (LETTER[]) al.toArray();
+		final int[] nr = { internalORcallORreturn };
 		this.mNestingRelation = nr;
 	}
 	
@@ -163,8 +163,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @param word
 	 */
 	private NestedWord(Word<LETTER> word) {
-		this.mWord = (LETTER[]) new ArrayList<LETTER>(word.asList()).toArray();
-		int length = word.length();
+		mWord = (LETTER[]) new ArrayList<LETTER>(word.asList()).toArray();
+		final int length = word.length();
 		this.mNestingRelation = new int[length];
 		for (int i=0; i<length; i++) {
 			mWord[i] = word.getSymbol(i);
@@ -183,7 +183,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	
 	
 	private LETTER[] getWord() {
-		return this.mWord;
+		return mWord;
 	}
 	
 	private int[] getNestingRelation() {
@@ -198,7 +198,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 	
 	private Set<Integer> computeCallPositions() {
-		Set<Integer> result = new HashSet<Integer>();
+		final Set<Integer> result = new HashSet<Integer>();
 		for (int i=0; i<mNestingRelation.length; i++) {
 			if (isCallPosition(i)) {
 				result.add(i);
@@ -215,7 +215,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 	
 	private TreeMap<Integer, LETTER> computePendingReturnPositions() {
-		TreeMap<Integer, LETTER> result = new TreeMap<Integer, LETTER>();
+		final TreeMap<Integer, LETTER> result = new TreeMap<Integer, LETTER>();
 		for (int i=0; i<mNestingRelation.length; i++) {
 			if (isReturnPosition(i) && isPendingReturn(i)) {
 				result.put(i, mWord[i]);
@@ -303,6 +303,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return The length of the NestedWord is the length of the word. The length is 0 
 	 * for the empty word, 1 for the word that consists of one symbol, etc.
 	 */
+	@Override
 	public int length() {
 		return super.length();
 	}
@@ -310,31 +311,34 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	
 	public boolean isCallPosition(int i) {
 		assert (0<=i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
-		assert (i<=this.mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
-		if (mNestingRelation[i] >=i) 
+		assert (i<=mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
+		if (mNestingRelation[i] >=i) {
 			return true;
-		else 
+		} else {
 			return false;
+		}
 	}
 	
 	
 	public boolean isInternalPosition(int i) {
 		assert (0<=i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
-		assert (i<=this.mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
-		if (mNestingRelation[i] == INTERNAL_POSITION) 
+		assert (i<=mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
+		if (mNestingRelation[i] == INTERNAL_POSITION) {
 			return true;
-		else 
+		} else {
 			return false;
+		}
 	}
 	
 	
 	public boolean isReturnPosition(int i) {
 		assert (0<=i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
-		assert (i<=this.mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
-		if (mNestingRelation[i] <=i && mNestingRelation[i] != INTERNAL_POSITION) 
+		assert (i<=mWord.length) : "Access to position " + i + " not possible. The last positions of this word is " + (mWord.length-1);
+		if (mNestingRelation[i] <=i && mNestingRelation[i] != INTERNAL_POSITION) {
 			return true;
-		else 
+		} else {
 			return false;
+		}
 	}
 	
 	
@@ -372,17 +376,17 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public boolean isPendingCall(int i) {
 		if (mNestingRelation[i] == PLUS_INFINITY) {
 			return true;
-		}
-		else 
+		} else {
 			return false;
+		}
 	}
 	
 	public boolean isPendingReturn(int i) {
 		if (mNestingRelation[i] == MINUS_INFINITY) {
 			return true;
-		}
-		else 
+		} else {
 			return false;
+		}
 	}
 	
 	public boolean containsPendingReturns() {
@@ -402,12 +406,12 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		if (lastIndex<firstIndex) {
 			throw new IllegalArgumentException("lastIndex must not be smaller than first");
 		}
-		ArrayList<LETTER> word = new ArrayList<LETTER>(lastIndex-firstIndex+1);
-		int[] nestingRelation = new int[lastIndex-firstIndex+1];
+		final ArrayList<LETTER> word = new ArrayList<LETTER>(lastIndex-firstIndex+1);
+		final int[] nestingRelation = new int[lastIndex-firstIndex+1];
 		int newWordPos = 0;
 		for (int i=firstIndex;i<=lastIndex;i++) {
 			word.add(getWord()[i]);
-			int nestingEntry = mNestingRelation[i];
+			final int nestingEntry = mNestingRelation[i];
 			if (nestingEntry == INTERNAL_POSITION) {
 				nestingRelation[newWordPos] = INTERNAL_POSITION;
 			} else if  (nestingEntry == MINUS_INFINITY) {
@@ -433,7 +437,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			}
 			newWordPos++;
 		}
-		LETTER[] wordAsArray = (LETTER[]) word.toArray();
+		final LETTER[] wordAsArray = (LETTER[]) word.toArray();
 		return new NestedWord<LETTER>(wordAsArray, nestingRelation);
 	}
 	
@@ -454,9 +458,9 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 */
 	@SuppressWarnings("unchecked")
 	public NestedWord<LETTER> concatenate(NestedWord<LETTER> nestedWord2) {
-		LETTER[] word2 = nestedWord2.getWord();
-		int[] nestingRelation2 = nestedWord2.getNestingRelation();
-		int[] concatNestingRelation = new int[mWord.length+word2.length];
+		final LETTER[] word2 = nestedWord2.getWord();
+		final int[] nestingRelation2 = nestedWord2.getNestingRelation();
+		final int[] concatNestingRelation = new int[mWord.length+word2.length];
 		int i = mWord.length -1;
 		int j = 0;
 		while (i>=0) {
@@ -504,7 +508,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			j++;
 		}
 		
-		LETTER[] concatWord = (LETTER[]) new Object[mWord.length+word2.length];
+		final LETTER[] concatWord = (LETTER[]) new Object[mWord.length+word2.length];
 		System.arraycopy(mWord, 0, concatWord, 0, mWord.length);
 		System.arraycopy(word2, 0, concatWord, mWord.length, word2.length);
 		
@@ -531,8 +535,9 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Remark: There is a bijection from nested words to words in this tagged
 	 * alphabet style.
 	 */
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i<mWord.length; i++) {
 			if (isInternalPosition(i)) {
 				sb.append("\"");
@@ -575,8 +580,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			throw new IllegalArgumentException(
 					"last index must smaller strictly smaller than length");
 		}
-		LETTER[] subWord = Arrays.copyOfRange(mWord, firstIndex, lastIndex+1);
-		int[] subNestingRelation = new int[lastIndex-firstIndex+1];
+		final LETTER[] subWord = Arrays.copyOfRange(mWord, firstIndex, lastIndex+1);
+		final int[] subNestingRelation = new int[lastIndex-firstIndex+1];
 		for (int i = firstIndex; i<=lastIndex; i++) {
 			int translatedNestingCode;
 			if (mNestingRelation[i] == -2 || 

@@ -26,8 +26,12 @@
  */
 package pea_to_boogie.generator;
 
-import pea.*;
-import java.util.*;
+import java.util.List;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.Decision;
+import pea.RangeDecision;
 public class VarRemoval {
 	
 	public CDD getRangeCDDs (CDD cdd) {
@@ -39,11 +43,11 @@ public class VarRemoval {
             return CDD.FALSE;
         }
         
-    	CDD[] childs = cdd.getChilds();
-    	Decision decision = cdd.getDecision();
+    	final CDD[] childs = cdd.getChilds();
+    	final Decision decision = cdd.getDecision();
     	CDD decisionCDD = CDD.TRUE;
       	if (decision instanceof RangeDecision) {
-      	   CDD[] newChilds = new CDD[childs.length];
+      	   final CDD[] newChilds = new CDD[childs.length];
            for (int i = 0; i < childs.length; i++) {
         	newChilds[i] = getRangeCDDs(childs[i]);	            	
            } 
@@ -63,14 +67,14 @@ public class VarRemoval {
             return CDD.FALSE;
         }
         
-    	CDD[] childs = cdd.getChilds();
-    	Decision decision = cdd.getDecision();
+    	final CDD[] childs = cdd.getChilds();
+    	final Decision decision = cdd.getDecision();
     	CDD decisionCDD = CDD.TRUE;
       	if (decision instanceof RangeDecision) {
   			assert childs.length == 2;
   		    decisionCDD = excludeRangeCDDs (childs[0]).or(excludeRangeCDDs (childs[1]));
       	} else {
-       	   CDD[] newChilds = new CDD[childs.length];
+       	   final CDD[] newChilds = new CDD[childs.length];
            for (int i = 0; i < childs.length; i++) {
         	newChilds[i] = excludeRangeCDDs (childs[i]);	            	
            } 
@@ -86,11 +90,11 @@ public class VarRemoval {
             return CDD.FALSE;
         }
         
-    	CDD[] childs = cdd.getChilds();
-    	Decision decision = cdd.getDecision();
+    	final CDD[] childs = cdd.getChilds();
+    	final Decision decision = cdd.getDecision();
     	CDD decisionCDD = CDD.TRUE;
       	if (decision instanceof RangeDecision || (decision instanceof BooleanDecision & !primedVars.contains(decision.getVar()))) {
-      	   CDD[] newChilds = new CDD[childs.length];
+      	   final CDD[] newChilds = new CDD[childs.length];
            for (int i = 0; i < childs.length; i++) {
         	newChilds[i] =  excludeEventsAndPrimedVars(childs[i], primedVars);	            	
            } 
@@ -109,11 +113,11 @@ public class VarRemoval {
             return CDD.FALSE;
         }
         
-    	CDD[] childs = cdd.getChilds();
-    	Decision decision = cdd.getDecision();
+    	final CDD[] childs = cdd.getChilds();
+    	final Decision decision = cdd.getDecision();
     	CDD decisionCDD = CDD.TRUE;
       	if (decision instanceof BooleanDecision & stateVars.contains(decision.getVar())) {
-      	   CDD[] newChilds = new CDD[childs.length];
+      	   final CDD[] newChilds = new CDD[childs.length];
            for (int i = 0; i < childs.length; i++) {
         	newChilds[i] = getUnPrimedVars(childs[i], stateVars);	            	
            } 

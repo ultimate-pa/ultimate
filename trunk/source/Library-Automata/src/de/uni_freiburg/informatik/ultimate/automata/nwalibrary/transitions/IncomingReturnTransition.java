@@ -58,11 +58,13 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 		return mHierPred;
 	}
 	
+	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
 	
 	
+	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , {2} , _ )",getLinPred(), getHierPred(), getLetter());
 	}
@@ -82,28 +84,37 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		IncomingReturnTransition other = (IncomingReturnTransition) obj;
+		}
+		final IncomingReturnTransition other = (IncomingReturnTransition) obj;
 		if (mHierPred == null) {
-			if (other.mHierPred != null)
+			if (other.mHierPred != null) {
 				return false;
-		} else if (!mHierPred.equals(other.mHierPred))
+			}
+		} else if (!mHierPred.equals(other.mHierPred)) {
 			return false;
+		}
 		if (mLetter == null) {
-			if (other.mLetter != null)
+			if (other.mLetter != null) {
 				return false;
-		} else if (!mLetter.equals(other.mLetter))
+			}
+		} else if (!mLetter.equals(other.mLetter)) {
 			return false;
+		}
 		if (mLinPred == null) {
-			if (other.mLinPred != null)
+			if (other.mLinPred != null) {
 				return false;
-		} else if (!mLinPred.equals(other.mLinPred))
+			}
+		} else if (!mLinPred.equals(other.mLinPred)) {
 			return false;
+		}
 		return true;
 	}
 	

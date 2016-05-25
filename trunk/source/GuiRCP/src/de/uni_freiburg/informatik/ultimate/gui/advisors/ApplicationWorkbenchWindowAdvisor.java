@@ -56,7 +56,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 //	private TrayItem mTrayItem;
 //	private Image mTrayImage;
 //	private TrayIconNotifier mTrayIconNotifier;
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
 	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ICore<ToolchainListType> icc,
 			TrayIconNotifier notifier, GuiController controller, ILogger logger) {
@@ -79,7 +79,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	@Override
 	public void preWindowOpen() {
-		IWorkbenchWindowConfigurer configurer = getWindowConfigurer();
+		final IWorkbenchWindowConfigurer configurer = getWindowConfigurer();
 		configurer.setTitle("Ultimate");
 		configurer.setInitialSize(new Point(1024, 768));
 		configurer.setShowMenuBar(true);

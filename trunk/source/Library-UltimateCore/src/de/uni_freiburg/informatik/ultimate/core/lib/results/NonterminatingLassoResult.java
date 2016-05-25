@@ -61,7 +61,7 @@ public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElemen
 
 	@Override
 	public String getLongDescription() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Found a nonterminating execution for the following lasso shaped sequence of statements.");
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Stem:");

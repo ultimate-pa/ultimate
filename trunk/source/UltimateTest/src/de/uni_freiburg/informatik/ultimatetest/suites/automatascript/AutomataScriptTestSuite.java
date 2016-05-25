@@ -76,18 +76,18 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
+		final List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
 
-		Collection<File> inputFiles = new ArrayList<File>();
-		for (String directory : mDirectories) {
+		final Collection<File> inputFiles = new ArrayList<File>();
+		for (final String directory : mDirectories) {
 			inputFiles.addAll(getInputFiles(directory, mFileEndings));
 		}
 
-		for (File inputFile : inputFiles) {
-			File settingsFile = null;
-			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-			UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
-			UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
+		for (final File inputFile : inputFiles) {
+			final File settingsFile = null;
+			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
+			final UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
+			final UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
 					new AutomataScriptTestResultDecider(), starter,
 					// mDescription + "_" + inputFile.getAbsolutePath(),
 					urd, super.getSummaries(), null);

@@ -62,7 +62,7 @@ public class UltimateLabelFieldEditor extends FieldEditor {
 	 */
 	@Override
 	protected void adjustForNumColumns(int numColumns) {
-		((GridData) this.label.getLayoutData()).horizontalSpan = numColumns;
+		((GridData) label.getLayoutData()).horizontalSpan = numColumns;
 	}
 
 	/***
@@ -75,14 +75,14 @@ public class UltimateLabelFieldEditor extends FieldEditor {
 	 */
 	@Override
 	protected void doFillIntoGrid(Composite parent, int numColumns) {
-		this.label = getLabelControl(parent);
-		GridData gridData = new GridData();
+		label = getLabelControl(parent);
+		final GridData gridData = new GridData();
 		gridData.horizontalSpan = numColumns;
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.grabExcessHorizontalSpace = false;
 		gridData.verticalAlignment = GridData.CENTER;
 		gridData.grabExcessVerticalSpace = false;
-		this.label.setLayoutData(gridData);
+		label.setLayoutData(gridData);
 	}
 
 	/***

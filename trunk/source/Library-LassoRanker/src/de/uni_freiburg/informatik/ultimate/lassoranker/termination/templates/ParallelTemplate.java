@@ -74,8 +74,8 @@ public class ParallelTemplate extends RankingTemplate {
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
 	
-	private Term[] mdeltas;
-	private AffineFunctionGenerator[] mfgens;
+	private final Term[] mdeltas;
+	private final AffineFunctionGenerator[] mfgens;
 	
 	/**
 	 * @param numfunctions number of parallel ranking functions
@@ -106,7 +106,7 @@ public class ParallelTemplate extends RankingTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(size);
 		sb.append("-parallel template:\n   ");
 		for (int i = 0; i < size; ++i) {
@@ -139,13 +139,13 @@ public class ParallelTemplate extends RankingTemplate {
 	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
 		// /\_i f_i(x') <= f_i(x)
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = mfgens[i].generate(inVars);
-			LinearInequality li2 = mfgens[i].generate(outVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -157,12 +157,12 @@ public class ParallelTemplate extends RankingTemplate {
 		// /\ ( \/_i (f_i(x) > 0 /\ f_i(x') < f_i(x) - δ_i ))
 		for (int k = 0; k < (1 << size); ++k) {
 			// This is done in conjunctive normal form
-			List<LinearInequality> disjunction =
+			final List<LinearInequality> disjunction =
 					new ArrayList<LinearInequality>();
 			for (int i = 0; i < size; ++i) {
 				if ((k & (1 << i)) == 0) {
 					// f_i(x) > 0
-					LinearInequality li = mfgens[i].generate(inVars);
+					final LinearInequality li = mfgens[i].generate(inVars);
 					li.setStrict(true);
 					li.motzkin_coefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -170,11 +170,11 @@ public class ParallelTemplate extends RankingTemplate {
 					disjunction.add(li);
 				} else {
 					// f_i(x') < f_i(x) - δ_i
-					LinearInequality li = mfgens[i].generate(inVars);
-					LinearInequality li2 = mfgens[i].generate(outVars);
+					final LinearInequality li = mfgens[i].generate(inVars);
+					final LinearInequality li2 = mfgens[i].generate(outVars);
 					li2.negate();
 					li.add(li2);
-					AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
+					final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
 					li.motzkin_coefficient = sRedAtoms && i == 0 ?
@@ -192,7 +192,7 @@ public class ParallelTemplate extends RankingTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
+		final Collection<Term> list = new ArrayList<Term>();
 		for (int i = 0; i < size; ++i) {
 			list.addAll(mfgens[i].getVariables());
 			list.add(mdeltas[i]);
@@ -203,7 +203,7 @@ public class ParallelTemplate extends RankingTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction[] fs = new AffineFunction[size];
+		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
 			fs[i] = mfgens[i].extractAffineFunction(val);
 		}
@@ -212,12 +212,12 @@ public class ParallelTemplate extends RankingTemplate {
 	
 	@Override
 	public List<String> getAnnotations() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is not increasing");
 		}
 		for (int k = 0; k < (1 << size); ++k) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < size; ++i) {
 				if (i > 0) {
 					sb.append(" or ");

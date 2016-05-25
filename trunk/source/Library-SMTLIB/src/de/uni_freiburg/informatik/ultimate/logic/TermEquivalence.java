@@ -58,7 +58,7 @@ public class TermEquivalence extends NonRecursive {
 		public final static EndScope INSTANCE = new EndScope();
 		@Override
 		public void walk(NonRecursive engine) {
-			TermEquivalence te = (TermEquivalence) engine;
+			final TermEquivalence te = (TermEquivalence) engine;
 			te.endScope();
 		}
 	}
@@ -71,7 +71,7 @@ public class TermEquivalence extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive engine) {
-			TermEquivalence te = (TermEquivalence) engine;
+			final TermEquivalence te = (TermEquivalence) engine;
 			te.addRenaming(mLvar, mRvar);
 		}
 	}
@@ -92,61 +92,71 @@ public class TermEquivalence extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive engine) {
-			TermEquivalence te = (TermEquivalence) engine;
+			final TermEquivalence te = (TermEquivalence) engine;
 			if (mLhs != mRhs) {
-				if (mLhs.getClass() != mRhs.getClass())
+				if (mLhs.getClass() != mRhs.getClass()) {
 					// Cannot be equal
 					notEqual();
+				}
 				if (mLhs instanceof ApplicationTerm) {
-					ApplicationTerm l = (ApplicationTerm) mLhs;
-					ApplicationTerm r = (ApplicationTerm) mRhs;
-					if (l.getFunction() != r.getFunction())
+					final ApplicationTerm l = (ApplicationTerm) mLhs;
+					final ApplicationTerm r = (ApplicationTerm) mRhs;
+					if (l.getFunction() != r.getFunction()) {
 						notEqual();
-					Term[] lparams = l.getParameters();
-					Term[] rparams = r.getParameters();
-					if (lparams.length != rparams.length)
+					}
+					final Term[] lparams = l.getParameters();
+					final Term[] rparams = r.getParameters();
+					if (lparams.length != rparams.length) {
 						notEqual();
-					for (int i = 0; i < lparams.length; ++i)
+					}
+					for (int i = 0; i < lparams.length; ++i) {
 						te.enqueueWalker(new TermEq(lparams[i], rparams[i]));
+					}
 				} else if (mLhs instanceof AnnotatedTerm) {
-					AnnotatedTerm l = (AnnotatedTerm) mLhs;
-					AnnotatedTerm r = (AnnotatedTerm) mRhs;
-					Annotation[] lannot = l.getAnnotations();
-					Annotation[] rannot = r.getAnnotations();
-					if (rannot.length != lannot.length)
+					final AnnotatedTerm l = (AnnotatedTerm) mLhs;
+					final AnnotatedTerm r = (AnnotatedTerm) mRhs;
+					final Annotation[] lannot = l.getAnnotations();
+					final Annotation[] rannot = r.getAnnotations();
+					if (rannot.length != lannot.length) {
 						notEqual();
+					}
 					for (int i = 0; i < lannot.length; ++i) {
-						if (!lannot[i].getKey().equals(rannot[i].getKey()))
+						if (!lannot[i].getKey().equals(rannot[i].getKey())) {
 							notEqual();
+						}
 						if (lannot[i].getValue() instanceof Term
-								&& rannot[i].getValue() instanceof Term)
+								&& rannot[i].getValue() instanceof Term) {
 							te.enqueueWalker(new TermEq(
 									(Term) lannot[i].getValue(),
 									(Term) rannot[i].getValue()));
-						else if (lannot[i].getValue() instanceof Term[]
+						} else if (lannot[i].getValue() instanceof Term[]
 								&& rannot[i].getValue() instanceof Term[]) {
-							Term[] lv = (Term[]) lannot[i].getValue();
-							Term[] rv = (Term[]) lannot[i].getValue();
-							if (lv.length != rv.length)
+							final Term[] lv = (Term[]) lannot[i].getValue();
+							final Term[] rv = (Term[]) lannot[i].getValue();
+							if (lv.length != rv.length) {
 								notEqual();
-							for (int j = 0; j < lv.length; ++j)
+							}
+							for (int j = 0; j < lv.length; ++j) {
 								te.enqueueWalker(new TermEq(lv[j], rv[j]));
+							}
 						} else if (!lannot[i].getValue().equals(
-								rannot[i].getValue()))
+								rannot[i].getValue())) {
 							notEqual();
+						}
 					}
 				} else if (mLhs instanceof LetTerm) {
-					LetTerm llet = (LetTerm) mLhs;
-					LetTerm rlet = (LetTerm) mRhs;
-					TermVariable[] lvars = llet.getVariables();
-					TermVariable[] rvars = rlet.getVariables();
-					if (lvars.length != rvars.length)
+					final LetTerm llet = (LetTerm) mLhs;
+					final LetTerm rlet = (LetTerm) mRhs;
+					final TermVariable[] lvars = llet.getVariables();
+					final TermVariable[] rvars = rlet.getVariables();
+					if (lvars.length != rvars.length) {
 						notEqual();
+					}
 					te.enqueueWalker(EndScope.INSTANCE);
 					te.enqueueWalker(
 							new TermEq(llet.getSubTerm(), rlet.getSubTerm()));
-					Term[] lvals = llet.getValues();
-					Term[] rvals = rlet.getValues();
+					final Term[] lvals = llet.getValues();
+					final Term[] rvals = rlet.getValues();
 					for (int i = 0; i < lvars.length; ++i) {
 						te.enqueueWalker(new AddRenaming(lvars[i], rvars[i]));
 						te.enqueueWalker(new TermEq(lvals[i], rvals[i]));
@@ -154,29 +164,34 @@ public class TermEquivalence extends NonRecursive {
 //					te.enqueueWalker(BeginScope.INSTANCE);
 					te.beginScope();
 				} else if (mLhs instanceof QuantifiedFormula) {
-					QuantifiedFormula lq = (QuantifiedFormula) mLhs;
-					QuantifiedFormula rq = (QuantifiedFormula) mRhs;
-					if (lq.getQuantifier() != rq.getQuantifier())
+					final QuantifiedFormula lq = (QuantifiedFormula) mLhs;
+					final QuantifiedFormula rq = (QuantifiedFormula) mRhs;
+					if (lq.getQuantifier() != rq.getQuantifier()) {
 						notEqual();
-					TermVariable[] lv = lq.getVariables();
-					TermVariable[] rv = rq.getVariables();
-					if (lv.length != rv.length)
+					}
+					final TermVariable[] lv = lq.getVariables();
+					final TermVariable[] rv = rq.getVariables();
+					if (lv.length != rv.length) {
 						notEqual();
+					}
 					te.enqueueWalker(EndScope.INSTANCE);
 					te.beginScope();
-					for (int i = 0; i < lv.length; ++i)
+					for (int i = 0; i < lv.length; ++i) {
 						if (lv[i] != rv[i]) {
-							if (lv[i].getSort() != rv[i].getSort())
+							if (lv[i].getSort() != rv[i].getSort()) {
 								notEqual();
+							}
 							te.addRenaming(lv[i], rv[i]);
 						}
+					}
 					te.enqueueWalker(
 							new TermEq(lq.getSubformula(), rq.getSubformula()));
 				} else if (mLhs instanceof TermVariable) {
-					TermVariable lv = (TermVariable) mLhs;
-					TermVariable rv = (TermVariable) mRhs;
-					if (!te.checkRenaming(lv, rv))
+					final TermVariable lv = (TermVariable) mLhs;
+					final TermVariable rv = (TermVariable) mRhs;
+					if (!te.checkRenaming(lv, rv)) {
 						notEqual();
+					}
 				} // Term case switch
 			}
 		}
@@ -192,7 +207,7 @@ public class TermEquivalence extends NonRecursive {
 		try {
 			run(new TermEq(lhs, rhs));
 			return true;
-		} catch (NotEq ignored) {
+		} catch (final NotEq ignored) {
 			reset();
 			return false;
 		}

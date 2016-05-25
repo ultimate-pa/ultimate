@@ -72,11 +72,11 @@ public class production {
       _action_index = action_index;
       for (int i = 0; i < rhs.length; i++)
 	{
-	  symbol rhs_sym = rhs[i].the_symbol;
+	  final symbol rhs_sym = rhs[i].the_symbol;
 	  rhs_sym.note_use();
 	  if (precedence == null && rhs_sym instanceof terminal)
 	    {
-	      terminal term = (terminal) rhs_sym;
+	      final terminal term = (terminal) rhs_sym;
 	      if (term.precedence_num() != assoc.no_prec)
 		{
 		  if (_rhs_prec == assoc.no_prec)
@@ -192,7 +192,9 @@ public class production {
   public lr_item item()
     {
       if (_itm == null)
-	_itm = new lr_item(this);
+	{
+	    _itm = new lr_item(this);
+	  }
       return _itm;
     }
 
@@ -210,7 +212,7 @@ public class production {
   /*--- General Methods ---------------------------------------*/
   /*-----------------------------------------------------------*/
 
-  private int indexOfIntermediateResult;
+  private final int indexOfIntermediateResult;
   /**
    * @return the index of the result of the previous intermediate action on the stack relative to top, -1 if no previous action
    */
@@ -229,7 +231,9 @@ public class production {
     {
       /* if we already know bail out early */
       if (_nullable_known)
-	return _nullable;
+	{
+	    return _nullable;
+	  }
 
       /* if we have a zero size RHS we are directly nullable */
       if (rhs_length() == 0)
@@ -242,15 +246,17 @@ public class production {
       for (int pos = 0; pos < rhs_length(); pos++)
 	{
 	  /* only look at non-actions */
-	  symbol sym = _rhs[pos].the_symbol;
+	  final symbol sym = _rhs[pos].the_symbol;
 
 	  /* if its a terminal we are definitely not nullable */
 	  if (!sym.is_non_term())
-	    return set_nullable(false);
-	  /* its a non-term, is it marked nullable */
-	  else if (!((non_terminal) sym).nullable())
-	    /* this one not (yet) nullable, so we aren't */
-	    return false;
+	    {
+		return set_nullable(false);
+	      } else if (!((non_terminal) sym).nullable())
+	    {
+		/* this one not (yet) nullable, so we aren't */
+		return false;
+	      }
 	}
 
       /* if we make it here all parts are nullable */
@@ -285,13 +291,16 @@ public class production {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Convert to a simpler string. */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder();
+      final StringBuilder result = new StringBuilder();
 
       result.append(lhs().name()).append(" ::= ");
       for (int i = 0; i < rhs_length(); i++)
-	result.append(rhs(i).the_symbol.name()).append(" ");
+	{
+	    result.append(rhs(i).the_symbol.name()).append(" ");
+	  }
 
       return result.toString();
     }

@@ -119,7 +119,7 @@ public class VPDomainStatementProcessor extends NonRecursive {
 			if (term.getFunction().getName() == "=") {
 				mResult.add(term);
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new VPDomainTermWalker(t));
 			}
 		}

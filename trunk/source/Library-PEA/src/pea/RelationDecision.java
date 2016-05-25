@@ -64,7 +64,8 @@ public class RelationDecision extends BooleanDecision {
             this.op = op;
         }
         
-        public String toString(){
+        @Override
+		public String toString(){
             return op;
         }
     
@@ -125,17 +126,22 @@ public class RelationDecision extends BooleanDecision {
         return RelationDecision.create(exprs[0],op,exprs[1]);
     }
 
-    public boolean equals(Object o) {
-	if (!(o instanceof BooleanDecision))
-	    return false;
-	if (!var.equals(((BooleanDecision) o).var))
-	    return false;
+    @Override
+	public boolean equals(Object o) {
+	if (!(o instanceof BooleanDecision)) {
+		return false;
+	}
+	if (!var.equals(((BooleanDecision) o).var)) {
+		return false;
+	}
 	return true;
     }
 
-    public int compareTo(Object o) {
-	if (!(o instanceof BooleanDecision))
-	    return 1;
+    @Override
+	public int compareTo(Object o) {
+	if (!(o instanceof BooleanDecision)) {
+		return 1;
+	}
 
 	return var.compareTo(((BooleanDecision) o).var);
     }
@@ -143,11 +149,13 @@ public class RelationDecision extends BooleanDecision {
     /**
      * @return Returns the var.
      */
-    public String getVar() {
+    @Override
+	public String getVar() {
         return var;
     }
     
-    public String toString(int child) {
+    @Override
+	public String toString(int child) {
 	if(child != 0){
 	    switch (op) {
 	    case LESS:
@@ -168,27 +176,28 @@ public class RelationDecision extends BooleanDecision {
 
     }
 
-    public String toUppaalString(int child) {
+    @Override
+	public String toUppaalString(int child) {
         return "true";
     }
 
     @Override
     public Decision prime() {
-        String expr1 = this.leftExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + RelationDecision.PRIME); 
-        String expr2 = this.rightExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + RelationDecision.PRIME); 
-        return (new RelationDecision(expr1,this.op,expr2));
+        final String expr1 = leftExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + RelationDecision.PRIME); 
+        final String expr2 = rightExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + RelationDecision.PRIME); 
+        return (new RelationDecision(expr1,op,expr2));
     }
     
     @Override
     public Decision unprime() {
-    	String expr1 = this.leftExpr;
-    	String expr2 = this.rightExpr;
-    	if (this.leftExpr.endsWith(PRIME)){
-    		expr1 = this.leftExpr.substring(0,this.leftExpr.length()-1); 
+    	String expr1 = leftExpr;
+    	String expr2 = rightExpr;
+    	if (leftExpr.endsWith(PRIME)){
+    		expr1 = leftExpr.substring(0,leftExpr.length()-1); 
     	}
-    	if (this.rightExpr.endsWith(PRIME)){
-    		expr2 = this.rightExpr.substring(0,this.rightExpr.length()-1); 
+    	if (rightExpr.endsWith(PRIME)){
+    		expr2 = rightExpr.substring(0,rightExpr.length()-1); 
         }
-        return (new RelationDecision(expr1,this.op,expr2));
+        return (new RelationDecision(expr1,op,expr2));
     }
 }

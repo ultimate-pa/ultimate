@@ -62,22 +62,23 @@ public class CCAnnotation implements IAnnotation {
 
 	public CCAnnotation(CCEquality diseq, Collection<SubPath> paths) {
 		super();
-		this.mDiseq = diseq;
-		this.mPaths = new CCTerm[paths.size()][];
+		mDiseq = diseq;
+		mPaths = new CCTerm[paths.size()][];
 		int i = 0;
-		for (SubPath p : paths) {
+		for (final SubPath p : paths) {
 			mPaths[i++] = p.getTerms();
 		}
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append('(');
 		sb.append(mDiseq);
 		for (int p = 0; p < mPaths.length; p++) {
 			sb.append("::(");
 			String comma = "";
-			for (CCTerm term : mPaths[p]) {
+			for (final CCTerm term : mPaths[p]) {
 				sb.append(comma).append(term);
 				comma = " ";
 			}
@@ -96,20 +97,22 @@ public class CCAnnotation implements IAnnotation {
 
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {
-		Term base = cls.toTerm(theory);
-		Object[] subannots =
+		final Term base = cls.toTerm(theory);
+		final Object[] subannots =
 				new Object[2 * mPaths.length + (mDiseq == null ? 0 : 1)];
 		int i = 0;
-		if (mDiseq != null)
+		if (mDiseq != null) {
 			subannots [i++] = mDiseq.getSMTFormula(theory);
-		for (CCTerm[] subpath : mPaths) {
-			Term[] subs = new Term[subpath.length];
-			for (int j = 0; j < subpath.length; ++j)
+		}
+		for (final CCTerm[] subpath : mPaths) {
+			final Term[] subs = new Term[subpath.length];
+			for (int j = 0; j < subpath.length; ++j) {
 				subs[j] = subpath[j].toSMTTerm(theory);
+			}
 			subannots[i++] = ":subpath";
 			subannots[i++] = subs;
 		}
-		Annotation[] annots = new Annotation[] {
+		final Annotation[] annots = new Annotation[] {
 			new Annotation(":CC", subannots)
 		};
 		return theory.term("@lemma", theory.annotatedTerm(annots, base));

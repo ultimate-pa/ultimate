@@ -110,7 +110,7 @@ public class LassoAnalysis {
 	/**
 	 * Stem formula of the linear lasso program
 	 */
-	private TransFormula mstem_transition;
+	private final TransFormula mstem_transition;
 
 	/**
 	 * Loop formula of the linear lasso program
@@ -127,7 +127,7 @@ public class LassoAnalysis {
 	 * Global BoogieVars that are modifiable in the procedure where the honda 
 	 * of the lasso lies.
 	 */
-	private Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
 
 	/**
 	 * SMT script that created the transition formulae
@@ -235,7 +235,7 @@ public class LassoAnalysis {
 		assert (mloop_transition != null);
 		
 		// Preprocessing creates the Lasso object
-		this.preprocess();
+		preprocess();
 		
 		// This is now a good time to do garbage collection to free the memory
 		// allocated during preprocessing. Hopefully it is then available when
@@ -281,11 +281,11 @@ public class LassoAnalysis {
 	 */
 	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
-		LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mold_script, mBoogie2SMT,
+		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mold_script, mBoogie2SMT,
 				mstem_transition, mloop_transition, mpreferences.nlaHandling);
 		assert lassoBuilder.isSane();
-		lassoBuilder.preprocess(this.getPreProcessors(lassoBuilder, mpreferences.overapproximateArrayIndexConnection), 
-				this.getPreProcessors(lassoBuilder, false));
+		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mpreferences.overapproximateArrayIndexConnection), 
+				getPreProcessors(lassoBuilder, false));
 		
 		mPreprocessingBenchmark = lassoBuilder.getPreprocessingBenchmark();
 		
@@ -356,7 +356,7 @@ public class LassoAnalysis {
 	}
 	
 	protected String benchmarkScriptMessage(LBool constraintSat, RankingTemplate template) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("BenchmarkResult: ");
 		sb.append(constraintSat);
 		sb.append(" for template ");
@@ -372,10 +372,10 @@ public class LassoAnalysis {
 	 * @return a pretty version of the guesses for loop eigenvalues
 	 */
 	protected static String eigenvalueGuesses(Collection<Lasso> lassos) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
-		for (Lasso lasso : lassos) {
-			Rational[] eigenvalues = lasso.guessEigenvalues(true);
+		for (final Lasso lasso : lassos) {
+			final Rational[] eigenvalues = lasso.guessEigenvalues(true);
 			for (int i = 0; i < eigenvalues.length; ++i) {
 				if (i > 0) {
 					sb.append(", ");
@@ -403,22 +403,22 @@ public class LassoAnalysis {
 			TermException, IOException {
 		mLogger.info("Checking for nontermination...");
 		
-		List<NonTerminationArgument> ntas
+		final List<NonTerminationArgument> ntas
 			= new ArrayList<NonTerminationArgument>(mlassos.size());
 		if (mlassos.size() == 0) {
 			mlassos.add(new Lasso(LinearTransition.getTranstionTrue(),
 					LinearTransition.getTranstionTrue()));
 		}
-		for (Lasso lasso : mlassos) {
+		for (final Lasso lasso : mlassos) {
 			
-			long startTime = System.nanoTime();
-			NonTerminationArgumentSynthesizer nas =
+			final long startTime = System.nanoTime();
+			final NonTerminationArgumentSynthesizer nas =
 					new NonTerminationArgumentSynthesizer(lasso, mpreferences,
 							settings, mServices, mStorage);
 			final LBool constraintSat = nas.synthesize();
-			long endTime = System.nanoTime();
+			final long endTime = System.nanoTime();
 			
-			NonterminationAnalysisBenchmark nab = new NonterminationAnalysisBenchmark(
+			final NonterminationAnalysisBenchmark nab = new NonterminationAnalysisBenchmark(
 					constraintSat, lasso.getStemVarNum(),
 					lasso.getLoopVarNum(), lasso.getStemDisjuncts(),
 					lasso.getLoopDisjuncts(), 
@@ -427,7 +427,7 @@ public class LassoAnalysis {
 			
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved nontermination for one component.");
-				NonTerminationArgument nta = nas.getArgument();
+				final NonTerminationArgument nta = nas.getArgument();
 				ntas.add(nta);
 				mLogger.info(nta);
 			} else if (constraintSat == LBool.UNKNOWN) {
@@ -471,19 +471,19 @@ public class LassoAnalysis {
 		mLogger.info("Using template '" + template.getName() + "'.");
 		mLogger.debug(template);
 		
-		for (Lasso lasso : mlassos) {
+		for (final Lasso lasso : mlassos) {
 			// It suffices to prove termination for one component
-			long startTime = System.nanoTime();
+			final long startTime = System.nanoTime();
 			
-			TerminationArgumentSynthesizer tas =
+			final TerminationArgumentSynthesizer tas =
 					new TerminationArgumentSynthesizer(lasso, template,
 							mpreferences, settings,
 							mArrayIndexSupportingInvariants, mServices, mStorage);
 			final LBool constraintSat = tas.synthesize();
 			
-			long endTime = System.nanoTime();
+			final long endTime = System.nanoTime();
 			
-			TerminationAnalysisBenchmark tab = new TerminationAnalysisBenchmark(
+			final TerminationAnalysisBenchmark tab = new TerminationAnalysisBenchmark(
 					constraintSat, lasso.getStemVarNum(),
 					lasso.getLoopVarNum(), lasso.getStemDisjuncts(),
 					lasso.getLoopDisjuncts(), template.getName(),
@@ -494,10 +494,10 @@ public class LassoAnalysis {
 			
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved termination.");
-				TerminationArgument ta = tas.getArgument();
+				final TerminationArgument ta = tas.getArgument();
 				mLogger.info(ta);
-				Term[] lexTerm = ta.getRankingFunction().asLexTerm(mold_script);
-				for (Term t : lexTerm) {
+				final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mold_script);
+				for (final Term t : lexTerm) {
 					mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 				}
 				tas.close();
@@ -579,17 +579,17 @@ public class LassoAnalysis {
 			if (benchmarks.isEmpty()) {
 				return "";
 			}
-			List<String> preprocessors = benchmarks.get(0).getPreprocessors();
-			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
-			float[] LassosData = new float[preprocessors.size()];
+			final List<String> preprocessors = benchmarks.get(0).getPreprocessors();
+			final List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
+			final float[] LassosData = new float[preprocessors.size()];
 			int LassosAverageInitial = 0;
-			for (PreprocessingBenchmark pb : benchmarks) {
+			for (final PreprocessingBenchmark pb : benchmarks) {
 				addListElements(LassosData, pb.getMaxDagSizeLassosRelative());
 				LassosAverageInitial += pb.getIntialMaxDagSizeLassos();
 			}
 			divideAllEntries(LassosData, benchmarks.size());
 			LassosAverageInitial /= benchmarks.size();
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("  ");
 			sb.append("Lassos: ");
 			sb.append("inital");
@@ -600,8 +600,8 @@ public class LassoAnalysis {
 		}
 		
 		private static List<String> computeAbbrev(List<String> preprocessors) {
-			List<String> result = new ArrayList<>();
-			for (String description : preprocessors) {
+			final List<String> result = new ArrayList<>();
+			for (final String description : preprocessors) {
 				result.add(computeAbbrev(description));
 			}
 			return result;
@@ -642,7 +642,7 @@ public class LassoAnalysis {
 			}
 		}
 		private static String ppOne(float[] relativeEqualizedData, List<String> preprocessorAbbreviations) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			for (int i=0; i<relativeEqualizedData.length; i++) {
 				sb.append(preprocessorAbbreviations.get(i));
 				sb.append(String.valueOf(makePercent(relativeEqualizedData[i])));
@@ -663,7 +663,7 @@ public class LassoAnalysis {
 		
 		private static void divideAllEntries(float[] modifiedArray, int divisor) {
 			for (int i=0; i<modifiedArray.length; i++) {
-				modifiedArray[i] /= (float) divisor;
+				modifiedArray[i] /= divisor;
 			}
 		}
 		

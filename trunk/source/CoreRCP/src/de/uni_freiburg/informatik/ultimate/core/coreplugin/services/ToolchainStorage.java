@@ -36,6 +36,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
@@ -93,7 +95,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		for (final IStorable storable : current) {
 			try {
 				storable.destroy();
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				if (coreLogger == null) {
 					continue;
 				}
@@ -106,7 +108,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public void destroyStorable(String key) {
-		IStorable storable = mToolchainStorage.remove(key);
+		final IStorable storable = mToolchainStorage.remove(key);
 		if (storable != null) {
 			storable.destroy();
 		}
@@ -140,5 +142,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	@Override
 	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
 		return GenericServiceProvider.getServiceInstance(this, serviceType);
+	}
+
+	@Override
+	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+		return new RcpPreferenceProvider(pluginId);
 	}
 }

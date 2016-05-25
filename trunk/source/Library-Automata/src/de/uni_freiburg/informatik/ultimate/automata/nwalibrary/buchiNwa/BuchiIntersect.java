@@ -121,11 +121,12 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
+		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
+		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+		final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 				(new BuchiIntersectDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() <= mResult.size());
@@ -140,25 +141,25 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
-		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = 
+		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = 
 				ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = 
+		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = 
 				ResultChecker.getOldApiNwa(mServices, mSndOperand);
-		List<NestedLassoWord<LETTER>> lassoWords = 
+		final List<NestedLassoWord<LETTER>> lassoWords = 
 				new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = 
 				new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
 		if (!resultEmptiness.getResult()) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = 
 				new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
 		if (fstOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else 	{
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = 
 				new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
 		if (sndOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
@@ -172,7 +173,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 		boolean correct = true;
-		for (NestedLassoWord<LETTER> nlw : lassoWords) {
+		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi);
 			assert correct;
 		}
@@ -186,9 +187,9 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws AutomataLibraryException {
-		boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
-		boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
+		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		return ((op1 && op2) == res);
 	}
 	

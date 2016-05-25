@@ -98,13 +98,13 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 				&& node.getOutgoingEdges().size() == 1) {
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
-			listToCheck.add((IMinimizedEdge) node.getIncomingEdges().get(0));
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
-			for (IMinimizedEdge edgeToCheck : listToCheck) {
+			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
-					IBasicEdge basic = (IBasicEdge) edgeToCheck;
+					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
 					if (basic.getOriginalEdge() instanceof Call
 							|| basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {
@@ -123,13 +123,13 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}
 			}
-			HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
-			for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
+			final HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
+			for (final IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
 					mLogger.info("Found a self-loop, should not happen");
@@ -144,13 +144,13 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
-			listToCheck.add((IMinimizedEdge) node.getIncomingEdges().get(0));
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
-			for (IMinimizedEdge edgeToCheck : listToCheck) {
+			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
-					IBasicEdge basic = (IBasicEdge) edgeToCheck;
+					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
 					if (basic.getOriginalEdge() instanceof Call
 							|| basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {
@@ -169,12 +169,12 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 				|| node.getIncomingEdges().size() <= 1) {
 			return false;
 		}
-		HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
-		for (IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
+		final HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
+		for (final IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
 			if (!pointingMap.containsKey(incomingEdge.getSource())) {
 				pointingMap.put(incomingEdge.getSource(), incomingEdge);
 			} else {
-				IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
+				final IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
 						.getSource());
 				// ParallelEdges maybe Return-Edges, we do not merge them
 				if (incomingEdge.isBasicEdge()

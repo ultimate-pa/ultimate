@@ -231,7 +231,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		getInstance().put(key, value);
 		try {
 			getInstance().flush();
-		} catch (BackingStoreException e) {
+		} catch (final BackingStoreException e) {
 			throw new PreferenceException(mPluginID, e);
 		}
 	}
@@ -278,8 +278,8 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	public static IStatus importPreferences(InputStream inputStream) throws CoreException {
 		final IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
 		if (status.isOK()) {
-			for (Entry<String, Set<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
-				for (IPreferenceChangeListener listener : entry.getValue()) {
+			for (final Entry<String, Set<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
+				for (final IPreferenceChangeListener listener : entry.getValue()) {
 					InstanceScope.INSTANCE.getNode(entry.getKey()).removePreferenceChangeListener(listener);
 					addPreferenceChangeListener(entry.getKey(), listener);
 				}
@@ -306,7 +306,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 					rtr.add(defaultKey + "=" + currentValue);
 				}
 			}
-		} catch (BackingStoreException e) {
+		} catch (final BackingStoreException e) {
 			throw new PreferenceException(mPluginID, e);
 		}
 

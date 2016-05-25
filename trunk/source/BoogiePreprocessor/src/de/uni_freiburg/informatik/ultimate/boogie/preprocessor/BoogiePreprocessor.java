@@ -51,20 +51,24 @@ public class BoogiePreprocessor implements IAnalysis {
 
 	private IUltimateServiceProvider mServices;
 
+	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
 
+	@Override
 	public void init() {
 	}
 
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
@@ -72,30 +76,34 @@ public class BoogiePreprocessor implements IAnalysis {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/* use old graph type definition */
 		return null;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		// not required.
 	}
 
 	// @Override
+	@Override
 	public List<IObserver> getObservers() {
-		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
+		final BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
 
-		ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
+		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
 		backTranslator.setSymbolTable(symb.getSymbolTable());
 
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		// observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));

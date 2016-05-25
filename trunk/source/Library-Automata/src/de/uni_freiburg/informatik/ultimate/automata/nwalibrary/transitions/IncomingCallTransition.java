@@ -47,6 +47,7 @@ public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTE
 		mLetter = letter;
 	}
 	
+	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
@@ -55,6 +56,7 @@ public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTE
 		return mPred;
 	}
 	
+	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
 	}

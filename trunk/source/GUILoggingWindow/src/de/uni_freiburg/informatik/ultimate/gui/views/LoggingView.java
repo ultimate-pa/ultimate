@@ -108,7 +108,7 @@ public class LoggingView extends ViewPart {
 			@Override
 			public void preferenceChange(PreferenceChangeEvent event) {
 				// do things if it concerns the loggers
-				String ek = event.getKey();
+				final String ek = event.getKey();
 				if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
@@ -141,12 +141,12 @@ public class LoggingView extends ViewPart {
 	public void write(String s) {
 		mStyledText.append(s);
 		for (int i = mOldLineCount; i < mStyledText.getLineCount(); ++i) {
-			String line = mStyledText.getLine(i);
-			String[] splits = line.split(" ");
+			final String line = mStyledText.getLine(i);
+			final String[] splits = line.split(" ");
 			if (splits.length < 3) {
 				continue;
 			}
-			String third = splits[2].trim();
+			final String third = splits[2].trim();
 
 			if (third.equals("DEBUG")) {
 				mStyledText.setLineBackground(i, 1, mColorDebug);
@@ -174,7 +174,7 @@ public class LoggingView extends ViewPart {
 		} else if (mLastWriter != null) {
 			try {
 				mLastWriter.close();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -216,13 +216,13 @@ public class LoggingView extends ViewPart {
 	 * @return a Color object with the given colour
 	 */
 	private Color colorFromString(String colorString) {
-		String[] channels = colorString.split(",");
+		final String[] channels = colorString.split(",");
 		if (channels.length >= 3) {
 			Color color;
 			try {
 				color = new Color(Display.getDefault(), Integer.parseInt(channels[0]), Integer.parseInt(channels[1]),
 						Integer.parseInt(channels[2]));
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				color = new Color(Display.getDefault(), 255, 255, 255);
 			}
 			return color;

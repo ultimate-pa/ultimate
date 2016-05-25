@@ -72,7 +72,7 @@ public class ArrayIndexFinder extends NonRecursive {
 					|| term.getFunction().getName() == "store") {
 				mResult.add(term);
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ArrayIndexFindWalker(t));
 			}
 		}

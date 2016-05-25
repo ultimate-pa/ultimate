@@ -121,25 +121,33 @@ public class CompleteBoogieVar
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		CompleteBoogieVar other = (CompleteBoogieVar) obj;
+		}
+		final CompleteBoogieVar other = (CompleteBoogieVar) obj;
 		if (mIdentifier == null) {
-			if (other.mIdentifier != null)
+			if (other.mIdentifier != null) {
 				return false;
-		} else if (!mIdentifier.equals(other.mIdentifier))
+			}
+		} else if (!mIdentifier.equals(other.mIdentifier)) {
 			return false;
-		if (mOldvar != other.mOldvar)
+		}
+		if (mOldvar != other.mOldvar) {
 			return false;
+		}
 		if (mProcedure == null) {
-			if (other.mProcedure != null)
+			if (other.mProcedure != null) {
 				return false;
-		} else if (!mProcedure.equals(other.mProcedure))
+			}
+		} else if (!mProcedure.equals(other.mProcedure)) {
 			return false;
+		}
 		return true;
 	}
 	

@@ -38,16 +38,16 @@ public class JSONValue {
 	 */
 	public static Object parse(Reader in){
 		try{
-			JSONParser parser=new JSONParser();
+			final JSONParser parser=new JSONParser();
 			return parser.parse(in);
 		}
-		catch(Exception e){
+		catch(final Exception e){
 			return null;
 		}
 	}
 	
 	public static Object parse(String s){
-		StringReader in=new StringReader(s);
+		final StringReader in=new StringReader(s);
 		return parse(in);
 	}
 	
@@ -69,12 +69,12 @@ public class JSONValue {
 	 * @throws ParseException
 	 */
 	public static Object parseWithException(Reader in) throws IOException, ParseException{
-		JSONParser parser=new JSONParser();
+		final JSONParser parser=new JSONParser();
 		return parser.parse(in);
 	}
 	
 	public static Object parseWithException(String s) throws ParseException{
-		JSONParser parser=new JSONParser();
+		final JSONParser parser=new JSONParser();
 		return parser.parse(s);
 	}
 	
@@ -106,18 +106,20 @@ public class JSONValue {
 		}
 		
 		if(value instanceof Double){
-			if(((Double)value).isInfinite() || ((Double)value).isNaN())
+			if(((Double)value).isInfinite() || ((Double)value).isNaN()) {
 				out.write("null");
-			else
+			} else {
 				out.write(value.toString());
+			}
 			return;
 		}
 		
 		if(value instanceof Float){
-			if(((Float)value).isInfinite() || ((Float)value).isNaN())
+			if(((Float)value).isInfinite() || ((Float)value).isNaN()) {
 				out.write("null");
-			else
+			} else {
 				out.write(value.toString());
+			}
 			return;
 		}		
 		
@@ -169,40 +171,49 @@ public class JSONValue {
 	 * @return JSON text, or "null" if value is null or it's an NaN or an INF number.
 	 */
 	public static String toJSONString(Object value){
-		if(value == null)
+		if(value == null) {
 			return "null";
+		}
 		
-		if(value instanceof String)
+		if(value instanceof String) {
 			return "\""+escape((String)value)+"\"";
+		}
 		
 		if(value instanceof Double){
-			if(((Double)value).isInfinite() || ((Double)value).isNaN())
+			if(((Double)value).isInfinite() || ((Double)value).isNaN()) {
 				return "null";
-			else
+			} else {
 				return value.toString();
+			}
 		}
 		
 		if(value instanceof Float){
-			if(((Float)value).isInfinite() || ((Float)value).isNaN())
+			if(((Float)value).isInfinite() || ((Float)value).isNaN()) {
 				return "null";
-			else
+			} else {
 				return value.toString();
+			}
 		}		
 		
-		if(value instanceof Number)
+		if(value instanceof Number) {
 			return value.toString();
+		}
 		
-		if(value instanceof Boolean)
+		if(value instanceof Boolean) {
 			return value.toString();
+		}
 		
-		if((value instanceof JSONAware))
+		if((value instanceof JSONAware)) {
 			return ((JSONAware)value).toJSONString();
+		}
 		
-		if(value instanceof Map)
+		if(value instanceof Map) {
 			return JSONObject.toJSONString((Map)value);
+		}
 		
-		if(value instanceof List)
+		if(value instanceof List) {
 			return JSONArray.toJSONString((List)value);
+		}
 		
 		return value.toString();
 	}
@@ -213,9 +224,10 @@ public class JSONValue {
 	 * @return
 	 */
 	public static String escape(String s){
-		if(s==null)
+		if(s==null) {
 			return null;
-        StringBuffer sb = new StringBuffer();
+		}
+        final StringBuffer sb = new StringBuffer();
         escape(s, sb);
         return sb.toString();
     }
@@ -226,7 +238,7 @@ public class JSONValue {
      */
     static void escape(String s, StringBuffer sb) {
 		for(int i=0;i<s.length();i++){
-			char ch=s.charAt(i);
+			final char ch=s.charAt(i);
 			switch(ch){
 			case '"':
 				sb.append("\\\"");
@@ -255,7 +267,7 @@ public class JSONValue {
 			default:
                 //Reference: http://www.unicode.org/versions/Unicode5.1.0/
 				if((ch>='\u0000' && ch<='\u001F') || (ch>='\u007F' && ch<='\u009F') || (ch>='\u2000' && ch<='\u20FF')){
-					String ss=Integer.toHexString(ch);
+					final String ss=Integer.toHexString(ch);
 					sb.append("\\u");
 					for(int k=0;k<4-ss.length();k++){
 						sb.append('0');

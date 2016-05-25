@@ -30,9 +30,9 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -78,7 +78,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mInput);
 			mReach.computeDeadEnds();
 			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(mServices, mReach, mReach.getWithOutDeadEnds());
-		} catch (AutomataOperationCanceledException oce) {
+		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		mLogger.info(exitMessage());
@@ -123,7 +123,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mInput)).getResult(); 
 		}
-		ReachableStatesCopy<LETTER, STATE> rsc = 
+		final ReachableStatesCopy<LETTER, STATE> rsc = 
 				(new ReachableStatesCopy<LETTER, STATE>(mServices, input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
@@ -138,46 +138,46 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= ResultChecker.isSubset(rscEntries,rsaEntries);
 //		assert correct;
 		rsc.removeDeadEnds();
-		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
+		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
 		correct &= mResult.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),mResult.getStates());
 		assert correct;
 		correct &= ResultChecker.isSubset(mResult.getStates(),reachalbeStatesCopy.getStates());
 		assert correct;
-		Collection<STATE> rsaStates = mResult.getStates();
-		Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
+		final Collection<STATE> rsaStates = mResult.getStates();
+		final Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
 		correct &= ResultChecker.isSubset(rsaStates,rscStates);
 		assert correct;
 		correct &= ResultChecker.isSubset(rscStates,rsaStates);
 		assert correct;
-		for (STATE state : reachalbeStatesCopy.getStates()) {
-			for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
+		for (final STATE state : reachalbeStatesCopy.getStates()) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
 				correct &= mReach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
 				// TODO: fix or remove
 				 correct &= mReach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				// ignore call transitions
 				assert correct;
 			}
-			for (OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
 				correct &= mReach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
 				correct &= reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
 				correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
 				correct &= reachalbeStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			Set<STATE> rCAdownStates = mReach.getWithOutDeadEnds().getDownStates(state);
+			final Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
+			final Set<STATE> rCAdownStates = mReach.getWithOutDeadEnds().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			// After enhanced non-live/dead end removal the following does not

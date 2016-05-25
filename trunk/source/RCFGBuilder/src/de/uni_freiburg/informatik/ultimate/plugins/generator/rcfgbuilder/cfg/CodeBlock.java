@@ -202,8 +202,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * Returns the procedure in that the system was before executing this CodeBlock. E.g., if CodeBlock is a call, the
 	 * result is the name of the caller, if CodeBlock is a return the result is the callee (from which we return).
 	 */
+	@Override
 	public String getPreceedingProcedure() {
-		ProgramPoint pp = (ProgramPoint) getSource();
+		final ProgramPoint pp = (ProgramPoint) getSource();
 		return pp.getProcedure();
 	}
 
@@ -211,8 +212,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * Returns the procedure in that the system will be after executing the CodeBlock. E.g., if CodeBlock is a call, the
 	 * result is the name of the callee, if CodeBlock is a return the result is the caller (to which we return).
 	 */
+	@Override
 	public String getSucceedingProcedure() {
-		ProgramPoint pp = (ProgramPoint) getTarget();
+		final ProgramPoint pp = (ProgramPoint) getTarget();
 		return pp.getProcedure();
 	}
 

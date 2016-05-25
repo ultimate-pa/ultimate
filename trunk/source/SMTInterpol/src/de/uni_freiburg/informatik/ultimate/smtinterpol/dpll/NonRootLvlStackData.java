@@ -36,14 +36,17 @@ public class NonRootLvlStackData extends StackData {
 		mAtoms = new ArrayList<DPLLAtom>();
 	}
 	
+	@Override
 	public void addAtom(DPLLAtom atom) {
 		mAtoms.add(atom);
 	}
 	
+	@Override
 	public StackData restore(DPLLEngine engine, int targetlevel) {
-		ListIterator<DPLLAtom> it = mAtoms.listIterator(mAtoms.size());
-		while (it.hasPrevious())
+		final ListIterator<DPLLAtom> it = mAtoms.listIterator(mAtoms.size());
+		while (it.hasPrevious()) {
 			engine.removeAtom(it.previous());
+		}
 		mAtoms.clear();
 		return super.restore(engine, targetlevel);
 	}

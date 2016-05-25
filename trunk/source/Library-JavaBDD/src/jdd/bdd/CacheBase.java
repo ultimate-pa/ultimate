@@ -8,10 +8,10 @@ package jdd.bdd;
  */
 
 public abstract class CacheBase {
-	private String cache_name;
+	private final String cache_name;
 
 	protected CacheBase(String name) {
-		this.cache_name = name;
+		cache_name = name;
 	}
 
 	// ---------------------------------------------

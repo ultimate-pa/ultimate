@@ -59,16 +59,17 @@ public class SymbolChecker extends TermTransformer {
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		FunctionSymbol fs = appTerm.getFunction();
+		final FunctionSymbol fs = appTerm.getFunction();
 		if (!fs.isIntern() && !mGlobals.contains(fs)) {
-			Integer left = mLeftAllowed.get(fs);
-			Integer right = mRightAllowed.get(fs);
-			if (left == null && right == null)
+			final Integer left = mLeftAllowed.get(fs);
+			final Integer right = mRightAllowed.get(fs);
+			if (left == null && right == null) {
 				throw new InternalError("Detected new symbol in interpolant: " + fs);
-			else if (left == null)
+			} else if (left == null) {
 				mRightErrors.add(fs);
-			else if (right - left <= 0)
+			} else if (right - left <= 0) {
 				mLeftErrors.add(fs);
+			}
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}

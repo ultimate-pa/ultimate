@@ -60,6 +60,7 @@ public class TermVariable extends Term {
 	 * Return the (expanded) sort of the variable.
 	 * @return the expanded sort of the variable.
 	 */
+	@Override
 	public Sort getSort() {
 		return mSort.getRealSort();
 	}
@@ -67,6 +68,7 @@ public class TermVariable extends Term {
 	/**
 	 * The SMTLIB representation of the term.
 	 */
+	@Override
 	public String toString() {
 		return PrintTerm.quoteIdentifier(mName);
 	}

@@ -35,8 +35,8 @@ public class TestAutomaton_1 extends AlternatingAutomaton<String, String>{
 
 	public TestAutomaton_1(){
 		super(generateAlphabet(), null);
-		String state1 = new String("q1_1");
-		String state2 = new String("q1_2");
+		final String state1 = new String("q1_1");
+		final String state2 = new String("q1_2");
 		addState(state1);
 		addState(state2);
 		setStateFinal(state2);
@@ -57,7 +57,7 @@ public class TestAutomaton_1 extends AlternatingAutomaton<String, String>{
 	};
 	
 	private static HashSet<String> generateAlphabet(){
-		HashSet<String> alphabet = new HashSet<String>();
+		final HashSet<String> alphabet = new HashSet<String>();
 		alphabet.add(a);
 		alphabet.add(b);
 		return alphabet;

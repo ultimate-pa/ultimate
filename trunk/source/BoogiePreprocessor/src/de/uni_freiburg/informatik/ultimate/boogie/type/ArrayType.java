@@ -48,63 +48,76 @@ public class ArrayType extends BoogieType {
 		this.valueType = valueType;
 		
 		boolean changed = false;
-		BoogieType   realValueType = valueType.getUnderlyingType();
-		if (realValueType != valueType)
+		final BoogieType   realValueType = valueType.getUnderlyingType();
+		if (realValueType != valueType) {
 			changed = true;
-		BoogieType[] realIndexTypes = new BoogieType[indexTypes.length];
+		}
+		final BoogieType[] realIndexTypes = new BoogieType[indexTypes.length];
 		for (int i = 0; i < realIndexTypes.length; i++) {
 			realIndexTypes[i] = indexTypes[i].getUnderlyingType();
-			if (realIndexTypes[i] != indexTypes[i])
+			if (realIndexTypes[i] != indexTypes[i]) {
 				changed = true;
+			}
 		}
-		if (changed)
+		if (changed) {
 			realType = createArrayType(numPlaceholders, realIndexTypes, realValueType);
-		else
+		} else {
 			realType = this;
+		}
 		boolean finite = realValueType.isFinite();
-		for (BoogieType indexType : realIndexTypes)
+		for (final BoogieType indexType : realIndexTypes) {
 			finite &= indexType.isFinite();
-		this.isFinite = finite;
+		}
+		isFinite = finite;
 	}
 
 
 	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int depth, BoogieType[] substType) {
 		depth += numPlaceholders;
 		boolean changed = false;
-		BoogieType newValueType = valueType.substitutePlaceholders(depth, substType);
-		if (newValueType != valueType)
+		final BoogieType newValueType = valueType.substitutePlaceholders(depth, substType);
+		if (newValueType != valueType) {
 			changed = true;
-		BoogieType[] newIndexTypes = new BoogieType[indexTypes.length];
+		}
+		final BoogieType[] newIndexTypes = new BoogieType[indexTypes.length];
 		for (int i = 0; i < indexTypes.length; i++) {
 			newIndexTypes[i] = indexTypes[i].substitutePlaceholders(depth, substType);
-			if (newIndexTypes[i] != indexTypes[i])
+			if (newIndexTypes[i] != indexTypes[i]) {
 				changed = true;
+			}
 		}
-		if (changed)
+		if (changed) {
 			return createArrayType(numPlaceholders, newIndexTypes, newValueType);
+		}
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
 		depth += numPlaceholders;
 		boolean changed = false;
-		BoogieType newValueType = valueType.incrementPlaceholders(depth, incDepth);
-		if (newValueType != valueType)
+		final BoogieType newValueType = valueType.incrementPlaceholders(depth, incDepth);
+		if (newValueType != valueType) {
 			changed = true;
-		BoogieType[] newIndexTypes = new BoogieType[indexTypes.length];
+		}
+		final BoogieType[] newIndexTypes = new BoogieType[indexTypes.length];
 		for (int i = 0; i < indexTypes.length; i++) {
 			newIndexTypes[i] = indexTypes[i].incrementPlaceholders(depth, incDepth);
-			if (newIndexTypes[i] != indexTypes[i])
+			if (newIndexTypes[i] != indexTypes[i]) {
 				changed = true;
+			}
 		}
-		if (changed)
+		if (changed) {
 			return createArrayType(numPlaceholders, newIndexTypes, newValueType);
+		}
 		return this;
 	}
 
 	//@Override
+	@Override
 	public BoogieType getUnderlyingType() {
 		return realType;
 	}
@@ -147,49 +160,62 @@ public class ArrayType extends BoogieType {
 
 
 	//@Override
+	@Override
 	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
-		if (other == TYPE_ERROR)
+		if (other == TYPE_ERROR) {
 			return true;
-		if (!(other instanceof ArrayType))
+		}
+		if (!(other instanceof ArrayType)) {
 			return false;
-		ArrayType type = (ArrayType) other;
+		}
+		final ArrayType type = (ArrayType) other;
 		if (type.numPlaceholders != numPlaceholders
-			|| type.indexTypes.length != indexTypes.length)
+			|| type.indexTypes.length != indexTypes.length) {
 			return false;
+		}
 		depth += numPlaceholders;
 		for (int i = 0; i < indexTypes.length; i++) {
-			if (!indexTypes[i].unify(depth, type.indexTypes[i], substitution))
+			if (!indexTypes[i].unify(depth, type.indexTypes[i], substitution)) {
 				return false;
+			}
 		}
 		return valueType.unify(depth, type.valueType, substitution);
 	}
 	
+	@Override
 	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
 		minDepth += numPlaceholders;
 		maxDepth += numPlaceholders;
-		for (BoogieType t : indexTypes) {
-			if (t.hasPlaceholder(minDepth, maxDepth))
+		for (final BoogieType t : indexTypes) {
+			if (t.hasPlaceholder(minDepth, maxDepth)) {
 				return true;
+			}
 		}
 		return valueType.hasPlaceholder(minDepth, maxDepth); 
 	}
 
 	//@Override
+	@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst) {
-		if (this == other || other == TYPE_ERROR)
+		if (this == other || other == TYPE_ERROR) {
 			return true;
-		if (other instanceof PlaceholderType)
+		}
+		if (other instanceof PlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
-		if (!(other instanceof ArrayType))
+		}
+		if (!(other instanceof ArrayType)) {
 			return false;
-		ArrayType type = (ArrayType) other;
+		}
+		final ArrayType type = (ArrayType) other;
 		if (type.numPlaceholders != numPlaceholders
-			|| type.indexTypes.length != indexTypes.length)
+			|| type.indexTypes.length != indexTypes.length) {
 			return false;
+		}
 		depth += numPlaceholders;
 		for (int i = 0; i < indexTypes.length; i++) {
-			if (!indexTypes[i].isUnifiableTo(depth, type.indexTypes[i], subst))
+			if (!indexTypes[i].isUnifiableTo(depth, type.indexTypes[i], subst)) {
 				return false;
+			}
 		}
 		return valueType.isUnifiableTo(depth, type.valueType, subst);
 	}
@@ -201,11 +227,13 @@ public class ArrayType extends BoogieType {
 	 * @param needParentheses true if parentheses should be set for constructed types
 	 * @return a string representation of this array type.
 	 */
+	@Override
 	protected String toString(int depth, boolean needParentheses) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		String delim;
-		if (needParentheses)
+		if (needParentheses) {
 			sb.append("(");
+		}
 		if (numPlaceholders > 0) {
 			sb.append("<");
 			delim ="";
@@ -217,31 +245,35 @@ public class ArrayType extends BoogieType {
 		}
 		sb.append("[");
 		delim = "";
-		for (BoogieType iType : indexTypes) {
+		for (final BoogieType iType : indexTypes) {
 			sb.append(delim).append(iType.toString(depth+numPlaceholders, false));
 			delim = ",";
 		}
 		sb.append("]");
 		sb.append(valueType.toString(depth+numPlaceholders, false));
-		if (needParentheses)
+		if (needParentheses) {
 			sb.append(")");
+		}
 		return sb.toString();
 	}
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		String[] typeParams = new String[numPlaceholders];
-		for (int i = 0; i < numPlaceholders; i++)
+		final String[] typeParams = new String[numPlaceholders];
+		for (int i = 0; i < numPlaceholders; i++) {
 			typeParams[i] = "$"+(depth+i);
-		ASTType[] astIndexTypes = new ASTType[indexTypes.length];
-		for (int i = 0; i < indexTypes.length; i++)
+		}
+		final ASTType[] astIndexTypes = new ASTType[indexTypes.length];
+		for (int i = 0; i < indexTypes.length; i++) {
 			astIndexTypes[i] = indexTypes[i].toASTType(loc, depth + numPlaceholders);
-		ASTType astValueType = valueType.toASTType(loc, depth + numPlaceholders);
+		}
+		final ASTType astValueType = valueType.toASTType(loc, depth + numPlaceholders);
 		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			ArrayType(loc, this, typeParams, astIndexTypes, astValueType);
 	}
 	
 	//@Override
+	@Override
 	public boolean isFinite() {
 		return isFinite;
 	}

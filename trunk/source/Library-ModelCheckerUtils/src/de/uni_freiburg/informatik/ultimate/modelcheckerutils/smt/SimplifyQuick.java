@@ -95,8 +95,8 @@ public class SimplifyQuick {
 //		simplificationScript.exit();
 		
 //		mScript.setOption(":check-type", "QUICK");
-		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(mScript, false, mServices);
-		Term simplified = dda.getSimplifiedTerm(inputTerm);
+		final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(mScript, false, mServices);
+		final Term simplified = dda.getSimplifiedTerm(inputTerm);
 //		mScript.setOption(":check-type", "FULL");
 		return simplified;
 	}

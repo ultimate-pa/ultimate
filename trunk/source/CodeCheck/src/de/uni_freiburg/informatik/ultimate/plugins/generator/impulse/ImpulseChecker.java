@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public class ImpulseChecker extends CodeChecker {
 	
@@ -75,10 +75,11 @@ public class ImpulseChecker extends CodeChecker {
 	}
 	
 	public void replaceEdge(AppEdge edge, AnnotatedProgramPoint newTarget) {
-		if (edge instanceof AppHyperEdge)
+		if (edge instanceof AppHyperEdge) {
 			edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), newTarget);
-		else
+		} else {
 			edge.getSource().connectOutgoing(edge.getStatement(), newTarget);
+		}
 
 		edge.disconnect();
 	}
@@ -92,18 +93,21 @@ public class ImpulseChecker extends CodeChecker {
 				errorReached = true;
 			} else {
 				if (GlobalSettings._instance.defaultRedirection) {
-					if (GlobalSettings._instance.checkSatisfiability)
+					if (GlobalSettings._instance.checkSatisfiability) {
 						redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
-					else
+					} else {
 						replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
+					}
 				} else {
 					AnnotatedProgramPoint clone = clones[i + 1];
-					AppEdge prevEdge = clones[i].getEdge(nodes[i + 1]);
-					if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy)
+					final AppEdge prevEdge = clones[i].getEdge(nodes[i + 1]);
+					if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
 						clone = cloneFinder.getStrongestValidCopy(prevEdge);
+					}
 	
-					if (clone == null)
+					if (clone == null) {
 						continue;
+					}
 					redirectIfValid(prevEdge, clone);
 				}
 			}
@@ -115,25 +119,29 @@ public class ImpulseChecker extends CodeChecker {
 	public boolean redirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
 
 		for (int i = 0; i < nodes.length; ++i) {
-			if (nodes[i].isErrorLocation())
+			if (nodes[i].isErrorLocation()) {
 				continue;
-			AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[]{});
-			for (AppEdge prevEdge : prevEdges) {
+			}
+			final AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[]{});
+			for (final AppEdge prevEdge : prevEdges) {
 				AnnotatedProgramPoint clone = clones[i];
 				
-				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy)
+				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
 					clone = cloneFinder.getStrongestValidCopy(prevEdge);
+				}
 				
-				if (clone == null)
+				if (clone == null) {
 					continue;
+				}
 				redirectIfValid(prevEdge, clone);
 			}
 		}
 		return true;
 	}
 	protected void redirectIfValid(AppEdge edge, AnnotatedProgramPoint target) {
-		if (edge.getTarget() == target)
+		if (edge.getTarget() == target) {
 			return ;
+		}
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 				
@@ -142,28 +150,32 @@ public class ImpulseChecker extends CodeChecker {
 				if (!GlobalSettings._instance.checkSatisfiability || 
 						_edgeChecker.checkReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(), 
 								(IReturnAction) edge.getStatement(), edge.getTarget().getPredicate())
-						  != Validity.VALID);
+						  != Validity.VALID) {
+					;
+				}
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
 			} else {
 				
 				boolean result = !GlobalSettings._instance.checkSatisfiability;
 				if (!result) {
-					if (edge.getStatement() instanceof Call)
-//						result = msmtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+					if (edge.getStatement() instanceof Call) {
+						//						result = msmtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
 //								mpredicateUnifier.getFalsePredicate()) != LBool.UNSAT;
 						result = _edgeChecker.checkCall(edge.getSource().getPredicate(), (ICallAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								 != Validity.VALID;
-					else
-//						result = msmtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
+					} else {
+						//						result = msmtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
 //							mpredicateUnifier.getFalsePredicate()) != LBool.UNSAT;
 						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(), (IInternalAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								!= Validity.VALID;
+					}
 				}
 				
-				if (result)
+				if (result) {
 					edge.getSource().connectOutgoing(edge.getStatement(), target);
+				}
 				
 			}
 		
@@ -182,7 +194,7 @@ public class ImpulseChecker extends CodeChecker {
 			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 
-		AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
+		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
 		
 		/*
 		System.err.println("vor DFS");
@@ -202,10 +214,10 @@ public class ImpulseChecker extends CodeChecker {
 		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
 		
 		*/
-		AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
+		final AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
 		//_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		
-		AnnotatedProgramPoint newRoot = new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true, ++nodeIDs);
+		final AnnotatedProgramPoint newRoot = new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true, ++nodeIDs);
 		
 		clones[0] = nodes[0];
 		//_cloneNode.put(newRoot, nodes[0]);
@@ -216,53 +228,57 @@ public class ImpulseChecker extends CodeChecker {
 			clones[i + 1] = new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true, ++nodeIDs);
 		}
 		
-		if (!defaultRedirecting(nodes, clones))
+		if (!defaultRedirecting(nodes, clones)) {
 			throw new AssertionError("The error location hasn't been reached.");
+		}
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
 		
-		if (GlobalSettings._instance.removeFalseNodes)
+		if (GlobalSettings._instance.removeFalseNodes) {
 			removeFalseNodes(nodes, clones);
+		}
 		
 		return true;
 	}
 	
 	public boolean removeFalseNodes(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
 		for (int i = 0; i < nodes.length; ++i) {
-			if (nodes[i].isErrorLocation())
+			if (nodes[i].isErrorLocation()) {
 				continue;
+			}
             // TODO: Handle the false predicate properly.
 			//if (clones[i].getPredicate().toString().endsWith("false"))
-			IPredicate annotation = clones[i].getPredicate();
+			final IPredicate annotation = clones[i].getPredicate();
 			if (mpredicateUnifier.getOrConstructPredicate(annotation.getFormula())
-		        .equals(mpredicateUnifier.getFalsePredicate()))
+		        .equals(mpredicateUnifier.getFalsePredicate())) {
 				clones[i].isolateNode();
+			}
 		}
 		return true;
 	}
 	
 	public boolean improveAnnotations(AnnotatedProgramPoint root) {
-		HashSet <AnnotatedProgramPoint> seen = new HashSet <AnnotatedProgramPoint>();
+		final HashSet <AnnotatedProgramPoint> seen = new HashSet <AnnotatedProgramPoint>();
 
-		HashSet <AnnotatedProgramPoint> pushed = new HashSet <AnnotatedProgramPoint>();
-		Queue <AnnotatedProgramPoint> queue = new LinkedList<AnnotatedProgramPoint>();
+		final HashSet <AnnotatedProgramPoint> pushed = new HashSet <AnnotatedProgramPoint>();
+		final Queue <AnnotatedProgramPoint> queue = new LinkedList<AnnotatedProgramPoint>();
 		
 		queue.add(root);
 		pushed.add(root);
 		
 		while (!queue.isEmpty()) {
-			AnnotatedProgramPoint peak = queue.poll();
-			AnnotatedProgramPoint[] prevNodes = peak.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
+			final AnnotatedProgramPoint peak = queue.poll();
+			final AnnotatedProgramPoint[] prevNodes = peak.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
 			if (prevNodes.length == 1) {
 				//TODO: Modify the new predicate.
-				AnnotatedProgramPoint prevNode = prevNodes[0];
+				final AnnotatedProgramPoint prevNode = prevNodes[0];
 				if (seen.contains(prevNode)) {
 					// peak.predicate &= prevNode.predicate o edge.formula
 				}
 			} else {
 				//TODO: To handle this case later
 				// Formula = false;
-				for (AnnotatedProgramPoint prevNode : prevNodes) {
+				for (final AnnotatedProgramPoint prevNode : prevNodes) {
 					if (seen.contains(prevNode)) {
 						// Formula |= prevNode.predicate o edge.formula
 					}
@@ -270,8 +286,8 @@ public class ImpulseChecker extends CodeChecker {
 				// peak.predicate &= Formula;
 			}
 			
-			AnnotatedProgramPoint[] nextNodes = peak.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint nextNode : nextNodes) {
+			final AnnotatedProgramPoint[] nextNodes = peak.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			for (final AnnotatedProgramPoint nextNode : nextNodes) {
 				if (!pushed.contains(nextNode)) {
 					pushed.add(nextNode);
 					queue.add(nextNode);
@@ -287,8 +303,10 @@ public class ImpulseChecker extends CodeChecker {
 	public boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
+		 {
 			return false;
 		// System.out.print(".");
+		}
 		
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
@@ -303,17 +321,20 @@ public class ImpulseChecker extends CodeChecker {
 		}
 
 		boolean result = true;
-		if (edgeLabel instanceof Call)
+		if (edgeLabel instanceof Call) {
 			result = _edgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
-		else
+		} else {
 			result = _edgeChecker.checkInternal(sourceNode.getPredicate(), (IInternalAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
+		}
 	
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
-			if (result)
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+			if (result) {
 				_satTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
-			else
+			} else {
 				_unsatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
+			}
+		}
 
 		return result;
 	}
@@ -333,17 +354,19 @@ public class ImpulseChecker extends CodeChecker {
 			}
 		}
 
-		boolean result = _edgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(), 
+		final boolean result = _edgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(), 
 				(IReturnAction) edgeLabel, destinationNode.getPredicate())
 				 == Validity.VALID;
 
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
-			if (result)
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+			if (result) {
 				_satQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), 
 						edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
-			else
+			} else {
 				_unsatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), 
 						edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
+			}
+		}
 
 		return result;
 	}
@@ -359,8 +382,8 @@ public class ImpulseChecker extends CodeChecker {
 			AnnotatedProgramPoint procedureRoot,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
-		this._satTriples = satTriples;
-		this._unsatTriples = unsatTriples;
+		_satTriples = satTriples;
+		_unsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
@@ -371,8 +394,8 @@ public class ImpulseChecker extends CodeChecker {
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
-		this._satQuadruples = satQuadruples;
-		this._unsatQuadruples = unsatQuadruples;
+		_satQuadruples = satQuadruples;
+		_unsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
 	
@@ -401,25 +424,26 @@ public class ImpulseChecker extends CodeChecker {
 	HashSet <AnnotatedProgramPoint> visited;
 	protected void dfsDEBUG(AnnotatedProgramPoint node, boolean print) {
 		
-		if (visited.contains(node))
+		if (visited.contains(node)) {
 			return ;
+		}
 		visited.add(node);
 		if (print) {
 			System.err.println(String.format("\n%s\n", node));
 			System.err.print("[ ");
-			for (AppEdge nextEdge : node.getOutgoingEdges()) {
+			for (final AppEdge nextEdge : node.getOutgoingEdges()) {
 				System.err.print(" << " + (nextEdge instanceof AppHyperEdge ? ("return to " + ((AppHyperEdge) nextEdge).getHier()) : nextEdge.getStatement()) + " >> " + nextEdge.getTarget());
 				System.err.print(" , ");
 			}
 			System.err.println("]");
 			
 			System.err.print("\nCopied From " + node.getParentCopy() + "\nCopies :: { ");
-			for (AnnotatedProgramPoint copy : node.getNextClones()) {
+			for (final AnnotatedProgramPoint copy : node.getNextClones()) {
 				System.err.print(copy + " , ");
 			}
 			System.err.println("}");
 		}
-		for (AnnotatedProgramPoint nextNode : node.getOutgoingNodes()) {
+		for (final AnnotatedProgramPoint nextNode : node.getOutgoingNodes()) {
 			dfsDEBUG(nextNode, print);
 		}
 	}
@@ -432,7 +456,7 @@ public class ImpulseChecker extends CodeChecker {
 		boolean result = mpredicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == Validity.VALID;
 		//System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
 		if (result) {
-			boolean converse = mpredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == Validity.VALID;
+			final boolean converse = mpredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == Validity.VALID;
 			result &= !converse || (converse && node1._nodeID > node2._nodeID);
 		}
 		return result;

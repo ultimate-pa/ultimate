@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.map_elimination;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.mapelimination;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,12 +47,12 @@ public class MapEliminator {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node are exactly the entry nodes of procedures.
 	 */
-	private RootNode mGraphroot;
+	private final RootNode mGraphroot;
 
-	private RootAnnot mRootAnnot;
+	private final RootAnnot mRootAnnot;
 
-	private Script mScript;
-	private Boogie2SMT mBoogie2smt;
+	private final Script mScript;
+	private final Boogie2SMT mBoogie2smt;
 	
 	public MapEliminator(IUltimateServiceProvider services, RootNode graphroot) {
 		super();

@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
-import java.io.*;
+import java.io.FileReader;
 
 public class Main {
 	public void usage() {
@@ -69,14 +69,15 @@ public class Main {
 		}
 		
 		for (; i < param.length; i++) {
-			Lexer lexer = new Lexer(new FileReader(param[i]));
-			parser p = new parser(lexer);
+			final Lexer lexer = new Lexer(new FileReader(param[i]));
+			final parser p = new parser(lexer);
 			p.setFileName(param[i]);
 			Grammar grammar;
-			if (debug)
+			if (debug) {
 				grammar = (Grammar) p.debug_parse().value;
-			else
+			} else {
 				grammar = (Grammar) p.parse().value;
+			}
 			if (grammar == null) {
 				System.err.println("Parse Error in file: " + param[i]);
 				System.exit(1);

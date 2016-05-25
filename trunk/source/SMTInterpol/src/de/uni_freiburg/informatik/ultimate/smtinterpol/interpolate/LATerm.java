@@ -20,16 +20,16 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
 import java.util.ArrayDeque;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class LATerm extends Term {
 	public LATerm(InterpolatorAffineTerm s, InfinitNumber k, Term F) {
 		super(F.hashCode());
 		if (!s.isConstant()) {
-			Rational gcd = s.getGCD().abs();
+			final Rational gcd = s.getGCD().abs();
 			if (!gcd.equals(Rational.ONE)) {
 				// normalize s-Term by dividing by gcd
 				s.div(gcd);
@@ -37,9 +37,9 @@ public class LATerm extends Term {
 				// if s is an integer term, round the constants accordingly
 				if (s.isInt()) {
 					// s <= 0 iff ceil(s) <= 0.
-					InfinitNumber c = s.getConstant();
+					final InfinitNumber c = s.getConstant();
 					// ceil(s) = s - c + ceil(c) = s + cdiff
-					InfinitNumber cdiff = c.ceil().add(c.negate());
+					final InfinitNumber cdiff = c.ceil().add(c.negate());
 					s.add(cdiff);
 					// -k <= s iff -k+cdiff <= s + cdiff
 					//         iff ceil(-k+cdiff) <= s + cdiff

@@ -65,7 +65,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	@Override
 	public void startFrom(RootNode node) {
 		init();
-		RCFGEdge start = searchMainEdge(node);
+		final RCFGEdge start = searchMainEdge(node);
 		if (start == null) {
 			mLogger.error("No main procedure found");
 			return;
@@ -95,9 +95,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	protected void finish() {
 		mFinalPaths = new ArrayList<>();
 
-		for (List<ARTEdge> path : mPaths) {
-			List<RCFGEdge> newPath = new ArrayList<>();
-			for (ARTEdge edge : path) {
+		for (final List<ARTEdge> path : mPaths) {
+			final List<RCFGEdge> newPath = new ArrayList<>();
+			for (final ARTEdge edge : path) {
 				newPath.add(edge.mBacking);
 			}
 			mFinalPaths.add(newPath);
@@ -114,7 +114,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected void printPath(List<ARTEdge> path) {
 		mLogger.debug(path.get(0).getSource());
-		for (ARTEdge e : path) {
+		for (final ARTEdge e : path) {
 			mLogger.debug(e.mBacking);
 			mLogger.debug(e.getTarget());
 		}
@@ -122,8 +122,8 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected RCFGEdge searchMainEdge(final RootNode node) {
 		mLogger.debug("Searching for procedure \"" + sMainProcedureName + "\"");
-		for (RCFGEdge edge : node.getOutgoingEdges()) {
-			ProgramPoint possibleMain = (ProgramPoint) edge.getTarget();
+		for (final RCFGEdge edge : node.getOutgoingEdges()) {
+			final ProgramPoint possibleMain = (ProgramPoint) edge.getTarget();
 			mLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
 			if (possibleMain.getProcedure()
 					.equalsIgnoreCase(sMainProcedureName)) {
@@ -135,7 +135,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	public void process(RCFGEdge currentEdge, List<ARTEdge> processed) {
-		ARTEdge current = createEdge(currentEdge);
+		final ARTEdge current = createEdge(currentEdge);
 		if (current.getAnnotation() == null) {
 			findLoopEntryExit(currentEdge.getTarget());
 		}
@@ -166,7 +166,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 		} else if (currentEdge instanceof Return) {
 			mCalls.pop();
-			String old = mGraph.values().toString();
+			final String old = mGraph.values().toString();
 			mGraph = mGraphs.pop();
 			current.mLastGraphState = mGraph;
 			mLogger.debug("--pop (return) " + currentEdge);
@@ -192,7 +192,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 		} else if (current.isNestedLoopExit()) {
 			mNestedLoops.push(currentEdge);
-			String old = mGraph.values().toString();
+			final String old = mGraph.values().toString();
 			mGraph = mGraphs.pop();
 			current.mLastGraphState = mGraph;
 			mLogger.debug("--push (nestedLoop) " + currentEdge);
@@ -217,7 +217,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			return;
 		}
 
-		for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+		for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
 			if (isFeasible(next)) {
 				process(next, processed);
 				post(current.mBacking);
@@ -233,7 +233,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	protected void backtrack(ARTEdge stop, List<ARTEdge> processed) {
 		mLogger.debug("--backtracking--");
 		for (int i = processed.size() - 1; i >= 0; --i) {
-			ARTEdge current = processed.get(i);
+			final ARTEdge current = processed.get(i);
 			mLogger.debug("----remove from trace prefix: " + current);
 			processed.remove(i);
 			mCurrentPath.remove(i);
@@ -241,14 +241,14 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			if (current.isNestedLoopExit()) {
 				mNestedLoops.pop();
 				mGraphs.push(mGraph);
-				String old = mGraph.values().toString();
+				final String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
 				mLogger.debug("----pop (nestedLoopExit) " + current.mBacking);
 				mLogger.debug("------old mGraph: " + old);
 				mLogger.debug("------new mGraph: " + mGraph.values());
 			} else if (current.isNestedLoopEntry()) {
 				mNestedLoops.pop();
-				String old = mGraph.values().toString();
+				final String old = mGraph.values().toString();
 				mGraph = mGraphs.pop();
 				mLogger.debug("----pop (nestedLoopEntry) " + current.mBacking);
 				mLogger.debug("------old mGraph: " + old);
@@ -259,14 +259,14 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				mCalls.push(((Return) current.mBacking)
 						.getCorrespondingCall());
 				mGraphs.push(mGraph);
-				String old = mGraph.values().toString();
+				final String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
 				mLogger.debug("----push (return) " + current.mBacking);
 				mLogger.debug("------old mGraph: " + old);
 				mLogger.debug("------new mGraph: " + mGraph.values());
 			} else if (current.mBacking instanceof Call) {
 				mCalls.pop();
-				String old = mGraph.values().toString();
+				final String old = mGraph.values().toString();
 				mGraph = mGraphs.pop();
 				mLogger.debug("----pop (call) " + current.mBacking);
 				mLogger.debug("------old mGraph: " + old);
@@ -297,15 +297,15 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected void findLoopEntryExit(RCFGNode loopNode) {
 		if (loopNode.getPayload().getLocation().isLoop()) {
-			for (RCFGEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
+			for (final RCFGEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
 				if (potentialSelfLoop.getTarget().equals(loopNode)) {
 					addAnnotation(potentialSelfLoop, loopNode, true, true);
 					return;
 				}
 			}
 
-			for (RCFGEdge potentialEntryEdge : loopNode.getOutgoingEdges()) {
-				RCFGEdge potentialBackEdge = findBackedge(potentialEntryEdge,
+			for (final RCFGEdge potentialEntryEdge : loopNode.getOutgoingEdges()) {
+				final RCFGEdge potentialBackEdge = findBackedge(potentialEntryEdge,
 						loopNode, new HashSet<RCFGEdge>());
 				if (potentialBackEdge != null) {
 					addAnnotation(potentialEntryEdge, loopNode, true, false);
@@ -327,9 +327,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			return current;
 		} else {
 			visited.add(current);
-			for (RCFGEdge succ : current.getTarget().getOutgoingEdges()) {
+			for (final RCFGEdge succ : current.getTarget().getOutgoingEdges()) {
 				if (!visited.contains(succ)) {
-					RCFGEdge potential = findBackedge(succ, target, visited);
+					final RCFGEdge potential = findBackedge(succ, target, visited);
 					if (potential != null
 							&& potential.getTarget().equals(target)) {
 						return potential;
@@ -342,7 +342,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected boolean isMaxCallDepth(RCFGEdge c) {
 		int i = 0;
-		for (RCFGEdge call : mCalls) {
+		for (final RCFGEdge call : mCalls) {
 			if (c.equals(call)) {
 				++i;
 			}
@@ -353,7 +353,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	protected boolean isMaxLoopDepth(ARTEdge c) {
 		// c is nestedLoopEntry
 		int i = 0;
-		for (RCFGEdge loopEntries : mNestedLoops) {
+		for (final RCFGEdge loopEntries : mNestedLoops) {
 			if (c.mBacking.equals(loopEntries)) {
 				++i;
 			}
@@ -377,8 +377,8 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	protected String traceToString(List<ARTEdge> trace) {
-		StringBuilder sb = new StringBuilder();
-		for (ARTEdge e : trace) {
+		final StringBuilder sb = new StringBuilder();
+		for (final ARTEdge e : trace) {
 			sb.append(e.mBacking);
 			sb.append(" ");
 		}
@@ -397,7 +397,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	private class ARTEdge {
-		private RCFGEdge mBacking;
+		private final RCFGEdge mBacking;
 		private int mVisited;
 		private HashMap<RCFGEdge, ARTEdge> mLastGraphState;
 
@@ -444,7 +444,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 
 		private boolean isLoopEntry() {
-			RCFGUnrollWalkerAnnotation annot = getAnnotation();
+			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopEntry();
 			} else {
@@ -453,7 +453,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 
 		private boolean isLoopExit() {
-			RCFGUnrollWalkerAnnotation annot = getAnnotation();
+			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopExit();
 			} else {
@@ -462,7 +462,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 
 		private boolean isNestedLoopEntry() {
-			RCFGUnrollWalkerAnnotation annot = getAnnotation();
+			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return !annot.isLoopExit() && annot.isLoopEntry();
 			} else {
@@ -471,7 +471,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 
 		private boolean isNestedLoopExit() {
-			RCFGUnrollWalkerAnnotation annot = getAnnotation();
+			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopExit() && !annot.isLoopEntry();
 			} else {
@@ -480,7 +480,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 
 		private RCFGNode getLoopHead() {
-			RCFGUnrollWalkerAnnotation annot = getAnnotation();
+			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.getHonda();
 			} else {

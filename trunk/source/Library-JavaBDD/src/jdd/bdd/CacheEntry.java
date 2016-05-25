@@ -1,7 +1,7 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
+import jdd.util.Configuration;
 
 /**
  * A cache entry used by Cache, but not SimpleCache.
@@ -36,14 +36,20 @@ public final  class CacheEntry {
 	/** register a hit */
 	public final int hit() {
 		found++;
-		if(hits < 127) hits++;
+		if(hits < 127) {
+			hits++;
+		}
 		return ret;
 	}
 
 	/** returns true if this position is available, false if it should not be overwritten */
 	public final boolean save() {
-		if(op1 != -1) overwrite++;
-		if(hits > Configuration.cacheentryStickyHits) return false;
+		if(op1 != -1) {
+			overwrite++;
+		}
+		if(hits > Configuration.cacheentryStickyHits) {
+			return false;
+		}
 		hits = 0;
 		return true;
 	}

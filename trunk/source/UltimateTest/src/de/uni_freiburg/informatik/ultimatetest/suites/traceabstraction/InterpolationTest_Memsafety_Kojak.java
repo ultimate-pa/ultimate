@@ -110,14 +110,14 @@ public class InterpolationTest_Memsafety_Kojak extends AbstractTraceAbstractionT
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_Deref);
 				addTestCase(toolchain, setting, mCurrentBugs_Deref, new String[] {".c", ".i"});
 			}
 		}
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_DerefFreeMemtrack);
 				addTestCase(toolchain, setting, mCurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
 			}

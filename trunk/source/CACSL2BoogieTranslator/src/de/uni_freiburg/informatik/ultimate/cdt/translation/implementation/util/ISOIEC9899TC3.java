@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -115,7 +116,7 @@ public final class ISOIEC9899TC3 {
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
 			val = val.substring(1, val.length());
-			String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
+			final String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
 			dispatch.warn(loc, msg);
 		}
 		if (!val.startsWith("'") || !val.endsWith("'")) {
@@ -128,7 +129,7 @@ public final class ISOIEC9899TC3 {
 			case '\"':
 			case '?':
 			case '\\':
-				value = (int) val.charAt(2);
+				value = val.charAt(2);
 				break;
 			case 'a':
 				value = 7;
@@ -167,10 +168,11 @@ public final class ISOIEC9899TC3 {
 			default:
 				throw new UnsupportedOperationException();
 			}
-		} else if (val.length() == 3)
-			value = (int) val.charAt(1);
-		else
+		} else if (val.length() == 3) {
+			value = val.charAt(1);
+		} else {
 			throw new UnsupportedOperationException();
+		}
 		return String.valueOf(value);
 	}
 
@@ -203,15 +205,15 @@ public final class ISOIEC9899TC3 {
 			
 
 			// if there is a float-suffix: throw it away
-			for (String s : SUFFIXES_FLOAT) {
+			for (final String s : SUFFIXES_FLOAT) {
 				if (val.endsWith(s)) {
 					value = val.substring(0, val.length() - s.length());
 					floatType = s;
 				}
 			}
 			if (value.contains("e")) {
-				int eLocatation = value.indexOf("e");
-				String floatString = value.substring(0, eLocatation);
+				final int eLocatation = value.indexOf("e");
+				final String floatString = value.substring(0, eLocatation);
 				String exponentString = value.substring(eLocatation + 1, value.length());
 				BigDecimal base = new BigDecimal(floatString);
 				if (exponentString.startsWith("0")) {
@@ -241,7 +243,7 @@ public final class ISOIEC9899TC3 {
 				value = base.toString();
 			}
 			
-			BigDecimal floatVal = new BigDecimal(value);
+			final BigDecimal floatVal = new BigDecimal(value);
 			
 			// Set floatIndices depending on the value of the val
 			final CType resultType;
@@ -284,7 +286,7 @@ public final class ISOIEC9899TC3 {
 				} else {
 					throw new IllegalArgumentException();
 				}
-				Expression realValue = new RealLiteral(loc, floatVal.toString());
+				final Expression realValue = new RealLiteral(loc, floatVal.toString());
 				arguments = new Expression[] {roundingMode, realValue};
 				
 				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
@@ -315,16 +317,16 @@ public final class ISOIEC9899TC3 {
 				 */
 			}
 			
-			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
+			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
 			return new RValue(func, resultType);
 			
 		} else {
 			String value = val;
 			// if there is a float-suffix: throw it away
-			for (String s : SUFFIXES_FLOAT) {
+			for (final String s : SUFFIXES_FLOAT) {
 				if (val.endsWith(s)) {
 					value = val.substring(0, val.length() - s.length());
-					String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
+					final String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
 			}
@@ -338,8 +340,8 @@ public final class ISOIEC9899TC3 {
 					Double.valueOf(value); //using double for good measure..
 				}
 				return new RValue(new RealLiteral(loc, value), new CPrimitive(PRIMITIVE.FLOAT));
-			} catch (NumberFormatException nfe) {
-				String msg = "Unable to translate float!";
+			} catch (final NumberFormatException nfe) {
+				final String msg = "Unable to translate float!";
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
@@ -372,8 +374,8 @@ public final class ISOIEC9899TC3 {
 					loc, bitvectorTranslation, typeSizeConstants, cType,
 					ic.getValue());
 			return new RValue(resultLiteral, cType);
-		} catch (NumberFormatException nfe) {
-			String msg = "Unable to translate int!";
+		} catch (final NumberFormatException nfe) {
+			final String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
@@ -384,9 +386,9 @@ public final class ISOIEC9899TC3 {
 			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
-			int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
+			final int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
 			if (value.signum() == -1) {
-				long maxValue = (long) Math.pow(2, bitlength);
+				final long maxValue = (long) Math.pow(2, bitlength);
 				value = value.add(BigInteger.valueOf(maxValue));
 			}
 			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
@@ -412,7 +414,7 @@ public final class ISOIEC9899TC3 {
 		public IntegerConstant(String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
-			for (String s : SUFFIXES_INT) {
+			for (final String s : SUFFIXES_INT) {
 				if (valueWithPrefixAndSuffix.endsWith(s)) {
 					valueWithPrefix = valueWithPrefixAndSuffix.substring(0, valueWithPrefixAndSuffix.length() - s.length());
 					suffix = s;
@@ -490,10 +492,10 @@ public final class ISOIEC9899TC3 {
 	}
 	
 	private static CPrimitive determineCType(IntegerConstant ic, TypeSizes typeSizes) {
-		PRIMITIVE[] primitives = getPossibleTypes(ic);
-		for (PRIMITIVE primitive : primitives) {
-			CPrimitive cPrimitive = new CPrimitive(primitive);
-			BigInteger maxValue = typeSizes.getMaxValueOfPrimitiveType(cPrimitive);
+		final PRIMITIVE[] primitives = getPossibleTypes(ic);
+		for (final PRIMITIVE primitive : primitives) {
+			final CPrimitive cPrimitive = new CPrimitive(primitive);
+			final BigInteger maxValue = typeSizes.getMaxValueOfPrimitiveType(cPrimitive);
 			if (ic.getValue().compareTo(maxValue) <= 0) {
 				return cPrimitive;
 			}

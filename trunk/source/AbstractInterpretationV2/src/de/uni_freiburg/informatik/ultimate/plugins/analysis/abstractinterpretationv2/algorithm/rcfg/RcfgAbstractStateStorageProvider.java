@@ -55,6 +55,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		mStorage = new HashMap<>();
 	}
 
+	@Override
 	protected Deque<STATE> getPostStates(CodeBlock action) {
 		assert action != null;
 		final LOCATION node = getTransitionProvider().getTarget(action);

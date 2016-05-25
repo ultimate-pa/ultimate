@@ -1,7 +1,7 @@
 
 package jdd.util;
 
-import java.io.*;
+import java.io.File;
 
 /**
  * Utility functions related to files are gathered here
@@ -16,8 +16,9 @@ public class FileUtility {
 	public static boolean invalidFilename(String file) {
 
 		// lets say \xxx is only invalid if we are not using windows ??
-		if(File.separatorChar != '\\' && file.indexOf('\\') != -1 )
+		if(File.separatorChar != '\\' && file.indexOf('\\') != -1 ) {
 			return false;
+		}
 
 		return
 			file.indexOf('\"') != -1 ||			file.indexOf('\'') != -1 ||
@@ -33,7 +34,7 @@ public class FileUtility {
 	 * @return true if deletion succeeded
 	 */
 	public static boolean delete(String filename) {
-		File f = new File(filename);
+		final File f = new File(filename);
 		return f.delete();
 	}
 

@@ -38,9 +38,9 @@ import pea.CDD;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.RelationDecision;
+import pea.RelationDecision.Operator;
 import pea.Transition;
 import pea.ZDecision;
-import pea.RelationDecision.Operator;
 
 /**
  * PEA2TCSConverter is a general converter class to convert Phase Event Automata (PEA) into Transition Constraint
@@ -135,7 +135,7 @@ public final class PEA2TCSConverter {
     }
     
     private CDD clockConstraintForCurrentTrans;
-    private List<String> clocks;
+    private final List<String> clocks;
     
     private Transition currentTransition;
     private Iterator<CDD> disjunctIterator;
@@ -144,13 +144,13 @@ public final class PEA2TCSConverter {
     private Iterator<CDD> initDisjunctIterator;
     
     private int initPhaseCounter;
-    private Phase[] initPhases;
-    private PhaseEventAutomata pea;
+    private final Phase[] initPhases;
+    private final PhaseEventAutomata pea;
     private int phaseCounter;
-    private Phase[] phases;
-    private TCSWriter tcsWriter;
+    private final Phase[] phases;
+    private final TCSWriter tcsWriter;
     private Iterator<Transition> transitionIterator;
-    private Map<String,String> variables;
+    private final Map<String,String> variables;
     private boolean useBooleanDecision = false;
     // len'>0
     private final CDD lenConstraint;
@@ -174,10 +174,10 @@ public final class PEA2TCSConverter {
         this.tcsWriter = tcsWriter;
         this.tcsWriter.setConverter(this);
         this.pea = pea;
-        this.phases = pea.getPhases();
-        this.initPhases = pea.getInit();
-        this.clocks = pea.getClocks();
-        this.variables = pea.getVariables();
+        phases = pea.getPhases();
+        initPhases = pea.getInit();
+        clocks = pea.getClocks();
+        variables = pea.getVariables();
         
         if (pea.getPhases().length == 0) {
             throw new RuntimeException(
@@ -188,10 +188,10 @@ public final class PEA2TCSConverter {
                     "PEA with initial phase count = 0 is not allowed");
         }
 
-        this.globalInvariant = this.tcsWriter.processDeclarations(pea.getDeclarations(), this.variables);
+        globalInvariant = this.tcsWriter.processDeclarations(pea.getDeclarations(), variables);
         
-        this.variables.put(LEN,REAL_TYPE);
-        for (String clock : clocks) {
+        variables.put(LEN,REAL_TYPE);
+        for (final String clock : clocks) {
             variables.put(clock,REAL_TYPE);
         }
         /* Add program counter to variable list */
@@ -204,7 +204,7 @@ public final class PEA2TCSConverter {
         	useBooleanDecision ?
         	        RelationDecision.create("0", Operator.LESS, LEN) :
         			ZDecision.create("len>0");
-        for (String clock : clocks) {
+        for (final String clock : clocks) {
             CDD cdd;
             if(useBooleanDecision){
                 cdd = RelationDecision.create(clock, Operator.EQUALS, LEN);
@@ -225,7 +225,7 @@ public final class PEA2TCSConverter {
         stoppedClockUpdatesReset = new HashMap<String,CDD>();
         stoppedClockUpdates= new HashMap<String,CDD>();
         if(useBooleanDecision){
-            for (String clock : clocks) {
+            for (final String clock : clocks) {
                 clockUpdatesReset.put(clock, 
                         RelationDecision.create(clock 
                                 + Operator.PRIME,  Operator.EQUALS,
@@ -245,7 +245,7 @@ public final class PEA2TCSConverter {
                                 clock));
             }                
         }else{
-            for (String clock : clocks) {
+            for (final String clock : clocks) {
                 clockUpdatesReset.put(clock,
                         ZDecision.create(clock + ZString.PRIME + ZString.EQUALS
                                 + LEN + ZString.PRIME));
@@ -286,13 +286,14 @@ public final class PEA2TCSConverter {
      * @return false if there is no next init phase, true otherwise.
      */
     private boolean chooseNextInitPhase() {
-        if(++initPhaseCounter>=initPhases.length)
-            return false;
+        if(++initPhaseCounter>=initPhases.length) {
+			return false;
+		}
         
-        CDD initStateInvariant = initPhases[initPhaseCounter].getStateInvariant().and(globalInvariant);
-        CDD initClockInvariant = initPhases[initPhaseCounter].getClockInvariant();
+        final CDD initStateInvariant = initPhases[initPhaseCounter].getStateInvariant().and(globalInvariant);
+        final CDD initClockInvariant = initPhases[initPhaseCounter].getClockInvariant();
 
-        CDD[] initPhaseDisjuncts = initStateInvariant.and(initClockInvariant).toDNF();
+        final CDD[] initPhaseDisjuncts = initStateInvariant.and(initClockInvariant).toDNF();
 
         initDisjunctIterator = Arrays.asList(initPhaseDisjuncts).iterator();
 
@@ -316,7 +317,7 @@ public final class PEA2TCSConverter {
     private boolean chooseNextTransition() {
         while(transitionIterator == null || !transitionIterator.hasNext()) {
             if(++phaseCounter < phases.length) {
-                List<Transition> transitionsForPhase = phases[phaseCounter].getTransitions();
+                final List<Transition> transitionsForPhase = phases[phaseCounter].getTransitions();
                 transitionIterator = transitionsForPhase.iterator();
             }else {
                 return false;
@@ -324,22 +325,22 @@ public final class PEA2TCSConverter {
         }
         currentTransition = transitionIterator.next();
 
-        CDD guard = currentTransition.getGuard();
+        final CDD guard = currentTransition.getGuard();
         if(guard == CDD.FALSE){
             return chooseNextTransition();
         }
 
-        CDD[] transitionDisjuncts = guard.toDNF();
+        final CDD[] transitionDisjuncts = guard.toDNF();
         
-        CDD destStateInvariant = currentTransition.getDest().getStateInvariant().and(globalInvariant);
-        CDD destClockInvariant = currentTransition.getDest().getClockInvariant();
-        CDD[] invariantDisjuncts = destStateInvariant.and(destClockInvariant).toDNF();
+        final CDD destStateInvariant = currentTransition.getDest().getStateInvariant().and(globalInvariant);
+        final CDD destClockInvariant = currentTransition.getDest().getClockInvariant();
+        final CDD[] invariantDisjuncts = destStateInvariant.and(destClockInvariant).toDNF();
         
-        ArrayList<CDD> disjuncts = new ArrayList<CDD>();
+        final ArrayList<CDD> disjuncts = new ArrayList<CDD>();
         for (int i = 0; i < transitionDisjuncts.length; i++) {
-            CDD transDisj = transitionDisjuncts[i];
+            final CDD transDisj = transitionDisjuncts[i];
             for (int j = 0; j < invariantDisjuncts.length; j++) {
-                CDD invDisj = invariantDisjuncts[j];
+                final CDD invDisj = invariantDisjuncts[j];
                 disjuncts.add(transDisj.and(invDisj.prime()));
             }
         } 
@@ -349,9 +350,9 @@ public final class PEA2TCSConverter {
         CDD constraint = lenConstraint;
         
         /* create Decision for updating clock values */
-        Set<String> resets = 
+        final Set<String> resets = 
             new HashSet<String>(Arrays.asList(currentTransition.getResets()));
-        for (String clock : this.clocks) {
+        for (final String clock : clocks) {
             CDD cdd;
             if(resets.contains(clock)){
                 if(currentTransition.getDest().isStopped(clock)){
@@ -419,9 +420,9 @@ public final class PEA2TCSConverter {
             initDisjunct = initDisjunctIterator.next();
         }
 
-        CDD constraint = initDisjunct.and(initClockConstraint);
+        final CDD constraint = initDisjunct.and(initClockConstraint);
 
-        String initLoc = initPhases[initPhaseCounter].getName();
+        final String initLoc = initPhases[initPhaseCounter].getName();
 
         return new TransitionConstraint(constraint, initLoc);
     }
@@ -444,15 +445,16 @@ public final class PEA2TCSConverter {
             if(!chooseNextTransition()){
                 return null;
             }
-            if(!disjunctIterator.hasNext())
-                System.out.println();
+            if(!disjunctIterator.hasNext()) {
+				System.out.println();
+			}
             disjunct = disjunctIterator.next();
         }
 
-        CDD constraint = disjunct.and(clockConstraintForCurrentTrans);
+        final CDD constraint = disjunct.and(clockConstraintForCurrentTrans);
 
-        String source = currentTransition.getSrc().getName();
-        String dest = currentTransition.getDest().getName();
+        final String source = currentTransition.getSrc().getName();
+        final String dest = currentTransition.getDest().getName();
 
         return new TransitionConstraint(constraint, source, dest);
     }
@@ -476,7 +478,7 @@ public final class PEA2TCSConverter {
      * for all newly generated decisions.
      */
     public void useBooleanDecision() {
-        this.useBooleanDecision = true;
+        useBooleanDecision = true;
     }
 
     /**
@@ -484,7 +486,7 @@ public final class PEA2TCSConverter {
      * for all newly generated decisions.
      */
     public void useZDecision() {
-        this.useBooleanDecision = false;
+        useBooleanDecision = false;
     }
 
 

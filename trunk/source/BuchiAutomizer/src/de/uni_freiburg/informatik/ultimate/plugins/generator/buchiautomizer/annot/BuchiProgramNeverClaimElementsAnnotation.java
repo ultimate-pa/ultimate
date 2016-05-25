@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @author dietsch@informatik.uni-freiburg.de
  * @deprecated Was an experiment, will be removed 
  */
+@Deprecated
 public class BuchiProgramNeverClaimElementsAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;

@@ -77,7 +77,7 @@ public class ModelExtractionUtils {
 	 */
 	public static Rational const2Rational(Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) t;
+			final ApplicationTerm appt = (ApplicationTerm) t;
 			if (appt.getFunction().getName().equals("+")) {
 				return const2Rational(appt.getParameters()[0]).add(const2Rational(appt.getParameters()[1]));
 			}
@@ -96,18 +96,18 @@ public class ModelExtractionUtils {
 			}
 		}
 		if (t instanceof ConstantTerm) {
-			Object o = ((ConstantTerm) t).getValue();
+			final Object o = ((ConstantTerm) t).getValue();
 			if (o instanceof BigInteger) {
 				return Rational.valueOf((BigInteger) o, BigInteger.ONE);
 			} else if (o instanceof BigDecimal) {
-				BigDecimal decimal = (BigDecimal) o;
+				final BigDecimal decimal = (BigDecimal) o;
 				Rational rat;
 				if (decimal.scale() <= 0) {
-					BigInteger num = decimal.toBigInteger();
+					final BigInteger num = decimal.toBigInteger();
 					rat = Rational.valueOf(num, BigInteger.ONE);
 				} else {
-					BigInteger num = decimal.unscaledValue();
-					BigInteger denom = BigInteger.TEN.pow(decimal.scale());
+					final BigInteger num = decimal.unscaledValue();
+					final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
 					rat = Rational.valueOf(num, denom);
 				}
 				return rat;
@@ -136,10 +136,10 @@ public class ModelExtractionUtils {
 	 */
 	public static Map<Term, Rational> getValuation(Script script, Collection<Term> vars) throws TermException {
 		// assert mscript.checkSat() == LBool.SAT;
-		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
+		final Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		if (!vars.isEmpty()) {
-			Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
-			for (Map.Entry<Term, Term> entry : val.entrySet()) {
+			final Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
+			for (final Map.Entry<Term, Term> entry : val.entrySet()) {
 				result.put(entry.getKey(), const2Rational(entry.getValue()));
 			}
 		}
@@ -172,13 +172,13 @@ public class ModelExtractionUtils {
 	@Deprecated
 	protected int simplifyAssignment(Script script, ArrayList<Term> variables, ILogger logger) {
 		// Shuffle the variable list for better effect
-		Random rnd = new Random(s_randomSeed);
+		final Random rnd = new Random(s_randomSeed);
 		Collections.shuffle(variables, rnd);
 
 		int pops = 0;
 		int checkSat_calls = 0;
 		for (int i = 0; i < variables.size(); ++i) {
-			Term var = variables.get(i);
+			final Term var = variables.get(i);
 			script.push(1);
 			script.assertTerm(script.term("=", var, script.numeral(BigInteger.ZERO)));
 			LBool sat = script.checkSat();
@@ -219,19 +219,19 @@ public class ModelExtractionUtils {
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment(Script script, 
 			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
-		Random rnd = new Random(s_randomSeed);
-		Term zero = script.numeral("0");
+		final Random rnd = new Random(s_randomSeed);
+		final Term zero = script.numeral("0");
 		Map<Term, Rational> val = getValuation(script, variables);
 
-		Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to
+		final Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to
 													// 0
-		Set<Term> not_zero_vars = new HashSet<Term>(variables); // other
+		final Set<Term> not_zero_vars = new HashSet<Term>(variables); // other
 																// variables
 
 		int checkSat_calls = 0;
 		int unsat_calls = 0;
 		while (true) {
-			for (Map.Entry<Term, Rational> entry : val.entrySet()) {
+			for (final Map.Entry<Term, Rational> entry : val.entrySet()) {
 				if (entry.getValue().equals(Rational.ZERO)) {
 					zero_vars.add(entry.getKey());
 					not_zero_vars.remove(entry.getKey());
@@ -245,22 +245,22 @@ public class ModelExtractionUtils {
 						"simplifying assignment for " + variables.size() + "variables");
 			}
 			script.push(1);
-			for (Term var : zero_vars) {
+			for (final Term var : zero_vars) {
 				script.assertTerm(script.term("=", var, zero));
 			}
 			for (int i = 0; i < 10; ++i) { // 10 is a good number
-				List<Term> vars = new ArrayList<Term>(not_zero_vars);
+				final List<Term> vars = new ArrayList<Term>(not_zero_vars);
 				// Shuffle the variable list for better effect
 				Collections.shuffle(vars, rnd);
 
-				Term[] disj = new Term[s_numof_simultaneous_simplification_tests];
+				final Term[] disj = new Term[s_numof_simultaneous_simplification_tests];
 				for (int j = 0; j < s_numof_simultaneous_simplification_tests; ++j) {
 					disj[j] = script.term("=", vars.get(j), zero);
 				}
 				script.assertTerm(Util.or(script, disj));
 			}
 			++checkSat_calls;
-			LBool sat = script.checkSat();
+			final LBool sat = script.checkSat();
 			if (sat == LBool.SAT) {
 				val = getValuation(script, not_zero_vars);
 			} else {
@@ -275,14 +275,14 @@ public class ModelExtractionUtils {
 		}
 
 		// Add zero variables to the valuation
-		for (Term var : zero_vars) {
+		for (final Term var : zero_vars) {
 			val.put(var, Rational.ZERO);
 		}
 
 		// Send stats to the logger
 		logger.info("Simplification made " + checkSat_calls + " calls to the SMT solver.");
 		int numzero_vars = 0;
-		for (Map.Entry<Term, Rational> entry : val.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : val.entrySet()) {
 			if (entry.getValue().equals(Rational.ZERO)) {
 				++numzero_vars;
 			}
@@ -313,20 +313,20 @@ public class ModelExtractionUtils {
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(Script script, 
 			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
-		Term zero = script.numeral("0");
+		final Term zero = script.numeral("0");
 
-		Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
-		Set<Term> zeroCandidates = new HashSet<Term>(variables); // variables that might be fixed to 0
-		Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
-		Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, variables));
+		final Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
+		final Set<Term> zeroCandidates = new HashSet<Term>(variables); // variables that might be fixed to 0
+		final Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
+		final Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, variables));
 		
 		{
-			List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
-			for (Term var : notYetAssertedZeros) {
+			final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
+			for (final Term var : notYetAssertedZeros) {
 				script.assertTerm(script.term("=", var, zero));
 			}
 		}
-		int variablesInitiallySetToZero = alreadyZero.size();
+		final int variablesInitiallySetToZero = alreadyZero.size();
 		
 		boolean conjunctiveMode = false;
 		double subsetSizeBonusFactor = 1.0;
@@ -339,28 +339,28 @@ public class ModelExtractionUtils {
 						"simplifying assignment for " + variables.size() + "variables");
 			}
 			
-			int subsetSize = computeSubsetSize(zeroCandidates.size(), subsetSizeBonusFactor);
-			List<Term> subset = getSubset(subsetSize, zeroCandidates);
-			Term[] equalsZeroTerms = constructEqualsZeroTerms(script, subset);
+			final int subsetSize = computeSubsetSize(zeroCandidates.size(), subsetSizeBonusFactor);
+			final List<Term> subset = getSubset(subsetSize, zeroCandidates);
+			final Term[] equalsZeroTerms = constructEqualsZeroTerms(script, subset);
 			script.push(1);
 			pushWithoutPop++;
 			assert !subset.isEmpty() : "subset too small";
 			if (subset.size() == 1) {
 				assert equalsZeroTerms.length == 1;
 				script.assertTerm(equalsZeroTerms[0]);
-				LBool sat = script.checkSat();
+				final LBool sat = script.checkSat();
 				checkSatCalls++;
 				if (sat == LBool.SAT) {
 					newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
 					finalValuation.putAll(newPartialValuation);
-					for (Term var : subset) {
+					for (final Term var : subset) {
 						zeroCandidates.remove(var);
 						alreadyZero.add(var);
 					}
 					conjunctiveMode = true;
 					subsetSizeBonusFactor = 2.0;
 				} else if (sat == LBool.UNSAT) {
-					for (Term var : subset) {
+					for (final Term var : subset) {
 						zeroCandidates.remove(var);
 						neverZero.add(var);
 					}
@@ -377,14 +377,14 @@ public class ModelExtractionUtils {
 			} else {
 				// size > 1
 				if (conjunctiveMode) {
-					Term conjunction = Util.and(script, equalsZeroTerms);
+					final Term conjunction = Util.and(script, equalsZeroTerms);
 					script.assertTerm(conjunction);
-					LBool sat = script.checkSat();
+					final LBool sat = script.checkSat();
 					checkSatCalls++;
 					if (sat == LBool.SAT) {
 						newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
 						finalValuation.putAll(newPartialValuation);
-						for (Term var : subset) {
+						for (final Term var : subset) {
 							zeroCandidates.remove(var);
 							alreadyZero.add(var);
 						}
@@ -401,9 +401,9 @@ public class ModelExtractionUtils {
 					}
 				} else {
 					// disjunctive mode
-					Term disjunction = Util.or(script, equalsZeroTerms);
+					final Term disjunction = Util.or(script, equalsZeroTerms);
 					script.assertTerm(disjunction);
-					LBool sat = script.checkSat();
+					final LBool sat = script.checkSat();
 					checkSatCalls++;
 					if (sat == LBool.SAT) {
 						newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
@@ -412,7 +412,7 @@ public class ModelExtractionUtils {
 						pushWithoutPop--;
 						conjunctiveMode = true;
 					} else if (sat == LBool.UNSAT) {
-						for (Term var : subset) {
+						for (final Term var : subset) {
 							zeroCandidates.remove(var);
 							neverZero.add(var);
 						}
@@ -429,8 +429,8 @@ public class ModelExtractionUtils {
 			}
 			
 			if (newPartialValuation != null) {
-				List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
-				for (Term var : notYetAssertedZeros) {
+				final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
+				for (final Term var : notYetAssertedZeros) {
 					script.assertTerm(script.term("=", var, zero));
 				}
 			}
@@ -451,7 +451,7 @@ public class ModelExtractionUtils {
 	
 	private static Map<Term, Rational> getValuation2(Script script,
 			Set<Term> zeroCandidates, Set<Term> neverZero) throws TermException {
-		List<Term> vars = new ArrayList<>(zeroCandidates.size() + neverZero.size());
+		final List<Term> vars = new ArrayList<>(zeroCandidates.size() + neverZero.size());
 		vars.addAll(zeroCandidates);
 		vars.addAll(neverZero);
 		return getValuation(script, vars);
@@ -466,9 +466,9 @@ public class ModelExtractionUtils {
 	 * return only set.size() elements.
 	 */
 	private static <E> List<E> getSubset(int n, Set<E> set) {
-		ArrayList<E> result = new ArrayList<E>();
-		int subsetSize = Math.min(n, set.size());
-		Iterator<E> it = set.iterator();
+		final ArrayList<E> result = new ArrayList<E>();
+		final int subsetSize = Math.min(n, set.size());
+		final Iterator<E> it = set.iterator();
 		for (int i=0; i<subsetSize; i++) {
 			result.add(it.next());
 		}
@@ -480,10 +480,10 @@ public class ModelExtractionUtils {
 	 * Rreturn the equality (= t 0) for each t in set.
 	 */
 	private static Term[] constructEqualsZeroTerms(Script script, List<Term> set) {
-		Term[] result = new Term[set.size()];
-		Iterator<Term> it = set.iterator();
+		final Term[] result = new Term[set.size()];
+		final Iterator<Term> it = set.iterator();
 		for (int i=0; i<set.size(); i++) {
-			Term term = it.next();
+			final Term term = it.next();
 			result[i] = script.term("=",term, script.numeral("0"));
 		}
 		return result;
@@ -496,10 +496,10 @@ public class ModelExtractionUtils {
 	 */
 	private static List<Term> findNewZeros(Map<Term, Rational> val,
 			Set<Term> alreadyZero, Set<Term> zeroCandidates) {
-		List<Term> newlyBecomeZero = new ArrayList<Term>();
-		Iterator<Term> it = zeroCandidates.iterator();
+		final List<Term> newlyBecomeZero = new ArrayList<Term>();
+		final Iterator<Term> it = zeroCandidates.iterator();
 		while (it.hasNext()) {
-			Term var = it.next();
+			final Term var = it.next();
 			assert (val.containsKey(var));
 			if (val.get(var).equals(Rational.ZERO)) {
 				newlyBecomeZero.add(var);

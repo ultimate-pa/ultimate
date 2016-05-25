@@ -57,8 +57,8 @@ public class SymbolTableCreator extends BaseObserver
 	@Override
 	public boolean process(IElement root)
 	{
-		SymbolTableTransformer transformer = new SymbolTableTransformer(mLogger);
-		boolean finished = transformer.process(root);
+		final SymbolTableTransformer transformer = new SymbolTableTransformer(mLogger);
+		final boolean finished = transformer.process(root);
 		mSymbolTable = transformer.getSymbolTable();
 		return finished;
 	}

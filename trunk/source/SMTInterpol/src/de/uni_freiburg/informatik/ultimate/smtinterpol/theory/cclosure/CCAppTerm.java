@@ -44,6 +44,7 @@ public class CCAppTerm extends CCTerm {
 			assert (!mMark || CCAppTerm.this.mRepStar.mNumMembers > 1);
 			return mMark;
 		}
+		@Override
 		public String toString() {
 			return CCAppTerm.this.toString();
 		}
@@ -53,8 +54,8 @@ public class CCAppTerm extends CCTerm {
 			SharedTerm term, CClosure engine) {
 		super(isFunc, parentPos, term,
 				HashUtils.hashJenkins(func.hashCode(), arg));
-		this.mFunc = func;
-		this.mArg = arg;
+		mFunc = func;
+		mArg = arg;
 //		firstFormula = Integer.MAX_VALUE; lastFormula = -1;
 		mLeftParInfo = new Parent();
 		mRightParInfo = new Parent();
@@ -80,12 +81,12 @@ public class CCAppTerm extends CCTerm {
 	 * @return The congruent CCAppTerm appearing in both terms.
 	 */
 	private CCAppTerm findCongruentAppTerm(CCTerm func, CCTerm arg) {
-		CCParentInfo argInfo = arg.mCCPars.getInfo(func.mParentPosition);
-		CCParentInfo funcInfo = func.mCCPars.getInfo(0);
+		final CCParentInfo argInfo = arg.mCCPars.getInfo(func.mParentPosition);
+		final CCParentInfo funcInfo = func.mCCPars.getInfo(0);
 		if (argInfo != null && funcInfo != null) {
-			for (Parent p : argInfo.mCCParents) {
+			for (final Parent p : argInfo.mCCParents) {
 				if (p.getData() != this) {
-					for (Parent q : funcInfo.mCCParents) {
+					for (final Parent q : funcInfo.mCCParents) {
 						if (p.getData() == q.getData()) {
 							return p.getData();
 						}
@@ -106,8 +107,8 @@ public class CCAppTerm extends CCTerm {
 	 * existed earlier. 
 	 */
 	public CCAppTerm addParentInfo(CClosure engine) {
-		CCTerm func = this.mFunc;
-		CCTerm arg = this.mArg;
+		CCTerm func = mFunc;
+		CCTerm arg = mArg;
 		
 		CCAppTerm congruentAppTerm = null;
 		/*
@@ -163,27 +164,30 @@ public class CCAppTerm extends CCTerm {
 			sb.append('(').append(mFunc).append(' ');
 		}
 		if (mArg instanceof CCAppTerm) {
-			CCAppTerm arg2 = (CCAppTerm) mArg;
+			final CCAppTerm arg2 = (CCAppTerm) mArg;
 			if (!visited.contains(arg2)) {
 				arg2.toStringHelper(sb, visited);
 				sb.append(')');
-				visited.add((CCAppTerm) arg2);
+				visited.add(arg2);
 			}
 		} else {
 			sb.append(mArg);
 		}
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		toStringHelper(sb, new HashSet<CCAppTerm>());
 		sb.append(')');
 		return sb.toString();
 	}
 
+	@Override
 	public Term toSMTTerm(Theory theory, boolean useAuxVars) {
-		if (mSmtTerm != null)
+		if (mSmtTerm != null) {
 			return mSmtTerm;
+		}
 		
 		assert !mIsFunc;
 		CCTerm t = this;
@@ -192,24 +196,25 @@ public class CCAppTerm extends CCTerm {
 			t = ((CCAppTerm) t).mFunc;
 			++dest;
 		}
-		CCBaseTerm basefunc = (CCBaseTerm) t;
-		Term[] args = new Term[dest];
+		final CCBaseTerm basefunc = (CCBaseTerm) t;
+		final Term[] args = new Term[dest];
 		t = this;
 		while (t instanceof CCAppTerm) {
 			args[--dest] = ((CCAppTerm)t).mArg.toSMTTerm(theory, useAuxVars);
 			t = ((CCAppTerm) t).mFunc;
 		}
 		FunctionSymbol sym;
-		if (basefunc.mSymbol instanceof FunctionSymbol)
+		if (basefunc.mSymbol instanceof FunctionSymbol) {
 			sym = (FunctionSymbol) basefunc.mSymbol;
-		else if (basefunc.mSymbol instanceof String) {
+		} else if (basefunc.mSymbol instanceof String) {
 			// tmp is just to get the correct function symbol.  This is needed
 			// if the function symbol is polymorphic
-			ApplicationTerm tmp = theory.term((String) basefunc.mSymbol, args);
+			final ApplicationTerm tmp = theory.term((String) basefunc.mSymbol, args);
 			sym = tmp.getFunction();
-		} else
+		} else {
 			throw new InternalError("Unknown symbol in CCBaseTerm: "
 				+ basefunc.mSymbol);
+		}
 		mSmtTerm = Coercion.buildApp(sym, args);
 		return mSmtTerm;
 	}

@@ -46,8 +46,8 @@ public class TestPatternToPEA {
     
     public void vacuousTest(){
     	PhaseEventAutomata ct1A, ct2A, ctParallel;
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
         
         ct1A = patternToPEA.invariantPattern(A,B,A,B,"Globally");
         ct2A = patternToPEA.invariantPattern(A,B,A,B.negate(),"Globally");
@@ -59,7 +59,8 @@ public class TestPatternToPEA {
     }
     
     public void vacuousTest3(){
-    	PhaseEventAutomata ct1A, ct2A, ctParallel;
+    	PhaseEventAutomata ct1A;
+		final PhaseEventAutomata ct2A, ctParallel;
         ct1A = patternToPEA.universalityPattern(P.and(Q), Q, R, "After");
         //ct2A = patternToPEA.universalityPattern(P, Q.negate(), R, "After");
         //ctParallel = ct1A.parallel(ct2A);
@@ -69,8 +70,8 @@ public class TestPatternToPEA {
 	
 	public PhaseEventAutomata vacuousTest2(){
     	PhaseEventAutomata ct1A, ct2A, ctParallel;
-    	CDD P = BooleanDecision.create("P");
-    	CDD S = BooleanDecision.create("S");
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD S = BooleanDecision.create("S");
         
         ct1A = patternToPEA.bndInvariancePattern(P,P,P,S,10,"Globally");
         ct2A = patternToPEA.universalityPattern(P,S,S,"After");
@@ -84,8 +85,8 @@ public class TestPatternToPEA {
 	
 	public PhaseEventAutomata vacuousTest22(){
     	PhaseEventAutomata ct1A, ct2A, ctParallel;
-    	CDD P = BooleanDecision.create("velocity<10");
-    	CDD S = BooleanDecision.create("standstill");
+    	final CDD P = BooleanDecision.create("velocity<10");
+    	final CDD S = BooleanDecision.create("standstill");
         
         ct1A = patternToPEA.bndInvariancePattern(P,P,P,S,10,"Globally");
         ct2A = patternToPEA.universalityPattern(P,S,S,"After");
@@ -101,17 +102,17 @@ public class TestPatternToPEA {
 	//Beispiel mit infinite und finite runs
     public void testUppaal(){
     	PhaseEventAutomata ctParallel, ct1A, ct2A;
-        CDD P = BooleanDecision.create("IRTest");
-    	CDD S = BooleanDecision.create("IRLampsOn");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
+        final CDD P = BooleanDecision.create("IRTest");
+    	final CDD S = BooleanDecision.create("IRLampsOn");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
     	
     	ct1A = patternToPEA.bndInvariancePattern(P,Q,R,S.negate(),6, "Globally");   
         ct2A = patternToPEA.bndResponsePattern(P,Q,R,S,10, "Globally");
         ctParallel = ct1A.parallel(ct2A);
         ctParallel.dump();
         
-        J2UPPAALConverter j2uppaalConverter = new J2UPPAALConverter();
+        final J2UPPAALConverter j2uppaalConverter = new J2UPPAALConverter();
         j2uppaalConverter.writePEA2UppaalFile("C:/vacuous/deadlock/AmiTestDeadlock.xml", ctParallel);   
         
         dotwriter.write("C:/vacuous/deadlock/d1.dot", ct1A);
@@ -122,11 +123,13 @@ public class TestPatternToPEA {
     
     //Beispiel von oben, + zus�tzliche Anforderungen, die den Deadlock ausschlie�en
     public void testUppaal2(){
-    	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A, ct4A, ct5A;
-        CDD P = BooleanDecision.create("IRTest");
-    	CDD S = BooleanDecision.create("IRLampsOn");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
+    	PhaseEventAutomata ctParallel, ct1A, ct2A;
+		final PhaseEventAutomata ct3A;
+		PhaseEventAutomata ct4A, ct5A;
+        final CDD P = BooleanDecision.create("IRTest");
+    	final CDD S = BooleanDecision.create("IRLampsOn");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
     	
     	ct1A = patternToPEA.bndInvariancePattern(P,Q,R,S.negate(),6, "Globally");   
         ct2A = patternToPEA.bndResponsePattern(P,Q,R,S,10, "Globally");
@@ -138,7 +141,7 @@ public class TestPatternToPEA {
         
  //       ctParallel = ct1A.parallel(ct2A).parallel(ct3A);
         
-        J2UPPAALConverter j2uppaalConverter = new J2UPPAALConverter();
+        final J2UPPAALConverter j2uppaalConverter = new J2UPPAALConverter();
         //J2UPPAALConverterDOM j2uppaalConverterDom = new J2UPPAALConverterDOM();
         //J2UPPAALWriterV4 j2uppaalWriter = new J2UPPAALWriterV4();
  //       j2uppaalConverter.writePEA2UppaalFile("C:/vacuous/deadlock/d123.xml", ctParallel);   
@@ -172,10 +175,10 @@ public class TestPatternToPEA {
     
     public void testDeadlock(){
     	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A;
-        CDD P = BooleanDecision.create("P");
-    	CDD S = BooleanDecision.create("S");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
+        final CDD P = BooleanDecision.create("P");
+    	final CDD S = BooleanDecision.create("S");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
     	
     	ct1A = patternToPEA.absencePattern(S, Q, R, "Globally");   
         ct2A = patternToPEA.bndResponsePattern(P,Q,R,S,10, "Globally");
@@ -183,7 +186,7 @@ public class TestPatternToPEA {
         ctParallel = ct1A.parallel(ct2A).parallel(ct3A);
         ctParallel.dump();
         
-        J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
+        final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
         j2uppaalWriter.writePEA2UppaalFile("C:/vacuous/deadlock/d34.xml", ct1A);   
         
         dotwriter.write("C:/vacuous/deadlock/d3.dot", ct1A);
@@ -196,14 +199,14 @@ public class TestPatternToPEA {
     
     
     public void testBeforeScope(){
-    	CDD P = BooleanDecision.create("P");
-    	CDD S = BooleanDecision.create("S");
-    	CDD T = BooleanDecision.create("T");
-    	CDD R = BooleanDecision.create("R");
-    	CDD Q = BooleanDecision.create("Q");
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD S = BooleanDecision.create("S");
+    	final CDD T = BooleanDecision.create("T");
+    	final CDD R = BooleanDecision.create("R");
+    	final CDD Q = BooleanDecision.create("Q");
     	PhaseEventAutomata ct;
     	
-    	DOTWriter dotwriter = new DOTWriter("C:\test\before.dot");
+    	final DOTWriter dotwriter = new DOTWriter("C:\test\before.dot");
     	
     	ct = patternToPEA.absencePattern(P, Q, R, "Before");
     	dotwriter.write("C:/test/absenceBefore.dot", ct);
@@ -237,11 +240,11 @@ public class TestPatternToPEA {
     }
     
     public void testSeeping(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata a1, a2, a3;
     	
     	a1 = patternToPEA.universalityPattern(P, Q, R, "Between");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(Q.and(R.negate())),
 	    	    new CounterTrace.DCPhase(R.negate()),
@@ -252,7 +255,7 @@ public class TestPatternToPEA {
 	    	});    	
 	    a2 = compiler.compile("univBet2", ct); //ctA.dump();
 	    
-	    CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+	    final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(Q.and(R.negate())),
 	    	    new CounterTrace.DCPhase(R.negate()),
@@ -270,11 +273,11 @@ public class TestPatternToPEA {
     }
     
     public void testSeeping2(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata a1, a2, a3;
     	
     	a1 = patternToPEA.bndExistencePattern(P, Q, R, "Before");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
      		    new CounterTrace.DCPhase(P.and(R.negate())),
      		    new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -283,7 +286,7 @@ public class TestPatternToPEA {
      		    //new CounterTrace.DCPhase(P.and(R.negate())),
     		    new CounterTrace.DCPhase()
     		 }); 
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
      		    new CounterTrace.DCPhase(P.and(R.negate())),
      		    new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -303,17 +306,17 @@ public class TestPatternToPEA {
     
     public PhaseEventAutomata testBndInvarianceVacuous(){
     	PhaseEventAutomata ct2A, ctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(P),
 	    	    new CounterTrace.DCPhase(S),
 	    	    new CounterTrace.DCPhase(S.negate()),
 	    	    new CounterTrace.DCPhase()
 	    	});
-    		Trace2PEACompiler compiler = new Trace2PEACompiler();
+    		final Trace2PEACompiler compiler = new Trace2PEACompiler();
 	    	ctA = compiler.compile("inv1", ct); //ctA.dump();
 	    	
-	    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+	    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(P.and(S.negate())),
 	    	    new CounterTrace.DCPhase()
@@ -325,11 +328,11 @@ public class TestPatternToPEA {
     }
     
     public void testSeeping3(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata a1, a2, a3;
     	
     	a1 = patternToPEA.bndExistencePattern(P, Q, R, "After");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
      		    new CounterTrace.DCPhase(Q),
      		    new CounterTrace.DCPhase(),
@@ -340,7 +343,7 @@ public class TestPatternToPEA {
     		    //new CounterTrace.DCPhase(P),
     		    new CounterTrace.DCPhase()
     		 });   
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
      		    new CounterTrace.DCPhase(Q),
      		    new CounterTrace.DCPhase(),
@@ -367,11 +370,11 @@ public class TestPatternToPEA {
     }
     
     public void testVacuousProperty3(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata a1, a2, a3, aParallel;
     	
     	a1 = patternToPEA.invariantPattern(P, Q, R, S, "After");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(Q),
 	    	    new CounterTrace.DCPhase(),
@@ -380,7 +383,7 @@ public class TestPatternToPEA {
 	    	});    	
 	    	a2 = compiler.compile("T1", ct); //ctA.dump();
     	
-	    CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+	    final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
 		    	    new CounterTrace.DCPhase(),
 		    	    new CounterTrace.DCPhase(Q),
 		    	    new CounterTrace.DCPhase(),
@@ -398,9 +401,9 @@ public class TestPatternToPEA {
     
     //shows the subgraphs when building up a prefix of a requirement
     public void testVacuous(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata ctA, ctA2, ctA3;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P.and(S.negate())),
     			new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, 10),
@@ -408,7 +411,7 @@ public class TestPatternToPEA {
     	});
     	ctA = compiler.compile("1", ct);
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P.and(S.negate())),
     			new CounterTrace.DCPhase(S.negate()),
@@ -416,7 +419,7 @@ public class TestPatternToPEA {
     	});
     	ctA2 = compiler.compile("2", ct2); 
     	
-    	CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P.and(S.negate())),
     			new CounterTrace.DCPhase()
@@ -431,9 +434,10 @@ public class TestPatternToPEA {
     
   //shows the subgraphs when building up a prefix of a requirement
     public void testVacuous2(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
-    	PhaseEventAutomata ctA, ctA2, ctA3;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	PhaseEventAutomata ctA, ctA2;
+		final PhaseEventAutomata ctA3;
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(P.negate()),
     			new CounterTrace.DCPhase(S),
     			new CounterTrace.DCPhase(),
@@ -442,7 +446,7 @@ public class TestPatternToPEA {
     	});
     	ctA = compiler.compile("1", ct);
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(P.negate()),
     			new CounterTrace.DCPhase(S),
     			new CounterTrace.DCPhase(),
@@ -458,7 +462,7 @@ public class TestPatternToPEA {
     
   //shows the subgraphs when building up a prefix of a requirement
     public void testVacuous3(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata ctA, ctA2, ctA3;
 //    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 //    			new CounterTrace.DCPhase(),
@@ -468,7 +472,7 @@ public class TestPatternToPEA {
 //    			new CounterTrace.DCPhase()
 //    	});
     	//PhaseEventAutomata ctA, ctA2, ctA3;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase(CounterTrace.BOUND_LESS, 6),
@@ -477,7 +481,7 @@ public class TestPatternToPEA {
     	});
     	ctA = compiler.compile("1", ct);
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase(T),
@@ -485,7 +489,7 @@ public class TestPatternToPEA {
     	});
     	ctA2 = compiler.compile("2", ct2); 
     	
-    	CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase()
@@ -499,9 +503,9 @@ public class TestPatternToPEA {
     }
   //shows the graphs for the case \neg(x;x;...;x\wedge y;true)
     public void testVacuous5(){
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata ctA, ctA2, ctA3;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase(T.and(S)),
@@ -509,7 +513,7 @@ public class TestPatternToPEA {
     	});
     	ctA = compiler.compile("1", ct);
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase(T),
@@ -517,7 +521,7 @@ public class TestPatternToPEA {
     	});
     	ctA2 = compiler.compile("2", ct2); 
     	
-    	CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P),
     			new CounterTrace.DCPhase(S),
@@ -534,12 +538,12 @@ public class TestPatternToPEA {
   //Pr�fe: Kann man ein Beispiel aufbauen, das einen ZenoRun zu einem Deadlock hat, 
     //der dann von Uppaal nicht erkannt wird?
     public void testZeno(){
-    	CDD P = BooleanDecision.create("Signal_1");
-    	CDD Q = BooleanDecision.create("Signal_2");
+    	final CDD P = BooleanDecision.create("Signal_1");
+    	final CDD Q = BooleanDecision.create("Signal_2");
     	
-    	Trace2PEACompiler compiler = new Trace2PEACompiler();
+    	final Trace2PEACompiler compiler = new Trace2PEACompiler();
     	PhaseEventAutomata ctA, ctA2, ctA3;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			//new CounterTrace.DCPhase(P.negate()),
     			new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATEREQUAL, 6),
@@ -547,7 +551,7 @@ public class TestPatternToPEA {
     	});
     	ctA = compiler.compile("z1", ct);
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(P.negate()),
     			new CounterTrace.DCPhase(P, CounterTrace.BOUND_LESS, 10),
@@ -556,7 +560,7 @@ public class TestPatternToPEA {
     	});
     	ctA2 = compiler.compile("z2", ct2); 
     	
-    	CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     			new CounterTrace.DCPhase(Q),
     			new CounterTrace.DCPhase(),
@@ -572,7 +576,7 @@ public class TestPatternToPEA {
  	    //ctA=ctA.parallel(ctA2.parallel(ctA3));
  	   ctA=ctA.parallel(ctA3);
  	   dotwriter.write("C:/vacuous/zeno_123.dot", ctA);
- 	    J2UPPAALConverter converter = new J2UPPAALConverter();
+ 	    final J2UPPAALConverter converter = new J2UPPAALConverter();
  	    converter.writePEA2UppaalFile("C:/vacuous/zeno.xml", ctA);
  	    
 

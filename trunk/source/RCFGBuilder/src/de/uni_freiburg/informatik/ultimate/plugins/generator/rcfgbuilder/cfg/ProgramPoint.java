@@ -142,8 +142,8 @@ public class ProgramPoint extends RCFGNode {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof ProgramPoint) {
-			ProgramPoint pp2 = (ProgramPoint) obj;
-			return this.mProcedure.equals(pp2.getProcedure()) && this.mPosition.equals(pp2.getPosition());
+			final ProgramPoint pp2 = (ProgramPoint) obj;
+			return mProcedure.equals(pp2.getProcedure()) && mPosition.equals(pp2.getPosition());
 		} else {
 			return false;
 		}
@@ -151,7 +151,7 @@ public class ProgramPoint extends RCFGNode {
 
 	@Override
 	public int hashCode() {
-		return 3 * this.mPosition.hashCode() + 5 * this.mProcedure.hashCode();
+		return 3 * mPosition.hashCode() + 5 * mProcedure.hashCode();
 	}
 
 	@Override

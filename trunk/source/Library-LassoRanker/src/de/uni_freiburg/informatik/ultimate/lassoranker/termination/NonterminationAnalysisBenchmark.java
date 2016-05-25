@@ -97,8 +97,9 @@ public class NonterminationAnalysisBenchmark
 		return mTime;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 //			sb.append("Number of variables in the stem: ");
 //			sb.append(getVariablesStem());
 //			sb.append("  Number of variables in the loop: ");
@@ -111,7 +112,7 @@ public class NonterminationAnalysisBenchmark
 //			sb.append(getNumSIs());
 //			sb.append("  Number of Motzkin applications: ");
 //			sb.append(getNumMotzkin());
-		for (Entry<String, Object> entry : getKeyValueMap().entrySet()) {
+		for (final Entry<String, Object> entry : getKeyValueMap().entrySet()) {
 			sb.append(entry.getKey());
 			sb.append(": ");
 			sb.append(entry.getValue());
@@ -121,7 +122,7 @@ public class NonterminationAnalysisBenchmark
 	}
 	
 	public Map<String, Object> getKeyValueMap() {
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		final Map<String, Object> result = new LinkedHashMap<String, Object>();
 		result.put(s_Label_ConstraintsSatisfiability, mConstraintsSatisfiability);
 		result.put(s_Label_Time, mTime);
 		result.put(s_Label_VariablesStem, mVariablesStem);

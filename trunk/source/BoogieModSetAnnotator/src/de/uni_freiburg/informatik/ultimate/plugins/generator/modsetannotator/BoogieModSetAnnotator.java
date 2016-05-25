@@ -46,20 +46,24 @@ public class BoogieModSetAnnotator implements IAnalysis {
 
 	private IUltimateServiceProvider mServices;
 
+	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
 
+	@Override
 	public void init() {
 	}
 
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
@@ -67,23 +71,27 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/* use old graph type definition */
 		return null;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		// not required.
 	}
 
 	// @Override
+	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		ModSetAnalyzer analyzer = new ModSetAnalyzer(mServices);
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ModSetAnalyzer analyzer = new ModSetAnalyzer(mServices);
 		observers.add(analyzer);
 		observers.add(new ModSetWriter(analyzer, mServices));
 		return observers;

@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -92,16 +92,16 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
+		final StateFactory<String> snf = new StringFactory();
 
-		int n = 10;
-		int k = 3;
-		int acceptanceInPerc = 100;
-		int totalityInternalInPerc = 5;
-		int totalityCallInPerc = 2;
-		int totalityReturnInPerc = 1;
-		int logEvery = 50;
-		int amount = 1000;
+		final int n = 10;
+		final int k = 3;
+		final int acceptanceInPerc = 100;
+		final int totalityInternalInPerc = 5;
+		final int totalityCallInPerc = 2;
+		final int totalityReturnInPerc = 1;
+		final int logEvery = 50;
+		final int amount = 1000;
 		NestedWordAutomaton<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {
@@ -114,7 +114,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 					(acceptanceInPerc + 0.0f) / 100).getResult();
 			try {
 				new CompareReduceNwaSimulation<String, String>(services, snf, nwa);
-			} catch (AutomataOperationCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}

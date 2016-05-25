@@ -61,6 +61,7 @@ public class DeclarationResult extends Result {
 		return mDecls;
 	}
 	
+	@Override
 	public String toString() {
 		return mDecls.toString();
 	}

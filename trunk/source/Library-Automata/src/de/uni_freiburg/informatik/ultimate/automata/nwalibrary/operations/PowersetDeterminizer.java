@@ -65,9 +65,9 @@ public class PowersetDeterminizer<LETTER,STATE>
 	
 	@Override
 	public DeterminizedState<LETTER,STATE> initialState() {
-		DeterminizedState<LETTER,STATE> detState = 
+		final DeterminizedState<LETTER,STATE> detState = 
 			new DeterminizedState<LETTER,STATE>(mNwa);
-		for (STATE initialState : mNwa.getInitialStates()) {
+		for (final STATE initialState : mNwa.getInitialStates()) {
 			detState.addPair(mNwa.getEmptyStackState(), initialState, mNwa);
 		}
 		updateMaxDegreeOfNondeterminism(detState.degreeOfNondeterminism());
@@ -80,11 +80,11 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detState,
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
+		final DeterminizedState<LETTER,STATE> succDetState = 
 				new DeterminizedState<LETTER,STATE>(mNwa);
-		for (STATE downState : detState.getDownStates()) {
-			for (STATE upState : detState.getUpStates(downState)) {
-				for (OutgoingInternalTransition<LETTER, STATE> upSucc : mNwa.internalSuccessors(upState, symbol)) {
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> upSucc : mNwa.internalSuccessors(upState, symbol)) {
 					succDetState.addPair(downState,upSucc.getSucc(), mNwa);
 				}
 			}
@@ -100,11 +100,11 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detState, 
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
+		final DeterminizedState<LETTER,STATE> succDetState = 
 				new DeterminizedState<LETTER,STATE>(mNwa);
-		for (STATE downState : detState.getDownStates()) {
-			for (STATE upState : detState.getUpStates(downState)) {
-				for (OutgoingCallTransition<LETTER, STATE> upSucc : mNwa.callSuccessors(upState, symbol)) {
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				for (final OutgoingCallTransition<LETTER, STATE> upSucc : mNwa.callSuccessors(upState, symbol)) {
 					STATE succDownState;
 					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
@@ -130,15 +130,17 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detLinPred,
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
+		final DeterminizedState<LETTER,STATE> succDetState = 
 				new DeterminizedState<LETTER,STATE>(mNwa);
 		
-		for (STATE downLinPred : detLinPred.getDownStates()) {
-			for (STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
+		for (final STATE downLinPred : detLinPred.getDownStates()) {
+			for (final STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
 				Set<STATE> upStates;
 				if (mUseDoubleDeckers) {
 					upStates = detState.getUpStates(upLinPred);
-					if (upStates == null) continue;
+					if (upStates == null) {
+						continue;
+					}
 				} else {
 					assert detState.getDownStates().size() == 1;
 					assert detState.getDownStates().iterator().next() == 
@@ -148,8 +150,8 @@ public class PowersetDeterminizer<LETTER,STATE>
 					// sets of DoubleDeckers.
 					upStates = detState.getUpStates(mNwa.getEmptyStackState());
 				}
-				for (STATE upState : upStates) {
-					for (OutgoingReturnTransition<LETTER, STATE> upSucc : mNwa.returnSucccessors(upState, upLinPred, symbol)) {
+				for (final STATE upState : upStates) {
+					for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mNwa.returnSucccessors(upState, upLinPred, symbol)) {
 						assert mUseDoubleDeckers || downLinPred == mNwa.getEmptyStackState();
 						succDetState.addPair(downLinPred, upSucc.getSucc(), mNwa);
 					}

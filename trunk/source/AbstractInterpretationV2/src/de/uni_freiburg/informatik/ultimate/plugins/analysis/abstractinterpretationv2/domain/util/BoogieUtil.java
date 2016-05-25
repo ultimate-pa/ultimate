@@ -3,8 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
@@ -54,7 +54,7 @@ public class BoogieUtil {
      * @return expression references a variable or constant
      */
 	public static boolean isVariable(IdentifierExpression ie) {
-		DeclarationInformation di = ie.getDeclarationInformation();
+		final DeclarationInformation di = ie.getDeclarationInformation();
 		switch (di.getStorageClass()) {
 		case PROC_FUNC:
 		case IMPLEMENTATION:

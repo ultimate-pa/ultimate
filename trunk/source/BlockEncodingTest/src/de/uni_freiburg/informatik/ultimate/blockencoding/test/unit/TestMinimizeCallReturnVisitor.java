@@ -99,8 +99,8 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 		// first over the RootEdges
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		ArrayList<MinimizedNode> functionHeader = new ArrayList<MinimizedNode>();
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		final ArrayList<MinimizedNode> functionHeader = new ArrayList<MinimizedNode>();
+		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
 			functionHeader.add(minimizeSingleFunction((ProgramPoint) edge
@@ -108,11 +108,11 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 		}
 		// now the basic RCFG is minimized, but Call- and Return-Edges are still
 		// present in the graph
-		ArrayList<IMinimizedEdge> callEdges = new ArrayList<IMinimizedEdge>();
-		for (MinimizedNode functionHead : functionHeader) {
+		final ArrayList<IMinimizedEdge> callEdges = new ArrayList<IMinimizedEdge>();
+		for (final MinimizedNode functionHead : functionHeader) {
 			assertNotNull(functionHead.getIncomingEdges());
 			// We search for incoming "Call"-Edges!
-			for (IMinimizedEdge inEdge : functionHead.getIncomingEdges()) {
+			for (final IMinimizedEdge inEdge : functionHead.getIncomingEdges()) {
 				if (inEdge.isBasicEdge()
 						&& ((IBasicEdge) inEdge).getOriginalEdge() instanceof Call) {
 					// We found a call edge, which we store in a global list
@@ -121,21 +121,21 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 			}
 		}
 		// Now we check which of our collected Call-Edges can be minimized
-		HashSet<IMinimizedEdge> minimizableCallEdges = new HashSet<IMinimizedEdge>();
-		for (IMinimizedEdge callEdge : callEdges) {
+		final HashSet<IMinimizedEdge> minimizableCallEdges = new HashSet<IMinimizedEdge>();
+		for (final IMinimizedEdge callEdge : callEdges) {
 			if (checkCallReturnMinimization(callEdge)) {
 				minimizableCallEdges.add(callEdge);
 			}
 		}
 		// now we execute the Call-Return Minimization Visitor
-		for (MinimizedNode functionHead : functionHeader) {
+		for (final MinimizedNode functionHead : functionHeader) {
 			mcrv.visitNode(functionHead);
 		}
 		// so every Call-Return edge which can be minimized is now minimized
 		// Now we perform checks
-		for (MinimizedNode functionHead : functionHeader) {
+		for (final MinimizedNode functionHead : functionHeader) {
 			assertNotNull(functionHead.getIncomingEdges());
-			for (IMinimizedEdge inEdge : functionHead.getIncomingEdges()) {
+			for (final IMinimizedEdge inEdge : functionHead.getIncomingEdges()) {
 				if (inEdge.isBasicEdge()
 						&& ((IBasicEdge) inEdge).getOriginalEdge() instanceof Call) {
 					assertFalse(minimizableCallEdges.contains(inEdge));
@@ -185,9 +185,9 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 		assertTrue(callEdge.isBasicEdge());
 		assertTrue(((IBasicEdge) callEdge).getOriginalEdge() instanceof Call);
 		assertNotNull(callEdge.getTarget().getOutgoingEdges());
-		ArrayList<MinimizedNode> errorLocs = new ArrayList<MinimizedNode>();
-		ArrayList<MinimizedNode> targetLocs = new ArrayList<MinimizedNode>();
-		for (IMinimizedEdge edge : callEdge.getTarget().getOutgoingEdges()) {
+		final ArrayList<MinimizedNode> errorLocs = new ArrayList<MinimizedNode>();
+		final ArrayList<MinimizedNode> targetLocs = new ArrayList<MinimizedNode>();
+		for (final IMinimizedEdge edge : callEdge.getTarget().getOutgoingEdges()) {
 			if (edge.isOldVarInvolved()) {
 				return false;
 			}
@@ -203,12 +203,12 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 				// now we have to inspect the targetLoc[0].getTarget if there
 				// are
 				// only Return-Edges, than it is possible to minimize it
-				for (IMinimizedEdge possibleReturnEdge : targetLocs.get(0)
+				for (final IMinimizedEdge possibleReturnEdge : targetLocs.get(0)
 						.getOutgoingEdges()) {
 					if (!possibleReturnEdge.isBasicEdge()) {
 						return false;
 					}
-					IBasicEdge basicEdge = (IBasicEdge) possibleReturnEdge;
+					final IBasicEdge basicEdge = (IBasicEdge) possibleReturnEdge;
 					if (!(basicEdge.getOriginalEdge() instanceof Return)) {
 						return false;
 					}

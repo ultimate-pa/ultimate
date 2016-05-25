@@ -48,16 +48,16 @@ public class PlaceNode extends PetriNetVisualizationNode {
 	public PlaceNode(Place<?, ?> place, Collection<String> participatedAcceptingMarkings) {
 		super(place.getContent().toString());
 
-		IPayload payload = this.getPayload();
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload();
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings containing this place", participatedAcceptingMarkings);
 		thisPluginsAnnotations.put("toString", place.toString());
 		thisPluginsAnnotations.put("hashCode", place.hashCode());
-		Map<String, IAnnotations> annotations = payload.getAnnotations();
+		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 
 		if (place.getContent() instanceof IAnnotations) {
-			thisPluginsAnnotations.put("Content", (IAnnotations) place.getContent());
+			thisPluginsAnnotations.put("Content", place.getContent());
 		}
 	}
 }

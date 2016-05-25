@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class ExternalParserToolchainJob extends BasicToolchainJob {
 
-	private IElement mAST;
-	private ModelType mOutputDefinition;
+	private final IElement mAST;
+	private final ModelType mOutputDefinition;
 
 	public ExternalParserToolchainJob(String name, ICore<ToolchainListType> core,
 			IController<ToolchainListType> controller, IElement ast, ModelType outputDefinition, ILogger logger) {
@@ -107,7 +107,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
-			String idOfCore = Activator.PLUGIN_ID;
+			final String idOfCore = Activator.PLUGIN_ID;
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 		} finally {
 			tpm.worked(1);

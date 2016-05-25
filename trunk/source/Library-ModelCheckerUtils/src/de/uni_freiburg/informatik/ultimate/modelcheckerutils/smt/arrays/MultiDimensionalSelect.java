@@ -66,12 +66,12 @@ public class MultiDimensionalSelect {
 	 */
 	public MultiDimensionalSelect(Term term) {
 		mSelectTerm = (ApplicationTerm) term;
-		ArrayList<Term> index = new ArrayList<Term>();
+		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
 				break;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (!appTerm.getFunction().getName().equals("select")) {
 				break;
 			}
@@ -139,12 +139,12 @@ public class MultiDimensionalSelect {
 	 */
 	public static List<MultiDimensionalSelect> extractSelectShallow(
 			Term term, boolean allowArrayValues) {
-		List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
-		Set<ApplicationTerm> selectTerms = 
+		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
+		final Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		for (Term storeTerm : selectTerms) {
+		for (final Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
-				MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
+				final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
 				if (mdSelect.getIndex().size() == 0) {
 					throw new AssertionError("select must not have dimension 0");
 				}
@@ -168,16 +168,16 @@ public class MultiDimensionalSelect {
 	 */
 	public static List<MultiDimensionalSelect> extractSelectDeep(
 			Term term, boolean allowArrayValues) {
-		List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
+		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
 		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term, allowArrayValues);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
+			final List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
-			for (MultiDimensionalSelect mdSelect : foundInLastIteration) {
+			for (final MultiDimensionalSelect mdSelect : foundInLastIteration) {
 				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray(), allowArrayValues));
-				ArrayIndex index = mdSelect.getIndex();
-				for (Term entry : index) {
+				final ArrayIndex index = mdSelect.getIndex();
+				for (final Term entry : index) {
 					foundInThisIteration.addAll(extractSelectShallow(entry, allowArrayValues));
 				}
 			}

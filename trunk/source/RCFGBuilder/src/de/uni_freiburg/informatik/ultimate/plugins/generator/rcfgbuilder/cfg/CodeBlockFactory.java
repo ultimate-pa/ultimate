@@ -115,27 +115,27 @@ public class CodeBlockFactory implements IStorable {
 
 	public CodeBlock copyCodeBlock(CodeBlock codeBlock, ProgramPoint source, ProgramPoint target) {
 		if (codeBlock instanceof Call) {
-			Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
+			final Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof Return) {
-			Return copy = constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
+			final Return copy = constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof StatementSequence) {
-			List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
-			Origin origin = ((StatementSequence) codeBlock).getOrigin();
-			StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
+			final List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
+			final Origin origin = ((StatementSequence) codeBlock).getOrigin();
+			final StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof Summary) {
-			CallStatement callStatement = ((Summary) codeBlock).getCallStatement();
-			boolean calledProcedureHasImplementation = ((Summary) codeBlock).calledProcedureHasImplementation();
-			Summary copy = constructSummary(source, target, callStatement, calledProcedureHasImplementation);
+			final CallStatement callStatement = ((Summary) codeBlock).getCallStatement();
+			final boolean calledProcedureHasImplementation = ((Summary) codeBlock).calledProcedureHasImplementation();
+			final Summary copy = constructSummary(source, target, callStatement, calledProcedureHasImplementation);
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof GotoEdge) {
-			GotoEdge copy = constructGotoEdge(source, target);
+			final GotoEdge copy = constructGotoEdge(source, target);
 			return copy;
 		} else {
 			throw new UnsupportedOperationException("unsupported kind of CodeBlock");

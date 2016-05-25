@@ -74,7 +74,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
 		observers.add(new Inliner(mServices));
 		return observers;

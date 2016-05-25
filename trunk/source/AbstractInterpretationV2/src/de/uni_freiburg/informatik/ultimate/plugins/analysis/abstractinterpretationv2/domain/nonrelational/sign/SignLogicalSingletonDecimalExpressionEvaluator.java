@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingletonDecimalExpressionEvaluator
         implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	private BooleanValue mBooleanValue;
+	private final BooleanValue mBooleanValue;
 
 	public SignLogicalSingletonDecimalExpressionEvaluator(String value) {
 		super(value);

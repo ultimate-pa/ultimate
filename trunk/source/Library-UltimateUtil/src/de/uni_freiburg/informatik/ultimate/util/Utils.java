@@ -48,20 +48,22 @@ public class Utils {
 	 * @return
 	 */
 	public static String humanReadableByteCount(long bytes, boolean si) {
-		int unit = si ? 1000 : 1024;
-		if (bytes < unit)
+		final int unit = si ? 1000 : 1024;
+		if (bytes < unit) {
 			return bytes + " B";
-		int exp = (int) (Math.log(bytes) / Math.log(unit));
-		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
+		}
+		final int exp = (int) (Math.log(bytes) / Math.log(unit));
+		final String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
 		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 	
 	public static String humanReadableNumber(long number) {
-		int unit = 1000 ;
-		if (number < unit)
+		final int unit = 1000 ;
+		if (number < unit) {
 			return number + "";
-		int exp = (int) (Math.log(number) / Math.log(unit));
-		String pre = ("KMGTPE").charAt(exp - 1)+"";
+		}
+		final int exp = (int) (Math.log(number) / Math.log(unit));
+		final String pre = ("KMGTPE").charAt(exp - 1)+"";
 		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
 	}
 
@@ -74,8 +76,8 @@ public class Utils {
 	 * @return
 	 */
 	public static String join(Collection<?> collection, String delimiter) {
-		StringBuilder builder = new StringBuilder();
-		Iterator<?> iter = collection.iterator();
+		final StringBuilder builder = new StringBuilder();
+		final Iterator<?> iter = collection.iterator();
 		while (iter.hasNext()) {
 			builder.append(iter.next());
 			if (!iter.hasNext()) {
@@ -119,7 +121,7 @@ public class Utils {
 	 * @return A String with unit symbol.
 	 */
 	public static String humanReadableTime(double time, TimeUnit unit, int decimal) {
-		String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
+		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
 
 		switch (unit) {
 		case DAYS:
@@ -171,8 +173,8 @@ public class Utils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <E> Collection<E> filter(Collection<?> iterable, Class<E> clazz) {
-		ArrayList<E> filteredList = new ArrayList<E>();
-		for (Object e: iterable) {
+		final ArrayList<E> filteredList = new ArrayList<E>();
+		for (final Object e: iterable) {
 			if (clazz.isAssignableFrom(e.getClass())) {
 				filteredList.add((E) e);
 			}
@@ -184,8 +186,8 @@ public class Utils {
 	 * Construct a new HashSet that contains the elements of a given Iterable.
 	 */
 	public static <E> HashSet<E> constructHashSet(Iterable<E> iterable) {
-		HashSet<E> result = new HashSet<E>();
-		for (E element : iterable) {
+		final HashSet<E> result = new HashSet<E>();
+		for (final E element : iterable) {
 			result.add(element);
 		}
 		return result;
@@ -196,9 +198,9 @@ public class Utils {
 	 * key is contained in filter.
 	 */
 	public static <K,V> HashMap<K,V> constructFilteredMap(Map<K,V> map, Collection<K> filter) {
-		HashMap<K,V> result = new HashMap<>();
-		for (K key : filter) {
-			V value = map.get(key);
+		final HashMap<K,V> result = new HashMap<>();
+		for (final K key : filter) {
+			final V value = map.get(key);
 			if (value != null) {
 				result.put(key, value);
 			}

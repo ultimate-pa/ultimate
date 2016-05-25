@@ -74,7 +74,7 @@ public class BinaryExpressionAST extends AtsASTNode {
 		// then the operation is 'String concatenation' and not 'Addition'
 		// therefore the return type is 'String.
 		if (op == BinaryOperatorAST.PLUS) {
-			for (AtsASTNode astn : getOutgoingNodes()) {
+			for (final AtsASTNode astn : getOutgoingNodes()) {
 				if (astn.getReturnType() == String.class) {
 					setBothTypesTo(String.class);
 					break;

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.pre
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
 
 /**
@@ -39,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Acti
  */
 public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	private static final String sMode = "Mode";
+	public static final String MODE = "Mode";
 
 	public enum Mode {
 		Default
@@ -52,11 +51,6 @@ public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInit
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
-				new UltimatePreferenceItem<Mode>(sMode, Mode.Default, PreferenceType.Combo, Mode.values()), };
+				new UltimatePreferenceItem<Mode>(MODE, Mode.Default, PreferenceType.Combo, Mode.values()), };
 	}
-
-	public static Mode getMode() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
-	}
-
 }

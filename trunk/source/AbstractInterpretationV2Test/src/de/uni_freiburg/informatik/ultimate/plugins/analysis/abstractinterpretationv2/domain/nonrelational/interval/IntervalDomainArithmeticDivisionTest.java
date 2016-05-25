@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -43,44 +43,44 @@ public class IntervalDomainArithmeticDivisionTest {
 
 	@Test
 	public void TestIntervalDivisionPointIntervalPositive() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
 
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(5, 5);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(5, 5);
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 
 	@Test
 	public void TestIntervalDivisionPointIntervalNegative() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
 
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-5, -5);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-5, -5);
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 
 	@Test
 	public void TestIntervalDivisionPointIntervalNegativePositiveResult() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-2, -2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-2, -2);
 
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(5, 5);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(5, 5);
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 
 	@Test
 	public void TestIntervalDivisionPositive() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
 
-		IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
 		        new IntervalValue(new BigDecimal(5)));
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
@@ -88,11 +88,11 @@ public class IntervalDomainArithmeticDivisionTest {
 	
 	@Test
 	public void TestIntervalDivisionNegative() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -1);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, -1);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-2, -2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-2, -2);
 
-		IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
 		        new IntervalValue(new BigDecimal(5)));
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
@@ -100,45 +100,45 @@ public class IntervalDomainArithmeticDivisionTest {
 	
 	@Test
 	public void TestIntervalDivisionZeroCrossingNominator() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-10, 10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(5, 5);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(5, 5);
 
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-2, 2);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-2, 2);
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 	
 	@Test
 	public void TestIntervalDivisionZeroCrossingDenominator() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, 5);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, 5);
 
 		// Result should be (-\infty; \infty)
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval();
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 	
 	@Test
 	public void TestIntervalDivisionByZero() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 10);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(0, 0);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(0, 0);
 
-		IntervalDomainValue expectedResult = new IntervalDomainValue(true);
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(true);
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
 	
 	@Test
 	public void TestIntervalDivisionRegression() {
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-16, 16);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-16, 16);
 
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(8, 8);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(8, 8);
 
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-2, 2);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-2, 2);
 
 		assertTrue(HelperFunctions.computeDivisionResultInteger(interval1, interval2, expectedResult));
 	}

@@ -84,7 +84,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 				return "=";
 			} else if (op == BinaryExpression.Operator.ARITHDIV) {
 				if (type1 instanceof PrimitiveType) {
-					PrimitiveType primType = (PrimitiveType) type1;
+					final PrimitiveType primType = (PrimitiveType) type1;
 					if (primType.getTypeCode() == PrimitiveType.INT) {
 						return "div";
 					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
@@ -116,8 +116,9 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 			return "not";
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
 			return "-";
-		} else
+		} else {
 			throw new AssertionError("Unsupported unary expression " + op);
+		}
 	}
 
 	@Override
@@ -127,23 +128,23 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 
 	@Override
 	public Term booleanTranslation(BooleanLiteral exp) {
-		return ((BooleanLiteral) exp).getValue() ? mScript.term("true") : mScript.term("false");
+		return exp.getValue() ? mScript.term("true") : mScript.term("false");
 	}
 
 	@Override
 	public Term bitvecTranslation(BitvecLiteral exp) {
-		BigInteger[] indices = { BigInteger.valueOf(((BitvecLiteral) exp).getLength()) };
+		final BigInteger[] indices = { BigInteger.valueOf(exp.getLength()) };
 		
-		return mScript.term("bv" + ((BitvecLiteral) exp).getValue(), indices, null);
+		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 
 	@Override
 	public Term integerTranslation(IntegerLiteral exp) {
-		return mScript.numeral(((IntegerLiteral) exp).getValue());
+		return mScript.numeral(exp.getValue());
 	}
 
 	@Override
 	public Term realTranslation(RealLiteral exp) {
-		return mScript.decimal(((RealLiteral) exp).getValue());
+		return mScript.decimal(exp.getValue());
 	}
 }

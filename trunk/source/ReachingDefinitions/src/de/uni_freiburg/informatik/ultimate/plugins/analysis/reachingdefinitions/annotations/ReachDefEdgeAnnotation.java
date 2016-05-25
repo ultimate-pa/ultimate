@@ -36,7 +36,7 @@ public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 
 	private static final long serialVersionUID = 1L;
 
-	private RCFGEdge mEdge;
+	private final RCFGEdge mEdge;
 	private DefCollector mDefCollector;
 	private UseCollector mUseCollector;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;

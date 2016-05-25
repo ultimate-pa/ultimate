@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainValue;
+import org.junit.Test;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -34,13 +34,13 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testMerge() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
-		CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
+		final CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
 		assertTrue(b.merge(b).toString().equals("{}"));
 		assertTrue(b.merge(z4).toString().equals("4Z \\ {0}"));
 		assertTrue(z4.merge(b).toString().equals("4Z \\ {0}"));
@@ -53,14 +53,14 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testIntersect() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
-		CongruenceDomainValue z6 = CongruenceDomainValue.createNonConstant(new BigInteger("6"));
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
-		CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("8"));
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
+		final CongruenceDomainValue z6 = CongruenceDomainValue.createNonConstant(new BigInteger("6"));
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("8"));
 		assertTrue(b.intersect(z4).toString().equals("{}"));
 		assertTrue(c1.intersect(c1).toString().equals("-6"));
 		assertTrue(c1.intersect(c2).toString().equals("{}"));
@@ -76,14 +76,14 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testAddSub() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
-		CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
-		CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("4"));
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
+		final CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("4"));
 		assertTrue(c3.add(z4).toString().equals("4Z \\ {0}"));
 		assertTrue(c3.add(z2).toString().equals("2Z"));
 		assertTrue(b.add(z4).toString().equals("{}"));
@@ -97,12 +97,12 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testMod() {
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-2"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("-3"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(new BigInteger("3"));
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z5 = CongruenceDomainValue.createNonConstant(new BigInteger("5"));
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"), true);
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-2"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("-3"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(new BigInteger("3"));
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z5 = CongruenceDomainValue.createNonConstant(new BigInteger("5"));
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"), true);
 		assertTrue(c1.mod(c2).toString().equals("1"));
 		assertTrue(c3.mod(z4).toString().equals("3"));
 		assertTrue(z4.mod(c1).toString().equals("0"));
@@ -115,13 +115,13 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testMult() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
-		CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"));
+		final CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-6"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
 		assertTrue(b.multiply(z4).toString().equals("{}"));
 		assertTrue(c1.multiply(c2).toString().equals("-42"));
 		assertTrue(c1.multiply(z3).toString().equals("18Z"));
@@ -132,16 +132,16 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testDiv() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
-		CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-2"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(new BigInteger("3"));
-		CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("-5"));
-		CongruenceDomainValue c5 = CongruenceDomainValue.createConstant(new BigInteger("-100"));
-		CongruenceDomainValue c6 = CongruenceDomainValue.createConstant(new BigInteger("-7"));
-		CongruenceDomainValue c7 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-2"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("7"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(new BigInteger("3"));
+		final CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("-5"));
+		final CongruenceDomainValue c5 = CongruenceDomainValue.createConstant(new BigInteger("-100"));
+		final CongruenceDomainValue c6 = CongruenceDomainValue.createConstant(new BigInteger("-7"));
+		final CongruenceDomainValue c7 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
 		assertTrue(b.divide(z4).toString().equals("{}"));
 		assertTrue(z4.divide(c1).toString().equals("2Z \\ {0}"));
 		assertTrue(z3.divide(c1).toString().equals("1Z"));
@@ -159,9 +159,9 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testNeg() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue c = CongruenceDomainValue.createConstant(new BigInteger("-3"));
-		CongruenceDomainValue z = CongruenceDomainValue.createNonConstant(new BigInteger("3"), true);
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue c = CongruenceDomainValue.createConstant(new BigInteger("-3"));
+		final CongruenceDomainValue z = CongruenceDomainValue.createNonConstant(new BigInteger("3"), true);
 		assertTrue(b.negate().toString().equals("{}"));
 		assertTrue(c.negate().toString().equals("3"));
 		assertTrue(z.negate().toString().equals("3Z \\ {0}"));
@@ -169,12 +169,12 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testModEquals() {
-		CongruenceDomainValue zero = CongruenceDomainValue.createConstant(BigInteger.ZERO);
-		CongruenceDomainValue one = CongruenceDomainValue.createConstant(BigInteger.ONE);
-		CongruenceDomainValue two = CongruenceDomainValue.createConstant(new BigInteger("2"));
-		CongruenceDomainValue minusTwo = CongruenceDomainValue.createConstant(new BigInteger("-2"));
-		CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
+		final CongruenceDomainValue zero = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue one = CongruenceDomainValue.createConstant(BigInteger.ONE);
+		final CongruenceDomainValue two = CongruenceDomainValue.createConstant(new BigInteger("2"));
+		final CongruenceDomainValue minusTwo = CongruenceDomainValue.createConstant(new BigInteger("-2"));
+		final CongruenceDomainValue z3 = CongruenceDomainValue.createNonConstant(new BigInteger("3"));
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
 		assertTrue(z3.modEquals(zero).toString().equals("1Z"));
 		assertTrue(z4.modEquals(two).toString().equals("2Z \\ {0}"));
 		assertTrue(two.modEquals(zero).toString().equals("2Z"));
@@ -187,12 +187,12 @@ public class CongruenceDomainValueTest{
 	
 	@Test
 	public void testIsContainedIn() {
-		CongruenceDomainValue b = CongruenceDomainValue.createBottom();
-		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("3"));
-		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("4"));
-		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
-		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"));
-		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"), true);
+		final CongruenceDomainValue b = CongruenceDomainValue.createBottom();
+		final CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("3"));
+		final CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("4"));
+		final CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(BigInteger.ZERO);
+		final CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"));
+		final CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"), true);
 		assertTrue(b.isContainedIn(b));
 		assertTrue(c1.isContainedIn(c1));
 		assertFalse(c2.isContainedIn(c1));

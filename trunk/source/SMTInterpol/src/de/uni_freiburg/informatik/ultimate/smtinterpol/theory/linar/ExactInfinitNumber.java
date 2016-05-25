@@ -48,20 +48,25 @@ public class ExactInfinitNumber implements Comparable<ExactInfinitNumber> {
 	public Rational getEpsilon() {
 		return mEps;
 	}
+	@Override
 	public String toString() {
-		if (mEps.signum() == 0)
+		if (mEps.signum() == 0) {
 			return mReal.toString();
-		if (mEps.signum() > 0)
+		}
+		if (mEps.signum() > 0) {
 			return mReal.toString() + "+" + mEps.toString() + "eps";
+		}
 		return mReal.toString() + "-" + mEps.abs().toString() + "eps";
 	}
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof ExactInfinitNumber) {
-			ExactInfinitNumber n = (ExactInfinitNumber) o;
+			final ExactInfinitNumber n = (ExactInfinitNumber) o;
 			return mReal.equals(n.mReal) && mEps.equals(n.mEps);
 		}
 		return false;
 	}
+	@Override
 	public int hashCode() {
 		return mReal.hashCode() + 65537 * mEps.hashCode();
 	}
@@ -105,12 +110,15 @@ public class ExactInfinitNumber implements Comparable<ExactInfinitNumber> {
 	 *         <code>null</code> if no such conversion is possible. 
 	 */
 	public InfinitNumber toInfinitNumber() {
-		if (mEps == Rational.ZERO)
+		if (mEps == Rational.ZERO) {
 			return new InfinitNumber(mReal, 0);
-		if (mEps == Rational.MONE)
+		}
+		if (mEps == Rational.MONE) {
 			return new InfinitNumber(mReal, -1);
-		if (mEps == Rational.ONE)
+		}
+		if (mEps == Rational.ONE) {
 			return new InfinitNumber(mReal, 1);
+		}
 		return null;
 	}
 	/**
@@ -136,8 +144,9 @@ public class ExactInfinitNumber implements Comparable<ExactInfinitNumber> {
 		return new InfinitNumber(mReal, mEps.ceil().signum());
 	}
 
+	@Override
 	public int compareTo(ExactInfinitNumber other) {
-		int cmp = mReal.compareTo(other.mReal);
+		final int cmp = mReal.compareTo(other.mReal);
 		return cmp == 0 ? mEps.compareTo(other.mEps) : cmp;
 	}
 

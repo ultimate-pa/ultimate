@@ -34,11 +34,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 public class StripAnnotationsTermTransformer extends TermTransformer{
 
+	@Override
 	protected void convert(Term term) {
 		if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm at = (AnnotatedTerm) term;
+			final AnnotatedTerm at = (AnnotatedTerm) term;
 			super.setResult(at.getSubterm());
-		} else
+		} else {
 			super.convert(term);
+		}
 	}
 }

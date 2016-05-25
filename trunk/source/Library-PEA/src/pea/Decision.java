@@ -36,14 +36,16 @@ import java.util.HashMap;
  *
  */
 public abstract class Decision implements Comparable {
-    public abstract int compareTo(Object o);
+    @Override
+	public abstract int compareTo(Object o);
 
     public boolean implies(Decision other, CDD[] childs, CDD[] ochilds) {
         /* default implementation for boolean decisions */
-        for (int i = 0; i < childs.length; i++)
-            if (!childs[i].implies(ochilds[i])) {
+        for (int i = 0; i < childs.length; i++) {
+			if (!childs[i].implies(ochilds[i])) {
                 return false;
             }
+		}
 
         return true;
     }
@@ -64,30 +66,33 @@ public abstract class Decision implements Comparable {
 
     public CDD and(Decision other, CDD[] childs, CDD[] ochilds, HashMap<CDD,HashMap<CDD,CDD>> cache) {
         /* default implementation for boolean decisions */
-        CDD[] nchilds = new CDD[childs.length];
+        final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++)
-            nchilds[i] = childs[i].and(ochilds[i], cache);
+        for (int i = 0; i < childs.length; i++) {
+			nchilds[i] = childs[i].and(ochilds[i], cache);
+		}
 
         return simplify(nchilds);
     }
 
     public CDD or(Decision other, CDD[] childs, CDD[] ochilds) {
         /* default implementation for boolean decisions */
-        CDD[] nchilds = new CDD[childs.length];
+        final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++)
-            nchilds[i] = childs[i].or(ochilds[i]);
+        for (int i = 0; i < childs.length; i++) {
+			nchilds[i] = childs[i].or(ochilds[i]);
+		}
 
         return simplify(nchilds);
     }
 
     public CDD assume(Decision other, CDD[] childs, CDD[] ochilds) {
         /* default implementation for boolean decisions */
-        CDD[] nchilds = new CDD[childs.length];
+        final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++)
-            nchilds[i] = childs[i].assume(ochilds[i]);
+        for (int i = 0; i < childs.length; i++) {
+			nchilds[i] = childs[i].assume(ochilds[i]);
+		}
 
         return simplify(nchilds);
     }

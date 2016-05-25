@@ -28,9 +28,9 @@ public class HornClauseParserScript extends NoopScript {
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used 
 	 * the HornClauseGraph) will use as a backend.
 	 */
-	private Script mBackendSmtSolver;
-	private String mLogic;
-	private Settings mSolverSettings;
+	private final Script mBackendSmtSolver;
+	private final String mLogic;
+	private final Settings mSolverSettings;
 	private HashSet<String> mDeclaredPredicateSymbols;
 	private HornClause mCurrentHornClause;
 	private ArrayList<Term> mcurrentPredicateAtoms;
@@ -62,8 +62,9 @@ public class HornClauseParserScript extends NoopScript {
 	public void setLogic(String logic) throws UnsupportedOperationException {
 		assert logic.equals("HORN") : "Error: the SmtParser-setting HornSolverMode is set, "
 				+ "but the smt2 file sets the logic to something other than HORN";
-		if (!logic.equals("HORN"))  // TODO redundant with assertion
+		if (!logic.equals("HORN")) {
 			throw new UnsupportedOperationException();
+		}
 
 		super.setLogic(mLogic);
 	}
@@ -94,8 +95,9 @@ public class HornClauseParserScript extends NoopScript {
 		//  to the theory of the backend solver
 //		mBackendSmtSolver.declareFun(fun, paramSorts, resultSort);
 		super.declareFun(fun, paramSorts, resultSort);
-		if (resultSort.getName() == "Bool")
+		if (resultSort.getName() == "Bool") {
 			mDeclaredPredicateSymbols.add(fun);
+		}
 	}
 
 	@Override
@@ -151,7 +153,7 @@ public class HornClauseParserScript extends NoopScript {
 	@Override
 	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
 		
-		Term result = super.term(funcname, indices, returnSort, params);
+		final Term result = super.term(funcname, indices, returnSort, params);
 
 //		if (returnSort.getName().equals("Bool")) {
 //			

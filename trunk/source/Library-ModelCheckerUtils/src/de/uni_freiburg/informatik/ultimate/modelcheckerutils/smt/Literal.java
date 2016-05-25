@@ -99,7 +99,7 @@ public class Literal {
 	 */
 	public static Term getParameterOfNotTerm(Term term) {
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("not")) {
 				assert appTerm.getParameters().length == 1;
 				return appTerm.getParameters()[0];

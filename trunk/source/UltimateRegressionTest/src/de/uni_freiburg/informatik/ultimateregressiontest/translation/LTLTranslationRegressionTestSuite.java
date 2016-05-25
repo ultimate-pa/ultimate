@@ -51,7 +51,7 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 
 	@Override
 	protected Collection<Pair> getRunConfiguration() {
-		List<Pair> rtr = new ArrayList<>();
+		final List<Pair> rtr = new ArrayList<>();
 
 		rtr.add(getPair("examples/toolchains/LtlTranslationC.xml", "examples/settings/ltlAutomizer/Default.epf"));
 

@@ -59,11 +59,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxRes
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
@@ -207,11 +207,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 		// translate to Boogie
 		final Dispatcher main;
-		final RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mService.getPreferenceProvider(Activator.PLUGIN_ID);
 		TranslationMode mode = TranslationMode.BASE;
 		try {
 			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new IllegalArgumentException("Unable to determine preferred mode.");
 		}
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
@@ -230,7 +230,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 		final ASTDecorator decorator = new ASTDecorator();
 		// build a list of ACSL ASTs
-		FunctionLineVisitor visitor = new FunctionLineVisitor();
+		final FunctionLineVisitor visitor = new FunctionLineVisitor();
 		inputTU.accept(visitor);
 		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
 		final List<ACSLNode> acslNodes = cparser.processComments();

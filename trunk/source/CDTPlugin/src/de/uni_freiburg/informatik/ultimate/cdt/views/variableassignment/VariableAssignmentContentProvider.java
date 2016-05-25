@@ -52,7 +52,7 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 
 	private IValuation valuation;
 
-	private ArrayList<VarAssNode> internalList;
+	private final ArrayList<VarAssNode> internalList;
 
 	public VariableAssignmentContentProvider() {
 		internalList = new ArrayList<VarAssNode>();
@@ -66,19 +66,19 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (viewer instanceof TreeViewer) {
-			TreeViewer tv = (TreeViewer) viewer;
+			final TreeViewer tv = (TreeViewer) viewer;
 			tv.getTree().removeAll();
 			internalList.clear();
 
-			Integer index = (Integer) newInput;
+			final Integer index = (Integer) newInput;
 			if (valuation != null && index != null) {
-				for (Entry<String, SimpleEntry<IType, List<String>>> entry : valuation
+				for (final Entry<String, SimpleEntry<IType, List<String>>> entry : valuation
 						.getValuesForFailurePathIndex(index).entrySet()) {
 					if (entry.getValue().getKey() instanceof ArrayType) {
-						VarAssNode parent = new VarAssNode(entry.getKey(), "");
-						ArrayList<VarAssNode> children = new ArrayList<VarAssNode>();
+						final VarAssNode parent = new VarAssNode(entry.getKey(), "");
+						final ArrayList<VarAssNode> children = new ArrayList<VarAssNode>();
 						for (int i = 0; i < entry.getValue().getValue().size(); i++) {
-							VarAssNode child = new VarAssNode(
+							final VarAssNode child = new VarAssNode(
 									Integer.toString(i), entry.getValue()
 											.getValue().get(i));
 							child.setParent(parent);
@@ -103,7 +103,7 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 	@Override
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof VarAssNode) {
-			VarAssNode node = (VarAssNode) parentElement;
+			final VarAssNode node = (VarAssNode) parentElement;
 			if (node.getChildren() != null) {
 				return node.getChildren().toArray();
 			}
@@ -114,7 +114,7 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 	@Override
 	public Object getParent(Object element) {
 		if (element instanceof VarAssNode) {
-			VarAssNode node = (VarAssNode) element;
+			final VarAssNode node = (VarAssNode) element;
 			if (node.getParent() != null) {
 				return node.getParent();
 			}

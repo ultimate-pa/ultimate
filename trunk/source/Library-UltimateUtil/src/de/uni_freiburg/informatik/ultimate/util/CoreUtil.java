@@ -72,10 +72,10 @@ public class CoreUtil {
 	}
 
 	public static File writeFile(String filename, String content) throws IOException {
-		File outputFile = new File(filename);
+		final File outputFile = new File(filename);
 		outputFile.createNewFile();
 
-		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+		final Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 		try {
 			out.write(content);
 			return outputFile;
@@ -86,12 +86,12 @@ public class CoreUtil {
 
 	public static void writeFile(String filename, String[] content) throws IOException {
 
-		File outputFile = new File(filename);
+		final File outputFile = new File(filename);
 		outputFile.createNewFile();
 
-		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+		final Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 		try {
-			for (String s : content) {
+			for (final String s : content) {
 				out.write(s);
 				out.write(sPlatformLineSeparator);
 			}
@@ -102,10 +102,10 @@ public class CoreUtil {
 	}
 
 	public static String readFile(String filename) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
 		try {
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
 			while (line != null) {
 				sb.append(line);
@@ -132,8 +132,8 @@ public class CoreUtil {
 	 * @return A new collection that only contains elements for which {@link IPredicate#check(Object)} returned true.
 	 */
 	public static <E> Collection<E> where(Collection<E> collection, IPredicate<E> predicate) {
-		ArrayList<E> rtr = new ArrayList<>();
-		for (E entry : collection) {
+		final ArrayList<E> rtr = new ArrayList<>();
+		for (final E entry : collection) {
 			if (predicate.check(entry)) {
 				rtr.add(entry);
 			}
@@ -151,24 +151,24 @@ public class CoreUtil {
 	 * @return
 	 */
 	public static <T, E> Set<T> selectDistinct(Collection<E> collection, IReduce<T, E> reducer) {
-		Set<T> rtr = new HashSet<>();
-		for (E entry : collection) {
+		final Set<T> rtr = new HashSet<>();
+		for (final E entry : collection) {
 			rtr.add(reducer.reduce(entry));
 		}
 		return rtr;
 	}
 
 	public static <T, E> Collection<T> select(Collection<E> collection, IReduce<T, E> reducer) {
-		Collection<T> rtr = new ArrayList<>();
-		for (E entry : collection) {
+		final Collection<T> rtr = new ArrayList<>();
+		for (final E entry : collection) {
 			rtr.add(reducer.reduce(entry));
 		}
 		return rtr;
 	}
 
 	public static <E> Collection<E> flattenMapValuesToCollection(Map<?, E> map) {
-		Collection<E> rtr = new ArrayList<>();
-		for (Entry<?, E> entry : map.entrySet()) {
+		final Collection<E> rtr = new ArrayList<>();
+		for (final Entry<?, E> entry : map.entrySet()) {
 			rtr.add(entry.getValue());
 		}
 		return rtr;
@@ -176,7 +176,7 @@ public class CoreUtil {
 
 	public static <T, E> T reduce(Set<E> collection, IMapReduce<T, E> reducer) {
 		T lastValue = null;
-		for (E entry : collection) {
+		for (final E entry : collection) {
 			lastValue = reducer.reduce(lastValue, entry);
 		}
 		return lastValue;
@@ -184,7 +184,7 @@ public class CoreUtil {
 
 	public static <T, E> T reduce(Collection<E> collection, IMapReduce<T, E> reducer) {
 		T lastValue = null;
-		for (E entry : collection) {
+		for (final E entry : collection) {
 			lastValue = reducer.reduce(lastValue, entry);
 		}
 		return lastValue;
@@ -203,15 +203,15 @@ public class CoreUtil {
 	 */
 	public static StringBuilder indentMultilineString(String original, String indentPrefix,
 			boolean forceRemoveLastLinebreak) {
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
-		String[] splitted = original.split("\\r?\\n");
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
+		final String[] splitted = original.split("\\r?\\n");
 
-		for (String s : splitted) {
+		for (final String s : splitted) {
 			sb.append(indentPrefix).append(s).append(lineSeparator);
 		}
 
-		char last = original.charAt(original.length() - 1);
+		final char last = original.charAt(original.length() - 1);
 		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
 			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");
 		}
@@ -230,9 +230,9 @@ public class CoreUtil {
 	 * @return
 	 */
 	public static StringBuilder flatten(String original, String separator) {
-		StringBuilder sb = new StringBuilder();
-		String[] splitted = original.split("\\r?\\n");
-		for (String s : splitted) {
+		final StringBuilder sb = new StringBuilder();
+		final String[] splitted = original.split("\\r?\\n");
+		for (final String s : splitted) {
 			sb.append(s).append(separator);
 		}
 		sb.replace(sb.length() - separator.length(), sb.length(), "");
@@ -240,9 +240,9 @@ public class CoreUtil {
 	}
 
 	public static <E> Collection<E> firstN(Collection<E> collection, int n) {
-		ArrayList<E> rtr = new ArrayList<E>(n);
+		final ArrayList<E> rtr = new ArrayList<E>(n);
 		int i = 1;
-		for (E elem : collection) {
+		for (final E elem : collection) {
 			rtr.add(elem);
 			++i;
 			if (n < i) {

@@ -103,8 +103,9 @@ public class ToolchainData implements IToolchainData<ToolchainListType> {
 	 * @param name
 	 *            of the desired plugin
 	 */
+	@Override
 	public void addPlugin(String name) {
-		PluginType foo = new PluginType();
+		final PluginType foo = new PluginType();
 		foo.setId(name);
 		mToolchain.getPluginOrSubchain().add(foo);
 	}

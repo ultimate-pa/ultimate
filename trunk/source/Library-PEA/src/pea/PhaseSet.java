@@ -37,7 +37,7 @@ import pea.CounterTrace.DCPhase;
  *
  */
 public class PhaseSet {
-    private ArrayList<DCPhase> phases, waiting, exact;
+    private final ArrayList<DCPhase> phases, waiting, exact;
 
     public PhaseSet() {
         phases = new ArrayList<DCPhase>();
@@ -47,8 +47,9 @@ public class PhaseSet {
 
     public void addPhase(DCPhase ph, boolean isExact) {
         phases.add(ph);
-        if (isExact)
-            exact.add(ph);
+        if (isExact) {
+			exact.add(ph);
+		}
     }
 
     public void addWaitingPhase(DCPhase ph, boolean isExact) {
@@ -63,16 +64,18 @@ public class PhaseSet {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (phases.size() == 0)
-            return "";
-        Iterator<DCPhase> it = phases.iterator();
+        final StringBuilder sb = new StringBuilder();
+        if (phases.size() == 0) {
+			return "";
+		}
+        final Iterator<DCPhase> it = phases.iterator();
         sb.append("    ").append(it.next());
         while (it.hasNext()) {
-            DCPhase ph = it.next();
+            final DCPhase ph = it.next();
             sb.append("\n    ").append(ph);
-            if (waiting.contains(ph))
-                sb.append(" (waiting)");
+            if (waiting.contains(ph)) {
+				sb.append(" (waiting)");
+			}
         }
         return sb.toString();
     }

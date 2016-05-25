@@ -88,18 +88,23 @@ public final class Log4JWrapper implements ILogger {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Log4JWrapper other = (Log4JWrapper) obj;
+		}
+		final Log4JWrapper other = (Log4JWrapper) obj;
 		if (mLogger == null) {
-			if (other.mLogger != null)
+			if (other.mLogger != null) {
 				return false;
-		} else if (!mLogger.equals(other.mLogger))
+			}
+		} else if (!mLogger.equals(other.mLogger)) {
 			return false;
+		}
 		return true;
 	}
 }

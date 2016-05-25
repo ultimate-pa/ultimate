@@ -135,9 +135,9 @@ public abstract class BaseUltimatePreferenceItem {
 	 * @return A flattened list.
 	 */
 	public static List<UltimatePreferenceItem<?>> constructFlattenedList(List<BaseUltimatePreferenceItem> list) {
-		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
+		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 
-		for (BaseUltimatePreferenceItem elem : list) {
+		for (final BaseUltimatePreferenceItem elem : list) {
 			returnList.addAll(elem.getFlattenedList());
 		}
 
@@ -152,7 +152,7 @@ public abstract class BaseUltimatePreferenceItem {
 	 * @return A flattened list.
 	 */
 	public static List<UltimatePreferenceItem<?>> constructFlattenedList(BaseUltimatePreferenceItem[] list) {
-		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
+		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 
 		for (int i = 0; i < list.length; i++) {
 			returnList.addAll(list[i].getFlattenedList());

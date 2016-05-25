@@ -129,20 +129,20 @@ public class PathInvariantsTest extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase("AutomizerCInline.xml", 
 					setting, 
 					mSVCOMP_Examples);
 		}
 		
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase(
 					"AutomizerBplInline.xml",
 					setting,
 					mUltimateRepository,
 				    new String[] {".bpl"});
 		}
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase(
 					"AutomizerCInline.xml",
 					setting,

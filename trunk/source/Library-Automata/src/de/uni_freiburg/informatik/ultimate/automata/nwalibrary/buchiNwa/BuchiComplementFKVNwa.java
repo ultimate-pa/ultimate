@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -134,13 +134,13 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	
 	
 	private void constructInitialState() {
-		DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
+		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
 		getOrAdd(detState, true);	
 	}
 	
 	private STATE constructSinkState() {
-		DeterminizedState<LETTER, STATE> detSinkState = new DeterminizedState<>(mOperand);
-		STATE resSinkState = mStateDeterminizer.getState(detSinkState);
+		final DeterminizedState<LETTER, STATE> detSinkState = new DeterminizedState<>(mOperand);
+		final STATE resSinkState = mStateDeterminizer.getState(detSinkState);
 		mCache.addState(false, true, resSinkState);
 		mdet2res.put(detSinkState, resSinkState);
 		mres2scs.put(resSinkState, new FkvSubsetComponentState<>(detSinkState));
@@ -270,45 +270,45 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		Collection<STATE> succs = mCache.succInternal(state, letter);
+		final Collection<STATE> succs = mCache.succInternal(state, letter);
 		if (succs == null) {
-			Collection<STATE> resSuccs = new ArrayList<STATE>();
-			FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
+			final Collection<STATE> resSuccs = new ArrayList<STATE>();
+			final FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
 			if (detUp != null) {
 				{
-					DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.internalSuccessor(
+					final DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.internalSuccessor(
 							detUp.getDeterminizedState(), letter);
-					STATE resSucc = getOrAdd(detSucc, false);
+					final STATE resSucc = getOrAdd(detSucc, false);
 					mCache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
+				final boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				final LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
 						mOperand, oIsEmpty, mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(detUp, letter);
-				Collection<LevelRankingState<LETTER,STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER,STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, true);
 				if (result.size() > 2) {
 					mLogger.warn("big" + result.size());
 				}
-				for (LevelRankingState<LETTER,STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER,STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
 			}
-			LevelRankingState<LETTER,STATE> complUp = mres2lrk.get(state);
+			final LevelRankingState<LETTER,STATE> complUp = mres2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
+				final LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
 						mOperand, complUp.isOempty(), mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(complUp, letter);
-				Collection<LevelRankingState<LETTER,STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER,STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, false);
 				if (result.size() > 4) {
 					mLogger.warn("big" + result.size());
 				}
-				for (LevelRankingState<LETTER,STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER,STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
@@ -320,7 +320,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		for (LETTER letter : getInternalAlphabet()) {
+		for (final LETTER letter : getInternalAlphabet()) {
 			internalSuccessors(state, letter);
 		}
 		return mCache.internalSuccessors(state);
@@ -329,39 +329,39 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		Collection<STATE> succs = mCache.succCall(state, letter);
+		final Collection<STATE> succs = mCache.succCall(state, letter);
 		if (succs == null) {
-			Collection<STATE> resSuccs = new ArrayList<STATE>();
-			FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
+			final Collection<STATE> resSuccs = new ArrayList<STATE>();
+			final FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
 			if (detUp != null) {
 				{
-					DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.callSuccessor(
+					final DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.callSuccessor(
 							detUp.getDeterminizedState(), letter);
-					STATE resSucc = getOrAdd(detSucc, false);
+					final STATE resSucc = getOrAdd(detSucc, false);
 					mCache.addCallTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+				final boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				final LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						mOperand, oIsEmpty, mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(detUp, letter);
-				Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, true);
-				for (LevelRankingState<LETTER, STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER, STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addCallTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
 			}
-			LevelRankingState<LETTER, STATE> complUp = mres2lrk.get(state);
+			final LevelRankingState<LETTER, STATE> complUp = mres2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+				final LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						mOperand, complUp.isOempty(), mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(complUp, letter);
-				Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, false);
-				for (LevelRankingState<LETTER, STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER, STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addCallTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
@@ -373,7 +373,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		for (LETTER letter : getCallAlphabet()) {
+		for (final LETTER letter : getCallAlphabet()) {
 			callSuccessors(state, letter);
 		}
 		return mCache.callSuccessors(state);
@@ -384,32 +384,32 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		Collection<STATE> succs = mCache.succReturn(state, hier, letter);
+		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null) {
-			Collection<STATE> resSuccs = new ArrayList<STATE>();
-			FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
-			FkvSubsetComponentState<LETTER,STATE> detDown = mres2scs.get(hier);
+			final Collection<STATE> resSuccs = new ArrayList<STATE>();
+			final FkvSubsetComponentState<LETTER,STATE> detUp = mres2scs.get(state);
+			final FkvSubsetComponentState<LETTER,STATE> detDown = mres2scs.get(hier);
 			if (detUp != null) {
 				{
-					DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.returnSuccessor(
+					final DeterminizedState<LETTER,STATE> detSucc = mStateDeterminizer.returnSuccessor(
 							detUp.getDeterminizedState(), detDown.getDeterminizedState(), letter);
-					STATE resSucc = getOrAdd(detSucc, false);
+					final STATE resSucc = getOrAdd(detSucc, false);
 					mCache.addReturnTransition(state, hier, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+				final boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				final LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						mOperand, oIsEmpty, mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(detUp, detDown, letter);
-				Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, true);
-				for (LevelRankingState<LETTER, STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER, STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addReturnTransition(state, hier, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
 			}
-			LevelRankingState<LETTER, STATE> complUp = mres2lrk.get(state);
+			final LevelRankingState<LETTER, STATE> complUp = mres2lrk.get(state);
 			IFkvState<LETTER, STATE> complDown;
 			if (mres2scs.containsKey(hier)) {
 				complDown = mres2scs.get(hier);
@@ -418,13 +418,13 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				complDown = mres2lrk.get(hier);
 			}
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+				final LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						mOperand, complUp.isOempty(), mUserDefinedMaxRank, mStateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(complUp, complDown, letter);
-				Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
+				final Collection<LevelRankingState<LETTER, STATE>> result = mLevelRankingGenerator.
 						generateLevelRankings(constraints, false);
-				for (LevelRankingState<LETTER, STATE> complSucc : result) {
-					STATE resSucc = getOrAdd(complSucc);
+				for (final LevelRankingState<LETTER, STATE> complSucc : result) {
+					final STATE resSucc = getOrAdd(complSucc);
 					mCache.addReturnTransition(state, hier, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
@@ -436,7 +436,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		for (LETTER letter : getReturnAlphabet()) {
+		for (final LETTER letter : getReturnAlphabet()) {
 			returnSucccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);

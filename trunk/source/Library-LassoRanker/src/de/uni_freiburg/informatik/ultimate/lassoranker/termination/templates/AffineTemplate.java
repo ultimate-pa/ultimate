@@ -82,11 +82,11 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x') < f(x) - delta
-		LinearInequality li = mfgen.generate(inVars);
-		LinearInequality li2 = mfgen.generate(outVars);
+		final LinearInequality li = mfgen.generate(inVars);
+		final LinearInequality li2 = mfgen.generate(outVars);
 		li2.negate();
 		li.add(li2);
-		AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
+		final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 		li.add(a);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
@@ -100,8 +100,8 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x') ≤ f(x)
-		LinearInequality li = mfgen.generate(inVars);
-		LinearInequality li2 = mfgen.generate(outVars);
+		final LinearInequality li = mfgen.generate(inVars);
+		final LinearInequality li2 = mfgen.generate(outVars);
 		li2.negate();
 		li.add(li2);
 		li.setStrict(false);
@@ -114,7 +114,7 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x) > 0
-		LinearInequality li = mfgen.generate(inVars);
+		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
@@ -139,7 +139,7 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = mfgen.getVariables();
+		final Collection<Term> list = mfgen.getVariables();
 		list.add(mdelta);
 		return list;
 	}
@@ -147,7 +147,7 @@ public class AffineTemplate extends ComposableTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction f = mfgen.extractAffineFunction(val);
+		final AffineFunction f = mfgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);
 	}
 	

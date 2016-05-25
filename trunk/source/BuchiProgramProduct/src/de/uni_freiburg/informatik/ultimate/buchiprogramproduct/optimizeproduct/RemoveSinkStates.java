@@ -51,7 +51,7 @@ public class RemoveSinkStates extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode process(RootNode root) {
-		List<RCFGNode> sinks = collectSinks(root);
+		final List<RCFGNode> sinks = collectSinks(root);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
 		}
@@ -61,12 +61,12 @@ public class RemoveSinkStates extends BaseProductOptimizer {
 	}
 
 	private List<RCFGNode> collectSinks(RootNode root) {
-		ArrayList<RCFGNode> rtr = new ArrayList<>();
-		ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
-		HashSet<RCFGNode> closed = new HashSet<>();
+		final ArrayList<RCFGNode> rtr = new ArrayList<>();
+		final ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
+		final HashSet<RCFGNode> closed = new HashSet<>();
 		nodes.addAll(root.getOutgoingNodes());
 		while (!nodes.isEmpty()) {
-			RCFGNode current = nodes.removeFirst();
+			final RCFGNode current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -82,14 +82,14 @@ public class RemoveSinkStates extends BaseProductOptimizer {
 	}
 
 	private void removeSinks(List<RCFGNode> sinks) {
-		ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
+		final ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
 		nodes.addAll(sinks);
 		while (!nodes.isEmpty()) {
-			RCFGNode current = nodes.removeFirst();
+			final RCFGNode current = nodes.removeFirst();
 
 			if (current.getOutgoingEdges().size() == 0) {
-				ArrayList<RCFGEdge> incoming = new ArrayList<>(current.getIncomingEdges());
-				for (RCFGEdge edge : incoming) {
+				final ArrayList<RCFGEdge> incoming = new ArrayList<>(current.getIncomingEdges());
+				for (final RCFGEdge edge : incoming) {
 					nodes.add(edge.getSource());
 					edge.disconnectSource();
 					edge.disconnectTarget();

@@ -82,7 +82,7 @@ public abstract class BaseWalker implements IWalker {
 	@Override
 	public void run(IElement inode) throws Throwable {
 		if (inode != null) {
-			for (IObserver v : mObservers) {
+			for (final IObserver v : mObservers) {
 				runObserver(inode, v);
 			}
 		}

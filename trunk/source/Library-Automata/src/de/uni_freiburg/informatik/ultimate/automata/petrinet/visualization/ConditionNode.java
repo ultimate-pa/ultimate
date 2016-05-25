@@ -49,25 +49,25 @@ public class ConditionNode<S,C> extends PetriNetVisualizationNode {
 	public ConditionNode(Condition<S,C> condition, BranchingProcess<S,C> bc) {
 		super(condition.toString());
 		
-		DefaultAnnotations annot = new DefaultAnnotations();
+		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("Condition",condition.toString());
 		annot.put("CorrespondingPlace",condition.getPlace());
 		annot.put("NumberSuccesorEvents", condition.getSuccessorEvents().size());
 		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition,bc));
-		Map<String,IAnnotations> annotations = getPayload().getAnnotations();
+		final Map<String,IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
-		C content = condition.getPlace().getContent();
+		final C content = condition.getPlace().getContent();
 		if (content instanceof IAnnotations) {
-			annot.put("Content", (IAnnotations) content);
+			annot.put("Content", content);
 
 		}
 //		super.setPayload(payload);
 	}
 	
 	private ArrayList<Condition<S,C>> allConditionsInCoRelation(Condition<S,C> condition, BranchingProcess<S,C> bc) {
-		ArrayList<Condition<S,C>> conditionsInCoRelation = new ArrayList<Condition<S,C>>();
-		for (Condition<S,C> c : bc.getConditions()) {
+		final ArrayList<Condition<S,C>> conditionsInCoRelation = new ArrayList<Condition<S,C>>();
+		for (final Condition<S,C> c : bc.getConditions()) {
 			if (bc.isInCoRelation(condition, c)) {
 				conditionsInCoRelation.add(c);
 			}

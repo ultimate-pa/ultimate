@@ -63,7 +63,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *  updated, too.
 	 */
 	public boolean removeOutgoingNode(T node) {
-		int index = mOutgoingNodes.indexOf(node);
+		final int index = mOutgoingNodes.indexOf(node);
 		if (mOutgoingNodes.remove(index) != null) {
 			mOutgoingEdgeLabels.remove(index);
 			return true;
@@ -125,7 +125,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *  the latter case, changes already made are undone.
 	 */
 	public boolean disconnectOutgoing(T node) {
-		int index = mOutgoingNodes.indexOf(node);
+		final int index = mOutgoingNodes.indexOf(node);
 		if(mOutgoingNodes.remove(index) != null) {
 			if(node.mIncomingNodes.remove(this)) {
 				mOutgoingEdgeLabels.remove(index);
@@ -173,7 +173,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 */
 	public boolean disconnectIncoming(T node) {
 		if (mIncomingNodes.remove(node)) {
-			int index = node.mOutgoingNodes.indexOf(this);
+			final int index = node.mOutgoingNodes.indexOf(this);
 			if (node.mOutgoingNodes.remove(index) != null) {
 				node.mOutgoingEdgeLabels.remove(index);
 				return true;

@@ -51,10 +51,10 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	
 	@Override
 	protected void strongconnect(NODE v) {
-		Stack<TodoStackElement> todoStack = new Stack<>();
+		final Stack<TodoStackElement> todoStack = new Stack<>();
 		todoStack.push(new TodoStackElement(v, null));
 		while (!todoStack.isEmpty()) {
-			TodoStackElement todoStackElement = todoStack.pop();
+			final TodoStackElement todoStackElement = todoStack.pop();
 			switch (todoStackElement.getTask()) {
 			case INDEX:
 				if (mIndices.containsKey(todoStackElement.getNode())) {
@@ -93,9 +93,9 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 
 
 	private void doGetSuccessors(NODE node, Stack<TodoStackElement> todoStack) {
-		Iterator<NODE> it = mSuccessorProvider.getSuccessors(node);
+		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(node);
 		while(it.hasNext()) {
-			NODE succ = it.next();
+			final NODE succ = it.next();
 			if (mIndices.containsKey(succ)) {
 				if (mNoScc.contains(succ)) {
 					updateLowlink(node, mIndices.get(succ));

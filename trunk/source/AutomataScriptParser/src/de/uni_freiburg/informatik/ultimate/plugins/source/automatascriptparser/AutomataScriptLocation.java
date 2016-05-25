@@ -70,7 +70,7 @@ public class AutomataScriptLocation implements ILocation {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("Location: File \"");
 		builder.append(mFileName);
 		builder.append("\" at Line: ");

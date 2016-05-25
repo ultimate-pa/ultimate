@@ -95,7 +95,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		super(position, plugin, translatorSequence);
 		assert unprovabilityReasons != null;
 		assert programExecution != null;
-		Check check = ResultUtil.getCheckedSpecification(position);
+		final Check check = ResultUtil.getCheckedSpecification(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
 		} else {
@@ -140,10 +140,12 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	 * 
 	 * @return the failurePath
 	 */
+	@Override
 	public List<ILocation> getFailurePath() {
 		return mFailurePath;
 	}
 
+	@Override
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
 	}
@@ -152,7 +154,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	 * @return a description of the reasons for unprovability.
 	 */
 	public String getReasons() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(" Reason:");
 		for (int i = 0; i < mUnprovabilityReasons.size(); i++) {
 			sb.append(" overapproximation of ");

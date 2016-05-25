@@ -90,7 +90,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 			return "=";
 		} else if (op == BinaryExpression.Operator.ARITHDIV) {
 			if (type1 instanceof PrimitiveType) {
-				PrimitiveType primType = (PrimitiveType) type1;
+				final PrimitiveType primType = (PrimitiveType) type1;
 				if (primType.getTypeCode() == PrimitiveType.INT) {
 					return "div";
 				} else if (primType.getTypeCode() == PrimitiveType.REAL) {
@@ -126,8 +126,9 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 			}
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
 			return "bvneg";
-		} else
+		} else {
 			throw new AssertionError("Unsupported unary expression " + op);
+		}
 	}
 
 	@Override
@@ -153,8 +154,8 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	
 	@Override
 	public Term integerTranslation(IntegerLiteral exp) {
-		BigInteger[] indices = { BigInteger.valueOf(32) };
+		final BigInteger[] indices = { BigInteger.valueOf(32) };
 		
-		return mScript.term("bv" + ((IntegerLiteral) exp).getValue(), indices, null);
+		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 }

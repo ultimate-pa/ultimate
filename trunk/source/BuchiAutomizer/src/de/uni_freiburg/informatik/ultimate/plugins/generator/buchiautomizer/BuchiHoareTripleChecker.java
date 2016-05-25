@@ -66,7 +66,7 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 
 	
 	private IPredicate replaceIfRankDecreasePredicate(IPredicate p) {
-		IPredicate rankEq = mRankDecrease2RankEquality.get(p);
+		final IPredicate rankEq = mRankDecrease2RankEquality.get(p);
 		if (rankEq == null) {
 			return p;
 		} else {
@@ -96,6 +96,7 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 
+	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return mIHoareTripleChecker.getEdgeCheckerBenchmark();
 	}

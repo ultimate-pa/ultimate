@@ -115,19 +115,19 @@ public class RCFGLoopDetector {
 	}
 
 	private List<ProgramPoint> orderLoopHeads(Set<ProgramPoint> loopHeads, RootNode programStart) {
-		List<ProgramPoint> rtr = new ArrayList<>();
+		final List<ProgramPoint> rtr = new ArrayList<>();
 
-		Stack<RCFGNode> open = new Stack<>();
-		HashSet<RCFGNode> closed = new HashSet<>();
+		final Stack<RCFGNode> open = new Stack<>();
+		final HashSet<RCFGNode> closed = new HashSet<>();
 
 		open.push(programStart);
 		while (!open.isEmpty()) {
-			RCFGNode current = open.pop();
+			final RCFGNode current = open.pop();
 			if (closed.contains(current)) {
 				continue;
 			}
 			closed.add(current);
-			for (RCFGEdge edge : current.getOutgoingEdges()) {
+			for (final RCFGEdge edge : current.getOutgoingEdges()) {
 				open.push(edge.getTarget());
 			}
 			if (loopHeads.contains(current)) {
@@ -151,7 +151,7 @@ public class RCFGLoopDetector {
 		// got first path, add it to the results and get the edge starting this
 		// path to find different entry/exits for this loop
 		while (path != null) {
-			RCFGEdge forbiddenEdge = addToResult(path, map);
+			final RCFGEdge forbiddenEdge = addToResult(path, map);
 			forbiddenEdges.add(forbiddenEdge);
 
 			walker = new AStar<RCFGNode, RCFGEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
@@ -161,15 +161,15 @@ public class RCFGLoopDetector {
 	}
 
 	private IEdgeDenier<RCFGEdge> createDenier(List<RCFGEdge> forbiddenEdges) {
-		List<IEdgeDenier<RCFGEdge>> rtr = new ArrayList<>();
+		final List<IEdgeDenier<RCFGEdge>> rtr = new ArrayList<>();
 		rtr.add(new CollectionEdgeDenier<RCFGEdge>(forbiddenEdges));
 		rtr.add(new RcfgCallReturnDenier());
 		return new CompositEdgeDenier<>(rtr);
 	}
 
 	private RCFGEdge addToResult(List<RCFGEdge> path, Map<RCFGEdge, RCFGEdge> map) {
-		RCFGEdge first = path.get(0);
-		RCFGEdge last = path.get(path.size() - 1);
+		final RCFGEdge first = path.get(0);
+		final RCFGEdge last = path.get(path.size() - 1);
 		assert first.getSource().equals(last.getTarget());
 		map.put(first, last);
 		return first;

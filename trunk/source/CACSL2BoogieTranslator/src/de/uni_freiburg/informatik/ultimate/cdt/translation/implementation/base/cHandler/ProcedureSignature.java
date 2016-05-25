@@ -21,21 +21,21 @@ public class ProcedureSignature {
 	public boolean takesVarArgs = false;
 	
 	public ProcedureSignature(Dispatcher main, CFunction cf) {
-		for (CDeclaration ip : cf.getParameterTypes()) {
-			ASTType type = main.typeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), ip.getType());
+		for (final CDeclaration ip : cf.getParameterTypes()) {
+			final ASTType type = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), ip.getType());
 			inParams.add(type);
 		}
 		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == PRIMITIVE.VOID) {
 			returnType = null;
 		} else {
-			returnType = main.typeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), cf.getResultType());
+			returnType = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
 		takesVarArgs = cf.takesVarArgs();
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
 		for (int i = 0; i < inParams.size(); i++) {
@@ -43,8 +43,9 @@ public class ProcedureSignature {
 			sb.append(inParams.get(i).toString());
 			times = "~X~";
 		}
-		if (takesVarArgs)
+		if (takesVarArgs) {
 			sb.append("X~varArgs~");
+		}
 		sb.append("~TO~");
 		sb.append(returnType != null ? returnType.toString() : "VOID");
 		return sb.toString();
@@ -65,7 +66,7 @@ public class ProcedureSignature {
 //			result &= this.inParams.get(i).equals(other.inParams.get(i));
 //		result &= this.takesVarArgs == other.takesVarArgs;
 //		return result;
-		return this.toString().equals(o.toString());
+		return toString().equals(o.toString());
 	}
 
 	@Override

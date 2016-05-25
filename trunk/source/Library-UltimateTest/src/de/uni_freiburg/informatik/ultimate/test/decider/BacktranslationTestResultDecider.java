@@ -119,7 +119,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		}
 		if (cex.size() > 1) {
 			setResultCategory("More than one counter example found");
-			String errorMsg = "There were " + cex.size() + " counter examples, but we expected only one";
+			final String errorMsg = "There were " + cex.size() + " counter examples, but we expected only one";
 			setResultMessage(errorMsg);
 			customMessages.add(errorMsg);
 			fail = true;
@@ -139,7 +139,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			for (final WitnessResult witness : witnessesWithCex) {
 				if (witness.isEmpty()) {
 					setResultCategory("Empty Witness");
-					String errorMsg = "The witness is empty: " + witness.getShortDescription();
+					final String errorMsg = "The witness is empty: " + witness.getShortDescription();
 					setResultMessage(errorMsg);
 					customMessages.add(errorMsg);
 					fail = true;
@@ -147,7 +147,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				} else if (witness.getExpectedVerificationStatus() == WitnessVerificationStatus.VERIFIED
 						&& witness.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 					setResultCategory("Witness failed to verify");
-					String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
+					final String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
 					setResultMessage(errorMsg);
 					customMessages.add(errorMsg);
 					fail = true;
@@ -165,7 +165,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			String desiredCounterExample = null;
 			try {
 				desiredCounterExample = getDesiredCounterExample(inputFile, settingsFile);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				setResultCategory(e.getMessage());
 				setResultMessage(e.toString());
 				e.printStackTrace();
@@ -216,13 +216,13 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 							+ actualCounterExample.length());
 					customMessages.add("Desired error trace:");
 					int i = 0;
-					for (String s : desiredCounterExample.split(platformLineSeparator)) {
+					for (final String s : desiredCounterExample.split(platformLineSeparator)) {
 						customMessages.add("[L" + i + "] " + s);
 						++i;
 					}
 					i = 0;
 					customMessages.add("Actual error trace:");
-					for (String s : actualCounterExample.split(platformLineSeparator)) {
+					for (final String s : actualCounterExample.split(platformLineSeparator)) {
 						customMessages.add("[L" + i + "] " + s);
 						++i;
 					}
@@ -313,16 +313,16 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	private boolean tryWritingActualResultToFile(String actualCounterExample) {
-		String[] actualLines = actualCounterExample.split(CoreUtil.getPlatformLineSeparator());
+		final String[] actualLines = actualCounterExample.split(CoreUtil.getPlatformLineSeparator());
 		try {
-			File input = new File(mInputFile);
-			String path = input.getParentFile().getAbsolutePath();
-			String name = removeFileEnding(input) + "_" + (removeFileEnding(new File(mSettingsFile)));
-			String target = new File(String.format("%s%s%s%s", path, Path.SEPARATOR, name, ".errorpath-actual"))
+			final File input = new File(mInputFile);
+			final String path = input.getParentFile().getAbsolutePath();
+			final String name = removeFileEnding(input) + "_" + (removeFileEnding(new File(mSettingsFile)));
+			final String target = new File(String.format("%s%s%s%s", path, Path.SEPARATOR, name, ".errorpath-actual"))
 					.getAbsolutePath();
 			CoreUtil.writeFile(target, actualLines);
 			return true;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			return false;
 		}
 	}

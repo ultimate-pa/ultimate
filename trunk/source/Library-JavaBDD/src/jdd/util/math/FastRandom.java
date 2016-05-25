@@ -1,7 +1,7 @@
 
 package jdd.util.math;
 
-import jdd.util.*;
+import jdd.util.Test;
 
 /**
  * A class for fast random number generation.
@@ -38,9 +38,10 @@ public class FastRandom {
 	/** seed the Mersenne Twister PRNG */
 	public static final void mtseed(int n) {
 		mt_mt[0] = n;
-		for(mt_mti = 1; mt_mti < MT_N; mt_mti++)
+		for(mt_mti = 1; mt_mti < MT_N; mt_mti++) {
 			// WAS: mt_mt[mt_mti] = (69069 * mt_mt[mt_mti-1]);
 			mt_mt[mt_mti] = (1812433253 * (mt_mt[mt_mti-1] ^ (mt_mt[mt_mti-1] >>> 30)) + mt_mti);
+		}
 
 	}
 
@@ -94,10 +95,10 @@ public class FastRandom {
 		Test.start("FastRandom");
 
 		final int MAX = 1000;
-		java.util.Random rnd = new java.util.Random();
+		final java.util.Random rnd = new java.util.Random();
 
-		Chi2Test  mt_c2t = new Chi2Test(MAX);
-		Chi2Test  java_c2t = new Chi2Test(MAX);
+		final Chi2Test  mt_c2t = new Chi2Test(MAX);
+		final Chi2Test  java_c2t = new Chi2Test(MAX);
 		while(mt_c2t.more()) {
 			mt_c2t.add( mtrand() % MAX );
 			java_c2t.add(rnd.nextInt(MAX));

@@ -59,10 +59,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -102,9 +102,9 @@ public abstract class AbstractCegarLoop {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
 	public static Result aggregateResult(Object value1, Object value2) {
-		Result result1 = (Result) value1;
-		Result result2 = (Result) value2;
-		Set<Result> results = new HashSet<Result>();
+		final Result result1 = (Result) value1;
+		final Result result2 = (Result) value2;
+		final Set<Result> results = new HashSet<Result>();
 		results.add(result1);
 		results.add(result2);
 		if (results.contains(Result.UNSAFE)) {
@@ -121,7 +121,7 @@ public abstract class AbstractCegarLoop {
 	}
 	
 	public static Function<Object, Function<Object,Object>> s_DefaultAggregation = 
-			x -> y -> { return aggregateResult((BackwardCoveringInformation)x, (BackwardCoveringInformation)y); };
+			x -> y -> { return aggregateResult(x, y); };
 
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification
@@ -211,14 +211,14 @@ public abstract class AbstractCegarLoop {
 			ILogger logger) {
 		mServices = services;
 		mLogger = logger;
-		this.mPrintAutomataLabeling = taPrefs.getAutomataFormat();
+		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
-		this.mName = name;
-		this.mRootNode = rootNode;
-		this.mSmtManager = smtManager;
-		this.mPref = taPrefs;
-		this.mErrorLocs = errorLocs;
-		this.mToolchainStorage = storage;
+		mName = name;
+		mRootNode = rootNode;
+		mSmtManager = smtManager;
+		mPref = taPrefs;
+		mErrorLocs = errorLocs;
+		mToolchainStorage = storage;
 
 	}
 
@@ -323,11 +323,11 @@ public abstract class AbstractCegarLoop {
 		}
 		try {
 			getInitialAbstraction();
-		} catch (AutomataOperationCanceledException e1) {
+		} catch (final AutomataOperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		}
 
@@ -336,7 +336,7 @@ public abstract class AbstractCegarLoop {
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			String filename = mName + "Abstraction" + mIteration;
+			final String filename = mName + "Abstraction" + mIteration;
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 		mInitialAbstractionSize = mAbstraction.size();
@@ -346,7 +346,7 @@ public abstract class AbstractCegarLoop {
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
-		} catch (AutomataOperationCanceledException e1) {
+		} catch (final AutomataOperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
@@ -364,7 +364,7 @@ public abstract class AbstractCegarLoop {
 				dumpInitinalize();
 			}
 			try {
-				LBool isCounterexampleFeasible = isCounterexampleFeasible();
+				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
 					mCegarLoopBenchmark.setResult(Result.UNSAFE);
 					return Result.UNSAFE;
@@ -373,7 +373,7 @@ public abstract class AbstractCegarLoop {
 					mCegarLoopBenchmark.setResult(Result.UNKNOWN);
 					return Result.UNKNOWN;
 				}
-			} catch (ToolchainCanceledException e) {
+			} catch (final ToolchainCanceledException e) {
 				mToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
@@ -382,11 +382,11 @@ public abstract class AbstractCegarLoop {
 
 			try {
 				constructInterpolantAutomaton();
-			} catch (AutomataOperationCanceledException e1) {
+			} catch (final AutomataOperationCanceledException e1) {
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
-			} catch (ToolchainCanceledException e) {
+			} catch (final ToolchainCanceledException e) {
 				mToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
@@ -403,24 +403,24 @@ public abstract class AbstractCegarLoop {
 			}
 
 			try {
-				boolean progress = refineAbstraction();
+				final boolean progress = refineAbstraction();
 				if (!progress) {
 					mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 					// return Result.UNKNOWN;
 				}
-			} catch (AutomataOperationCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
-			} catch (ToolchainCanceledException e) {
+			} catch (final ToolchainCanceledException e) {
 				mToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
-			} catch (AutomataLibraryException e) {
+			} catch (final AutomataLibraryException e) {
 				throw new AssertionError("Automata Operation failed" + e.getMessage());
 			}
 
@@ -439,7 +439,7 @@ public abstract class AbstractCegarLoop {
 			}
 
 			if (mPref.dumpAutomata()) {
-				String filename = "Abstraction" + mIteration;
+				final String filename = "Abstraction" + mIteration;
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 
@@ -448,7 +448,7 @@ public abstract class AbstractCegarLoop {
 			boolean isAbstractionCorrect;
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
-			} catch (AutomataOperationCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -468,12 +468,12 @@ public abstract class AbstractCegarLoop {
 	}
 
 	private void dumpInitinalize() {
-		File file = new File(mPref.dumpPath() + "/" + mName + "_iteration" + mIteration + ".txt");
+		final File file = new File(mPref.dumpPath() + "/" + mName + "_iteration" + mIteration + ".txt");
 		FileWriter fileWriter;
 		try {
 			fileWriter = new FileWriter(file);
 			mIterationPW = new PrintWriter(fileWriter);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -482,7 +482,7 @@ public abstract class AbstractCegarLoop {
 	 * TODO unify sequential and concurrent
 	 */
 	protected static void dumpNestedRun(IRun<CodeBlock, IPredicate> run, PrintWriter pW, ILogger logger) {
-		NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
+		final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
 		ArrayList<IPredicate> stateSequence = null;
 		if (run instanceof NestedRun) {
 			stateSequence = ((NestedRun<CodeBlock, IPredicate>) run).getStateSequence();
@@ -522,7 +522,7 @@ public abstract class AbstractCegarLoop {
 
 	@SuppressWarnings("unused")
 	private void dumpSsa(Term[] ssa) {
-		FormulaUnLet unflet = new FormulaUnLet();
+		final FormulaUnLet unflet = new FormulaUnLet();
 		try {
 			mIterationPW.println("===============SSA of potential Counterexample==========");
 			for (int i = 0; i < ssa.length; i++) {
@@ -550,7 +550,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	public static String addIndentation(int indentation, String s) {
-		StringBuilder sb = new StringBuilder("");
+		final StringBuilder sb = new StringBuilder("");
 		for (int i = 0; i < indentation; i++) {
 			sb.append("    ");
 		}
@@ -628,7 +628,7 @@ public abstract class AbstractCegarLoop {
 
 		@Override
 		public String prettyprint(Object o) {
-			return mPrettyprinter.apply(this.name()).apply(o);
+			return mPrettyprinter.apply(name()).apply(o);
 		}
 
 		@Override

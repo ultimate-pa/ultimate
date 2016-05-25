@@ -105,11 +105,11 @@ public class SymbolTableValue {
             boolean isGlobal, IASTNode declNode) {
 //            , boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
-        this.boogieName = bId;
+        boogieName = bId;
         assert cdecl != null;
-        this.cDecl = cdecl;
+        cDecl = cdecl;
         this.boogieDecl = boogieDecl;
-        this.isGlobalVar = isGlobal;
+        isGlobalVar = isGlobal;
 //        this.storageClass = sc;
 //        this.cvar = cvar;
 //        this.isStatic = isStatic;
@@ -153,7 +153,7 @@ public class SymbolTableValue {
      * @return the C variable description.
      */
     public CType getCVariable() {
-        return this.cDecl.getType();
+        return cDecl.getType();
     }
     
 //    public boolean isStatic() {

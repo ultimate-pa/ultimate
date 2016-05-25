@@ -73,19 +73,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 // @formatter:on
 public class PluginConnector {
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
-	private IModelManager mModelManager;
-	private IController<ToolchainListType> mController;
-	private ITool mTool;
+	private final IModelManager mModelManager;
+	private final IController<ToolchainListType> mController;
+	private final ITool mTool;
 
 	private boolean mHasPerformedChanges;
 
 	private int mCurrent;
 	private int mMax;
 
-	private IToolchainStorage mStorage;
-	private IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
+	private final IUltimateServiceProvider mServices;
 
 	public PluginConnector(IModelManager modelmanager, ITool tool, IController<ToolchainListType> control,
 			IToolchainStorage storage, IUltimateServiceProvider services) {
@@ -113,9 +113,9 @@ public class PluginConnector {
 		mLogger.info("------------------------" + mTool.getPluginName() + "----------------------------");
 		init();
 		initializePlugin(mLogger, mTool, mServices, mStorage);
-		List<ModelType> models = selectModels();
+		final List<ModelType> models = selectModels();
 		if (models.isEmpty()) {
-			IllegalArgumentException ex = new IllegalArgumentException();
+			final IllegalArgumentException ex = new IllegalArgumentException();
 			mLogger.error("Tool did not select a valid model", ex);
 			throw ex;
 		}
@@ -123,9 +123,9 @@ public class PluginConnector {
 		mCurrent = 1;
 
 		for (int i = mMax - 1; i >= 0; --i) {
-			ModelType currentModel = models.get(i);
+			final ModelType currentModel = models.get(i);
 			mTool.setInputDefinition(currentModel);
-			List<IObserver> observers = mTool.getObservers();
+			final List<IObserver> observers = mTool.getObservers();
 			runTool(observers, currentModel, mMax - i - 1, mMax);
 			++mCurrent;
 		}
@@ -144,16 +144,16 @@ public class PluginConnector {
 
 	private void runTool(List<IObserver> observers, ModelType currentModel, int currentModelIndex, int numberOfModels)
 			throws Throwable {
-		IElement entryNode = getEntryPoint(currentModel);
+		final IElement entryNode = getEntryPoint(currentModel);
 
 		if (mTool instanceof IGenerator) {
-			IGenerator tool = (IGenerator) mTool;
-			for (IObserver observer : observers) {
+			final IGenerator tool = (IGenerator) mTool;
+			for (final IObserver observer : observers) {
 				runObserver(observer, currentModel, entryNode, currentModelIndex, numberOfModels);
 				retrieveModel(tool, observer.toString());
 			}
 		} else {
-			for (IObserver observer : observers) {
+			for (final IObserver observer : observers) {
 				runObserver(observer, currentModel, entryNode, currentModelIndex, numberOfModels);
 			}
 		}
@@ -162,7 +162,7 @@ public class PluginConnector {
 	private void runObserver(IObserver observer, ModelType currentModel, IElement entryNode, int currentModelIndex,
 			int numberOfModels) throws Throwable {
 		logObserverRun(observer, currentModel);
-		IWalker walker = selectWalker(currentModel);
+		final IWalker walker = selectWalker(currentModel);
 		walker.addObserver(observer);
 		observer.init(currentModel, currentModelIndex, numberOfModels);
 		walker.run(entryNode);
@@ -171,7 +171,7 @@ public class PluginConnector {
 	}
 
 	private void logObserverRun(IObserver observer, ModelType model) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Executing the observer ");
 		sb.append(observer.getClass().getSimpleName());
 		sb.append(" from plugin ");
@@ -190,15 +190,15 @@ public class PluginConnector {
 		IElement n = null;
 		try {
 			n = mModelManager.getRootNode(definition);
-		} catch (GraphNotFoundException e) {
+		} catch (final GraphNotFoundException e) {
 			mLogger.error("Graph not found!", e);
 		}
 		return n;
 	}
 
 	private void retrieveModel(IGenerator tool, String observer) {
-		IElement element = tool.getModel();
-		ModelType type = tool.getOutputDefinition();
+		final IElement element = tool.getModel();
+		final ModelType type = tool.getOutputDefinition();
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
@@ -209,7 +209,7 @@ public class PluginConnector {
 	}
 
 	private List<ModelType> selectModels() {
-		List<ModelType> models = new ArrayList<ModelType>();
+		final List<ModelType> models = new ArrayList<ModelType>();
 
 		switch (mTool.getModelQuery()) {
 		case ALL:
@@ -217,8 +217,8 @@ public class PluginConnector {
 			break;
 		case USER:
 			if (mModelManager.size() > 1) {
-				for (String s : mController.selectModel(mModelManager.getItemNames())) {
-					ModelType t = mModelManager.getGraphTypeById(s);
+				for (final String s : mController.selectModel(mModelManager.getItemNames())) {
+					final ModelType t = mModelManager.getGraphTypeById(s);
 					if (t != null) {
 						models.add(t);
 					}
@@ -232,28 +232,29 @@ public class PluginConnector {
 			break;
 		case SOURCE:
 			models.addAll(mModelManager.getItemKeys());
-			for (ModelType t : models) {
+			for (final ModelType t : models) {
 				if (!t.isFromSource()) {
 					models.remove(t);
 				}
 			}
 			break;
 		case TOOL:
-			List<String> desiredToolIDs = mTool.getDesiredToolID();
+			final List<String> desiredToolIDs = mTool.getDesiredToolID();
 			if (desiredToolIDs == null || desiredToolIDs.size() == 0) {
 				break;
 			} else {
 				models.addAll(mModelManager.getItemKeys());
-				List<ModelType> removeModels = new ArrayList<ModelType>();
-				for (ModelType t : models) {
-					if (!desiredToolIDs.contains(t.getCreator()))
+				final List<ModelType> removeModels = new ArrayList<ModelType>();
+				for (final ModelType t : models) {
+					if (!desiredToolIDs.contains(t.getCreator())) {
 						removeModels.add(t);
+					}
 				}
 				models.removeAll(removeModels);
 				break;
 			}
 		default:
-			IllegalStateException ex = new IllegalStateException("Unknown Query type");
+			final IllegalStateException ex = new IllegalStateException("Unknown Query type");
 			mLogger.fatal("Unknown Query type", ex);
 			throw ex;
 		}
@@ -278,7 +279,7 @@ public class PluginConnector {
 			plugin.setToolchainStorage(storage);
 			plugin.init();
 			logger.info(plugin.getPluginName() + " initialized");
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			logger.fatal("Exception during initialization of " + plugin.getPluginName());
 			throw ex;
 		}

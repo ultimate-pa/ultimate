@@ -159,7 +159,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.init(tpm);
 			tpm.worked(1);
 
-			IToolchainData<ToolchainListType> data = mToolchain.getCurrentToolchainData();
+			final IToolchainData<ToolchainListType> data = mToolchain.getCurrentToolchainData();
 			if (data == null) {
 				return Status.CANCEL_STATUS;
 			}
@@ -176,7 +176,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
-			String idOfCore = Activator.PLUGIN_ID;
+			final String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}

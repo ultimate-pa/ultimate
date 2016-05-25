@@ -81,12 +81,12 @@ public abstract class Xnf extends Nnf {
 		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			String functionSymbolName = appTerm.getFunction().getName();
+			final String functionSymbolName = appTerm.getFunction().getName();
 			Term result;
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
 				// case where the connective of the formula is inner connective
 				// of the normal form.
-				Term[] resOuterJuncts = applyDistributivityAndOr(newArgs);
+				final Term[] resOuterJuncts = applyDistributivityAndOr(newArgs);
 				result = outerConnective(mScript, Arrays.asList(resOuterJuncts));
 			} else if (functionSymbolName.equals(outerConnectiveSymbol())) {
 				result = outerConnective(mScript, Arrays.asList(newArgs));
@@ -116,7 +116,7 @@ public abstract class Xnf extends Nnf {
 				try {
 					first = new ResultInnerJunctions(innerJunctionOfOuterJunctions);
 					innerJunctionOfOuterJunctions = null;
-				} catch (AtomAndNegationException e1) {
+				} catch (final AtomAndNegationException e1) {
 					// innerJunctionOfOuterJunctions contains the singleton {φ}
 					// and the singleton {¬φ}.
 					// Hence the result is equivalent to the annihilator of the 
@@ -126,17 +126,17 @@ public abstract class Xnf extends Nnf {
 				}
 			}
 			
-			int inputSize = first.numberOfUnprocessedOuterJunctions();
+			final int inputSize = first.numberOfUnprocessedOuterJunctions();
 			if ( inputSize > 5) {
 				mLogger.warn("expecting exponential blowup for input size " + inputSize);
 			}
 			
 			// iteratively apply distributivity until we have a set of innerJunctions.
-			Set<XJunction> resOuterJunction = new HashSet<XJunction>();
-			Stack<ResultInnerJunctions> todoStack = new Stack<ResultInnerJunctions>();
+			final Set<XJunction> resOuterJunction = new HashSet<XJunction>();
+			final Stack<ResultInnerJunctions> todoStack = new Stack<ResultInnerJunctions>();
 			todoStack.add(first);
 			while (!todoStack.isEmpty()) {
-				ResultInnerJunctions top = todoStack.pop();
+				final ResultInnerJunctions top = todoStack.pop();
 				if (top.isProcessedToInnerJunction()) {
 					resOuterJunction.add(top.getInnerJunction());
 				} else {
@@ -148,7 +148,7 @@ public abstract class Xnf extends Nnf {
 				}
 			}
 			
-			boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
+			final boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
 			if (timeConsumingSimplification) {
 				mLogger.warn("Simplifying " + outerJunctionName() + " of " 
 						+ resOuterJunction.size() + " " + innerJunctionName() + 
@@ -157,8 +157,8 @@ public abstract class Xnf extends Nnf {
 			
 			// Simplify by keeping only minimal (with respect to set inclusion)
 			// outerJunctions.
-			XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
-			for (XJunction resInnerSet : resOuterJunction) {
+			final XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
+			for (final XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"XNF transformer was simplifying " + resOuterJunction.size() 
@@ -174,9 +174,9 @@ public abstract class Xnf extends Nnf {
 			}
 			
 			// Construct terms.
-			Term[] resInnerTerms = new Term[pme.getElements().size()];
+			final Term[] resInnerTerms = new Term[pme.getElements().size()];
 			int i = 0;
-			for (XJunction resInnerSet : pme.getElements()) {
+			for (final XJunction resInnerSet : pme.getElements()) {
 				resInnerTerms[i] = innerConnective(mScript, resInnerSet.toTermList(mScript));
 				i++;
 			}
@@ -190,12 +190,12 @@ public abstract class Xnf extends Nnf {
 		 */
 		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(
 				Term[] inputInnerJunction) {
-			Set<XJunction> result = new HashSet<>();
-			for (Term inputInnerJunct : inputInnerJunction) {
-				Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
+			final Set<XJunction> result = new HashSet<>();
+			for (final Term inputInnerJunct : inputInnerJunction) {
+				final Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
 				try {
 					result.add(new XJunction(inputOuterJunction));
-				} catch (AtomAndNegationException e) {
+				} catch (final AtomAndNegationException e) {
 					// do nothing, we omit this outerJunction because it is
 					// equivalent to the neutral element of the inner connective
 					// (true for ∧, false for ∨)
@@ -224,13 +224,13 @@ public abstract class Xnf extends Nnf {
 			private final Set<XJunction> mUnprocessedInnerJunctionOfOuterJunctions;
 			
 			public ResultInnerJunctions(Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
-				XJunction innerJuncts = new XJunction(); 
+				final XJunction innerJuncts = new XJunction(); 
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = innerJuncts;
 			}
 			
 			public ResultInnerJunctions(XJunction innerJuncts, Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
-				XJunction newInnerJuncts = new XJunction();
+				final XJunction newInnerJuncts = new XJunction();
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = XJunction.disjointUnion(innerJuncts, newInnerJuncts);
 			}
@@ -248,19 +248,19 @@ public abstract class Xnf extends Nnf {
 			}
 			
 			public List<ResultInnerJunctions> processOneOuterJunction() {
-				Iterator<XJunction> it = mUnprocessedInnerJunctionOfOuterJunctions.iterator();
-				XJunction next = it.next();
+				final Iterator<XJunction> it = mUnprocessedInnerJunctionOfOuterJunctions.iterator();
+				final XJunction next = it.next();
 				it.remove();
-				ArrayList<ResultInnerJunctions> result = new ArrayList<>(next.size());
-				for (Entry<Term, Polarity> entry : next.entrySet()) {
-					XJunction singletonInnerJunct = new XJunction(entry.getKey(), entry.getValue());
-					Set<XJunction> innerJunctionOfOuterJunctions = new HashSet<XJunction>(mUnprocessedInnerJunctionOfOuterJunctions);
+				final ArrayList<ResultInnerJunctions> result = new ArrayList<>(next.size());
+				for (final Entry<Term, Polarity> entry : next.entrySet()) {
+					final XJunction singletonInnerJunct = new XJunction(entry.getKey(), entry.getValue());
+					final Set<XJunction> innerJunctionOfOuterJunctions = new HashSet<XJunction>(mUnprocessedInnerJunctionOfOuterJunctions);
 					innerJunctionOfOuterJunctions.add(singletonInnerJunct);
-					XJunction innerJunctions = new XJunction(mInnerJuncts);
+					final XJunction innerJunctions = new XJunction(mInnerJuncts);
 					try {
-						ResultInnerJunctions rij = new ResultInnerJunctions(innerJunctions, innerJunctionOfOuterJunctions);
+						final ResultInnerJunctions rij = new ResultInnerJunctions(innerJunctions, innerJunctionOfOuterJunctions);
 						result.add(rij);
-					} catch (AtomAndNegationException e) {
+					} catch (final AtomAndNegationException e) {
 						// omit this ResultInnerJunctions it is equivalent to true/false
 					}
 				}
@@ -289,11 +289,11 @@ public abstract class Xnf extends Nnf {
 					XJunction innerJunction, 
 					Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				while (true) {
-					boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
+					final boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
 					if (!modified) {
 						return innerJunctionOfOuterJunctions;
 					}
-					Set<XJunction> newinnerJunctionOfOuterJunctions = applyAbsorbeAndMpsimplify(innerJunction, innerJunctionOfOuterJunctions);
+					final Set<XJunction> newinnerJunctionOfOuterJunctions = applyAbsorbeAndMpsimplify(innerJunction, innerJunctionOfOuterJunctions);
 					if (newinnerJunctionOfOuterJunctions == innerJunctionOfOuterJunctions) {
 						return innerJunctionOfOuterJunctions;
 					} else {
@@ -319,11 +319,11 @@ public abstract class Xnf extends Nnf {
 					Set<XJunction> innerJunctionOfOuterJunctions)
 							throws AtomAndNegationException {
 				boolean someSingletonContained = false;
-				Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
+				final Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
 				while (it.hasNext()) {
-					XJunction outerJunction = it.next();
+					final XJunction outerJunction = it.next();
 					if (outerJunction.size() == 1) {
-						Entry<Term, Polarity> singleton = outerJunction.entrySet().iterator().next();
+						final Entry<Term, Polarity> singleton = outerJunction.entrySet().iterator().next();
 						innerJunction.add(singleton.getKey(), singleton.getValue());
 						someSingletonContained = true;
 						it.remove();
@@ -359,10 +359,10 @@ public abstract class Xnf extends Nnf {
 			 */
 			private Set<XJunction> applyAbsorbeAndMpsimplify(XJunction innerJunction,
 					Set<XJunction> innerJunctionOfOuterJunctions) {
-				HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<XJunction>();
+				final HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<XJunction>();
 				boolean modified = false;
-				for (XJunction outerJunction : innerJunctionOfOuterJunctions) {
-					XJunction newOuterJunction = applyAbsorbeAndMpsimplify(innerJunction, outerJunction);
+				for (final XJunction outerJunction : innerJunctionOfOuterJunctions) {
+					final XJunction newOuterJunction = applyAbsorbeAndMpsimplify(innerJunction, outerJunction);
 					if (newOuterJunction == null) {
 						// do not add, absorbed by innerJunction
 						modified = true;
@@ -400,7 +400,7 @@ public abstract class Xnf extends Nnf {
 			private XJunction applyAbsorbeAndMpsimplify(XJunction innerJunction,
 					XJunction outerJunction) {
 				XJunction resultOuterJunction = outerJunction;
-				for (Entry<Term, Polarity> literal : innerJunction.entrySet()) {
+				for (final Entry<Term, Polarity> literal : innerJunction.entrySet()) {
 					if (outerJunction.contains(literal.getKey(), literal.getValue())) {
 						return null;
 					} else if (outerJunction.containsNegation(literal.getKey(), literal.getValue())) {
@@ -436,9 +436,9 @@ public abstract class Xnf extends Nnf {
 			private final Set<XJunction> mElements = new HashSet<XJunction>();
 			
 			public void add(XJunction xjunction) {
-				Iterator<XJunction> it = mElements.iterator();
+				final Iterator<XJunction> it = mElements.iterator();
 				while (it.hasNext()) {
-					XJunction existing = it.next();
+					final XJunction existing = it.next();
 					if(existing.isSubset(xjunction)) {
 						// add nothing
 						return;

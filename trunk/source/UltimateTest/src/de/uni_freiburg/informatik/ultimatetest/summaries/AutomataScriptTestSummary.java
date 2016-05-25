@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class AutomataScriptTestSummary implements ITestSummary {
 	
-	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
-	private List<SummaryEntry> mResults;
+	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
+	private final List<SummaryEntry> mResults;
 
 	public AutomataScriptTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mUltimateTestSuite = ultimateTestSuite;
@@ -67,12 +67,12 @@ public class AutomataScriptTestSummary implements ITestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("################# ");
 		sb.append(mUltimateTestSuite);
 		sb.append(" #################");
 		sb.append("\n");
-		for (SummaryEntry summaryEntry  : mResults) {
+		for (final SummaryEntry summaryEntry  : mResults) {
 			sb.append(summaryEntry.getTestResult().toString());
 			sb.append("\t");
 			sb.append(String.format( "%.2f", summaryEntry.getTime()) + "s");
@@ -88,12 +88,12 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	@Override
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
 			String category, String message, String testname, IResultService resultService) {
-		Collection<Benchmark> benchmarkSingleton = TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
+		final Collection<Benchmark> benchmarkSingleton = TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
 		if (benchmarkSingleton.size() != 1) {
 			throw new AssertionError("expected single benchmark result");
 		} else {
-			Benchmark benchmark = benchmarkSingleton.iterator().next();
-			double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.PLUGIN_NAME, TimeUnit.SECONDS);
+			final Benchmark benchmark = benchmarkSingleton.iterator().next();
+			final double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.PLUGIN_NAME, TimeUnit.SECONDS);
 			mResults.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()[0]));
 		}
 		

@@ -30,8 +30,10 @@ public class virtual_parse_stack {
     {
       /* sanity check */
       if (shadowing_stack == null)
-	throw new Exception(
-	  "Internal parser error: attempt to create null virtual stack");
+	{
+	    throw new Exception(
+	      "Internal parser error: attempt to create null virtual stack");
+	  }
 
       /* set up our internals */
       real_stack = shadowing_stack;
@@ -48,7 +50,7 @@ public class virtual_parse_stack {
    *  the bottom of the virtual portion of the stack, but is always left
    *  unmodified.
    */
-  private List<Symbol> real_stack;
+  private final List<Symbol> real_stack;
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -67,7 +69,7 @@ public class virtual_parse_stack {
    *  on the virtual stack).  When this portion of the stack becomes empty we 
    *  transfer elements from the underlying stack onto this stack. 
    */
-  private ArrayList<Integer> vstack;
+  private final ArrayList<Integer> vstack;
 
   /*-----------------------------------------------------------*/
   /*--- General Methods ---------------------------------------*/
@@ -81,10 +83,13 @@ public class virtual_parse_stack {
       Symbol stack_sym;
 
       /* don't transfer if the real stack is empty */
-      if (real_top == 0) return;
+      if (real_top == 0)
+	{
+	    return;
+	  }
 
       /* get a copy of the first Symbol we have not transfered */
-      stack_sym = (Symbol)real_stack.get(--real_top);
+      stack_sym = real_stack.get(--real_top);
 
       /* put the state number from the Symbol onto the virtual stack */
       vstack.add(stack_sym.parse_state);
@@ -106,8 +111,10 @@ public class virtual_parse_stack {
   public int top() throws java.lang.Exception
     {
       if (vstack.isEmpty())
-	throw new Exception(
-		  "Internal parser error: top() called on empty virtual stack");
+	{
+	    throw new Exception(
+	    	  "Internal parser error: top() called on empty virtual stack");
+	  }
 
       return vstack.get(vstack.size()-1).intValue();
     }
@@ -125,7 +132,9 @@ public class virtual_parse_stack {
 
       /* if we are now empty transfer an element (if there is one) */
       if (vstack.isEmpty())
-        get_fromreal();
+	{
+	    get_fromreal();
+	  }
     }
   
   /** Pop several elements from the stack */
@@ -135,7 +144,9 @@ public class virtual_parse_stack {
       if (vsize > numelems) 
 	{
 	  while (numelems-- > 0)
-	    vstack.remove(--vsize);
+	    {
+		vstack.remove(--vsize);
+	      }
 	}
       else 
 	{

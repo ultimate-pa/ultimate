@@ -22,7 +22,7 @@ public class UltimateGraphMLWriter<V, E> extends GraphMLWriter<V, E> {
 		bw.write("<key id=\"" + key + "\" attr.name=\"" + key + "\" for=\"" + type + "\"");
 		boolean closed = false;
 		// write out description if any
-		String desc = ds.description;
+		final String desc = ds.description;
 		if (desc != null) {
 			if (!closed) {
 				bw.write(">\n");
@@ -31,7 +31,7 @@ public class UltimateGraphMLWriter<V, E> extends GraphMLWriter<V, E> {
 			bw.write("<desc>" + desc + "</desc>\n");
 		}
 		// write out default if any
-		Object def = ds.default_value;
+		final Object def = ds.default_value;
 		if (def != null) {
 			if (!closed) {
 				bw.write(">\n");
@@ -39,9 +39,10 @@ public class UltimateGraphMLWriter<V, E> extends GraphMLWriter<V, E> {
 			}
 			bw.write("<default>" + def.toString() + "</default>\n");
 		}
-		if (!closed)
+		if (!closed) {
 			bw.write("/>\n");
-		else
+		} else {
 			bw.write("</key>\n");
+		}
 	}
 }

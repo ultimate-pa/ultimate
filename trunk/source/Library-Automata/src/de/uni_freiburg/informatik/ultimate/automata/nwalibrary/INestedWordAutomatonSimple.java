@@ -103,6 +103,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return The StateFactory which was used to construct the states of this
 	 * automaton.
 	 */
+	@Override
 	public StateFactory<STATE> getStateFactory();
 	
 	

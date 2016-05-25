@@ -43,9 +43,10 @@ public class SSATermTransformer extends TermTransformer{
 		mVariableMapping	= variableMapping;
 	}
 	
+	@Override
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
-			TermVariable tv		= (TermVariable) term;
+			final TermVariable tv		= (TermVariable) term;
 			if (mVariableMapping.containsKey(tv)){
 				super.setResult(mVariableMapping.get(tv));
 				return;

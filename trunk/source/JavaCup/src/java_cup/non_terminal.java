@@ -93,6 +93,7 @@ public class non_terminal extends symbol {
   /*-----------------------------------------------------------*/
 
   /** Indicate that this symbol is a non-terminal. */
+  @Override
   public boolean is_non_term() 
     {
       return true;
@@ -107,10 +108,12 @@ public class non_terminal extends symbol {
     {
       /* only look at things that aren't already marked nullable */
       if (_nullable)
-	return false;
+	{
+	    return false;
+	  }
       
       /* look and see if any of the productions now look nullable */
-      for (production prod : productions())
+      for (final production prod : productions())
 	{	
 	  /* if the production can go to empty, we are nullable */
 	  if (prod.check_nullable())
@@ -127,6 +130,7 @@ public class non_terminal extends symbol {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** convert to string */
+  @Override
   public String toString()
     {
       return super.toString() + "[" + index() + "]" + (nullable() ? "*" : "");

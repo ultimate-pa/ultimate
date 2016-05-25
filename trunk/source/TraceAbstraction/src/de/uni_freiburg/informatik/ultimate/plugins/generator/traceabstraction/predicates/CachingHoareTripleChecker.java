@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * IHoareTripleChecker that caches already computed results.
@@ -81,11 +81,11 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	private Validity extendedCacheCheckInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		boolean someResultWasUnknown = false;
 		{
-			Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
-			Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
-			for (IPredicate strengthenedPre : strongerThanPre) {
-				for (IPredicate weakenedSucc : weakerThanSucc) {
-					Validity result = mInternalCache.get(strengthenedPre, act, weakenedSucc);
+			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
+			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
+			for (final IPredicate strengthenedPre : strongerThanPre) {
+				for (final IPredicate weakenedSucc : weakerThanSucc) {
+					final Validity result = mInternalCache.get(strengthenedPre, act, weakenedSucc);
 					if (result != null) {
 						switch (result) {
 						case VALID:
@@ -106,11 +106,11 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 			}
 		}
 		{
-			Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-			Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
-			for (IPredicate weakenedPre : weakerThanPre) {
-				for (IPredicate strengthenedSucc : strongerThanSucc) {
-					Validity result = mInternalCache.get(weakenedPre, act, strengthenedSucc);
+			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
+			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			for (final IPredicate weakenedPre : weakerThanPre) {
+				for (final IPredicate strengthenedSucc : strongerThanSucc) {
+					final Validity result = mInternalCache.get(weakenedPre, act, strengthenedSucc);
 					if (result != null) {
 						switch (result) {
 						case VALID:

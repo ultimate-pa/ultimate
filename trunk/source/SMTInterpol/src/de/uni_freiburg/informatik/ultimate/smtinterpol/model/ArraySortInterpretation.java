@@ -43,29 +43,31 @@ public class ArraySortInterpretation implements SortInterpretation {
 
 	@Override
 	public int ensureCapacity(int numValues) {
-		while (mValues.size() < numValues)
+		while (mValues.size() < numValues) {
 			extendFresh();
+		}
 		return mValues.size();
 	}
 
 	public int createEmptyArrayValue() {
-		int val = mValues.size();
-		ArrayValue fresh = new ArrayValue();
+		final int val = mValues.size();
+		final ArrayValue fresh = new ArrayValue();
 		mValues.add(val, fresh);
 		return val;
 	}
 
 	@Override
 	public int extendFresh() {
-		int val = mValues.size();
-		ArrayValue fresh = new ArrayValue();
+		final int val = mValues.size();
+		final ArrayValue fresh = new ArrayValue();
 		mValueSort.ensureCapacity(2);
-		int idxval = mIndexSort.extendFresh();
-		int old = fresh.store(idxval, 1);
+		final int idxval = mIndexSort.extendFresh();
+		final int old = fresh.store(idxval, 1);
 		assert old == 1 : "Fresh index already used!";
 		mValues.add(val, fresh);
-		if (mUnifier != null)
+		if (mUnifier != null) {
 			mUnifier.put(fresh, val);
+		}
 		return val;
 	}
 
@@ -76,10 +78,12 @@ public class ArraySortInterpretation implements SortInterpretation {
 
 	@Override
 	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mValues.size())
+		if (idx < 0 || idx >= mValues.size()) {
 			throw new IndexOutOfBoundsException();
-		if (idx == 0)
+		}
+		if (idx == 0) {
 			return t.term(t.getFunctionWithResult("@0", null, s));
+		}
 		return mValues.get(idx).toSMTLIB(s, t, mIndexSort, mValueSort);
 	}
 
@@ -105,15 +109,16 @@ public class ArraySortInterpretation implements SortInterpretation {
 		if (mUnifier == null) {
 			mUnifier = new HashMap<ArrayValue, Integer>();
 			for (int i = 0; i < mValues.size(); ++i) {
-				Integer prev = mUnifier.put(mValues.get(i), i);
+				final Integer prev = mUnifier.put(mValues.get(i), i);
 				assert (prev == null) : "Same array values at different indices";
 			}
 		}
-		Integer res = mUnifier.get(value);
-		if (res != null)
+		final Integer res = mUnifier.get(value);
+		if (res != null) {
 			return res;
+		}
 		// Create a new element
-		int idx = mValues.size();
+		final int idx = mValues.size();
 		mValues.add(idx, value);
 		mUnifier.put(value, idx);
 		return idx;

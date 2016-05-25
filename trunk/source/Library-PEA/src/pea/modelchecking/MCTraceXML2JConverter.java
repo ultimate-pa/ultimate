@@ -26,6 +26,10 @@
  */
 package pea.modelchecking;
 
+import java.io.IOException;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -34,14 +38,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.TreeSet;
-
+import pea.CDD;
 import pea.CounterTrace;
 import pea.EventDecision;
-import pea.CDD;
 
 /**
  * The class <code>MCTraceXML2JConverter</code> converts a given
@@ -79,15 +78,15 @@ public class MCTraceXML2JConverter {
      */
     public MCTraceXML2JConverter(String loggerName, boolean useZDecision) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = ILogger
+            logger = ILogger
                     .getLogger(MCTraceXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = ILogger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.formulaConverter = new FormulaXML2JConverter(useZDecision);
+        formulaConverter = new FormulaXML2JConverter(useZDecision);
 
-        this.initialiseParser();
+        initialiseParser();
     }
 
     /**
@@ -109,18 +108,18 @@ public class MCTraceXML2JConverter {
      * @see org.apache.xerces.parsers.DOMParser;
      */
     private void initialiseParser() throws Exception {
-        this.parser = new DOMParser();
+        parser = new DOMParser();
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\" successful");
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, false);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, false);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\" successful");
 
     }
@@ -134,7 +133,7 @@ public class MCTraceXML2JConverter {
      *            Node for which the traces need to be converted
      */
     public MCTrace[] convert(Element mcFormNode) {
-        return this.buildTraceModel(mcFormNode);
+        return buildTraceModel(mcFormNode);
     }
 
     /**
@@ -154,8 +153,8 @@ public class MCTraceXML2JConverter {
      *  
      */
     public MCTrace[] convert(String file) throws SAXException, IOException {
-        Document document = this.parse(file);
-        return this.buildTraceModel(document.getDocumentElement());
+        final Document document = parse(file);
+        return buildTraceModel(document.getDocumentElement());
     }
 
     /**
@@ -163,10 +162,10 @@ public class MCTraceXML2JConverter {
      * or if the file cannot be accessed.
      */
     private Document parse(String file) throws SAXException, IOException {
-        this.logger.debug("Trying to parse file=\"" + file + "\"");
-        this.parser.parse(file);
-        this.logger.debug("Parsing file=\"" + file + "\" successful");
-        return this.parser.getDocument();
+        logger.debug("Trying to parse file=\"" + file + "\"");
+        parser.parse(file);
+        logger.debug("Parsing file=\"" + file + "\" successful");
+        return parser.getDocument();
     }
 
     /**
@@ -181,16 +180,16 @@ public class MCTraceXML2JConverter {
      *  
      */
     private MCTrace[] buildTraceModel(Element node) {
-        NodeList mcTraceNodes = node.getElementsByTagName(XMLTags.MCTRACE_TAG);
+        final NodeList mcTraceNodes = node.getElementsByTagName(XMLTags.MCTRACE_TAG);
 
-        int traceCount = mcTraceNodes.getLength();
-        this.logger.info("MCTraceCount    = " + traceCount);
+        final int traceCount = mcTraceNodes.getLength();
+        logger.info("MCTraceCount    = " + traceCount);
 
-        MCTrace[] traces = new MCTrace[traceCount];
+        final MCTrace[] traces = new MCTrace[traceCount];
         for (int i = 0; i < traceCount; i++) {
-            this.logger.info("Trying to build mcTrace " + i);
-            traces[i] = this.buildMCTrace((Element) mcTraceNodes.item(i));
-            this.logger.info("Building mcTrace " + i + " successful");
+            logger.info("Trying to build mcTrace " + i);
+            traces[i] = buildMCTrace((Element) mcTraceNodes.item(i));
+            logger.info("Building mcTrace " + i + " successful");
         }
 
         return traces;
@@ -205,34 +204,34 @@ public class MCTraceXML2JConverter {
      * @return MCTrace The corresponding Java object
      */
     private MCTrace buildMCTrace(Element node) {
-        MCTrace mcTrace = new MCTrace();
+        final MCTrace mcTrace = new MCTrace();
 
         if (node.hasAttribute(XMLTags.ENTRYSYNC_TAG)) {
-            String entrySync = node.getAttribute(XMLTags.ENTRYSYNC_TAG);
+            final String entrySync = node.getAttribute(XMLTags.ENTRYSYNC_TAG);
             if (entrySync.equals("")) {
                 throw new RuntimeException(
                         "Existing entry sync events are not allowed to have empty names");
             }
             mcTrace.setEntrySync(EventDecision.create(entrySync));
-            this.logger.info("EntrySync       = " + entrySync);
+            logger.info("EntrySync       = " + entrySync);
 
         }
 
-        NodeList traceNodes = node.getElementsByTagName(XMLTags.TRACE_TAG);
+        final NodeList traceNodes = node.getElementsByTagName(XMLTags.TRACE_TAG);
         if (traceNodes.getLength() != 1) {
             throw new RuntimeException("Trace count != 1 is not allowed");
         }
-        this.logger.info("Trying to build trace");
-        this.buildTrace((Element) traceNodes.item(0), mcTrace);
-        this.logger.info("Building trace successful");
+        logger.info("Trying to build trace");
+        buildTrace((Element) traceNodes.item(0), mcTrace);
+        logger.info("Building trace successful");
 
-        String exitSync = node.getAttribute(XMLTags.EXITSYNC_TAG);
+        final String exitSync = node.getAttribute(XMLTags.EXITSYNC_TAG);
         if (exitSync.equals("")) {
             throw new RuntimeException(
                     "Exit sync events are not allowed to be empty");
         }
         mcTrace.setExitSync(EventDecision.create(exitSync));
-        this.logger.info("ExitSync        = " + exitSync);
+        logger.info("ExitSync        = " + exitSync);
 
         return mcTrace;
     }
@@ -247,22 +246,22 @@ public class MCTraceXML2JConverter {
      * @return MCTrace The Java object that is currently built up
      */
     private void buildTrace(Element node, MCTrace trace) {
-        NodeList children = node.getChildNodes();
+        final NodeList children = node.getChildNodes();
 
-        NodeList phaseNodes = node.getElementsByTagName(XMLTags.PHASE_TAG);
-        int phaseCount = phaseNodes.getLength();
+        final NodeList phaseNodes = node.getElementsByTagName(XMLTags.PHASE_TAG);
+        final int phaseCount = phaseNodes.getLength();
         if (phaseCount == 0) {
             throw new RuntimeException("A trace with 0 phases is not allowed");
         }
-        this.logger.info("PhaseCount      = " + phaseCount);
+        logger.info("PhaseCount      = " + phaseCount);
 
-        CounterTrace.DCPhase[] phases = new CounterTrace.DCPhase[phaseCount];
+        final CounterTrace.DCPhase[] phases = new CounterTrace.DCPhase[phaseCount];
 
         int actPhase = 0;
-        this.logger.info("Trying to build phase " + actPhase);
+        logger.info("Trying to build phase " + actPhase);
         phases[actPhase] = 
-	    this.buildPhase(CDD.TRUE, (Element) phaseNodes.item(actPhase));
-        this.logger.info("Building phase " + actPhase + " successful");
+	    buildPhase(CDD.TRUE, (Element) phaseNodes.item(actPhase));
+        logger.info("Building phase " + actPhase + " successful");
         actPhase++;
 
 	CDD entryEvents = CDD.TRUE;
@@ -284,21 +283,21 @@ public class MCTraceXML2JConverter {
             }
             actNode = (Element) children.item(traceElementCounter);
 
-            String actName = actNode.getNodeName();
+            final String actName = actNode.getNodeName();
 
             //Add a Phase.
             if (actName.equals(XMLTags.PHASE_TAG)) {
-                this.logger.info("Trying to build phase " + actPhase);
-                phases[actPhase] = this.buildPhase(entryEvents, actNode);
-                this.logger.info("EntryEvents     = " + entryEvents);
-                this.logger.info("Building phase " + actPhase + " successful");
+                logger.info("Trying to build phase " + actPhase);
+                phases[actPhase] = buildPhase(entryEvents, actNode);
+                logger.info("EntryEvents     = " + entryEvents);
+                logger.info("Building phase " + actPhase + " successful");
 		entryEvents = CDD.TRUE;
                 actPhase++;
             }
             //Add an Event
             if (actName.equals(XMLTags.EVENT_TAG)) {
-		CDD event = EventDecision.create(getNameAttribute(actNode));
-                if (this.getSpecAttribute(actNode) == true) {
+		final CDD event = EventDecision.create(getNameAttribute(actNode));
+                if (getSpecAttribute(actNode) == true) {
 		    entryEvents = entryEvents.and(event);
                 } else {
 		    entryEvents = entryEvents.and(event.negate());
@@ -314,20 +313,19 @@ public class MCTraceXML2JConverter {
                 continue;
             }
             actNode = (Element) children.item(k);
-            if (this.getSpecAttribute(actNode) == true) {
-                missingEvents = missingEvents.and(EventDecision.create(this
-                        .getNameAttribute(actNode)));
+            if (getSpecAttribute(actNode) == true) {
+                missingEvents = missingEvents.and(EventDecision.create(getNameAttribute(actNode)));
             } else {
                 missingEvents = missingEvents.and(EventDecision.create('/',
-                        this.getNameAttribute(actNode)));
+                        getNameAttribute(actNode)));
             }
         }
-        this.logger.info("MissingEvents   = " + missingEvents);
+        logger.info("MissingEvents   = " + missingEvents);
         trace.setMissingEvents(missingEvents);
 
-        boolean spec = this.getSpecAttribute(node);
+        final boolean spec = getSpecAttribute(node);
         trace.setSpec(spec);
-        this.logger.info("TraceSpec       = " + spec);
+        logger.info("TraceSpec       = " + spec);
 
     }
 
@@ -335,7 +333,7 @@ public class MCTraceXML2JConverter {
      * Gives the name of an element. Raises an exception if the name is empty.
      */
     private String getNameAttribute(Element element) {
-        String name = element.getAttribute(XMLTags.NAME_Tag);
+        final String name = element.getAttribute(XMLTags.NAME_Tag);
         if (name.equals("")) {
             throw new RuntimeException("Name is not allowed to be empty");
         }
@@ -355,41 +353,41 @@ public class MCTraceXML2JConverter {
 					    Element phaseNode) {
         int boundType = CounterTrace.BOUND_NONE;
         double bound = 0;
-        NodeList timeBounds = phaseNode
+        final NodeList timeBounds = phaseNode
                 .getElementsByTagName(XMLTags.TIMEBOUND_TAG);
         if (timeBounds.getLength() > 1) {
             throw new RuntimeException("Time bound count > 1 is not allowed");
         }
         if (timeBounds.getLength() == 1) {
-            Element timeBoundNode = (Element) timeBounds.item(0);
-            boundType = this.getOperator(timeBoundNode);
-            bound = this.getTimeBound(timeBoundNode);
+            final Element timeBoundNode = (Element) timeBounds.item(0);
+            boundType = getOperator(timeBoundNode);
+            bound = getTimeBound(timeBoundNode);
         }
 
-        NodeList stateInvariantNodes = phaseNode
+        final NodeList stateInvariantNodes = phaseNode
                 .getElementsByTagName(XMLTags.STATEINVARIANT_TAG);
         if (stateInvariantNodes.getLength() != 1) {
             throw new RuntimeException(
                     "Stateinvariant count != 1 is not allowed");
         }
-        Element invNode = (Element) stateInvariantNodes.item(0);
-        CDD inv = formulaConverter.convert(invNode);
+        final Element invNode = (Element) stateInvariantNodes.item(0);
+        final CDD inv = formulaConverter.convert(invNode);
 
-        Set<String> forbidden = new TreeSet<String>();
-        NodeList forbiddenEventNodes = phaseNode
+        final Set<String> forbidden = new TreeSet<String>();
+        final NodeList forbiddenEventNodes = phaseNode
                 .getElementsByTagName(XMLTags.FORBIDDENEVENT_TAG);
         if (forbiddenEventNodes.getLength() > 0) {
-            int forbiddenEventCount = forbiddenEventNodes.getLength();
+            final int forbiddenEventCount = forbiddenEventNodes.getLength();
             for (int i = 0; i < forbiddenEventCount; i++) {
-                Element actForbiddenEvent = (Element) forbiddenEventNodes
+                final Element actForbiddenEvent = (Element) forbiddenEventNodes
                         .item(i);
-                forbidden.add(this.getNameAttribute(actForbiddenEvent));
+                forbidden.add(getNameAttribute(actForbiddenEvent));
             }
         }
 
         boolean allowEmpty = false;
         if (phaseNode.hasAttribute(XMLTags.ALLOWEMPTY_TAG)) {
-            String allowEmpyString = phaseNode
+            final String allowEmpyString = phaseNode
                     .getAttribute(XMLTags.ALLOWEMPTY_TAG);
             if (!allowEmpyString.equals(XMLTags.TRUE_CONST)
                     && !allowEmpyString.equals(XMLTags.FALSE_CONST)) {
@@ -401,14 +399,14 @@ public class MCTraceXML2JConverter {
             allowEmpty = Boolean.parseBoolean(allowEmpyString);
         }
 
-        CounterTrace.DCPhase phase = 
+        final CounterTrace.DCPhase phase = 
 	    new CounterTrace.DCPhase(entryEvents, inv, boundType,
 				     (int) bound, forbidden, allowEmpty);
-        this.logger.info("PhaseBoundType  = " + boundType);
-        this.logger.info("PhaseBound      = " + (int) bound);
-        this.logger.info("PhaseInvariant  = " + inv);
-        this.logger.info("ForbiddenEvents = " + forbidden);
-        this.logger.info("AllowEmpty      = " + allowEmpty);
+        logger.info("PhaseBoundType  = " + boundType);
+        logger.info("PhaseBound      = " + (int) bound);
+        logger.info("PhaseInvariant  = " + inv);
+        logger.info("ForbiddenEvents = " + forbidden);
+        logger.info("AllowEmpty      = " + allowEmpty);
         return phase;
 
     }
@@ -421,7 +419,7 @@ public class MCTraceXML2JConverter {
      * @return double The double value
      */
     private double getTimeBound(Element timeBound) {
-        String bound = timeBound.getAttribute(XMLTags.BOUND_TAG);
+        final String bound = timeBound.getAttribute(XMLTags.BOUND_TAG);
         return (new Double(bound)).doubleValue();
     }
 
@@ -435,15 +433,16 @@ public class MCTraceXML2JConverter {
      *         class.
      */
     private int getOperator(Element timeBound) {
-        String op = timeBound.getAttribute(XMLTags.OPERATOR_TAG);
-        if (op.equals(XMLTags.GREATEREQUAL_CONST))
-            return CounterTrace.BOUND_GREATEREQUAL;
-        else if (op.equals(XMLTags.GREATER_CONST))
-            return CounterTrace.BOUND_GREATER;
-        else if (op.equals(XMLTags.LESS_CONST))
-            return CounterTrace.BOUND_LESS;
-        else if (op.equals(XMLTags.LESSEQUAL_CONST))
-            return CounterTrace.BOUND_LESSEQUAL;
+        final String op = timeBound.getAttribute(XMLTags.OPERATOR_TAG);
+        if (op.equals(XMLTags.GREATEREQUAL_CONST)) {
+			return CounterTrace.BOUND_GREATEREQUAL;
+		} else if (op.equals(XMLTags.GREATER_CONST)) {
+			return CounterTrace.BOUND_GREATER;
+		} else if (op.equals(XMLTags.LESS_CONST)) {
+			return CounterTrace.BOUND_LESS;
+		} else if (op.equals(XMLTags.LESSEQUAL_CONST)) {
+			return CounterTrace.BOUND_LESSEQUAL;
+		}
         throw new RuntimeException("Operator needs to be " + "\""
                 + XMLTags.GREATEREQUAL_CONST + "\", " + "\""
                 + XMLTags.GREATER_CONST + "\", " + "\"" + XMLTags.LESS_CONST
@@ -459,7 +458,7 @@ public class MCTraceXML2JConverter {
      * @return boolean The boolean representation of the spec attribute
      */
     private boolean getSpecAttribute(Element element) {
-        String spec = element.getAttribute(XMLTags.SPEC_TAG);
+        final String spec = element.getAttribute(XMLTags.SPEC_TAG);
         if (!spec.equals(XMLTags.TRUE_CONST)
                 && !spec.equals(XMLTags.FALSE_CONST)) {
             throw new RuntimeException(
@@ -475,10 +474,10 @@ public class MCTraceXML2JConverter {
         PropertyConfigurator
                 .configure("/home/roland/Desktop/Arbeit/PUMLaut/Parser/src/LogConfiguration.txt");
         try {
-            MCTraceXML2JConverter fileParser = new MCTraceXML2JConverter(false);
+            final MCTraceXML2JConverter fileParser = new MCTraceXML2JConverter(false);
             fileParser
                     .convert("file:/home/roland/Desktop/Arbeit/PUMLaut/ModelCheckForm/ModelCheckForm.xml");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println("Exception raised");
             e.printStackTrace();
         }

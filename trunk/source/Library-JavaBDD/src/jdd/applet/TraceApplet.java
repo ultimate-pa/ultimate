@@ -2,15 +2,27 @@
 package jdd.applet;
 
 
-import java.io.*;
+import java.applet.Applet;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Checkbox;
+import java.awt.Choice;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextArea;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 // import java.net.*;
+import java.io.IOException;
+import java.io.StringBufferInputStream;
 
-import java.applet.*;
-import java.awt.*;
-import java.awt.event.*;
-
-import jdd.util.*;
-import jdd.bdd.debug.*;
+import jdd.bdd.debug.BDDTrace;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.TextAreaTarget;
 
 
 public class TraceApplet extends Applet implements ActionListener  {
@@ -19,7 +31,7 @@ public class TraceApplet extends Applet implements ActionListener  {
 	private Checkbox cbVerbose;
 	private Choice initialNodes;
 
-	private String initial_text =
+	private final String initial_text =
 		"MODULE c17\n"+
 		"INPUT\n"+
 		"	1gat,2gat,3gat,6gat,7gat;\n"+
@@ -36,12 +48,12 @@ public class TraceApplet extends Applet implements ActionListener  {
 		"ENDMODULE\n";
 
 	public TraceApplet() {
-		Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
+		final Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
 		setBackground( bgcolor );
 
 		setLayout( new BorderLayout() );
 
-		Panel p = new Panel( new FlowLayout( FlowLayout.LEFT) );
+		final Panel p = new Panel( new FlowLayout( FlowLayout.LEFT) );
 		p.setBackground( bgcolor );
 		add(p, BorderLayout.NORTH);
 		p.add( bRun = new Button("Run") );
@@ -88,10 +100,14 @@ public class TraceApplet extends Applet implements ActionListener  {
 	}
 
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
-		if(src == bRun) doRun();
-		else if(src == bClear) doClear();
+		final Object src = e.getSource();
+		if(src == bRun) {
+			doRun();
+		} else if(src == bClear) {
+			doClear();
+		}
 
 	}
 
@@ -103,11 +119,11 @@ public class TraceApplet extends Applet implements ActionListener  {
 
 	private void doRun() {
 		BDDTrace.verbose = Options.verbose = cbVerbose.getState();
-		StringBufferInputStream sbis = new StringBufferInputStream( code.getText() );
-		int nodes = Integer.parseInt( initialNodes.getSelectedItem() );
+		final StringBufferInputStream sbis = new StringBufferInputStream( code.getText() );
+		final int nodes = Integer.parseInt( initialNodes.getSelectedItem() );
 		try {
-			BDDTrace bt = new BDDTrace("(memory)", sbis, nodes );
-		} catch(IOException exx) {
+			final BDDTrace bt = new BDDTrace("(memory)", sbis, nodes );
+		} catch(final IOException exx) {
 			JDDConsole.out.println("ERROR: " + exx);
 		}
 

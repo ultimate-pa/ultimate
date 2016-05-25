@@ -54,9 +54,9 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 
 	@Override
 	public Set<E> next() {
-		Set<E> result = new HashSet<E>();
+		final Set<E> result = new HashSet<E>();
 		for (int i=0; i<array.length; i++) {
-			boolean bitSet = BigInteger.valueOf(currentElement).testBit(i); 
+			final boolean bitSet = BigInteger.valueOf(currentElement).testBit(i); 
 			if (bitSet) {
 				result.add(array[i]);
 			}

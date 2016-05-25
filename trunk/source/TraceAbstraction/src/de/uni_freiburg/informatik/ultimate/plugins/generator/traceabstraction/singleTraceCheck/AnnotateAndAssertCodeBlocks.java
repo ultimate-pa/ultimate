@@ -74,8 +74,8 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertPrecondition() {
-		String name = precondAnnotation();
-		Term annotated = annotateAndAssertTerm(mSSA.getPrecondition(), name);
+		final String name = precondAnnotation();
+		final Term annotated = annotateAndAssertTerm(mSSA.getPrecondition(), name);
 		return annotated;
 	}
 
@@ -84,9 +84,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertPostcondition() {
-		String name = postcondAnnotation();
-		Term negatedPostcondition = mScript.term("not", mSSA.getPostcondition());
-		Term annotated = annotateAndAssertTerm(negatedPostcondition, name);
+		final String name = postcondAnnotation();
+		final Term negatedPostcondition = mScript.term("not", mSSA.getPostcondition());
+		final Term annotated = annotateAndAssertTerm(negatedPostcondition, name);
 		return annotated;
 	}
 
@@ -101,8 +101,8 @@ public class AnnotateAndAssertCodeBlocks {
 		} else {
 			name = internalAnnotation(position);
 		}
-		Term original = mSSA.getFormulaFromNonCallPos(position);
-		Term annotated = annotateAndAssertTerm(original, name);
+		final Term original = mSSA.getFormulaFromNonCallPos(position);
+		final Term annotated = annotateAndAssertTerm(original, name);
 		return annotated;
 	}
 
@@ -115,9 +115,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
-		String name = localVarAssignemntCallAnnotation(position);
-		Term indexed = mSSA.getLocalVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = localVarAssignemntCallAnnotation(position);
+		final Term indexed = mSSA.getLocalVarAssignment(position);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -126,9 +126,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
-		String name = globalVarAssignemntAnnotation(position);
-		Term indexed = mSSA.getGlobalVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = globalVarAssignemntAnnotation(position);
+		final Term indexed = mSSA.getGlobalVarAssignment(position);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -137,9 +137,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
-		String name = oldVarAssignemntCallAnnotation(position);
-		Term indexed = mSSA.getOldVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = oldVarAssignemntCallAnnotation(position);
+		final Term indexed = mSSA.getOldVarAssignment(position);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -148,9 +148,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertPendingContext(int positionOfPendingContext, int pendingContextCode) {
-		String name = pendingContextAnnotation(pendingContextCode);
-		Term indexed = mSSA.getPendingContext(positionOfPendingContext);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = pendingContextAnnotation(pendingContextCode);
+		final Term indexed = mSSA.getPendingContext(positionOfPendingContext);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -159,9 +159,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(int positionOfPendingReturn, int pendingContextCode) {
-		String name = localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = localVarAssignemntPendingReturnAnnotation(pendingContextCode);
+		final Term indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -170,9 +170,9 @@ public class AnnotateAndAssertCodeBlocks {
 	}
 
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(int positionOfPendingReturn, int pendingContextCode) {
-		String name = oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
-		Term annotated = annotateAndAssertTerm(indexed, name);
+		final String name = oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
+		final Term indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
+		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -182,10 +182,10 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertTerm(Term term, String name) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
-		Annotation annot = new Annotation(":named", name);
-		Term annotTerm = mScript.annotate(term, annot);
+		final Annotation annot = new Annotation(":named", name);
+		final Term annotTerm = mScript.annotate(term, annot);
 		mSmtManager.assertTerm(annotTerm);
-		Term constantRepresentingAnnotatedTerm = mScript.term(name);
+		final Term constantRepresentingAnnotatedTerm = mScript.term(name);
 		return constantRepresentingAnnotatedTerm;
 	}
 	

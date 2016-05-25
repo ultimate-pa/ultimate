@@ -64,8 +64,8 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		IGNORE, TERMINATION, TERMINATIONDERIVABLE, NONTERMINATION, NONTERMINATIONDERIVABLE, UNKNOWN, ERROR, UNSPECIFIED
 	}
 
-	private String minput_file_name;
-	private ExpectedResult mexpected_result;
+	private final String minput_file_name;
+	private final ExpectedResult mexpected_result;
 
 	public LassoRankerTestResultDecider(File inputFile) {
 		minput_file_name = inputFile.getName();
@@ -92,11 +92,11 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			br = new BufferedReader(new FileReader(inputFile));
 			line = br.readLine();
 			br.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			line = null;
 		}
 		if (line != null && line.startsWith("//#r")) {
-			String expected = line.substring(4).toLowerCase();
+			final String expected = line.substring(4).toLowerCase();
 			if (expected.equals("ignore")) {
 				return ExpectedResult.IGNORE;
 			} else if (expected.equals("termination")) {
@@ -135,10 +135,10 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		} else if (mexpected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
-			Map<String, List<IResult>> resultMap = resultService.getResults();
-			List<IResult> results = resultMap.get("de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker");
+			final Map<String, List<IResult>> resultMap = resultService.getResults();
+			final List<IResult> results = resultMap.get("de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker");
 			if (results != null) {
-				IResult lastResult = results.get(results.size() - 1);
+				final IResult lastResult = results.get(results.size() - 1);
 				customMessages.add("Expected Result: " + mexpected_result.toString());
 				customMessages.add("Results: " + results.toString());
 

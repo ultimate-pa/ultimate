@@ -32,7 +32,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -66,18 +65,18 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		mOperand = operand;
 
 		final HashRelation<OutgoingInCaSymbols<STATE, LETTER>, STATE> symbols2states = new HashRelation<>();
-		for (STATE inputState : mOperand.getStates()) {
+		for (final STATE inputState : mOperand.getStates()) {
 			symbols2states.addPair(computeOutgoingSymbols(inputState), inputState);
 		}
 		mResult = new LinkedHashSet<>();
-		for(OutgoingInCaSymbols<STATE, LETTER> outgoingSymbols : symbols2states.getDomain()) {
+		for(final OutgoingInCaSymbols<STATE, LETTER> outgoingSymbols : symbols2states.getDomain()) {
 			mResult.add(Collections.unmodifiableSet(symbols2states.getImage(outgoingSymbols)));
 		}
 	}
 	
 	private OutgoingInCaSymbols<STATE,LETTER> computeOutgoingSymbols(STATE state) {
-		Set<LETTER> lettersInternal = mOperand.lettersInternal(state);
-		Set<LETTER> lettersCall = mOperand.lettersCall(state);
+		final Set<LETTER> lettersInternal = mOperand.lettersInternal(state);
+		final Set<LETTER> lettersCall = mOperand.lettersCall(state);
 		return new OutgoingInCaSymbols<>(lettersInternal, lettersCall);
 		
 	}
@@ -100,23 +99,30 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		}
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			OutgoingInCaSymbols other = (OutgoingInCaSymbols) obj;
+			}
+			final OutgoingInCaSymbols other = (OutgoingInCaSymbols) obj;
 			if (mCall == null) {
-				if (other.mCall != null)
+				if (other.mCall != null) {
 					return false;
-			} else if (!mCall.equals(other.mCall))
+				}
+			} else if (!mCall.equals(other.mCall)) {
 				return false;
+			}
 			if (mInternal == null) {
-				if (other.mInternal != null)
+				if (other.mInternal != null) {
 					return false;
-			} else if (!mInternal.equals(other.mInternal))
+				}
+			} else if (!mInternal.equals(other.mInternal)) {
 				return false;
+			}
 			return true;
 		}
 		@Override

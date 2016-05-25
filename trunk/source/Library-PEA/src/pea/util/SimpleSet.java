@@ -42,22 +42,26 @@ public class SimpleSet<T> extends AbstractSet<T> implements Cloneable
 	elementObjects = (T[]) new Object[initialSize];
     }
 
-    public int size() {
+    @Override
+	public int size() {
 	return count;
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
+	@SuppressWarnings("unchecked")
     public boolean add(T element) {
-	if (element == null)
-	    throw new NullPointerException();
+	if (element == null) {
+		throw new NullPointerException();
+	}
 
 	for (int i=0; i< count; i++) {
-	    if (element.equals(elementObjects[i]))
-		return false;
+	    if (element.equals(elementObjects[i])) {
+			return false;
+		}
 	}
 	
 	if (count == elementObjects.length) {
-            T[] newArray = (T[]) new Object[(count+1)*3/2];
+            final T[] newArray = (T[]) new Object[(count+1)*3/2];
             System.arraycopy(elementObjects,0,newArray,0,count);
             elementObjects = newArray;
         }
@@ -65,33 +69,39 @@ public class SimpleSet<T> extends AbstractSet<T> implements Cloneable
 	return true;
     }
 	
-    @SuppressWarnings("unchecked")
+    @Override
+	@SuppressWarnings("unchecked")
     public Object clone() {
         try {
-            SimpleSet<T> other = (SimpleSet<T>) super.clone();
-	    other.elementObjects = (T[]) elementObjects.clone();
+            final SimpleSet<T> other = (SimpleSet<T>) super.clone();
+	    other.elementObjects = elementObjects.clone();
             return other;
-        } catch (CloneNotSupportedException ex) {
+        } catch (final CloneNotSupportedException ex) {
             throw new InternalError("Clone?");
         }
     }
 
-    public Iterator<T> iterator() {
+    @Override
+	public Iterator<T> iterator() {
 	return new Iterator<T>() {
 	    int pos = 0;
 
-	    public boolean hasNext() {
+	    @Override
+		public boolean hasNext() {
 		return pos < count;
 	    }
 	    
-	    public T next() {
+	    @Override
+		public T next() {
                 return elementObjects[pos++];
 	    }
 	  
-	    public void remove() {
-		if (pos < count)
-		    System.arraycopy(elementObjects, pos, 
+	    @Override
+		public void remove() {
+		if (pos < count) {
+			System.arraycopy(elementObjects, pos, 
 				     elementObjects, pos-1, count - pos);
+		}
 		count--;
 		pos--;
 	    }

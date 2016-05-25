@@ -1,6 +1,6 @@
 package jdd.util.math;
 
-import jdd.util.*;
+import jdd.util.Test;
 
 /**
  * prime-number support, mostly used in the hash-tables
@@ -12,12 +12,20 @@ public final class Prime {
 	private static final int NUmTRIALS = 8;
 
 	private static final long witness(long a, long i, long n) {
-		if(i == 0) return 1;
-		long x = witness( a, i /2, n);
-		if(x == 0) return 0;
+		if(i == 0) {
+			return 1;
+		}
+		final long x = witness( a, i /2, n);
+		if(x == 0) {
+			return 0;
+		}
 		long y = (x * x) % n;
-		if( y == 1 && x != 1 && x != n -1) return 0;
-		if( (i %2) == 1) y = (a * y) % n;
+		if( y == 1 && x != 1 && x != n -1) {
+			return 0;
+		}
+		if( (i %2) == 1) {
+			y = (a * y) % n;
+		}
 		return y;
 	}
 
@@ -28,18 +36,22 @@ public final class Prime {
 	public static final boolean isPrime(int n) {
 		// small primes ?
 		if(n < 20) {
-			if( (n == 1) || (n == 2) || (n == 3) || (n == 5) || (n == 7) || (n == 11) || (n == 13) || (n == 17) || (n == 19))
+			if( (n == 1) || (n == 2) || (n == 3) || (n == 5) || (n == 7) || (n == 11) || (n == 13) || (n == 17) || (n == 19)) {
 				return true;
+			}
 		}
 
 		// multiple of small primes?
-		if(( (n % 2) == 0)||  ( (n % 3) == 0)||  ( (n % 5) == 0)||  ( (n % 7) == 0)||  ( (n % 11) == 0)||  ( (n % 13) == 0)||  ( (n % 17) == 0)||  ( (n % 19) == 0))
+		if(( (n % 2) == 0)||  ( (n % 3) == 0)||  ( (n % 5) == 0)||  ( (n % 7) == 0)||  ( (n % 11) == 0)||  ( (n % 13) == 0)||  ( (n % 17) == 0)||  ( (n % 19) == 0)) {
 			return false;
+		}
 
 		// ... not? take out the big guns now:
-		for(int c = 0; c < NUmTRIALS; c++)
-			if( witness( 2 + (long)( Math.random() * (n -2)), n-1, n) != 1)
+		for(int c = 0; c < NUmTRIALS; c++) {
+			if( witness( 2 + (long)( Math.random() * (n -2)), n-1, n) != 1) {
 				return false;
+			}
+		}
 
 		// yes sir, we have a winner
 		return true;
@@ -49,9 +61,13 @@ public final class Prime {
 	 * get the closest prime larger than "n", including "n" itself
 	 */
 	public static final int nextPrime(int n) {
-		if( (n % 2) == 0) n++;
+		if( (n % 2) == 0) {
+			n++;
+		}
 		for(;;) {
-			if(isPrime(n)) return n;
+			if(isPrime(n)) {
+				return n;
+			}
 			n += 2;
 		}
 	}
@@ -61,9 +77,13 @@ public final class Prime {
 	 * get the closest prime smaller than "n", including "n" itself
 	 */
 	public static final int prevPrime(int n) {
-		if( (n % 2) == 0) n--;
+		if( (n % 2) == 0) {
+			n--;
+		}
 		for(;;) {
-			if(isPrime(n)) return n;
+			if(isPrime(n)) {
+				return n;
+			}
 			n -= 2;
 		}
 	}
@@ -71,14 +91,28 @@ public final class Prime {
 
 	// ------------------------- [ testbed starts here ] --------------------------------
 	private static boolean dumb_prime_check(int n) {
-		int n0 = (int) Math.sqrt(n);
-		if(n == 0) return false;
-		if(n == 1) return true;
-		for(int i = 2; i <= n0; i++) if( (n % i) == 0) return false;
+		final int n0 = (int) Math.sqrt(n);
+		if(n == 0) {
+			return false;
+		}
+		if(n == 1) {
+			return true;
+		}
+		for(int i = 2; i <= n0; i++) {
+			if( (n % i) == 0) {
+				return false;
+			}
+		}
 		return true;
 	}
 	private static int dumb_next_prime(int n) {
-		for(;;) if(dumb_prime_check(n)) return n; else n++;
+		for(;;) {
+			if(dumb_prime_check(n)) {
+				return n;
+			} else {
+				n++;
+			}
+		}
 	}
 
 
@@ -100,15 +134,19 @@ public final class Prime {
 		// check isPrime
 		boolean failed = false;
 		for(int i = 0; !failed && i < 3000; i++) {
-			int n = (int)(Math.random() * 1234567);
-			if( isPrime(n) != dumb_prime_check(n)) failed = true;
+			final int n = (int)(Math.random() * 1234567);
+			if( isPrime(n) != dumb_prime_check(n)) {
+				failed = true;
+			}
 		}
 		Test.check(!failed, "isPrime failed");
 
 		// now check nextPrime
 		for(int i = 0; !failed && i < 3000; i++) {
-			int n = (int)(Math.random() * 1234567);
-			if(nextPrime(n) != dumb_next_prime(n)) failed = true;
+			final int n = (int)(Math.random() * 1234567);
+			if(nextPrime(n) != dumb_next_prime(n)) {
+				failed = true;
+			}
 		}
 		Test.check(!failed, "nextPrime failed");
 

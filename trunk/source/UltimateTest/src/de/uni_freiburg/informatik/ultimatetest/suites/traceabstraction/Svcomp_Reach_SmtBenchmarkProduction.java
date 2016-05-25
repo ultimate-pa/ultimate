@@ -117,7 +117,7 @@ public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractio
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase("AutomizerC.xml", 
 					setting, 
 					mSVCOMP_Examples);

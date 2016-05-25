@@ -86,13 +86,13 @@ public class ReachingDefinitions implements IAnalysis {
 	public List<IObserver> getObservers() {
 		if (mCurrentGraphType.getCreator().equals(
 				de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID)) {
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefGraphAnnotationProvider<>(null);
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefGraphAnnotationProvider<>(null);
-			ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefGraphAnnotationProvider<>(null);
+			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefGraphAnnotationProvider<>(null);
+			final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-			AssumeFinder finder = new AssumeFinder(logger);
+			final AssumeFinder finder = new AssumeFinder(logger);
 
-			List<IObserver> rtr = new ArrayList<>();
+			final List<IObserver> rtr = new ArrayList<>();
 			rtr.add(new ReachDefRCFG(logger, stmtProvider, edgeProvider));
 			rtr.add(finder);
 			// rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
@@ -128,9 +128,9 @@ public class ReachingDefinitions implements IAnalysis {
 
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
 			BoogieSymbolTable symbolTable) throws Throwable {
-		IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
-		IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
-		ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
+		final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
+		final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
+		final ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
 		return rdt.process(trace);
 	}
 

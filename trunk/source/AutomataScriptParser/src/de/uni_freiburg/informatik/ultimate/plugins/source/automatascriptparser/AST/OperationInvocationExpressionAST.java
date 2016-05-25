@@ -64,11 +64,11 @@ public class OperationInvocationExpressionAST extends AtsASTNode {
 
 		
 	public void setErrorMessage(String errorMessage) {
-		this.merrorMessage = errorMessage;
+		merrorMessage = errorMessage;
 	}
 	
 	public void setOperationName(String opName) {
-		this.moperationName = opName;
+		moperationName = opName;
 	}
 	
 	

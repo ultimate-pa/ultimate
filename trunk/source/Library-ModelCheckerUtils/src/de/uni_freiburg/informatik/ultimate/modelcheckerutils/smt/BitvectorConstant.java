@@ -72,23 +72,30 @@ public class BitvectorConstant {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BitvectorConstant other = (BitvectorConstant) obj;
+		}
+		final BitvectorConstant other = (BitvectorConstant) obj;
 		if (mIndex == null) {
-			if (other.mIndex != null)
+			if (other.mIndex != null) {
 				return false;
-		} else if (!mIndex.equals(other.mIndex))
+			}
+		} else if (!mIndex.equals(other.mIndex)) {
 			return false;
+		}
 		if (mValue == null) {
-			if (other.mValue != null)
+			if (other.mValue != null) {
 				return false;
-		} else if (!mValue.equals(other.mValue))
+			}
+		} else if (!mValue.equals(other.mValue)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -223,8 +230,8 @@ public class BitvectorConstant {
 
 
 	public static BitvectorConstant extract(BitvectorConstant bv, int upperIndex, int lowerIndex) {
-		String binaryString = bvToBinaryString(bv);
-		int resultIndex = upperIndex + 1 - lowerIndex;
+		final String binaryString = bvToBinaryString(bv);
+		final int resultIndex = upperIndex + 1 - lowerIndex;
 		final String extractedBinaryString;
 		if (resultIndex < binaryString.length()) {
 			extractedBinaryString = binaryString.substring(
@@ -232,7 +239,7 @@ public class BitvectorConstant {
 		} else {
 			extractedBinaryString = binaryString;
 		}
-		BigInteger extractedValue = binaryStringToBv(extractedBinaryString);
+		final BigInteger extractedValue = binaryStringToBv(extractedBinaryString);
 		return new BitvectorConstant(extractedValue, BigInteger.valueOf(resultIndex));
 	}
 
@@ -247,9 +254,9 @@ public class BitvectorConstant {
 	}
 	
 	private static String bvToFullBinaryString(BitvectorConstant bv) {
-		String withoutZeros = bv.getValue().toString(2);
-		StringBuilder sb = new StringBuilder();
-		int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
+		final String withoutZeros = bv.getValue().toString(2);
+		final StringBuilder sb = new StringBuilder();
+		final int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
 		for (int i=0; i<missingZeros; i++) {
 			sb.append("0");
 		}
@@ -264,11 +271,11 @@ public class BitvectorConstant {
 	}
 	
 	public static BigInteger toSignedInt(BigInteger bvValue, BigInteger bvIndex) {
-		BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
+		final BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
 		if (bvValue.compareTo(firstNegative) < 0) {
 			return bvValue;
 		} else {
-			BigInteger biggestUnsigned = new BigInteger("2").pow(bvIndex.intValueExact());
+			final BigInteger biggestUnsigned = new BigInteger("2").pow(bvIndex.intValueExact());
 			return bvValue.subtract(biggestUnsigned);
 		}
 	}

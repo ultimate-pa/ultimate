@@ -99,12 +99,12 @@ class Executor {
 			throw new IllegalStateException(errorMsg);
 		}
 
-		OutputStream stdin = mProcess.getOutputStream();
-		InputStream stdout = mProcess.getInputStream();
+		final OutputStream stdin = mProcess.getOutputStream();
+		final InputStream stdout = mProcess.getInputStream();
 
 		mStdErr = mProcess.getErrorStream();
 
-		MySymbolFactory symfactory = new MySymbolFactory();
+		final MySymbolFactory symfactory = new MySymbolFactory();
 		mLexer = new Lexer(new InputStreamReader(stdout));
 		mLexer.setSymbolFactory(symfactory);
 
@@ -121,7 +121,7 @@ class Executor {
 		try {
 			mWriter.write(in + "\n");
 			mWriter.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			if (mServices.getProgressMonitorService().continueProcessing()) {
 				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 			} else {
@@ -142,14 +142,16 @@ class Executor {
 	}
 
 	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
-		ArrayList<Symbol> result = new ArrayList<Symbol>();
+		final ArrayList<Symbol> result = new ArrayList<Symbol>();
 		int parenLevel = 0;
 		do {
-			Symbol sym = lexer.next_token();
-			if (sym.sym == LexerSymbols.LPAR)
+			final Symbol sym = lexer.next_token();
+			if (sym.sym == LexerSymbols.LPAR) {
 				parenLevel++;
-			if (sym.sym == LexerSymbols.RPAR)
+			}
+			if (sym.sym == LexerSymbols.RPAR) {
 				parenLevel--;
+			}
 			result.add(sym);
 		} while (parenLevel > 0);
 		return result;
@@ -159,12 +161,12 @@ class Executor {
 		try {
 			final List<Symbol> result = parseSexpr(mLexer);
 			if (mLogger.isDebugEnabled()) {
-				for (Symbol s : result) {
+				for (final Symbol s : result) {
 					mLogger.debug(s.toString() + "\n");
 				}
 			}
 			return result;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 		}
 	}
@@ -173,7 +175,7 @@ class Executor {
 		try {
 			mWriter.write("(exit)\n");
 			mWriter.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			/* ignore */
 		}
 		mProcess.forceShutdown();
@@ -189,14 +191,14 @@ class Executor {
 			if (mStdErr.available() > 0) {
 				final StringBuilder sb = new StringBuilder();
 				while (mStdErr.available() > 0) {
-					int i = mStdErr.read();
-					char c = (char) i;
+					final int i = mStdErr.read();
+					final char c = (char) i;
 					sb.append(c);
 				}
 				stderr = sb.toString();
 				mLogger.warn(getLogStringPrefix() + " " + generateStderrMessage(stderr));
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// we don't care what happens on stdErr
 		}
 
@@ -206,16 +208,16 @@ class Executor {
 		parser.setAnswer(answer);
 		try {
 			return parser.parse();
-		} catch (SMTLIBException ex) {
+		} catch (final SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
 				throw new SMTLIBException(getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr),
 						ex);
 			} else {
 				throw ex;
 			}
-		} catch (UnsupportedOperationException ex) {
+		} catch (final UnsupportedOperationException ex) {
 			throw ex;
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			throw new SMTLIBException(
 					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
 		}
@@ -251,7 +253,7 @@ class Executor {
 	}
 
 	public Object parseGetOptionResult() {
-		return (Object) parse(LexerSymbols.GETOPTION).value;
+		return parse(LexerSymbols.GETOPTION).value;
 	}
 
 	public Term parseTerm() {

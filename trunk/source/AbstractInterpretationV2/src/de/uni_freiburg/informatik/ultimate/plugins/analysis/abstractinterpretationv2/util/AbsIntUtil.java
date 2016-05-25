@@ -75,7 +75,7 @@ public final class AbsIntUtil {
 			final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true));
 			bw.append(sb);
 			bw.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

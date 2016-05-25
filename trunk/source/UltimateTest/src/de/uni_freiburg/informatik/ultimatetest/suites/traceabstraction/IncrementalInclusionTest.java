@@ -158,20 +158,20 @@ public class IncrementalInclusionTest extends
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : s_Settings) {
+		for (final String setting : s_Settings) {
 			addTestCase("AutomizerCInline.xml", 
 					setting, 
 					s_SVCOMP_Programs);
 		}
 		
-		for (String setting : s_Settings) {
+		for (final String setting : s_Settings) {
 			addTestCase(
 					"AutomizerBplInline.xml",
 					setting,
 					s_UltimateRepository_Programs,
 				    new String[] {".bpl"});
 		}
-		for (String setting : s_Settings) {
+		for (final String setting : s_Settings) {
 			addTestCase(
 					"AutomizerCInline.xml",
 					setting,

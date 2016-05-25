@@ -2,8 +2,9 @@
 package jdd.zdd;
 
 
-import jdd.util.*;
-import jdd.bdd.*;
+import jdd.bdd.OptimizedCache;
+import jdd.util.Configuration;
+import jdd.util.Test;
 
 /**
  * ZDD operations for CSP problems.
@@ -24,6 +25,7 @@ public class ZDDCSP  extends ZDD2  {
     
 
 	// ---------------------------------------------------------------
+	@Override
 	public void cleanup() {
 		super.cleanup();
 		csp_cache = null;
@@ -31,6 +33,7 @@ public class ZDDCSP  extends ZDD2  {
 	// ---------------------------------------------------------------
 
 
+	@Override
 	protected void post_removal_callbak() {
 		super.post_removal_callbak();
 		csp_cache.free_or_grow(this);
@@ -39,21 +42,29 @@ public class ZDDCSP  extends ZDD2  {
 
 
 	public final int restrict(int F, int C) {
-		if(F == 0 || C == 0) return 0;
-		if(F == C) return F;
-		//if(C == 1) return 0; // <=== is this OK ???
+		if(F == 0 || C == 0) {
+			return 0;
+		}
+		if(F == C)
+		 {
+			return F;
+			//if(C == 1) return 0; // <=== is this OK ???
+		}
 
-		if(csp_cache.lookup(F, C, CACHE_RESTRICT)) return csp_cache.answer;
-		int hash = csp_cache.hash_value;
+		if(csp_cache.lookup(F, C, CACHE_RESTRICT)) {
+			return csp_cache.answer;
+		}
+		final int hash = csp_cache.hash_value;
 
-		int ret = 0, v = getVar(F);
+		int ret = 0;
+		final int v = getVar(F);
 		if(v < getVar(C)) { // F0 = F, F1 = 0 ==> restrict(F1,Cn) = 0
-			int tmp =  work_stack[work_stack_tos++] = restrict(F,getLow(C));
+			final int tmp =  work_stack[work_stack_tos++] = restrict(F,getLow(C));
 			ret = mk(getVar(C), tmp, 0);
 			work_stack_tos--;
 		} else if(v > getVar(C)) { // C0 = C, C1 = 0 => restrict(F1,C1) = 0
-			int tmp  = work_stack[work_stack_tos++] = restrict( getHigh(F), C);
-			int tmp2 = work_stack[work_stack_tos++] = restrict( getLow(F), C);
+			final int tmp  = work_stack[work_stack_tos++] = restrict( getHigh(F), C);
+			final int tmp2 = work_stack[work_stack_tos++] = restrict( getLow(F), C);
 			ret = mk(v, tmp2, tmp);
 			work_stack_tos -= 2;
 		} else {
@@ -95,39 +106,47 @@ public class ZDDCSP  extends ZDD2  {
      */
 
     private final int exclude_fast(int F, int C)  {
-		if( emptyIn(C)) return 0;
+		if( emptyIn(C)) {
+			return 0;
+		}
 		return noSupset_rec(F, C);
 	}
 
 
     private final int noSupset_rec(int F, int C) {
         
-		if(F == 0 || C == 1 || F == C) return 0;
-        if(F == 1 || C == 0) return F;         
+		if(F == 0 || C == 1 || F == C) {
+			return 0;
+		}
+        if(F == 1 || C == 0) {
+			return F;
+		}         
         
-		if(csp_cache.lookup(F, C, CACHE_NOSUPSET)) return csp_cache.answer;
-		int hash = csp_cache.hash_value;
+		if(csp_cache.lookup(F, C, CACHE_NOSUPSET)) {
+			return csp_cache.answer;
+		}
+		final int hash = csp_cache.hash_value;
 
 		int ret;
-		int fvar = getVar(F);
-		int cvar = getVar(C);
+		final int fvar = getVar(F);
+		final int cvar = getVar(C);
 
 		if (fvar < cvar) {
 			ret = noSupset_rec(F, getLow(C));
 		} else if (fvar > cvar) {
-			int tmp1 = work_stack[work_stack_tos++] = noSupset_rec(getHigh(F), C);
-			int tmp2 = work_stack[work_stack_tos++] = noSupset_rec(getLow(F) , C);
+			final int tmp1 = work_stack[work_stack_tos++] = noSupset_rec(getHigh(F), C);
+			final int tmp2 = work_stack[work_stack_tos++] = noSupset_rec(getLow(F) , C);
 			ret = mk(fvar, tmp2, tmp1);
 			work_stack_tos -= 2;
 		} else {            
             int tmp1, tmp2;            
-            int C1 = getHigh(C);
+            final int C1 = getHigh(C);
             
             if( emptyIn(C1)) { 
                 // special case, because noSupset( getHigh(F), C1) = 0
                tmp1 = work_stack[work_stack_tos++] = 0;
             } else {
-                int F1 = getHigh(F);
+                final int F1 = getHigh(F);
                 tmp1 = work_stack[work_stack_tos++] = noSupset_rec( F1, getLow(C));
                 tmp2 = work_stack[work_stack_tos++] = noSupset_rec( F1, C1);                
                 tmp1 = intersect(tmp1, tmp2);
@@ -156,14 +175,18 @@ public class ZDDCSP  extends ZDD2  {
 
 	// --- [ debug ] ----------------------------------------------
 
+	@Override
 	public void showStats() {
 		super.showStats();
 		csp_cache.showStats();
 	}
 
+	@Override
 	public long getMemoryUsage() {
 		long ret = super.getMemoryUsage();
-		if(csp_cache != null) ret += csp_cache.getMemoryUsage();
+		if(csp_cache != null) {
+			ret += csp_cache.getMemoryUsage();
+		}
 		return ret;
 	}
 
@@ -172,18 +195,18 @@ public class ZDDCSP  extends ZDD2  {
 
 		Test.start("ZDDCSP");
 
-		ZDDCSP csp = new ZDDCSP(200, 1000);
-		int a = csp.createVar();
-		int b = csp.createVar();
-		int c = csp.createVar();
-		int d = csp.createVar();
-		int e = csp.createVar();
+		final ZDDCSP csp = new ZDDCSP(200, 1000);
+		final int a = csp.createVar();
+		final int b = csp.createVar();
+		final int c = csp.createVar();
+		final int d = csp.createVar();
+		final int e = csp.createVar();
         
-        int p = csp.cubes_union("00011 00111 01110");
-        int q = csp.cubes_union("00110 00111");
+        final int p = csp.cubes_union("00011 00111 01110");
+        final int q = csp.cubes_union("00110 00111");
         
 		// test P * Q
-		int answer_product = csp.cubes_union("00111 01111 01110");
+		final int answer_product = csp.cubes_union("00111 01111 01110");
 		Test.checkEquality( answer_product, csp.mul(p,q), "P * Q" );
 		Test.checkEquality( csp.work_stack_tos, 0, "TOS restored (1)" );
 
@@ -191,29 +214,29 @@ public class ZDDCSP  extends ZDD2  {
 
 
 		// test P / Q
-		int answer_division = 0;
+		final int answer_division = 0;
 		Test.checkEquality( answer_division, csp.div(p,q), "P / Q" );
 		Test.checkEquality( csp.work_stack_tos, 0, "TOS restored (2)" );
 
 
 		// test P % Q
-		int answer_quotient = csp.cubes_union("00011 00111 01110");
+		final int answer_quotient = csp.cubes_union("00011 00111 01110");
 		Test.checkEquality( answer_quotient, csp.mod(p,q), "P % Q" );
 		Test.checkEquality( csp.work_stack_tos, 0, "TOS restored (3)" );
 
 
 
 		// restrict:
-		int answer_restrict_pq = csp.cubes_union("00111 01110");
-		int answer_restrict_qp = csp.cube("00111");
+		final int answer_restrict_pq = csp.cubes_union("00111 01110");
+		final int answer_restrict_qp = csp.cube("00111");
 		Test.checkEquality(csp.restrict(p, q), answer_restrict_pq, "Restrict(P,Q)");
 		Test.checkEquality(csp.restrict(q, p), answer_restrict_qp, "Restrict(Q,P)");
 		Test.checkEquality( csp.work_stack_tos, 0, "TOS restored (4)" );
 
 
 		// exclude
-		int answer_exclude_pq = csp.cube("00011");
-		int answer_exclude_qp = csp.cube("00110");
+		final int answer_exclude_pq = csp.cube("00011");
+		final int answer_exclude_qp = csp.cube("00110");
 		Test.checkEquality(csp.exclude(p, q), answer_exclude_pq, "Exclude(P,Q)");
 		Test.checkEquality(csp.exclude(q, p), answer_exclude_qp, "Exclude(Q,P)");
 		Test.checkEquality( csp.work_stack_tos, 0, "TOS restored (5)" );

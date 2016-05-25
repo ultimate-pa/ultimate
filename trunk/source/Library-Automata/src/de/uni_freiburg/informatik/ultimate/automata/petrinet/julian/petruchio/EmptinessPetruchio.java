@@ -115,28 +115,28 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 		mLogger.debug("Net has "+mNetJulian.getTransitions().size()+ " Transitions");
 		
 		// construct single invariant p_1 + ... + p_n where p_i \in places
-		Collection<Map<Place, Integer>> invariants = new ArrayList<Map<Place, Integer>>(1);
-		Map<Place, Integer> theInvariant = 
+		final Collection<Map<Place, Integer>> invariants = new ArrayList<Map<Place, Integer>>(1);
+		final Map<Place, Integer> theInvariant = 
 			new IdentityHashMap<Place, Integer>(mPetruchio.getNet().getPlaces().size());
-		for(Place pPetruchio : mPetruchio.getNet().getPlaces()) {
+		for(final Place pPetruchio : mPetruchio.getNet().getPlaces()) {
 		   theInvariant.put(pPetruchio, Integer.valueOf(1));
 		}
 		invariants.add(theInvariant);
 		
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in Paccepting } is coverable
-		Collection<Map<Place, Integer>> targets = new ArrayList<Map<Place, Integer>>();
-		for(de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pAcceptingJulian : mNetJulian.getAcceptingPlaces()) {
+		final Collection<Map<Place, Integer>> targets = new ArrayList<Map<Place, Integer>>();
+		for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pAcceptingJulian : mNetJulian.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
-			Place pAcceptingPetruchio = mPetruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
-			Map<Place, Integer> placeWithOneToken = new IdentityHashMap<Place, Integer>();
+			final Place pAcceptingPetruchio = mPetruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
+			final Map<Place, Integer> placeWithOneToken = new IdentityHashMap<Place, Integer>();
 			placeWithOneToken.put(pAcceptingPetruchio,1);
 			targets.add(placeWithOneToken);
 		}
 		
 		mLogger.debug("Check coverability of " + mNetJulian.getAcceptingPlaces().toString());
 		mLogger.warn(targets);
-		SimpleList<Transition> tracePetruchio = 
+		final SimpleList<Transition> tracePetruchio = 
 			Backward.checkCoverability(mPetruchio.getNet(), targets);//, invariants);
 		mLogger.debug("done");
 		
@@ -166,9 +166,9 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 				tracePetruchio.iterator().next() == null) {
 			return result;
 		}
-		for(Transition tPetruchio : tracePetruchio) {
-			S symbol = mPetruchio.gettPetruchio2tJulian().get(tPetruchio).getSymbol();
-			NestedRun<S,C> oneStepSubrun = 
+		for(final Transition tPetruchio : tracePetruchio) {
+			final S symbol = mPetruchio.gettPetruchio2tJulian().get(tPetruchio).getSymbol();
+			final NestedRun<S,C> oneStepSubrun = 
 				new NestedRun<S,C>(null, symbol,NestedWord.INTERNAL_POSITION, null);
 			result = result.concatenate(oneStepSubrun);
 		}
@@ -176,6 +176,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	}
 	
 	
+	@Override
 	public NestedRun<S,C> getResult() throws AutomataLibraryException {
 		return mAcceptedRun;
 	}
@@ -187,7 +188,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 		boolean correct = true;
 		if (mAcceptedRun == null) {
-			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNetJulian)).getResult())).getNestedRun();
+			final NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNetJulian)).getResult())).getNestedRun();
 			correct = (automataRun == null);
 		} else {
 			correct =  mNetJulian.accepts(mAcceptedRun.getWord());

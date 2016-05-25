@@ -45,7 +45,7 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 
 	private static final long serialVersionUID = -7727684030243112324L;
 
-	private BidirectionalMap<V, K> mInverse;
+	private final BidirectionalMap<V, K> mInverse;
 
 	public BidirectionalMap() {
 		super();
@@ -102,9 +102,9 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 	 */
 	@Override
 	public V put(K key, V value) {
-		K oldKey = mInverse.putAsymmetric(value, key);
+		final K oldKey = mInverse.putAsymmetric(value, key);
 		removeAsymmetric(oldKey);
-		V oldValue = putAsymmetric(key, value);
+		final V oldValue = putAsymmetric(key, value);
 		mInverse.removeAsymmetric(oldValue);
 		return oldValue;
 	}
@@ -115,7 +115,7 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 
 	@Override
 	public V remove(Object key) {
-		V removedValue = removeAsymmetric(key);
+		final V removedValue = removeAsymmetric(key);
 		mInverse.removeAsymmetric(removedValue);
 		return removedValue;
 	}
@@ -178,7 +178,7 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 	 */
 	@Override
 	public void putAll(Map<? extends K,? extends V> m) {
-		for (Map.Entry<? extends K,? extends V> e : m.entrySet()) {
+		for (final Map.Entry<? extends K,? extends V> e : m.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
 	}

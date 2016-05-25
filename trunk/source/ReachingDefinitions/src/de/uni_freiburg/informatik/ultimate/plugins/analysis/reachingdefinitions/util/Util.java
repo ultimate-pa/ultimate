@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 public class Util {
 
 	public static <T> String prettyPrintIterable(Iterable<T> remaining, ElemToString<T> converter) {
-		StringBuilder sb = new StringBuilder();
-		for (T e : remaining) {
+		final StringBuilder sb = new StringBuilder();
+		for (final T e : remaining) {
 			sb.append(converter.toString(e)).append(", ");
 		}
 		sb.delete(sb.length() - 2, sb.length());

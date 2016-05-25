@@ -45,7 +45,7 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 	private final ELEM mPosition;
 	protected final IBacktranslationService mTranslatorSequence;
 	private final ILocation mLocation;
-	private String mLongDescription;
+	private final String mLongDescription;
 
 	/**
 	 * @param location
@@ -79,6 +79,7 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 		return mLongDescription;
 	}
 	
+	@Override
 	public final ILocation getLocation() {
 		assert ((mPosition == null) ^ (mLocation == null)) : 
 			"exactly one has to be non-null";

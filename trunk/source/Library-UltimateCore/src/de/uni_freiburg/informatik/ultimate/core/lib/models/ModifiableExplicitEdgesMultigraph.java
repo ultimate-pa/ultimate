@@ -148,7 +148,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 
 	@Override
 	public boolean addOutgoing(int index, E outgoing) {
-		int i = mOutgoingEdges.size();
+		final int i = mOutgoingEdges.size();
 		mOutgoingEdges.add(index, outgoing);
 		return i != mOutgoingEdges.size();
 	}
@@ -156,7 +156,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean addAllOutgoing(Collection<? extends E> c) {
 		boolean rtr = false;
-		for (E outgoing : c) {
+		for (final E outgoing : c) {
 			rtr = rtr || addOutgoing(outgoing);
 		}
 		return rtr;
@@ -185,7 +185,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean removeAllOutgoing(Collection<?> c) {
 		boolean rtr = false;
-		for (Object o : c) {
+		for (final Object o : c) {
 			rtr = rtr || removeOutgoing(o);
 		}
 		return rtr;
@@ -204,7 +204,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 
 	@Override
 	public boolean addIncoming(int index, E incoming) {
-		int i = mIncomingEdges.size();
+		final int i = mIncomingEdges.size();
 		mIncomingEdges.add(index, incoming);
 		return i != mIncomingEdges.size();
 	}
@@ -212,7 +212,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean addAllIncoming(Collection<? extends E> c) {
 		boolean rtr = false;
-		for (E e : c) {
+		for (final E e : c) {
 			rtr = rtr || addIncoming(e);
 		}
 		return rtr;
@@ -241,7 +241,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean removeAllIncoming(Collection<?> c) {
 		boolean rtr = false;
-		for (Object o : c) {
+		for (final Object o : c) {
 			rtr = rtr || removeIncoming(o);
 		}
 		return rtr;

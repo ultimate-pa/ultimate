@@ -53,10 +53,11 @@ final class Hist {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Hist))
+		if (!(obj instanceof Hist)) {
 			return false;
+		}
 
-		Hist b = (Hist) obj;
+		final Hist b = (Hist) obj;
 
 		return lin == b.lin && hier == b.hier;
 	}
@@ -67,8 +68,9 @@ final class Hist {
 	}
 
 	static int compareLinHier(Hist a, Hist b) {
-		if (a.lin != b.lin)
+		if (a.lin != b.lin) {
 			return a.lin - b.lin;
+		}
 		return a.hier - b.hier;
 	}
 
@@ -79,10 +81,12 @@ final class Hist {
 	 */
 	static boolean checkConsistency(NWA nwa, ArrayList<Hist> hist) {
 		for (int i = 0; i < hist.size(); i++) {
-			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates)
+			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates) {
 				return false;
-			if (hist.get(i).hier < -1 || hist.get(i).hier >= nwa.numStates)
+			}
+			if (hist.get(i).hier < -1 || hist.get(i).hier >= nwa.numStates) {
 				return false;
+			}
 		}
 		return true;
 	}

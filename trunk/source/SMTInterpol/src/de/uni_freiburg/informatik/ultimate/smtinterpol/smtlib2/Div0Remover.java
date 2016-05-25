@@ -49,65 +49,70 @@ public class Div0Remover extends TermTransformer {
 		}
 		@Override
 		public void walk(NonRecursive engine) {
-			Div0Remover remover = (Div0Remover) engine;
-			Annotation[] newAnnots =
+			final Div0Remover remover = (Div0Remover) engine;
+			final Annotation[] newAnnots =
 					remover.collectAnnotations(mTerm.getAnnotations());
-			Term sub = remover.getConverted();
-			if (newAnnots == mTerm.getAnnotations() && sub == mTerm.getSubterm())
+			final Term sub = remover.getConverted();
+			if (newAnnots == mTerm.getAnnotations() && sub == mTerm.getSubterm()) {
 				remover.setResult(mTerm);
-			else
+			} else {
 				remover.setResult(
 						mTerm.getTheory().annotatedTerm(newAnnots, sub));
+			}
 		}
 		
 	}
 	
 	private void pushTermsFromArray(Object[] arr) {
 		for (int i = arr.length - 1; i >= 0; --i) {
-			Object val = arr[i];
-			if (val instanceof Term)
+			final Object val = arr[i];
+			if (val instanceof Term) {
 				pushTerm((Term) val);
-			else if (val instanceof Term[])
+			} else if (val instanceof Term[]) {
 				pushTerms((Term[]) val);
-			else if (val instanceof Object[])
+			} else if (val instanceof Object[]) {
 				/* Recursion should be okay here since nesting should not be too
 				 * big.
 				 */
 				pushTermsFromArray((Object[]) val);
+			}
 		}
 	}
 	
 	void pushTermsFromAnnotations(Annotation[] annots) {
 		for (int i = annots.length - 1; i >= 0; --i) {
-			Object val = annots[i].getValue();
-			if (val instanceof Term)
+			final Object val = annots[i].getValue();
+			if (val instanceof Term) {
 				pushTerm((Term) val);
-			else if (val instanceof Term[])
+			} else if (val instanceof Term[]) {
 				pushTerms((Term[]) val);
-			else if (val instanceof Object[])
+			} else if (val instanceof Object[]) {
 				pushTermsFromArray((Object[]) val);
+			}
 		}
 	}
 	
 	private Object[] getFromArray(Object[] oldVal) {
 		Object[] newVal = oldVal;
 		for (int i = oldVal.length - 1; i >= 0; --i) {
-			Object val = oldVal[i];
+			final Object val = oldVal[i];
 			Object newValue;
-			if (val instanceof Term)
+			if (val instanceof Term) {
 				newValue = getConverted();
-			else if (val instanceof Term[])
+			} else if (val instanceof Term[]) {
 				newValue = getConverted((Term[]) val);
-			else if (val instanceof Object[])
+			} else if (val instanceof Object[]) {
 				/* Recursion should be okay here since nesting should not be too
 				 * big.
 				 */
 				newValue = getFromArray((Object[]) val);
-			else
+			} else {
 				newValue = val;
+			}
 			if (newValue != val) {
-				if (newVal == oldVal)
+				if (newVal == oldVal) {
 					newVal = oldVal.clone();
+				}
 				newVal[i] = newValue;
 			}
 		}
@@ -117,19 +122,21 @@ public class Div0Remover extends TermTransformer {
 	Annotation[] collectAnnotations(Annotation[] oldAnnots) {
 		Annotation[] newAnnots = oldAnnots;
 		for (int i = oldAnnots.length - 1; i >= 0; i--) {
-			Object value = oldAnnots[i].getValue();
+			final Object value = oldAnnots[i].getValue();
 			Object newValue;
-			if (value instanceof Term)
+			if (value instanceof Term) {
 				newValue = getConverted();
-			else if (value instanceof Term[])
+			} else if (value instanceof Term[]) {
 				newValue = getConverted((Term[]) value);
-			else if (value instanceof Object[])
+			} else if (value instanceof Object[]) {
 				newValue = getFromArray((Object[]) value);
-			else
+			} else {
 				newValue = value;
+			}
 			if (newValue != value) {
-				if (oldAnnots == newAnnots)
+				if (oldAnnots == newAnnots) {
 					newAnnots = oldAnnots.clone();
+				}
 				newAnnots[i] = new Annotation(oldAnnots[i].getKey(), newValue);
 			}
 		}
@@ -143,7 +150,7 @@ public class Div0Remover extends TermTransformer {
 			 * does not descend into Object[] which is needed for proof tree
 			 * transformations.
 			 */
-			AnnotatedTerm annot = (AnnotatedTerm) term;
+			final AnnotatedTerm annot = (AnnotatedTerm) term;
 			enqueueWalker(new BuildAnnotationTerm(annot));
 			pushTermsFromAnnotations(annot.getAnnotations());
 			pushTerm(annot.getSubterm());
@@ -154,17 +161,18 @@ public class Div0Remover extends TermTransformer {
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		FunctionSymbol sym = appTerm.getFunction();
+		final FunctionSymbol sym = appTerm.getFunction();
 		String name = sym.getName();
 		if (name.charAt(0) == '@' && name.endsWith("0")) {
 			name = name.substring(1, name.length() - 1);
-			Term[] args = new Term[2];
+			final Term[] args = new Term[2];
 			args[0] = newArgs[0];
 			args[1] = appTerm.getTheory().constant(
 					BigInteger.ZERO, newArgs[0].getSort());
 			setResult(appTerm.getTheory().term(name, args));
-		} else
+		} else {
 			super.convertApplicationTerm(appTerm, newArgs);
+		}
 	}
 	
 }

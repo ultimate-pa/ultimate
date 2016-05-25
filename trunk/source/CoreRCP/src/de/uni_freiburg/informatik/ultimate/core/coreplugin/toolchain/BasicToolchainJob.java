@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 public abstract class BasicToolchainJob extends Job {
 
@@ -99,26 +99,26 @@ public abstract class BasicToolchainJob extends Job {
 			return;
 		}
 		mLogger.info(" --- Results ---");
-		for (Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
+		for (final Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
 			mLogger.info(String.format(" * Results from %s:", entry.getKey()));
 
-			for (IResult result : entry.getValue()) {
-				StringBuilder sb = new StringBuilder();
+			for (final IResult result : entry.getValue()) {
+				final StringBuilder sb = new StringBuilder();
 
 				sb.append("  - ");
 				sb.append(result.getClass().getSimpleName());
 				if (result instanceof IResultWithLocation) {
 					sb.append(" [Line: ");
-					ILocation loc = ((IResultWithLocation) result).getLocation();
+					final ILocation loc = ((IResultWithLocation) result).getLocation();
 					sb.append(loc.getStartLine()).append("]");
 				}
 				sb.append(": ");
 				sb.append(result.getShortDescription());
 				mLogger.info(sb.toString());
 
-				boolean appendCompleteLongDescription = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+				final boolean appendCompleteLongDescription = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 						.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
-				String[] s = result.getLongDescription().split("\n");
+				final String[] s = result.getLongDescription().split("\n");
 				if (appendCompleteLongDescription) {
 					mLogger.info(String.format("    %s", result.getLongDescription()));
 				} else {
@@ -135,8 +135,8 @@ public abstract class BasicToolchainJob extends Job {
 	private void setTimeout() {
 		long realDeadline = 0;
 
-		RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
 
 		// first , check if we have a deadline set by the executor
 		if (mDeadline != -1) {

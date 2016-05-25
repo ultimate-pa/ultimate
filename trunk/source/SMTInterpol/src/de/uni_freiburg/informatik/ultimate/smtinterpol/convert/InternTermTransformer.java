@@ -34,11 +34,11 @@ public class InternTermTransformer extends TermTransformer {
 		
 		@Override
 		public void walk(NonRecursive engine) {
-			InternTermTransformer transformer = (InternTermTransformer) engine;
+			final InternTermTransformer transformer = (InternTermTransformer) engine;
 			/* collect args and check if they have been changed */
-			Term[] oldArgs = mOld.getSummands().keySet().toArray(
+			final Term[] oldArgs = mOld.getSummands().keySet().toArray(
 					new Term[mOld.getSummands().size()]);
-			Term[] newArgs = transformer.getConverted(oldArgs);
+			final Term[] newArgs = transformer.getConverted(oldArgs);
 			transformer.convertSMTAffineTerm(mOld, newArgs, oldArgs);
 		}
 		
@@ -47,12 +47,13 @@ public class InternTermTransformer extends TermTransformer {
 	@Override
 	protected void convert(Term term) {
 		if (term instanceof SMTAffineTerm) {
-			SMTAffineTerm old = (SMTAffineTerm) term;
+			final SMTAffineTerm old = (SMTAffineTerm) term;
 			enqueueWalker(new BuildSMTAffineTerm(old));
 			pushTerms(old.getSummands().keySet().toArray(
 					new Term[old.getSummands().size()]));
-		} else
+		} else {
 			super.convert(term);
+		}
 	}
 
 	protected void convertSMTAffineTerm(
@@ -61,7 +62,7 @@ public class InternTermTransformer extends TermTransformer {
 		if (oldArgs != newArgs) {
 			res = SMTAffineTerm.create(old.getConstant(), old.getSort());
 			for (int i = 0; i < oldArgs.length; ++i) {
-				Rational fac = old.getSummands().get(oldArgs[i]);
+				final Rational fac = old.getSummands().get(oldArgs[i]);
 				res = res.add(SMTAffineTerm.create(fac, newArgs[i]));
 			}
 		}

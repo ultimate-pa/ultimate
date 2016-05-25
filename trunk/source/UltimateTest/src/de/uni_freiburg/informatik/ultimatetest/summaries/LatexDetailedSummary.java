@@ -73,12 +73,12 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
-		PartitionedResults results = partitionResults(mResults.entrySet());
+		final StringBuilder sb = new StringBuilder();
+		final PartitionedResults results = partitionResults(mResults.entrySet());
 
 		try {
 			makeTables(sb, results);
-		} catch (Error e) {
+		} catch (final Error e) {
 			return "";
 		}
 
@@ -94,14 +94,14 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		final int additionalHeaders = 4;
 
-		Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
+		final Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
 			}
 		});
 
-		String br = CoreUtil.getPlatformLineSeparator();
+		final String br = CoreUtil.getPlatformLineSeparator();
 
 		appendPreamble(sb, br);
 
@@ -119,7 +119,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			sb.append("  \\header{Variant}& ").append(br);
 
 			int i = 0;
-			for (ColumnDefinition cd : mColumnDefinitions) {
+			for (final ColumnDefinition cd : mColumnDefinitions) {
 				if (cd.getLatexTableTitle() == null) {
 					continue;
 				}
@@ -139,7 +139,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(
+			final PartitionedResults resultsPerTool = partitionResults(
 					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -185,7 +185,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname,
 			int additionalTableHeaders) {
-		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
+		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
@@ -294,12 +294,12 @@ public class LatexDetailedSummary extends LatexSummary {
 			}
 		});
 
-		String br = CoreUtil.getPlatformLineSeparator();
-		String sep = " & ";
+		final String br = CoreUtil.getPlatformLineSeparator();
+		final String sep = " & ";
 
 		if (results.size() == 0) {
 			// insert an empty row for this category
-			int length = mLatexTableHeaderCount + 2;
+			final int length = mLatexTableHeaderCount + 2;
 			for (int i = 0; i < length; ++i) {
 				sb.append(sep);
 			}
@@ -310,7 +310,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		boolean isFirst = true;
 
-		for (Entry<UltimateRunDefinition, ExtendedResult> result : results) {
+		for (final Entry<UltimateRunDefinition, ExtendedResult> result : results) {
 			if (isFirst) {
 				sb.append(sep);
 				isFirst = false;
@@ -344,12 +344,12 @@ public class LatexDetailedSummary extends LatexSummary {
 			csv = ColumnDefinitionUtil.makeHumanReadable(csv, mColumnDefinitions);
 
 			// make list of indices to ignore idx -> true / false
-			boolean[] idx = new boolean[csv.getColumnTitles().size()];
+			final boolean[] idx = new boolean[csv.getColumnTitles().size()];
 			// because of count
 			idx[0] = true;
 			for (int i = 1; i < idx.length; ++i) {
-				String currentHeader = csv.getColumnTitles().get(i);
-				for (ColumnDefinition cd : mColumnDefinitions) {
+				final String currentHeader = csv.getColumnTitles().get(i);
+				for (final ColumnDefinition cd : mColumnDefinitions) {
 					if (cd.getColumnToKeep().equals(currentHeader)) {
 						idx[i] = (cd.getLatexTableTitle() != null);
 						break;
@@ -357,16 +357,16 @@ public class LatexDetailedSummary extends LatexSummary {
 				}
 			}
 
-			int length = mLatexTableHeaderCount;
+			final int length = mLatexTableHeaderCount;
 			int i = 0;
-			List<String> row = csv.getRow(0);
+			final List<String> row = csv.getRow(0);
 			if (row == null || row.size() == 0) {
 				// no results in this category, just fill with empty fields
 				for (; i < length; ++i) {
 					sb.append(sep);
 				}
 			} else {
-				for (String cell : row) {
+				for (final String cell : row) {
 					if (!idx[i]) {
 						// skip this column, we dont want to print it
 						i++;

@@ -51,7 +51,7 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 
 	private List<TraceNode> internalList;
 
-	private HashMap<ILocation, Integer> locationIteration;
+	private final HashMap<ILocation, Integer> locationIteration;
 
 
 	/**
@@ -83,7 +83,7 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (viewer instanceof TreeViewer) {
 			locationIteration.clear();
-			TreeViewer tv = (TreeViewer) viewer;
+			final TreeViewer tv = (TreeViewer) viewer;
 			internalList.clear();
 			tv.getTree().removeAll();
 			// if the selected item in the TreeView is a CounterExample
@@ -92,9 +92,9 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 				originalFailurePath = ((CounterExampleResult) newInput)
 						.getFailurePath();
 				internalList = compressFailurePath(originalFailurePath);
-				for (TraceNode tn : internalList) {
+				for (final TraceNode tn : internalList) {
 					if (locationIteration.containsKey(tn.getLocation())) {
-						int temp = locationIteration.get(tn.getLocation());
+						final int temp = locationIteration.get(tn.getLocation());
 						locationIteration.put(tn.getLocation(), temp + 1);
 						tn.setIteration(temp + 1);
 					} else {
@@ -118,15 +118,15 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 	 * @return the reduced failure path
 	 */
 	private List<TraceNode> compressFailurePath(List<ILocation> failurePath) {
-		ArrayList<TraceNode> newList = new ArrayList<TraceNode>();
+		final ArrayList<TraceNode> newList = new ArrayList<TraceNode>();
 		ILocation actualLocation = null;
 		int counter = 0;
 		int counterv2 = 0;
-		for (ILocation loc : failurePath) {
+		for (final ILocation loc : failurePath) {
 			
 			if (loc instanceof LocationFactory) {
 				if (!loc.equals(actualLocation)) {
-					TraceNode tn = new TraceNode(loc, counterv2, counter);
+					final TraceNode tn = new TraceNode(loc, counterv2, counter);
 					newList.add(tn);
 					actualLocation = loc;
 					counterv2++;

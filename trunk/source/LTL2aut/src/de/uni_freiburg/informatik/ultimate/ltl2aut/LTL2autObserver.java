@@ -109,7 +109,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			// the boogie file or from the settings
 			// both formats are in ltl2aut format
 			// we need to create a check with boogie-code
-			String[] specification = getSpecification();
+			final String[] specification = getSpecification();
 			if (specification == null || specification.length == 0 || specification[0].isEmpty()) {
 				throw new UnsupportedOperationException("No specification given");
 			}
@@ -118,11 +118,11 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			mCheck = new LTLPropertyCheck(ltlProperty, irs, null);
 		}
 
-		String ltl2baProperty = getLTL2BAProperty(ltlProperty);
-		AstNode node = getNeverClaim(ltl2baProperty);
-		CodeBlockFactory cbf = (CodeBlockFactory) mStorage
+		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
+		final AstNode node = getNeverClaim(ltl2baProperty);
+		final CodeBlockFactory cbf = (CodeBlockFactory) mStorage
 				.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
-		NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
+		final NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
 		mNWAContainer = new NWAContainer(nwa);
@@ -142,7 +142,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private String prettyPrintProperty(Map<String, CheckableExpression> irs, String property) {
-		for (Entry<String, CheckableExpression> entry : irs.entrySet()) {
+		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
 			property = property.replaceAll(entry.getKey(),
 					"(" + BoogiePrettyPrinter.print(entry.getValue().getExpression()) + ")");
 		}
@@ -150,12 +150,13 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private String[] getSpecification() throws IOException {
-		if (PreferenceInitializer.readPropertyFromFile()) {
+		if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE)) {
 			if (mInputFile != null) {
 				BufferedReader br;
 				String line = null;
-				ArrayList<String> properties = new ArrayList<>();
-				ArrayList<String> irs = new ArrayList<>();
+				final ArrayList<String> properties = new ArrayList<>();
+				final ArrayList<String> irs = new ArrayList<>();
 				try {
 					br = new BufferedReader(new FileReader(mInputFile));
 					while ((line = br.readLine()) != null) {
@@ -167,7 +168,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 						}
 					}
 					br.close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					mLogger.error("Error while reading " + mInputFile + ": " + e);
 					line = null;
 					throw e;
@@ -179,10 +180,10 @@ public class LTL2autObserver implements IUnmanagedObserver {
 					if (properties.size() > 1) {
 						throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
 					}
-					String[] rtr = new String[1 + irs.size()];
+					final String[] rtr = new String[1 + irs.size()];
 					rtr[0] = properties.get(0);
 					int i = 1;
-					for (String entry : irs) {
+					for (final String entry : irs) {
 						rtr[i] = entry;
 						i++;
 					}
@@ -192,7 +193,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 
 		mLogger.info("Using LTL specification from settings.");
-		String property = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		final String property = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_PPROPERTY);
 		return property.split("\n");
 	}
@@ -201,7 +202,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		try {
 			mLogger.debug("Parsing LTL property...");
 			return new LTLXBAExecutor(mServices, mStorage).ltl2Ast(property);
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			mLogger.fatal(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;
 		}
@@ -262,7 +263,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			if (nwa == null) {
 				throw new NullPointerException("nwa is null");
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.fatal("LTL2Aut encountered an error while transforming the NeverClaim to a NestedWordAutomaton");
 			throw e;
 		}

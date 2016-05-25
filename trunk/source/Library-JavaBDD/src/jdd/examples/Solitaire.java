@@ -2,9 +2,11 @@
 package jdd.examples;
 
 
-import jdd.bdd.*;
-import jdd.bdd.debug.*;
-import jdd.util.*;
+import jdd.bdd.Permutation;
+import jdd.bdd.debug.ProfiledBDD2;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
 
 
 /**
@@ -58,12 +60,12 @@ public class Solitaire extends ProfiledBDD2 {
 	private static final int CENTER = 16;
 
 	/** Current state variables */
-	private int [] boardC = new int[SIZE];
-	private int [] not_boardC = new int[SIZE];
+	private final int [] boardC = new int[SIZE];
+	private final int [] not_boardC = new int[SIZE];
 
 	/** Next state variables */
-	private int [] boardN = new int[SIZE];
-	private int [] not_boardN = new int[SIZE];
+	private final int [] boardN = new int[SIZE];
+	private final int [] not_boardN = new int[SIZE];
 
 	/** Use to remove the number of states defined by the next-state variables  */
 	private double dummyStateNum;
@@ -161,8 +163,10 @@ public class Solitaire extends ProfiledBDD2 {
 	private void make_initial_state() {
 		I = 1;
 		for(int n = 0; n < SIZE; n++)
+		 {
 			I = andTo(I, (n == CENTER) ? not_boardC[n] : boardC[n] );
 		// printSet(I);
+		}
 	}
 
 
@@ -174,7 +178,7 @@ public class Solitaire extends ProfiledBDD2 {
 		int idle = 1;
 		for(int n = 0; n < SIZE; n++) {
    		if(n != src && n != tmp && n != dst) {
-				int tmp2 = ref( biimp(boardC[n], boardN[n]) );
+				final int tmp2 = ref( biimp(boardC[n], boardN[n]) );
 				idle = andTo(idle, tmp2);
 				deref(tmp2);
 			}
@@ -190,20 +194,20 @@ public class Solitaire extends ProfiledBDD2 {
 		// bdd move = boardC[src] & boardC[tmp] & !boardC[dst] & !boardN[src] & !boardN[tmp] & boardN[dst];
 		// move &= all_other_idle(src, tmp, dst);
 
-		int tmp1 = ref( and( boardC[src], not_boardN[src]) );
-		int tmp2 = ref( and( boardC[tmp], not_boardN[tmp]) );
-		int tmp5 = ref( and(tmp1, tmp2) );
+		final int tmp1 = ref( and( boardC[src], not_boardN[src]) );
+		final int tmp2 = ref( and( boardC[tmp], not_boardN[tmp]) );
+		final int tmp5 = ref( and(tmp1, tmp2) );
 		deref(tmp1);
 		deref(tmp2);
 
 
-		int tmp3 = ref( and( boardN[dst], not_boardC[dst]) );
-		int tmp4 = all_other_idle(src, tmp, dst);
-		int tmp6 = ref( and(tmp3, tmp4) );
+		final int tmp3 = ref( and( boardN[dst], not_boardC[dst]) );
+		final int tmp4 = all_other_idle(src, tmp, dst);
+		final int tmp6 = ref( and(tmp3, tmp4) );
 		deref(tmp3);
 		deref(tmp4);
 
-		int move = ref( and(tmp5, tmp6) );
+		final int move = ref( and(tmp5, tmp6) );
 		deref(tmp5);
 		deref(tmp6);
 
@@ -215,7 +219,7 @@ public class Solitaire extends ProfiledBDD2 {
 
 		T = 0;
 		for(int n = 0; n < moves.length; n++) {
-			int tmp = make_move(moves[n][0]-1, moves[n][1]-1, moves[n][2]-1);
+			final int tmp = make_move(moves[n][0]-1, moves[n][1]-1, moves[n][2]-1);
 			T = orTo(T, tmp);
 			deref(tmp);
 		}
@@ -232,7 +236,9 @@ public class Solitaire extends ProfiledBDD2 {
 		pair = createPermutation(boardN, boardC);
 
 		currentvar = 1;
-		for(int n = 0; n < SIZE; n++)  currentvar = andTo(currentvar, boardC[n]);
+		for(int n = 0; n < SIZE; n++) {
+			currentvar = andTo(currentvar, boardC[n]);
+		}
 	}
 
 
@@ -247,8 +253,8 @@ public class Solitaire extends ProfiledBDD2 {
 
 	do {
 		tmp = reachable;
-		int next = ref( relProd(reachable, T, currentvar) );
-		int tmp2 = ref( replace(next, pair) );
+		final int next = ref( relProd(reachable, T, currentvar) );
+		final int tmp2 = ref( replace(next, pair) );
 		deref(next);
 
 		reachable = orTo(reachable, tmp2);
@@ -297,14 +303,14 @@ void iterate_front(void)
 
 
 
-		long c1 = System.currentTimeMillis();
-		Solitaire s = new Solitaire();
+		final long c1 = System.currentTimeMillis();
+		final Solitaire s = new Solitaire();
 
 		s.setup();
 		s.iterate();
 
 		s.showStats();
-		long c2 = System.currentTimeMillis();
+		final long c2 = System.currentTimeMillis();
 		JDDConsole.out.println("Time: " + (c2-c1) + " [ms]");
 	}
 }

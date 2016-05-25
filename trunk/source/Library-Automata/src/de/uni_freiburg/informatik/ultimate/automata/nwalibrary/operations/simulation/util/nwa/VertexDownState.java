@@ -76,7 +76,7 @@ public final class VertexDownState<STATE> {
 		if (!(obj instanceof VertexDownState)) {
 			return false;
 		}
-		VertexDownState<?> other = (VertexDownState<?>) obj;
+		final VertexDownState<?> other = (VertexDownState<?>) obj;
 		if (mLeftDownState == null) {
 			if (other.mLeftDownState != null) {
 				return false;

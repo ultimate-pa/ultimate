@@ -252,7 +252,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		if (!(obj instanceof DuplicatorDoubleDeckerVertex)) {
 			return false;
 		}
-		DuplicatorDoubleDeckerVertex<?, ?> other = (DuplicatorDoubleDeckerVertex<?, ?>) obj;
+		final DuplicatorDoubleDeckerVertex<?, ?> other = (DuplicatorDoubleDeckerVertex<?, ?>) obj;
 		if (mSink == null) {
 			if (other.mSink != null) {
 				return false;
@@ -281,7 +281,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public String getName() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + ",");
 		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
@@ -295,7 +295,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
+		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -426,7 +426,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",");
 		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
@@ -441,7 +441,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
+		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

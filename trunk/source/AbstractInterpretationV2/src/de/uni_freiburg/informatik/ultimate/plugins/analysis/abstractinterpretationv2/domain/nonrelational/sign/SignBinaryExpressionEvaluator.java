@@ -90,10 +90,10 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 
 		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 

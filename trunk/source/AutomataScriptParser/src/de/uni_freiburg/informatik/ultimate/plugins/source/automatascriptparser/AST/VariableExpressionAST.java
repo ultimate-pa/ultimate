@@ -54,7 +54,7 @@ public class VariableExpressionAST extends AtsASTNode {
 	}
 
 	public void setIdentifier(String identifier) {
-		this.mIdentifier = identifier;
+		mIdentifier = identifier;
 	}
 	
 

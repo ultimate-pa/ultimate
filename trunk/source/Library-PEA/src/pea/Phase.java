@@ -23,13 +23,13 @@
  */
 package pea;
 
-import pea.util.SimpleSet;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+
+import pea.util.SimpleSet;
 
 
 public class Phase implements Comparable<Phase> {
@@ -45,7 +45,7 @@ public class Phase implements Comparable<Phase> {
     public boolean haslDl = true;
     public int flags;
     public CDD dlCheck;
-    private Vector<Transition> incomming;
+    private final Vector<Transition> incomming;
     String name;
     CDD stateInv;
     CDD clockInv;
@@ -63,7 +63,7 @@ public class Phase implements Comparable<Phase> {
         this.name = name;
         this.stateInv = stateInv;
         this.clockInv = clockInv;
-        this.transitions = new ArrayList<Transition>();
+        transitions = new ArrayList<Transition>();
         this.stoppedClocks = stoppedClocks;
         dlCheck = clockInv;
 
@@ -127,10 +127,10 @@ public class Phase implements Comparable<Phase> {
 
     /** @return the transition added or modified */
     public Transition addTransition(Phase dest, CDD guard, String[] resets) {
-        Iterator<Transition> it = transitions.iterator();
+        final Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext()) {
-            Transition t = (Transition) it.next();
+            final Transition t = it.next();
 
             if ((t.getDest() == dest) && t.resets.equals(resets)) {
                 t.guard = t.guard.or(guard);
@@ -139,13 +139,14 @@ public class Phase implements Comparable<Phase> {
             }
         }
 
-        Transition t = new Transition(this, guard, resets, dest);
+        final Transition t = new Transition(this, guard, resets, dest);
         transitions.add(t);
 
         return t;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return name;
     }
 
@@ -167,29 +168,30 @@ public class Phase implements Comparable<Phase> {
             System.err.println("    clockinvariant " + clockInv);
         }
 
-        for (String clock : stoppedClocks) {
+        for (final String clock : stoppedClocks) {
             System.err.println("    stopped " + clock);
         }
 
         System.err.println("    transitions {");
 
-        Iterator<Transition> it = transitions.iterator();
+        final Iterator<Transition> it = transitions.iterator();
 
-        while (it.hasNext())
-            System.err.println("       " + it.next());
+        while (it.hasNext()) {
+			System.err.println("       " + it.next());
+		}
 
         System.err.println("    }");
         System.err.println("  }");
     }
 
     public void dumpDot() {
-        System.out.println("  " + this.name + " [ label = \"" + stateInv +
+        System.out.println("  " + name + " [ label = \"" + stateInv +
             "\\n" + clockInv + "\" shape=ellipse ]");
 
-        Iterator<Transition> it = transitions.iterator();
+        final Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext()) {
-            Transition t = it.next();
+            final Transition t = it.next();
             System.out.println("  " + t.getSrc().name + " -> " +
                 t.getDest().name + " [ label = \"" + t.guard + "\" ]");
         }
@@ -225,7 +227,8 @@ public class Phase implements Comparable<Phase> {
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Phase p) {
+    @Override
+	public int compareTo(Phase p) {
         return name.compareTo(p.name);
     }
 

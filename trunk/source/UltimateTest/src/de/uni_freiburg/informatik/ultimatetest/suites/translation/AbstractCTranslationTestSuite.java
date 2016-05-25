@@ -44,19 +44,19 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		final ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
 		// get a set of input files
 
-		Collection<File> inputFiles = getInputFiles();
-		File settingsFile = getSettings();
+		final Collection<File> inputFiles = getInputFiles();
+		final File settingsFile = getSettings();
 
-		File toolchainFile = new File(TestUtil.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
-		long deadline = 10000;
+		final File toolchainFile = new File(TestUtil.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
+		final long deadline = 10000;
 
-		for (File inputFile : inputFiles) {
-			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
-			UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
+		for (final File inputFile : inputFiles) {
+			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
+			final UltimateStarter starter = new UltimateStarter(urd, deadline, null, null);
 			rtr.add(new UltimateTestCase(inputFile.getAbsolutePath(), new TranslationTestResultDecider(inputFile
 					.getAbsolutePath()), starter, urd, super.getSummaries(), null));
 		}

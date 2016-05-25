@@ -75,9 +75,9 @@ public abstract class AbstractAnnotations implements IAnnotations {
 	public Map<String, Object> getAnnotationsAsMap() {
 		if (mBackingMap == null) {
 			mBackingMap = new AbstractMap<String, Object>() {
-				private Set<Entry<String, Object>> mEntrySet = new AbstractSet<Entry<String, Object>>() {
+				private final Set<Entry<String, Object>> mEntrySet = new AbstractSet<Entry<String, Object>>() {
 
-					private String[] mAttribFields = getFieldNames();
+					private final String[] mAttribFields = getFieldNames();
 
 					@Override
 					public Iterator<Entry<String, Object>> iterator() {
@@ -91,7 +91,7 @@ public abstract class AbstractAnnotations implements IAnnotations {
 
 							@Override
 							public Entry<String, Object> next() {
-								String field = mAttribFields[fieldCount++];
+								final String field = mAttribFields[fieldCount++];
 								return new AbstractMap.SimpleImmutableEntry<String, Object>(field, getFieldValue(field));
 							}
 

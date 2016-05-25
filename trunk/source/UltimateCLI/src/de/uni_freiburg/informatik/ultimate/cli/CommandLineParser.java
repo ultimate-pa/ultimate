@@ -69,7 +69,7 @@ public class CommandLineParser {
 	}
 
 	public void parse(String[] args) {
-		int argc = args.length;
+		final int argc = args.length;
 
 		// iterate over command lines
 		for (int i = 0; i < argc; i++) {
@@ -91,9 +91,9 @@ public class CommandLineParser {
 				try {
 					mToolchainFile = new String(args[i]);
 					++i;
-					ArrayList<String> inputFiles = new ArrayList<>();
+					final ArrayList<String> inputFiles = new ArrayList<>();
 					while (i < args.length) {
-						String current = args[i];
+						final String current = args[i];
 						if (current.startsWith("--")) {
 							--i;
 							break;
@@ -108,7 +108,7 @@ public class CommandLineParser {
 						mInputFiles = inputFiles.toArray(new String[0]);
 					}
 					continue;
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					mExit = true;
 					return;
 				}
@@ -120,7 +120,7 @@ public class CommandLineParser {
 					try {
 						mPreludeFile = args[++i];
 						return;
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						mExit = true;
 						return;
 					}
@@ -128,7 +128,7 @@ public class CommandLineParser {
 				if (args[i].compareTo("--settings") == 0) {
 					try {
 						mSettingsFile = args[++i];
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						mExit = true;
 						return;
 					}

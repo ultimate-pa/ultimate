@@ -87,15 +87,15 @@ public class HoareAnnotationChecker {
 		// neither proven nor refuted because theorem prover too weak
 		// yield[3] is the number of edges whose inductiveness could be
 		// neither proven nor refuted because there were no interpolants
-		int[] yield = new int[4];
+		final int[] yield = new int[4];
 
-		List<RCFGNode> initialNodes = rootNode.getOutgoingNodes();
-		Set<ProgramPoint> visited = new HashSet<ProgramPoint>();
-		List<ProgramPoint> worklist = new LinkedList<ProgramPoint>();
+		final List<RCFGNode> initialNodes = rootNode.getOutgoingNodes();
+		final Set<ProgramPoint> visited = new HashSet<ProgramPoint>();
+		final List<ProgramPoint> worklist = new LinkedList<ProgramPoint>();
 
 		if (initialNodes != null) {
-			for (RCFGNode initINode : initialNodes) {
-				ProgramPoint initNode = (ProgramPoint) initINode;
+			for (final RCFGNode initINode : initialNodes) {
+				final ProgramPoint initNode = (ProgramPoint) initINode;
 				visited.add(initNode);
 				worklist.add(initNode);
 			}
@@ -103,8 +103,8 @@ public class HoareAnnotationChecker {
 			mLogger.warn("There was no procedure with an implementation");
 		}
 		while (!worklist.isEmpty()) {
-			ProgramPoint locNode = worklist.remove(0);
-			for (RCFGEdge iEdge : locNode.getOutgoingEdges()) {
+			final ProgramPoint locNode = worklist.remove(0);
+			for (final RCFGEdge iEdge : locNode.getOutgoingEdges()) {
 
 				final RCFGNode iSuccLoc = iEdge.getTarget();
 				final ProgramPoint succLoc = (ProgramPoint) iSuccLoc;
@@ -113,13 +113,13 @@ public class HoareAnnotationChecker {
 					worklist.add(succLoc);
 				}
 
-				IPredicate sf1 = HoareAnnotation.getAnnotation(locNode);
+				final IPredicate sf1 = HoareAnnotation.getAnnotation(locNode);
 				if (sf1 == null) {
 					mLogger.warn(locNode + " has no Hoare annotation");
 					continue;
 				}
 
-				IPredicate sf2 = HoareAnnotation.getAnnotation(succLoc);
+				final IPredicate sf2 = HoareAnnotation.getAnnotation(succLoc);
 				if (sf2 == null) {
 					mLogger.warn(succLoc + " has no Hoare annotation");
 					continue;
@@ -131,8 +131,8 @@ public class HoareAnnotationChecker {
 					action = ((ICallAction) iEdge);
 					inductivity = mHoareTripleChecker.checkCall(sf1, (ICallAction) action, sf2);
 				} else if (iEdge instanceof Return) {
-					ProgramPoint callerNode = ((Return) iEdge).getCallerProgramPoint();
-					IPredicate sfk = HoareAnnotation.getAnnotation(callerNode);
+					final ProgramPoint callerNode = ((Return) iEdge).getCallerProgramPoint();
+					final IPredicate sfk = HoareAnnotation.getAnnotation(callerNode);
 					if (sfk == null) {
 						mLogger.warn(callerNode + " has no Hoare annotation");
 						continue;

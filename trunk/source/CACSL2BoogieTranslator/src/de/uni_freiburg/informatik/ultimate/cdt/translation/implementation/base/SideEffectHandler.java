@@ -52,17 +52,17 @@ public class SideEffectHandler implements ISideEffectHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
-        String msg = "SideEffectHandler: Not yet implemented: "
+        final String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = LocationFactory.createCLocation(node);
+        final ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
     public Result visit(Dispatcher main, ACSLNode node) {
-        String msg = "SideEffectHandler: Not yet implemented: "
+        final String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = LocationFactory.createACSLLocation(node);
+        final ILocation loc = LocationFactory.createACSLLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 }

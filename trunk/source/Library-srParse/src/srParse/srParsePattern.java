@@ -1,8 +1,10 @@
 package srParse;
 
-import java.util.*;
+import java.util.Vector;
 
-import pea.*;
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.PhaseEventAutomata;
 import pea.reqCheck.PatternToPEA;
 
 
@@ -31,7 +33,7 @@ public class srParsePattern {
 	public Vector<Integer> getElemHashes()
 	{
 		int i;
-    	Vector<Integer> res=new Vector<Integer>();
+    	final Vector<Integer> res=new Vector<Integer>();
     	
     	for( i=0;i<cdds.size();i++ )
     	{
@@ -53,29 +55,32 @@ public class srParsePattern {
 	
 	private boolean subExpressionsContained( CDD cdd, Vector<CDD> list )
 	{
-		if( cdd==null || list==null || cdd==CDD.FALSE || cdd==CDD.TRUE )
+		if( cdd==null || list==null || cdd==CDD.FALSE || cdd==CDD.TRUE ) {
 			return true;
+		}
 		
-		String var=cdd.getDecision().getVar();
+		final String var=cdd.getDecision().getVar();
 		int i;
 		boolean found=false;
 		
 		for(i=0;i<list.size();i++)
 		{
-			String lvar=list.get(i).getDecision().getVar();
+			final String lvar=list.get(i).getDecision().getVar();
 			if( lvar.compareTo( var )==0 )
 			{
 				found=true;
 				break;
 			}
 		}
-		if( !found )
+		if( !found ) {
 			return false;
+		}
 		
 		for(i=0;i<cdd.getChilds().length;i++)
 		{
-			if( !subExpressionsContained( cdd.getChilds()[i], list ) )
+			if( !subExpressionsContained( cdd.getChilds()[i], list ) ) {
 				return false;
+			}
 		}
 		
 		return true;
@@ -85,11 +90,13 @@ public class srParsePattern {
 	{
 		int i;
 		
-		if( cdds==null )
+		if( cdds==null ) {
 			return;
+		}
 		
-		if( this.cdds==null )
+		if( this.cdds==null ) {
 			this.cdds=new Vector<CDD>();
+		}
 			
 		for(i=0;i<cdds.size();i++)
 		{
@@ -133,21 +140,24 @@ public class srParsePattern {
 		
 		public abstract void transform();
 		
+		@Override
 		public abstract String toString();
 	}
 	
 	public class InvariantPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0); 
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0); 
 			
 			pea = peaTransformator.invariantPattern(p_cdd, q_cdd, r_cdd, s_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -162,6 +172,7 @@ public class srParsePattern {
 	public class InstAbsPattern extends PatternType
 	{
 		// erwartet cdds rückwärts
+		@Override
 		public void transform()
 		{
 			
@@ -172,9 +183,9 @@ public class srParsePattern {
 						System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 					}
 					
-					CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
-					CDD q_cdd = this.getDefaultQ_cdd();
-					CDD r_cdd = this.getDefaultR_cdd();
+					final CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
+					final CDD q_cdd = getDefaultQ_cdd();
+					final CDD r_cdd = getDefaultR_cdd();
 					
 					
 					pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString() );
@@ -187,9 +198,9 @@ public class srParsePattern {
 							System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 						}
 						
-						CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
-						CDD q_cdd = this.getDefaultQ_cdd();
-						CDD r_cdd = cdds.get(1); 
+						final CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
+						final CDD q_cdd = getDefaultQ_cdd();
+						final CDD r_cdd = cdds.get(1); 
 						
 						
 						
@@ -204,9 +215,9 @@ public class srParsePattern {
 							System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 						}
 
-						CDD p_cdd = cdds.get(0);
-						CDD q_cdd = scope.getCdd1();
-						CDD r_cdd = scope.getCdd2();
+						final CDD p_cdd = cdds.get(0);
+						final CDD q_cdd = scope.getCdd1();
+						final CDD r_cdd = scope.getCdd2();
 
 						pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 						
@@ -218,9 +229,9 @@ public class srParsePattern {
 								//Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 								System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 							}
-							CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
-							CDD q_cdd = scope.getCdd1();
-							CDD r_cdd = this.getDefaultR_cdd();
+							final CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
+							final CDD q_cdd = scope.getCdd1();
+							final CDD r_cdd = getDefaultR_cdd();
 							
 							pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 						}
@@ -232,15 +243,16 @@ public class srParsePattern {
 									System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 								}
 								
-								CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
-								CDD q_cdd = scope.getCdd1();
-								CDD r_cdd = scope.getCdd2();
+								final CDD p_cdd = cdds.get(0); //für Duration Calculus muß das als CDD gegeben sein
+								final CDD q_cdd = scope.getCdd1();
+								final CDD r_cdd = scope.getCdd2();
 								
 								pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 								//return this.getFormulaInLTL();
 							}
 		}	
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -253,6 +265,7 @@ public class srParsePattern {
 	
 	public class UniversalityPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
 			/*
@@ -262,13 +275,14 @@ public class srParsePattern {
 			*/
 			
 			
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 						
 			pea = peaTransformator.universalityPattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -281,15 +295,17 @@ public class srParsePattern {
 	
 	public class BndExistencePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 			
 			pea = peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -300,16 +316,18 @@ public class srParsePattern {
 	
 	public class PrecedencePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0);
 			
 			pea = peaTransformator.precedencePattern(p_cdd, q_cdd, r_cdd, s_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -321,17 +339,19 @@ public class srParsePattern {
 	
 	public class PrecedenceChain12Pattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(2); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(1);
-			CDD t_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(2); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(1);
+			final CDD t_cdd = cdds.get(0);
 			
 			pea = peaTransformator.precedenceChainPattern12(p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -344,17 +364,19 @@ public class srParsePattern {
 	
 	public class PrecedenceChain21Pattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(2); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(1);
-			CDD t_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(2); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(1);
+			final CDD t_cdd = cdds.get(0);
 			
 			pea = peaTransformator.precedenceChainPattern21(p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -367,16 +389,18 @@ public class srParsePattern {
 	
 	public class ResponsePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0);
 			
 			pea = peaTransformator.responsePattern(p_cdd, q_cdd, r_cdd, s_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -390,17 +414,19 @@ public class srParsePattern {
 	
 	public class ResponseChain12Pattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(2); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(1);
-			CDD t_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(2); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(1);
+			final CDD t_cdd = cdds.get(0);
 			
 			pea = peaTransformator.responseChainPattern12(p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -413,17 +439,19 @@ public class srParsePattern {
 	
 	public class ResponseChain21Pattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(2); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(1);
-			CDD t_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(2); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(1);
+			final CDD t_cdd = cdds.get(0);
 			
 			pea = peaTransformator.responseChainPattern21(p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -436,17 +464,19 @@ public class srParsePattern {
 	
 	public class ConstrainedChainPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 			
 			System.err.println( "Kein PEA" );
 			
 			pea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -460,15 +490,17 @@ public class srParsePattern {
 	
 	public class MinDurationPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 			
 			pea = peaTransformator.minDurationPattern(p_cdd, q_cdd, r_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -481,15 +513,17 @@ public class srParsePattern {
 	
 	public class MaxDurationPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 			
 			pea = peaTransformator.maxDurationPattern(p_cdd, q_cdd, r_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -503,15 +537,17 @@ public class srParsePattern {
 	
 	public class BndReccurrencePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(0); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = cdds.get(0); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
 			
 			pea = peaTransformator.periodicPattern(p_cdd, q_cdd, r_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -525,16 +561,18 @@ public class srParsePattern {
 	
 	public class BndResponsePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0);
 			
 			pea = peaTransformator.bndResponsePattern(p_cdd, q_cdd, r_cdd, s_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -548,16 +586,18 @@ public class srParsePattern {
 	
 	public class BndInvariancePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0);
 			
 			pea = peaTransformator.bndInvariancePattern(p_cdd, q_cdd, r_cdd, s_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -570,6 +610,7 @@ public class srParsePattern {
 	
 	public class PossibilityPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
 			
@@ -578,6 +619,7 @@ public class srParsePattern {
 			pea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -590,6 +632,7 @@ public class srParsePattern {
 	
 	public class BndPossResponsePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
 			System.err.println( "Kein PEA" );
@@ -597,6 +640,7 @@ public class srParsePattern {
 			pea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -609,6 +653,7 @@ public class srParsePattern {
 	
 	public class BndPossInvariancePattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
 			System.err.println( "Kein PEA" );
@@ -616,6 +661,7 @@ public class srParsePattern {
 			pea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -628,16 +674,18 @@ public class srParsePattern {
 	
 	public class BndEntryConditionPattern extends PatternType
 	{
+		@Override
 		public void transform()
 		{
-			CDD p_cdd = cdds.get(1); 
-			CDD q_cdd = scope.getCdd1(); 
-			CDD r_cdd = scope.getCdd2();
-			CDD s_cdd = cdds.get(0);
+			final CDD p_cdd = cdds.get(1); 
+			final CDD q_cdd = scope.getCdd1(); 
+			final CDD r_cdd = scope.getCdd2();
+			final CDD s_cdd = cdds.get(0);
 			
 			pea = peaTransformator.bndEntryConditionPattern(p_cdd, q_cdd, r_cdd, s_cdd, duration, scope.toString());
 		}
 		
+		@Override
 		public String toString()
 		{
 			String res=new String();
@@ -695,6 +743,7 @@ public class srParsePattern {
 		this.pattern=pattern;
 	}
 	
+	@Override
 	public String toString()
 	{
 		String res=new String();

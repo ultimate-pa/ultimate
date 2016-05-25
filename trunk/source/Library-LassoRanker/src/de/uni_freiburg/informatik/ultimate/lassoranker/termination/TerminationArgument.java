@@ -75,7 +75,7 @@ public class TerminationArgument implements Serializable {
 		
 		// Add only non-trivial supporting invariants
 		msupporting_invariants = new ArrayList<SupportingInvariant>();
-		for (SupportingInvariant si : supporting_invariants) {
+		for (final SupportingInvariant si : supporting_invariants) {
 			if (!si.isTrue()) {
 				msupporting_invariants.add(si);
 			}
@@ -102,8 +102,9 @@ public class TerminationArgument implements Serializable {
 											mArrayIndexSupportingInvariants);
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Termination argument consisting of:\n");
 		sb.append("Ranking function ");
 		sb.append(mranking_function);

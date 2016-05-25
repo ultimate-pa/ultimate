@@ -1,7 +1,8 @@
 
 package jdd.util;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 // DOT TYPE ARE:
 // ps ps2 hpgl pcl mif pic gd gd2 gif jpg jpeg png wbmp ismap imap cmap vrml
@@ -30,12 +31,12 @@ public class Dot {
 	 */
 	public static void showString(String file, String string)  {
 		try {
-			FileOutputStream fs = new FileOutputStream (file);
+			final FileOutputStream fs = new FileOutputStream (file);
 			fs.write(string.getBytes() );
 			fs.flush();
 			fs.close();
 			showDot(file);
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("Unable to save graph to the file "+ file + "\nReason: " + exx.toString() );
 		}
 	}
@@ -60,8 +61,8 @@ public class Dot {
 		try {
 
 			if(run_dot) {
-				String cmd = DOT_COMMAND + " -T" + DOT_TYPES[dot_type] + " \"" + file + "\" -o \"" + file + "." + DOT_TYPES[dot_type] + "\"";
-				Process p = rt.exec(cmd);
+				final String cmd = DOT_COMMAND + " -T" + DOT_TYPES[dot_type] + " \"" + file + "\" -o \"" + file + "." + DOT_TYPES[dot_type] + "\"";
+				final Process p = rt.exec(cmd);
 				p.waitFor();
 			}
 
@@ -69,9 +70,9 @@ public class Dot {
 				FileUtility.delete(file);
 			}
 
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("Unable to run DOT on " + file + "\nReason: " + exx.toString() );
-		}catch(InterruptedException exx) {
+		}catch(final InterruptedException exx) {
 			JDDConsole.out.println("DOT interrupted when processing " + file + "\nReason: " + exx.toString() );
 		}
 	}

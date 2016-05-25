@@ -50,9 +50,10 @@ public class HeapLValue extends LRValue {
 	Expression address;
 	
 	public Expression getAddress() {
-		return this.address;
+		return address;
 	}
 	
+	@Override
 	public Expression getValue() {
 		throw new AssertionError("HeapLValues must be converted to RValue before their value can be queried.");
 	}

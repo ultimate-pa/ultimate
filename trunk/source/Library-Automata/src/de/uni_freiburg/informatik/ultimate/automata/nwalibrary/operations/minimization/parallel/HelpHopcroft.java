@@ -38,9 +38,9 @@ import java.util.Iterator;
  *
  */
 public class HelpHopcroft implements Runnable {
-	private MinimizeDfaAmrParallel<?, ?> mincrementalAlgorithm;
-	private MinimizeDfaHopcroftParallel<?, ?> mhopcroftAlgorithm;
-	private int mstate1;
+	private final MinimizeDfaAmrParallel<?, ?> mincrementalAlgorithm;
+	private final MinimizeDfaHopcroftParallel<?, ?> mhopcroftAlgorithm;
+	private final int mstate1;
 
 	/**
 	 * The incremental algorithm determined, that state1 and state2 are of the
@@ -68,7 +68,7 @@ public class HelpHopcroft implements Runnable {
 		HashSet<Integer> set = null;
 		try {
 			set = mhopcroftAlgorithm.getBlock(mstate1);
-		} catch (NullPointerException e) {
+		} catch (final NullPointerException e) {
 			return;
 		}
 		// Return in case of empty set list.
@@ -78,17 +78,17 @@ public class HelpHopcroft implements Runnable {
 		boolean eq = true;
 		assert (set.size() > 1);
 		if (set.size() > 2) {
-			for (Iterator<Integer> iter = set.iterator(); iter.hasNext();) {
-				int elem = iter.next();
+			for (final Iterator<Integer> iter = set.iterator(); iter.hasNext();) {
+				final int elem = iter.next();
 
-				int state1rep = mincrementalAlgorithm.find(mstate1);
+				final int state1rep = mincrementalAlgorithm.find(mstate1);
 				if (mincrementalAlgorithm.find(elem) != state1rep) {
 					eq = false;
 				}
 			}
 		}
 		if (eq) {
-			for (int state : set) {
+			for (final int state : set) {
 				mhopcroftAlgorithm.removePartition(state);
 			}
 		}

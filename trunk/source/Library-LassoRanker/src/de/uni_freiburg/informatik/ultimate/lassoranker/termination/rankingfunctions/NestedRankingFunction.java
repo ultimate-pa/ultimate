@@ -65,8 +65,8 @@ public class NestedRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : mRanking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mRanking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
@@ -78,7 +78,7 @@ public class NestedRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mRanking.length);
 		sb.append("-nested ranking function:\n");
 		for (int i = 0; i < mFunctions; ++i) {
@@ -101,8 +101,8 @@ public class NestedRankingFunction extends RankingFunction {
 		Term value = mRanking[mRanking.length - 1].asTerm(script);
 		for (int i = mRanking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term f_term = mRanking[i].asTerm(script);
-			Term cond = script.term(">", f_term,
+			final Term f_term = mRanking[i].asTerm(script);
+			final Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
 			value = script.term("ite", cond, f_term, value);

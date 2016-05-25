@@ -111,10 +111,10 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	}
 	
 	protected LinkedList<ArrayList<ISmtCommand>> deepCopyOfCommandStack() {
-		LinkedList<ArrayList<ISmtCommand>> result = new LinkedList<ArrayList<ISmtCommand>>();
-		for (ArrayList<ISmtCommand> al : mCommandStack) {
+		final LinkedList<ArrayList<ISmtCommand>> result = new LinkedList<ArrayList<ISmtCommand>>();
+		for (final ArrayList<ISmtCommand> al : mCommandStack) {
 			result.add(new ArrayList<ISmtCommand>());
-			for (ISmtCommand command : al) {
+			for (final ISmtCommand command : al) {
 				result.getLast().add(command);
 			}
 		}
@@ -136,8 +136,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	}
 	
 	private void printCommandStack(PrintWriter pw, List<ArrayList<ISmtCommand>> commandStack) {
-		for (ArrayList<ISmtCommand> al : commandStack) {
-			for (ISmtCommand command : al) {
+		for (final ArrayList<ISmtCommand> al : commandStack) {
+			for (final ISmtCommand command : al) {
 				pw.print(command.toString());
 			}
 		}
@@ -147,17 +147,17 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		FileWriter fw = null;
 		try {
 			fw = new FileWriter(file);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new AssertionError("Unable to write file " + file.getAbsolutePath());
 		}
-		PrintWriter pw = new PrintWriter(fw);
+		final PrintWriter pw = new PrintWriter(fw);
 		printCommandStack(pw, commandStack);
 		pw.close();
 	}
 	
 	protected File constructFile(String suffix) {
-		String filename = mDirectory + File.separator + mBaseFilename + suffix + ".smt2";
-		File file = new File(filename);
+		final String filename = mDirectory + File.separator + mBaseFilename + suffix + ".smt2";
+		final File file = new File(filename);
 		return file;
 	}
 
@@ -169,8 +169,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void setLogic(String logic)
 		throws UnsupportedOperationException, SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(set-logic " + logic + ")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setLogic(logic);
@@ -179,8 +179,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void setLogic(Logics logic)
 		throws UnsupportedOperationException, SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(set-logic " + logic.name() + ")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setLogic(logic);
@@ -191,8 +191,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void setOption(String opt, Object value)
 		throws UnsupportedOperationException, SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(set-option ");
 		mPw.print(opt);
 		mPw.print(' ');
@@ -204,8 +204,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public void setInfo(String info, Object value) {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(set-info ");
 		mPw.print(info);
 		mPw.print(' ');
@@ -217,8 +217,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(declare-sort ");
 		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(' ');
@@ -231,13 +231,13 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void defineSort(String sort, Sort[] sortParams, Sort definition)
 		throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(define-sort ");
 		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(" (");
 		String sep = "";
-		for (Sort p : sortParams) {
+		for (final Sort p : sortParams) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, p);
 			sep = " ";
@@ -252,13 +252,13 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
 		throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(declare-fun ");
 		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "";
-		for (Sort p : paramSorts) {
+		for (final Sort p : paramSorts) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, p);
 			sep = " ";
@@ -273,13 +273,13 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
 			Term definition) throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(define-fun ");
 		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "(";
-		for (TermVariable t : params) {
+		for (final TermVariable t : params) {
 			mPw.print(sep);
 			mPw.print(t);
 			mPw.print(' ');
@@ -329,8 +329,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(check-sat)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.checkSat();
@@ -338,8 +338,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-assertions)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getAssertions();
@@ -348,8 +348,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Term getProof() throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-proof)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getProof();
@@ -358,8 +358,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-unsat-core)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getUnsatCore();
@@ -368,11 +368,11 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(get-value (");
 		String sep = "";
-		for (Term t : terms) {
+		for (final Term t : terms) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, formatTerm(t));
 			sep = " ";
@@ -385,8 +385,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Assignments getAssignment() throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-assignment)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getAssignment();
@@ -403,8 +403,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public Object getInfo(String info) throws UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-info " + info + ")");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getInfo(info);
@@ -412,8 +412,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public Term simplify(Term term) throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(simplify ");
 		mTermPrinter.append(mPw, term);
 		mPw.println(")");
@@ -423,8 +423,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public void reset() {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(reset)");
 		resetAssertionStack();
 		mScript.reset();
@@ -434,10 +434,10 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(get-interpolants");
-		for (Term t : partition) {
+		for (final Term t : partition) {
 			mPw.print(' ');
 			mTermPrinter.append(mPw, t);
 		}
@@ -452,8 +452,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
 		throws SMTLIBException,	UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(get-interpolants ");
 		mTermPrinter.append(mPw, partition[0]);
 		for (int i = 1; i < partition.length; ++i) {
@@ -463,8 +463,9 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 				prevStart = startOfSubtree[prevStart - 1];
 			}
 			mPw.print(' ');
-			if (startOfSubtree[i] == i)
+			if (startOfSubtree[i] == i) {
 				mPw.print('(');
+			}
 			mTermPrinter.append(mPw, partition[i]);
 		}
 		mPw.println(')');
@@ -474,8 +475,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public void exit() {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(exit)");
 		mPw.flush();
 		mPw.close();
@@ -572,8 +573,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Model getModel() throws SMTLIBException,
 			UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(get-model)");
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getModel();
@@ -582,12 +583,12 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	@Override
 	public Iterable<Term[]> checkAllsat(Term[] predicates)
 		throws SMTLIBException,	UnsupportedOperationException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
-		PrintTerm pt = new PrintTerm();
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
+		final PrintTerm pt = new PrintTerm();
 		mPw.print("(check-allsat (");
 		String spacer = "";
-		for (Term p : predicates) {
+		for (final Term p : predicates) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";
@@ -599,19 +600,19 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public Term[] findImpliedEquality(Term[] x, Term[] y) {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
-		PrintTerm pt = new PrintTerm();
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
+		final PrintTerm pt = new PrintTerm();
 		mPw.print("(find-implied-equality (");
 		String spacer = "";
-		for (Term p : x) {
+		for (final Term p : x) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";
 		}
 		mPw.print(") (");
 		spacer = "";
-		for (Term p : x) {
+		for (final Term p : x) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";
@@ -639,8 +640,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	 * @param comment The comment to write to the dump file.
 	 */
 	public void comment(String comment) {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("; ");
 		mPw.println(comment);
 		addToCurrentAssertionStack(sw.toString());
@@ -661,8 +662,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		
 		@Override
 		public String toString() {
-			StringWriter sw = new StringWriter();
-			PrintWriter mPw = new PrintWriter(sw);
+			final StringWriter sw = new StringWriter();
+			final PrintWriter mPw = new PrintWriter(sw);
 			mPw.print("(assert ");
 			mTermPrinter.append(mPw, formatTerm(mTerm));
 			mPw.println(")");

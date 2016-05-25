@@ -106,7 +106,7 @@ public class VariableAssignmentLabelProvider implements ITableLabelProvider {
 		 * The second column shows the value that is assigned to this variable.
 		 */
 		if (element instanceof VarAssNode) {
-			VarAssNode node = (VarAssNode) element;
+			final VarAssNode node = (VarAssNode) element;
 			switch (columnIndex) {
 			case 0:
 				return node.getName();

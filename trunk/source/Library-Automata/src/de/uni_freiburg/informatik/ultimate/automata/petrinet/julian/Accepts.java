@@ -33,9 +33,9 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -55,9 +55,9 @@ public class Accepts<S, C> implements IOperation<S, C> {
 		return "acceptsJulian";
 	}
 	
-	private PetriNetJulian<S, C> net;
-	private Word<S> nWord;
-	private Boolean mResult;
+	private final PetriNetJulian<S, C> net;
+	private final Word<S> nWord;
+	private final Boolean mResult;
 
 	// private Collection<Place<S, C>> marking;
 	// private int position;
@@ -90,43 +90,49 @@ public class Accepts<S, C> implements IOperation<S, C> {
 		mLogger.info(exitMessage());
 	}
 
+	@Override
 	public Boolean getResult() throws AutomataLibraryException {
 		return mResult;
 	}
 
 	private boolean getResultHelper(int position,
 	        Marking<S, C> marking) throws AutomataLibraryException {
-		if (position >= nWord.length())
+		if (position >= nWord.length()) {
 			return net.isAccepting(marking);
+		}
 		
 		
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
-		S symbol = nWord.getSymbol(position);
+		final S symbol = nWord.getSymbol(position);
 		if (!net.getAlphabet().contains(symbol)) {
 			throw new IllegalArgumentException("Symbol "+symbol
 					+" not in alphabet"); 
 		}
 
-		HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = 
+		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = 
 											new HashSet<ITransition<S, C>>();
 
 		// get all active transitions which are labeled with the next symbol
-		for (Place<S, C> place : marking)
-			for (ITransition<S, C> transition : place.getSuccessors())
+		for (final Place<S, C> place : marking) {
+			for (final ITransition<S, C> transition : place.getSuccessors()) {
 				if (marking.isTransitionEnabled(transition)
-				        && transition.getSymbol().equals(symbol))
+				        && transition.getSymbol().equals(symbol)) {
 					activeTransitionsWithTheSymbol.add(transition);
+				}
+			}
+		}
 		// marking = new HashSet<Place<S,C>>();
 		position++;
 		boolean result = false;
 		Marking<S, C> nextMarking;
-		for (ITransition<S, C> transition : activeTransitionsWithTheSymbol) {
+		for (final ITransition<S, C> transition : activeTransitionsWithTheSymbol) {
 			nextMarking = marking.fireTransition(transition);
-			if (getResultHelper(position, nextMarking))
+			if (getResultHelper(position, nextMarking)) {
 				result = true;
+			}
 		}
 		return result;
 	}
@@ -137,11 +143,11 @@ public class Accepts<S, C> implements IOperation<S, C> {
 
 		mLogger.info("Testing correctness of accepts");
 
-		NestedWord<S> nw = NestedWord.nestedWord(nWord);
-		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(mServices, 
+		final NestedWord<S> nw = NestedWord.nestedWord(nWord);
+		final boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(mServices, 
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, net)).getResult(), nw))
 				.getResult();
-		boolean correct = (mResult == resultAutomata);
+		final boolean correct = (mResult == resultAutomata);
 
 		mLogger.info("Finished testing correctness of accepts");
 

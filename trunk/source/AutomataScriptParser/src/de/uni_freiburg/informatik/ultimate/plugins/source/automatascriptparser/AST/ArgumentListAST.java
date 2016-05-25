@@ -29,8 +29,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -46,7 +46,7 @@ public class ArgumentListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -7834789712780583991L;
-	private ArrayList<Object> marguments;
+	private final ArrayList<Object> marguments;
 	
 	public ArgumentListAST(ILocation loc) {
 		super(loc);
@@ -82,8 +82,8 @@ public class ArgumentListAST extends AtsASTNode {
 	
 	@Override
 	public String getAsString() {
-        StringBuilder builder = new StringBuilder();
-        for (AtsASTNode arg : mchildren) {
+        final StringBuilder builder = new StringBuilder();
+        for (final AtsASTNode arg : mchildren) {
         	builder.append(arg.getAsString() + ", ");
         }
         builder.delete(builder.length() - 2, builder.length());

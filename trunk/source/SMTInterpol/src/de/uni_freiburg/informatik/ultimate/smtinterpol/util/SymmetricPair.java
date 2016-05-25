@@ -32,19 +32,22 @@ public class SymmetricPair<T> {
 		return mSnd;
 	}
 	
+	@Override
 	public int hashCode() {
 		return mFst.hashCode() + mSnd.hashCode();
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof SymmetricPair<?>) {
-			SymmetricPair<?> p = (SymmetricPair<?>) o;
+			final SymmetricPair<?> p = (SymmetricPair<?>) o;
 			return (mFst.equals(p.mFst) && mSnd.equals(p.mSnd))
 			    || (mFst.equals(p.mSnd) && mSnd.equals(p.mFst));
 		}
 		return false;
 	}
 	
+	@Override
 	public String toString() {
 		return "(" + mFst + "," + mSnd + ")";
 	}

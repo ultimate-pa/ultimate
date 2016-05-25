@@ -59,7 +59,7 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	@Override
 	public boolean continueProcessing() {
-		boolean cancel = mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
+		final boolean cancel = mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
 		if (cancel) {
 			mLogger.debug("Do not continue processing!");
 		}

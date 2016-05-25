@@ -51,9 +51,9 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		PetriNetUnfolder<LETTER,STATE> unf = 
+		final PetriNetUnfolder<LETTER,STATE> unf = 
 				new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, false, true);
-		PetriNetRun<LETTER,STATE> run = unf.getAcceptingRun();
+		final PetriNetRun<LETTER,STATE> run = unf.getAcceptingRun();
 		mResult = (run == null);
 		mLogger.info(exitMessage());
 	}
@@ -83,8 +83,8 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
-		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(mServices, finiteAutomaton)).getResult();
+		final INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+		final boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(mServices, finiteAutomaton)).getResult();
 		return (mResult == automatonEmpty);
 	}
 

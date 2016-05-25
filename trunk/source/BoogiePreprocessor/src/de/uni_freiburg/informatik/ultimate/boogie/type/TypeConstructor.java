@@ -64,8 +64,9 @@ public class TypeConstructor implements Serializable{
 		return synonym;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(name);
 		if (paramOrder.length > 0) {
 			sb.append('<');
@@ -76,8 +77,9 @@ public class TypeConstructor implements Serializable{
 			}
 			sb.append('>');
 		}
-		if (synonym != null)
+		if (synonym != null) {
 			sb.append('=').append(synonym);
+		}
 		return sb.toString();
 	}
 	

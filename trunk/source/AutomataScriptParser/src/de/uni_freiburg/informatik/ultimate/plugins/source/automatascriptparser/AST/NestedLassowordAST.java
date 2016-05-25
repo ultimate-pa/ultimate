@@ -43,8 +43,8 @@ public class NestedLassowordAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -2004814510723903218L;
-	private NestedwordAST mnw1;
-	private NestedwordAST mnw2;
+	private final NestedwordAST mnw1;
+	private final NestedwordAST mnw2;
 	
 	public NestedLassowordAST(ILocation loc, NestedwordAST nw1, NestedwordAST nw2) {
 		super(loc);
@@ -55,7 +55,7 @@ public class NestedLassowordAST extends AtsASTNode {
 
 	@Override
 	public String toString() {
-		StringBuilder b = new StringBuilder();
+		final StringBuilder b = new StringBuilder();
 		b.append("NestedLassoword: [Nw1: ");
 		b.append(mnw1);
 		b.append(", Nw2: ");

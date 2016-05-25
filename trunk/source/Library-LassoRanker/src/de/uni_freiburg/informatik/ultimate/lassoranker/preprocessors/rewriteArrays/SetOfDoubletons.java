@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 
 /**
@@ -57,7 +57,7 @@ public class SetOfDoubletons<E> {
 	}
 	
 	public boolean containsDoubleton(E oneElem, E otherElem) {
-		Set<E> image = mSomeElem2OtherElem.getImage(oneElem);
+		final Set<E> image = mSomeElem2OtherElem.getImage(oneElem);
 		if (image == null) {
 			return false;
 		} else {

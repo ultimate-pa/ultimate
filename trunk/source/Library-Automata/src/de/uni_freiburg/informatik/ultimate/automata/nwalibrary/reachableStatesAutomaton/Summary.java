@@ -60,7 +60,7 @@ class Summary<LETTER, STATE> {
 	
 	public IncomingReturnTransition<LETTER, STATE> obtainIncomingReturnTransition(
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
-		for (IncomingReturnTransition<LETTER, STATE> inTrans  : 
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans  : 
 			nwars.returnPredecessors(getHierPred().getState(), getLetter(), getSucc().getState())) {
 			if (getLinPred().getState().equals(inTrans.getLinPred())) {
 				return inTrans;
@@ -83,28 +83,37 @@ class Summary<LETTER, STATE> {
 	}
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Summary other = (Summary) obj;
+		}
+		final Summary other = (Summary) obj;
 		if (mHierPred == null) {
-			if (other.mHierPred != null)
+			if (other.mHierPred != null) {
 				return false;
-		} else if (!mHierPred.equals(other.mHierPred))
+			}
+		} else if (!mHierPred.equals(other.mHierPred)) {
 			return false;
+		}
 		if (mLinPred == null) {
-			if (other.mLinPred != null)
+			if (other.mLinPred != null) {
 				return false;
-		} else if (!mLinPred.equals(other.mLinPred))
+			}
+		} else if (!mLinPred.equals(other.mLinPred)) {
 			return false;
+		}
 		if (mSucc == null) {
-			if (other.mSucc != null)
+			if (other.mSucc != null) {
 				return false;
-		} else if (!mSucc.equals(other.mSucc))
+			}
+		} else if (!mSucc.equals(other.mSucc)) {
 			return false;
+		}
 		return true;
 	}
 	@Override

@@ -75,7 +75,7 @@ public final class VisualizationNode implements
 
 			@Override
 			protected void createIncoming() {
-				for (IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getIncomingEdges()) {
+				for (final IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getIncomingEdges()) {
 					if (e.getSource() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
@@ -92,7 +92,7 @@ public final class VisualizationNode implements
 
 			@Override
 			protected void createOutgoing() {
-				for (IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getOutgoingEdges()) {
+				for (final IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getOutgoingEdges()) {
 					if (e.getTarget() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
@@ -128,7 +128,7 @@ public final class VisualizationNode implements
 				if (label instanceof IPayload) {
 					pay = (IPayload) label;
 				} else if (label instanceof IElement) {
-					IElement ele = (IElement) label;
+					final IElement ele = (IElement) label;
 					if (ele.hasPayload()) {
 						pay = ele.getPayload();
 					}
@@ -139,9 +139,9 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createIncoming() {
-				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> pred : node.getIncomingNodes()) {
+				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> pred : node.getIncomingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
+					final IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
 
 					if (pay != null) {
 						ve = new VisualizationEdge(pred.getVisualizationGraph(), VisualizationNode.this, pay, null);
@@ -156,9 +156,9 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createOutgoing() {
-				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
+				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
+					final IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
 
 					if (pay != null) {
 						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(), pay, null);
@@ -174,8 +174,8 @@ public final class VisualizationNode implements
 
 			@Override
 			protected List<IWalkable> getSuccessors() {
-				ArrayList<IWalkable> rtr = new ArrayList<IWalkable>();
-				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
+				final ArrayList<IWalkable> rtr = new ArrayList<IWalkable>();
+				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
 					final ILabeledEdgesMultigraph<T, L, VisualizationNode> child = succ;
 					rtr.add(new IWalkable() {
 
@@ -219,7 +219,7 @@ public final class VisualizationNode implements
 				// in the right order
 				mIncoming = new ArrayList<VisualizationEdge>();
 
-				for (ISimpleAST<?, VisualizationNode> succ : node.getOutgoingNodes()) {
+				for (final ISimpleAST<?, VisualizationNode> succ : node.getOutgoingNodes()) {
 					if (succ == null) {
 						continue;
 					}
@@ -264,7 +264,7 @@ public final class VisualizationNode implements
 
 				@Override
 				protected void createOutgoing() {
-					for (IDirectedGraph<?, VisualizationNode> succ : node.getOutgoingNodes()) {
+					for (final IDirectedGraph<?, VisualizationNode> succ : node.getOutgoingNodes()) {
 						mOutgoing.add(new VisualizationEdge(VisualizationNode.this,
 								new VisualizationNode(succ, backingDirectory), null));
 					}
@@ -272,7 +272,7 @@ public final class VisualizationNode implements
 
 				@Override
 				protected void createIncoming() {
-					for (IDirectedGraph<?, VisualizationNode> pred : node.getOutgoingNodes()) {
+					for (final IDirectedGraph<?, VisualizationNode> pred : node.getOutgoingNodes()) {
 						mIncoming.add(new VisualizationEdge(new VisualizationNode(pred, backingDirectory),
 								VisualizationNode.this, null));
 					}
@@ -290,7 +290,7 @@ public final class VisualizationNode implements
 	public List<VisualizationNode> getOutgoingNodes() {
 		if (mOutgoing == null) {
 			mOutgoing = new ArrayList<VisualizationNode>();
-			for (VisualizationEdge e : getOutgoingEdges()) {
+			for (final VisualizationEdge e : getOutgoingEdges()) {
 				mOutgoing.add(e.getTarget());
 			}
 		}

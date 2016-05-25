@@ -5,16 +5,20 @@
 
 package jdd.bdd.sets;
 
-import jdd.bdd.*;
-import jdd.util.*;
-import jdd.util.sets.*;
-import jdd.util.math.*;
+import jdd.bdd.BDD;
+import jdd.bdd.BDDUtil;
+import jdd.util.Array;
+import jdd.util.JDDConsole;
+import jdd.util.Test;
+import jdd.util.math.Digits;
+import jdd.util.sets.Set;
+import jdd.util.sets.Universe;
 
 
 /**  this class is class accessible only in package */
 
 /* package */ class SubDomain {
-	private BDDUniverse universe;
+	private final BDDUniverse universe;
 	/* package */ int bits, size;
 	/* package */ int all;
 	/* package */ int [] vars, numbers;
@@ -24,19 +28,20 @@ import jdd.util.math.*;
 
 		this.universe = universe;
 		this.size     = size;
-		this.bits     = Digits.log2_ceil( size);
+		bits     = Digits.log2_ceil( size);
 
 		vars = new int[bits];
 		numbers  = new int[size];
-		for(int i = 0; i < bits; i++)
+		for(int i = 0; i < bits; i++) {
 			vars[i] = universe.createVar();
+		}
 
 		all = 0;
 		for(int i = 0; i < size; i++) {
 			numbers[i] = BDDUtil.numberToBDD(universe, vars, i);
 
 			// add to the care-set
-			int tmp = universe.ref ( universe.or(all, numbers[i]) );
+			final int tmp = universe.ref ( universe.or(all, numbers[i]) );
 			universe.deref(all);
 			all = tmp;
 		}
@@ -49,9 +54,14 @@ import jdd.util.math.*;
 
 	// XXX: very inefficient!!
 	public int find(int bdd) {
-		if(bdd == 1 || bdd == 0 /* error! */ || bdd == all) return 0;
-		for(int i = 0; i < size; i++)
-			if( universe.and(bdd, numbers[i]) == bdd) return i;
+		if(bdd == 1 || bdd == 0 /* error! */ || bdd == all) {
+			return 0;
+		}
+		for(int i = 0; i < size; i++) {
+			if( universe.and(bdd, numbers[i]) == bdd) {
+				return i;
+			}
+		}
 
 		return -1; /* error */
 	}
@@ -66,9 +76,11 @@ import jdd.util.math.*;
  * @see jdd.util.mixedradix.MRUniverse
  */
 public class BDDUniverse extends BDD implements Universe {
-	private int [] int_subdomains, int_bits;
+	private final int [] int_subdomains, int_bits;
 	private double domainsize;
-	private int numsubdomains, all, bits;
+	private final int numsubdomains;
+	private int all;
+	private int bits;
 	private SubDomain [] subdomains;
 
 	public BDDUniverse(int [] domains) {
@@ -90,13 +102,14 @@ public class BDDUniverse extends BDD implements Universe {
 		// calc the care-set
 		all = 1;
 		for(int i = 0; i < numsubdomains; i++) {
-			int tmp = ref( and(all, subdomains[i].all) );
+			final int tmp = ref( and(all, subdomains[i].all) );
 			deref(all);
 			all = tmp;
 		}
 	}
 
 	/** cleanup before die */
+	@Override
 	public void free() {
 		cleanup();
 		subdomains = null; // a good way the dsaibe further use - will throw nullpointer exception :)
@@ -106,7 +119,7 @@ public class BDDUniverse extends BDD implements Universe {
 		int ret = 1;
 		for(int i = 0; i < numsubdomains; i++) {
 			if(assignments[i] != -1) {
-				int tmp = ref( and( ret,subdomains[i].numbers[ assignments[i] ] ) );
+				final int tmp = ref( and( ret,subdomains[i].numbers[ assignments[i] ] ) );
 				deref(ret);
 				ret = tmp;
 			}
@@ -138,23 +151,29 @@ public class BDDUniverse extends BDD implements Universe {
 
 	public int cardinality(int [] x) {
 		int ret = 1;
-		for(int i = 0; i < numsubdomains; i++)
-			if(x[i] == -1)
+		for(int i = 0; i < numsubdomains; i++) {
+			if(x[i] == -1) {
 				ret *= subdomains[i].getSize() ;
+			}
+		}
 		return ret;
 	}
 
+	@Override
 	public Set createEmptySet() {	return new BDDSet(this, 0);	}
 
+	@Override
 	public Set createFullSet() {	return new BDDSet(this, all);	}
 
 	public Set simplify(Set s1, Set s2) {
-		int new_bdd = restrict( ((BDDSet)s1).bdd, ((BDDSet)s2).bdd);
+		final int new_bdd = restrict( ((BDDSet)s1).bdd, ((BDDSet)s2).bdd);
 		return new BDDSet(this, new_bdd);
 	}
 
+	@Override
 	public double domainSize() { 	return domainsize; }
 
+	@Override
 	public int subdomainCount() { return numsubdomains; }
 
 	/** number of BDD bits (variables) allocated by this universe */
@@ -170,9 +189,14 @@ public class BDDUniverse extends BDD implements Universe {
 	public void print(int [] v) {
 		JDDConsole.out.print("<");
 		for(int i = 0; i < v.length; i++) {
-			if(i > 0) JDDConsole.out.print(", ");
-			if(v[i] == -1) JDDConsole.out.print("-");
-			else			JDDConsole.out.print(""+v[i]);
+			if(i > 0) {
+				JDDConsole.out.print(", ");
+			}
+			if(v[i] == -1) {
+				JDDConsole.out.print("-");
+			} else {
+				JDDConsole.out.print(""+v[i]);
+			}
 		}
 		JDDConsole.out.print(">");
 	}
@@ -181,7 +205,9 @@ public class BDDUniverse extends BDD implements Universe {
 
 	// ---- random member ----------------------
 	public void randomMember(int [] out) {
-		for(int i = 0; i < numsubdomains; i++) out[i] = (int)(Math.random() * int_subdomains[i]);
+		for(int i = 0; i < numsubdomains; i++) {
+			out[i] = (int)(Math.random() * int_subdomains[i]);
+		}
 	}
 
 	// ---- [satOneVector] more efficient minterm extraction ----------------------
@@ -192,20 +218,34 @@ public class BDDUniverse extends BDD implements Universe {
 		sat_curr = sat_level = sat_index = sat_bit = 0;
 		sat_next = subdomains[0].bits;
 		satOneVector_rec(bdd);
-		while(sat_index < numsubdomains) satOneVector_insert(false);	// if dont care, we choose '0'
+		while(sat_index < numsubdomains)
+		 {
+			satOneVector_insert(false);	// if dont care, we choose '0'
+		}
 		sat_vec = null;
 	}
 	private void satOneVector_insert(boolean x) {
-		if(x) sat_curr |= (1 << sat_bit);
+		if(x) {
+			sat_curr |= (1 << sat_bit);
+		}
 		if(++sat_level == sat_next) {
 			sat_vec[sat_index++] = sat_curr;
 			sat_bit = sat_curr = 0;
-			if(sat_index < numsubdomains) sat_next += subdomains[sat_index].bits;
-		} else sat_bit++;
+			if(sat_index < numsubdomains) {
+				sat_next += subdomains[sat_index].bits;
+			}
+		} else {
+			sat_bit++;
+		}
 	}
 	private void satOneVector_rec(int bdd) {
-		if(bdd < 2) return;
-		while(getVar(bdd) > sat_level)	satOneVector_insert(false);	// if dont care, we choose '0'
+		if(bdd < 2) {
+			return;
+		}
+		while(getVar(bdd) > sat_level)
+		 {
+			satOneVector_insert(false);	// if dont care, we choose '0'
+		}
 		if(getLow(bdd) == 0) {
 			satOneVector_insert(true);
 			satOneVector_rec( getHigh(bdd) );
@@ -221,9 +261,9 @@ public class BDDUniverse extends BDD implements Universe {
 		Test.start("BDDUniverse");
 
 
-		BDDUniverse u = new BDDUniverse(dum);
-		Set s1 = u.createEmptySet();
-		Set s2 = u.createFullSet();
+		final BDDUniverse u = new BDDUniverse(dum);
+		final Set s1 = u.createEmptySet();
+		final Set s2 = u.createFullSet();
 
 		// test trivial stuff
 		Test.checkEquality( s1.cardinality(), 0.0, "Empty set has zero cardinality");

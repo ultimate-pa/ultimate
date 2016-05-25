@@ -47,6 +47,7 @@ public class IncomingInternalTransition<LETTER,STATE> implements Transitionlet<L
 		mLetter = letter;
 	}
 	
+	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
@@ -56,6 +57,7 @@ public class IncomingInternalTransition<LETTER,STATE> implements Transitionlet<L
 	}
 	
 	
+	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
 	}

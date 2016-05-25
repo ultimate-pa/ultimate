@@ -52,26 +52,26 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     /**
      * Holds a map from BoogieIDs and the corresponding CIDs.
      */
-    private HashMap<String, String> boogieID2CID;
+    private final HashMap<String, String> boogieID2CID;
     
 
-    private HashMap<CDeclaration, Declaration> mCDecl2BoogieDecl;
+    private final HashMap<CDeclaration, Declaration> mCDecl2BoogieDecl;
     /**
      * unique ID for current scope.
      */
     private int compoundCounter;
 
-    private Stack<Integer> compoundNrStack = new Stack<>();;
+    private final Stack<Integer> compoundNrStack = new Stack<>();;
 
     /**
      * A reference to the main dispatcher.
      */
-    private Dispatcher main;
+    private final Dispatcher main;
 
     @Override
     public SymbolTableValue put(String cId, SymbolTableValue value) {
-        if (!main.typeHandler.isStructDeclaration()) {
-            SymbolTableValue v = super.put(cId, value);
+        if (!main.mTypeHandler.isStructDeclaration()) {
+            final SymbolTableValue v = super.put(cId, value);
             boogieID2CID.put(value.getBoogieName(), cId);
             mCDecl2BoogieDecl.put(value.getCDecl(), value.getBoogieDecl());
             return v;
@@ -84,7 +84,9 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @deprecated ignores the error location! Use
      *             <code>get(String, Location)</code> instead.
      **/
-    public SymbolTableValue get(Object cId) {
+    @Deprecated
+	@Override
+	public SymbolTableValue get(Object cId) {
         return get((String) cId, null);
     }
 
@@ -103,7 +105,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
                     "Not a valid key for symbol table: " + cId.getClass());
         }
         if (!containsKey(cId)) {
-            String msg = "Variable is neither declared globally nor locally! ID="
+            final String msg = "Variable is neither declared globally nor locally! ID="
                     + cId;
             throw new IncorrectSyntaxException(errorLoc, msg);
         }
@@ -132,7 +134,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return true iff contained.
      */
     public boolean containsCSymbol(String cId) {
-        return this.containsKey(cId);
+        return containsKey(cId);
     }
 
     /**
@@ -143,7 +145,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return true iff contained.
      */
     public boolean containsBoogieSymbol(String boogieId) {
-        return this.boogieID2CID.containsKey(boogieId);
+        return boogieID2CID.containsKey(boogieId);
     }
 
     /**
@@ -154,9 +156,9 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      */
     public SymbolTable(Dispatcher main) {
         super();
-        this.boogieID2CID = new HashMap<String, String>();
-        this.mCDecl2BoogieDecl = new HashMap<CDeclaration, Declaration>();
-        this.compoundCounter = 0;
+        boogieID2CID = new HashMap<String, String>();
+        mCDecl2BoogieDecl = new HashMap<CDeclaration, Declaration>();
+        compoundCounter = 0;
         this.main = main;
     }
 
@@ -173,9 +175,9 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      */
     public void addToReverseMap(String boogieIdentifier, String cIdentifier,
             ILocation loc) {
-        String old = boogieID2CID.put(boogieIdentifier, cIdentifier);
+        final String old = boogieID2CID.put(boogieIdentifier, cIdentifier);
         if (old != null && !old.equals(cIdentifier)) {
-            String msg = "Variable with this name was already declared before:"
+            final String msg = "Variable with this name was already declared before:"
                     + cIdentifier;
             throw new IncorrectSyntaxException(loc, msg);
         }
@@ -192,7 +194,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      */
     public String getCID4BoogieID(String boogieIdentifier, ILocation loc) {
         if (!boogieID2CID.containsKey(boogieIdentifier)) {
-            String msg = "Variable not found: " + boogieIdentifier;
+            final String msg = "Variable not found: " + boogieIdentifier;
             throw new IncorrectSyntaxException(loc, msg);
         }
         return boogieID2CID.get(boogieIdentifier);
@@ -204,10 +206,11 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return a unique number for the current scope.
      */
     public int getCompoundCounter() {
-    	if (compoundNrStack.isEmpty())
-    		return 0;
-    	else 
-    		return compoundNrStack.peek();
+    	if (compoundNrStack.isEmpty()) {
+			return 0;
+		} else {
+			return compoundNrStack.peek();
+		}
     }
 
     /**
@@ -221,7 +224,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return the found ASTType.
      */
     public ASTType getTypeOfVariable(String cId, ILocation loc) {
-    	return main.typeHandler.ctype2asttype(loc, this.get(cId, loc).getCVariable());
+    	return main.mTypeHandler.ctype2asttype(loc, this.get(cId, loc).getCVariable());
 //        if (this.get(cId, loc).getBoogieDecl() instanceof VariableDeclaration) {
 //            VariableDeclaration vd = (VariableDeclaration) get(cId, loc)
 //                    .getBoogieDecl();
@@ -251,10 +254,11 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     }
 
 	public boolean existsInCurrentScope(String name) {
-		if (!this.containsCSymbol(name))
+		if (!containsCSymbol(name)) {
 			return false;
+		}
 		boolean result = false;
-		for (String k : currentScopeKeys()) {
+		for (final String k : currentScopeKeys()) {
 			result |= name.equals(k);
 		}
 		return result;

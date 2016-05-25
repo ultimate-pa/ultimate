@@ -79,7 +79,7 @@ public class AutomataScriptInterpreter implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override

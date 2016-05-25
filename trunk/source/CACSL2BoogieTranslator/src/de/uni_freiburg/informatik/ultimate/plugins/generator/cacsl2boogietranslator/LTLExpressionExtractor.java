@@ -62,10 +62,10 @@ public class LTLExpressionExtractor {
 	 *         false otherwise
 	 */
 	public boolean run(ACSLNode node) {
-		LTLPrettyPrinter printer = new LTLPrettyPrinter();
+		final LTLPrettyPrinter printer = new LTLPrettyPrinter();
 		mMap = null;
 		node = removeWeakUntil(node);
-		LTLExtractSubexpressions visitor = new LTLExtractSubexpressions();
+		final LTLExtractSubexpressions visitor = new LTLExtractSubexpressions();
 		node.accept(visitor);
 
 		mLTLFormatString = printer.print(node);
@@ -112,12 +112,12 @@ public class LTLExpressionExtractor {
 
 			if (node.getOperator().equals(Operator.LTLWEAKUNTIL)) {
 				// a WU b == (a U b) || (G a)
-				Expression left = node.getLeft().accept(this);
-				Expression right = node.getRight().accept(this);
+				final Expression left = node.getLeft().accept(this);
+				final Expression right = node.getRight().accept(this);
 
-				BinaryExpression until = new BinaryExpression(Operator.LTLUNTIL, left, right);
-				UnaryExpression globally = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, left);
-				BinaryExpression or = new BinaryExpression(Operator.LOGICOR, until, globally);
+				final BinaryExpression until = new BinaryExpression(Operator.LTLUNTIL, left, right);
+				final UnaryExpression globally = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, left);
+				final BinaryExpression or = new BinaryExpression(Operator.LOGICOR, until, globally);
 
 				addAdditionalInfo(node, until);
 				addAdditionalInfo(node, globally);
@@ -165,7 +165,7 @@ public class LTLExpressionExtractor {
 		public boolean visit(Expression node) {
 			if (mSubExpressions.contains(node)) {
 				String symbol;
-				String nodeString = new LTLPrettyPrinter().print(node);
+				final String nodeString = new LTLPrettyPrinter().print(node);
 				symbol = mExprString2APString.get(nodeString);
 				if (symbol == null) {
 					// we dont have a symbol for this AP yet, so we need a new
@@ -185,7 +185,7 @@ public class LTLExpressionExtractor {
 	private class LTLExtractSubexpressions extends ACSLVisitor {
 
 		private Expression mCurrentSubExpression;
-		private HashSet<Expression> mExpressions;
+		private final HashSet<Expression> mExpressions;
 
 		private LTLExtractSubexpressions() {
 			mCurrentSubExpression = null;
@@ -206,8 +206,8 @@ public class LTLExpressionExtractor {
 				return super.visit(node);
 			default:
 				if (mCurrentSubExpression == null) {
-					LTLExtractSubexpressions left = new LTLExtractSubexpressions();
-					LTLExtractSubexpressions right = new LTLExtractSubexpressions();
+					final LTLExtractSubexpressions left = new LTLExtractSubexpressions();
+					final LTLExtractSubexpressions right = new LTLExtractSubexpressions();
 					node.getLeft().accept(left);
 					node.getRight().accept(right);
 
@@ -216,14 +216,14 @@ public class LTLExpressionExtractor {
 					} else {
 						boolean allOfLeft = false;
 						boolean allOfRight = false;
-						HashSet<Expression> results = new HashSet<>();
-						for (Expression expr : left.getResult()) {
+						final HashSet<Expression> results = new HashSet<>();
+						for (final Expression expr : left.getResult()) {
 							results.add(expr);
 							if (expr == node.getLeft()) {
 								allOfLeft = true;
 							}
 						}
-						for (Expression expr : right.getResult()) {
+						for (final Expression expr : right.getResult()) {
 							results.add(expr);
 							if (expr == node.getRight()) {
 								allOfRight = true;
@@ -251,13 +251,13 @@ public class LTLExpressionExtractor {
 				return super.visit(node);
 			default:
 				if (mCurrentSubExpression == null) {
-					LTLExtractSubexpressions right = new LTLExtractSubexpressions();
+					final LTLExtractSubexpressions right = new LTLExtractSubexpressions();
 					node.getExpr().accept(right);
 
 					if (right.getResult().isEmpty()) {
 						mCurrentSubExpression = node;
 					} else {
-						for (Expression expr : right.getResult()) {
+						for (final Expression expr : right.getResult()) {
 							if (expr == node.getExpr()) {
 								mCurrentSubExpression = node;
 							}

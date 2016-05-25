@@ -76,5 +76,6 @@ public interface IPayload extends Serializable {
 	 * 
 	 * @deprecated Should not be used anymore because {@link IPayload} should become immutable.
 	 */
+	@Deprecated
 	void setLocation(ILocation loc);
 }

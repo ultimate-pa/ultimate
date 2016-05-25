@@ -46,16 +46,16 @@ public class ComparativeSummary extends NewTestSummary {
 
 	@Override
 	public String getSummaryLog() {
-		PartitionedResults partitionedResults = getAllResultsPartitioned();
+		final PartitionedResults partitionedResults = getAllResultsPartitioned();
 
 		final HashMap<String, HashSet<Entry<UltimateRunDefinition, ExtendedResult>>> tool2entry = new HashMap<>();
 		final HashMap<String, HashSet<String>> file2tool = new HashMap<>();
-		HashMap<String, HashSet<Entry<UltimateRunDefinition, ExtendedResult>>> file2entries = new HashMap<>();
+		final HashMap<String, HashSet<Entry<UltimateRunDefinition, ExtendedResult>>> file2entries = new HashMap<>();
 
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : partitionedResults.All) {
-			String tool = entry.getKey().getToolchain().getAbsolutePath() + "+"
+		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : partitionedResults.All) {
+			final String tool = entry.getKey().getToolchain().getAbsolutePath() + "+"
 					+ entry.getKey().getSettings().getAbsolutePath();
-			String filename = entry.getKey().getInputFileNames();
+			final String filename = entry.getKey().getInputFileNames();
 			HashSet<Entry<UltimateRunDefinition, ExtendedResult>> entries = tool2entry.get(tool);
 			if (entries == null) {
 				entries = new HashSet<>();
@@ -78,12 +78,12 @@ public class ComparativeSummary extends NewTestSummary {
 			fEntries.add(entry);
 		}
 
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> mismatches = CoreUtil.where(partitionedResults.Error,
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> mismatches = CoreUtil.where(partitionedResults.Error,
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
-						for (String tool : tools) {
+						final HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
+						for (final String tool : tools) {
 							if (!tool2entry.containsKey(tool)) {
 								return false;
 							}
@@ -95,18 +95,18 @@ public class ComparativeSummary extends NewTestSummary {
 		// HashSet<Entry<UltimateRunDefinition, ExtendedResult>> mismatchesSet =
 		// new HashSet<>(mismatches);
 
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("#################");
 		sb.append(" Mismatching errors ");
 		sb.append("#################");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		String indent = "    ";
-		for (Entry<UltimateRunDefinition, ExtendedResult> mismatch : mismatches) {
-			String filename = mismatch.getKey().getInputFileNames();
+		final String indent = "    ";
+		for (final Entry<UltimateRunDefinition, ExtendedResult> mismatch : mismatches) {
+			final String filename = mismatch.getKey().getInputFileNames();
 			sb.append(filename);
 			sb.append(CoreUtil.getPlatformLineSeparator());
-			for (Entry<UltimateRunDefinition, ExtendedResult> differentEntry : file2entries.get(filename)) {
-				String tool = TestUtil.removeTrunkToolchainPrefix(differentEntry.getKey().getToolchain().getAbsolutePath())
+			for (final Entry<UltimateRunDefinition, ExtendedResult> differentEntry : file2entries.get(filename)) {
+				final String tool = TestUtil.removeTrunkToolchainPrefix(differentEntry.getKey().getToolchain().getAbsolutePath())
 						+ "+" + TestUtil.removeTrunkSettingsPrefix(differentEntry.getKey().getSettings().getAbsolutePath());
 				sb.append(indent);
 				sb.append(tool);

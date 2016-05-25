@@ -46,97 +46,119 @@ public class ConstructedType extends BoogieType {
 	private final BoogieType realType;
 	
 	ConstructedType(TypeConstructor c, BoogieType[] parameters) {
-		this.constr = c;
+		constr = c;
 		this.parameters = parameters;
 
 		boolean changed = false;
-		BoogieType[] realParameters = new BoogieType[parameters.length];
+		final BoogieType[] realParameters = new BoogieType[parameters.length];
 		for (int i = 0; i < realParameters.length; i++) {
 			realParameters[i] = parameters[i].getUnderlyingType();
-			if (realParameters[i] != parameters[i])
+			if (realParameters[i] != parameters[i]) {
 				changed = true;
+			}
 		}
-		BoogieType t = c.getSynonym();
+		final BoogieType t = c.getSynonym();
 		if (t == null) {
-			if (changed)
+			if (changed) {
 				realType = createConstructedType(constr, realParameters);
-			else
+			} else {
 				realType = this;
+			}
 		} else {
 			realType = t.getUnderlyingType().substitutePlaceholders(0, realParameters);
 		}
 	}
 
 	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int depth, BoogieType[] substType) {
-		if (parameters.length == 0)
+		if (parameters.length == 0) {
 			return this;
-		BoogieType[] newParam = new BoogieType[parameters.length];
+		}
+		final BoogieType[] newParam = new BoogieType[parameters.length];
 		boolean changed = false;
 		for (int i = 0; i < parameters.length; i++) {
 			newParam[i] = parameters[i].substitutePlaceholders(depth, substType);
-			if (newParam[i] != parameters[i])
+			if (newParam[i] != parameters[i]) {
 				changed = true;
+			}
 		}
-		if (!changed)
+		if (!changed) {
 			return this;
+		}
 		return createConstructedType(constr, newParam);
 	}
 
 	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
-		if (parameters.length == 0)
+		if (parameters.length == 0) {
 			return this;
-		BoogieType[] newParam = new BoogieType[parameters.length];
+		}
+		final BoogieType[] newParam = new BoogieType[parameters.length];
 		boolean changed = false;
 		for (int i = 0; i < parameters.length; i++) {
 			newParam[i] = parameters[i].incrementPlaceholders(depth, incDepth);
-			if (newParam[i] != parameters[i])
+			if (newParam[i] != parameters[i]) {
 				changed = true;
+			}
 		}
-		if (!changed)
+		if (!changed) {
 			return this;
+		}
 		return createConstructedType(constr, newParam);
 	}
 
 	//@Override
+	@Override
 	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
-		if (!(other instanceof ConstructedType))
+		if (!(other instanceof ConstructedType)) {
 			return false;
-		ConstructedType type = (ConstructedType) other;
-		if (constr != type.constr)
+		}
+		final ConstructedType type = (ConstructedType) other;
+		if (constr != type.constr) {
 			return false;
+		}
 		for (int i = 0; i < parameters.length; i++) {
-			if (!parameters[i].unify(depth, type.parameters[i], substitution))
+			if (!parameters[i].unify(depth, type.parameters[i], substitution)) {
 				return false;
+			}
 		}
 		return true;
 	}
 
+	@Override
 	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
-		for (BoogieType t : parameters) {
-			if (t.hasPlaceholder(minDepth, maxDepth))
+		for (final BoogieType t : parameters) {
+			if (t.hasPlaceholder(minDepth, maxDepth)) {
 				return true;
+			}
 		}
 		return false; 
 	}
 
 	//@Override
+	@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst) {
-		if (this == other || other == TYPE_ERROR)
+		if (this == other || other == TYPE_ERROR) {
 			return true;
-		if (!(other instanceof ConstructedType))
+		}
+		if (!(other instanceof ConstructedType)) {
 			return false;
-		ConstructedType type = (ConstructedType) other;
-		if (constr != type.constr)
+		}
+		final ConstructedType type = (ConstructedType) other;
+		if (constr != type.constr) {
 			return false;
+		}
 		for (int i = 0; i < parameters.length; i++) {
-			if (!parameters[i].isUnifiableTo(depth, type.parameters[i], subst))
+			if (!parameters[i].isUnifiableTo(depth, type.parameters[i], subst)) {
 				return false;
+			}
 		}
 		return true;
 	}
 
+	@Override
 	public BoogieType getUnderlyingType() {
 		return realType;
 	}
@@ -159,34 +181,42 @@ public class ConstructedType extends BoogieType {
 	 * @param needParentheses true if parentheses should be set for constructed types
 	 * @return a string representation of this type.
 	 */
+	@Override
 	protected String toString(int depth, boolean needParentheses) {
-		if (parameters.length == 0)
+		if (parameters.length == 0) {
 			return constr.getName();
+		}
 		
-		StringBuilder sb = new StringBuilder();
-		if (needParentheses)
+		final StringBuilder sb = new StringBuilder();
+		if (needParentheses) {
 			sb.append("(");
+		}
 		sb.append(constr.getName());
-		for (BoogieType pType: parameters)
+		for (final BoogieType pType: parameters) {
 			sb.append(" ").append(pType.toString(depth, true));
-		if (needParentheses)
+		}
+		if (needParentheses) {
 			sb.append(")");
+		}
 		return sb.toString();
 	}
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		ASTType[] astParamTypes = new ASTType[parameters.length];
-		for (int i = 0; i < parameters.length; i++)
+		final ASTType[] astParamTypes = new ASTType[parameters.length];
+		for (int i = 0; i < parameters.length; i++) {
 			astParamTypes[i] = parameters[i].toASTType(loc, depth);
+		}
 		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			NamedType(loc, this, constr.getName(), astParamTypes);
 	}
 	
 	//@Override
+	@Override
 	public boolean isFinite() {
-		if (realType != this)
+		if (realType != this) {
 			return realType.isFinite();
+		}
 		return constr.isFinite();
 	}
 }

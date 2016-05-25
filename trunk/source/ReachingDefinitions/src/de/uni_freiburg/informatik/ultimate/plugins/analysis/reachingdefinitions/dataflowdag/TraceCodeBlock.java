@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class TraceCodeBlock {
 
@@ -45,20 +45,26 @@ public class TraceCodeBlock {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		TraceCodeBlock other = (TraceCodeBlock) obj;
+		}
+		final TraceCodeBlock other = (TraceCodeBlock) obj;
 		if (mBlock == null) {
-			if (other.mBlock != null)
+			if (other.mBlock != null) {
 				return false;
-		} else if (!mBlock.equals(other.mBlock))
+			}
+		} else if (!mBlock.equals(other.mBlock)) {
 			return false;
-		if (mIndex != other.mIndex)
+		}
+		if (mIndex != other.mIndex) {
 			return false;
+		}
 		return true;
 	}
 
@@ -87,7 +93,7 @@ public class TraceCodeBlock {
 	}
 	
 	public void addInterpolant(IPredicate interpolant) {
-		this.mInterpolant = interpolant;
+		mInterpolant = interpolant;
 	}
 	
 	public IPredicate getInterpolant() {

@@ -43,35 +43,41 @@ public class PrepareScript extends LoggingScript {
 	public PrepareScript(Track track, String file) throws FileNotFoundException {
 		super(file, false);
 		mTrack = track;
-		if (track.hasInitalOption())
+		if (track.hasInitalOption()) {
 			setOption(track.getInitialOption(), track.getInitialOptionValue());
+		}
 	}
 
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
-		if (arity != 0)
+		if (arity != 0) {
 			throw new IllegalArgumentException(
 					"Sorts with non-0 arity not allowed in SMTCOMP");
+		}
 		super.declareSort(sort, arity);
 	}
 
 	@Override
 	public void push(int levels) throws SMTLIBException {
-		if (!mTrack.isPushPopAllowed())
+		if (!mTrack.isPushPopAllowed()) {
 			throw new IllegalArgumentException(
 					"push not allowed in this track");
-		if (levels != 1)
+		}
+		if (levels != 1) {
 			throw new IllegalArgumentException("Only (push 1) allowed");
+		}
 		super.push(levels);
 	}
 
 	@Override
 	public void pop(int levels) throws SMTLIBException {
-		if (!mTrack.isPushPopAllowed())
+		if (!mTrack.isPushPopAllowed()) {
 			throw new IllegalArgumentException(
 					"pop not allowed in this track");
-		if (levels != 1)
+		}
+		if (levels != 1) {
 			throw new IllegalArgumentException("Only (pop 1) allowed");
+		}
 		super.pop(levels);
 	}
 
@@ -84,8 +90,9 @@ public class PrepareScript extends LoggingScript {
 	@Override
 	public Term getProof() throws SMTLIBException,
 			UnsupportedOperationException {
-		if (mTrack == Track.PROOF_GEN)
+		if (mTrack == Track.PROOF_GEN) {
 			return super.getProof();
+		}
 		// Do nothing since command not allowed in this track
 		throw new UnsupportedOperationException("Not allowed in this trace");
 	}
@@ -93,8 +100,9 @@ public class PrepareScript extends LoggingScript {
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		if (mTrack == Track.UNSAT_CORE)
+		if (mTrack == Track.UNSAT_CORE) {
 			return super.getUnsatCore();
+		}
 		// Do nothing since command not allowed in this track
 		return new Term[0];
 	}
@@ -110,7 +118,7 @@ public class PrepareScript extends LoggingScript {
 	public Assignments getAssignment() throws SMTLIBException,
 			UnsupportedOperationException {
 		// Do nothing since no track allows this command
-		Map<String, Boolean> empty = Collections.emptyMap();
+		final Map<String, Boolean> empty = Collections.emptyMap();
 		return new Assignments(empty);
 	}
 
@@ -136,13 +144,15 @@ public class PrepareScript extends LoggingScript {
 	public Term annotate(Term t, Annotation... annotations)
 		throws SMTLIBException {
 		// By default, I allow :pattern
-		List<Annotation> allowed = new ArrayList<Annotation>();
-		for (Annotation annot : annotations) {
-			if (annot.getKey().equals(":pattern"))
+		final List<Annotation> allowed = new ArrayList<Annotation>();
+		for (final Annotation annot : annotations) {
+			if (annot.getKey().equals(":pattern")) {
 				allowed.add(annot);
-			else if (mTrack.isNamedAllowed() && annot.getKey().equals(":named"))
+			} else if (mTrack.isNamedAllowed() && annot.getKey().equals(":named"))
+			 {
 				allowed.add(annot);
 			// All other annotations are silently discarded...
+			}
 		}
 		return super.annotate(
 				t, allowed.toArray(new Annotation[allowed.size()]));

@@ -38,6 +38,7 @@ public class AstNode extends ModifiableSimpleAST<AstNode>{
 		super();
 	}
 	
+	@Override
 	public String toString(){
 		return "NOT IMPMELENTED";	
 	}

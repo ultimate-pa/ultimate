@@ -1,10 +1,15 @@
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
-import jdd.util.math.*;
+import java.util.Hashtable;
 
-import java.util.*;
+import jdd.bdd.Cache;
+import jdd.bdd.CacheBase;
+import jdd.bdd.DoubleCache;
+import jdd.bdd.NodeTable;
+import jdd.bdd.OptimizedCache;
+import jdd.bdd.SimpleCache;
+import jdd.util.JDDConsole;
+import jdd.util.math.Digits;
 
 
 /**
@@ -40,18 +45,20 @@ import java.util.*;
 			hash = good_hash(key1, key2, key3);
 		}
 
+		@Override
 		public int hashCode() { return hash; }
 
+		@Override
 		public boolean equals(Object o) {
-			IdealElement ie = (IdealElement) o;
+			final IdealElement ie = (IdealElement) o;
 			return key1 == ie.key1 && key2 == ie.key2 && key3 == ie.key3;
 		}
 	}
 
 	// --------------------------------------------------------------------
 	public int answer, hash_value;
-	private Hashtable ht;
-	private IdealElement query;	// a lightweight object
+	private final Hashtable ht;
+	private final IdealElement query;	// a lightweight object
 	private int numclears;
 	private long numaccess;
 	private long hit, miss; // cache hits and misses, hit/acces-count since last grow
@@ -63,8 +70,8 @@ import java.util.*;
 	public IdealCache(String name, int size, int members, int bdds) {
 		super(name);
 
-		this.ht = new Hashtable(size);
-		this.query = new IdealElement(0,0,0,-1);
+		ht = new Hashtable(size);
+		query = new IdealElement(0,0,0,-1);
 
 
 		numaccess = 0;
@@ -116,20 +123,20 @@ import java.util.*;
 
 
 	public void insert(int hash, int key1, int key2, int key3, int value) {
-		IdealElement ie = new IdealElement(key1, key2, key3, value);
+		final IdealElement ie = new IdealElement(key1, key2, key3, value);
 		ht.put(ie, ie);
 	}
 
 	public final boolean lookup(int a, int b, int c) {
 		numaccess++;
 		query.set(a,b,c);
-		Object obj = ht.get(query);
+		final Object obj = ht.get(query);
 		if(obj == null) {
 			miss++;
 			return false;
 		} else {
 			hit++;
-			IdealElement ie = (IdealElement) obj;
+			final IdealElement ie = (IdealElement) obj;
 			answer = ie.value;
 			return true;
 		}
@@ -137,19 +144,28 @@ import java.util.*;
 
 	// -----------------------------------------------------------------------------
 
+	@Override
 	public double computeLoadFactor() {
 		return 100.0;
 	}
 
+	@Override
 	public double computeHitRate() { // hit-rate since the last clear
-		if(numaccess == 0) return 0;
+		if(numaccess == 0) {
+			return 0;
+		}
 		return ((int)((hit * 10000) / ( numaccess ))) / 100.0;
 	}
 
+	@Override
 	public long getAccessCount() {		return numaccess; }
+	@Override
 	public int getCacheSize() { return getSize(); }
+	@Override
 	public int getNumberOfClears() {		return numclears;	}
+	@Override
 	public int getNumberOfPartialClears() {		return 0;	}
+	@Override
 	public int getNumberOfGrows() { return 0;			}
 
 	public boolean check_cache(int [] crap) {

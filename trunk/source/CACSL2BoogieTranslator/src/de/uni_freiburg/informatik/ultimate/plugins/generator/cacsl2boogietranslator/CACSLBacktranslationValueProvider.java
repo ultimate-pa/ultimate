@@ -78,7 +78,7 @@ public class CACSLBacktranslationValueProvider implements
 	private String getStringFromIASTNode(IASTNode currentStepNode) {
 		String str = currentStepNode.getRawSignature();
 		if (currentStepNode instanceof CASTIdExpression) {
-			CASTIdExpression id = (CASTIdExpression) currentStepNode;
+			final CASTIdExpression id = (CASTIdExpression) currentStepNode;
 			if (id.getExpressionType() instanceof IPointerType) {
 				str = "\\read(" + getPointerStars((IPointerType) id.getExpressionType()) + str + ")";
 			} else {

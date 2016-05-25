@@ -2,8 +2,9 @@
 package jdd.zdd;
 
 
-import jdd.util.*;
-import jdd.bdd.*;
+import jdd.bdd.OptimizedCache;
+import jdd.util.Configuration;
+import jdd.util.Test;
 
 /**
  * ZDD2 extends ZDD with some additional operations for unate cube set algerba
@@ -27,12 +28,14 @@ public class ZDD2  extends ZDD  {
 
 
 	// ---------------------------------------------------------------
+	@Override
 	public void cleanup() {
 		super.cleanup();
 		unate_cache = null;
 	}
 
 	// ---------------------------------------------------------------
+	@Override
 	protected void post_removal_callbak() {
 		super.post_removal_callbak();
 		unate_cache.free_or_grow(this);
@@ -42,9 +45,15 @@ public class ZDD2  extends ZDD  {
 	// ----------------------------------------------------------------------
     public final int mul(int p, int q) {
         
-        if(p == 0 || q == 0) return 0;
-        if(p == 1) return q;
-        if(q == 1) return p;
+        if(p == 0 || q == 0) {
+			return 0;
+		}
+        if(p == 1) {
+			return q;
+		}
+        if(q == 1) {
+			return p;
+		}
         
         
         int pvar = getVar(p);
@@ -56,8 +65,10 @@ public class ZDD2  extends ZDD  {
             tmp = pvar; pvar = qvar; qvar = tmp;
         }
         
-        if(unate_cache.lookup(p, q, CACHE_MUL)) return unate_cache.answer;
-		int hash = unate_cache.hash_value;
+        if(unate_cache.lookup(p, q, CACHE_MUL)) {
+			return unate_cache.answer;
+		}
+		final int hash = unate_cache.hash_value;
         
         int tmp1, tmp2, ret;
         if(pvar < qvar) {
@@ -130,18 +141,28 @@ public class ZDD2  extends ZDD  {
      * if q contains a single literal, this equals subset1(p, getVar(q)) 
      */
     public final int div(int p, int q) {
-        if(p < 2) return 0;
-        if(p == q) return 1;
-        if(q == 1) return p;
+        if(p < 2) {
+			return 0;
+		}
+        if(p == q) {
+			return 1;
+		}
+        if(q == 1) {
+			return p;
+		}
         
-        int pvar = getVar(p);
-        int qvar = getVar(q);
+        final int pvar = getVar(p);
+        final int qvar = getVar(q);
         
-        if(pvar < qvar) return 0;
+        if(pvar < qvar) {
+			return 0;
+		}
         
         
-		if(unate_cache.lookup(p, q, CACHE_DIV)) return unate_cache.answer;
-		int hash = unate_cache.hash_value;
+		if(unate_cache.lookup(p, q, CACHE_DIV)) {
+			return unate_cache.answer;
+		}
+		final int hash = unate_cache.hash_value;
         
         int tmp1, tmp2, ret;
         if(pvar > qvar) {
@@ -197,8 +218,10 @@ public class ZDD2  extends ZDD  {
 	public final int mod(int p, int q) { // P % Q = P - Q * (P / Q)
 
 
-		if(unate_cache.lookup(p, q, CACHE_MOD)) return unate_cache.answer;
-		int hash = unate_cache.hash_value;
+		if(unate_cache.lookup(p, q, CACHE_MOD)) {
+			return unate_cache.answer;
+		}
+		final int hash = unate_cache.hash_value;
 
 		int tmp = work_stack[work_stack_tos++] = div(p, q);
 		tmp = work_stack[work_stack_tos++] = mul(q, tmp);
@@ -211,15 +234,19 @@ public class ZDD2  extends ZDD  {
 	}
 	// --- [ debug ] ----------------------------------------------
 
+	@Override
 	public void showStats() {
 		super.showStats();
 		unate_cache.showStats();
 	}
 
 	/** return the amount of internally allocated memory in bytes */
+	@Override
 	public long getMemoryUsage() {
 		long ret = super.getMemoryUsage();
-		if(unate_cache != null) ret += unate_cache.getMemoryUsage();
+		if(unate_cache != null) {
+			ret += unate_cache.getMemoryUsage();
+		}
 		return ret;
 	}
 
@@ -228,17 +255,17 @@ public class ZDD2  extends ZDD  {
 	/** testbench. do not call */
 	public static void internal_test() {
 		Test.start("ZDD2");
-		ZDD2 zdd =  new ZDD2(1000);
+		final ZDD2 zdd =  new ZDD2(1000);
 		// Options.verbose = true; // want to see GC:s
 
-		int a = zdd.createVar();
-		int b = zdd.createVar();
-		int c = zdd.createVar();
-		int d = zdd.createVar();
-		int e = zdd.createVar();
-		int f = zdd.createVar();
-		int g = zdd.createVar();
-		int h = zdd.createVar();
+		final int a = zdd.createVar();
+		final int b = zdd.createVar();
+		final int c = zdd.createVar();
+		final int d = zdd.createVar();
+		final int e = zdd.createVar();
+		final int f = zdd.createVar();
+		final int g = zdd.createVar();
+		final int h = zdd.createVar();
 
         // MUL:
 		// from minatos paper "Calculation of ..." {ab, b, c } * {ab, 1 } = {ab, abc, b, c }
@@ -251,7 +278,7 @@ public class ZDD2  extends ZDD  {
         
         
 		// simple mul test: prefix
-		int mp = zdd.cubes_union( "011 111 1110");
+		final int mp = zdd.cubes_union( "011 111 1110");
 		int md = zdd.cube("1000");
 		int mpd= zdd.mul(mp, md);
 		answer = zdd.cubes_union( "1011 1111 1110" );

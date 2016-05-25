@@ -97,8 +97,9 @@ public class CDeclaration {
 		return mName;
 	}
 	public ExpressionResult getInitializer() {
-		if (!mIsInitializerTranslated)
+		if (!mIsInitializerTranslated) {
 			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
+		}
 		return mInitializer;
 	}
 	
@@ -111,6 +112,7 @@ public class CDeclaration {
 		return mIsOnHeap;
 	}
 	
+	@Override
 	public String toString() {
 		return "" + mType + " " + mName + " = " + mInitializer;
 	}

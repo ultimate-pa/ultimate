@@ -30,41 +30,36 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
-
 /**
- * This is the interface that all plugins providing a user interface to Ultimate
- * should implement. UltimateCore should always use methods in this interface,
- * and if necessary, extend it to request user interaction.
+ * This is the interface that all plugins providing a user interface to Ultimate should implement. UltimateCore should
+ * always use methods in this interface, and if necessary, extend it to request user interaction.
  * 
  * @author dietsch
+ * @param <T>
+ *            The type of toolchain this controller supports
  * 
  */
 public interface IController<T> extends IUltimatePlugin {
 
 	/**
-	 * {@link UltimateCore} initializes a controller during startup with this
-	 * callback. This call delegates control to the controller.
+	 * {@link UltimateCore} initializes a controller during startup with this callback. This call delegates control to
+	 * the controller.
 	 * 
 	 * @param core
-	 *            The active {@link UltimateCore} instance that can be used by
-	 *            the controller to start various Ultimate functions.
-	 * @param loggingService
-	 *            A {@link LoggingService} instance so that the controller has
-	 *            access to the logging subsystem
-	 * @return
+	 *            The active {@link UltimateCore} instance that can be used by the controller to start various Ultimate
+	 *            functions.
+	 * @return A status code that determines whether the IController instance completed successfully or not. Use 0 to
+	 *         signal normal termination.
 	 */
-	int init(ICore<T> core, ILoggingService loggingService);
+	int init(ICore<T> core);
 
 	/**
-	 * Here the controller tells the caller what parser to use. Usually, the
-	 * core will try to determine that automatically. This should only be called
-	 * if that is not possible and hence the user's opinion is needed.
+	 * Here the controller tells the caller what parser to use. Usually, the core will try to determine that
+	 * automatically. This should only be called if that is not possible and hence the user's opinion is needed.
 	 * 
 	 * @param parser
 	 *            providing parsers
-	 * @return what parser should be used null if the toolchain should be
-	 *         interrupted
+	 * @return what parser should be used null if the toolchain should be interrupted
 	 */
 	ISource selectParser(Collection<ISource> parser);
 
@@ -78,8 +73,7 @@ public interface IController<T> extends IUltimatePlugin {
 	IToolchainData<T> selectTools(List<ITool> tools);
 
 	/**
-	 * Here the controller tells the caller (usually the core) what model out of
-	 * a set of model ids the user has chosen.
+	 * Here the controller tells the caller (usually the core) what model out of a set of model ids the user has chosen.
 	 * 
 	 * @param modelNames
 	 * @return string with model id
@@ -87,29 +81,31 @@ public interface IController<T> extends IUltimatePlugin {
 	List<String> selectModel(List<String> modelNames);
 
 	/**
-	 * Should be called to notify the user that the toolchain proved the program
-	 * to be incorrect
+	 * Should be called to notify the user that the toolchain proved the program to be incorrect
 	 */
 	void displayToolchainResultProgramIncorrect();
 
 	/**
-	 * Should be called to notify the user that the toolchain proved the program
-	 * to be correct
+	 * Should be called to notify the user that the toolchain proved the program to be correct
 	 */
 	void displayToolchainResultProgramCorrect();
 
 	/**
-	 * Should be called to notify the user that the toolchain failed to prove
-	 * the program correct or incorrect
-	 */
-	void displayToolchainResultProgramUnknown(String description);
-
-	/**
-	 * Is called by the core if the controller should display an exception to
-	 * the user
+	 * Should be called to notify the user that the toolchain failed to prove the program correct or incorrect for some
+	 * reason.
 	 * 
 	 * @param description
+	 *            The reason why the result of the analysis is unknown.
+	 */
+	void displayToolchainResultProgramUnknown(final String description);
+
+	/**
+	 * Is called by the core if the controller should display an exception to the user
+	 * 
+	 * @param description
+	 *            A message to the user saying why or where the exception occured.
 	 * @param ex
+	 *            The exception itself.
 	 */
 	void displayException(String description, Throwable ex);
 

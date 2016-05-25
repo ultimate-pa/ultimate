@@ -98,7 +98,7 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(RankVar oldRankVar) {
-		Term definition = oldRankVar.getDefinition();
+		final Term definition = oldRankVar.getDefinition();
 		return definition;
 	}
 	

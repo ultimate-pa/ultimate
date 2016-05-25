@@ -106,7 +106,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		@Override
 		public boolean isValid(Boolean value) {
 			if (value) {
-				RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+				final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
 			} else {
 				return true;

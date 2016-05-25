@@ -46,14 +46,14 @@ public class TransitionNode extends PetriNetVisualizationNode {
 	public TransitionNode(Transition<?,?> transition) {
 		super(transition.getSymbol().toString());
 		
-		IPayload payload = this.getPayload(); 
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload(); 
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("hashCode",transition.hashCode());
-		Map<String,IAnnotations> annotations = payload.getAnnotations();
+		final Map<String,IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 		
 		if (transition.getSymbol() instanceof IAnnotations) {
-			thisPluginsAnnotations.put("Symbol", (IAnnotations) transition.getSymbol());
+			thisPluginsAnnotations.put("Symbol", transition.getSymbol());
 
 		}
 	}

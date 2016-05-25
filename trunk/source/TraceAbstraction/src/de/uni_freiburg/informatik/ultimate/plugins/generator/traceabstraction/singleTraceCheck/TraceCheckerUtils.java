@@ -70,13 +70,13 @@ public class TraceCheckerUtils {
 	 */
 	public static List<ProgramPoint> getSequenceOfProgramPoints(
 											NestedWord<CodeBlock> trace) {
-		List<ProgramPoint> result = new ArrayList<ProgramPoint>();
-		for (CodeBlock cb : trace) {
-			ProgramPoint pp = (ProgramPoint) cb.getSource();
+		final List<ProgramPoint> result = new ArrayList<ProgramPoint>();
+		for (final CodeBlock cb : trace) {
+			final ProgramPoint pp = (ProgramPoint) cb.getSource();
 			result.add(pp);
 		}
-		CodeBlock cb = trace.getSymbol(trace.length()-1);
-		ProgramPoint pp = (ProgramPoint) cb.getTarget();
+		final CodeBlock cb = trace.getSymbol(trace.length()-1);
+		final ProgramPoint pp = (ProgramPoint) cb.getTarget();
 		result.add(pp);
 		return result;
 	}
@@ -89,8 +89,8 @@ public class TraceCheckerUtils {
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
 			IInterpolantGenerator traceChecker, ILogger logger) {
-		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
-		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
+		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
+		final List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
 	}
 	
@@ -101,7 +101,7 @@ public class TraceCheckerUtils {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		CoverageAnalysis ca = new CoverageAnalysis(services, interpolantGenerator, programPoints, logger);
+		final CoverageAnalysis ca = new CoverageAnalysis(services, interpolantGenerator, programPoints, logger);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}
@@ -173,8 +173,8 @@ public class TraceCheckerUtils {
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			ModifiableGlobalVariableManager mgvManager,
 			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
-		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
-		InterpolantsPreconditionPostcondition ipp = 
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
+		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
@@ -201,8 +201,8 @@ public class TraceCheckerUtils {
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			ModifiableGlobalVariableManager mgvManager,
 			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
-		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
-		InterpolantsPreconditionPostcondition ipp = 
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
+		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
 			final Validity result;
@@ -221,9 +221,9 @@ public class TraceCheckerUtils {
 			SortedMap<Integer, IPredicate> pendingContexts,
 			IHoareTripleChecker htc,
 			ILogger logger) {
-		IPredicate predecessor = ipp.getInterpolant(i);
-		IPredicate successor = ipp.getInterpolant(i+1);
-		IAction cb = trace.getSymbol(i);
+		final IPredicate predecessor = ipp.getInterpolant(i);
+		final IPredicate successor = ipp.getInterpolant(i+1);
+		final IAction cb = trace.getSymbol(i);
 		final Validity result;
 		if (trace.isCallPosition(i)) {
 			assert (cb instanceof ICallAction) : "not Call at call position";
@@ -236,7 +236,7 @@ public class TraceCheckerUtils {
 			if (trace.isPendingReturn(i)) {
 				hierarchicalPredecessor = pendingContexts.get(i);
 			} else {
-				int callPosition = trace.getCallPosition(i);
+				final int callPosition = trace.getCallPosition(i);
 				hierarchicalPredecessor = ipp.getInterpolant(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);

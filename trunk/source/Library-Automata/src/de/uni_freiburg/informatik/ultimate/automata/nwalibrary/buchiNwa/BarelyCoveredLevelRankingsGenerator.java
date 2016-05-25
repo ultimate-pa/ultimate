@@ -50,9 +50,9 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 				return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 			}
 		}
-		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
-		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new HashSet<>();
-		for (DoubleDecker<StateWithRankInfo<STATE>> dd : constraint.getPredecessorWasAccepting()) {
+		final List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
+		final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new HashSet<>();
+		for (final DoubleDecker<StateWithRankInfo<STATE>> dd : constraint.getPredecessorWasAccepting()) {
 			if (LevelRankingState.isEven(constraint.getRank(dd.getDown(), dd.getUp().getState())) && !mOperand.isFinal(dd.getUp().getState())) {
 				if (mAllowDelayedRankDecrease || constraint.nonAcceptingPredecessorsWithEvenRanksIsEmpty(dd.getDown(), dd.getUp().getState())) {
 					if (!mVoluntaryDecreaseOnlyForStatesInO || constraint.inO(dd.getDown(), dd.getUp().getState())) {
@@ -62,11 +62,11 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 			}
 			
 		}
-		Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
+		final Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
 				new PowersetIterator<DoubleDecker<StateWithRankInfo<STATE>>>(doubleDeckersEligibleForVoluntaryDecrease);
 		while(it.hasNext()) {
-			Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
-			LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
+			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
+			final LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if (succCandidate != null) {
 				if (!mRestrictToElasticLevelRankings || succCandidate.isElastic()) {
 					succLvls.add(succCandidate);
@@ -79,9 +79,9 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 	
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
-		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(mOperand);
-		for (StateWithRankInfo<STATE> down : constraint.getDownStates()) {
-			for (StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
+		final LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(mOperand);
+		for (final StateWithRankInfo<STATE> down : constraint.getDownStates()) {
+			for (final StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
 				final boolean oCandidate = up.isInO();
 				final int rankConstraint = up.getRank();
 				final boolean inO;

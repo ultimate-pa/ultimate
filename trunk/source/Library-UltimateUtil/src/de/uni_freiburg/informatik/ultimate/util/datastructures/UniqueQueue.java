@@ -69,7 +69,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean add(final T e) {
-		boolean changed = mSet.add(e);
+		final boolean changed = mSet.add(e);
 		if (changed) {
 			mQueue.add(e);
 		}
@@ -84,7 +84,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	@Override
 	public boolean addAll(final Collection<? extends T> c) {
 		boolean changed = false;
-		for (T e : c) {
+		for (final T e : c) {
 			if (add(e)) {
 				changed = true;
 			}
@@ -160,7 +160,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean offer(final T e) {
-		boolean changed = mQueue.offer(e);
+		final boolean changed = mQueue.offer(e);
 		if (changed) {
 			mSet.add(e);
 		}
@@ -184,7 +184,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T poll() {
-		T element = mQueue.poll();
+		final T element = mQueue.poll();
 		mSet.remove(element);
 		return element;
 	}
@@ -196,7 +196,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T remove() {
-		T element = mQueue.remove();
+		final T element = mQueue.remove();
 		mSet.remove(element);
 		return element;
 	}
@@ -208,7 +208,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean remove(Object o) {
-		boolean changed = mSet.remove(o);
+		final boolean changed = mSet.remove(o);
 		if (changed) {
 			mQueue.remove(o);
 		}
@@ -222,7 +222,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean removeAll(final Collection<?> c) {
-		boolean changed = mSet.removeAll(c);
+		final boolean changed = mSet.removeAll(c);
 		if (changed) {
 			mQueue.removeAll(c);
 		}
@@ -236,7 +236,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean retainAll(final Collection<?> c) {
-		boolean changed = mSet.retainAll(c);
+		final boolean changed = mSet.retainAll(c);
 		if (changed) {
 			mQueue.retainAll(c);
 		}

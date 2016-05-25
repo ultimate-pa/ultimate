@@ -2,9 +2,12 @@
 package jdd.examples;
 
 
-import jdd.bdd.*;
-import jdd.util.*;
-import jdd.util.math.*; // for Digits
+import jdd.bdd.BDD;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.Test;
+// for Digits
+import jdd.util.math.Digits;
 
 /** <pre>
  * The N Queens on a N * N chessboard...
@@ -20,9 +23,10 @@ import jdd.util.math.*; // for Digits
 
 public class BDDQueens	extends BDD implements Queens
 {
-	private int [] bdds, nbdds;
-	private int N, queen;
-	private double sols, memory_usage;
+	private final int [] bdds, nbdds;
+	private final int N;
+	private int queen;
+	private final double sols, memory_usage;
 	private long time;
 	private boolean [] solvec;
 
@@ -38,7 +42,7 @@ public class BDDQueens	extends BDD implements Queens
 
 		time = System.currentTimeMillis() ;
 
-		int all = N * N;
+		final int all = N * N;
 		bdds = new int[all];
 		nbdds = new int[all];
 		for(int i = 0; i < all; i++) {
@@ -50,8 +54,9 @@ public class BDDQueens	extends BDD implements Queens
 
 		for (int i=0 ; i<N ; i++) {
 			int e = 0;
-			for(int j = 0; j < N; j++)
+			for(int j = 0; j < N; j++) {
 				e = orTo(e, X(i,j) );
+			}
 		    queen = andTo(queen, e);
 		    deref(e);
 		}
@@ -59,23 +64,31 @@ public class BDDQueens	extends BDD implements Queens
 
 
 
-		for (int i=0 ; i<N ; i++)
+		for (int i=0 ; i<N ; i++) {
 			for(int j = 0; j < N; j++) {
 				build(i,j);
 				// Test.check(work_stack_tos == 0, "in QUEENS: workset stack should be empty");
 			}
+		}
 
 
 		sols = satCount(queen);
 		time = System.currentTimeMillis()  -time;
 		memory_usage = getMemoryUsage();
-		if(queen == 0) solvec =  null; // no solutions
+		if(queen == 0)
+		 {
+			solvec =  null; // no solutions
+		}
 
-		int [] tmp = oneSat(queen, null);
+		final int [] tmp = oneSat(queen, null);
 		solvec = new boolean[ tmp.length];
-		for(int x = 0; x < solvec.length; x++) solvec[x] = (tmp[x] == 1);
+		for(int x = 0; x < solvec.length; x++) {
+			solvec[x] = (tmp[x] == 1);
+		}
 		deref(queen);
-		if(Options.verbose) showStats();
+		if(Options.verbose) {
+			showStats();
+		}
 
 		cleanup();
 	}
@@ -89,41 +102,45 @@ public class BDDQueens	extends BDD implements Queens
    		int k,l;
 
 		  /* No one in the same column */
-	   for (l=0 ; l<N ; l++)
-		 	if (l != j) {
-				int mp = ref( imp(X(i,j), nX(i,l)));
-				a = andTo(a, mp);
-				deref(mp);
-			}
+	   for (l=0 ; l<N ; l++) {
+		if (l != j) {
+			final int mp = ref( imp(X(i,j), nX(i,l)));
+			a = andTo(a, mp);
+			deref(mp);
+		}
+	}
 
 		  /* No one in the same row */
-		for (k=0 ; k<N ; k++)
+		for (k=0 ; k<N ; k++) {
 			if (k != i) {
-				int mp = ref( imp(X(i,j), nX(k,j) ) );
+				final int mp = ref( imp(X(i,j), nX(k,j) ) );
 				b = andTo(b, mp);
 				deref(mp);
 			}
+		}
 
 		 /* No one in the same up-right diagonal */
 		for (k=0 ; k<N ; k++){
-			int ll = k-i+j;
-			if (ll>=0 && ll<N)
+			final int ll = k-i+j;
+			if (ll>=0 && ll<N) {
 				if (k != i) {
-					int mp = ref( imp(X(i,j), nX(k,ll)) );
+					final int mp = ref( imp(X(i,j), nX(k,ll)) );
 					c = andTo(c, mp);
 					deref(mp);
 				}
+			}
 		}
 
 		  /* No one in the same down-right diagonal */
 		for (k=0 ; k<N ; k++) {
-			int ll = i+j-k;
-			if (ll>=0 && ll<N)
+			final int ll = i+j-k;
+			if (ll>=0 && ll<N) {
 				if (k != i) {
-					int mp = ref( imp(X(i,j), nX(k,ll)) );
+					final int mp = ref( imp(X(i,j), nX(k,ll)) );
 					d = andTo(d, mp);
 					deref(mp);
 				}
+			}
 		}
 
 
@@ -139,9 +156,14 @@ public class BDDQueens	extends BDD implements Queens
 	}
 
 	public void showOneSolution() {
-		if(solvec == null) return; // no solutions
+		if(solvec == null)
+		 {
+			return; // no solutions
+		}
 		for(int x = 0; x < solvec.length; x++) {
-			if( (x % N) == 0) JDDConsole.out.println();
+			if( (x % N) == 0) {
+				JDDConsole.out.println();
+			}
 			JDDConsole.out.print( solvec[x] ? "*|" : "_|");
 		}
 		JDDConsole.out.println();
@@ -149,19 +171,23 @@ public class BDDQueens	extends BDD implements Queens
 
 
 	// ---------------------------------------
+	@Override
 	public int getN() { return N; }
+	@Override
 	public double numberOfSolutions() { return sols; }
+	@Override
 	public long getTime() { return time; }
 	public double getMemory() { return memory_usage; }
+	@Override
 	public boolean [] getOneSolution() { return solvec;	}
 
 	// -------------------------------------------
 	public static void main(String [] args) {
 		if(args.length == 1) {
 			// Options.verbose = true;
-			BDDQueens q = new BDDQueens( Integer.parseInt( args[0] ) );
+			final BDDQueens q = new BDDQueens( Integer.parseInt( args[0] ) );
 			// q.showOneSolution();
-			double mem = Digits.numberDivided( q.getMemory(), 1024 * 1024);
+			final double mem = Digits.numberDivided( q.getMemory(), 1024 * 1024);
 			JDDConsole.out.println("There are " + q.numberOfSolutions() + " solutions (time: " + q.getTime() + ", memory: " + mem + " MB)");
 		}
 	}
@@ -169,9 +195,9 @@ public class BDDQueens	extends BDD implements Queens
 	/** testbench. do not call */
 	public static void internal_test() {
 		Test.start("BDDQueens");
-		int [] correct = { 1, 0,0,2, 10, 4, 40,  92 /*,  352, 724 */ };
+		final int [] correct = { 1, 0,0,2, 10, 4, 40,  92 /*,  352, 724 */ };
 		for(int i = 0; i < correct.length; i++) {
-			BDDQueens q = new BDDQueens( i + 1 );
+			final BDDQueens q = new BDDQueens( i + 1 );
 			// System.out.println("Q"+ (i + 1) + " --> " + q.numberOfSolutions());
 			Test.checkEquality(q.numberOfSolutions(),correct[i], "correct solutions for " + (i + 1) + " queens");
 		}

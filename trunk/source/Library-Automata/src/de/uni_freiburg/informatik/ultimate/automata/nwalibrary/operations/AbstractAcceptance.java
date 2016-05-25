@@ -64,9 +64,9 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * state.
 	 */
 	public Set<Stack<STATE>> emptyStackConfiguration(Iterable<STATE> states) {
-		Set<Stack<STATE>> configurations = new HashSet<Stack<STATE>>();
-		for (STATE state : states) {
-			Stack<STATE> singletonStack = new Stack<STATE>();
+		final Set<Stack<STATE>> configurations = new HashSet<Stack<STATE>>();
+		for (final STATE state : states) {
+			final Stack<STATE> singletonStack = new Stack<STATE>();
 			singletonStack.push(state);
 			configurations.add(singletonStack);
 		}
@@ -78,7 +78,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 */
 	public boolean isAcceptingConfiguration(Stack<STATE> configuration,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-			STATE state = configuration.peek();
+			final STATE state = configuration.peek();
 			if (nwa.isFinal(state)) {
 				return true;
 			}
@@ -109,23 +109,23 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	public Set<Stack<STATE>> successorConfigurations(Set<Stack<STATE>> configurations,
 			NestedWord<LETTER> nw, int position, INestedWordAutomatonSimple<LETTER,STATE> nwa,
 			boolean addInitial) throws AutomataLibraryException {
-		Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
+		final Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
 		if (addInitial) {
 			configurations.addAll(configurations);
 		}
-		for (Stack<STATE> config : configurations) {
-			STATE state = config.pop();
-			LETTER symbol = nw.getSymbol(position);
+		for (final Stack<STATE> config : configurations) {
+			final STATE state = config.pop();
+			final LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
 				if (!nwa.getInternalAlphabet().contains(symbol)) {
 					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
 							symbol + " at position " + position + " not in internal alphabet of automaton.");
 				}
-				Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
+				final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
 						nwa.internalSuccessors(state, symbol);
-				for (OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
-					STATE succ = outRans.getSucc();
-					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+				for (final OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
+					final STATE succ = outRans.getSucc();
+					final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
@@ -134,11 +134,11 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
 							symbol + " at position " + position + " not in call alphabet of automaton.");
 				}
-				Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
+				final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
 						nwa.callSuccessors(state, symbol);
-				for (OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
-					STATE succ = outRans.getSucc();
-					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+				for (final OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
+					final STATE succ = outRans.getSucc();
+					final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(state);
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
@@ -152,12 +152,12 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 					mLogger.warn("Input has pending returns, we reject such words");
 				}
 				else {
-					STATE callPred = config.pop();
-					Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
+					final STATE callPred = config.pop();
+					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
 							nwa.returnSucccessors(state, callPred, symbol);
-					for (OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
-						STATE succ = outRans.getSucc();
-						Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+					for (final OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
+						final STATE succ = outRans.getSucc();
+						final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 						succConfig.push(succ);
 						succConfigs.add(succConfig);
 					}

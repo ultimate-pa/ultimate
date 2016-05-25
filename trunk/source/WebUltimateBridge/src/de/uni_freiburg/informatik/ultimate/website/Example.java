@@ -37,7 +37,7 @@ public class Example {
 	 * The files name; a String describing the file - this is the name shown to
 	 * the web user in a dropdown box.
 	 */
-	private String mFileName;
+	private final String mFileName;
 	/**
 	 * The path to the file - actually the files real name without an absolute
 	 * path! This is used by the Class Loader to find the file!
@@ -47,7 +47,7 @@ public class Example {
 	 * The examples identifier used to uniquely identify the example on
 	 * communication between client and server.
 	 */
-	private String mId;
+	private final String mId;
 	/**
 	 * The taskNames for which these example is applicable.
 	 */
@@ -73,44 +73,44 @@ public class Example {
 	 */
 	private static void init() {
 		SimpleLogger.log("Initializing Examples.");
-		ArrayList<Example> list = new ArrayList<Example>();
+		final ArrayList<Example> list = new ArrayList<Example>();
 
-		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
+		final Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
-		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE };
+		final Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 
-		Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
+		final Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "rankBoogie/", rankBoogie);
 
-		Tasks.TaskNames[] rankC = { Tasks.TaskNames.RANK_SYNTHESIS_C };
+		final Tasks.TaskNames[] rankC = { Tasks.TaskNames.RANK_SYNTHESIS_C };
 		addAllFilesInExamplesSubfolder(list, "rankC/", rankC);
 
-		Tasks.TaskNames[] terminatonC = { Tasks.TaskNames.TERMINATION_C };
+		final Tasks.TaskNames[] terminatonC = { Tasks.TaskNames.TERMINATION_C };
 		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
 
-		Tasks.TaskNames[] terminationBoogie = { Tasks.TaskNames.TERMINATION_BOOGIE };
+		final Tasks.TaskNames[] terminationBoogie = { Tasks.TaskNames.TERMINATION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminationBoogie);
 
-		Tasks.TaskNames[] automataScript = { Tasks.TaskNames.AUTOMATA_SCRIPT };
+		final Tasks.TaskNames[] automataScript = { Tasks.TaskNames.AUTOMATA_SCRIPT };
 		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
 
-		Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
+		final Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyConcurrentBoogie/", verifyConcurrentBoogie);
 
-		Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };
+		final Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };
 		addAllFilesInExamplesSubfolder(list, "ltlautomizer/", ltlAutomizer);
 
 		// load the content for the examples in the list and place it in the
 		// sExamplesByTask map (via the alternate example constructor)
-		for (Example e : list) {
+		for (final Example e : list) {
 			try {
 				new Example(e.mFileName, e.mId, e.mTaskNames, readFile(e.mFilePath));
-			} catch (IOException ex) {
+			} catch (final IOException ex) {
 				/* file cannot be parsed -> skip it! */
 				ex.printStackTrace();
-			} catch (IllegalArgumentException ex) {
+			} catch (final IllegalArgumentException ex) {
 				ex.printStackTrace();
 				/* file not valid -> skip it! */
 			}
@@ -165,11 +165,11 @@ public class Example {
 		if (!id.matches("[a-zA-Z0-9]*")) {
 			throw new IllegalArgumentException("ID must be element of (a-Z0-9)*");
 		}
-		this.mFileName = name;
-		this.mFileContent = content;
-		this.mId = id;
+		mFileName = name;
+		mFileContent = content;
+		mId = id;
 		sIds.add(id);
-		for (Tasks.TaskNames tn : taskNames) {
+		for (final Tasks.TaskNames tn : taskNames) {
 			if (!sExamplesByTask.containsKey(tn)) {
 				sExamplesByTask.put(tn, new ArrayList<Example>());
 			}
@@ -191,10 +191,10 @@ public class Example {
 	 *            the id
 	 */
 	private Example(String name, String id, String path, Tasks.TaskNames[] taskNames) {
-		this.mFileName = name;
-		this.mFilePath = path;
-		this.mTaskNames = taskNames;
-		this.mId = id;
+		mFileName = name;
+		mFilePath = path;
+		mTaskNames = taskNames;
+		mId = id;
 	}
 
 	/**
@@ -207,16 +207,16 @@ public class Example {
 	 *             care for it ...
 	 */
 	private static final String readFile(String name) throws IOException {
-		String example = "/resources/examples/" + name;
-		InputStream inStream = Example.class.getResourceAsStream(example);
+		final String example = "/resources/examples/" + name;
+		final InputStream inStream = Example.class.getResourceAsStream(example);
 		if (inStream == null) {
 			return "// File not found!";
 		}
 
-		BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+		final BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
 		String inputLine;
-		String eol = System.getProperty("line.separator");
-		StringBuilder fileContents = new StringBuilder();
+		final String eol = System.getProperty("line.separator");
+		final StringBuilder fileContents = new StringBuilder();
 		try {
 			while ((inputLine = in.readLine()) != null) {
 				fileContents.append(inputLine + eol);
@@ -236,29 +236,29 @@ public class Example {
 	 * these are the only ones that occur in Website and WebsiteEclipseBridge.
 	 */
 	static private String[] filenamesOfFilesInSubdirectory(String dirSuffix) {
-		String dir = "/resources/examples/" + dirSuffix;
+		final String dir = "/resources/examples/" + dirSuffix;
 		SimpleLogger.log("Trying to get all files in directory " + dir);
-		URL dirURL = Example.class.getClassLoader().getResource(dir);
+		final URL dirURL = Example.class.getClassLoader().getResource(dir);
 		if (dirURL == null) {
 			SimpleLogger.log("Folder " + dir + " does not exist");
 			return new String[0];
 		}
 		SimpleLogger.log("URL " + dirURL);
-		String protocol = dirURL.getProtocol();
+		final String protocol = dirURL.getProtocol();
 		File dirFile = null;
 		if (protocol.equals("file")) {
 			try {
 				dirFile = new File(dirURL.toURI());
-			} catch (URISyntaxException e) {
+			} catch (final URISyntaxException e) {
 				e.printStackTrace();
 				SimpleLogger.log("Failed");
 				return new String[0];
 			}
 		} else if (protocol.equals("bundleresource")) {
 			try {
-				URL fileURL = FileLocator.toFileURL(dirURL);
+				final URL fileURL = FileLocator.toFileURL(dirURL);
 				dirFile = new File(fileURL.toURI());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				e.printStackTrace();
 				SimpleLogger.log("Failed");
 				return new String[0];
@@ -267,7 +267,7 @@ public class Example {
 			SimpleLogger.log("Unkown protocol " + protocol);
 			return new String[0];
 		}
-		String[] content = dirFile.list();
+		final String[] content = dirFile.list();
 		if (content == null) {
 			SimpleLogger.log("No folder:" + dirURL);
 			return new String[0];
@@ -282,10 +282,10 @@ public class Example {
 	 * taskNames. The id of the examples is defined by hash codes.
 	 */
 	static private void addAllFilesInExamplesSubfolder(List<Example> list, String subfolder, TaskNames[] taskNames) {
-		String[] filesInSubfolder = filenamesOfFilesInSubdirectory(subfolder);
-		for (String filename : filesInSubfolder) {
-			String exPath = subfolder + filename;
-			String id = String.valueOf(Math.abs(exPath.hashCode()));
+		final String[] filesInSubfolder = filenamesOfFilesInSubdirectory(subfolder);
+		for (final String filename : filesInSubfolder) {
+			final String exPath = subfolder + filename;
+			final String id = String.valueOf(Math.abs(exPath.hashCode()));
 			// crop name to 30 characters
 			String name;
 			if (filename.length() > 30) {
@@ -335,11 +335,11 @@ public class Example {
 	}
 
 	public String getInfoString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Example ").append(getId()).append(" from File ").append(getFileName()).append(" (Tasks [");
 
 		if (getTaskNames() != null) {
-			for (TaskNames taskName : getTaskNames()) {
+			for (final TaskNames taskName : getTaskNames()) {
 				sb.append(taskName).append(", ");
 			}
 			if (getTaskNames().length > 0) {
@@ -362,7 +362,7 @@ public class Example {
 			SimpleLogger.log("Example list is empty, initializing...");
 			init();
 		}
-		Example ex = sExamplesById.get(id);
+		final Example ex = sExamplesById.get(id);
 		if (ex != null) {
 			SimpleLogger.log("Get example returns " + ex.getInfoString());
 		} else {

@@ -75,20 +75,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class BitvectorTranslation extends AExpressionTranslation {
 	
 	private final boolean mOverapproximateFloatingPointOperations;
-	private Expression mRoundingMode;
+	private final Expression mRoundingMode;
 
 	public BitvectorTranslation(TypeSizes mTypeSizeConstants, ITypeHandler typeHandler, 
 			POINTER_INTEGER_CONVERSION pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion);
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
-		IdentifierExpression roundingMode = new IdentifierExpression(null, "RNE");
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, "RNE");
 		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		mRoundingMode = roundingMode;
 	}
 
 	@Override
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
-		ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_char_constant:
@@ -105,14 +105,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateIntegerLiteral(ILocation loc, String val) {
-		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, mTypeSizes);
+		final RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, mTypeSizes);
 		return rVal;
 	}
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
 		declareFloatingPointConstructers(loc);
-		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
+		final RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
 		return rVal;
 	}
 	
@@ -193,8 +193,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
-		declareBitvectorFunction(loc, functionName, functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), true, new CPrimitive(PRIMITIVE.BOOL), null, (CPrimitive) type1, (CPrimitive) type2);
-		Expression result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
+		declareBitvectorFunction(loc, functionName, functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), true, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
+		final Expression result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 		return result;
 	}
 	
@@ -232,11 +232,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			}
 			break;
 		default:
-			String msg = "Unknown or unsupported bitwise expression";
+			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), false, typeLeft, null, typeLeft, typeRight);
-		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+		final Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 		return func;
 	}
 	
@@ -252,11 +252,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			funcname = "bvneg";
 			break;
 		default:
-			String msg = "Unknown or unsupported unary expression";
+			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type), false, type, null, type);
-		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type), new Expression[]{expr});
+		final Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type), new Expression[]{expr});
 		return func;
 	}
 	
@@ -302,7 +302,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			funcname = "bvadd";
 			break;
 		default:
-			String msg = "Unknown or unsupported arithmetic expression";
+			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
@@ -318,7 +318,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			// function already declared
 			return;
 		}
-		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+		final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
@@ -329,24 +329,24 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			return;
 		}
 		if (isRounded) {
-			ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
-			ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
+			final ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
+			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 			int counter = 1;
 			paramASTTypes[0] = new NamedType(loc,"RoundingMode", new ASTType[0]);
-			for (CPrimitive cType : paramCType) {
+			for (final CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = mTypeHandler.ctype2asttype(loc, cType);
 				counter += 1;
 			}
-			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultASTType, paramASTTypes);
 		}  else {
-			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 		}
 	}
 	
 	private void declareFloatingPointConstructers(ILocation loc) {
-		ASTType[] paramASTTypes = new ASTType[2];
+		final ASTType[] paramASTTypes = new ASTType[2];
 		
 		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
 		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, result);
@@ -372,15 +372,15 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	private Attribute[] generateAttributes(ILocation loc, String smtlibFunctionName, int[] indices) {
 		Attribute[] attributes;
 		if (indices == null) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
 		    attributes = new Attribute[] { attribute };
 		} else {
-		    Expression[] literalIndices = new IntegerLiteral[indices.length];
+		    final Expression[] literalIndices = new IntegerLiteral[indices.length];
 		    for (int i = 0; i < indices.length; ++i) {
 		    	literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
 		    }
-		    Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
-		    Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
+		    final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+		    final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
 		    attributes = new Attribute[] { attribute1, attribute2 };
 		}
 		return attributes;
@@ -391,25 +391,25 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
-		CPrimitive resultPrimitive = (CPrimitive) resultType;
+		final CPrimitive resultPrimitive = resultType;
 		if (!(resultPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
 			throw new UnsupportedOperationException("non-integer types not supported yet " + resultType);
 		}
 		
-		int resultLength = mTypeSizes.getSize(resultPrimitive.getType()) * 8;
-		int operandLength = mTypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
+		final int resultLength = mTypeSizes.getSize(resultPrimitive.getType()) * 8;
+		final int operandLength = mTypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 		
 		if (resultLength == operandLength) {
-			RValue oldRValue = (RValue) operand.lrVal;
-			RValue rVal = new RValue(oldRValue.getValue(), resultType, 
+			final RValue oldRValue = (RValue) operand.lrVal;
+			final RValue rVal = new RValue(oldRValue.getValue(), resultType, 
 					oldRValue.isBoogieBool(), oldRValue.isIntFromPointer());
 			operand.lrVal = rVal;
 		} else if (resultLength > operandLength) {
 			extend(loc, operand, resultType, resultPrimitive, resultLength,
 					operandLength);
 		} else {
-			Expression bv = extractBits(loc, operand.lrVal.getValue(), resultLength, 0);
-			RValue rVal = new RValue(bv, resultType);
+			final Expression bv = extractBits(loc, operand.lrVal.getValue(), resultLength, 0);
+			final RValue rVal = new RValue(bv, resultType);
 			operand.lrVal = rVal;
 		}
 	}
@@ -417,23 +417,23 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression extractBits(ILocation loc, Expression operand, int high, int low) {
-		Expression bv = new BitVectorAccessExpression(loc, operand, high, low);
+		final Expression bv = new BitVectorAccessExpression(loc, operand, high, low);
 		return bv;
 	}
 
 	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
-		int[] indices = new int[]{resultLength - operandLength};
+		final int[] indices = new int[]{resultLength - operandLength};
 		String smtlibFunctionName;
 		if (((CPrimitive) operand.lrVal.getCType()).isUnsigned()) {
 			smtlibFunctionName = "zero_extend";
 		} else {
 			smtlibFunctionName = "sign_extend";
 		}
-		String funcName = smtlibFunctionName + "From" + mFunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.getCType())
+		final String funcName = smtlibFunctionName + "From" + mFunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.getCType())
 		                             + "To" + mFunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
 		declareBitvectorFunction(loc, smtlibFunctionName, funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.getCType());
-		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
-		RValue rVal = new RValue(func, resultType);
+		final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
+		final RValue rVal = new RValue(func, resultType);
 		operand.lrVal = rVal;
 	}
 
@@ -442,7 +442,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (cType.isIntegerType()) {
 			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
-				BigInteger value =  new BigInteger(((BitvecLiteral) expr).getValue());
+				final BigInteger value =  new BigInteger(((BitvecLiteral) expr).getValue());
 				if (((CPrimitive) cType).isUnsigned()) {
 					if (value.signum() < 0) {
 						throw new UnsupportedOperationException("negative value");
@@ -536,7 +536,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
 		
-		declareFloatingPointFunction(loc, funcname, funcname, true, false, new CPrimitive(PRIMITIVE.BOOL), null, (CPrimitive) type1, (CPrimitive) type2);
+		declareFloatingPointFunction(loc, funcname, funcname, true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
 		//TODO: evaluate possiblities for boogiefunctionnames
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
 		
@@ -556,10 +556,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			funcname = "fp.neg";
 			break;
 		default:
-			String msg = "Unknown or unsupported unary expression";
+			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareFloatingPointFunction(loc, funcname, funcname, true, false, type, null, (CPrimitive) type);
+		declareFloatingPointFunction(loc, funcname, funcname, true, false, type, null, type);
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp});
 		return result;
 	}
@@ -596,14 +596,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			funcname = "fp.add";
 			break;
 		default:
-			String msg = "Unknown or unsupported arithmetic expression";
+			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		if (isRounded) {
-			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, type1, type2);
 			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{getRoundingMode(), exp1, exp2});
 		} else {
-			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, type1, type2);
 			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
 		}
 		return result;
@@ -634,16 +634,16 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			return declareConversionFunctionOverApprox(loc, oldType, newType);
 		}
 		
-		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "convert" + oldType.toString() +"To" + newType.toString();
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			
 			Attribute[] attributes = null;
-			ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
+			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			ASTType[] params;
-			ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
+			final ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
 			if (newType.isFloatingType()) {
-				int[] indices = new int[2];
+				final int[] indices = new int[2];
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.FLOAT)) {
 					indices[0] = 8;
 					indices[1] = 24;
@@ -665,7 +665,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				} 
 			}
 			params = new ASTType[]{roundingMode, paramASTType};
-			ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
 			
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, params);
 		}
@@ -705,14 +705,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		} else {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
-		Expression[] indices = new Expression[]{new IntegerLiteral(loc, exponent), new IntegerLiteral(loc, significant)};
-		Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+		final Expression[] indices = new Expression[]{new IntegerLiteral(loc, exponent), new IntegerLiteral(loc, significant)};
+		final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
 				new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-		ASTType asttype = new NamedType(loc, typeName, new ASTType[0]);
-		ASTType paramType = new PrimitiveType(loc, SFO.INT);
+		final ASTType asttype = new NamedType(loc, typeName, new ASTType[0]);
+		final ASTType paramType = new PrimitiveType(loc, SFO.INT);
 		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype, paramType, paramType);
 		
-		FunctionApplication func = 	new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, indices);
+		final FunctionApplication func = 	new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, indices);
 		return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
 	}
 

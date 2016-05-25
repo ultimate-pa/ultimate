@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.util;
 
-import javax.management.MBeanServer;
-
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+
+import javax.management.MBeanServer;
 
 public class HeapDumper {
 	// This is the name of the HotSpot Diagnostic MBean
@@ -50,25 +50,25 @@ public class HeapDumper {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void dumpHeap(String fileName, boolean live) {
-		Object hotspotMBean = getHotspotMBean();
+		final Object hotspotMBean = getHotspotMBean();
 		if (hotspotMBean == null) {
 			return;
 		}
 		try {
 			// invoke per reflection to avoid explicit dependeny resolution.
 			// Will fail.
-			Class clazz = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
-			Method m = clazz.getMethod("dumpHeap", String.class, boolean.class);
+			final Class clazz = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+			final Method m = clazz.getMethod("dumpHeap", String.class, boolean.class);
 			m.invoke(getHotspotMBean(), prepareFilename(fileName), live);
-		} catch (RuntimeException re) {
+		} catch (final RuntimeException re) {
 			throw re;
-		} catch (Exception exp) {
+		} catch (final Exception exp) {
 			throw new RuntimeException(exp);
 		}
 	}
 
 	private static String prepareFilename(String filename) {
-		File f = new File(filename + de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString() + ".hprof");
+		final File f = new File(filename + de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString() + ".hprof");
 		return f.getAbsolutePath();
 	}
 
@@ -79,13 +79,13 @@ public class HeapDumper {
 				if (sHotspotMBean == null) {
 					// initialize the hotspot diagnostic MBean field
 					try {
-						Class clazz = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
-						MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-						Object bean = ManagementFactory.newPlatformMXBeanProxy(server, HOTSPOT_BEAN_NAME, clazz);
+						final Class clazz = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+						final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+						final Object bean = ManagementFactory.newPlatformMXBeanProxy(server, HOTSPOT_BEAN_NAME, clazz);
 						sHotspotMBean = bean;
-					} catch (RuntimeException re) {
+					} catch (final RuntimeException re) {
 						throw re;
-					} catch (Exception exp) {
+					} catch (final Exception exp) {
 						throw new RuntimeException(exp);
 					}
 				}

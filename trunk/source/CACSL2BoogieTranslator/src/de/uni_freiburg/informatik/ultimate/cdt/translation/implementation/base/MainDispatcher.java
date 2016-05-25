@@ -250,7 +250,7 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	private LinkedHashSet<IASTNode> variablesOnHeap;
 	
-	private Set<Set<String>> mNodeLabelsOfAddedWitnesses = new HashSet<>();
+	private final Set<Set<String>> mNodeLabelsOfAddedWitnesses = new HashSet<>();
 
 	// begin alex
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
@@ -259,6 +259,7 @@ public class MainDispatcher extends Dispatcher {
 	protected boolean mOverapproximateFloatingPointOperations;
 	protected BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
 
+	@Override
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
 	}
@@ -268,14 +269,16 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	void addBoogieDeclarationOfVariableOnHeap(VariableDeclaration vd) {
-		if (_boogieDeclarationsOfVariablesOnHeap == null)
+		if (_boogieDeclarationsOfVariablesOnHeap == null) {
 			_boogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<VariableDeclaration>();
+		}
 		_boogieDeclarationsOfVariablesOnHeap.add(vd);
 	}
 
 	boolean getBoogieDeclarationsOfVariablesOnHeapContains(VariableDeclaration vd) {
-		if (_boogieDeclarationsOfVariablesOnHeap == null)
+		if (_boogieDeclarationsOfVariablesOnHeap == null) {
 			return false;
+		}
 		return _boogieDeclarationsOfVariablesOnHeap.contains(vd);
 	}
 
@@ -284,8 +287,8 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants,
 			IUltimateServiceProvider services, ILogger logger) {
 		super(backtranslator, services, logger);
-		mBitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		mOverapproximateFloatingPointOperations = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		mOverapproximateFloatingPointOperations = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mWitnessInvariants = witnessInvariants;
 	}
 
@@ -297,8 +300,8 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	@Override
 	public boolean isMMRequired() {
-		return !this.variablesOnHeap.isEmpty() || !this.mFunctionToIndex.isEmpty()
-				|| this.thereAreDereferencedPointerVariables;
+		return !variablesOnHeap.isEmpty() || !mFunctionToIndex.isEmpty()
+				|| thereAreDereferencedPointerVariables;
 	}
 
 	@Override
@@ -320,22 +323,22 @@ public class MainDispatcher extends Dispatcher {
 		assert node.getCNode() != null;
 		assert node.getCNode() instanceof IASTTranslationUnit;
 
-		IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
 
 		variablesOnHeap = new LinkedHashSet<>();
 
-		FunctionTableBuilder ftb = new FunctionTableBuilder();
+		final FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
-		PreRunner pr = new PreRunner(ftb.getFunctionTable());
+		final PreRunner pr = new PreRunner(ftb.getFunctionTable());
 		tu.accept(pr);
 
 		variablesOnHeap.addAll(pr.getVarsForHeap());
 
 		mFunctionToIndex = pr.getFunctionToIndex();
 
-		boolean useDetNecessaryDeclarations = true;
+		final boolean useDetNecessaryDeclarations = true;
 		if (useDetNecessaryDeclarations) {
-			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this,
+			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
 					ftb.getFunctionTable(), mFunctionToIndex);
 			tu.accept(dnd);
 
@@ -344,14 +347,14 @@ public class MainDispatcher extends Dispatcher {
 			reachableDeclarations = null;
 		}
 
-		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex,
+		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
 				reachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
 		variablesOnHeap.addAll(prd.getVariablesOnHeap());
 
 		indexToFunction = new LinkedHashMap<>();
-		for (Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
+		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
 			indexToFunction.put(en.getValue(), en.getKey());
 		}
 
@@ -362,15 +365,15 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	protected void init() {
 
-		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new TypeHandler(!mBitvectorTranslation);
-		acslHandler = new ACSLHandler(mWitnessInvariants != null);
-		nameHandler = new NameHandler(backtranslator);
-		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, 
-				mBitvectorTranslation, mOverapproximateFloatingPointOperations, nameHandler);
-		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
-		preprocessorHandler = new PreprocessorHandler();
-		REPORT_WARNINGS = true;
+		mSideEffectHandler = new SideEffectHandler();
+		mTypeHandler = new TypeHandler(!mBitvectorTranslation);
+		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
+		mNameHandler = new NameHandler(mBacktranslator);
+		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, 
+				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mNameHandler);
+		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
+		mPreprocessorHandler = new PreprocessorHandler();
+		mReportWarnings = true;
 	}
 
 	@Override
@@ -387,176 +390,176 @@ public class MainDispatcher extends Dispatcher {
 
 		final Result result;
 		if (n instanceof IASTTranslationUnit) {
-			result = cHandler.visit(this, ((IASTTranslationUnit) n));
+			result = mCHandler.visit(this, ((IASTTranslationUnit) n));
 		} else if (n instanceof IASTSimpleDeclaration) {
-			result = cHandler.visit(this, (IASTSimpleDeclaration) n);
+			result = mCHandler.visit(this, (IASTSimpleDeclaration) n);
 		} else if (n instanceof IASTParameterDeclaration) {
-			result = cHandler.visit(this, (IASTParameterDeclaration) n);
+			result = mCHandler.visit(this, (IASTParameterDeclaration) n);
 		} else if (n instanceof IASTASMDeclaration) {
-			result = cHandler.visit(this, (IASTASMDeclaration) n);
+			result = mCHandler.visit(this, (IASTASMDeclaration) n);
 		} else if (n instanceof IASTDeclarator) {
-			result = cHandler.visit(this, (IASTDeclarator) n);
+			result = mCHandler.visit(this, (IASTDeclarator) n);
 		} else if (n instanceof IASTFunctionDefinition) {
-			result = cHandler.visit(this, (IASTFunctionDefinition) n);
+			result = mCHandler.visit(this, (IASTFunctionDefinition) n);
 		} else if (n instanceof IASTArrayModifier) {
-			result = cHandler.visit(this, (IASTArrayModifier) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTComment) {
 			// TODO : remove? I think they are excluded by the parser anyway?
-			result = cHandler.visit(this, (IASTComment) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTDeclaration) {
-			result = cHandler.visit(this, (IASTDeclaration) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTDeclSpecifier) {
 			// Here we decide which further Interface we want to visit, and
 			// call the typeHandler
 			if (n instanceof IASTSimpleDeclSpecifier) {
-				result = typeHandler.visit(this, (IASTSimpleDeclSpecifier) n);
+				result = mTypeHandler.visit(this, (IASTSimpleDeclSpecifier) n);
 			} else if (n instanceof IASTNamedTypeSpecifier) {
-				result = typeHandler.visit(this, (IASTNamedTypeSpecifier) n);
+				result = mTypeHandler.visit(this, (IASTNamedTypeSpecifier) n);
 			} else if (n instanceof IASTEnumerationSpecifier) {
-				result = typeHandler.visit(this, (IASTEnumerationSpecifier) n);
+				result = mTypeHandler.visit(this, (IASTEnumerationSpecifier) n);
 			} else if (n instanceof IASTElaboratedTypeSpecifier) {
-				result = typeHandler.visit(this, (IASTElaboratedTypeSpecifier) n);
+				result = mTypeHandler.visit(this, (IASTElaboratedTypeSpecifier) n);
 			} else if (n instanceof IASTCompositeTypeSpecifier) {
-				result = typeHandler.visit(this, (IASTCompositeTypeSpecifier) n);
+				result = mTypeHandler.visit(this, (IASTCompositeTypeSpecifier) n);
 			} else {
-				result = cHandler.visit(this, (IASTDeclSpecifier) n);
+				result = mCHandler.visit(this, n);
 			}
 		} else if (n instanceof IASTDeclarationListOwner) {
 			// must be after IASTCompositeTypeSpecifier!
-			result = cHandler.visit(this, (IASTDeclarationListOwner) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTStatement) {
 			if (n instanceof IASTReturnStatement) {
-				result = cHandler.visit(this, (IASTReturnStatement) n);
+				result = mCHandler.visit(this, (IASTReturnStatement) n);
 			} else if (n instanceof IASTSwitchStatement) {
-				result = cHandler.visit(this, (IASTSwitchStatement) n);
+				result = mCHandler.visit(this, (IASTSwitchStatement) n);
 			} else if (n instanceof IASTWhileStatement) {
-				result = cHandler.visit(this, (IASTWhileStatement) n);
+				result = mCHandler.visit(this, (IASTWhileStatement) n);
 			} else if (n instanceof IASTLabelStatement) {
-				result = cHandler.visit(this, (IASTLabelStatement) n);
+				result = mCHandler.visit(this, (IASTLabelStatement) n);
 			} else if (n instanceof IASTNullStatement) {
-				result = cHandler.visit(this, (IASTNullStatement) n);
+				result = mCHandler.visit(this, (IASTNullStatement) n);
 			} else if (n instanceof IASTContinueStatement) {
-				result = cHandler.visit(this, (IASTContinueStatement) n);
+				result = mCHandler.visit(this, (IASTContinueStatement) n);
 			} else if (n instanceof IASTDeclarationStatement) {
-				result = cHandler.visit(this, (IASTDeclarationStatement) n);
+				result = mCHandler.visit(this, (IASTDeclarationStatement) n);
 			} else if (n instanceof IASTDefaultStatement) {
-				result = cHandler.visit(this, (IASTDefaultStatement) n);
+				result = mCHandler.visit(this, (IASTDefaultStatement) n);
 			} else if (n instanceof IASTDoStatement) {
-				result = cHandler.visit(this, (IASTDoStatement) n);
+				result = mCHandler.visit(this, (IASTDoStatement) n);
 			} else if (n instanceof IASTExpressionStatement) {
-				result = cHandler.visit(this, (IASTExpressionStatement) n);
+				result = mCHandler.visit(this, (IASTExpressionStatement) n);
 			} else if (n instanceof IASTForStatement) {
-				result = cHandler.visit(this, (IASTForStatement) n);
+				result = mCHandler.visit(this, (IASTForStatement) n);
 			} else if (n instanceof IASTGotoStatement) {
-				result = cHandler.visit(this, (IASTGotoStatement) n);
+				result = mCHandler.visit(this, (IASTGotoStatement) n);
 			} else if (n instanceof IASTIfStatement) {
-				result = cHandler.visit(this, (IASTIfStatement) n);
+				result = mCHandler.visit(this, (IASTIfStatement) n);
 			} else if (n instanceof IASTCompoundStatement) {
-				result = cHandler.visit(this, (IASTCompoundStatement) n);
+				result = mCHandler.visit(this, (IASTCompoundStatement) n);
 			} else if (n instanceof IASTBreakStatement) {
-				result = cHandler.visit(this, (IASTBreakStatement) n);
+				result = mCHandler.visit(this, (IASTBreakStatement) n);
 			} else if (n instanceof IASTCaseStatement) {
-				result = cHandler.visit(this, (IASTCaseStatement) n);
+				result = mCHandler.visit(this, (IASTCaseStatement) n);
 			} else if (n instanceof IASTProblemStatement) {
 				// error -> we will cancel the translation anyway ...
 				// -> should be at the end of the parent if for performance
-				result = cHandler.visit(this, (IASTProblemStatement) n);
+				result = mCHandler.visit(this, (IASTProblemStatement) n);
 			} else {
-				result = cHandler.visit(this, (IASTStatement) n);
+				result = mCHandler.visit(this, n);
 			}
 		} else if (n instanceof IASTInitializer) {
 			if (n instanceof IASTEqualsInitializer) {
-				result = cHandler.visit(this, (IASTEqualsInitializer) n);
+				result = mCHandler.visit(this, (IASTEqualsInitializer) n);
 			} else if (n instanceof CASTDesignatedInitializer) {
-				result = cHandler.visit(this, (CASTDesignatedInitializer) n);
+				result = mCHandler.visit(this, (CASTDesignatedInitializer) n);
 			} else if (n instanceof IASTInitializerList) {
-				result = cHandler.visit(this, (IASTInitializerList) n);
+				result = mCHandler.visit(this, (IASTInitializerList) n);
 			} else {
-				result = cHandler.visit(this, (IASTInitializer) n);
+				result = mCHandler.visit(this, n);
 			}
 		} else if (n instanceof IASTExpression) {
 			if (n instanceof IASTLiteralExpression) {
-				result = cHandler.visit(this, (IASTLiteralExpression) n);
+				result = mCHandler.visit(this, (IASTLiteralExpression) n);
 			} else if (n instanceof IASTIdExpression) {
-				result = cHandler.visit(this, (IASTIdExpression) n);
+				result = mCHandler.visit(this, (IASTIdExpression) n);
 			} else if (n instanceof IASTFunctionCallExpression) {
-				result = cHandler.visit(this, (IASTFunctionCallExpression) n);
+				result = mCHandler.visit(this, (IASTFunctionCallExpression) n);
 			} else if (n instanceof IASTFieldReference) {
-				result = cHandler.visit(this, (IASTFieldReference) n);
+				result = mCHandler.visit(this, (IASTFieldReference) n);
 			} else if (n instanceof IASTExpressionList) {
-				result = cHandler.visit(this, (IASTExpressionList) n);
+				result = mCHandler.visit(this, (IASTExpressionList) n);
 			} else if (n instanceof IASTConditionalExpression) {
-				result = cHandler.visit(this, (IASTConditionalExpression) n);
+				result = mCHandler.visit(this, (IASTConditionalExpression) n);
 			} else if (n instanceof IASTCastExpression) {
-				result = cHandler.visit(this, (IASTCastExpression) n);
+				result = mCHandler.visit(this, (IASTCastExpression) n);
 			} else if (n instanceof IASTBinaryExpression) {
-				result = cHandler.visit(this, (IASTBinaryExpression) n);
+				result = mCHandler.visit(this, (IASTBinaryExpression) n);
 			} else if (n instanceof IASTBinaryTypeIdExpression) {
-				result = cHandler.visit(this, (IASTBinaryTypeIdExpression) n);
+				result = mCHandler.visit(this, (IASTBinaryTypeIdExpression) n);
 			} else if (n instanceof IASTArraySubscriptExpression) {
-				result = cHandler.visit(this, (IASTArraySubscriptExpression) n);
+				result = mCHandler.visit(this, (IASTArraySubscriptExpression) n);
 			} else if (n instanceof IASTAmbiguousExpression) {
-				result = cHandler.visit(this, (IASTAmbiguousExpression) n);
+				result = mCHandler.visit(this, (IASTAmbiguousExpression) n);
 			} else if (n instanceof IASTAmbiguousCondition) {
-				result = cHandler.visit(this, (IASTAmbiguousCondition) n);
+				result = mCHandler.visit(this, (IASTAmbiguousCondition) n);
 			} else if (n instanceof IASTTypeIdExpression) {
-				result = cHandler.visit(this, (IASTTypeIdExpression) n);
+				result = mCHandler.visit(this, (IASTTypeIdExpression) n);
 			} else if (n instanceof IASTTypeIdInitializerExpression) {
-				result = cHandler.visit(this, (IASTTypeIdInitializerExpression) n);
+				result = mCHandler.visit(this, (IASTTypeIdInitializerExpression) n);
 			} else if (n instanceof IASTUnaryExpression) {
-				result = cHandler.visit(this, (IASTUnaryExpression) n);
+				result = mCHandler.visit(this, (IASTUnaryExpression) n);
 			} else if (n instanceof IASTProblemExpression) {
-				result = cHandler.visit(this, (IASTProblemExpression) n);
+				result = mCHandler.visit(this, (IASTProblemExpression) n);
 			} else {
-				result = cHandler.visit(this, (IASTExpression) n);
+				result = mCHandler.visit(this, (IASTExpression) n);
 			}
 		} else if (n instanceof IASTFunctionStyleMacroParameter) {
-			result = cHandler.visit(this, (IASTFunctionStyleMacroParameter) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTImplicitNameOwner) {
-			result = cHandler.visit(this, (IASTImplicitNameOwner) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTName) {
-			result = cHandler.visit(this, (IASTName) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTPointerOperator) {
-			result = cHandler.visit(this, (IASTPointerOperator) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTPreprocessorMacroExpansion) {
-			result = cHandler.visit(this, (IASTPreprocessorMacroExpansion) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTProblem) {
-			result = cHandler.visit(this, (IASTProblem) n);
+			result = mCHandler.visit(this, (IASTProblem) n);
 		} else if (n instanceof IASTTypeId) {
-			result = cHandler.visit(this, (IASTTypeId) n);
+			result = mCHandler.visit(this, n);
 
 			// Indirect implementations of IASTNode in CDT version 7:
 		} else if (n instanceof IASTArrayDeclarator) {
-			result = cHandler.visit(this, (IASTArrayDeclarator) n);
+			result = mCHandler.visit(this, (IASTArrayDeclarator) n);
 		} else if (n instanceof IASTASMDeclaration) {
-			result = cHandler.visit(this, (IASTASMDeclaration) n);
+			result = mCHandler.visit(this, (IASTASMDeclaration) n);
 		} else if (n instanceof IASTCompositeTypeSpecifier) {
-			result = cHandler.visit(this, (IASTCompositeTypeSpecifier) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTFieldDeclarator) {
-			result = cHandler.visit(this, (IASTFieldDeclarator) n);
+			result = mCHandler.visit(this, (IASTFieldDeclarator) n);
 		} else if (n instanceof IASTImplicitName) {
-			result = cHandler.visit(this, (IASTImplicitName) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTInitializerClause) {
-			result = cHandler.visit(this, (IASTInitializerClause) n);
+			result = mCHandler.visit(this, (IASTInitializerClause) n);
 		} else if (n instanceof IASTPointer) {
-			result = cHandler.visit(this, (IASTPointer) n);
+			result = mCHandler.visit(this, (IASTPointer) n);
 		} else if (n instanceof IASTPreprocessorMacroDefinition) {
-			result = cHandler.visit(this, (IASTPreprocessorMacroDefinition) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-			result = cHandler.visit(this, (IASTPreprocessorObjectStyleMacroDefinition) n);
+			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTStandardFunctionDeclarator) {
-			result = cHandler.visit(this, (IASTStandardFunctionDeclarator) n);
+			result = mCHandler.visit(this, (IASTStandardFunctionDeclarator) n);
 		} else if (n instanceof IASTProblemDeclaration) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
-			result = cHandler.visit(this, (IASTProblemDeclaration) n);
+			result = mCHandler.visit(this, (IASTProblemDeclaration) n);
 		} else if (n instanceof IASTProblemTypeId) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
-			result = cHandler.visit(this, (IASTProblemTypeId) n);
+			result = mCHandler.visit(this, (IASTProblemTypeId) n);
 		} else {
-			String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-			ILocation loc = LocationFactory.createCLocation(n);
+			final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
+			final ILocation loc = LocationFactory.createCLocation(n);
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
@@ -571,7 +574,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
-			ILocation loc = LocationFactory.createCLocation(n);
+			final ILocation loc = LocationFactory.createCLocation(n);
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
 				final ArrayList<Statement> stmt = exprResult.stmt;
@@ -588,16 +591,16 @@ public class MainDispatcher extends Dispatcher {
 							+ loc);
 				}
 			} else if (result instanceof ExpressionListResult) {
-				ExpressionListResult exlire = (ExpressionListResult) result;
+				final ExpressionListResult exlire = (ExpressionListResult) result;
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
-					ArrayList<Statement> stmt = exlire.list.get(0).stmt;
+					final ArrayList<Statement> stmt = exlire.list.get(0).stmt;
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
-					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
+					final ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
 					stmt.addAll(witnessInvariantsAfter);
 					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
@@ -605,13 +608,13 @@ public class MainDispatcher extends Dispatcher {
 				}
 			} else {
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
-					String message = "Found witness invariant but unable to add check " + invariantBefore
+					final String message = "Found witness invariant but unable to add check " + invariantBefore
 							+ " directly before the following code " + loc;
 					mLogger.warn(message);
 					// throw new AssertionError(message);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
-					String message = "Found witness invariant but unable to add check " + invariantAfter
+					final String message = "Found witness invariant but unable to add check " + invariantAfter
 							+ " directly after the following code " + loc;
 					mLogger.warn(message);
 					// throw new AssertionError(message);
@@ -627,13 +630,13 @@ public class MainDispatcher extends Dispatcher {
 			ACSLNode acslNode = null;
 			try {
 				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";", 0, 0, mLogger);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new IllegalArgumentException(e);
 			}
-			Result translationResult = dispatch(acslNode);
-			List<AssertStatement> invariants = new ArrayList<>();
+			final Result translationResult = dispatch(acslNode);
+			final List<AssertStatement> invariants = new ArrayList<>();
 			if (translationResult instanceof ExpressionResult) {
-				ExpressionResult exprResult = (ExpressionResult) translationResult;
+				final ExpressionResult exprResult = (ExpressionResult) translationResult;
 				if (!exprResult.auxVars.isEmpty()) {
 					throw new AssertionError("must be translatable without auxvars");
 				}
@@ -646,7 +649,7 @@ public class MainDispatcher extends Dispatcher {
 				if (exprResult.stmt.size() > 1) {
 					throw new AssertionError("must be translatable without additional statements");
 				}
-				Statement stmt = exprResult.stmt.get(0);
+				final Statement stmt = exprResult.stmt.get(0);
 				if (stmt instanceof AssertStatement) {
 					invariants.add((AssertStatement) stmt);
 				} else {
@@ -662,212 +665,212 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	public Result dispatch(ACSLNode n) {
 		if (n instanceof CodeAnnot) {
-			return acslHandler.visit(this, (CodeAnnot) n);
+			return mAcslHandler.visit(this, (CodeAnnot) n);
 		}
 		if (n instanceof Expression) {
 			if (n instanceof BinaryExpression) {
-				return acslHandler.visit(this, (BinaryExpression) n);
+				return mAcslHandler.visit(this, (BinaryExpression) n);
 			}
 			if (n instanceof NotDefinedExpression) {
-				return acslHandler.visit(this, (NotDefinedExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof UnaryExpression) {
-				return acslHandler.visit(this, (UnaryExpression) n);
+				return mAcslHandler.visit(this, (UnaryExpression) n);
 			}
 			if (n instanceof ArrayAccessExpression) {
-				return acslHandler.visit(this, (ArrayAccessExpression) n);
+				return mAcslHandler.visit(this, (ArrayAccessExpression) n);
 			}
 			if (n instanceof ArrayStoreExpression) {
-				return acslHandler.visit(this, (ArrayStoreExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof BitVectorAccessExpression) {
-				return acslHandler.visit(this, (BitVectorAccessExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof BooleanLiteral) {
-				return acslHandler.visit(this, (BooleanLiteral) n);
+				return mAcslHandler.visit(this, (BooleanLiteral) n);
 			}
 			if (n instanceof IntegerLiteral) {
-				return acslHandler.visit(this, (IntegerLiteral) n);
+				return mAcslHandler.visit(this, (IntegerLiteral) n);
 			}
 			if (n instanceof RealLiteral) {
-				return acslHandler.visit(this, (RealLiteral) n);
+				return mAcslHandler.visit(this, (RealLiteral) n);
 			}
 			if (n instanceof StringLiteral) {
-				return acslHandler.visit(this, (StringLiteral) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof NullPointer) {
-				return acslHandler.visit(this, (NullPointer) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof ValidExpression) {
-				return acslHandler.visit(this, (ValidExpression) n);
+				return mAcslHandler.visit(this, (ValidExpression) n);
 			}
 			if (n instanceof FreeableExpression) {
-				return acslHandler.visit(this, (FreeableExpression) n);
+				return mAcslHandler.visit(this, (FreeableExpression) n);
 			}
 			if (n instanceof MallocableExpression) {
-				return acslHandler.visit(this, (MallocableExpression) n);
+				return mAcslHandler.visit(this, (MallocableExpression) n);
 			}
 			if (n instanceof ACSLResultExpression) {
-				return acslHandler.visit(this, (ACSLResultExpression) n);
+				return mAcslHandler.visit(this, (ACSLResultExpression) n);
 			}
 			if (n instanceof FieldAccessExpression) {
-				return acslHandler.visit(this, (FieldAccessExpression) n);
+				return mAcslHandler.visit(this, (FieldAccessExpression) n);
 			}
 			if (n instanceof SizeOfExpression) {
-				return acslHandler.visit(this, (SizeOfExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof OldValueExpression) {
-				return acslHandler.visit(this, (OldValueExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof AtLabelExpression) {
-				return acslHandler.visit(this, (AtLabelExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof BaseAddrExpression) {
-				return acslHandler.visit(this, (BaseAddrExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof BlockLengthExpression) {
-				return acslHandler.visit(this, (BlockLengthExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof SyntacticNamingExpression) {
-				return acslHandler.visit(this, (SyntacticNamingExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof IdentifierExpression) {
-				return acslHandler.visit(this, (IdentifierExpression) n);
+				return mAcslHandler.visit(this, (IdentifierExpression) n);
 			}
 			if (n instanceof FunctionApplication) {
-				return acslHandler.visit(this, (FunctionApplication) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof IfThenElseExpression) {
-				return acslHandler.visit(this, (IfThenElseExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof QuantifierExpression) {
-				return acslHandler.visit(this, (QuantifierExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof WildcardExpression) {
-				return acslHandler.visit(this, (WildcardExpression) n);
+				return mAcslHandler.visit(this, n);
 			}
-			return acslHandler.visit(this, (Expression) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Contract) {
-			return acslHandler.visit(this, (Contract) n);
+			return mAcslHandler.visit(this, (Contract) n);
 		}
 		if (n instanceof ContractStatement) {
 			if (n instanceof Requires) {
-				return acslHandler.visit(this, (Requires) n);
+				return mAcslHandler.visit(this, (Requires) n);
 			}
 			if (n instanceof Terminates) {
-				return acslHandler.visit(this, (Terminates) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Decreases) {
-				return acslHandler.visit(this, (Decreases) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Ensures) {
-				return acslHandler.visit(this, (Ensures) n);
+				return mAcslHandler.visit(this, (Ensures) n);
 			}
 			if (n instanceof Assigns) {
-				return acslHandler.visit(this, (Assigns) n);
+				return mAcslHandler.visit(this, (Assigns) n);
 			}
 			if (n instanceof Assumes) {
-				return acslHandler.visit(this, (Assumes) n);
+				return mAcslHandler.visit(this, n);
 			}
-			return acslHandler.visit(this, (ContractStatement) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Completeness) {
-			return acslHandler.visit(this, (Completeness) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Behavior) {
-			return acslHandler.visit(this, (Behavior) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof LogicStatement) {
 			if (n instanceof Predicate) {
-				return acslHandler.visit(this, (Predicate) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof LogicFunction) {
-				return acslHandler.visit(this, (LogicFunction) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Lemma) {
-				return acslHandler.visit(this, (Lemma) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Inductive) {
-				return acslHandler.visit(this, (Inductive) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Axiom) {
-				return acslHandler.visit(this, (Axiom) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof Axiomatic) {
-				return acslHandler.visit(this, (Axiomatic) n);
+				return mAcslHandler.visit(this, n);
 			}
-			return acslHandler.visit(this, (LogicStatement) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Invariant) {
 			if (n instanceof GlobalInvariant) {
-				return acslHandler.visit(this, (GlobalInvariant) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof GlobalLTLInvariant) {
-				return acslHandler.visit(this, (GlobalLTLInvariant) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof TypeInvariant) {
-				return acslHandler.visit(this, (TypeInvariant) n);
+				return mAcslHandler.visit(this, n);
 			}
-			return acslHandler.visit(this, (Invariant) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof LoopStatement) {
 			if (n instanceof LoopInvariant) {
-				return acslHandler.visit(this, (LoopInvariant) n);
+				return mAcslHandler.visit(this, (LoopInvariant) n);
 			}
 			if (n instanceof LoopVariant) {
-				return acslHandler.visit(this, (LoopVariant) n);
+				return mAcslHandler.visit(this, (LoopVariant) n);
 			}
 			if (n instanceof LoopAssigns) {
-				return acslHandler.visit(this, (LoopAssigns) n);
+				return mAcslHandler.visit(this, (LoopAssigns) n);
 			}
-			return acslHandler.visit(this, (LoopStatement) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof CodeStatement) {
 			if (n instanceof Assertion) {
-				return acslHandler.visit(this, (Assertion) n);
+				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof CodeInvariant) {
-				return acslHandler.visit(this, (CodeInvariant) n);
+				return mAcslHandler.visit(this, n);
 			}
-			return acslHandler.visit(this, (CodeStatement) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof ACSLType) {
-			return acslHandler.visit(this, (ACSLType) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Case) {
-			return acslHandler.visit(this, (Case) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof CodeForBehavior) {
-			return acslHandler.visit(this, (CodeForBehavior) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof LoopAnnot) {
-			return acslHandler.visit(this, (LoopAnnot) n);
+			return mAcslHandler.visit(this, (LoopAnnot) n);
 		}
 		if (n instanceof LoopForBehavior) {
-			return acslHandler.visit(this, (LoopForBehavior) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof ModelVariable) {
-			return acslHandler.visit(this, (ModelVariable) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof Parameter) {
-			return acslHandler.visit(this, (Parameter) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof PolyIdentifier) {
-			return acslHandler.visit(this, (PolyIdentifier) n);
+			return mAcslHandler.visit(this, n);
 		}
 		if (n instanceof ACSLNode) {
-			return acslHandler.visit(this, (ACSLNode) n);
+			return mAcslHandler.visit(this, n);
 		}
-		String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
-		ILocation loc = LocationFactory.createACSLLocation(n);
+		final String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
+		final ILocation loc = LocationFactory.createACSLLocation(n);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result dispatch(DecoratorNode node) {
-		this.decoratorTree = node;
-		this.decoratorTreeIterator = node.iterator();
+		decoratorTree = node;
+		decoratorTreeIterator = node.iterator();
 		if (node.getCNode() != null) {
 			return dispatch(node.getCNode());
 		}
@@ -894,14 +897,14 @@ public class MainDispatcher extends Dispatcher {
 			return null;
 		}
 		// current = found ACSL node
-		ArrayList<ACSLNode> acsl = new ArrayList<ACSLNode>();
+		final ArrayList<ACSLNode> acsl = new ArrayList<ACSLNode>();
 		checkACSLLocation(current);
 		acsl.add(current.getAcslNode());
 		if (!decoratorTreeIterator.hasNext()) {
 			return new NextACSL(acsl, null);
 		}
 		// find successor C node with same parent as the found acsl node
-		Iterator<DecoratorNode> myIterator = decoratorTree.iterator();
+		final Iterator<DecoratorNode> myIterator = decoratorTree.iterator();
 		DecoratorNode cNode = decoratorTree;
 		while (myIterator.hasNext() && (cNode.getAcslNode() == null || !cNode.equals(current))) {
 			cNode = myIterator.next();
@@ -939,7 +942,7 @@ public class MainDispatcher extends Dispatcher {
 		} else if (nextNode.getAcslNode() != null) {
 			nextACSLBuffer = nextNode;
 		}
-		nextAcsl = new NextACSL(acsl, successor);
+		mNextAcsl = new NextACSL(acsl, successor);
 		return new NextACSL(acsl, successor);
 	}
 
@@ -980,52 +983,52 @@ public class MainDispatcher extends Dispatcher {
 		// IGPPPointerToMemberType, IGPPPointerType, IGPPQualifierType,
 		// IPointerType, IProblemBinding, IProblemType, IQualifierType, ITypedef
 		if (type instanceof IBasicType) {
-			return typeHandler.visit(this, (IBasicType) type);
+			return mTypeHandler.visit(this, (IBasicType) type);
 		}
 		if (type instanceof ITypedef) {
-			return typeHandler.visit(this, (ITypedef) type);
+			return mTypeHandler.visit(this, (ITypedef) type);
 		}
 		if (type instanceof IArrayType) {
-			return typeHandler.visit(this, (IArrayType) type);
+			return mTypeHandler.visit(this, (IArrayType) type);
 		}
-		return typeHandler.visit(this, type);
+		return mTypeHandler.visit(this, type);
 	}
 
 	@Override
 	public Result dispatch(IASTPreprocessorStatement n) {
 		if (n instanceof IASTPreprocessorElifStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorElifStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorElifStatement) n);
 		}
 		if (n instanceof IASTPreprocessorElseStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorElseStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorElseStatement) n);
 		}
 		if (n instanceof IASTPreprocessorEndifStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorEndifStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorEndifStatement) n);
 		}
 		if (n instanceof IASTPreprocessorErrorStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorErrorStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorErrorStatement) n);
 		}
 		if (n instanceof IASTPreprocessorIfdefStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorIfdefStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorIfdefStatement) n);
 		}
 		if (n instanceof IASTPreprocessorIfndefStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorIfndefStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorIfndefStatement) n);
 		}
 		if (n instanceof IASTPreprocessorIfStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorIfStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorIfStatement) n);
 		}
 		if (n instanceof IASTPreprocessorIncludeStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorIncludeStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorIncludeStatement) n);
 		}
 		if (n instanceof IASTPreprocessorMacroDefinition) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorMacroDefinition) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorMacroDefinition) n);
 		}
 		if (n instanceof IASTPreprocessorPragmaStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorPragmaStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorPragmaStatement) n);
 		}
 		if (n instanceof IASTPreprocessorUndefStatement) {
-			return preprocessorHandler.visit(this, (IASTPreprocessorUndefStatement) n);
+			return mPreprocessorHandler.visit(this, (IASTPreprocessorUndefStatement) n);
 		}
-		return preprocessorHandler.visit(this, n);
+		return mPreprocessorHandler.visit(this, n);
 	}
 }

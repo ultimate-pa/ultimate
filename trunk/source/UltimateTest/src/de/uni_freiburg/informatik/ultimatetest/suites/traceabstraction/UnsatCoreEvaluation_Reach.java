@@ -138,8 +138,8 @@ public class UnsatCoreEvaluation_Reach extends AbstractTraceAbstractionTestSuite
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs);
 				addTestCase(toolchain, setting, mUltimate, new String[] {".c", ".i"});
 			}

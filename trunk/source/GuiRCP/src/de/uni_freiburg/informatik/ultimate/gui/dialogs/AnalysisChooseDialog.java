@@ -62,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
@@ -107,7 +107,7 @@ public class AnalysisChooseDialog extends Dialog {
 		mShell.layout();
 		mShell.setSize(mShell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 		mShell.open();
-		Display display = getParent().getDisplay();
+		final Display display = getParent().getDisplay();
 		while (!mShell.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
@@ -121,14 +121,14 @@ public class AnalysisChooseDialog extends Dialog {
 		} else if (mResult != null) {
 			// convert selection into a toolchain
 			resultChain = mCore.createToolchainData();
-			for (ITool t : mResult) {
+			for (final ITool t : mResult) {
 				resultChain.addPlugin(t.getPluginID());
 			}
 			// save this toolchain in a tempfile for redo actions
-			String tDir = System.getProperty("java.io.tmpdir");
-			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
+			final String tDir = System.getProperty("java.io.tmpdir");
+			final File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
 			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
-			new RcpPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
+			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
 
@@ -174,7 +174,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		});
 
-		for (IToolchainPlugin analysis : mTools) {
+		for (final IToolchainPlugin analysis : mTools) {
 			final TableItem analysisTableItem = new TableItem(mTable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -219,7 +219,7 @@ public class AnalysisChooseDialog extends Dialog {
 		newColumnTableColumn_1.setText("Current Toolchain");
 		newColumnTableColumn_1.setResizable(true);
 
-		for (IToolchainPlugin analysis : mPrevious) {
+		for (final IToolchainPlugin analysis : mPrevious) {
 			final TableItem analysisTableItem = new TableItem(mRresultTable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -270,7 +270,7 @@ public class AnalysisChooseDialog extends Dialog {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				mResult = new ArrayList<ITool>();
-				for (TableItem item : mRresultTable.getItems()) {
+				for (final TableItem item : mRresultTable.getItems()) {
 					mResult.add((ITool) item.getData());
 				}
 				if (mResult.isEmpty()) {
@@ -290,12 +290,12 @@ public class AnalysisChooseDialog extends Dialog {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 
-				RcpPreferenceProvider prefs = new RcpPreferenceProvider(GuiController.PLUGIN_ID);
-				String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
+				final IPreferenceProvider prefs = mCore.getPreferenceProvider(GuiController.PLUGIN_ID);
+				final String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 
-				String[] extensions = new String[1];
+				final String[] extensions = new String[1];
 				extensions[0] = "*.xml";
-				FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
+				final FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
 				fd.setText("Choose XML Toolchain");
 				fd.setFilterExtensions(extensions);
 				fd.setFileName(filterpath);
@@ -334,8 +334,8 @@ public class AnalysisChooseDialog extends Dialog {
 	 */
 	private void moveItem(int swtDirection) {
 		// get currently selected items
-		int ri = mRresultTable.getSelectionIndex();
-		int li = mTable.getSelectionIndex();
+		final int ri = mRresultTable.getSelectionIndex();
+		final int li = mTable.getSelectionIndex();
 		TableItem rightside = null;
 		TableItem leftside = null;
 		if (ri != -1) {
@@ -363,12 +363,12 @@ public class AnalysisChooseDialog extends Dialog {
 		case SWT.DOWN:
 			if (rightside != null) {
 				// compute with which item we should switch
-				int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
+				final int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
 				if (ri != -1 && otherindex >= 0 && otherindex < mRresultTable.getItemCount()) {
-					TableItem oldItem = mRresultTable.getItem(ri);
-					Object data = oldItem.getData();
+					final TableItem oldItem = mRresultTable.getItem(ri);
+					final Object data = oldItem.getData();
 					oldItem.dispose();
-					TableItem newItem = new TableItem(mRresultTable, SWT.NONE, otherindex);
+					final TableItem newItem = new TableItem(mRresultTable, SWT.NONE, otherindex);
 					newItem.setData(data);
 					setCaption(newItem);
 					mRresultTable.select(otherindex);
@@ -383,7 +383,7 @@ public class AnalysisChooseDialog extends Dialog {
 	}
 
 	private static void setCaption(TableItem item) {
-		IToolchainPlugin isp = (IToolchainPlugin) item.getData();
+		final IToolchainPlugin isp = (IToolchainPlugin) item.getData();
 		item.setText(isp.getPluginName() + "   id: " + isp.getPluginID());
 	}
 

@@ -66,12 +66,12 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		mOperand2 = nwa2;
 		mLogger.info(startMessage());
 
-		INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
+		final INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
 				mServices, stateFactory, mOperand2)).getResult();
-		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
+		final INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
 				mServices, mOperand1, sndComplement, true)).getResult();
-		BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
-				mServices, (INestedWordAutomatonOldApi<LETTER, STATE>) difference);
+		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
+				mServices, difference);
 
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getAcceptingNestedLassoRun();

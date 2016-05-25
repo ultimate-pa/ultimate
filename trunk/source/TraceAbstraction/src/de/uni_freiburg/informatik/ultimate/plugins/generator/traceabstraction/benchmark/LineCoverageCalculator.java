@@ -141,7 +141,7 @@ public class LineCoverageCalculator {
 		if (stmt instanceof AssumeStatement) {
 			return ((AssumeStatement) stmt).getFormula().getLocation();
 		} else if (stmt instanceof CallStatement) {
-			CallStatement call = (CallStatement) stmt;
+			final CallStatement call = (CallStatement) stmt;
 			if (call.getLocation().getStartLine() == call.getLocation().getEndLine()) {
 				return call.getLocation();
 			}
@@ -164,13 +164,13 @@ public class LineCoverageCalculator {
 	}
 
 	private Set<CodeBlock> getCodeblocks(IAutomaton<CodeBlock, IPredicate> automaton) {
-		Set<CodeBlock> rtr = new HashSet<>();
+		final Set<CodeBlock> rtr = new HashSet<>();
 		if (automaton instanceof INestedWordAutomaton<?, ?>) {
-			INestedWordAutomaton<CodeBlock, IPredicate> nwa = ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton);
-			Deque<IPredicate> open = new ArrayDeque<>();
+			final INestedWordAutomaton<CodeBlock, IPredicate> nwa = ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton);
+			final Deque<IPredicate> open = new ArrayDeque<>();
 			open.addAll(nwa.getInitialStates());
 			while (!open.isEmpty()) {
-				IPredicate current = open.removeFirst();
+				final IPredicate current = open.removeFirst();
 				addCodeblock(rtr, open, nwa.callSuccessors(current));
 				addCodeblock(rtr, open, nwa.internalSuccessors(current));
 				addCodeblock(rtr, open, nwa.returnSuccessors(current));
@@ -182,7 +182,7 @@ public class LineCoverageCalculator {
 
 	private <T extends OutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
 			Deque<IPredicate> open, Iterable<T> iter) {
-		for (OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
+		for (final OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
 			if (rtr.add(trans.getLetter())) {
 				open.addFirst(trans.getSucc());
 			}

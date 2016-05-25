@@ -128,7 +128,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case AbstIntTime:
 			try {
 				return getElapsedTime(key);
-			} catch (StopwatchStillRunningException e) {
+			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
 		case HoareTripleCheckerStatistics:

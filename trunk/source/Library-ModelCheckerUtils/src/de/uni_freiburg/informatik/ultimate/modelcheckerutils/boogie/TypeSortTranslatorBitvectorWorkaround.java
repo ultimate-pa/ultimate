@@ -51,9 +51,10 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 		super(declarations, script, blackHoleArrays, services);
 	}
 
+	@Override
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		if (boogieType.equals(PrimitiveType.TYPE_INT)) {
-			BigInteger[] sortIndices = { BigInteger.valueOf(32) };
+			final BigInteger[] sortIndices = { BigInteger.valueOf(32) };
 			return mScript.sort("BitVec", sortIndices);
 		} else {
 			return super.constructSort(boogieType, BoogieASTNode);

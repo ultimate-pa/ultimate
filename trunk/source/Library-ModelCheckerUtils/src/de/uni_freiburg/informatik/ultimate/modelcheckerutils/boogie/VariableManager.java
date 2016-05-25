@@ -82,7 +82,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 		final String basename = bv.toString();
 		final Integer newIndex = mTvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();
-		TermVariable result = mScript.variable(
+		final TermVariable result = mScript.variable(
 				"v_" + basename + "_" + newIndex, sort);
 		mTv2Basename.put(result, basename);
 		return result;
@@ -96,7 +96,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 			basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 		}
 		final Integer newIndex = mTvForBasenameCounter.increase(basename);
-		TermVariable result = mScript.variable(
+		final TermVariable result = mScript.variable(
 				"v_" + basename + "_" + newIndex, tv.getSort());
 		mTv2Basename.put(result, basename);
 		return result;
@@ -107,10 +107,10 @@ public class VariableManager implements IFreshTermVariableConstructor {
 	 */
 	@Override
 	public TermVariable constructFreshTermVariable(String name, Sort sort) {
-		String withoutSmtQuoteChar = SmtUtils.removeSmtQuoteCharacters(name);
+		final String withoutSmtQuoteChar = SmtUtils.removeSmtQuoteCharacters(name);
 		final Integer newIndex = mTvForBasenameCounter.increase(withoutSmtQuoteChar);
 		
-		TermVariable result = mScript.variable(
+		final TermVariable result = mScript.variable(
 				"v_" + withoutSmtQuoteChar + "_" + newIndex, sort);
 		mTv2Basename.put(result, withoutSmtQuoteChar);
 		return result;
@@ -131,8 +131,8 @@ public class VariableManager implements IFreshTermVariableConstructor {
 	
 	public Term constructFreshConstant(TermVariable tv) {
 		final Integer newIndex = mConstForTvCounter.increase(tv);
-		String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
-		Sort resultSort = tv.getSort();
+		final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
+		final Sort resultSort = tv.getSort();
 		mScript.declareFun(name, new Sort[0], resultSort);
 		return mScript.term(name);
 	}
@@ -157,7 +157,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 		final String basename = bv.toString() + SmtUtils.removeSmtQuoteCharacters(suffix);
 		final Integer newIndex = mTvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();
-		TermVariable result = mScript.variable(
+		final TermVariable result = mScript.variable(
 				"v_" + basename + "_" + newIndex, sort);
 		mTv2Basename.put(result, basename);
 		return result;

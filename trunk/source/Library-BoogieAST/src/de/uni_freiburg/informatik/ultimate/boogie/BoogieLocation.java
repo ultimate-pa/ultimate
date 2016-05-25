@@ -73,35 +73,35 @@ public class BoogieLocation implements Serializable, ILocation {
 
 	public BoogieLocation(String fileName, int startLine, int endLine,
 			int startColum, int endColumn, boolean isLoopEntry) {
-		this.mFileName = fileName;
-		this.mStartLine = startLine;
-		this.mEndLine = endLine;
-		this.mStartColumn = startColum;
-		this.mEndColumn = endColumn;
-		this.mOrigin = this;
-		this.mLoopEntry = isLoopEntry;
+		mFileName = fileName;
+		mStartLine = startLine;
+		mEndLine = endLine;
+		mStartColumn = startColum;
+		mEndColumn = endColumn;
+		mOrigin = this;
+		mLoopEntry = isLoopEntry;
 	}
 
 	public BoogieLocation(String fileName, int startLine, int endLine,
 			int startColum, int endColumn, ILocation origin) {
-		this.mFileName = fileName;
-		this.mStartLine = startLine;
-		this.mEndLine = endLine;
-		this.mStartColumn = startColum;
-		this.mEndColumn = endColumn;
-		this.mOrigin = origin;
-		this.mLoopEntry = false;
+		mFileName = fileName;
+		mStartLine = startLine;
+		mEndLine = endLine;
+		mStartColumn = startColum;
+		mEndColumn = endColumn;
+		mOrigin = origin;
+		mLoopEntry = false;
 	}
 
 	public BoogieLocation(String fileName, int startLine, int endLine,
 			int startColum, int endColumn, ILocation origin, boolean isLoopEntry) {
-		this.mFileName = fileName;
-		this.mStartLine = startLine;
-		this.mEndLine = endLine;
-		this.mStartColumn = startColum;
-		this.mEndColumn = endColumn;
-		this.mOrigin = origin;
-		this.mLoopEntry = isLoopEntry;
+		mFileName = fileName;
+		mStartLine = startLine;
+		mEndLine = endLine;
+		mStartColumn = startColum;
+		mEndColumn = endColumn;
+		mOrigin = origin;
+		mLoopEntry = isLoopEntry;
 	}
 
 	@Override
@@ -112,27 +112,27 @@ public class BoogieLocation implements Serializable, ILocation {
 
 	@Override
 	public int getStartLine() {
-		return this.mStartLine;
+		return mStartLine;
 	}
 
 	@Override
 	public int getEndLine() {
-		return this.mEndLine;
+		return mEndLine;
 	}
 
 	@Override
 	public int getStartColumn() {
-		return this.mStartColumn;
+		return mStartColumn;
 	}
 
 	@Override
 	public int getEndColumn() {
-		return this.mEndColumn;
+		return mEndColumn;
 	}
 
 	@Override
 	public String getFileName() {
-		return this.mFileName;
+		return mFileName;
 	}
 
 	@Override

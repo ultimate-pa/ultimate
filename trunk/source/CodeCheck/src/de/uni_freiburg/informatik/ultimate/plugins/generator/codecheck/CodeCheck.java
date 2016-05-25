@@ -89,7 +89,7 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -97,6 +97,7 @@ public class CodeCheck implements IGenerator {
 		return mObservers;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt

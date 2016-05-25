@@ -44,7 +44,7 @@ public final class CompositEdgeDenier<E> implements IEdgeDenier<E> {
 	public CompositEdgeDenier(Collection<IEdgeDenier<E>> edgeDenier) {
 		if (edgeDenier != null) {
 			mEdgeDeniers = new ArrayList<IEdgeDenier<E>>(edgeDenier.size());
-			for (IEdgeDenier<E> denier : edgeDenier) {
+			for (final IEdgeDenier<E> denier : edgeDenier) {
 				mEdgeDeniers.add(denier);
 			}
 		} else {
@@ -67,7 +67,7 @@ public final class CompositEdgeDenier<E> implements IEdgeDenier<E> {
 	private static final class CachedIterator<E> implements Iterator<E> {
 
 		private Iterator<E> mIter;
-		private List<E> mCache;
+		private final List<E> mCache;
 		private boolean mComplete;
 		private boolean mUsed;
 

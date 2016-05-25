@@ -63,14 +63,14 @@ public class ModelType implements Serializable {
 
 	private int mSize;
 
-	private String mCreator;
+	private final String mCreator;
 	private Date mCreated;
 	private long mLastModified;
 	private String mLastModifier;
-	private Type mType;
+	private final Type mType;
 	private int mIteration;
 	private boolean mTouched;
-	private List<String> mFileNames;
+	private final List<String> mFileNames;
 	private DateFormat mLastModifiedStringFormat;
 
 	private boolean mIsCyclic;
@@ -108,10 +108,10 @@ public class ModelType implements Serializable {
 	 *            The ID of the plugin which performed the write operation
 	 */
 	public void modified(String modifierPluginID) {
-		this.setDirty(true);
-		this.mLastModifier = modifierPluginID;
-		this.mLastModified = System.currentTimeMillis();
-		this.mIteration++;
+		setDirty(true);
+		mLastModifier = modifierPluginID;
+		mLastModified = System.currentTimeMillis();
+		mIteration++;
 	}
 
 	/*
@@ -122,7 +122,7 @@ public class ModelType implements Serializable {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof ModelType) {
-			ModelType t = (ModelType) obj;
+			final ModelType t = (ModelType) obj;
 			return t.mLastModified == mLastModified && t.mCreator.equals(mCreator);
 		}
 		return false;
@@ -143,26 +143,27 @@ public class ModelType implements Serializable {
 	 * 
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		for (String fileName : this.mFileNames) {
+		final StringBuffer sb = new StringBuffer();
+		for (final String fileName : mFileNames) {
 			sb.append(new File(fileName).getName());
 		}
 		if (sb.length() > 0) {
 			sb.append(" ");
 		}
-		sb.append(this.mCreator);
-		sb.append(" " + this.mType);
-		sb.append(" " + this.mLastModifiedStringFormat.format(new Date(this.mLastModified)));
+		sb.append(mCreator);
+		sb.append(" " + mType);
+		sb.append(" " + mLastModifiedStringFormat.format(new Date(mLastModified)));
 		return sb.toString();
 	}
 
 	public boolean isDirty() {
-		return this.mTouched;
+		return mTouched;
 	}
 
 	public void setDirty(boolean flag) {
-		this.mTouched = flag;
+		mTouched = flag;
 	}
 
 	public String getCreator() {
@@ -182,7 +183,7 @@ public class ModelType implements Serializable {
 	}
 
 	public boolean isFromSource() {
-		return (this.mIteration == 0);
+		return (mIteration == 0);
 	}
 
 	public Type getType() {
@@ -214,16 +215,16 @@ public class ModelType implements Serializable {
 	}
 
 	public String getAbsolutePath(int i) {
-		return this.mFileNames.get(i);
+		return mFileNames.get(i);
 	}
 
 	public String getFileName(int i) {
-		String s = this.mFileNames.get(i);
+		String s = mFileNames.get(i);
 		if (s.contains(", ")) {
-			String fileSep = ", ";
-			String[] names = s.split(fileSep);
+			final String fileSep = ", ";
+			final String[] names = s.split(fileSep);
 			s = "";
-			for (String k : names) {
+			for (final String k : names) {
 				s += k.substring(k.lastIndexOf(File.separator) + 1) + fileSep;
 			}
 			s = s.substring(0, s.length() - 2);
@@ -235,17 +236,17 @@ public class ModelType implements Serializable {
 	}
 
 	public int getNumberOfFiles() {
-		return this.mFileNames.size();
+		return mFileNames.size();
 	}
 
 	private void init() {
-		this.mTouched = false;
-		this.mIteration = 0;
-		this.mLastModifier = this.mCreator;
-		this.mCreated = new Date();
-		this.mLastModified = System.currentTimeMillis();
-		this.mSize = 0;
-		this.mLastModifiedStringFormat = new SimpleDateFormat("dd.MM hh:mm:ss");
+		mTouched = false;
+		mIteration = 0;
+		mLastModifier = mCreator;
+		mCreated = new Date();
+		mLastModified = System.currentTimeMillis();
+		mSize = 0;
+		mLastModifiedStringFormat = new SimpleDateFormat("dd.MM hh:mm:ss");
 		setAttributes();
 	}
 
@@ -298,15 +299,15 @@ public class ModelType implements Serializable {
 	}
 
 	public int getSize() {
-		return this.mSize;
+		return mSize;
 	}
 
 	public void setSize(int size) {
-		this.mSize = size;
+		mSize = size;
 	}
 
 	public List<String> getFileNames() {
-		return this.mFileNames;
+		return mFileNames;
 	}
 
 }

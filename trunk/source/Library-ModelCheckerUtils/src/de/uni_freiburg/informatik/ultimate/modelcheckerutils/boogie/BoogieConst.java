@@ -53,14 +53,17 @@ public class BoogieConst implements IBoogieVar {
 		mSmtConstant = smtConstant;
 	}
 	
+	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
 
+	@Override
 	public IType getIType() {
 		return mIType;
 	}
 
+	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mSmtConstant;
 	}
@@ -72,28 +75,37 @@ public class BoogieConst implements IBoogieVar {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BoogieConst other = (BoogieConst) obj;
+		}
+		final BoogieConst other = (BoogieConst) obj;
 		if (mSmtConstant == null) {
-			if (other.mSmtConstant != null)
+			if (other.mSmtConstant != null) {
 				return false;
-		} else if (!mSmtConstant.equals(other.mSmtConstant))
+			}
+		} else if (!mSmtConstant.equals(other.mSmtConstant)) {
 			return false;
+		}
 		if (mIType == null) {
-			if (other.mIType != null)
+			if (other.mIType != null) {
 				return false;
-		} else if (!mIType.equals(other.mIType))
+			}
+		} else if (!mIType.equals(other.mIType)) {
 			return false;
+		}
 		if (mIdentifier == null) {
-			if (other.mIdentifier != null)
+			if (other.mIdentifier != null) {
 				return false;
-		} else if (!mIdentifier.equals(other.mIdentifier))
+			}
+		} else if (!mIdentifier.equals(other.mIdentifier)) {
 			return false;
+		}
 		return true;
 	}
 }

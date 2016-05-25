@@ -119,7 +119,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			final CallStatement callStatement = (CallStatement) call.getCallStatement();
+			final CallStatement callStatement = call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
 
 			// If there are no arguments, we don't need to rewrite states.

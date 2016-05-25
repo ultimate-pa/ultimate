@@ -76,7 +76,7 @@ public class Svcomp_Memsafety_SmtBenchmarkProduction extends AbstractTraceAbstra
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
+		for (final String setting : mSettings) {
 			addTestCase("AutomizerCWithBlockEncoding.xml", 
 					setting, 
 					mSVCOMP_Examples);

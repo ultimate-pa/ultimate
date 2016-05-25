@@ -83,7 +83,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -92,6 +92,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 		return Collections.singletonList((IObserver) mObserver);
 	}
 	
+	@Override
 	public ModelType getOutputDefinition() {
 		/* 
 		 * TODO This generated method body only assumes a standard case.
@@ -103,7 +104,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 	
 	@Override
 	public IElement getModel() {
-		return this.mObserver.getRoot();
+		return mObserver.getRoot();
 	}
 	
 	@Override

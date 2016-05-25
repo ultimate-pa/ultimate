@@ -80,10 +80,10 @@ class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<Astar
 	@Override
 	protected Object getFieldValue(String field) {
 		try {
-			Field f = getClass().getDeclaredField(field);
+			final Field f = getClass().getDeclaredField(field);
 			f.setAccessible(true);
 			return f.get(this);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return ex;
 		}
 	}

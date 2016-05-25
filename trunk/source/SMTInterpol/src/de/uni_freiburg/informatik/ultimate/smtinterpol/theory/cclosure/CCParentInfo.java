@@ -94,7 +94,7 @@ public class CCParentInfo {
 		// skip head
 		other = other.mNext;
 		while (other != null) {
-			int funcSymbNr = other.mFuncSymbNr;
+			final int funcSymbNr = other.mFuncSymbNr;
 //			assert !other.m_CCParents.isEmpty() || !other.m_ReverseTriggers.isEmpty();
 			while (myInfo.mNext != null && myInfo.mNext.mFuncSymbNr < funcSymbNr) {
 				myInfo = myInfo.mNext;
@@ -119,12 +119,12 @@ public class CCParentInfo {
 		// skip head
 		other = other.mNext;
 		while (other != null) {
-			int funcSymbNr = other.mFuncSymbNr;
+			final int funcSymbNr = other.mFuncSymbNr;
 //			assert !other.m_CCParents.isEmpty() || !other.m_ReverseTriggers.isEmpty();
 			while (myInfo.mNext.mFuncSymbNr < funcSymbNr) {
 				myInfo = myInfo.mNext;
 			}
-			CCParentInfo next = myInfo.mNext;
+			final CCParentInfo next = myInfo.mNext;
 			assert (next.mFuncSymbNr == funcSymbNr);
 			
 			/* unjoin lists */
@@ -176,10 +176,12 @@ public class CCParentInfo {
 	
 	public SimpleList<Parent> getParentInfo(int funcSymbNr) {
 		CCParentInfo info = mNext;
-		while (info != null && info.mFuncSymbNr < funcSymbNr)
+		while (info != null && info.mFuncSymbNr < funcSymbNr) {
 			info = info.mNext;
-		if (info != null && info.mFuncSymbNr == funcSymbNr)
+		}
+		if (info != null && info.mFuncSymbNr == funcSymbNr) {
 			return info.mCCParents;
+		}
 		return new SimpleList<Parent>();
 	}
 }

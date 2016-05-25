@@ -57,7 +57,7 @@ public class TestValuation implements IValuation {
 	@Override
 	public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(
 			int index) {
-		HashMap<String, SimpleEntry<IType, List<String>>> map = new HashMap<String, SimpleEntry<IType, List<String>>>();
+		final HashMap<String, SimpleEntry<IType, List<String>>> map = new HashMap<String, SimpleEntry<IType, List<String>>>();
 		switch (index) {
 		case 0:
 			map.put("x",

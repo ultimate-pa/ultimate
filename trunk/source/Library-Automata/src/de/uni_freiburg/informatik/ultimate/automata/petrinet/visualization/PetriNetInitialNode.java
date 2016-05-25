@@ -45,11 +45,11 @@ public class PetriNetInitialNode extends PetriNetVisualizationNode {
 	public PetriNetInitialNode(Collection<String> acceptingMarkings) {
 		super("My sucessors are the initial marking");
 		
-		IPayload payload = this.getPayload();
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload();
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings of this petri net",
 				acceptingMarkings);
-		Map<String,IAnnotations> annotations = payload.getAnnotations();
+		final Map<String,IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}
 	

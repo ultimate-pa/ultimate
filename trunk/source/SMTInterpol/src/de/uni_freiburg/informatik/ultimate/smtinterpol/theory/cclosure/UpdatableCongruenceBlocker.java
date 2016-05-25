@@ -36,8 +36,9 @@ public class UpdatableCongruenceBlocker {
 	/// Congruence management
 	public void update() {
 		mRoots = new HashSet<CongruenceBlockPair>();
-		for (CongruenceBlockPair p : mBlocked)
+		for (final CongruenceBlockPair p : mBlocked) {
 			mRoots.add(p.getRoot());
+		}
 	}
 	public void done() {
 		mRoots = null;

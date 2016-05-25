@@ -31,9 +31,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -93,7 +93,7 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 		mLogger.info(startMessage());
 		try {
 			constructDifference();
-		} catch (AutomataOperationCanceledException oce) {
+		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		mLogger.info(exitMessage());
@@ -125,24 +125,24 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		boolean underApproximationOfComplement = false;
+		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
 			mLogger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-			INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
-			List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-			BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
-			boolean fstOperandEmpty = fstOperandEmptiness.getResult();
+			final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
+			final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+			final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+			final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+			final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
 			if (!fstOperandEmpty) {
 				lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
-			boolean sndOperandEmpty = sndOperandEmptiness.getResult();
+			final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+			final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
 			if (!sndOperandEmpty) {
 				lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
-			boolean resultEmpty = resultEmptiness.getResult();
+			final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+			final boolean resultEmpty = resultEmptiness.getResult();
 			if (!resultEmpty) {
 				lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
@@ -155,7 +155,7 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
 			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 
-			for (NestedLassoWord<LETTER> nlw : lassoWords) {
+			for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 				correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi, underApproximationOfComplement);
 				assert correct;
 			}
@@ -171,9 +171,9 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
 			boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
-		boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
-		boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
+		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		if (res) {
 			correct = op1 && !op2;
 		} else {

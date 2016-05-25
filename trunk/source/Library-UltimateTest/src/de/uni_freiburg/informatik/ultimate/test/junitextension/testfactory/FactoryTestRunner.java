@@ -62,14 +62,14 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	}
 
 	protected Collection<? extends FrameworkMethod> generateFactoryTests() {
-		List<FrameworkFactoryTest> tests = new ArrayList<FrameworkFactoryTest>();
-		TestClass classUnderTest = getTestClass();
+		final List<FrameworkFactoryTest> tests = new ArrayList<FrameworkFactoryTest>();
+		final TestClass classUnderTest = getTestClass();
 
 		// create an instance of the current class
 		Object currentInstance = null;
 		try {
 			currentInstance = classUnderTest.getOnlyConstructor().newInstance();
-		} catch (Throwable e1) {
+		} catch (final Throwable e1) {
 			e1.printStackTrace();
 			return tests;
 		}
@@ -78,38 +78,38 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		for (final FrameworkMethod method : classUnderTest.getAnnotatedMethods(TestFactory.class)) {
 
 			// Execute the current @TestFactory method
-			Object factoryMethod;
+			Object factoryMethodResult;
 			try {
-				factoryMethod = method.getMethod().invoke(currentInstance);
-			} catch (InvocationTargetException ex) {
+				factoryMethodResult = method.getMethod().invoke(currentInstance);
+			} catch (final InvocationTargetException ex) {
 				System.err.println("Exception during invocation of test method:");
 				final Throwable cause = ex.getCause();
 				if (cause != null) {
 					cause.printStackTrace();
 				}
 				continue;
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				e.printStackTrace();
 				continue;
 			}
 
-			if (factoryMethod.getClass().isArray()) {
+			if (factoryMethodResult.getClass().isArray()) {
 				// Did the factory return an array? If so, make it a list.
-				factoryMethod = Arrays.asList((Object[]) factoryMethod);
+				factoryMethodResult = Arrays.asList((Object[]) factoryMethodResult);
 			}
 
-			if (!(factoryMethod instanceof Iterable<?>)) {
+			if (!(factoryMethodResult instanceof Iterable<?>)) {
 				// Did the factory return a single object? If so, put it in a
 				// list.
-				factoryMethod = Collections.singletonList(factoryMethod);
+				factoryMethodResult = Collections.singletonList(factoryMethodResult);
 			}
 
 			// For each object returned by the factory.
-			for (Object instance : (Iterable<?>) factoryMethod) {
+			for (final Object instance : (Iterable<?>) factoryMethodResult) {
 				// Find any methods marked with @FactoryTest and add them to the
 				// return list
 
-				for (FrameworkMethod m : new TestClass(instance.getClass())
+				for (final FrameworkMethod m : new TestClass(instance.getClass())
 						.getAnnotatedMethods(FactoryTestMethod.class)) {
 					tests.add(new FrameworkFactoryTest(m.getMethod(), instance, instance.toString()));
 				}
@@ -143,7 +143,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 					final String errorMsg = getTestClass().getName() + " did not return any dynamic tests";
 					mTests.add(new FrameworkFactoryTest(FailingTest.class.getMethod("NoFactoryTestMethod"),
 							new FailingTest(), errorMsg));
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					// this reflection is always safe
 				}
 

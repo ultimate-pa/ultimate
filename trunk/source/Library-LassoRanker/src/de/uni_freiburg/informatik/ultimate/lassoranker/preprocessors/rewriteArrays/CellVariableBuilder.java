@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class CellVariableBuilder {
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
@@ -56,8 +56,8 @@ public class CellVariableBuilder {
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
 	private final HashRelation<TermVariable, ArrayIndex> mFirstGeneration2Indices;
-	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars;
-	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars;
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;
 
 
 	public CellVariableBuilder(TransFormulaLR tf, 
@@ -73,7 +73,7 @@ public class CellVariableBuilder {
 		mTransFormula = tf;
 		mFirstGeneration2Indices = firstGeneration2Indices;
 		this.tflrwac = tflrwac;
-		this.tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
+		tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
 		mArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<ArrayIndex, TermVariable>>();
 		mArray2Index2RepVar = new HashMap<TermVariable, Map<ArrayIndex, ReplacementVar>>();
 		mArrayCellInVars = arrayCellInVars;
@@ -91,32 +91,32 @@ public class CellVariableBuilder {
 	}
 
 	public void dotSomething() {
-		for (TermVariable firstGeneration : tflrwai.getArrayFirstGeneration2Instances().getDomain()) {
-			for (TermVariable instance : tflrwai.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
+		for (final TermVariable firstGeneration : tflrwai.getArrayFirstGeneration2Instances().getDomain()) {
+			for (final TermVariable instance : tflrwai.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
 				Map<ArrayIndex, TermVariable> index2ArrayCellTv = mArrayInstance2Index2CellVariable.get(instance);
 				if (index2ArrayCellTv == null) {
 					index2ArrayCellTv = new HashMap<ArrayIndex, TermVariable>();
 					mArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 				}
-				Set<ArrayIndex> indicesOfFirstGeneration = mFirstGeneration2Indices.getImage(firstGeneration);
+				final Set<ArrayIndex> indicesOfFirstGeneration = mFirstGeneration2Indices.getImage(firstGeneration);
 				if (indicesOfFirstGeneration == null) {
 					mLogger.info("Array " + firstGeneration + " is never accessed");
 					continue;
 				}
-				for (ArrayIndex index : indicesOfFirstGeneration) {
+				for (final ArrayIndex index : indicesOfFirstGeneration) {
 					TermVariable tv = index2ArrayCellTv.get(index);
 					if (tv == null) {
 						tv = constructTermVariable(instance, index);
 						index2ArrayCellTv.put(index, tv);
 					}
-					boolean isInVarCell = isInVarCell(instance, index);
-					boolean isOutVarCell = isOutVarCell(instance, index);
+					final boolean isInVarCell = isInVarCell(instance, index);
+					final boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(mTransFormula, instance);
-						ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
+						final TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(mTransFormula, instance);
+						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
-							ReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							TermVariable inVar = (TermVariable) mTransFormula.getInVars().get(rv);
+							final ReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final TermVariable inVar = (TermVariable) mTransFormula.getInVars().get(rv);
 							if (inVar == null) {
 								mTransFormula.addInVar(rv, tv);
 							} else {
@@ -128,8 +128,8 @@ public class CellVariableBuilder {
 							}
 						}
 						if (isOutVarCell) {
-							ReplacementVar rv = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							TermVariable outVar = (TermVariable) mTransFormula.getOutVars().get(rv);
+							final ReplacementVar rv = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final TermVariable outVar = (TermVariable) mTransFormula.getOutVars().get(rv);
 							if (outVar == null) {
 								mTransFormula.addOutVar(rv, tv);
 							} else {
@@ -155,13 +155,13 @@ public class CellVariableBuilder {
 	}
 
 	private TermVariable constructTermVariable(TermVariable instance, List<Term> index) {
-		Sort arraySort = instance.getSort();
+		final Sort arraySort = instance.getSort();
 		assert arraySort.isArraySort();
-		MultiDimensionalSort mdias = new MultiDimensionalSort(arraySort);
+		final MultiDimensionalSort mdias = new MultiDimensionalSort(arraySort);
 		assert mdias.getDimension() == index.size();
-		Sort valueSort = mdias.getArrayValueSort();
-		String name = getArrayCellName(instance, index);
-		TermVariable tv = mReplacementVarFactory.
+		final Sort valueSort = mdias.getArrayValueSort();
+		final String name = getArrayCellName(instance, index);
+		final TermVariable tv = mReplacementVarFactory.
 				getOrConstructAuxVar(name, valueSort);
 		return tv;
 	}

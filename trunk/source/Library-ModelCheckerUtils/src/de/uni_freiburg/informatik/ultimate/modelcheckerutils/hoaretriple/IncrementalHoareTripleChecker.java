@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
 	protected final ManagedScript mManagedScript;
-	private Boogie2SMT mBoogie2Smt;
+	private final Boogie2SMT mBoogie2Smt;
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	
 	private IPredicate mAssertedPrecond;
@@ -249,16 +249,16 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	public void clearAssertionStack() {
 		if (mAssertedPostcond != null) {
-			this.unAssertPostcondition();
+			unAssertPostcondition();
 		}
 		if (mAssertedPrecond != null) {
-			this.unAssertPrecondition();
+			unAssertPrecondition();
 		}
 		if (mAssertedHier != null) {
-			this.unAssertHierPred();
+			unAssertHierPred();
 		}
 		if (mAssertedAction != null) {
-			this.unAssertCodeBlock();
+			unAssertCodeBlock();
 		}
 	}
 	
@@ -281,18 +281,18 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		Term predcondition = p.getClosedFormula();
 		if (mUseNamedTerms) {
-			Annotation annot = new Annotation(":named", s_IdPrecondition);
+			final Annotation annot = new Annotation(":named", s_IdPrecondition);
 			predcondition = mManagedScript.annotate(this, predcondition, annot);
 		}
 		LBool quickCheck = mManagedScript.assertTerm(this, predcondition);
-		String predProc = mAssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
+		final String predProc = mAssertedAction.getPreceedingProcedure();
+		final Set<BoogieVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
 				getOldVarsAssignment(predProc).getAssignedVars();
-		Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
+		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
 		if (!oldVarEqualities.isEmpty()) {
 			Term nonModOldVarsEquality = Util.and(mBoogie2Smt.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 			if (mUseNamedTerms) {
-				Annotation annot = new Annotation(":named", s_PrecondNonModGlobalEquality);
+				final Annotation annot = new Annotation(":named", s_PrecondNonModGlobalEquality);
 				nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);
 			}
 			quickCheck = mManagedScript.assertTerm(this, nonModOldVarsEquality);
@@ -310,8 +310,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 */
 	private Collection<Term> constructNonModOldVarsEquality(Set<BoogieVar> vars,
 			Set<BoogieVar> oldVarsOfModifiableGlobals) {
-		Collection<Term> conjunction = new ArrayList<>();
-		for (BoogieVar bv : vars) {
+		final Collection<Term> conjunction = new ArrayList<>();
+		for (final BoogieVar bv : vars) {
 			if (bv instanceof BoogieOldVar && !oldVarsOfModifiableGlobals.contains(bv)) {
 				conjunction.add(oldVarsEquality((BoogieOldVar) bv));
 			}
@@ -321,8 +321,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	private Term oldVarsEquality(BoogieOldVar oldVar) {
 		assert oldVar.isOldvar();
-		BoogieVar nonOldVar = oldVar.getNonOldVar();
-		Term equality = mManagedScript.term(this, "=", oldVar.getDefaultConstant(), 
+		final BoogieVar nonOldVar = oldVar.getNonOldVar();
+		final Term equality = mManagedScript.term(this, "=", oldVar.getDefaultConstant(), 
 										   nonOldVar.getDefaultConstant());
 		return equality;
 	}
@@ -365,15 +365,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			throw new AssertionError("unknown action");
 		}
 		if (mUseNamedTerms) {
-			Annotation annot = new Annotation(":named", s_IdTransitionFormula);
+			final Annotation annot = new Annotation(":named", s_IdTransitionFormula);
 			cbFormula = mManagedScript.annotate(this, cbFormula, annot);
 		}
 		LBool quickCheck = mManagedScript.assertTerm(this, cbFormula);
 		if (act instanceof IReturnAction) {
 			mHierConstants = new ScopedHashMap<BoogieVar,Term>();
-			IReturnAction ret = (IReturnAction) act;
-			String proc = ret.getPreceedingProcedure();
-			TransFormula ovaTF = mModifiableGlobalVariableManager.
+			final IReturnAction ret = (IReturnAction) act;
+			final String proc = ret.getPreceedingProcedure();
+			final TransFormula ovaTF = mModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
@@ -386,13 +386,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			}
 			assert ovaFormula.getFreeVars().length == 0;
 			if (mUseNamedTerms) {
-				Annotation annot = new Annotation(":named", s_IdTransitionModifiableGlobalEquality);
+				final Annotation annot = new Annotation(":named", s_IdTransitionModifiableGlobalEquality);
 				ovaFormula = mManagedScript.annotate(this, ovaFormula, annot);
 			}
 			quickCheck = mManagedScript.assertTerm(this, ovaFormula);
 			
-			Set<BoogieVar> modifiableGlobals = ovaTF.getInVars().keySet();
-			TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
+			final Set<BoogieVar> modifiableGlobals = ovaTF.getInVars().keySet();
+			final TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
 			Term locVarAssign = callTf.getFormula();
 			//TODO: rename non-modifiable globals to DefaultConstants
 			locVarAssign = renameNonModifiableGlobalsToDefaultConstants(
@@ -409,7 +409,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			}
 			assert locVarAssign.getFreeVars().length == 0;
 			if (mUseNamedTerms) {
-				Annotation annot = new Annotation(":named", s_IdLocalVarsAssignment);
+				final Annotation annot = new Annotation(":named", s_IdLocalVarsAssignment);
 				locVarAssign = mManagedScript.annotate(this, locVarAssign, annot);
 			}
 			quickCheck = mManagedScript.assertTerm(this, locVarAssign);
@@ -447,16 +447,16 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term hierFormula = p.getFormula();
 		
 		// rename globals that are not modifiable by callee to default constants
-		String callee = mAssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
+		final String callee = mAssertedAction.getPreceedingProcedure();
+		final Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
 				p.getVars(), modifiableGlobalsCallee, hierFormula);
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = mAssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
+		final String caller = mAssertedAction.getSucceedingProcedure();
+		final Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		hierFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, hierFormula);
@@ -471,10 +471,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		assert hierFormula.getFreeVars().length == 0;
 		
 		if (mUseNamedTerms) {
-			Annotation annot = new Annotation(":named", s_IdHierarchicalPrecondition);
+			final Annotation annot = new Annotation(":named", s_IdHierarchicalPrecondition);
 			hierFormula = mManagedScript.annotate(this, hierFormula, annot);
 		}
-		LBool quickCheck = mManagedScript.assertTerm(this, hierFormula);
+		final LBool quickCheck = mManagedScript.assertTerm(this, hierFormula);
 		
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
@@ -498,10 +498,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			Set<BoogieVar> modifiableGlobalsCaller,
 			Set<BoogieVar> modifiableGlobalsCallee) {
 		if (!modifiableGlobalsCallee.containsAll(modifiableGlobalsCaller)) {
-			boolean test = true;
+			final boolean test = true;
 		}
-		Collection<Term> conjunction = new ArrayList<>();
-		for (BoogieVar bv : vars) {
+		final Collection<Term> conjunction = new ArrayList<>();
+		for (final BoogieVar bv : vars) {
 			if (bv instanceof GlobalBoogieVar) {
 				BoogieNonOldVar bnov;
 				if (bv instanceof BoogieOldVar) {
@@ -511,8 +511,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				}
 				if (modifiableGlobalsCaller.contains(bnov) && 
 						!modifiableGlobalsCallee.contains(bnov)) {
-					Term hierConst = getOrConstructHierConstant(bnov);
-					Term conjunct = SmtUtils.binaryEquality(mBoogie2Smt.getScript(), bv.getDefaultConstant(), hierConst);
+					final Term hierConst = getOrConstructHierConstant(bnov);
+					final Term conjunct = SmtUtils.binaryEquality(mBoogie2Smt.getScript(), bv.getDefaultConstant(), hierConst);
 					conjunction.add(conjunct);
 				}
 			}
@@ -544,10 +544,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
-		Set<BoogieVar> assignedVars = ((IInternalAction) mAssertedAction).getTransformula().getAssignedVars();
+		final Set<BoogieVar> assignedVars = ((IInternalAction) mAssertedAction).getTransformula().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
-		String succProc = mAssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
+		final String succProc = mAssertedAction.getSucceedingProcedure();
+		final Set<BoogieVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
 		if (mUnletTerms ) {
@@ -556,10 +556,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		assert renamedFormula.getFreeVars().length == 0;
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
 		if (mUseNamedTerms) {
-			Annotation annot = new Annotation(":named", s_IdNegatedPostcondition);
+			final Annotation annot = new Annotation(":named", s_IdNegatedPostcondition);
 			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = mManagedScript.assertTerm(this, negation);
+		final LBool isSat = mManagedScript.assertTerm(this, negation);
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
@@ -574,7 +574,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		mManagedScript.push(this, 1);
 		mAssertedPostcond = p;
 		
-		Set<BoogieVar> boogieVars = p.getVars();
+		final Set<BoogieVar> boogieVars = p.getVars();
 		// rename oldVars to default constants of non-oldvars
 		Term renamedFormula = renameGlobalsAndOldVarsToNonOldDefaultConstants(
 												boogieVars, p.getFormula());
@@ -587,11 +587,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		assert renamedFormula.getFreeVars().length == 0;
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
 		if (mUseNamedTerms) {
-			String name = "negatedPostcondition";
-			Annotation annot = new Annotation(":named", name);
+			final String name = "negatedPostcondition";
+			final Annotation annot = new Annotation(":named", name);
 			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = mManagedScript.assertTerm(this, negation);
+		final LBool isSat = mManagedScript.assertTerm(this, negation);
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
@@ -609,11 +609,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		mAssertedPostcond = p;
 		
 		//rename assignedVars to primed vars
-		Set<BoogieVar> assignedVars = ((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
+		final Set<BoogieVar> assignedVars = ((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
-		String callee = mAssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
+		final String callee = mAssertedAction.getPreceedingProcedure();
+		final Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		
 		//rename modifiable globals to default constants
@@ -625,8 +625,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = mAssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
+		final String caller = mAssertedAction.getSucceedingProcedure();
+		final Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, renamedFormula);
@@ -644,11 +644,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term negation = mManagedScript.term(this, "not", renamedFormula);
 
 		if (mUseNamedTerms) {
-			String name = "negatedPostcondition";
-			Annotation annot = new Annotation(":named", name);
+			final String name = "negatedPostcondition";
+			final Annotation annot = new Annotation(":named", name);
 			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = mManagedScript.assertTerm(this, negation);
+		final LBool isSat = mManagedScript.assertTerm(this, negation);
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
@@ -701,80 +701,80 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	private Term renameVarsToDefaultConstants(Set<BoogieVar> boogieVars, Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			replacees.add(bv.getTermVariable());
 			replacers.add(bv.getDefaultConstant());
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
 	private Term renameVarsToDefaultConstants(Map<BoogieVar, TermVariable> bv2tv, Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : bv2tv.keySet()) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : bv2tv.keySet()) {
 			replacees.add(bv2tv.get(bv));
 			replacers.add(bv.getDefaultConstant());
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
 	private Term renameVarsToPrimedConstants(Set<BoogieVar> boogieVars, Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			replacees.add(bv.getTermVariable());
 			replacers.add(bv.getPrimedConstant());
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 
 
 	private Term renameVarsToHierConstants(Set<BoogieVar> boogieVars, Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			replacees.add(bv.getTermVariable());
 			replacers.add(getOrConstructHierConstant(bv));
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	private Term renameVarsToHierConstants(Map<BoogieVar, TermVariable> bv2tv, Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : bv2tv.keySet()) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : bv2tv.keySet()) {
 			replacees.add(bv2tv.get(bv));
 			replacers.add(getOrConstructHierConstant(bv));
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	private Term renameAuxVarsToCorrespondingConstants(Set<TermVariable> auxVars,
 			Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (TermVariable tv : auxVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final TermVariable tv : auxVars) {
 			replacees.add(tv);
-			Term correspondingConstant = mBoogie2Smt.
+			final Term correspondingConstant = mBoogie2Smt.
 					getVariableManager().getCorrespondingConstant(tv); 
 			replacers.add(correspondingConstant);
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 
@@ -782,8 +782,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private Term getOrConstructHierConstant(BoogieVar bv) {
 		Term preHierConstant = mHierConstants.get(bv);
 		if (preHierConstant == null) {
-			String name = "c_" + bv.getTermVariable().getName() + "_Hier";
-			Sort sort = bv.getTermVariable().getSort();
+			final String name = "c_" + bv.getTermVariable().getName() + "_Hier";
+			final Sort sort = bv.getTermVariable().getSort();
 			mManagedScript.declareFun(this, name, new Sort[0], sort);
 			preHierConstant = mManagedScript.term(this, name);
 			mHierConstants.put(bv, preHierConstant);
@@ -801,9 +801,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			Set<BoogieVar> boogieVars, 
 			Set<BoogieVar> modifiableGlobals,
 			Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			if (bv.isGlobal()) {
 				if (bv instanceof BoogieNonOldVar) {
 					if (modifiableGlobals.contains(bv)) {
@@ -815,8 +815,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				}
 			}
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
@@ -829,11 +829,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			Set<BoogieVar> boogieVars, 
 			Set<BoogieVar> modifiableGlobals,
 			Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			if (bv instanceof BoogieOldVar) {
-				BoogieNonOldVar nonOldVar = ((BoogieOldVar) bv).getNonOldVar();
+				final BoogieNonOldVar nonOldVar = ((BoogieOldVar) bv).getNonOldVar();
 				if (modifiableGlobals.contains(nonOldVar)) {
 					//do nothing
 				} else {
@@ -843,8 +843,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				
 			}
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 
@@ -853,9 +853,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			Map<BoogieVar,TermVariable> boogieVars, 
 			Set<BoogieVar> modifiableGlobals,
 			Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars.keySet()) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars.keySet()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					assert !modifiableGlobals.contains(bv);
@@ -873,8 +873,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				assert !modifiableGlobals.contains(bv);
 			}
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
@@ -882,13 +882,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private Term renameGlobalsAndOldVarsToNonOldDefaultConstants(
 			Set<BoogieVar> boogieVars, 
 			Term formula) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		for (BoogieVar bv : boogieVars) {
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
+		for (final BoogieVar bv : boogieVars) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					replacees.add(bv.getTermVariable());
-					BoogieVar nonOldbv = ((BoogieOldVar) bv).getNonOldVar();
+					final BoogieVar nonOldbv = ((BoogieOldVar) bv).getNonOldVar();
 					replacers.add(nonOldbv.getDefaultConstant());
 				} else {
 					replacees.add(bv.getTermVariable());
@@ -896,8 +896,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				}
 			}
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] values = replacers.toArray(new Term[replacers.size()]);
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	

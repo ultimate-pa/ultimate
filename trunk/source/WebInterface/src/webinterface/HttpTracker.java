@@ -30,7 +30,7 @@ public class HttpTracker extends ServiceTracker<Object, HttpService> {
 		final HttpService http = (HttpService) context.getService(reference);
 		try {
 			http.registerServlet("/if", new UltimateHttpServlet(), null, null);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return http;
@@ -39,7 +39,7 @@ public class HttpTracker extends ServiceTracker<Object, HttpService> {
 	@Override
 	public void removedService(ServiceReference<Object> reference,
 			HttpService service) {
-		final HttpService http = (HttpService) service;
+		final HttpService http = service;
 		http.unregister("/if");
 		super.removedService(reference, service);
 	}

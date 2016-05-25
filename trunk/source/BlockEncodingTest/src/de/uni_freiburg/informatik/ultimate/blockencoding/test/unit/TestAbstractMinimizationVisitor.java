@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import junit.framework.TestCase;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import junit.framework.TestCase;
 
 /**
  * The purpose of this class, is to test the initialization of the Minimized
@@ -79,6 +78,7 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	private HashSet<MinimizedNode> mVisitedMinNodes;
 
 
+	@Override
 	@Before
 	protected void setUp() throws Exception {
 		mRcfgNode = RCFGStore.getRCFG();
@@ -87,9 +87,9 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		mVisitedOrigNodes = new HashSet<RCFGNode>();
 		mVisitedMinNodes = new HashSet<MinimizedNode>();
 		// output the start node
-		RootNode rootNode = (RootNode) mRcfgNode;
+		final RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
-		for (String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
+		for (final String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
 			if (key.equals("ULTIMATE.init") || key.equals("ULTIMATE.start")) {
 				continue;
 			}
@@ -104,11 +104,11 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	public void testInitializationForGivenRCFG() {
 		mLogger.info("Start Testing the intialization of MinModel");
 		assertTrue(mRcfgNode instanceof RootNode);
-		for (RCFGEdge edge : mRcfgNode.getOutgoingEdges()) {
+		for (final RCFGEdge edge : mRcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
-			MinimizedNode minEntryNode = new MinimizedNode(methodEntryNode);
+			final ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
+			final MinimizedNode minEntryNode = new MinimizedNode(methodEntryNode);
 			assertEquals(minEntryNode.getOriginalNode(), methodEntryNode);
 			assertNull(minEntryNode.getOutgoingEdges());
 			assertNull(minEntryNode.getIncomingEdges());
@@ -128,12 +128,12 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 			return;
 		}
 		assertEquals(minNode.getOriginalNode(), originalNode);
-		ArrayList<MinimizedNode> minNodeList = new ArrayList<MinimizedNode>();
-		ArrayList<ProgramPoint> origNodeList = new ArrayList<ProgramPoint>();
+		final ArrayList<MinimizedNode> minNodeList = new ArrayList<MinimizedNode>();
+		final ArrayList<ProgramPoint> origNodeList = new ArrayList<ProgramPoint>();
 		for (int i = 0; i < minNode.getOutgoingEdges().size(); i++) {
-			IMinimizedEdge minEdge = minNode.getOutgoingEdges().get(i);
+			final IMinimizedEdge minEdge = minNode.getOutgoingEdges().get(i);
 			assertTrue(minEdge.isBasicEdge());
-			RCFGEdge originalEdge = originalNode.getOutgoingEdges().get(i);
+			final RCFGEdge originalEdge = originalNode.getOutgoingEdges().get(i);
 			assertEquals(((BasicEdge) minEdge).getOriginalEdge(), originalEdge);
 			assertTrue(originalEdge.getTarget() instanceof ProgramPoint);
 			if (originalEdge instanceof Call || originalEdge instanceof Return) {

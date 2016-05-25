@@ -25,7 +25,6 @@ package pea;
 
 import net.sourceforge.czt.parser.util.ParseException;
 import net.sourceforge.czt.z.util.ZString;
-
 import pea.util.z.PrimeVisitor;
 import pea.util.z.ZTerm;
 import pea.util.z.ZWrapper;
@@ -99,7 +98,7 @@ public class ZDecision extends Decision {
             return -1;
         }
 
-        ZDecision zd = (ZDecision) o;
+        final ZDecision zd = (ZDecision) o;
 
         return predicate.compareTo(zd.predicate);
     }
@@ -110,9 +109,9 @@ public class ZDecision extends Decision {
             return false;
         }
 
-        ZDecision zd = (ZDecision) o;
+        final ZDecision zd = (ZDecision) o;
 
-        return zd.predicate.equals(this.predicate);
+        return zd.predicate.equals(predicate);
     }
 
     @Override
@@ -131,16 +130,16 @@ public class ZDecision extends Decision {
 
         try {
             //            decision = OZUtils.computePrimedPredicate(predicate);
-            ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
-            PrimeVisitor visitor = new PrimeVisitor();
+            final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
+            final PrimeVisitor visitor = new PrimeVisitor();
             //            PrimeVisitor visitor = new PrimeVisitor();
             //            //visitor.accept(predTerm.getTerm());
             predTerm.getTerm().accept(visitor);
 
             decision = ZWrapper.INSTANCE.termToUnicode(predTerm);
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (final InstantiationException e) {
             e.printStackTrace();
         }
 
@@ -159,7 +158,8 @@ public class ZDecision extends Decision {
         return (child == 0) ? predicate : (ZString.NOT + predicate);
     }
 
-    public String toSmtString(int child) {
+    @Override
+	public String toSmtString(int child) {
         return toString(child);
     }
 
@@ -172,7 +172,8 @@ public class ZDecision extends Decision {
         return null;
     }
 
-    public String toUppaalStringDOM(int child) {
+    @Override
+	public String toUppaalStringDOM(int child) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -207,11 +208,11 @@ public class ZDecision extends Decision {
      */
     public boolean equals(ZDecision z) {
         //TODO: compare term objects
-        return this.predicate.equals(z.predicate);
+        return predicate.equals(z.predicate);
     }
 
     public ZDecision negate() {
-        StringBuilder neg = new StringBuilder(ZString.NOT);
+        final StringBuilder neg = new StringBuilder(ZString.NOT);
         neg.append(ZString.LPAREN);
         neg.append(predicate);
         neg.append(ZString.RPAREN);
@@ -231,10 +232,11 @@ public class ZDecision extends Decision {
             return true;
         }
 
-        for (CDD child : cdd.childs)
-            if (cddContainsZDecisionWith(child, text)) {
+        for (final CDD child : cdd.childs) {
+			if (cddContainsZDecisionWith(child, text)) {
                 return true;
             }
+		}
 
         return false;
     }
@@ -246,12 +248,13 @@ public class ZDecision extends Decision {
         }
 
         if (cdd.decision instanceof ZDecision) {
-            ZDecision zd = (ZDecision) cdd.decision;
+            final ZDecision zd = (ZDecision) cdd.decision;
             zd.predicate = zd.predicate.replace(oldVar, newVar);
         }
 
-        for (CDD child : cdd.childs)
-            renameVariableInCDD(child, oldVar, newVar);
+        for (final CDD child : cdd.childs) {
+			renameVariableInCDD(child, oldVar, newVar);
+		}
     }
 
     /* Methods to simplify and normalize ZDecisions on creation */
@@ -264,21 +267,21 @@ public class ZDecision extends Decision {
         s = s.trim();
 
         if (s.contains(ZString.GEQ)) {
-            String[] terms = s.split(ZString.GEQ);
+            final String[] terms = s.split(ZString.GEQ);
 
             return ZDecision.create(terms[0].trim() + "<" + terms[1].trim())
                             .negate();
         }
 
         if (s.contains(">=")) {
-            String[] terms = s.split(">=");
+            final String[] terms = s.split(">=");
 
             return ZDecision.create(terms[0].trim() + "<" + terms[1].trim())
                             .negate();
         }
 
         if (s.contains(">")) {
-            String[] terms = s.split(">");
+            final String[] terms = s.split(">");
 
             return ZDecision.create(terms[0].trim() + ZString.LEQ +
                 terms[1].trim()).negate();
@@ -294,29 +297,31 @@ public class ZDecision extends Decision {
 
     @Deprecated
     static CDD parseAND(String term) {
-        String[] tt = term.split(ZString.AND);
+        final String[] tt = term.split(ZString.AND);
         CDD cdd = simplifyDecision(tt[0]);
 
-        for (int i = 1; i < tt.length; i++)
-            cdd = cdd.and(simplifyDecision(tt[i]));
+        for (int i = 1; i < tt.length; i++) {
+			cdd = cdd.and(simplifyDecision(tt[i]));
+		}
 
         return cdd;
     }
 
     @Deprecated
     static CDD parseOR(String term) {
-        String[] tt = term.split(ZString.OR);
+        final String[] tt = term.split(ZString.OR);
         CDD cdd = parseAND(tt[0]);
 
-        for (int i = 1; i < tt.length; i++)
-            cdd = cdd.or(parseAND(tt[i]));
+        for (int i = 1; i < tt.length; i++) {
+			cdd = cdd.or(parseAND(tt[i]));
+		}
 
         return cdd;
     }
 
     @Deprecated
     static CDD resolveImpls(String term) {
-        String[] tt = term.split(ZString.IMP);
+        final String[] tt = term.split(ZString.IMP);
 
         if (tt.length == 1) {
             return parseOR(tt[0]);
@@ -338,11 +343,12 @@ public class ZDecision extends Decision {
     static CDD getSimplifiedCDD(String term) {
         /* split into conjugated subterms;
          * for some reason we can't split using ZString.NL, but "\n" works */
-        String[] tt = term.split("\n");
+        final String[] tt = term.split("\n");
         CDD cdd = resolveImpls(tt[0]);
 
-        for (int i = 1; i < tt.length; i++)
-            cdd = cdd.and(resolveImpls(tt[i]));
+        for (int i = 1; i < tt.length; i++) {
+			cdd = cdd.and(resolveImpls(tt[i]));
+		}
 
         return cdd;
     }
@@ -359,23 +365,24 @@ public class ZDecision extends Decision {
 
         try {
             //            decision = OZUtils.computePrimedPredicate(predicate);
-            ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
-            PrimeVisitor visitor = new PrimeVisitor();
+            final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
+            final PrimeVisitor visitor = new PrimeVisitor();
             //            PrimeVisitor visitor = new PrimeVisitor();
             //            //visitor.accept(predTerm.getTerm());
             predTerm.getTerm().accept(visitor);
 
             decision = ZWrapper.INSTANCE.termToUnicode(predTerm);
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (final InstantiationException e) {
             e.printStackTrace();
         }
 
         return new ZDecision(decision);
     }
 
-    public String getVar() {
+    @Override
+	public String getVar() {
         return "";
     }
 }

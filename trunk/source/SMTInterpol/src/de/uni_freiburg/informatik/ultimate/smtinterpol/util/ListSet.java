@@ -67,16 +67,18 @@ public class ListSet<E> extends AbstractSet<E> {
 		@Override
 		public boolean hasNext() {
 			ListSetElem<E> walk = mCur.mNext;
-			while (walk != mRoot && walk.mElem == null)
+			while (walk != mRoot && walk.mElem == null) {
 				walk = walk.mNext;
+			}
 			return walk != mRoot;
 		}
 
 		@Override
 		public E next() {
 			ListSetElem<E> walk = mCur.mNext;
-			while (walk != mRoot && walk.mElem == null)
+			while (walk != mRoot && walk.mElem == null) {
 				walk = walk.mNext;
+			}
 			mCur = walk;
 			return mCur.mElem;
 		}
@@ -97,12 +99,15 @@ public class ListSet<E> extends AbstractSet<E> {
 			this.mElem = elem;
 			mNext = mPrev = this;
 		}
+		@Override
 		public int hashCode() {
 			return mElem == null ? 0 : mElem.hashCode();
 		}
+		@Override
 		public boolean equals(Object other) {
-			if (other instanceof ListSetElem<?>)
+			if (other instanceof ListSetElem<?>) {
 				other = ((ListSetElem<?>)other).mElem;
+			}
 			return mElem == null ? other == null : mElem.equals(other);
 		}
 	}
@@ -116,7 +121,7 @@ public class ListSet<E> extends AbstractSet<E> {
 	}
 	
 	public void beginScope() {
-		ListSetElem<E> marker = new ListSetElem<E>(null);
+		final ListSetElem<E> marker = new ListSetElem<E>(null);
 		addToList(marker);
 	}
 	
@@ -135,8 +140,9 @@ public class ListSet<E> extends AbstractSet<E> {
 		mRoot.mPrev = toAdd;
 	}
 	
+	@Override
 	public boolean add(E elem) {
-		ListSetElem<E> toAdd = new ListSetElem<E>(elem);
+		final ListSetElem<E> toAdd = new ListSetElem<E>(elem);
 		if (mElems.add(toAdd)) {
 			addToList(toAdd);
 			return true;
@@ -172,7 +178,7 @@ public class ListSet<E> extends AbstractSet<E> {
 	}
 	
 	private ListSetElem<E> remove(ListSetElem<E> elem) {
-		ListSetElem<E> prev = elem.mPrev;
+		final ListSetElem<E> prev = elem.mPrev;
 		prev.mNext = elem.mNext;
 		elem.mNext.mPrev = prev;
 		elem.mNext = elem.mPrev = elem;

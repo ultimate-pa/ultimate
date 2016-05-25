@@ -27,45 +27,45 @@
 package req_to_pea;
 
 
-import pea.modelchecking.J2UPPAALConverter;
-import pea.reqCheck.PatternToPEA;
-
 import java.util.ArrayList;
 import java.util.List;
+
 import java_cup.runtime.Symbol;
-
-import pea.*;
-
-import srParse.*;
+import pea.PhaseEventAutomata;
+import pea.modelchecking.J2UPPAALConverter;
+import pea.reqCheck.PatternToPEA;
+import srParse.ReqParser;
+import srParse.srParsePattern;
 
 public class ReqToPEA {
     public srParsePattern[] genPatterns(String reqFileName) {
     	try {
-    		ReqParser parser = new ReqParser(reqFileName);
-    		Symbol goal = parser.parse();
-    		srParsePattern[] patterns = (srParsePattern[]) goal.value;
+    		final ReqParser parser = new ReqParser(reqFileName);
+    		final Symbol goal = parser.parse();
+    		final srParsePattern[] patterns = (srParsePattern[]) goal.value;
     		return patterns;
-    	} catch (Exception ex) {
+    	} catch (final Exception ex) {
     		ex.printStackTrace();
     		return new srParsePattern[0];
     	}
     }
     
 	public PhaseEventAutomata[] genPEA(srParsePattern[] patterns){
-		List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+		final List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
 			
-		PatternToPEA peaTrans=new PatternToPEA();
-		for(srParsePattern pat : patterns)
+		final PatternToPEA peaTrans=new PatternToPEA();
+		for(final srParsePattern pat : patterns)
 		{
 			// ignore patterns with syntax errors
-			if (pat == null)
+			if (pat == null) {
 				continue;
+			}
 			pat.setPeaTransformator( peaTrans );
-			PhaseEventAutomata pea=pat.transformToPea();
+			final PhaseEventAutomata pea=pat.transformToPea();
 			peaList.add(pea);
 		}
 		
-		PhaseEventAutomata[] peaArray = peaList.toArray(new PhaseEventAutomata[peaList.size()]);
+		final PhaseEventAutomata[] peaArray = peaList.toArray(new PhaseEventAutomata[peaList.size()]);
 	    return peaArray;	
 	}
 
@@ -73,9 +73,9 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea=null;				
 		
-		PatternToPEA peaTrans=new PatternToPEA();
+		final PatternToPEA peaTrans=new PatternToPEA();
 		
-		for(srParsePattern pat : patterns)
+		for(final srParsePattern pat : patterns)
 		{
 			pat.setPeaTransformator( peaTrans );
 			if (pea == null)
@@ -85,14 +85,15 @@ public class ReqToPEA {
 			}
 			else
 			{	
-				PhaseEventAutomata pea2 = pat.transformToPea();
-				if (pea2 == null)
-					continue;					
+				final PhaseEventAutomata pea2 = pat.transformToPea();
+				if (pea2 == null) {
+					continue;
+				}					
 				pea=pea.parallel( pea2 );
 			
 			}								
 		}			
-		J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
+		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile(xmlFilePath, pea);									
 	}
 }

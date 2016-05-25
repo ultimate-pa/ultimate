@@ -66,8 +66,9 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 	}
 
 	Horn3Clause get(int idx, Horn3Clause out) {
-		if (idx < 0 || idx >= ax.size())
+		if (idx < 0 || idx >= ax.size()) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 
 		out.x = ax.get(idx);
 		out.y = ay.get(idx);
@@ -98,8 +99,8 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 
 		Horn3Iterator(Horn3Array h3a) {
 			this.h3a = h3a;
-			this.h3c = new Horn3Clause(-1,-1,-1);
-			this.idx = 0;
+			h3c = new Horn3Clause(-1,-1,-1);
+			idx = 0;
 		}
 
 		@Override

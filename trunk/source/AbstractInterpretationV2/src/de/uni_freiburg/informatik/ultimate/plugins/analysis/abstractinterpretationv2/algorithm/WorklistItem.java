@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * 
@@ -120,7 +120,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			return null;
 		}
 		mScopedStorages.removeFirst();
-		Pair<ACTION, STATE> rtr = mScopes.removeFirst();
+		final Pair<ACTION, STATE> rtr = mScopes.removeFirst();
 		mHierachicalPreState = rtr.getSecond();
 		return rtr.getFirst();
 	}

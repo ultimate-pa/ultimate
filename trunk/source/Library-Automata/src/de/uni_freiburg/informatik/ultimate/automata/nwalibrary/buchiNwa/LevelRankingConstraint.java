@@ -86,8 +86,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 
 	void internalSuccessorConstraints(IFkvState<LETTER, STATE> state, LETTER symbol) {
-		for (StateWithRankInfo<STATE> down : state.getDownStates()) {
-			for (StateWithRankInfo<STATE> up : state.getUpStates(down)) {
+		for (final StateWithRankInfo<STATE> down : state.getDownStates()) {
+			for (final StateWithRankInfo<STATE> up : state.getUpStates(down)) {
 				final boolean inO;
 				final Integer upRank;
 				if (state instanceof LevelRankingState) {
@@ -99,7 +99,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					inO = false;
 					upRank = mUserDefinedMaxRank;
 				}
-				for (OutgoingInternalTransition<LETTER, STATE> trans : 
+				for (final OutgoingInternalTransition<LETTER, STATE> trans : 
 								mOperand.internalSuccessors(up.getState(),symbol)) {
 					addConstaint(down, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
 				}
@@ -108,8 +108,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 	
 	void callSuccessorConstraints(IFkvState<LETTER, STATE> state, LETTER symbol) {
-		for (StateWithRankInfo<STATE> down : state.getDownStates()) {
-			for (StateWithRankInfo<STATE> up : state.getUpStates(down)) {
+		for (final StateWithRankInfo<STATE> down : state.getDownStates()) {
+			for (final StateWithRankInfo<STATE> up : state.getUpStates(down)) {
 				final boolean inO;
 				final Integer upRank;
 				if (state instanceof LevelRankingState) {
@@ -121,7 +121,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					inO = false;
 					upRank = mUserDefinedMaxRank;
 				}
-				for (OutgoingCallTransition<LETTER, STATE> trans : 
+				for (final OutgoingCallTransition<LETTER, STATE> trans : 
 								mOperand.callSuccessors(up.getState(),symbol)) {
 					StateWithRankInfo<STATE> succDownState;
 					// if !mUseDoubleDeckers we always use getEmptyStackState()
@@ -140,8 +140,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	
 	void returnSuccessorConstraints(IFkvState<LETTER, STATE> state, 
 			IFkvState<LETTER, STATE> hier, LETTER symbol) {
-		for (StateWithRankInfo<STATE> hierDown : hier.getDownStates()) {
-			for (StateWithRankInfo<STATE> hierUp : hier.getUpStates(hierDown)) {
+		for (final StateWithRankInfo<STATE> hierDown : hier.getDownStates()) {
+			for (final StateWithRankInfo<STATE> hierUp : hier.getUpStates(hierDown)) {
 				if (state.getDownStates().isEmpty()) {
 					continue;
 					//throw new AssertionError();
@@ -162,7 +162,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					downState = new StateWithRankInfo<STATE>(mOperand.getEmptyStackState());
 
 				}
-				Iterable<StateWithRankInfo<STATE>> upStates = state.getUpStates(downState);
+				final Iterable<StateWithRankInfo<STATE>> upStates = state.getUpStates(downState);
 				addReturnSuccessorConstraintsGivenDownState(state,
 						downState, upStates, hierDown, hierUp, symbol);
 			}
@@ -174,13 +174,13 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			Iterable<StateWithRankInfo<STATE>> upStates,
 			StateWithRankInfo<STATE> hierDown, StateWithRankInfo<STATE> hierUp, 
 			LETTER symbol) {
-		for (StateWithRankInfo<STATE> stateUp : upStates) {
+		for (final StateWithRankInfo<STATE> stateUp : upStates) {
 			final boolean inO;
 			final Integer upRank;
 			if (state instanceof LevelRankingState) {
 				assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
 				//TODO: obtain rank and inO directly from StateWithRankInfo
-				LevelRankingState<LETTER, STATE> lvlRkState = (LevelRankingState<LETTER, STATE>) state;
+				final LevelRankingState<LETTER, STATE> lvlRkState = (LevelRankingState<LETTER, STATE>) state;
 				inO = lvlRkState.inO(downState,stateUp.getState());
 				upRank = lvlRkState.getRank(downState, stateUp.getState());
 			} else {
@@ -188,7 +188,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				inO = false;
 				upRank = mUserDefinedMaxRank;
 			}
-			for (OutgoingReturnTransition<LETTER, STATE> trans : 
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : 
 							mOperand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
 				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
 				addConstaint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
@@ -216,11 +216,11 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			up2rank = new HashMap<STATE,Integer>();
 			mLevelRanking.put(down, up2rank);
 		}
-		Integer oldRank = up2rank.get(up);
+		final Integer oldRank = up2rank.get(up);
 		if (oldRank == null || oldRank > predecessorRank) {
 			up2rank.put(up,predecessorRank);
 		}
-		boolean oCandidate = predecessorIsInO || mPredecessorOwasEmpty;
+		final boolean oCandidate = predecessorIsInO || mPredecessorOwasEmpty;
 		if (oCandidate) {
 			addToO(down,up);
 		}

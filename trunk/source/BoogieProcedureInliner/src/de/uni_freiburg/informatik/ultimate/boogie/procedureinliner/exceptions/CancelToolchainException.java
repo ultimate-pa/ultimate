@@ -41,7 +41,7 @@ public abstract class CancelToolchainException extends Exception {
 
 	private static final long serialVersionUID = -1545501978581884257L;
 
-	private ILocation mLocation;
+	private final ILocation mLocation;
 	
 	/**
 	 * Creates a new Exception, indicating that the toolchain should be canceled.
@@ -59,7 +59,7 @@ public abstract class CancelToolchainException extends Exception {
 	}
 
 	public void logErrorAndCancelToolchain(IUltimateServiceProvider services, String pluginId) {
-		String logMessage = (mLocation == null ?  "" : mLocation + ": ") + getMessage();
+		final String logMessage = (mLocation == null ?  "" : mLocation + ": ") + getMessage();
 		services.getLoggingService().getLogger(Activator.PLUGIN_ID).error(logMessage);
 		services.getResultService().reportResult(pluginId, createResult(pluginId));
 		services.getProgressMonitorService().cancelToolchain();

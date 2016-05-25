@@ -80,7 +80,8 @@ public abstract class LassoPreprocessor {
 		return true; // check nothing
 	}
 	
+	@Override
 	public String toString() {
-		return this.getDescription();
+		return getDescription();
 	}
 }

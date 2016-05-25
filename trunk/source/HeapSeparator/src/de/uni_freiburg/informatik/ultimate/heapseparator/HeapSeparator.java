@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

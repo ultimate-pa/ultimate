@@ -140,7 +140,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
-		} catch (ToolchainCanceledException tce) {
+		} catch (final ToolchainCanceledException tce) {
 			mLogger.info("Timeout while computing interpolants");
 			mToolchainCanceledException = tce;
 		} finally {
@@ -191,7 +191,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
 		}
-		Set<Term> unsatCore = new HashSet<Term>(
+		final Set<Term> unsatCore = new HashSet<Term>(
 				Arrays.asList(mTcSmtManager.getScript().getUnsatCore()));
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications
@@ -212,19 +212,19 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		
-		NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
+		final NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core";
 
 		
 		final Set<BoogieVar>[] liveVariables;
 		if (museLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
-			LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
+			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
 					mNsb.getIndexedVarRepresentative(), mSmtManager, mModifiedGlobals);
 			liveVariables = lvar.getLiveVariables();
 		} else {
 			// computation of live variables whose input takes the unsat core into a account (if applicable)
-			RelevantVariables rvar = new RelevantVariables(rtf, mModifiedGlobals);
+			final RelevantVariables rvar = new RelevantVariables(rtf, mModifiedGlobals);
 			liveVariables = rvar.getRelevantVariables();
 		}
 
@@ -235,19 +235,19 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (mConstructForwardInterpolantSequence) {
 			mLogger.debug("Computing forward predicates...");
 			try {
-				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
 						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
-				IterativePredicateTransformer spt = new IterativePredicateTransformer(
+				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
 						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
 						mPrecondition, mPostcondition, mPendingContexts, null);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
-			} catch (ToolchainCanceledException tce) {
+			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, 
@@ -262,19 +262,19 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (mConstructBackwardInterpolantSequence) {
 			mLogger.debug("Computing backward predicates...");
 			try {
-				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
 						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
-				IterativePredicateTransformer spt = new IterativePredicateTransformer(
+				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
 						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
 						mPrecondition, mPostcondition, mPendingContexts, null);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
-			} catch (ToolchainCanceledException tce) {
+			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, 
@@ -292,8 +292,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			// Post-process forwards predicates			
 			if (mPostProcess_FP_Predicates) {
 				for (int i = 0; i < mInterpolantsFp.size(); i++) {
-					IPredicate p_old = mInterpolantsFp.get(i);
-					IPredicate p_new = mPredicateUnifier.getOrConstructPredicate(p_old.getFormula());
+					final IPredicate p_old = mInterpolantsFp.get(i);
+					final IPredicate p_new = mPredicateUnifier.getOrConstructPredicate(p_old.getFormula());
 					mInterpolantsFp.set(i, p_new);
 				}
 				if (mCollectInformationAboutSizeOfPredicates) {
@@ -310,7 +310,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 //			checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
 //		}
 		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
-			boolean omitMixedSequence = true;
+			final boolean omitMixedSequence = true;
 			if (omitMixedSequence) {
 				mInterpolants = null;
 			} else {
@@ -335,10 +335,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					mModifiedGlobals, false);
 		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
-			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
-			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
+			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
+			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
-			Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
+			final Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					codeBlocksInUnsatCore, mModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
@@ -400,13 +400,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * finer granularity.
 	 */
 	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
-		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
+		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mSmtManager, mModifiedGlobals, rv,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
 		if (tc.getToolchainCancelledExpection() != null) {
 			throw tc.getToolchainCancelledExpection();
 		}
-		boolean result = (tc.isCorrect() == LBool.UNSAT);
+		final boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
 	}
 
@@ -418,7 +418,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private Set<IAction> filterOutIrrelevantStatements(NestedWord<? extends IAction> trace, Set<Term> unsat_coresAsSet,
 			boolean[] localVarAssignmentAtCallInUnsatCore, boolean[] oldVarAssignmentAtCallInUnsatCore) {
-		Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
+		final Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
 					&& unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
@@ -509,7 +509,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			IPredicate unified = mPredicateUnifier.getOrConstructPredicate(
+			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(
 					pred.getFormula());
 			return unified;
 		}
@@ -527,8 +527,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @see LiveVariables
 	 */
 	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
-		Set<TermVariable> result = new HashSet<TermVariable>();
-		for (BoogieVar bv : p.getVars()) {
+		final Set<TermVariable> result = new HashSet<TermVariable>();
+		for (final BoogieVar bv : p.getVars()) {
 			if (!relevantVars.contains(bv)) {
 				result.add(bv.getTermVariable());
 			}
@@ -550,7 +550,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
 		mLogger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
-			LBool result = mSmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
+			final LBool result = mSmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
 			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
 					+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
 			assert (result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";
@@ -584,8 +584,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public Collection<String> getKeys() {
-			ArrayList<String> result = new ArrayList<String>();
-			for (String key : super.getKeys()) {
+			final ArrayList<String> result = new ArrayList<String>();
+			for (final String key : super.getKeys()) {
 				result.add(key);
 			}
 			result.add(s_SizeOfPredicatesFP);
@@ -602,9 +602,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			switch (key) {
 			case s_SizeOfPredicatesFP:
 			case s_SizeOfPredicatesBP:
-				long size1 = (long) value1;
-				long size2 = (long) value2;
-				long result = size1 + size2;
+				final long size1 = (long) value1;
+				final long size2 = (long) value2;
+				final long result = size1 + size2;
 				return result;
 			case s_NumberOfNonLivePredicateFP:
 			case s_NumberOfNonLivePredicateBP:
@@ -619,24 +619,24 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");
 			sb.append(s_ConjunctsInSSA).append(": ");
-			int conjunctsSSA = (int) benchmarkData.getValue(s_ConjunctsInSSA);
+			final int conjunctsSSA = (int) benchmarkData.getValue(s_ConjunctsInSSA);
 			sb.append(conjunctsSSA);
 			sb.append(" ");
 			sb.append(s_ConjunctsInUnsatCore).append(": ");
-			int conjunctsUC = (int) benchmarkData.getValue(s_ConjunctsInUnsatCore);
+			final int conjunctsUC = (int) benchmarkData.getValue(s_ConjunctsInUnsatCore);
 			sb.append(conjunctsUC);
 			sb.append("\t");
-			long sizeOfPredicatesFP = (long) benchmarkData.getValue(s_SizeOfPredicatesFP);
+			final long sizeOfPredicatesFP = (long) benchmarkData.getValue(s_SizeOfPredicatesFP);
 			sb.append("Size of predicates FP: " + sizeOfPredicatesFP + " ");
-			long sizeOfPredicatesBP = (long) benchmarkData.getValue(s_SizeOfPredicatesBP);
+			final long sizeOfPredicatesBP = (long) benchmarkData.getValue(s_SizeOfPredicatesBP);
 			sb.append("Size of predicates BP: " + sizeOfPredicatesBP + " ");
-			int numberOfNonLivePredicateFP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateFP);
+			final int numberOfNonLivePredicateFP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateFP);
 			sb.append("Non-live variables FP: " + numberOfNonLivePredicateFP + " ");
-			int numberOfNonLivePredicateBP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateBP);
+			final int numberOfNonLivePredicateBP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateBP);
 			sb.append("Non-live variables BP: " + numberOfNonLivePredicateBP + " ");
 			return sb.toString();
 		}

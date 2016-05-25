@@ -102,17 +102,17 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	public NestedWordAutomaton<CodeBlock, IPredicate> 
 	buildTwoTrackInterpolantAutomaton(IAutomaton<CodeBlock, IPredicate> abstraction,
 			StateFactory<IPredicate> tAContentFactory) {
-		Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
+		final Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
 		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
 
 		if (abstraction instanceof INestedWordAutomatonSimple) {
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstractionAsNwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstractionAsNwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
 			callAlphabet = abstractionAsNwa.getCallAlphabet();
 			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
 		}
 		
-		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
+		final NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
 
 		// Add states, which contains the predicates computed via SP, WP.
@@ -134,8 +134,8 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		nwa.addState(true, false, mInterpolantsFP.getInterpolant(0));
 		
 		for (int i=1; i < mNestedWord.length() + 1; i++) {
-			IPredicate forward = mInterpolantsFP.getInterpolant(i);
-			IPredicate backward = mInterpolantsBP.getInterpolant(i);
+			final IPredicate forward = mInterpolantsFP.getInterpolant(i);
+			final IPredicate backward = mInterpolantsBP.getInterpolant(i);
 			if (!nwa.getStates().contains(forward)) {
 				nwa.addState(false, isFalsePredicate(forward), forward);
 			}
@@ -238,7 +238,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	
 	private void addTransition(NestedWordAutomaton<CodeBlock, IPredicate> nwa,
 			int symbolPos, Sequence seq) {
-		CodeBlock symbol = mNestedWord.getSymbol(symbolPos);
+		final CodeBlock symbol = mNestedWord.getSymbol(symbolPos);
 		final IPredicate succ;
 		if (seq == Sequence.FORWARD) {
 			succ = mInterpolantsFP.getInterpolant(symbolPos + 1);
@@ -260,7 +260,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			} else {
 				pred = mInterpolantsBP.getInterpolant(symbolPos);
 			}
-			int callPos = mNestedWord.getCallPosition(symbolPos);
+			final int callPos = mNestedWord.getCallPosition(symbolPos);
 			final IPredicate hier;
 			if (seq == Sequence.FORWARD) {
 				hier = mInterpolantsFP.getInterpolant(callPos);

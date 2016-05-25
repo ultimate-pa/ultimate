@@ -117,19 +117,19 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		mContentFactory = mFstNwa.getStateFactory();
 		mLogger.info(startMessage());
 		
-		Set<LETTER> newInternals = new HashSet<LETTER>();
+		final Set<LETTER> newInternals = new HashSet<LETTER>();
 		newInternals.addAll(mFstNwa.getInternalAlphabet());
 		newInternals.retainAll(mSndNwa.getInternalAlphabet());
-		Set<LETTER> newCalls = new HashSet<LETTER>();
+		final Set<LETTER> newCalls = new HashSet<LETTER>();
 		newCalls.addAll(mFstNwa.getCallAlphabet());
 		newCalls.retainAll(mSndNwa.getCallAlphabet());
-		Set<LETTER> newReturns = new HashSet<LETTER>();
+		final Set<LETTER> newReturns = new HashSet<LETTER>();
 		newReturns.addAll(mFstNwa.getReturnAlphabet());
 		newReturns.retainAll(mSndNwa.getReturnAlphabet());
 		
 		mResultNwa = new NestedWordAutomaton<LETTER,STATE>(mServices, 
 				newInternals, newCalls,	newReturns,	mContentFactory);
-		super.mTraversedNwa = (NestedWordAutomaton<LETTER,STATE>) mResultNwa;
+		super.mTraversedNwa = mResultNwa;
 		super.traverseDoubleDeckerGraph();
 		mLogger.info(exitMessage());
 		
@@ -186,8 +186,8 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		}
 		STATE state = snd2result.get(snd);
 		if (state == null) {
-			boolean isInitial = false;
-			boolean isFinal = false;
+			final boolean isInitial = false;
+			final boolean isFinal = false;
 			assert (mBuchi);
 			state = mContentFactory.intersectBuchi(fst, snd, 2);				
 			mResultNwa.addState(isInitial, isFinal, state);
@@ -231,12 +231,12 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		int amount = mFstNwa.getInitialStates().size() *
+		final int amount = mFstNwa.getInitialStates().size() *
 										mSndNwa.getInitialStates().size();
-		Collection<STATE> resInits = new ArrayList<STATE>(amount);
-		for (STATE fstInit : mFstNwa.getInitialStates()) {
-			for (STATE sndInit : mSndNwa.getInitialStates()) {
-				STATE resInit = getOrConstructOnTrack1(fstInit, sndInit, true);
+		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+		for (final STATE fstInit : mFstNwa.getInitialStates()) {
+			for (final STATE sndInit : mSndNwa.getInitialStates()) {
+				final STATE resInit = getOrConstructOnTrack1(fstInit, sndInit, true);
 				resInits.add(resInit);
 			}
 		}
@@ -249,15 +249,15 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(
 											DoubleDecker<STATE> doubleDecker) {
-		STATE resState = doubleDecker.getUp();
-		STATE fstState = mResult2fst.get(resState);
-		STATE sndState = mResult2snd.get(resState);
-		int stateTrack = mResult2track.get(resState);
-		int succTrack = getSuccTrack(stateTrack, fstState, sndState);
-		Collection<STATE> resSuccs = new ArrayList<STATE>();
-		for (LETTER symbol : mFstNwa.lettersInternal(fstState)) {
-			for (STATE fstSucc : mFstNwa.succInternal(fstState,symbol)) {
-				for (STATE sndSucc : mSndNwa.succInternal(sndState,symbol)) {
+		final STATE resState = doubleDecker.getUp();
+		final STATE fstState = mResult2fst.get(resState);
+		final STATE sndState = mResult2snd.get(resState);
+		final int stateTrack = mResult2track.get(resState);
+		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
+		final Collection<STATE> resSuccs = new ArrayList<STATE>();
+		for (final LETTER symbol : mFstNwa.lettersInternal(fstState)) {
+			for (final STATE fstSucc : mFstNwa.succInternal(fstState,symbol)) {
+				for (final STATE sndSucc : mSndNwa.succInternal(sndState,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);
@@ -279,15 +279,15 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	@Override
 	protected Collection<STATE> buildCallSuccessors(
 											DoubleDecker<STATE> doubleDecker) {
-		STATE resState = doubleDecker.getUp();
-		STATE fstState = mResult2fst.get(resState);
-		STATE sndState = mResult2snd.get(resState);
-		int stateTrack = mResult2track.get(resState);
-		int succTrack = getSuccTrack(stateTrack, fstState, sndState);
-		Collection<STATE> resSuccs = new ArrayList<STATE>();
-		for (LETTER symbol : mFstNwa.lettersCall(fstState)) {
-			for (STATE fstSucc : mFstNwa.succCall(fstState,symbol)) {
-				for (STATE sndSucc : mSndNwa.succCall(sndState,symbol)) {
+		final STATE resState = doubleDecker.getUp();
+		final STATE fstState = mResult2fst.get(resState);
+		final STATE sndState = mResult2snd.get(resState);
+		final int stateTrack = mResult2track.get(resState);
+		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
+		final Collection<STATE> resSuccs = new ArrayList<STATE>();
+		for (final LETTER symbol : mFstNwa.lettersCall(fstState)) {
+			for (final STATE fstSucc : mFstNwa.succCall(fstState,symbol)) {
+				for (final STATE sndSucc : mSndNwa.succCall(sndState,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);
@@ -309,22 +309,22 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	@Override
 	protected Collection<STATE> buildReturnSuccessors(
 											DoubleDecker<STATE> doubleDecker) {
-		Collection<STATE> resSuccs = new ArrayList<STATE>();
-		STATE resHierPre = doubleDecker.getDown();
+		final Collection<STATE> resSuccs = new ArrayList<STATE>();
+		final STATE resHierPre = doubleDecker.getDown();
 		if (resHierPre == mResultNwa.getEmptyStackState()) {
 			return resSuccs;
 		}
-		STATE fstHierPre = mResult2fst.get(resHierPre);
-		STATE sndHierPre = mResult2snd.get(resHierPre);
-		STATE resState = doubleDecker.getUp();
-		STATE fstState = mResult2fst.get(resState);
-		STATE sndState = mResult2snd.get(resState);
-		int stateTrack = mResult2track.get(resState);
-		int succTrack = getSuccTrack(stateTrack, fstState, sndState);
+		final STATE fstHierPre = mResult2fst.get(resHierPre);
+		final STATE sndHierPre = mResult2snd.get(resHierPre);
+		final STATE resState = doubleDecker.getUp();
+		final STATE fstState = mResult2fst.get(resState);
+		final STATE sndState = mResult2snd.get(resState);
+		final int stateTrack = mResult2track.get(resState);
+		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		
-		for (LETTER symbol : mFstNwa.lettersReturn(fstState)) {
-			for (STATE fstSucc : mFstNwa.succReturn(fstState,fstHierPre,symbol)) {
-				for (STATE sndSucc : mSndNwa.succReturn(sndState,sndHierPre,symbol)) {
+		for (final LETTER symbol : mFstNwa.lettersReturn(fstState)) {
+			for (final STATE fstSucc : mFstNwa.succReturn(fstState,fstHierPre,symbol)) {
+				for (final STATE sndSucc : mSndNwa.succReturn(sndState,sndHierPre,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);

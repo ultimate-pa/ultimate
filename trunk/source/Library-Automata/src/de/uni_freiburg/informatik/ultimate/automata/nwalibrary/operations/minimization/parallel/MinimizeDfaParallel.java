@@ -221,7 +221,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			if (mresult == null) {
 				try {
 					this.wait();
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					//e.printStackTrace();
 				}
 			}
@@ -231,7 +231,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		mLogger.info("MAIN: Result available. Start interrupting working threads.");
 		measureTime();
 
-		for (Thread thread : mthreads) {
+		for (final Thread thread : mthreads) {
 			thread.interrupt();
 		}
 		synchronized (mincrementalThread) {
@@ -249,7 +249,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		mLogger.info("MAIN: Start postprocessing result.");
 		try {
 			mresult = mresultGetter.call();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			//e.printStackTrace();
 		}
 
@@ -270,7 +270,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 */
 	private void measureTime() {
 		mcpuTime = new double[mthreads.size() + 2];
-		ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+		final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 		for (int i = 0; i < mthreads.size(); i++) {
 			mcpuTime[i] = bean.getThreadCpuTime(mthreads.get(i).getId());
 		}
@@ -286,7 +286,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * @return Formatted output.
 	 */
 	private StringBuilder createConsoleOutput() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CPU TIME needed for computation:\n");
 
 		for (int j = 0; j < mthreads.size(); j++) {
@@ -299,12 +299,12 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				+ "ns\n");
 
 		long sum = 0;
-		for (double i : mcpuTime) {
+		for (final double i : mcpuTime) {
 			sum += i;
 		}
 
-		ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-		long cpuTime = bean.getThreadCpuTime(Thread.currentThread().getId());
+		final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+		final long cpuTime = bean.getThreadCpuTime(Thread.currentThread().getId());
 		sum += cpuTime;
 		sb.append("Main Thread: " + cpuTime + "ns\n" + "TOTAL: " + sum + "ns"
 				+ " = " + sum / Math.pow(10, 9) + "sec");
@@ -316,7 +316,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * Initialize mappings from state to int.
 	 */
 	private void initialize() {
-		int nOfStates = moperand.getStates().size();
+		final int nOfStates = moperand.getStates().size();
 		// Allocate the finite space in ArrayList and HashMap.
 		mint2state = new ArrayList<STATE>(nOfStates);
 		mstate2int = new HashMap<STATE, Integer>(nOfStates);
@@ -362,29 +362,29 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				} else if (!PreferHelperThreads && PreferAlgorithmThreads) {
 					setPriority(Thread.MIN_PRIORITY);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//e.printStackTrace();
 			}
 			try {
 				setDaemon(true);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//e.printStackTrace();
 			}
 		}
 
 		@Override
 		public void run() {
-			while (!this.isInterrupted()) {
+			while (!isInterrupted()) {
 				try {
-					assert (!this.isInterrupted());
-					Runnable task = mtaskQueue.take();
-					if (!this.isInterrupted()) {
+					assert (!isInterrupted());
+					final Runnable task = mtaskQueue.take();
+					if (!isInterrupted()) {
 						task.run();
 					}
 					mLogger.info("MAIN: Size of task queue: "
 							+ mtaskQueue.size());
-				} catch (InterruptedException e) {
-					this.interrupt();
+				} catch (final InterruptedException e) {
+					interrupt();
 				}
 			}
 		}
@@ -432,12 +432,12 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				} else if (PreferAlgorithmThreads && !PreferHelperThreads) {
 					setPriority(Thread.MAX_PRIORITY);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				assert (false);
 			}
 			try {
 				setDaemon(true);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//e.printStackTrace();
 			}
 		}
@@ -450,7 +450,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					mLogger.info("moep1");
 					malgorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
 							mServices, moperand.getStateFactory(),
-							(INestedWordAutomaton<LETTER, STATE>) moperand,
+							moperand,
 							minterrupt, mint2state, mstate2int);
 
 					if (isInterrupted()) {
@@ -511,6 +511,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				synchronized (mmainThread) {
 					if (mresultGetter == null) {
 						mresultGetter = new Callable<INestedWordAutomaton<LETTER, STATE>>() {
+							@Override
 							public INestedWordAutomaton<LETTER, STATE> call() {
 								return (INestedWordAutomaton<LETTER, STATE>) malgorithm
 										.getResult();
@@ -523,9 +524,9 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					this.wait();
 				}
 
-			} catch (AutomataLibraryException e) {
+			} catch (final AutomataLibraryException e) {
 				throw new AssertionError("unhandeled AutomataLibraryException");
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				//e.printStackTrace();
 			}
 		}

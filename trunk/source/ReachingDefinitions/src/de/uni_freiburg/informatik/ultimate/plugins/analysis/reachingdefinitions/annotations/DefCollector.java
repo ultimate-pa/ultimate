@@ -59,7 +59,7 @@ class DefCollector extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		List<CodeBlock> blck = c.getCodeBlocks();
+		final List<CodeBlock> blck = c.getCodeBlocks();
 		if (blck == null || blck.isEmpty()) {
 			return;
 		}
@@ -70,13 +70,13 @@ class DefCollector extends RCFGEdgeVisitor {
 	protected void visit(StatementSequence c) {
 		super.visit(c);
 
-		List<Statement> stmts = c.getStatements();
+		final List<Statement> stmts = c.getStatements();
 
 		if (stmts == null || stmts.size() == 0) {
 			return;
 		}
 
-		ReachDefBaseAnnotation annot = getAnnotation(stmts);
+		final ReachDefBaseAnnotation annot = getAnnotation(stmts);
 		if (annot != null) {
 			mDefs = annot.getDefs();
 		}

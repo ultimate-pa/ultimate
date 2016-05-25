@@ -84,20 +84,21 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * 
 	 * @throws IOException
 	 */
+	@Override
 	public boolean process(IElement root) throws IOException {
 		if (!(root instanceof Unit)) {
 			// TODO
 			mLogger.debug("No WrapperNode. Let Ultimate process with next node");
 			return true;
 		} else {
-			Unit unit = (Unit) root;
+			final Unit unit = (Unit) root;
 			final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
 			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
 				mGraphroot = recCFGBuilder.getRootNode(unit);
 				ModelUtils.copyAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
-			} catch (SMTLIBException e) {
+			} catch (final SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
 					mLogger.warn("Unsupported syntax: " + e.getMessage());
 				} else if (e.getMessage().equals("Sort Array not declared")) {

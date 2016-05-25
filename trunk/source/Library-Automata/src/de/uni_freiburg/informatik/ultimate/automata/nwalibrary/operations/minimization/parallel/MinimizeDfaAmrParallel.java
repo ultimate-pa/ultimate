@@ -41,8 +41,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -462,7 +462,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 							mTaskQueue.put(new HelpHopcroft(this,
 									mHopcroftAlgorithm, tuple.mfirst,
 									tuple.msecond));
-						} catch (InterruptedException e) {
+						} catch (final InterruptedException e) {
 							e.printStackTrace();
 						}
 					}
@@ -686,7 +686,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 
 		// construct result
 		final StateFactory<STATE> stateFactory = mOperand.getStateFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
+		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
 				mServices, mOperand.getInternalAlphabet(),
 				mOperand.getCallAlphabet(), mOperand.getReturnAlphabet(),
 				stateFactory);
@@ -792,7 +792,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 * @return representative of the given state
 	 */
 	public int find(int oldRepresentative) {
-		LinkedList<Integer> path = new LinkedList<Integer>();
+		final LinkedList<Integer> path = new LinkedList<Integer>();
 
 		while (true) {
 			int newRepresentative;

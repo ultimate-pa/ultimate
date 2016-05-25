@@ -66,6 +66,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 		mIaTrueState = predicateUnifier.getTruePredicate();
 	}
 
+	@Override
 	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch) {
 		// if (linear) predecessor is false, the successor is false
@@ -96,7 +97,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		} else {
-			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState);
+			final Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState);
 			if (sat == Validity.VALID) {
 				sch.addTransition(resPred, resHier, letter, mIaFalseState);
 				sch.reportSuccsComputed(resPred, resHier, letter);

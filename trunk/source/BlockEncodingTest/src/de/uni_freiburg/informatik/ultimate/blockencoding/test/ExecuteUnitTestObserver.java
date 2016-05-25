@@ -99,7 +99,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		this.root = root;
 		RCFGStore.setRCFG((RCFGNode) root);
-		Result res = JUnitCore.runClasses(
+		final Result res = JUnitCore.runClasses(
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestAbstractMinimizationVisitor.class,
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeBranchVisitor.class,
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeLoopVisitor.class,
@@ -110,7 +110,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 			sLogger.error("A JUnit Test Case have failed!");
 		}
 
-		for (Failure failure : res.getFailures()) {
+		for (final Failure failure : res.getFailures()) {
 			sLogger.error(failure);
 			sLogger.error(failure.getDescription());
 			sLogger.error(failure.getException());

@@ -48,38 +48,46 @@ public class PhaseBits implements Comparable {
         this.waiting = waiting;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return active ^ (exactbound << 10 | exactbound >> 22)
                 ^ (waiting << 20 | waiting >> 12);
     }
 
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         return (o instanceof PhaseBits && active == ((PhaseBits) o).active
                 && exactbound == ((PhaseBits) o).exactbound && waiting == ((PhaseBits) o).waiting);
     }
 
-    public String toString() {
-        StringBuffer sb = new StringBuffer("st");
+    @Override
+	public String toString() {
+        final StringBuffer sb = new StringBuffer("st");
         String delim = "";
         for (int i = 0, bit = 1; bit <= active; i++, bit += bit) {
-            if ((active & bit) == 0)
-                continue;
+            if ((active & bit) == 0) {
+				continue;
+			}
             sb.append(delim).append(i);
-            if ((exactbound & bit) != 0)
-                sb.append('X');
-            else if ((waiting & bit) != 0)
-                sb.append('W');
+            if ((exactbound & bit) != 0) {
+				sb.append('X');
+			} else if ((waiting & bit) != 0) {
+				sb.append('W');
+			}
             delim = "";
         }
         return sb.toString();
     }
 
-    public int compareTo(Object other) {
-        PhaseBits o = (PhaseBits) other;
-        if (active != o.active)
-            return active - o.active;
-        if (waiting != o.waiting)
-            return o.waiting - waiting;
+    @Override
+	public int compareTo(Object other) {
+        final PhaseBits o = (PhaseBits) other;
+        if (active != o.active) {
+			return active - o.active;
+		}
+        if (waiting != o.waiting) {
+			return o.waiting - waiting;
+		}
         return exactbound - o.exactbound;
     }
     
@@ -97,16 +105,18 @@ public class PhaseBits implements Comparable {
 
     /** transform this PhaseBits object into a PhaseSet for easier access */
     public PhaseSet getPhaseSet(DCPhase phases[]) {
-        PhaseSet ps = new PhaseSet();
+        final PhaseSet ps = new PhaseSet();
         for (int i = 0, bit = 1; bit <= active; i++, bit += bit) {
-            if ((active & bit) == 0)
-                continue;
-            DCPhase ph = phases[i];
-            boolean exact = (exactbound & bit) != 0;
-            if ((waiting & bit) != 0)
-                ps.addWaitingPhase(ph, exact);
-            else
-                ps.addPhase(ph, exact);
+            if ((active & bit) == 0) {
+				continue;
+			}
+            final DCPhase ph = phases[i];
+            final boolean exact = (exactbound & bit) != 0;
+            if ((waiting & bit) != 0) {
+				ps.addWaitingPhase(ph, exact);
+			} else {
+				ps.addPhase(ph, exact);
+			}
         }
         return ps;
     }

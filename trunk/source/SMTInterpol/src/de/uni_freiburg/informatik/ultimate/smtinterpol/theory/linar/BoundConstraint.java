@@ -71,18 +71,21 @@ public class BoundConstraint extends DPLLAtom {
 
 	@Override
 	public String toStringNegated() {
-		InfinitNumber ibound = getInverseBound();
-		if (ibound.mEps > 0)
+		final InfinitNumber ibound = getInverseBound();
+		if (ibound.mEps > 0) {
 			return "[" + hashCode() + "]" + mVar + " > " + ibound.mA;
-		else
+		} else {
 			return "[" + hashCode() + "]" + mVar + " >= " + ibound;
+		}
 	}
 
+	@Override
 	public String toString() {
-		if (mBound.mEps < 0)
+		if (mBound.mEps < 0) {
 			return "[" + hashCode() + "]" + mVar + " < " + mBound.mA;
-		else
+		} else {
 			return "[" + hashCode() + "]" + mVar + " <= " + mBound;
+		}
 	}
 
 	// / --- Implies checks ---
@@ -116,15 +119,16 @@ public class BoundConstraint extends DPLLAtom {
 
 	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffinTerm at = new MutableAffinTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
 		return at.toSMTLibLeq0(smtTheory, quoted);
 	}
 
+	@Override
 	public boolean equals(Object other) { //NOCHECKSTYLE
 		if (other instanceof BoundConstraint) {
-			BoundConstraint o = (BoundConstraint) other;
+			final BoundConstraint o = (BoundConstraint) other;
 			return o.mVar == mVar && o.mBound.equals(mBound);
 		}
 		return false;

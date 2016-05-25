@@ -107,8 +107,8 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		
 		mLogger.info(startMessage());
 		
-		Collection<S> netAlphabet = new HashSet<S>(net.getAlphabet());
-		Collection<S> nwaAlpahbet = new HashSet<S>(nwa.getInternalAlphabet());
+		final Collection<S> netAlphabet = new HashSet<S>(net.getAlphabet());
+		final Collection<S> nwaAlpahbet = new HashSet<S>(nwa.getInternalAlphabet());
 		if (!netAlphabet.equals(nwaAlpahbet)) {
 			throw new IllegalArgumentException("net and nwa must use same" +
 					" alphabet");
@@ -122,7 +122,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 					"closed under concatenation with sigma star");
 			//otherwise the result won't be the intersection of languages
 		}
-		C nwaInitialState = nwa.getInitialStates().iterator().next();
+		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
 //		mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
 		if(nwa.isFinal(nwaInitialState)) {
@@ -131,7 +131,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			mResult = new PetriNetJulian<S,C>(mServices, mNet.getAlphabet(),
 					mNet.getStateFactory(),
 					true);
-			C sinkContent = mContentFactory.createSinkStateContent();
+			final C sinkContent = mContentFactory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		}
 		else {		
@@ -145,16 +145,16 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	private void classifySymbols() {
-		for (S symbol : mNwa.getInternalAlphabet()) {
-			HashSet<C> selfloopStates = new HashSet<C>();
-			HashSet<C> changerStates = new HashSet<C>();
-			for (C state : mNwa.getStates()) {
+		for (final S symbol : mNwa.getInternalAlphabet()) {
+			final HashSet<C> selfloopStates = new HashSet<C>();
+			final HashSet<C> changerStates = new HashSet<C>();
+			for (final C state : mNwa.getStates()) {
 				if (mNwa.isFinal(state)) {
 					// we do not consider accepting states since they
 					// do not occur in the result anyway
 					continue;
 				}
-				Collection<C> successors = mNwa.succInternal(state, symbol);
+				final Collection<C> successors = mNwa.succInternal(state, symbol);
 				if (successors.isEmpty()) {
 					continue;
 				}
@@ -215,50 +215,50 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 											mNet.getStateFactory(),
 											constantTokenAmount);
 		
-		for (Place<S,C> oldPlace : mNet.getPlaces()) {
-			C content = oldPlace.getContent();
-			boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
-			boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
-			Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+		for (final Place<S,C> oldPlace : mNet.getPlaces()) {
+			final C content = oldPlace.getContent();
+			final boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
+			final boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
+			final Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
 	
 	
 	private void addBlackAndWhitePlaces() {
-		for (C state : mNwa.getStates()) {
+		for (final C state : mNwa.getStates()) {
 			if (!mNwa.isFinal(state)) {
-				boolean isInitial = mNwa.getInitialStates().contains(state);
-				C stateContent = state;
-				C whiteContent = mContentFactory.getWhiteContent(stateContent);
-				Place<S,C> whitePlace = mResult.addPlace(whiteContent,isInitial,false);
+				final boolean isInitial = mNwa.getInitialStates().contains(state);
+				final C stateContent = state;
+				final C whiteContent = mContentFactory.getWhiteContent(stateContent);
+				final Place<S,C> whitePlace = mResult.addPlace(whiteContent,isInitial,false);
 				mWhitePlace.put(state,whitePlace);
-				C blackContent = mContentFactory.getBlackContent(stateContent);
-				Place<S,C> blackPlace = mResult.addPlace(blackContent,!isInitial,false);
+				final C blackContent = mContentFactory.getBlackContent(stateContent);
+				final Place<S,C> blackPlace = mResult.addPlace(blackContent,!isInitial,false);
 				mBlackPlace.put(state,blackPlace);
 			}
 		}
 	}
 	
 	private void addTransitions() {
-		for (ITransition<S, C> oldTrans : mNet.getTransitions()) {
-			S symbol = oldTrans.getSymbol();
+		for (final ITransition<S, C> oldTrans : mNet.getTransitions()) {
+			final S symbol = oldTrans.getSymbol();
 			
 			// A copy for each changer
-			for (C predState : mStateChanger.get(symbol)) {
-				Collection<C> succStates = mNwa.succInternal(predState, symbol); 
+			for (final C predState : mStateChanger.get(symbol)) {
+				final Collection<C> succStates = mNwa.succInternal(predState, symbol); 
 				assert (succStates.size() == 1);
-				C succState = succStates.iterator().next();	
+				final C succState = succStates.iterator().next();	
 				
 				// omit transitions to final states
 				if (mNwa.isFinal(succState)) {
 					continue;
 				}
 				
-				Collection<Place<S,C>> predecessors = 
+				final Collection<Place<S,C>> predecessors = 
 					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : oldTrans.getPredecessors()) {
-					Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
 				assert(mWhitePlace.containsKey(predState));
@@ -266,10 +266,10 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 				assert(mWhitePlace.containsKey(succState));
 				predecessors.add(mBlackPlace.get(succState));
 				
-				Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors = 
 					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : oldTrans.getSuccessors()) {
-					Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				assert(mWhitePlace.containsKey(succState));
@@ -285,25 +285,25 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 //				Collection<IState<S,C>> succStates = predState.getInternalSucc(symbol);
 //				assert (succStates.size() == 1);
 //				IState<S,C> succState = succStates.iterator().next();				
-				Collection<Place<S,C>> predecessors = 
+				final Collection<Place<S,C>> predecessors = 
 					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : oldTrans.getPredecessors()) {
-					Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
 //				predecessors.add(mWhitePlace.get(predState));
 //				predecessors.add(mBlackPlace.get(succState));
 				
-				Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors = 
 					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : oldTrans.getSuccessors()) {
-					Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 //				successors.add(mWhitePlace.get(succState));
 //				successors.add(mBlackPlace.get(predState));
 				
-				for (C state : mStateChanger.get(symbol)) {
+				for (final C state : mStateChanger.get(symbol)) {
 					predecessors.add(mBlackPlace.get(state));
 					successors.add(mBlackPlace.get(state));
 				}
@@ -335,6 +335,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 
+	@Override
 	public PetriNetJulian<S,C> getResult() throws AutomataLibraryException {
 		assert (isPreSuccPlaceInNet(mResult));
 		assert (isPreSuccTransitionInNet(mResult));
@@ -344,13 +345,13 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	private boolean isPreSuccPlaceInNet(PetriNetJulian<S,C> net) {
-		for (ITransition<S,C> trans : net.getTransitions()) {
-			for (Place<S,C> place : trans.getPredecessors()) {
+		for (final ITransition<S,C> trans : net.getTransitions()) {
+			for (final Place<S,C> place : trans.getPredecessors()) {
 				if(!net.getPlaces().contains(place)) {
 					return false;
 				}
 			}
-			for (Place<S,C> place : trans.getSuccessors()) {
+			for (final Place<S,C> place : trans.getSuccessors()) {
 				if(!net.getPlaces().contains(place)) {
 					return false;
 				}
@@ -362,13 +363,13 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	private boolean isPreSuccTransitionInNet(PetriNetJulian<S,C> net) {
-		for (Place<S,C> place : net.getPlaces()) {
-			for (ITransition<S,C> trans : place.getPredecessors()) {
+		for (final Place<S,C> place : net.getPlaces()) {
+			for (final ITransition<S,C> trans : place.getPredecessors()) {
 				if(!net.getTransitions().contains(trans)) {
 					return false;
 				}
 			}
-			for (ITransition<S,C> trans : place.getSuccessors()) {
+			for (final ITransition<S,C> trans : place.getSuccessors()) {
 				if(!net.getTransitions().contains(trans)) {
 					return false;
 				}
@@ -382,9 +383,9 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of differenceBlackAndWhite");
 
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
+		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
+		final INestedWordAutomatonOldApi rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultAsNwa,rcResult,stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(mServices, rcResult,resultAsNwa,stateFactory) == null);

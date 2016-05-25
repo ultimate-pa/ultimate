@@ -85,15 +85,15 @@ public class Nnf {
 		assert mQuantifiedVariables == null;
 		if (mQuantifierHandling == QuantifierHandling.PULL) {
 			mQuantifiedVariables = new ArrayList<List<TermVariable>>();
-			List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
+			final List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
 			mQuantifiedVariables.add(firstQuantifierBlock);
 		}
 		Term result = mNnfTransformerHelper.transform(term);
 		if (mQuantifierHandling == QuantifierHandling.PULL) {
 			for (int i=0; i<mQuantifiedVariables.size(); i++) {
-				TermVariable[] variables = mQuantifiedVariables.get(i).toArray(new TermVariable[mQuantifiedVariables.get(i).size()]);
+				final TermVariable[] variables = mQuantifiedVariables.get(i).toArray(new TermVariable[mQuantifiedVariables.get(i).size()]);
 				if (variables.length > 0) {
-					int quantor = i%2;
+					final int quantor = i%2;
 					assert QuantifiedFormula.EXISTS == 0;
 					assert QuantifiedFormula.FORALL == 1;
 					result = mScript.quantifier(quantor, variables, result);
@@ -117,8 +117,8 @@ public class Nnf {
 		protected void convert(Term term) {
 			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term; 
-				String functionName = appTerm.getFunction().getName();
+				final ApplicationTerm appTerm = (ApplicationTerm) term; 
+				final String functionName = appTerm.getFunction().getName();
 				if (functionName.equals("and")) {
 					final Term flattened = Util.and(mScript, appTerm.getParameters());
 					if (SmtUtils.isFunctionApplication(flattened, "and")) {
@@ -141,11 +141,11 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
-					Term notParam = appTerm.getParameters()[0];
+					final Term notParam = appTerm.getParameters()[0];
 					convertNot(notParam, term);
 					return;
 				} else if (functionName.equals("=>")) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -153,9 +153,9 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("=") && 
 						SmtUtils.firstParamIsBool(appTerm)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
-						Term binarized = SmtUtils.binarize(mScript, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -169,9 +169,9 @@ public class Nnf {
 								mScript, params[0], params[1]));
 					}
 				} else if (isXor(appTerm, functionName)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
-						Term binarized = SmtUtils.binarize(mScript, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -185,12 +185,12 @@ public class Nnf {
 								mScript, params[0], params[1]));
 					}
 				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					assert params.length == 3;
-					Term condTerm = params[0];
-					Term ifTerm = params[1];
-					Term elseTerm = params[2];
-					Term result = convertIte(condTerm, ifTerm, elseTerm);
+					final Term condTerm = params[0];
+					final Term ifTerm = params[1];
+					final Term elseTerm = params[2];
+					final Term result = convertIte(condTerm, ifTerm, elseTerm);
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -234,13 +234,13 @@ public class Nnf {
 						mQuantifiedVariables.add(variables);
 					}
 					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-					for (TermVariable oldTv : qf.getVariables()) {
+					for (final TermVariable oldTv : qf.getVariables()) {
 						final TermVariable freshTv = mFreshTermVariableConstructor.
 								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					Term newBody = (new SafeSubstitution(mScript, substitutionMapping)).transform(qf.getSubformula());
+					final Term newBody = (new SafeSubstitution(mScript, substitutionMapping)).transform(qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -258,9 +258,9 @@ public class Nnf {
 		}
 
 		private Term convertIte(Term condTerm, Term ifTerm, Term elseTerm) {
-			Term condImpliesIf = Util.or(mScript, SmtUtils.not(mScript, condTerm), ifTerm);
-			Term notCondImpliesElse = Util.or(mScript, condTerm, elseTerm);
-			Term result = Util.and(mScript, condImpliesIf, notCondImpliesElse);
+			final Term condImpliesIf = Util.or(mScript, SmtUtils.not(mScript, condTerm), ifTerm);
+			final Term notCondImpliesElse = Util.or(mScript, condTerm, elseTerm);
+			final Term result = Util.and(mScript, condImpliesIf, notCondImpliesElse);
 			return result;
 		}
 
@@ -281,9 +281,9 @@ public class Nnf {
 		private void convertNot(Term notParam, Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) notParam; 
-				String functionName = appTerm.getFunction().getName();
-				Term[] params = appTerm.getParameters();
+				final ApplicationTerm appTerm = (ApplicationTerm) notParam; 
+				final String functionName = appTerm.getFunction().getName();
+				final Term[] params = appTerm.getParameters();
 				if (functionName.equals("and")) {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
@@ -298,7 +298,7 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
-					Term notnotParam = appTerm.getParameters()[0];
+					final Term notnotParam = appTerm.getParameters()[0];
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -312,9 +312,9 @@ public class Nnf {
 					return;
 				} else if (functionName.equals("=") && 
 						SmtUtils.firstParamIsBool(appTerm)) {
-					Term[] notParams = appTerm.getParameters();
+					final Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
-						Term binarized = SmtUtils.binarize(mScript, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -328,9 +328,9 @@ public class Nnf {
 								mScript, notParams[0], notParams[1]));
 					}
 				} else if (isXor(appTerm, functionName)) {
-					Term[] notParams = appTerm.getParameters();
+					final Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
-						Term binarized = SmtUtils.binarize(mScript, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -344,12 +344,12 @@ public class Nnf {
 								mScript, notParams[0], notParams[1]));
 					}
 				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
-					Term[] notParams = appTerm.getParameters();
+					final Term[] notParams = appTerm.getParameters();
 					assert params.length == 3;
-					Term condTerm = notParams[0];
-					Term ifTerm = notParams[1];
-					Term elseTerm = notParams[2];
-					Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
+					final Term condTerm = notParams[0];
+					final Term ifTerm = notParams[1];
+					final Term elseTerm = notParams[2];
+					final Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
 					convertNot(convertedIte, SmtUtils.not(mScript, convertedIte));
 				} else {
 					//consider original term as atom
@@ -395,7 +395,7 @@ public class Nnf {
 		}
 		
 		private Term[] negateTerms(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length; i++) {
 				newTerms[i] = SmtUtils.not(mScript, terms[i]);
 			}
@@ -403,7 +403,7 @@ public class Nnf {
 		}
 		
 		private Term[] negateLast(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = terms[i];
 			}
@@ -412,7 +412,7 @@ public class Nnf {
 		}
 		
 		private Term[] negateAllButLast(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = SmtUtils.not(mScript, terms[i]);
 			}
@@ -423,7 +423,7 @@ public class Nnf {
 		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			Term simplified = SmtUtils.termWithLocalSimplification(mScript, 
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, 
 					appTerm.getFunction().getName(), 
 					appTerm.getFunction().getIndices(), newArgs);
 			setResult(simplified);

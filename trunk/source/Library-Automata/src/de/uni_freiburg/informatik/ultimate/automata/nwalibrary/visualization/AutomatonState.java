@@ -44,9 +44,9 @@ public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonS
 	
 	public AutomatonState(Object content, boolean isAccepting) {
 		
-		DefaultAnnotations acceptance = new DefaultAnnotations();
+		final DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting",isAccepting);
-		Map<String,IAnnotations> annotations = getPayload().getAnnotations();
+		final Map<String,IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put("isAccepting", acceptance);
 		
 		if (content instanceof IAnnotations) {
@@ -56,6 +56,7 @@ public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonS
 		mName = String.valueOf(content);
 	}
 	
+	@Override
 	public String toString() {
 		return mName;
 	}

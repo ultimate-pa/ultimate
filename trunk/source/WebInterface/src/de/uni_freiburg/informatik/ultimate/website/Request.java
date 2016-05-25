@@ -21,22 +21,22 @@ public class Request {
 		if (request == null) {
 			throw new IllegalArgumentException("The request was null");
 		}
-		Map<String, String[]> paramList = new HashMap<String, String[]>();
-		Enumeration<String> paramNames = request.getParameterNames();
+		final Map<String, String[]> paramList = new HashMap<String, String[]>();
+		final Enumeration<String> paramNames = request.getParameterNames();
 		if(paramNames == null){
 			throw new IllegalArgumentException("No parameter were transmitted (paramNames == null)");
 		}
 		while (paramNames.hasMoreElements()) {
-			String paramName = paramNames.nextElement();
-			String[] paramValues = request.getParameterValues(paramName);
+			final String paramName = paramNames.nextElement();
+			final String[] paramValues = request.getParameterValues(paramName);
 			paramList.put(paramName, paramValues);
 
 			if (mLogger.isDebugEnabled()) {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t{");
 				sb.append(paramName);
 				sb.append("} :: {");
-				for (String s : paramValues) {
+				for (final String s : paramValues) {
 					sb.append(s);
 					sb.append("}");
 				}

@@ -82,8 +82,8 @@ public class LdvRegression extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}

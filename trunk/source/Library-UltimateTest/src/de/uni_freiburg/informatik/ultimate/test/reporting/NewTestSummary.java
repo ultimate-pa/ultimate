@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
 public abstract class NewTestSummary implements ITestSummary {
 
 	protected LinkedHashMap<UltimateRunDefinition, ExtendedResult> mResults;
-	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
+	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
 	public NewTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mResults = new LinkedHashMap<>();
@@ -96,25 +96,33 @@ public abstract class NewTestSummary implements ITestSummary {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			TCS other = (TCS) obj;
-			if (!getOuterType().equals(other.getOuterType()))
+			}
+			final TCS other = (TCS) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
+			}
 			if (Setting == null) {
-				if (other.Setting != null)
+				if (other.Setting != null) {
 					return false;
-			} else if (!Setting.equals(other.Setting))
+				}
+			} else if (!Setting.equals(other.Setting)) {
 				return false;
+			}
 			if (Toolchain == null) {
-				if (other.Toolchain != null)
+				if (other.Toolchain != null) {
 					return false;
-			} else if (!Toolchain.equals(other.Toolchain))
+				}
+			} else if (!Toolchain.equals(other.Toolchain)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -242,7 +250,7 @@ public abstract class NewTestSummary implements ITestSummary {
 
 		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("Safe: ").append(Safe.size());
 			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Unsafe: ").append(Unsafe.size());

@@ -64,7 +64,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 			IInterpolantGenerator interpolantGenerator,
 			PredicateFactoryForInterpolantAutomata predicateFactory) {
 		mServices = services;
-		InterpolantsPreconditionPostcondition ipp = 
+		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
 		mResult =	new NestedWordAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(mServices), 
@@ -80,10 +80,10 @@ public class StraightLineInterpolantAutomatonBuilder {
 
 		mResult.addState(true, false, interpolantGenerator.getPrecondition());
 		mResult.addState(false, true, interpolantGenerator.getPostcondition());
-		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
+		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = ipp.getInterpolant(i);
-			IPredicate succ = ipp.getInterpolant(i+1);
+			final IPredicate pred = ipp.getInterpolant(i);
+			final IPredicate succ = ipp.getInterpolant(i+1);
 			assert mResult.getStates().contains(pred);
 			if (!mResult.getStates().contains(succ)) {
 				mResult.addState(false, false, succ);
@@ -92,8 +92,8 @@ public class StraightLineInterpolantAutomatonBuilder {
 				mResult.addCallTransition(pred, trace.getSymbol(i), succ);
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
-				int callPos = trace.getCallPosition(i);
-				IPredicate hierPred = ipp.getInterpolant(callPos);
+				final int callPos = trace.getCallPosition(i);
+				final IPredicate hierPred = ipp.getInterpolant(callPos);
 				mResult.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);

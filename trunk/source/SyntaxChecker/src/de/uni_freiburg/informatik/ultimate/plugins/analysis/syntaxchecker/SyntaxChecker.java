@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * Use external tool to do a syntax check.
@@ -110,17 +109,17 @@ public class SyntaxChecker implements IAnalysis {
 	public void finish() {
 		try {
 			doSyntaxCheck();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			throw new AssertionError(e);
 		}
 	}
 	private void doSyntaxCheck() throws IOException {
-		final String toolCommandError = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final String toolCommandError = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 		final String filename = mFilenameExtractionObserver.getFilename();
 		
-		final boolean removeFilename = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean removeFilename = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
 		
 		final String outputError = callSytaxCheckerAndReturnStderrOutput(toolCommandError, filename);
@@ -136,10 +135,10 @@ public class SyntaxChecker implements IAnalysis {
 		}
 
 		
-		final boolean doSyntaxWarningCheck = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean doSyntaxWarningCheck = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
-			final String toolCommandWarnings = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+			final String toolCommandWarnings = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 			final String outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
 			if (outputWarnings == null) {
@@ -147,8 +146,8 @@ public class SyntaxChecker implements IAnalysis {
 			} else {
 				final String longMessage = generateLongDescription(toolCommandError, outputWarnings, filename,
 						removeFilename);
-				String shortDescription = "Syntax checker warnings";
-				Severity severity = Severity.WARNING;
+				final String shortDescription = "Syntax checker warnings";
+				final Severity severity = Severity.WARNING;
 				final GenericResult res = new GenericResult(Activator.PLUGIN_ID, shortDescription, longMessage, severity);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			}

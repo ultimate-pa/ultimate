@@ -47,9 +47,9 @@ public class Main {
 	public static void main(String[] param) throws IOException {
 
 		/** Specify the solver command here. **/
-		String command = "z3 -smt2 -in";
+		final String command = "z3 -smt2 -in";
 
-		Logger logger = Logger.getRootLogger();
+		final Logger logger = Logger.getRootLogger();
 		int paramctr = 0;
 		Script benchmark;
 		if (!command.equals("SMTInterpol")) {
@@ -65,42 +65,42 @@ public class Main {
 			} else if (param[paramctr].equals("-v")) {
 				try {
 					benchmark.setOption(":verbosity", BigInteger.valueOf(5));
-				} catch (SMTLIBException doesNotHappen) {
+				} catch (final SMTLIBException doesNotHappen) {
 				}
 				paramctr++;
 			} else if (param[paramctr].equals("-q")) {
 				try {
 					benchmark.setOption(":verbosity", BigInteger.valueOf(3));
-				} catch (SMTLIBException doesNotHappen) {
+				} catch (final SMTLIBException doesNotHappen) {
 				}
 				paramctr++;
 			} else if (param[paramctr].equals("-t") && ++paramctr < param.length) {
 				try {
-					int timeout = Integer.parseInt(param[paramctr]);
+					final int timeout = Integer.parseInt(param[paramctr]);
 					if (timeout < 0) {
 						logger.error("Cannot parse timeout " + "argument: Negative number");
 					} else {
 						try {
 							benchmark.setOption(":timeout", BigInteger.valueOf(timeout));
-						} catch (SMTLIBException doesNotHappen) {
+						} catch (final SMTLIBException doesNotHappen) {
 						}
 					}
-				} catch (NumberFormatException nfe) {
+				} catch (final NumberFormatException nfe) {
 					logger.error("Cannot parse timeout " + "argument: Not a number");
 				}
 				paramctr++;
 			} else if (param[paramctr].equals("-r") && ++paramctr < param.length) {
 				try {
-					int seed = Integer.parseInt(param[paramctr]);
+					final int seed = Integer.parseInt(param[paramctr]);
 					if (seed < 0) {
 						logger.error("Cannot parse random seed " + "argument: Negative number");
 					} else {
 						try {
 							benchmark.setOption(":random-seed", BigInteger.valueOf(seed));
-						} catch (SMTLIBException doesNotHappen) {
+						} catch (final SMTLIBException doesNotHappen) {
 						}
 					}
-				} catch (NumberFormatException nfe) {
+				} catch (final NumberFormatException nfe) {
 					logger.error("Cannot parse random seed " + "argument: Not a number");
 				}
 				paramctr++;
@@ -119,10 +119,10 @@ public class Main {
 			usage();
 			return;
 		}
-		ParseEnvironment parseEnv = new ParseEnvironment(benchmark);
+		final ParseEnvironment parseEnv = new ParseEnvironment(benchmark);
 		try {
 			parseEnv.parseScript(filename);
-		} catch (SMTLIBException exc) {
+		} catch (final SMTLIBException exc) {
 			parseEnv.printError(exc.getMessage());
 		}
 	}

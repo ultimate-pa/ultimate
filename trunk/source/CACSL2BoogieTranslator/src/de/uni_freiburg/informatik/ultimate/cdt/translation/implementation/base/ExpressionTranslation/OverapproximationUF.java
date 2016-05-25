@@ -76,11 +76,11 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		if (newType.getType() == PRIMITIVE.BOOL) {
 			mExpressionTranslation.convertToBool(loc, rexp);
 		} else {
-			String prefixedFunctionName = declareConvertPointerToIntFunction(
+			final String prefixedFunctionName = declareConvertPointerToIntFunction(
 					loc, newType);
-			Expression pointerExpression = rexp.lrVal.getValue();
-			Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
-			RValue rValue = new RValue(intExpression, newType, false, false);
+			final Expression pointerExpression = rexp.lrVal.getValue();
+			final Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
+			final RValue rValue = new RValue(intExpression, newType, false, false);
 			rexp.lrVal = rValue;
 		}
 	}
@@ -91,43 +91,43 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	@Override
 	public void convertIntToPointer(ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
-		boolean overapproximate = false;
+		final boolean overapproximate = false;
 		if (overapproximate) {
-			String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.lrVal.getCType());
-			Expression intExpression = rexp.lrVal.getValue();
-			Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
-			RValue rValue = new RValue(pointerExpression, newType, false, false);
+			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.lrVal.getCType());
+			final Expression intExpression = rexp.lrVal.getValue();
+			final Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
+			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.lrVal = rValue;
 		} else {
 			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-			Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
+			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 					loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
+			final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
 			rexp.lrVal = rValue;
 		}
 	}
 	
 	private String declareConvertIntToPointerFunction(ILocation loc, CPrimitive newType) {
-		String functionName = "convert" + newType.toString() + "toPointer";
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "convert" + newType.toString() + "toPointer";
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = mTypeHandler.constructPointerType(loc); 
-			ASTType paramASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType resultASTType = mTypeHandler.constructPointerType(loc); 
+			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, newType);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
 	}
 	
 	private String declareConvertPointerToIntFunction(ILocation loc, CPrimitive newType) {
-		String functionName = "convertPointerTo" + newType.toString();
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "convertPointerTo" + newType.toString();
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = mTypeHandler.constructPointerType(loc);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final ASTType paramASTType = mTypeHandler.constructPointerType(loc);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;

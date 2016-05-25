@@ -73,7 +73,7 @@ public class LassoUnderConstruction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Stem:" + System.lineSeparator());
 		sb.append(getStem());
 		sb.append(System.lineSeparator());
@@ -88,8 +88,8 @@ public class LassoUnderConstruction {
 	 * Check whether the stem of this lasso is feasible.
 	 */
 	public LBool checkStemFeasiblity(Script script) {
-		Term term = mStem.getFormula();
-		LBool lbool = Util.checkSat(script, term);
+		final Term term = mStem.getFormula();
+		final LBool lbool = Util.checkSat(script, term);
 		return lbool;
 	}
 	

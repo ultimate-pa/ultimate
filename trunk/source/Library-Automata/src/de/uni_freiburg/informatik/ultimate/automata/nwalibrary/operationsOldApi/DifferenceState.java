@@ -91,26 +91,34 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 		 */
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			DifferenceState other = (DifferenceState) obj;
-			if (isFinal != other.isFinal)
+			}
+			final DifferenceState other = (DifferenceState) obj;
+			if (isFinal != other.isFinal) {
 				return false;
+			}
 			if (mMinuendState == null) {
-				if (other.mMinuendState != null)
+				if (other.mMinuendState != null) {
 					return false;
-			} else if (!mMinuendState.equals(other.mMinuendState))
+				}
+			} else if (!mMinuendState.equals(other.mMinuendState)) {
 				return false;
+			}
 			if (subtrahendDeterminizedState == null) {
-				if (other.subtrahendDeterminizedState != null)
+				if (other.subtrahendDeterminizedState != null) {
 					return false;
+				}
 			} else if (!subtrahendDeterminizedState
-					.equals(other.subtrahendDeterminizedState))
+					.equals(other.subtrahendDeterminizedState)) {
 				return false;
+			}
 			return true;
 		}
 

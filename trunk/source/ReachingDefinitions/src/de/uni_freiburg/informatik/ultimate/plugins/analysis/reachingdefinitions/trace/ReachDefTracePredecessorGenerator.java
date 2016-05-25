@@ -67,7 +67,7 @@ public class ReachDefTracePredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		List<CodeBlock> blck = c.getCodeBlocks();
+		final List<CodeBlock> blck = c.getCodeBlocks();
 		if (blck == null || blck.isEmpty()) {
 			return;
 		}
@@ -81,7 +81,7 @@ public class ReachDefTracePredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(StatementSequence stmtSeq) {
-		ReachDefStatementAnnotation annot = getAnnotation(stmtSeq);
+		final ReachDefStatementAnnotation annot = getAnnotation(stmtSeq);
 		if (annot != null) {
 			rtr.add(annot);
 		}

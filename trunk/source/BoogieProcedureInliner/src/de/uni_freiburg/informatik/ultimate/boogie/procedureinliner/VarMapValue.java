@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
  */
 public class VarMapValue {
 
-	private String mVarId;
-	private DeclarationInformation mDeclInfo;
+	private final String mVarId;
+	private final DeclarationInformation mDeclInfo;
 	
 	/**
 	 * Creates a new VarMapValue, containing the new identifier and DeclarationInformation of a variable.
@@ -68,23 +68,30 @@ public class VarMapValue {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		VarMapValue other = (VarMapValue) obj;
+		}
+		final VarMapValue other = (VarMapValue) obj;
 		if (mDeclInfo == null) {
-			if (other.mDeclInfo != null)
+			if (other.mDeclInfo != null) {
 				return false;
-		} else if (!mDeclInfo.equals(other.mDeclInfo))
+			}
+		} else if (!mDeclInfo.equals(other.mDeclInfo)) {
 			return false;
+		}
 		if (mVarId == null) {
-			if (other.mVarId != null)
+			if (other.mVarId != null) {
 				return false;
-		} else if (!mVarId.equals(other.mVarId))
+			}
+		} else if (!mVarId.equals(other.mVarId)) {
 			return false;
+		}
 		return true;
 	}
 

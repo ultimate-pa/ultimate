@@ -32,9 +32,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
@@ -155,7 +155,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 		// Simply returns true in any case. The only method that currently
 		// exists for checking the result needs very long and we do not want to
 		// slow progress.
-		boolean correct = true;
+		final boolean correct = true;
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

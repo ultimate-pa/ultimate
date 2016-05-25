@@ -107,7 +107,7 @@ public class LatexOverviewSummary extends LatexSummary {
 			sb.append("  \\header{Count}&").append(br);
 
 			int i = 0;
-			for (ColumnDefinition cd : mColumnDefinitions) {
+			for (final ColumnDefinition cd : mColumnDefinitions) {
 				if (cd.getLatexTableTitle() == null) {
 					continue;
 				}
@@ -240,7 +240,7 @@ public class LatexOverviewSummary extends LatexSummary {
 		sb.append("\\multirow{");
 		sb.append(variants.size());
 		sb.append("}{*}{\\folder{Completed}} ").append(br);
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
 		completed.addAll(results.Safe);
 		completed.addAll(results.Unsafe);
 		for (int i = 0; i < variants.size(); ++i) {
@@ -277,8 +277,8 @@ public class LatexOverviewSummary extends LatexSummary {
 		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
 				.filter(a -> a.getKey().getSettings().getName().equals(variant)).collect(Collectors.toList());
 
-		String br = CoreUtil.getPlatformLineSeparator();
-		String sep = " & ";
+		final String br = CoreUtil.getPlatformLineSeparator();
+		final String sep = " & ";
 
 		if (isFirst) {
 			sb.append(sep);
@@ -301,12 +301,12 @@ public class LatexOverviewSummary extends LatexSummary {
 		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));
 
 		// make list of indices to ignore idx -> true / false
-		boolean[] idx = new boolean[csv.getColumnTitles().size()];
+		final boolean[] idx = new boolean[csv.getColumnTitles().size()];
 		// because of count
 		idx[0] = true;
 		for (int i = 1; i < idx.length; ++i) {
-			String currentHeader = csv.getColumnTitles().get(i);
-			for (ColumnDefinition cd : mColumnDefinitions) {
+			final String currentHeader = csv.getColumnTitles().get(i);
+			for (final ColumnDefinition cd : mColumnDefinitions) {
 				if (cd.getColumnToKeep().equals(currentHeader)) {
 					idx[i] = (cd.getLatexTableTitle() != null);
 					break;
@@ -315,16 +315,16 @@ public class LatexOverviewSummary extends LatexSummary {
 		}
 
 		// one more because of Count
-		int length = mLatexTableHeaderCount + 1;
+		final int length = mLatexTableHeaderCount + 1;
 		int i = 0;
-		List<String> row = csv.getRow(0);
+		final List<String> row = csv.getRow(0);
 		if (row == null || row.size() == 0) {
 			// no results in this category, just fill with empty fields
 			for (; i < length; ++i) {
 				sb.append(sep);
 			}
 		} else {
-			for (String cell : row) {
+			for (final String cell : row) {
 				if (!idx[i]) {
 					// skip this column, we dont want to print it
 					i++;

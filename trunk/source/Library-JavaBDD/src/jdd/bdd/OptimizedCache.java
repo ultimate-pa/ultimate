@@ -6,8 +6,10 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
-import jdd.util.math.*;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Test;
+import jdd.util.math.Digits;
 
 
 /**
@@ -64,8 +66,11 @@ public final class OptimizedCache extends SimpleCache {
 		// "Configuration.MAX_KEEP_UNUSED_PARTIAL_CACHE" garbage collection, then we
 		// will wipe its contecnt since partial clean costs too much
 
-		if(access_last_gc == numaccess)  cache_not_used_count++;
-		else cache_not_used_count = 0;
+		if(access_last_gc == numaccess) {
+			cache_not_used_count++;
+		} else {
+			cache_not_used_count = 0;
+		}
 
 		access_last_gc = numaccess;
 
@@ -74,6 +79,7 @@ public final class OptimizedCache extends SimpleCache {
 
 	// ---[ these operations just clean the cache ] ---------------------------------
 
+	@Override
 	public void invalidate_cache() {
 		if(possible_bins_count != 0) {
 			super.invalidate_cache();
@@ -82,6 +88,7 @@ public final class OptimizedCache extends SimpleCache {
 	}
 
 
+	@Override
 	protected void grow_and_invalidate_cache() {
 		super.grow_and_invalidate_cache();
 		possible_bins_count = 0;
@@ -95,6 +102,7 @@ public final class OptimizedCache extends SimpleCache {
 	 * removes the elements that are garbage collected.
 	 * this is where the "bdds" variable in constructor is used.
 	 */
+	@Override
 	public void invalidate_cache(NodeTable nt) {
 
 		// sanity check
@@ -104,7 +112,9 @@ public final class OptimizedCache extends SimpleCache {
 
 
 		// if it is empty, no need to invalidate it?
-		if(possible_bins_count == 0) return;
+		if(possible_bins_count == 0) {
+			return;
+		}
 
 
 		// is itreally so smart to do a partial clear??
@@ -117,9 +127,13 @@ public final class OptimizedCache extends SimpleCache {
 
 		// yes, do a partial cache clear
 		int ok = 0; // "ok" is the number of valid cache entries
-		if(bdds == 3)  ok = partial_clean3(nt);
-		else if(bdds == 2)  ok = partial_clean2(nt);
-		else if(bdds == 1)  ok = partial_clean1(nt);
+		if(bdds == 3) {
+			ok = partial_clean3(nt);
+		} else if(bdds == 2) {
+			ok = partial_clean2(nt);
+		} else if(bdds == 1) {
+			ok = partial_clean1(nt);
+		}
 
 		numpartial_clears++;
 		partial_count += cache_size;	// for showStats
@@ -134,9 +148,11 @@ public final class OptimizedCache extends SimpleCache {
 		int ok = 0;
 		for(int i = cache_size; i != 0; ) {
 				i--;
-			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getIn(i,2) ) || !nt.isValid( getIn(i,3) ) || !nt.isValid( getOut(i) ) )
+			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getIn(i,2) ) || !nt.isValid( getIn(i,3) ) || !nt.isValid( getOut(i) ) ) {
 				invalidate(i);
-			else ok++;
+			} else {
+				ok++;
+			}
 		}
 		return ok;
 	}
@@ -145,9 +161,11 @@ public final class OptimizedCache extends SimpleCache {
 		int ok = 0;
 		for(int i = cache_size; i != 0; ) {
 			i--;
-			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getIn(i,2) ) || !nt.isValid( getOut(i) ) )
+			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getIn(i,2) ) || !nt.isValid( getOut(i) ) ) {
 				invalidate(i);
-			else ok++;
+			} else {
+				ok++;
+			}
 		}
 		return ok;
 	}
@@ -156,37 +174,44 @@ public final class OptimizedCache extends SimpleCache {
 		int ok = 0;
 		for(int i = cache_size; i != 0; ) {
 			i--;
-			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getOut(i) ) )
+			if( !isValid(i) || !nt.isValid( getIn(i,1) ) || !nt.isValid( getOut(i) ) ) {
 				invalidate(i);
-			else ok++;
+			} else {
+				ok++;
+			}
 		}
 		return ok;
 	}
 
 	// -----------------------------------------------------------------------------
 
+	@Override
 	public void insert(int hash, int key1, int value) {
 		super.insert(hash, key1, value);
 		possible_bins_count++;
 	}
 
+	@Override
 	public void insert(int hash, int key1, int key2, int value) {
 		super.insert(hash, key1, key2, value);
 		possible_bins_count++;
 	}
 
+	@Override
 	public void insert(int hash, int key1, int key2, int key3, int value) {
 		super.insert(hash, key1, key2, key3, value);
 		possible_bins_count++;
 	}
 
 	// --------------------------------------------------------------
+	@Override
 	public int getNumberOfPartialClears() {
 		return numpartial_clears;
 	}
 
 	// --------------------------------------------------------------
 
+	@Override
 	public void showStats() {
 		if(numaccess != 0) {
 			JDDConsole.out.print(getName() + "-cache ");
@@ -197,12 +222,16 @@ public final class OptimizedCache extends SimpleCache {
 
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
 			if(partial_count > 0) {
-				double pck = ((int)(10000.0 * partial_kept / partial_count)) / 100.0;
+				final double pck = ((int)(10000.0 * partial_kept / partial_count)) / 100.0;
 				JDDConsole.out.print("pck=" +  pck + "% ");
 			}
 
-			if(partial_given_up > 0)  JDDConsole.out.print("giveup=" +  partial_given_up + " ");
-			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
+			if(partial_given_up > 0) {
+				JDDConsole.out.print("giveup=" +  partial_given_up + " ");
+			}
+			if(numgrows > 0) {
+				JDDConsole.out.print("grws=" + numgrows + " ");
+			}
 
 			JDDConsole.out.println();
 		}

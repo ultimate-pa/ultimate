@@ -65,8 +65,8 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (RankingFunction rf : mParts) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final RankingFunction rf : mParts) {
 			vars.addAll(rf.getVariables());
 		}
 		return vars;
@@ -74,12 +74,12 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mParts.length);
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (RankVar var : getVariables()) {
+		for (final RankVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -99,9 +99,9 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		List<Term> lex = new ArrayList<Term>();
+		final List<Term> lex = new ArrayList<Term>();
 		for (int i = 0; i < mParts.length; ++i) {
-			Term[] lex_part = mParts[i].asLexTerm(script);
+			final Term[] lex_part = mParts[i].asLexTerm(script);
 			for (int j = 0; j < lex_part.length; ++j) {
 				lex.add(lex_part[j]);
 			}
@@ -111,7 +111,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
-		Ordinal o = Ordinal.ZERO;
+		final Ordinal o = Ordinal.ZERO;
 		// TODO
 //		Ordinal w_pow = Ordinal.ONE;
 //		for (int i = mParts.length - 1; i >= 0; --i) {

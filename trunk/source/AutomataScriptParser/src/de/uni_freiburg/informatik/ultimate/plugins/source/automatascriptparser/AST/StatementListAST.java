@@ -49,6 +49,7 @@ public class StatementListAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = 4839521364713345580L;
 
+	@Override
 	public Class<?> getReturnType() {
 		throw new RuntimeException("StatementList does not have and does not need any type!");
 	}
@@ -65,8 +66,8 @@ public class StatementListAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder();
-		for (AtsASTNode n : mchildren) {
+		final StringBuilder builder = new StringBuilder();
+		for (final AtsASTNode n : mchildren) {
 			builder.append(n.getAsString() + ";\n");
 		}
 		return builder.toString();

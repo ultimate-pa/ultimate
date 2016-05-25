@@ -36,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 
 public class ReachDefBoogieAnnotator {
 
-	private ReachDefBoogieVisitor mVisitor;
+	private final ReachDefBoogieVisitor mVisitor;
 
-	private Collection<ReachDefStatementAnnotation> mPredecessors;
-	private ReachDefStatementAnnotation mCurrent;
+	private final Collection<ReachDefStatementAnnotation> mPredecessors;
+	private final ReachDefStatementAnnotation mCurrent;
 	private final ILogger mLogger;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
@@ -63,7 +63,7 @@ public class ReachDefBoogieAnnotator {
 	 * @throws Throwable
 	 */
 	public boolean annotate(Statement stmt, TransFormula transFormula) throws Throwable {
-		ReachDefBaseAnnotation old = mCurrent.clone();
+		final ReachDefBaseAnnotation old = mCurrent.clone();
 		union(mCurrent, mPredecessors);
 
 		if (mLogger.isDebugEnabled()) {
@@ -91,7 +91,7 @@ public class ReachDefBoogieAnnotator {
 		assert previousRDs != null;
 		assert current != null;
 
-		for (ReachDefStatementAnnotation pre : previousRDs) {
+		for (final ReachDefStatementAnnotation pre : previousRDs) {
 			if (pre == current) {
 				continue;
 			}

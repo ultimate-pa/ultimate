@@ -60,7 +60,7 @@ public enum BoolValue {
 	 * @return Union
 	 */
 	public BoolValue union(final BoolValue other) {
-		return values()[this.ordinal() | other.ordinal()];
+		return values()[ordinal() | other.ordinal()];
 	}
 	
 	/**
@@ -69,7 +69,7 @@ public enum BoolValue {
 	 * @return Intersection
 	 */
 	public BoolValue intersect(final BoolValue other) {
-		return values()[this.ordinal() & other.ordinal()];
+		return values()[ordinal() & other.ordinal()];
 	}
 
 	/**
@@ -92,7 +92,7 @@ public enum BoolValue {
 		if (this == BOT || other == BOT) {
 			return BOT;
 		}
-		final int thisBitField = this.ordinal();
+		final int thisBitField = ordinal();
 		final int otherBitField = other.ordinal();
 		final int xAndY = (thisBitField & otherBitField) | ((thisBitField | otherBitField) & 0b01);
 		return values()[xAndY];
@@ -108,7 +108,7 @@ public enum BoolValue {
 		if (this == BOT || other == BOT) {
 			return BOT;
 		}
-		final int thisBitField = this.ordinal();
+		final int thisBitField = ordinal();
 		final int otherBitField = other.ordinal();
 		final int xOrY = ((thisBitField | otherBitField) & 0b10) | (thisBitField & otherBitField);
 		return values()[xOrY];

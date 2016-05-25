@@ -51,7 +51,7 @@ public class SafetyCheckTestResultDecider_Overflow extends SafetyCheckTestResult
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		Map<String, SafetyCheckerOverallResult> emptyMap = Collections.emptyMap();
+		final Map<String, SafetyCheckerOverallResult> emptyMap = Collections.emptyMap();
 		return new KeywordBasedExpectedResultFinder<SafetyCheckerOverallResult>(
 				emptyMap, null,
 				emptyMap);

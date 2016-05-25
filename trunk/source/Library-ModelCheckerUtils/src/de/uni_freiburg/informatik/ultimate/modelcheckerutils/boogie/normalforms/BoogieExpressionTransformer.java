@@ -185,7 +185,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		while (!open.isEmpty()) {
 			final Expression current = open.removeLast();
 			if (current instanceof BinaryExpression) {
-				BinaryExpression candidate = (BinaryExpression) current;
+				final BinaryExpression candidate = (BinaryExpression) current;
 				if (candidate.getOperator() == currentOp) {
 					open.add(candidate.getLeft());
 					open.add(candidate.getRight());

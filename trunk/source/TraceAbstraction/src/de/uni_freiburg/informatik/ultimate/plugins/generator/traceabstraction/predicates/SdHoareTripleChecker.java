@@ -162,12 +162,12 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			if (unknownCoverage) {
 				return Validity.UNKNOWN;
 			}
-			boolean isInductiveSelfloop = this.isInductiveSefloop(preLin, preHier, act, succ);
+			final boolean isInductiveSelfloop = isInductiveSefloop(preLin, preHier, act, succ);
 			if (isInductiveSelfloop) {
 				return Validity.VALID;
 			}
 			if (SmtUtils.isFalse(succ.getFormula())) {
-				Validity toFalse = this.sdecToFalse(preLin, preHier, act);
+				final Validity toFalse = sdecToFalse(preLin, preHier, act);
 				if (toFalse == null) {
 					// do nothing an continue with other checks
 				} else {

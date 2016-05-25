@@ -3,12 +3,28 @@
 
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextArea;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 
-import java.util.*;
-import java.awt.*;
-import java.awt.event.*;
+import jdd.bdd.BDD;
+import jdd.bdd.CacheBase;
+import jdd.bdd.NodeTable;
+import jdd.util.JDDConsole;
+import jdd.util.PrintTarget;
+import jdd.util.TextAreaTarget;
 
 /**
  * This class will report BDD statistics suing a minimalistic GUI.
@@ -29,10 +45,10 @@ public class BDDDebugFrame
 
 	private static final int SLEEP_TIME = 1000;
 
-	private NodeTable nodetable;
-	private Thread thread;
+	private final NodeTable nodetable;
+	private final Thread thread;
 	private boolean stop;
-	private LinkedList list;
+	private final LinkedList list;
 	private Label status;
 	private TextArea statistics;
 
@@ -42,14 +58,14 @@ public class BDDDebugFrame
 
 		this.nodetable = nodetable;
 
-		Collection caches = nodetable.addDebugger(this);
+		final Collection caches = nodetable.addDebugger(this);
 		list = new LinkedList();
 
-		Panel p = new Panel( new GridLayout(3, Math.max(1, caches.size()/3),5,5 ) );
+		final Panel p = new Panel( new GridLayout(3, Math.max(1, caches.size()/3),5,5 ) );
 
-		for (Iterator e = caches.iterator() ; e.hasNext() ;) {
-			CacheBase cb = (CacheBase) e.next();
-			CacheFrame cf = new CacheFrame(cb);
+		for (final Iterator e = caches.iterator() ; e.hasNext() ;) {
+			final CacheBase cb = (CacheBase) e.next();
+			final CacheFrame cf = new CacheFrame(cb);
 			p.add( cf);
 			list.add(cf);
 		}
@@ -72,6 +88,7 @@ public class BDDDebugFrame
 
 	}
 
+	@Override
 	public void run() {
 		long update = 0;
 		while(!stop) {
@@ -79,11 +96,11 @@ public class BDDDebugFrame
 				Thread.sleep(SLEEP_TIME);
 				status.setText("Update " + ++update);
 
-				for(Iterator it = list.iterator(); it.hasNext(); ) {
-					CacheFrame cf = (CacheFrame) it.next();
+				for(final Iterator it = list.iterator(); it.hasNext(); ) {
+					final CacheFrame cf = (CacheFrame) it.next();
 					cf.repaint();
 				}
-			} catch(Exception _) {
+			} catch(final Exception _) {
 				// also catches NULL pointer expcetion during GC and stuff..
 			}
 		}
@@ -92,8 +109,12 @@ public class BDDDebugFrame
 		status.setText("stopped");
 	}
 
+	@Override
 	public void stop() {
-		if(stop) return; // already stopped
+		if(stop)
+		 {
+			return; // already stopped
+		}
 		stop = true;
 
 
@@ -103,8 +124,8 @@ public class BDDDebugFrame
 		pack();
 
 		// redirect stats to our window
-		TextAreaTarget taa = new TextAreaTarget(statistics);
-		PrintTarget save = JDDConsole.out;
+		final TextAreaTarget taa = new TextAreaTarget(statistics);
+		final PrintTarget save = JDDConsole.out;
 		JDDConsole.out = taa;
 		JDDConsole.out.println("\nPackage statistics:\n==================\n");
 		nodetable.showStats();
@@ -114,12 +135,19 @@ public class BDDDebugFrame
 	}
 	// ---------------------------------------------
 
+	@Override
 	public void windowActivated(WindowEvent e) { }
+	@Override
 	public void windowClosed(WindowEvent e) { }
+	@Override
 	public void windowDeactivated(WindowEvent e) { }
+	@Override
 	public void windowDeiconified(WindowEvent e) { }
+	@Override
 	public void windowIconified(WindowEvent e) { }
+	@Override
 	public void windowOpened(WindowEvent e) { }
+	@Override
 	public void windowClosing(WindowEvent e) {
 		stop = true;
 		setVisible(false);
@@ -128,24 +156,26 @@ public class BDDDebugFrame
 
 	// ---------------------------------------------------------
 	private class CacheFrame extends Canvas {
-		private CacheBase cb;
-		private MiniGraph g1, g2;
+		private final CacheBase cb;
+		private final MiniGraph g1, g2;
 		public CacheFrame(CacheBase cb) {
 			this.cb = cb;
-			this.g1 = new MiniGraph(95, 0, 100);
-			this.g2 = new MiniGraph(95, 0, 100);
+			g1 = new MiniGraph(95, 0, 100);
+			g2 = new MiniGraph(95, 0, 100);
 		}
+		@Override
 		public Dimension getPreferredSize() {
 			return new Dimension(200,90);
 		}
+		@Override
 		public void paint(Graphics g) {
 
-			int h = getHeight();
-			int w = getWidth();
+			final int h = getHeight();
+			final int w = getWidth();
 			g.drawRect(1,1,w-2, h-2);
 
 
-			long accss = cb.getAccessCount();
+			final long accss = cb.getAccessCount();
 			if(accss == 0) {
 					g.drawString(cb.getName() + " unused.", 20, 30 );
 			} else {
@@ -169,21 +199,29 @@ public class BDDDebugFrame
 	// ---------------------------------------------------------
 	private class MiniGraph {
 		private static final int GRAPH_HEIGH = 40;
-		private int [] memory;
-		private int current, size, last;
-		private double min, max;
+		private final int [] memory;
+		private int current;
+		private final int size;
+		private int last;
+		private final double min, max;
 
 		public MiniGraph(int size, double min, double max){
 			this.size = size;
-			this.current = 0;
+			current = 0;
 
-			if(min == max) max++; // dont like div by zero
+			if(min == max)
+			 {
+				max++; // dont like div by zero
+			}
 
-			this.memory = new int[size];
+			memory = new int[size];
 			this.min = min;
 			this.max = max;
 
-			for(int i = 0; i < size; i++) memory[i] = -1; // fill with zeros
+			for(int i = 0; i < size; i++)
+			 {
+				memory[i] = -1; // fill with zeros
+			}
 		}
 		public void add(double v) {
 			// in precent, rounded
@@ -205,13 +243,15 @@ public class BDDDebugFrame
 			int n = current;
 			x0 += size-1;
 			for(int i = 0; i < size; i++) {
-				int p = memory[n];
+				final int p = memory[n];
 				if(p >= 0 & p <= GRAPH_HEIGH) {
 					g.drawLine(x0,y0+p,x0,y0+p+1);
 				}
 				x0--;
 				n--;
-				if(n == -1) n = size -1;
+				if(n == -1) {
+					n = size -1;
+				}
 			}
 			g.setColor(Color.black);
 

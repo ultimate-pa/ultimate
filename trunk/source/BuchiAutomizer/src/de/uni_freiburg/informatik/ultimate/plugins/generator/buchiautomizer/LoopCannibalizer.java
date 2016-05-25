@@ -65,7 +65,7 @@ public class LoopCannibalizer {
 	private final BuchiModGlobalVarManager mbuchiModGlobalVarManager;
 	private final Set<IPredicate> mResultPredicates;
 	private final Set<IPredicate> mOriginalLoopInterpolants;
-	private NestedWord<CodeBlock> mLoop;
+	private final NestedWord<CodeBlock> mLoop;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -90,7 +90,7 @@ public class LoopCannibalizer {
 	}
 
 	private StringBuilder exitMessage() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mOriginalLoopInterpolants.size());
 		sb.append(" predicates before loop cannibalization ");
 		sb.append(mResultPredicates.size());
@@ -101,7 +101,7 @@ public class LoopCannibalizer {
 	private void cannibalize(INTERPOLATION interpolation) {
 		final int startPosition;
 		if (mLoop.isCallPosition(0) && !mLoop.isPendingCall(0)) {
-			int correspondingReturn = mLoop.getReturnPosition(0);
+			final int correspondingReturn = mLoop.getReturnPosition(0);
 			startPosition = correspondingReturn;
 		} else {
 			startPosition = 1;
@@ -109,19 +109,19 @@ public class LoopCannibalizer {
 		int i = startPosition;
 		while (i < mLoop.length() - 1) {
 			if (mLoop.isCallPosition(i) && !mLoop.isPendingCall(i)) {
-				int correspondingReturn = mLoop.getReturnPosition(i);
+				final int correspondingReturn = mLoop.getReturnPosition(i);
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					NestedWord<CodeBlock> before = mLoop.subWord(0, i);
-					NestedWord<CodeBlock> after = mLoop.subWord(i + 1, mLoop.length() - 1);
-					NestedWord<CodeBlock> shifted = after.concatenate(before);
-					InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
-					LBool loopCheck = traceChecker.isCorrect();
+					final NestedWord<CodeBlock> before = mLoop.subWord(0, i);
+					final NestedWord<CodeBlock> after = mLoop.subWord(i + 1, mLoop.length() - 1);
+					final NestedWord<CodeBlock> shifted = after.concatenate(before);
+					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
+					final LBool loopCheck = traceChecker.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
 						loopInterpolants = traceChecker.getInterpolants();
-						Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, loopInterpolants);
+						final Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, loopInterpolants);
 						mResultPredicates.addAll(cannibalized);
 					} else {
 						mLogger.info("termination argument not suffcient for all loop shiftings");
@@ -194,12 +194,12 @@ public class LoopCannibalizer {
 	}
 
 	private boolean codeBlockContainsVarOfHondaPredicate(CodeBlock cb) {
-		Set<BoogieVar> hondaVars = mBspm.getHondaPredicate().getVars();
-		Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
+		final Set<BoogieVar> hondaVars = mBspm.getHondaPredicate().getVars();
+		final Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {
 			return true;
 		}
-		Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
+		final Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
 		if (!Collections.disjoint(hondaVars, outVars)) {
 			return true;
 		}

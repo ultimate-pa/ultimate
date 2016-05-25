@@ -73,9 +73,10 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
+	@Override
 	public LinearInequality generate(Map<RankVar, Term> vars) {
-		LinearInequality li = super.generate(vars);
-		li.setStrict(this.strict);
+		final LinearInequality li = super.generate(vars);
+		li.setStrict(strict);
 		return li;
 	}
 	
@@ -86,9 +87,9 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 */
 	public SupportingInvariant extractSupportingInvariant(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction f = super.extractAffineFunction(val);
-		SupportingInvariant si = new SupportingInvariant(f);
-		si.strict = this.strict;
+		final AffineFunction f = super.extractAffineFunction(val);
+		final SupportingInvariant si = new SupportingInvariant(f);
+		si.strict = strict;
 		return si;
 	}
 }

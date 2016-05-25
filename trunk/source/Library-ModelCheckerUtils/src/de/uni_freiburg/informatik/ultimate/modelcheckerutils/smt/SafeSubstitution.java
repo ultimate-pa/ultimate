@@ -84,7 +84,7 @@ public class SafeSubstitution extends TermTransformer {
 		} else {
 			if (term instanceof QuantifiedFormula) {
 				mScopedSubstitutionMapping.beginScope();
-				QuantifiedFormula qFormula = (QuantifiedFormula) term;
+				final QuantifiedFormula qFormula = (QuantifiedFormula) term;
 				removeQuantifiedVarContainingKeys(qFormula);
 				term = renameQuantifiedVarsThatOccurInValues(qFormula);
 			} else if (term instanceof LetTerm) {
@@ -103,7 +103,7 @@ public class SafeSubstitution extends TermTransformer {
 	 * @return 
 	 */
 	private Term renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
-		Set<TermVariable> toRename = 
+		final Set<TermVariable> toRename = 
 				varsOccuringInValues(qFormula.getVariables(), mScopedSubstitutionMapping);
 		if (toRename.isEmpty()) {
 			return qFormula;
@@ -134,12 +134,12 @@ public class SafeSubstitution extends TermTransformer {
 	 */
 	private void removeQuantifiedVarContainingKeys(QuantifiedFormula qFormula) {
 
-		Iterator<Entry<Term, Term>> it = 
+		final Iterator<Entry<Term, Term>> it = 
 				mScopedSubstitutionMapping.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<Term, Term> entry = it.next();
-			List<TermVariable> quantifiedVars = Arrays.asList(qFormula.getVariables());
-			List<TermVariable> occuringVars = Arrays.asList(entry.getKey().getFreeVars());
+			final Entry<Term, Term> entry = it.next();
+			final List<TermVariable> quantifiedVars = Arrays.asList(qFormula.getVariables());
+			final List<TermVariable> occuringVars = Arrays.asList(entry.getKey().getFreeVars());
 			if (!Collections.disjoint(quantifiedVars, occuringVars)) {
 				it.remove();
 			}
@@ -152,8 +152,8 @@ public class SafeSubstitution extends TermTransformer {
 	 */
 	private static Set<TermVariable> varsOccuringInValues(TermVariable vars[], Map<?,Term> map) {
 		Set<TermVariable> result = null;
-		for (Term term  : map.values()) {
-			for (TermVariable tv : term.getFreeVars()) {
+		for (final Term term  : map.values()) {
+			for (final TermVariable tv : term.getFreeVars()) {
 				if (Arrays.asList(vars).contains(tv)) {
 					result = addToSet(tv,result);
 				}
@@ -222,8 +222,8 @@ public class SafeSubstitution extends TermTransformer {
 	 * substitutions applied to each input Term. 
 	 */
 	public List<Term> transform(List<Term> terms) {
-		ArrayList<Term> result = new ArrayList<Term>();
-		for (Term term : terms) {
+		final ArrayList<Term> result = new ArrayList<Term>();
+		for (final Term term : terms) {
 			result.add(this.transform(term));
 		}
 		return result;

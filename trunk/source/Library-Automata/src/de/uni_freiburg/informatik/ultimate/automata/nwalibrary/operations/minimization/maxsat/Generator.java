@@ -47,17 +47,18 @@ final class Generator {
 	 * Convert a solved instance to a merge relation
 	 */
 	static Partition makeMergeRelation(int numStates, char[] assigned) {
-		UnionFind unionFind = new UnionFind(numStates);
-		EqVarCalc calc = new EqVarCalc(numStates);
+		final UnionFind unionFind = new UnionFind(numStates);
+		final EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assigned.length == calc.getNumEqVars();
 
-		for (int x : assigned)
+		for (final int x : assigned) {
 			assert x == Solver.TRUE || x == Solver.FALSE;
+		}
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
-				int eqVar = calc.eqVar(i, j);
+				final int eqVar = calc.eqVar(i, j);
 				if (assigned[eqVar] == Solver.TRUE) {
 					unionFind.merge(i, j);
 				}
@@ -82,27 +83,29 @@ final class Generator {
 
 		// "assert" that there are no transitions which are never taken
 		{
-			HashSet<Hist> hs = new HashSet<Hist>();
-			for (Hist h : history)
+			final HashSet<Hist> hs = new HashSet<Hist>();
+			for (final Hist h : history) {
 				hs.add(h);
-			for (RTrans x : inNWA.rTrans)
+			}
+			for (final RTrans x : inNWA.rTrans) {
 				assert hs.contains(new Hist(x.src, x.top));
+			}
 		}
 
 		// some "namespace imports"
-		int numStates = inNWA.numStates;
+		final int numStates = inNWA.numStates;
 		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
 		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
 		//@SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
 		//@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
-		boolean[] isFinal = inNWA.isFinal;
-		int numITrans = inNWA.iTrans.length;
-		int numCTrans = inNWA.cTrans.length;
-		int numRTrans = inNWA.rTrans.length;
-		ITrans[] iTrans = inNWA.iTrans.clone();
-		CTrans[] cTrans = inNWA.cTrans.clone();
-		RTrans[] rTrans = inNWA.rTrans.clone();
-		RTrans[] rTransTop = inNWA.rTrans.clone();
+		final boolean[] isFinal = inNWA.isFinal;
+		final int numITrans = inNWA.iTrans.length;
+		final int numCTrans = inNWA.cTrans.length;
+		final int numRTrans = inNWA.rTrans.length;
+		final ITrans[] iTrans = inNWA.iTrans.clone();
+		final CTrans[] cTrans = inNWA.cTrans.clone();
+		final RTrans[] rTrans = inNWA.rTrans.clone();
+		final RTrans[] rTransTop = inNWA.rTrans.clone();
 
 		history = new ArrayList<Hist>(history);
 
@@ -115,64 +118,126 @@ final class Generator {
 		history.sort(Hist::compareLinHier);
 
 		// All "outgoing" transitions, grouped by src, then sorted by (top), sym, dst
-		ArrayList<ArrayList<ITrans>> iTransOut = new ArrayList<ArrayList<ITrans>>();
-		ArrayList<ArrayList<CTrans>> cTransOut = new ArrayList<ArrayList<CTrans>>();
-		ArrayList<ArrayList<RTrans>> rTransOut = new ArrayList<ArrayList<RTrans>>();
+		final ArrayList<ArrayList<ITrans>> iTransOut = new ArrayList<ArrayList<ITrans>>();
+		final ArrayList<ArrayList<CTrans>> cTransOut = new ArrayList<ArrayList<CTrans>>();
+		final ArrayList<ArrayList<RTrans>> rTransOut = new ArrayList<ArrayList<RTrans>>();
 
-		for (int i = 0; i < numStates; i++) iTransOut.add(new ArrayList<ITrans>());
-		for (int i = 0; i < numStates; i++) cTransOut.add(new ArrayList<CTrans>());
-		for (int i = 0; i < numStates; i++) rTransOut.add(new ArrayList<RTrans>());
+		for (int i = 0; i < numStates; i++) {
+			iTransOut.add(new ArrayList<ITrans>());
+		}
+		for (int i = 0; i < numStates; i++) {
+			cTransOut.add(new ArrayList<CTrans>());
+		}
+		for (int i = 0; i < numStates; i++) {
+			rTransOut.add(new ArrayList<RTrans>());
+		}
 
-		for (int i = 0; i < numITrans; i++) iTransOut.get(iTrans[i].src).add(iTrans[i]);
-		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
-		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
+		for (int i = 0; i < numITrans; i++) {
+			iTransOut.get(iTrans[i].src).add(iTrans[i]);
+		}
+		for (int i = 0; i < numCTrans; i++) {
+			cTransOut.get(cTrans[i].src).add(cTrans[i]);
+		}
+		for (int i = 0; i < numRTrans; i++) {
+			rTransOut.get(rTrans[i].src).add(rTrans[i]);
+		}
 
-		IntArray[] iSet = new IntArray[numStates];
-		IntArray[] cSet = new IntArray[numStates];
-		IntArray[] rSet = new IntArray[numStates];
-		IntArray[] rTop = new IntArray[numStates];
-		IntArray[] hSet = new IntArray[numStates];
+		final IntArray[] iSet = new IntArray[numStates];
+		final IntArray[] cSet = new IntArray[numStates];
+		final IntArray[] rSet = new IntArray[numStates];
+		final IntArray[] rTop = new IntArray[numStates];
+		final IntArray[] hSet = new IntArray[numStates];
 
-		for (int i = 0; i < numStates; i++) iSet[i] = new IntArray();
-		for (int i = 0; i < numStates; i++) cSet[i] = new IntArray();
-		for (int i = 0; i < numStates; i++) rSet[i] = new IntArray();
-		for (int i = 0; i < numStates; i++) rTop[i] = new IntArray();
-		for (int i = 0; i < numStates; i++) hSet[i] = new IntArray();
+		for (int i = 0; i < numStates; i++) {
+			iSet[i] = new IntArray();
+		}
+		for (int i = 0; i < numStates; i++) {
+			cSet[i] = new IntArray();
+		}
+		for (int i = 0; i < numStates; i++) {
+			rSet[i] = new IntArray();
+		}
+		for (int i = 0; i < numStates; i++) {
+			rTop[i] = new IntArray();
+		}
+		for (int i = 0; i < numStates; i++) {
+			hSet[i] = new IntArray();
+		}
 
-		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) iSet[iTrans[i].src].add(iTrans[i].sym);
-		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) cSet[cTrans[i].src].add(cTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) rSet[rTrans[i].src].add(rTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) rTop[rTransTop[i].src].add(rTransTop[i].top);
+		for (int i = 0; i < numITrans; i++) {
+			if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) {
+				iSet[iTrans[i].src].add(iTrans[i].sym);
+			}
+		}
+		for (int i = 0; i < numCTrans; i++) {
+			if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) {
+				cSet[cTrans[i].src].add(cTrans[i].sym);
+			}
+		}
+		for (int i = 0; i < numRTrans; i++) {
+			if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) {
+				rSet[rTrans[i].src].add(rTrans[i].sym);
+			}
+		}
+		for (int i = 0; i < numRTrans; i++) {
+			if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) {
+				rTop[rTransTop[i].src].add(rTransTop[i].top);
+			}
+		}
 
 		{
 			// make the hSet, i.e. those history states except bottom-of-stack
 			// symbol which are not in the outgoing return transitions as
 			// top-of-stack symbol.
 			int i = 0;
-			for (Hist h : history) {
-				for (; i < numRTrans; i++)
+			for (final Hist h : history) {
+				for (; i < numRTrans; i++) {
 					if (h.lin < rTransTop[i].src
-							|| (h.lin == rTransTop[i].src && h.hier <= rTransTop[i].top))
+							|| (h.lin == rTransTop[i].src && h.hier <= rTransTop[i].top)) {
 						break;
+					}
+				}
 				if (i == numRTrans
 						|| h.lin < rTransTop[i].src
-						|| (h.lin == rTransTop[i].src && h.hier < rTransTop[i].top))
-					if (h.hier >= 0) // could be bottom-of-stack (-1)
+						|| (h.lin == rTransTop[i].src && h.hier < rTransTop[i].top)) {
+					if (h.hier >= 0) {
 						hSet[h.lin].add(h.hier);
+					}
+				}
 			}
 		}
 
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < iSet[i].size(); j++) assert j == 0 || iSet[i].get(j) > iSet[i].get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < cSet[i].size(); j++) assert j == 0 || cSet[i].get(j) > cSet[i].get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < rSet[i].size(); j++) assert j == 0 || rSet[i].get(j) > rSet[i].get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < rTop[i].size(); j++) assert j == 0 || rTop[i].get(j) > rTop[i].get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < hSet[i].size(); j++) assert j == 0 || hSet[i].get(j) > hSet[i].get(j-1);
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < iSet[i].size(); j++) {
+				assert j == 0 || iSet[i].get(j) > iSet[i].get(j-1);
+			}
+		}
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < cSet[i].size(); j++) {
+				assert j == 0 || cSet[i].get(j) > cSet[i].get(j-1);
+			}
+		}
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < rSet[i].size(); j++) {
+				assert j == 0 || rSet[i].get(j) > rSet[i].get(j-1);
+			}
+		}
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < rTop[i].size(); j++) {
+				assert j == 0 || rTop[i].get(j) > rTop[i].get(j-1);
+			}
+		}
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < hSet[i].size(); j++) {
+				assert j == 0 || hSet[i].get(j) > hSet[i].get(j-1);
+			}
+		}
 
 		// group rTrans by src and sym
-		HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
+		final HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
 
-		for (RTrans x : rTrans) {
-			SrcSym srcsym = new SrcSym(x.src, x.sym);
+		for (final RTrans x : rTrans) {
+			final SrcSym srcsym = new SrcSym(x.src, x.sym);
 			ArrayList<RTrans> a = bySrcSym.get(srcsym);
 			if (a == null) {
 				a = new ArrayList<RTrans>();
@@ -187,18 +252,18 @@ final class Generator {
 		 *
 		 */
 
-		EqVarCalc calc = new EqVarCalc(numStates);
-		Horn3ArrayBuilder builder = new Horn3ArrayBuilder(calc.getNumEqVars());
+		final EqVarCalc calc = new EqVarCalc(numStates);
+		final Horn3ArrayBuilder builder = new Horn3ArrayBuilder(calc.getNumEqVars());
 
 		for (int i = 0; i < numStates; i++) {
-			int eq1 = calc.eqVar(i, i);
+			final int eq1 = calc.eqVar(i, i);
 			builder.addClauseT(eq1);
 		}
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
-					int eq1 = calc.eqVar(i, j);
+					final int eq1 = calc.eqVar(i, j);
 					builder.addClauseF(eq1);
 				}
 			}
@@ -206,24 +271,25 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i; j < numStates; j++) {
-				int eq1 = calc.eqVar(i, j);
+				final int eq1 = calc.eqVar(i, j);
 
-				if (builder.isAlreadyFalse(eq1))
+				if (builder.isAlreadyFalse(eq1)) {
 					continue;
+				}
 
 				if (!iSet[i].equals(iSet[j]) || !cSet[i].equals(cSet[j])) {
 					builder.addClauseF(eq1);
 				} else {
 					// rule 1
 					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
-						ITrans t1 = iTransOut.get(i).get(x);
-						ITrans t2 = iTransOut.get(j).get(y);
+						final ITrans t1 = iTransOut.get(i).get(x);
+						final ITrans t2 = iTransOut.get(j).get(y);
 						if (t1.sym < t2.sym) {
 							x++;
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq2 = calc.eqVar(t1.dst, t2.dst);
+							final int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
 							y++;
@@ -231,14 +297,14 @@ final class Generator {
 					}
 					// rule 2
 					for (int x = 0, y = 0; x < cTransOut.get(i).size() && y < cTransOut.get(j).size();) {
-						CTrans t1 = cTransOut.get(i).get(x);
-						CTrans t2 = cTransOut.get(j).get(y);
+						final CTrans t1 = cTransOut.get(i).get(x);
+						final CTrans t2 = cTransOut.get(j).get(y);
 						if (t1.sym < t2.sym) {
 							x++;
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq2 = calc.eqVar(t1.dst, t2.dst);
+							final int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
 							y++;
@@ -246,24 +312,24 @@ final class Generator {
 					}
 				}
 				// rule 3
-				for (int k : rTop[i]) {
-					for (int l : hSet[j]) {
-						int eq2 = calc.eqVar(k, l);
+				for (final int k : rTop[i]) {
+					for (final int l : hSet[j]) {
+						final int eq2 = calc.eqVar(k, l);
 						builder.addClauseFF(eq1, eq2);
 					}
 				}
-				for (int k : hSet[i]) {
-					for (int l : rTop[j]) {
-						int eq2 = calc.eqVar(k, l);
+				for (final int k : hSet[i]) {
+					for (final int l : rTop[j]) {
+						final int eq2 = calc.eqVar(k, l);
 						builder.addClauseFF(eq1, eq2);
 					}
 				}
-				for (int s1 : rSet[i]) {
-					for (int s2 : rSet[j]) {
-						for (RTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
-							for (RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
-								int eq2 = calc.eqVar(t1.top, t2.top);
-								int eq3 = calc.eqVar(t1.dst, t2.dst);
+				for (final int s1 : rSet[i]) {
+					for (final int s2 : rSet[j]) {
+						for (final RTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
+							for (final RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
+								final int eq2 = calc.eqVar(t1.top, t2.top);
+								final int eq3 = calc.eqVar(t1.dst, t2.dst);
 								builder.addClauseFFT(eq1, eq2, eq3);
 							}
 						}
@@ -283,28 +349,32 @@ final class Generator {
 		 * visited.
 		 */
 
-		IntArray[] possible = new IntArray[numStates];
-
-		for (int i = 0; i < numStates; i++)
-			possible[i] = new IntArray();
-
-		for (int i = 0; i < numStates; i++)
-			for (int j = 0; j < numStates; j++)
-				if (!builder.isAlreadyFalse(calc.eqVar(i, j)))
-					possible[i].add(j);
+		final IntArray[] possible = new IntArray[numStates];
 
 		for (int i = 0; i < numStates; i++) {
-			for (int j : possible[i]) {
-				int eq1 = calc.eqVar(i, j);
-				for (int k : possible[j]) {
-					int eq2 = calc.eqVar(j, k);
-					int eq3 = calc.eqVar(i, k);
+			possible[i] = new IntArray();
+		}
+
+		for (int i = 0; i < numStates; i++) {
+			for (int j = 0; j < numStates; j++) {
+				if (!builder.isAlreadyFalse(calc.eqVar(i, j))) {
+					possible[i].add(j);
+				}
+			}
+		}
+
+		for (int i = 0; i < numStates; i++) {
+			for (final int j : possible[i]) {
+				final int eq1 = calc.eqVar(i, j);
+				for (final int k : possible[j]) {
+					final int eq2 = calc.eqVar(j, k);
+					final int eq3 = calc.eqVar(i, k);
 					builder.addClauseFFT(eq1, eq2, eq3);
 				}
 			}
 		}
 
-		Horn3Array clauses = builder.extract();
+		final Horn3Array clauses = builder.extract();
 		return clauses;
 	}
 
@@ -316,7 +386,7 @@ final class Generator {
 		private final int n;
 
 		EqVarCalc(int numStates) {
-			this.n = numStates;
+			n = numStates;
 		}
 
 		int getNumEqVars() {
@@ -327,7 +397,9 @@ final class Generator {
 		int eqVar(int a, int b) {
 			assert 0 <= a && a < n;
 			assert 0 <= b && b < n;
-			if (a > b) return eqVar(b, a);
+			if (a > b) {
+				return eqVar(b, a);
+			}
 			// add 2 because 0 and 1 are reserved for const false / const true
 			return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
 		}
@@ -344,10 +416,11 @@ final class Generator {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj == null || !(obj instanceof SrcSym))
+			if (obj == null || !(obj instanceof SrcSym)) {
 				return false;
+			}
 
-			SrcSym b = (SrcSym) obj;
+			final SrcSym b = (SrcSym) obj;
 
 			return src == b.src && sym == b.sym;
 		}

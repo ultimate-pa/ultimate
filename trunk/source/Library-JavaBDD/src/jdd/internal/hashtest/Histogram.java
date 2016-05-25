@@ -3,7 +3,7 @@ package jdd.internal.hashtest;
 
 
 
-import jdd.util.math.*;
+import jdd.util.math.Chi2Test;
 
 public class Histogram {
 	private int size, count;
@@ -32,7 +32,10 @@ public class Histogram {
 	}
 
 	public void resize(int new_size) {
-		if(new_size < 1) return; // error ?
+		if(new_size < 1)
+		 {
+			return; // error ?
+		}
 
 		size = new_size;
 		reset();
@@ -45,8 +48,9 @@ public class Histogram {
 	public int getSize() { return size; }
 	public int getSamples() { return count; }
 	public int getCount(int n) {
-		if(n >= 0 && n < size)
-		return c2t.getDistibution()[n];
+		if(n >= 0 && n < size) {
+			return c2t.getDistibution()[n];
+		}
 		return 0;
 	}
 

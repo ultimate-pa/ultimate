@@ -49,11 +49,11 @@ public class ModelContainer implements Serializable {
 	 */
 	private static final long serialVersionUID = -1957760572620128974L;
 
-	private IElement mGraphRoot;
+	private final IElement mGraphRoot;
 
-	private ModelType mGraphType;
+	private final ModelType mGraphType;
 
-	private String mGraphName;
+	private final String mGraphName;
 
 	protected ModelContainer(IElement rootNode, ModelType type, String name) {
 		mGraphRoot = rootNode;
@@ -74,6 +74,7 @@ public class ModelContainer implements Serializable {
 		return -1;
 	}
 
+	@Override
 	public String toString() {
 		return mGraphType.toString();
 	}
@@ -83,7 +84,7 @@ public class ModelContainer implements Serializable {
 	}
 
 	private void init() {
-		mGraphType.setSize(countNodes(this.mGraphRoot));
+		mGraphType.setSize(countNodes(mGraphRoot));
 	}
 
 	protected void cleanup() {
@@ -115,7 +116,7 @@ public class ModelContainer implements Serializable {
 		} else {
 			if (node instanceof IWalkable) {
 				IElement returnNode = null;
-				for (IElement i : ((IWalkable) node).getSuccessors()) {
+				for (final IElement i : ((IWalkable) node).getSuccessors()) {
 					returnNode = findNode(outerAnnotationKey,
 							innerAnnotationKey, innerAnnotationValue, i);
 					if (returnNode != null) {

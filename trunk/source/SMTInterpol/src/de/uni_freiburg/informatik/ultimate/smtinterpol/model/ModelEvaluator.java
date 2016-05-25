@@ -57,11 +57,11 @@ public class ModelEvaluator extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive engine) {
-			ModelEvaluator eval = (ModelEvaluator) engine;
-			int selector = eval.getConverted();
-			if (selector == -1)
+			final ModelEvaluator eval = (ModelEvaluator) engine;
+			final int selector = eval.getConverted();
+			if (selector == -1) {
 				eval.setResult(-1);
-			else {
+			} else {
 				eval.pushTerm(mIte.getParameters()
 						[selector == eval.mModel.getBoolSortInterpretation()
 						.getTrueIdx() ? 1 : 2]);
@@ -79,7 +79,7 @@ public class ModelEvaluator extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive engine) {
-			ModelEvaluator eval = (ModelEvaluator) engine;
+			final ModelEvaluator eval = (ModelEvaluator) engine;
 			eval.mCache.put(mTerm, eval.mEvaluated.peekLast());
 		}
 		
@@ -94,8 +94,8 @@ public class ModelEvaluator extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive engine) {
-			ModelEvaluator eval = (ModelEvaluator) engine;
-			int[] args = eval.getConvertedArgs(mTerm.getParameters().length);
+			final ModelEvaluator eval = (ModelEvaluator) engine;
+			final int[] args = eval.getConvertedArgs(mTerm.getParameters().length);
 			eval.setResult(eval.getValue(mTerm.getFunction(), args, mTerm));
 		}
 		
@@ -109,35 +109,37 @@ public class ModelEvaluator extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker) {
-			ModelEvaluator eval = (ModelEvaluator) walker;
-			Integer cached = eval.mCache.get(mTerm);
+			final ModelEvaluator eval = (ModelEvaluator) walker;
+			final Integer cached = eval.mCache.get(mTerm);
 			if (cached == null) {
 				eval.enqueueWalker(new AddToCache(mTerm));
 				super.walk(walker);
-			} else
-				eval.setResult(cached);	
+			} else {
+				eval.setResult(cached);
+			}	
 		}
 		
 		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
-			if (!term.getSort().isNumericSort())
+			if (!term.getSort().isNumericSort()) {
 				throw new InternalError(
 						"Don't know how to evaluate this: " + term);
-			ModelEvaluator eval = (ModelEvaluator) walker;
-			NumericSortInterpretation numSorts =
+			}
+			final ModelEvaluator eval = (ModelEvaluator) walker;
+			final NumericSortInterpretation numSorts =
 					eval.mModel.getNumericSortInterpretation();
 			Rational val;
 			if (term.getValue() instanceof BigInteger) {
 				val = Rational.valueOf(
 						(BigInteger) term.getValue(), BigInteger.ONE); 
 			} else if (term.getValue() instanceof BigDecimal) {
-				BigDecimal decimal = (BigDecimal) term.getValue();
+				final BigDecimal decimal = (BigDecimal) term.getValue();
 				if (decimal.scale() <= 0) {
-					BigInteger num = decimal.toBigInteger();
+					final BigInteger num = decimal.toBigInteger();
 					val = Rational.valueOf(num, BigInteger.ONE);
 				} else {
-					BigInteger num = decimal.unscaledValue();
-					BigInteger denom = BigInteger.TEN.pow(decimal.scale());
+					final BigInteger num = decimal.unscaledValue();
+					final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
 					val = Rational.valueOf(num, denom);
 				}
 			} else {
@@ -149,13 +151,13 @@ public class ModelEvaluator extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			ModelEvaluator eval = (ModelEvaluator) walker;
+			final ModelEvaluator eval = (ModelEvaluator) walker;
 			eval.enqueueWalker(new CachedEvaluator(term.getSubterm()));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			ModelEvaluator eval = (ModelEvaluator) walker;
+			final ModelEvaluator eval = (ModelEvaluator) walker;
 			if (term.getFunction().getName().equals("ite")) {
 				eval.enqueueWalker(new ITESelector(term));
 				eval.pushTerm(term.getParameters()[0]);
@@ -193,20 +195,23 @@ public class ModelEvaluator extends NonRecursive {
 	}
 	
 	public int getValue(FunctionSymbol fs, int[] args, ApplicationTerm term) {
-		if (fs.isInterpreted())
+		if (fs.isInterpreted()) {
 			return interpret(fs, args, term);
+		}
 		return evalFunction(fs, args);
 	}
 
 	public void pushTerms(Term[] terms) {
-		for (int i = terms.length - 1; i >= 0; i--)
+		for (int i = terms.length - 1; i >= 0; i--) {
 			pushTerm(terms[i]);
+		}
 	}
 
 	public int[] getConvertedArgs(int length) {
-		int[] result = new int[length];
-		while (--length >= 0)
+		final int[] result = new int[length];
+		while (--length >= 0) {
 			result[length] = getConverted();
+		}
 		return result;
 	}
 
@@ -227,7 +232,7 @@ public class ModelEvaluator extends NonRecursive {
 	public Term evaluate(Term input) {
 		try {
 			run(new CachedEvaluator(input));
-			int res = getConverted();
+			final int res = getConverted();
 			return mModel.toModelTerm(res, input.getSort());
 		} finally {
 			reset();
@@ -236,38 +241,44 @@ public class ModelEvaluator extends NonRecursive {
 	
 	private int evalFunction(FunctionSymbol fs, int... args) {
 		FunctionValue val = mModel.getFunctionValue(fs);
-		if (val == null)
+		if (val == null) {
 			val = mModel.map(fs, 0);
+		}
 		return val.get(args, mModel.isPartialModel());
 	}
 	
 	private int interpret(FunctionSymbol fun, int[] args,
 			ApplicationTerm term) {
-		if (fun.isModelValue())
+		if (fun.isModelValue()) {
 			return Integer.parseInt(fun.getName().substring(1));
-		Theory theory = mModel.getTheory();
-		if (fun == theory.mTrue.getFunction())
+		}
+		final Theory theory = mModel.getTheory();
+		if (fun == theory.mTrue.getFunction()) {
 			return mModel.getTrueIdx();
-		if (fun == theory.mFalse.getFunction())
+		}
+		if (fun == theory.mFalse.getFunction()) {
 			return mModel.getFalseIdx();
+		}
 		if (fun == theory.mAnd) {
 			int res = args[0];
-			for (int arg : args) {
-				if (arg == -1)
+			for (final int arg : args) {
+				if (arg == -1) {
 					res = -1;
-				else if (arg == mModel.getFalseIdx())
+				} else if (arg == mModel.getFalseIdx()) {
 					return arg;
+				}
 				assert (arg == -1 || arg == mModel.getTrueIdx());
 			}
 			return res;
 		}
 		if (fun == theory.mOr) {
 			int res = args[0];
-			for (int arg : args) {
-				if (arg == -1)
+			for (final int arg : args) {
+				if (arg == -1) {
 					res = arg;
-				else if (arg == mModel.getTrueIdx())
+				} else if (arg == mModel.getTrueIdx()) {
 					return arg;
+				}
 				assert (arg == -1 || arg == mModel.getFalseIdx());
 			}
 			return res;
@@ -275,19 +286,23 @@ public class ModelEvaluator extends NonRecursive {
 		if (fun == theory.mImplies) {
 			int val = args[args.length - 1];
 			for (int i = args.length - 2; i >= 0; --i) {
-				int argi = args[i];
-				if (val == mModel.getTrueIdx() || argi == mModel.getFalseIdx())
+				final int argi = args[i];
+				if (val == mModel.getTrueIdx() || argi == mModel.getFalseIdx()) {
 					val = mModel.getTrueIdx();
-				else if (!(argi == mModel.getTrueIdx()
+				} else if (!(argi == mModel.getTrueIdx()
 						&& val == mModel.getFalseIdx()))
+				 {
 					val = -1; // There is at least one undefined
+				}
 			}
 			return val;
 		}
 		// Propagate undefined
-		for (int arg : args)
-			if (arg == -1)
+		for (final int arg : args) {
+			if (arg == -1) {
 				return arg;
+			}
+		}
 		if (fun == theory.mNot) {
 			return args[0] == mModel.getTrueIdx()
 					? mModel.getFalseIdx() : mModel.getTrueIdx();
@@ -295,102 +310,116 @@ public class ModelEvaluator extends NonRecursive {
 		if (fun == theory.mXor) {
 			int val = args[0];
 			for (int i = 1; i < args.length; ++i) {
-				int argi = args[i];
+				final int argi = args[i];
 				val = argi == val ? mModel.getFalseIdx() : mModel.getTrueIdx();
 			}
 			return val;
 		}
-		String name = fun.getName();
+		final String name = fun.getName();
 		if (name.equals("=")) {
-			for (int i = 1; i < args.length; ++i)
-				if (args[i] != args[0])
+			for (int i = 1; i < args.length; ++i) {
+				if (args[i] != args[0]) {
 					return mModel.getFalseIdx();
+				}
+			}
 			return mModel.getTrueIdx();
 		}
 		if (name.equals("distinct")) {
-			HashSet<Integer> vals = new HashSet<Integer>();
-			for (int arg : args)
-				if (!vals.add(arg))
+			final HashSet<Integer> vals = new HashSet<Integer>();
+			for (final int arg : args) {
+				if (!vals.add(arg)) {
 					return mModel.getFalseIdx();
+				}
+			}
 			return mModel.getTrueIdx();
 		}
 		if (name.equals("ite")) {
 			assert(args.length == 3);// NOCHECKSTYLE since ite has 3 parameters
-			int selector = args[0];
+			final int selector = args[0];
 			return args[selector + 1];
 		}
 		if (name.equals("+")) {
 			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i)
+			for (int i = 1; i < args.length; ++i) {
 				val = val.add(rationalValue(args[i]));
+			}
 			return mModel.getNumericSortInterpretation().extend(val);
 		}
 		if (name.equals("-")) {
 			Rational val = rationalValue(args[0]);
-			if (args.length == 1)
+			if (args.length == 1) {
 				return mModel.getNumericSortInterpretation().extend(val.negate());
-			else {
-				for (int i = 1; i < args.length; ++i)
+			} else {
+				for (int i = 1; i < args.length; ++i) {
 					val = val.sub(rationalValue(args[i]));
+				}
 				return mModel.getNumericSortInterpretation().extend(val);
 			}
 		}
 		if (name.equals("*")) {
 			Rational val = rationalValue(args[0]);
-			for (int i = 1; i < args.length; ++i)
+			for (int i = 1; i < args.length; ++i) {
 				val = val.mul(rationalValue(args[i]));
+			}
 			return mModel.getNumericSortInterpretation().extend(val);
 		}
 		if (name.equals("/")) {
 			Rational val = rationalValue(args[0]);
 			for (int i = 1; i < args.length; ++i) {
-				Rational divisor = rationalValue(args[i]);
+				final Rational divisor = rationalValue(args[i]);
 				if (divisor.equals(Rational.ZERO)) {
-					FunctionSymbol div0 = theory.getFunction(
+					final FunctionSymbol div0 = theory.getFunction(
 							"@/0", fun.getReturnSort());
-					int idx = mModel.getNumericSortInterpretation().extend(val);
-					int divval = evalFunction(div0, idx);
+					final int idx = mModel.getNumericSortInterpretation().extend(val);
+					final int divval = evalFunction(div0, idx);
 					if (divval == -1)
+					 {
 						return -1; // Propagate undefined
+					}
 					val = rationalValue(divval);
-				} else
+				} else {
 					val = val.div(divisor);
+				}
 			}
 			return mModel.getNumericSortInterpretation().extend(val);
 		}
 		if (name.equals("<=")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) > 0)
+				final Rational arg1 = rationalValue(args[i - 1]);
+				final Rational arg2 = rationalValue(args[i]);
+				if (arg1.compareTo(arg2) > 0) {
 					return mModel.getFalseIdx();
+				}
 			}
 			return mModel.getTrueIdx();
 		}
 		if (name.equals("<")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) >= 0)
+				final Rational arg1 = rationalValue(args[i - 1]);
+				final Rational arg2 = rationalValue(args[i]);
+				if (arg1.compareTo(arg2) >= 0) {
 					return mModel.getFalseIdx();
+				}
 			}
 			return mModel.getTrueIdx();
 		}
 		if (name.equals(">=")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) < 0)
+				final Rational arg1 = rationalValue(args[i - 1]);
+				final Rational arg2 = rationalValue(args[i]);
+				if (arg1.compareTo(arg2) < 0) {
 					return mModel.getFalseIdx();
+				}
 			}
 			return mModel.getTrueIdx();
 		}
 		if (name.equals(">")) {
 			for (int i = 1; i < args.length; ++i) {
-				Rational arg1 = rationalValue(args[i - 1]);
-				Rational arg2 = rationalValue(args[i]);
-				if (arg1.compareTo(arg2) <= 0)
+				final Rational arg1 = rationalValue(args[i - 1]);
+				final Rational arg2 = rationalValue(args[i]);
+				if (arg1.compareTo(arg2) <= 0) {
 					return mModel.getFalseIdx();
+				}
 			}
 			return mModel.getTrueIdx();
 		}
@@ -398,17 +427,19 @@ public class ModelEvaluator extends NonRecursive {
 			// From the standard...
 			Rational val = rationalValue(args[0]);
 			for (int i = 1; i < args.length; ++i) {
-				Rational n = rationalValue(args[i]);
+				final Rational n = rationalValue(args[i]);
 				if (n.equals(Rational.ZERO)) {
-					FunctionSymbol div0 = theory.getFunction(
+					final FunctionSymbol div0 = theory.getFunction(
 							"@div0", fun.getReturnSort());
-					int idx = mModel.getNumericSortInterpretation().extend(val);
-					int divval = evalFunction(div0, idx);
+					final int idx = mModel.getNumericSortInterpretation().extend(val);
+					final int divval = evalFunction(div0, idx);
 					if (divval == -1)
+					 {
 						return -1; // Propagate undefined
+					}
 					val = rationalValue(divval);
 				} else {
-					Rational div = val.div(n);
+					final Rational div = val.div(n);
 					val = n.isNegative() ? div.ceil() : div.floor();
 				}
 			}
@@ -416,13 +447,13 @@ public class ModelEvaluator extends NonRecursive {
 		}
 		if (name.equals("mod")) {
 			assert(args.length == 2);
-			Rational n = rationalValue(args[1]);
+			final Rational n = rationalValue(args[1]);
 			if (n.equals(Rational.ZERO)) {
-				FunctionSymbol div0 = theory.getFunction(
+				final FunctionSymbol div0 = theory.getFunction(
 						"@mod0", fun.getReturnSort());
 				return evalFunction(div0, args[0]);
 			}
-			Rational m = rationalValue(args[0]);
+			final Rational m = rationalValue(args[0]);
 			Rational div = m.div(n);
 			div = n.isNegative() ? div.ceil() : div.floor();
 			return mModel.getNumericSortInterpretation().extend(
@@ -430,21 +461,21 @@ public class ModelEvaluator extends NonRecursive {
 		}
 		if (name.equals("abs")) {
 			assert args.length == 1;
-			Rational arg = rationalValue(args[0]);
+			final Rational arg = rationalValue(args[0]);
 			return mModel.getNumericSortInterpretation().extend(arg.abs());
 		}
 		if (name.equals("divisible")) {
 			assert(args.length == 1);
-			Rational arg = rationalValue(args[0]);
-			BigInteger[] indices = fun.getIndices();
+			final Rational arg = rationalValue(args[0]);
+			final BigInteger[] indices = fun.getIndices();
 			assert(indices.length == 1);
-			Rational rdiv = Rational.valueOf(indices[0], BigInteger.ONE);
+			final Rational rdiv = Rational.valueOf(indices[0], BigInteger.ONE);
 			return arg.div(rdiv).isIntegral()
 					? mModel.getTrueIdx() : mModel.getFalseIdx();
 		}
 		if (name.equals("to_int")) {
 			assert (args.length == 1);
-			Rational arg = rationalValue(args[0]);
+			final Rational arg = rationalValue(args[0]);
 			return mModel.getNumericSortInterpretation().extend(arg.floor());
 		}
 		if (name.equals("to_real")) {
@@ -453,7 +484,7 @@ public class ModelEvaluator extends NonRecursive {
 		}
 		if (name.equals("is_int")) {
 			assert (args.length == 1);
-			Rational arg = rationalValue(args[0]);
+			final Rational arg = rationalValue(args[0]);
 			return arg.isIntegral()
 					? mModel.getTrueIdx() : mModel.getFalseIdx();
 		}
@@ -461,26 +492,27 @@ public class ModelEvaluator extends NonRecursive {
 //		if (name.equals("@/0") || name.equals("@div0") || name.equals("@mod0"))
 //			return evalExecTerm(term, fun, args);
 		if (name.equals("store")) {
-			ArraySortInterpretation array = (ArraySortInterpretation)
+			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
 			ArrayValue storeVal = array.getValue(args[0]);
-			if (storeVal.select(args[1], false) == args[2])
+			if (storeVal.select(args[1], false) == args[2]) {
 				return args[0];
+			}
 			storeVal = storeVal.copy();
 			storeVal.store(args[1], args[2]);
 			return array.value2index(storeVal);
 		}
 		if (name.equals("select")) {
-			ArraySortInterpretation array = (ArraySortInterpretation)
+			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
-			ArrayValue val = array.getValue(args[0]);
+			final ArrayValue val = array.getValue(args[0]);
 			return val.select(args[1], false);
 		}
 		if (name.equals("@diff")) {
-			ArraySortInterpretation array = (ArraySortInterpretation)
+			final ArraySortInterpretation array = (ArraySortInterpretation)
 					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
-			ArrayValue left = array.getValue(args[0]);
-			ArrayValue right = array.getValue(args[1]);
+			final ArrayValue left = array.getValue(args[0]);
+			final ArrayValue right = array.getValue(args[1]);
 			return left.computeDiff(args[1], right);
 		}
 		throw new AssertionError("Unknown internal function!");

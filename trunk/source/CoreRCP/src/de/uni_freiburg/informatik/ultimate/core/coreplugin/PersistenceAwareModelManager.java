@@ -67,9 +67,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class PersistenceAwareModelManager implements IModelManager {
 
-	private Map<ModelType, ModelContainer> mModelMap;
-	private IRepository<String, ModelContainer> mRepository;
-	private ILogger mLogger;
+	private final Map<ModelType, ModelContainer> mModelMap;
+	private final IRepository<String, ModelContainer> mRepository;
+	private final ILogger mLogger;
 	private ModelType mLastAdded;
 
 	public PersistenceAwareModelManager(File repositoryRoot, ILogger logger) {
@@ -77,7 +77,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 		mModelMap = new HashMap<ModelType, ModelContainer>();
 		mLogger = logger;
 		mLogger.info("Repository-Root is: " + repositoryRoot.getAbsolutePath());
-		this.mRepository = new SerializationRepository(repositoryRoot, mLogger);
+		mRepository = new SerializationRepository(repositoryRoot, mLogger);
 	}
 
 	public PersistenceAwareModelManager(String tmp_dir, ILogger logger) {
@@ -101,10 +101,10 @@ public class PersistenceAwareModelManager implements IModelManager {
 			}
 		}
 		if (graphName.contains(", ")) {
-			String fileSep = ", ";
-			String[] names = graphName.split(fileSep);
+			final String fileSep = ", ";
+			final String[] names = graphName.split(fileSep);
 			graphName = "";
-			for (String s : names) {
+			for (final String s : names) {
 				graphName += s.substring(s.lastIndexOf(File.separator) + 1) + fileSep;
 			}
 			graphName = graphName.substring(0, graphName.length() - 2);
@@ -122,11 +122,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	private boolean addItem(ModelContainer vault) {
-		if (this.mModelMap.containsKey(vault.getType())) {
+		if (mModelMap.containsKey(vault.getType())) {
 			mLogger.warn("Model is already present, skipping insertion....");
 			return false;
 		} else {
-			this.mModelMap.put(vault.getType(), vault);
+			mModelMap.put(vault.getType(), vault);
 			mLogger.debug("Inserting " + vault);
 			setLastAdded(vault.getType());
 			return true;
@@ -143,37 +143,38 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 *            The concrete type of graph this node belongs to (should this be calculated or set somehow here ? )
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
+	@Override
 	public boolean addItem(IElement rootNode, ModelType graphtype) {
-		ModelContainer vault = new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode));
+		final ModelContainer vault = new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode));
 		setLastAdded(vault.getType());
 		return this.addItem(vault);
 	}
 
 	@Override
 	public ArrayList<String> getItemNames() {
-		ArrayList<String> names = new ArrayList<String>();
-		for (ModelType t : this.mModelMap.keySet()) {
+		final ArrayList<String> names = new ArrayList<String>();
+		for (final ModelType t : mModelMap.keySet()) {
 			names.add(t.toString());
 		}
-		names.addAll(this.mRepository.listKeys());
+		names.addAll(mRepository.listKeys());
 		return names;
 	}
 
 	@Override
 	public ModelType getLastAdded() {
-		return this.mLastAdded;
+		return mLastAdded;
 	}
 
 	@Override
 	public IElement getRootNode(ModelType graph) throws GraphNotFoundException {
-		ModelContainer container = this.mModelMap.get(graph);
+		ModelContainer container = mModelMap.get(graph);
 		if (container == null) {
 			try {
-				container = this.mRepository.get(graph.toString());
-				this.mModelMap.put(graph, container);
-			} catch (PersistentObjectNotFoundException e) {
+				container = mRepository.get(graph.toString());
+				mModelMap.put(graph, container);
+			} catch (final PersistentObjectNotFoundException e) {
 				throw new GraphNotFoundException(graph, e);
-			} catch (PersistentObjectTypeMismatchException e) {
+			} catch (final PersistentObjectTypeMismatchException e) {
 				mLogger.error("Could not deserialize graph " + graph, e);
 				throw new GraphNotFoundException(graph, e);
 			}
@@ -183,7 +184,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public boolean isEmpty() {
-		return (this.mModelMap.isEmpty() && this.mRepository.isEmpty());
+		return (mModelMap.isEmpty() && mRepository.isEmpty());
 	}
 
 	@Override
@@ -195,7 +196,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 			mRepository.addOrReplace(mapEntry.getKey().toString(), mapEntry.getValue());
 		}
 		if (!keepInMemory) {
-			this.removeAll();
+			removeAll();
 		}
 	}
 
@@ -207,10 +208,10 @@ public class PersistenceAwareModelManager implements IModelManager {
 	@Override
 	public void persistExistingGraph(ModelType key, boolean keepInMemory)
 			throws StoreObjectException, GraphNotFoundException {
-		if (this.mModelMap.containsKey(key)) {
-			this.mRepository.addOrReplace(key.toString(), this.mModelMap.get(key));
+		if (mModelMap.containsKey(key)) {
+			mRepository.addOrReplace(key.toString(), mModelMap.get(key));
 			if (!keepInMemory) {
-				this.mModelMap.remove(key);
+				mModelMap.remove(key);
 			}
 		} else {
 			throw new GraphNotFoundException(key);
@@ -220,44 +221,44 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public void removeAll() {
-		this.mModelMap.clear();
+		mModelMap.clear();
 	}
 
 	@Override
 	public boolean removeItem(ModelType graphtype) {
 		boolean successfull = true;
-		if (this.mModelMap.containsKey(graphtype)) {
-			successfull = this.mModelMap.remove(graphtype) != null;
+		if (mModelMap.containsKey(graphtype)) {
+			successfull = mModelMap.remove(graphtype) != null;
 		}
-		return successfull && this.mRepository.remove(graphtype.toString());
+		return successfull && mRepository.remove(graphtype.toString());
 	}
 
 	@Override
 	public boolean removeItem(String id) {
 		boolean successfull = true;
-		ModelType graphType = getInMemoryGraphTypeById(id);
+		final ModelType graphType = getInMemoryGraphTypeById(id);
 		if (graphType != null) {
-			successfull = this.mModelMap.remove(graphType) != null;
+			successfull = mModelMap.remove(graphType) != null;
 		}
-		return successfull && this.mRepository.remove(id);
+		return successfull && mRepository.remove(id);
 	}
 
 	@Override
 	public boolean removeItem(ModelContainer vault) {
-		return this.mModelMap.remove(vault.getType()) != null;
+		return mModelMap.remove(vault.getType()) != null;
 	}
 
 	@Override
 	public ModelType getGraphTypeById(String s) {
-		for (ModelType t : this.mModelMap.keySet()) {
+		for (final ModelType t : mModelMap.keySet()) {
 			if (t.toString().equals(s)) {
 				return t;
 			}
 		}
-		if (this.mRepository.listKeys().contains(s)) {
+		if (mRepository.listKeys().contains(s)) {
 			try {
-				return this.mRepository.get(s).getType();
-			} catch (DataAccessException e) {
+				return mRepository.get(s).getType();
+			} catch (final DataAccessException e) {
 				mLogger.error("Problems deserializing persistent model: ", e);
 			}
 		}
@@ -265,7 +266,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	private ModelType getInMemoryGraphTypeById(String id) {
-		for (ModelType t : this.mModelMap.keySet()) {
+		for (final ModelType t : mModelMap.keySet()) {
 			if (t.toString().equals(id)) {
 				return t;
 			}
@@ -275,18 +276,19 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public ModelType getGraphTypeByGeneratorPluginId(String id) {
-		for (ModelType t : this.mModelMap.keySet()) {
+		for (final ModelType t : mModelMap.keySet()) {
 			if (t.getCreator().equals(id)) {
 				return t;
 			}
 		}
-		for (String keyFromRepos : this.mRepository.listKeys()) {
+		for (final String keyFromRepos : mRepository.listKeys()) {
 			if (keyFromRepos.contains(id)) {
 				try {
-					ModelType graphType = this.mRepository.get(keyFromRepos).getType();
-					if (graphType.getCreator().equals(id))
+					final ModelType graphType = mRepository.get(keyFromRepos).getType();
+					if (graphType.getCreator().equals(id)) {
 						return graphType;
-				} catch (DataAccessException e) {
+					}
+				} catch (final DataAccessException e) {
 					mLogger.error("Problems deserializing persistent model: ", e);
 				}
 			}
@@ -296,14 +298,14 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public void setLastAdded(ModelType lastAdded) {
-		this.mLastAdded = lastAdded;
+		mLastAdded = lastAdded;
 	}
 
 	@Override
 	public void showStatus(String callerName) {
 		mLogger.debug(callerName + " reguests chamber status");
 		int i = 0;
-		for (ModelContainer v : this.mModelMap.values()) {
+		for (final ModelContainer v : mModelMap.values()) {
 			mLogger.debug(
 					"(" + i + ") " + "Name/Type/Size: " + v.getName() + " / " + v.getType() + " / " + v.getSize());
 			i++;
@@ -312,9 +314,9 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public int size() {
-		mLogger.debug("Current MM size is " + mModelMap.size() + ". There are " + this.mRepository.listKeys().size()
+		mLogger.debug("Current MM size is " + mModelMap.size() + ". There are " + mRepository.listKeys().size()
 				+ " models in the repository.");
-		return this.mModelMap.size();
+		return mModelMap.size();
 	}
 
 	@Override

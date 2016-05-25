@@ -55,8 +55,9 @@ class DecoratorIteratorDepthFirstSearch implements Iterator<DecoratorNode> {
 	 *            The root node to start from.
 	 */
 	public DecoratorIteratorDepthFirstSearch(DecoratorNode root) {
-		if (root != null)
+		if (root != null) {
 			stack.add(root);
+		}
 	}
 
 	/*
@@ -83,9 +84,10 @@ class DecoratorIteratorDepthFirstSearch implements Iterator<DecoratorNode> {
 	 */
 	@Override
 	public DecoratorNode next() {
-		if (!hasNext())
+		if (!hasNext()) {
 			throw new NoSuchElementException();
-		DecoratorNode result = stack.pop();
+		}
+		final DecoratorNode result = stack.pop();
 		for (int i = result.getChildren().size() - 1; i >= 0; i--) {
 			stack.add(result.getChildren().get(i));
 		}

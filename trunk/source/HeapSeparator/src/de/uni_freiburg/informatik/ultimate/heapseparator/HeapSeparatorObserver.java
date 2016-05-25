@@ -89,11 +89,11 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 		testSetup(((RootNode) root).getRootAnnot());
 		
 		
-		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
-		RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
+		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
+		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
 		walker.run((RCFGNode) root);
 		
@@ -103,37 +103,37 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	
 	void testSetup(RootAnnot ra) {
 		
-		BoogieVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 		
-		BoogieVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"p", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		BoogieVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"q", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		BoogieVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"#i", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		BoogieVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"#j", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 		
-		BoogieVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m1", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		BoogieVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final BoogieVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m2", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);

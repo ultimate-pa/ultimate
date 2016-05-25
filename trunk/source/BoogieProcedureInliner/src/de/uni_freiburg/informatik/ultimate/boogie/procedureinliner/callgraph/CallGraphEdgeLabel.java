@@ -60,7 +60,7 @@ public class CallGraphEdgeLabel {
 		}
 	} 
 	
-	private String mCalleeProcedureId;
+	private final String mCalleeProcedureId;
 
 	private EdgeType mEdgeType;
 	

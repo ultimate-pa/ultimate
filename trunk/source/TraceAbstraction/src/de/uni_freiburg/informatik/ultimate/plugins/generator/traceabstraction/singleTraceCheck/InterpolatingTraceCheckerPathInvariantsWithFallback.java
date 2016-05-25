@@ -86,7 +86,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	@Override
 	protected void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
-		PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
+		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
 				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
 				super.getPostcondition(), mPredicateUnifier, super.mSmtManager,
 				mModifiedGlobals, mUseNonlinerConstraints, mSolverSettings);

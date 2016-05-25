@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class DebugFileWriterNutz {
 
 	private final ILogger mLogger;
-	private List<List<RCFGEdge>> mPaths;
+	private final List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
@@ -62,17 +62,17 @@ public class DebugFileWriterNutz {
 	}
 
 	public void run() {
-		HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> tmp = new HashMap<>();
+		final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> tmp = new HashMap<>();
 
-		for (List<RCFGEdge> path : mPaths) {
+		for (final List<RCFGEdge> path : mPaths) {
 			if (path.size() > 0) {
-				IWalkable first = path.get(0);
+				final IWalkable first = path.get(0);
 				if (first instanceof RootEdge) {
-					RootEdge r = (RootEdge) first;
+					final RootEdge r = (RootEdge) first;
 					if (!tmp.containsKey(r)) {
 						tmp.put(r, new ArrayList<ArrayList<CodeBlock>>());
 					}
-					ArrayList<CodeBlock> cb = new ArrayList<>();
+					final ArrayList<CodeBlock> cb = new ArrayList<>();
 					for (int i = 1; i < path.size(); ++i) {
 						cb.add((CodeBlock) path.get(i));
 					}
@@ -86,35 +86,35 @@ public class DebugFileWriterNutz {
 
 	private void prepareTraces(int unrollingDepth, HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
 		mLogger.debug("Sorting all traces of each procedure...");
-		HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<RootEdge, TreeSet<String>>();
-		for (Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces.entrySet()) {
-			TreeSet<String> allProcTraces = new TreeSet<String>();
-			for (ArrayList<CodeBlock> trace : en.getValue()) {
-				String traceString = traceToString(trace);
+		final HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<RootEdge, TreeSet<String>>();
+		for (final Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces.entrySet()) {
+			final TreeSet<String> allProcTraces = new TreeSet<String>();
+			for (final ArrayList<CodeBlock> trace : en.getValue()) {
+				final String traceString = traceToString(trace);
 				allProcTraces.add("--------\n" + traceString);
 			}
 			procToTraceStrings.put(en.getKey(), allProcTraces);
 		}
 		mLogger.debug("Writing all traces of Main to file...");
 		try {
-			for (Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
-				String currentFileName = Paths
+			for (final Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
+				final String currentFileName = Paths
 						.get(((ProgramPoint) en.getKey().getTarget()).getPayload().getLocation().getFileName())
 						.getFileName().toString();
-				String currentMethodName = ((ProgramPoint) en.getKey().getTarget()).getProcedure();
-				String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_" + "_n_is_"
+				final String currentMethodName = ((ProgramPoint) en.getKey().getTarget()).getProcedure();
+				final String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_" + "_n_is_"
 						+ unrollingDepth + "_" + ".txt";
 
 				writeLargerTextFile(sFolderPath + filename, en.getValue());
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	private String traceToString(ArrayList<CodeBlock> trace) {
-		StringBuilder sb = new StringBuilder();
-		for (CodeBlock cb : trace) {
+		final StringBuilder sb = new StringBuilder();
+		for (final CodeBlock cb : trace) {
 			sb.append(cb.getPrettyPrintedStatements());
 			sb.append("\n");
 		}
@@ -122,10 +122,10 @@ public class DebugFileWriterNutz {
 	}
 
 	private void writeLargerTextFile(String aFileName, TreeSet<String> traces) throws IOException {
-		Path path = Paths.get(aFileName);
+		final Path path = Paths.get(aFileName);
 		mLogger.debug("Writing " + path.toString());
 		try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-			for (String line : traces) {
+			for (final String line : traces) {
 				writer.write(line);
 				writer.newLine();
 			}

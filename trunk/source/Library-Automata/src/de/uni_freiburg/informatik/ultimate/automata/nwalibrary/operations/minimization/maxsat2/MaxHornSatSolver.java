@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 /**
  * MAX-SAT solver for Horn clauses.
@@ -95,7 +95,7 @@ public class MaxHornSatSolver<V> {
 	 * used in Horn clauses.
 	 */
 	public void addVariable(V var) {
-		VariableStatus oldValue = mVariables.put(var, VariableStatus.UNSET);
+		final VariableStatus oldValue = mVariables.put(var, VariableStatus.UNSET);
 		if (oldValue != null) {
 			throw new IllegalArgumentException("variable already added " + var);
 		}
@@ -136,10 +136,10 @@ public class MaxHornSatSolver<V> {
 				throw new UnsupportedOperationException("clause set is equivalent to false");
 			} else  {
 				assert clause.getUnsetAtoms() > 0;
-				for (V var :clause.getNegativeAtoms()) {
+				for (final V var :clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
 				}
-				for (V var :clause.getPositiveAtoms()) {
+				for (final V var :clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
 				}
 				if (clause.getUnsetAtoms() == 1) {
@@ -166,7 +166,7 @@ public class MaxHornSatSolver<V> {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Clauses: ").append(mClauses);
 		sb.append(" (thereof " + mTrivialClauses + " trivial clauses)");
 		sb.append(" MaxLiveClauses: ").append(mMaxLiveClauses);
@@ -186,8 +186,8 @@ public class MaxHornSatSolver<V> {
 
 	private void decideOne() {
 		mDecisions++;
-		Iterator<V> it = mUnsetVariables.iterator();
-		V var = it.next();
+		final Iterator<V> it = mUnsetVariables.iterator();
+		final V var = it.next();
 		it.remove();
 		setVariable(var, true, false);
 		if (mConjunctionEquivalentToFalse) {
@@ -250,7 +250,7 @@ public class MaxHornSatSolver<V> {
 			}
 		}
 		mUnsetVariables.remove(var);
-		for (Clause clause : mOccursPositive.getImage(var)) {
+		for (final Clause clause : mOccursPositive.getImage(var)) {
 			clause.updateClauseStatus();
 			if (clause.isEquivalentToFalse()) {
 				mConjunctionEquivalentToFalse = true;
@@ -265,7 +265,7 @@ public class MaxHornSatSolver<V> {
 				}
 			}
 		}
-		for (Clause clause : mOccursNegative.getImage(var)) {
+		for (final Clause clause : mOccursNegative.getImage(var)) {
 			clause.updateClauseStatus();
 			if (clause.isEquivalentToFalse()) {
 				mConjunctionEquivalentToFalse = true;
@@ -283,7 +283,7 @@ public class MaxHornSatSolver<V> {
 	}
 	
 	public void removeClauses(Collection<Clause> clauses) {
-		for (Clause clause : clauses) {
+		for (final Clause clause : clauses) {
 			removeClause(clause);
 		}
 		mCurrentLiveClauses = mCurrentLiveClauses - clauses.size();
@@ -292,10 +292,10 @@ public class MaxHornSatSolver<V> {
 
 	public void removeClause(Clause clause) {
 		mClausesWithOneUnsetVariable.remove(clause);
-		for (V var : clause.mPositiveAtoms) {
+		for (final V var : clause.mPositiveAtoms) {
 			mOccursPositive.removePair(var, clause);
 		}
-		for (V var : clause.mNegativeAtoms) {
+		for (final V var : clause.mNegativeAtoms) {
 			mOccursNegative.removePair(var, clause);
 		}
 
@@ -329,8 +329,8 @@ public class MaxHornSatSolver<V> {
 		public void updateClauseStatus() {
 			mClauseStatus = ClauseStatus.NEITHER;
 			mUnsetAtoms = 0;
-			for (V var : mPositiveAtoms) {
-				VariableStatus status = mVariables.get(var);
+			for (final V var : mPositiveAtoms) {
+				final VariableStatus status = mVariables.get(var);
 				switch (status) {
 				case FALSE:
 					// do nothing
@@ -345,8 +345,8 @@ public class MaxHornSatSolver<V> {
 					throw new AssertionError();
 				}
 			}
-			for (V var : mNegativeAtoms) {
-				VariableStatus status = mVariables.get(var);
+			for (final V var : mNegativeAtoms) {
+				final VariableStatus status = mVariables.get(var);
 				switch (status) {
 				case FALSE:
 					mClauseStatus = ClauseStatus.TRUE;
@@ -391,8 +391,8 @@ public class MaxHornSatSolver<V> {
 			if (mUnsetAtoms != 1) {
 				throw new IllegalArgumentException("not only one unset Atom");
 			} else {
-				for (V var : mPositiveAtoms) {
-					VariableStatus status = mVariables.get(var);
+				for (final V var : mPositiveAtoms) {
+					final VariableStatus status = mVariables.get(var);
 					switch (status) {
 					case TRUE:
 					case FALSE:
@@ -404,8 +404,8 @@ public class MaxHornSatSolver<V> {
 						throw new AssertionError();
 					}
 				}
-				for (V var : mNegativeAtoms) {
-					VariableStatus status = mVariables.get(var);
+				for (final V var : mNegativeAtoms) {
+					final VariableStatus status = mVariables.get(var);
 					switch (status) {
 					case TRUE:
 					case FALSE:
@@ -424,7 +424,7 @@ public class MaxHornSatSolver<V> {
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
-			Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
+			final Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
 			while(it.hasNext()) {
 				sb.append(it.next());
 				if (it.hasNext()) {

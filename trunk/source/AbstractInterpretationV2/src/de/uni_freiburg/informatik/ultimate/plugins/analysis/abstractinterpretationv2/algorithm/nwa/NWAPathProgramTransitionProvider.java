@@ -27,8 +27,8 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider
 		implements ITransitionProvider<CodeBlock, ProgramPoint>, ILoopDetector<CodeBlock> {
 
 	private final NestedRun<CodeBlock, ?> mCex;
-	private Map<CodeBlock, Integer> mLetter2Index;
-	private CodeBlock mPostErrorLoc;
+	private final Map<CodeBlock, Integer> mLetter2Index;
+	private final CodeBlock mPostErrorLoc;
 
 	public NWAPathProgramTransitionProvider(final NestedRun<CodeBlock, ?> counterexample,
 			final IUltimateServiceProvider services, final RootAnnot annotation) {

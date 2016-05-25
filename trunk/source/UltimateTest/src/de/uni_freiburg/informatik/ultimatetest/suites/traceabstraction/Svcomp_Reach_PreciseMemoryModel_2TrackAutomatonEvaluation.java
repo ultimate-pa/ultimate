@@ -142,20 +142,20 @@ public class Svcomp_Reach_PreciseMemoryModel_2TrackAutomatonEvaluation extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		
-		for (String setting : mSettings) {
-			for (String toolchain : mBoogieToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mBoogieToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}

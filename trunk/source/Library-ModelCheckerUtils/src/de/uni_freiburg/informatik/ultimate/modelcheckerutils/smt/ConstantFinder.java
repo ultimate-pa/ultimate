@@ -72,7 +72,7 @@ public class ConstantFinder extends NonRecursive {
 			if (SmtUtils.isConstant(term)) {
 				mResult.add(term);
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ConstantFindWalker(t));
 			}
 		}

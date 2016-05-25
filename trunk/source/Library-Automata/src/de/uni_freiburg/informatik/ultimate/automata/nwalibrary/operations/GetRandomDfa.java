@@ -410,9 +410,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		mflags = new HashSet<Integer>(msize - 1);
 
 		mrandom = new Random();
-		int[] dfa = generatePackedRandomDFA();
-		Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
-		Set<Integer> accStates = calcAccStates(dfa, transToDelete);
+		final int[] dfa = generatePackedRandomDFA();
+		final Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
+		final Set<Integer> accStates = calcAccStates(dfa, transToDelete);
 		mresult = extractPackedDFA(dfa, accStates, transToDelete);
 	}
 
@@ -437,10 +437,10 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @return Set of states that should be accepting
 	 */
 	private Set<Integer> calcAccStates(final int[] dfa, Set<Integer> transToDelete) {
-		LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
+		final LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
 				mnumOfAccStates);
 		// Initialize list
-		List<Integer> shuffledStateList = new ArrayList<Integer>(msize);
+		final List<Integer> shuffledStateList = new ArrayList<Integer>(msize);
 		for (int i = 0; i < msize; i++) {
 			shuffledStateList.add(i);
 		}
@@ -457,26 +457,26 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// that
 		// Create a representation of the DFA where every state knows by which
 		// it is reached.
-		List<Set<Integer>> statesReachedBy = new ArrayList<Set<Integer>>(msize);
+		final List<Set<Integer>> statesReachedBy = new ArrayList<Set<Integer>>(msize);
 		for (int i = 0; i < msize; i++) {
 			statesReachedBy.add(new HashSet<Integer>(malphabetSize));
 		}
 		for (int i = 0; i < msize; i++) {
-			int offset = i * malphabetSize;
+			final int offset = i * malphabetSize;
 			// Resulting states are reached by state i
 			for (int j = 0; j < malphabetSize; j++) {
 				//Skip transition if it should not be contained in the final automata
 				if (transToDelete.contains(offset + j)) {
 					continue;
 				}
-				int resultingState = dfa[offset + j];
+				final int resultingState = dfa[offset + j];
 				statesReachedBy.get(resultingState).add(i);
 			}
 		}
 
 		// Initialize set that will contain remaining states that do not reach a
 		// final state
-		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(msize);
+		final LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(msize);
 		/*
 		 * Christian: Detected a bug: This value is not necessarily the size of
 		 * the data structure and caused problems (could become negative).
@@ -491,19 +491,19 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		do {
 			// Search all states that reach final states and remove them from
 			// 'remainingStates'
-			for (int finalState : finalStates) {
+			for (final int finalState : finalStates) {
 				if (!remainingStates.contains(finalState)) {
 					continue;
 				}
-				Queue<Integer> statesToProcess = new LinkedList<Integer>();
+				final Queue<Integer> statesToProcess = new LinkedList<Integer>();
 				statesToProcess.add(finalState);
 				while (!statesToProcess.isEmpty()) {
-					int currState = statesToProcess.poll();
+					final int currState = statesToProcess.poll();
 					remainingStates.remove(currState);
 //					remainingStatesAmount--;
-					Set<Integer> currStateReachedBy = statesReachedBy
+					final Set<Integer> currStateReachedBy = statesReachedBy
 							.get(currState);
-					for (int state : currStateReachedBy) {
+					for (final int state : currStateReachedBy) {
 						if (remainingStates.contains(state)) {
 							statesToProcess.add(state);
 						}
@@ -512,7 +512,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			}
 			// Make one of the remaining states final and repeat until all
 			// states reach final states
-			Iterator<Integer> iterator = remainingStates.iterator();
+			final Iterator<Integer> iterator = remainingStates.iterator();
 			if (remainingStates.size() > 0) {
 //			if (remainingStatesAmount > 0) {
 				int remainingState = NO_STATE;
@@ -558,21 +558,21 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			return new HashSet<Integer>(0);
 		}
 		
-		int amountOfTrans = dfa.length;
+		final int amountOfTrans = dfa.length;
 		int maxAllowedToDelete;
 		if (mensureIsConnected) {
 			//Ensure flag edges are not deleted
-			float percOfFlags = (mflags.size() + 0.0f) / amountOfTrans;
-			maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0.0f) / PERC_FULL) - percOfFlags)
+			final float percOfFlags = (mflags.size() + 0.0f) / amountOfTrans;
+			maxAllowedToDelete = Math.round((((PERC_FULL + 0.0f) / PERC_FULL) - percOfFlags)
 					* amountOfTrans);
 		} else {
 			//All edges are allowed to delete
 			maxAllowedToDelete = amountOfTrans;
 		}
 		
-		int desiredToDelete = (int) Math.round(((PERC_FULL - mpercOfTotality + 0.0f) / PERC_FULL)
+		final int desiredToDelete = Math.round(((PERC_FULL - mpercOfTotality + 0.0f) / PERC_FULL)
 				* amountOfTrans);
-		int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
+		final int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
 		
 		Set<Integer> transToDelete = new HashSet<Integer>(amountToDelete);
 		
@@ -584,7 +584,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		if (!useShuffleVariant) {
 			int counter = 0;
 			while(!useShuffleVariant && transToDelete.size() < amountToDelete) {
-				int transition = mrandom.nextInt(dfa.length);
+				final int transition = mrandom.nextInt(dfa.length);
 				if (mensureIsConnected) {
 					//Don't add flag edges for deletion
 					if (!mflags.contains(transition)) {
@@ -603,7 +603,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 		//Variant 2: Permute a list of all indexes and select the first valid ones
 		if (useShuffleVariant) {
-			List<Integer> transitions = new ArrayList<Integer>(dfa.length - mflags.size());
+			final List<Integer> transitions = new ArrayList<Integer>(dfa.length - mflags.size());
 			for (int i = 0; i < dfa.length; i++) {
 				if (mensureIsConnected) {
 					//Don't add flag edges for deletion
@@ -655,27 +655,27 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	private NestedWordAutomaton<String, String> extractPackedDFA(
 			final int[] dfa, final Set<Integer> accStates,
 			final Set<Integer> transToDelete) {
-		List<String> num2State = new ArrayList<String>(msize);
+		final List<String> num2State = new ArrayList<String>(msize);
 		for (int i = 0; i < msize; ++i) {
 			num2State.add(PREFIX_NODE + i);
 		}
-		String initialState = num2State.get(0);
+		final String initialState = num2State.get(0);
 
-		List<String> num2Letter = new ArrayList<String>(malphabetSize);
+		final List<String> num2Letter = new ArrayList<String>(malphabetSize);
 		for (int i = 0; i < malphabetSize; ++i) {
 			num2Letter.add(PREFIX_TRANSITION + i);
 		}
 
-		StateFactory<String> stateFactory = new StringFactory();
+		final StateFactory<String> stateFactory = new StringFactory();
 		NestedWordAutomaton<String, String> result;
 		result = new NestedWordAutomaton<String, String>(mServices,
 				new HashSet<String>(num2Letter), null, null, stateFactory);
 
 		// Create states
 		for (int i = 0; i < msize; ++i) {
-			String state = num2State.get(i);
-			boolean isAccepting = accStates.contains(i);
-			boolean isInitial = state.equals(initialState);
+			final String state = num2State.get(i);
+			final boolean isAccepting = accStates.contains(i);
+			final boolean isInitial = state.equals(initialState);
 			result.addState(isInitial, isAccepting, state);
 		}
 
@@ -685,14 +685,14 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			if (transToDelete.contains(i)) {
 				continue;
 			}
-			int predStateIndex = (int) Math.floor((i + 0.0) / malphabetSize);
-			int letterIndex = i % malphabetSize;
-			int succStateIndex = dfa[i];
+			final int predStateIndex = (int) Math.floor((i + 0.0) / malphabetSize);
+			final int letterIndex = i % malphabetSize;
+			final int succStateIndex = dfa[i];
 			// Skip transition if it points to a node out of the wished size.
 			// This node is the sink node for non-total DFAs.
-			String predState = num2State.get(predStateIndex);
-			String letter = num2Letter.get(letterIndex);
-			String succState = num2State.get(succStateIndex);
+			final String predState = num2State.get(predStateIndex);
+			final String letter = num2Letter.get(letterIndex);
+			final String succState = num2State.get(succStateIndex);
 
 			result.addInternalTransition(predState, letter, succState);
 		}
@@ -744,7 +744,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 		// Contains the numbers of DFAs including a probability of it where the
 		// first occurrence of 'node' is at position 'index'.
-		BigInteger[] permutationsPerStep = new BigInteger[PRE_SEQUENCE_LENGTH
+		final BigInteger[] permutationsPerStep = new BigInteger[PRE_SEQUENCE_LENGTH
 				- firstPossiblePos];
 
 		int counter = 0;
@@ -803,7 +803,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 		final int SEQUENCE_LENGTH = msize * malphabetSize;
 
-		int[] sequence = new int[SEQUENCE_LENGTH];
+		final int[] sequence = new int[SEQUENCE_LENGTH];
 		int curSequenceIndex = 0;
 
 		// Special case where size == 1
@@ -826,7 +826,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Calculate the flags for each node and generate the sequence from left
 		// to right until all nodes are reached by an edge.
 		for (int i = 1; i <= msize - 1; i++) {
-			int curFlag = generateFlag(i, lastFlag + 1);
+			final int curFlag = generateFlag(i, lastFlag + 1);
 			mflags.add(curFlag);
 			for (int j = lastFlag + 1; j <= curFlag - 1; j++) {
 				// Only use nodes that were already reached
@@ -875,14 +875,14 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            Length of sequence that must be size * alphabetSize
 	 */
 	private void preCalcPermutationsTable(final int sequenceLength) {
-		boolean hasUsableCache = menableCaching && permutationsTable != null
+		final boolean hasUsableCache = menableCaching && permutationsTable != null
 				&& permutationsTable[0] != null
 				&& permutationsTable.length == msize;
 		if (hasUsableCache && permutationsTable[0].length == sequenceLength) {
 			return;
 		}
 
-		BigInteger[][] nextPermutationsTable = new BigInteger[msize][sequenceLength];
+		final BigInteger[][] nextPermutationsTable = new BigInteger[msize][sequenceLength];
 
 		// Calculate the bottom row of the table.
 		for (int i = (msize - 1) * malphabetSize - 1; i >= msize - 2; i--) {
@@ -905,7 +905,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// changes in size and alphabetSize.
 		for (int curNode = msize - 2; curNode >= 1; curNode--) {
 			// Length of the sequence before 'curNode's edges are reached.
-			int preSequenceLength = curNode * malphabetSize;
+			final int preSequenceLength = curNode * malphabetSize;
 
 			// Calculate the rightest entry of the current row using the
 			// diagonal right entry of the bottom row.

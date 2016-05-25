@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -299,7 +299,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		mLogger.debug("Fair Game Graph has " + mGame.getSize() + " vertices.");
 		mGlobalInfinity = mGame.getGlobalInfinity();
 
-		SimulationPerformance performance = super.getSimulationPerformance();
+		final SimulationPerformance performance = super.getSimulationPerformance();
 		performance.startTimeMeasure(ETimeMeasure.OVERALL);
 		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
@@ -325,19 +325,19 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Merge states
 		mAttemptingChanges = true;
-		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
+		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
+		final Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Size of merge candidates: " + mergeCandidates.size());
 		}
 
-		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
-			STATE leftState = mergeCandidate.getQ0();
-			STATE rightState = mergeCandidate.getQ1();
+		for (final SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
+			final STATE leftState = mergeCandidate.getQ0();
+			final STATE rightState = mergeCandidate.getQ1();
 
 			// Attempt merge
-			FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
 			// Undo if language changed, else do not consider
 			// pair for transition removal
 			if (changes != null) {
@@ -358,7 +358,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// Pair and mirrored pair are no candidates
 				// for transition removal
 				noTransitionCandidates.add(mergeCandidate);
-				SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState, false);
+				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState, false);
 				if (mirroredCandidate != null) {
 					noTransitionCandidates.add(mirroredCandidate);
 				}
@@ -373,20 +373,20 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		}
 
 		// Remove redundant transitions
-		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
+		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
 		}
 
-		for (Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
-			STATE src = transitionCandidate.getFirst();
-			LETTER a = transitionCandidate.getSecond();
-			STATE dest = transitionCandidate.getThird();
-			STATE invoker = transitionCandidate.getFourth();
+		for (final Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
+			final STATE src = transitionCandidate.getFirst();
+			final LETTER a = transitionCandidate.getSecond();
+			final STATE dest = transitionCandidate.getThird();
+			final STATE invoker = transitionCandidate.getFourth();
 
 			// Attempt transition removal
-			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
 			// Undo if language changed, else add transition for removal
 			if (changes != null) {
 				if (mLogger.isDebugEnabled()) {
@@ -427,7 +427,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
@@ -445,8 +445,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
+		final StringBuilder result = new StringBuilder();
+		final String lineSeparator = System.lineSeparator();
 		// Header
 		result.append("FairSimulationResults fsr = (");
 
@@ -462,10 +462,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Progress Measure
 		result.append(lineSeparator + "\tprogress measure = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
 			int localInfinity = mGlobalInfinity;
 			if (isUsingSCCs()) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+				for (final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -474,10 +474,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), pm:"
 					+ vertex.getPM(null, mGlobalInfinity) + " of " + localInfinity + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
 			int localInfinity = mGlobalInfinity;
 			if (isUsingSCCs()) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+				for (final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -490,11 +490,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Best Neighbor Measure
 		result.append(lineSeparator + "\tbest neighbor measure = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), bnm:"
 					+ vertex.getBEff() + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
 					+ "), bnm:" + vertex.getBEff() + ">");
 		}
@@ -502,11 +502,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Neighbor counter
 		result.append(lineSeparator + "\tneighbor counter = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : mGame.getSpoilerVertices()) {
 			result.append(
 					lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : mGame.getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
 					+ "), nc:" + vertex.getC() + ">");
 		}
@@ -539,19 +539,19 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		if (isUsingSCCs()) {
 			mpokedFromNeighborSCC = new HashSet<>();
 			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
-			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(mGame);
+			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
+			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(mGame);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					mLogger, succProvider, sccFactory, mGame.getSize(), mGame.getVertices()));
 
-			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
+			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					getSccComp().getSCCs()).iterator();
 			getSimulationPerformance().stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
-				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
+				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 
-				int infinityOfSCC = calculateInfinityOfSCC(scc);
+				final int infinityOfSCC = calculateInfinityOfSCC(scc);
 
 				mCurrentChanges = changes;
 				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
@@ -591,14 +591,14 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// This is needed since a simulation can be aborted
 		// before working all vertices
 		if (isUsingSCCs()) {
-			for (Vertex<LETTER, STATE> vertex : scc) {
+			for (final Vertex<LETTER, STATE> vertex : scc) {
 				initWorkingListAndCWithVertex(vertex, localInfinity, scc);
 			}
 		} else {
-			for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGame.getSpoilerVertices()) {
+			for (final SpoilerVertex<LETTER, STATE> spoilerVertex : mGame.getSpoilerVertices()) {
 				initWorkingListAndCWithVertex(spoilerVertex, localInfinity, scc);
 			}
-			for (DuplicatorVertex<LETTER, STATE> duplicatorVertex : mGame.getDuplicatorVertices()) {
+			for (final DuplicatorVertex<LETTER, STATE> duplicatorVertex : mGame.getDuplicatorVertices()) {
 				initWorkingListAndCWithVertex(duplicatorVertex, localInfinity, scc);
 			}
 		}
@@ -616,17 +616,17 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @return Buechi states that are candidates for merge.
 	 */
 	private Set<SpoilerVertex<LETTER, STATE>> mergeCandidates() {
-		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = new HashSet<>();
-		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = mGame.getSpoilerVertices();
-		Set<SpoilerVertex<LETTER, STATE>> workedPairs = new HashSet<>();
-		for (SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
+		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = new HashSet<>();
+		final Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = mGame.getSpoilerVertices();
+		final Set<SpoilerVertex<LETTER, STATE>> workedPairs = new HashSet<>();
+		for (final SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
 			if (vertex.getPM(null, mGlobalInfinity) < mGlobalInfinity) {
 				// Skip vertex if it is a trivial simulation
 				if (vertex.getQ0().equals(vertex.getQ1())) {
 					continue;
 				}
 				// Found a one-directed fair simulating pair
-				boolean pairIsNew = workedPairs.add(vertex);
+				final boolean pairIsNew = workedPairs.add(vertex);
 
 				if (pairIsNew && workedPairs.contains(mGame.getSpoilerVertex(vertex.getQ1(), vertex.getQ0(), false))) {
 					// Found a two-directed fair simulating pair
@@ -654,8 +654,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			result = new HashMap<>();
 		}
 
-		for (Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
-			for (STATE state : possibleEquivalentClass) {
+		for (final Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
+			for (final STATE state : possibleEquivalentClass) {
 				result.put(state, possibleEquivalentClass);
 			}
 		}
@@ -681,9 +681,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates(
 			final Set<SpoilerVertex<LETTER, STATE>> exclusiveSet) {
-		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = new HashSet<>();
-		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = mGame.getSpoilerVertices();
-		for (SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
+		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = new HashSet<>();
+		final Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = mGame.getSpoilerVertices();
+		for (final SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
 			if (vertex.getPM(null, mGlobalInfinity) < mGlobalInfinity && !exclusiveSet.contains(vertex)) {
 				// Skip vertex if it is a trivial simulation
 				if (vertex.getQ0().equals(vertex.getQ1())) {
@@ -692,14 +692,14 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 				// Searching for transition
 				// q1 -a-> q2 where q1 -a-> q3 and q3 simulating q2
-				STATE simulatingState = vertex.getQ1();
-				STATE simulatedState = vertex.getQ0();
-				for (IncomingInternalTransition<LETTER, STATE> predTrans : mGame.getAutomaton()
+				final STATE simulatingState = vertex.getQ1();
+				final STATE simulatedState = vertex.getQ0();
+				for (final IncomingInternalTransition<LETTER, STATE> predTrans : mGame.getAutomaton()
 						.internalPredecessors(simulatingState)) {
-					STATE src = predTrans.getPred();
-					LETTER a = predTrans.getLetter();
-					STATE dest = simulatedState;
-					Triple<STATE, LETTER, STATE> transition = new Triple<>(src, a, dest);
+					final STATE src = predTrans.getPred();
+					final LETTER a = predTrans.getLetter();
+					final STATE dest = simulatedState;
+					final Triple<STATE, LETTER, STATE> transition = new Triple<>(src, a, dest);
 					if (mGame.hasBuechiTransition(transition)) {
 						transitionCandidates.add(new Quad<>(src, a, dest, simulatingState));
 					}
@@ -765,7 +765,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// Optimize the attempted merge if we have information about equivalence
 		// classes of the states
 		if (!mPossibleEquivalentClasses.isEmpty()) {
-			Set<STATE> equivalenceClass = mPossibleEquivalentClasses.get(firstState);
+			final Set<STATE> equivalenceClass = mPossibleEquivalentClasses.get(firstState);
 			// If the states are not in the same equivalence class we already
 			// know that the merge can not be possible
 			if (equivalenceClass != null && !equivalenceClass.contains(secondState)) {
@@ -790,7 +790,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			return null;
 		}
 
-		FairGameGraphChanges<LETTER, STATE> changes = mGame.equalizeBuechiStates(firstState, secondState);
+		final FairGameGraphChanges<LETTER, STATE> changes = mGame.equalizeBuechiStates(firstState, secondState);
 
 		return validateChange(changes);
 	}
@@ -818,7 +818,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
 			final STATE dest, final STATE invoker) throws AutomataOperationCanceledException {
-		FairGameGraphChanges<LETTER, STATE> changes = mGame.removeBuechiTransition(src, a, dest);
+		final FairGameGraphChanges<LETTER, STATE> changes = mGame.removeBuechiTransition(src, a, dest);
 
 		return validateChange(changes);
 	}
@@ -832,7 +832,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	@Override
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws AutomataOperationCanceledException {
-		SimulationPerformance performance = super.getSimulationPerformance();
+		final SimulationPerformance performance = super.getSimulationPerformance();
 		if (debugSimulation) {
 			mLogger.debug("Lifting SCC: " + scc);
 		}
@@ -849,7 +849,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			performance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
-			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();
+			final Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();
 
 			if (debugSimulation) {
 				mLogger.debug("\tWorking with: " + workingVertex);
@@ -865,10 +865,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Remember old progress measure of the working vertex
-			int oldProgressMeasure = workingVertex.getPM(scc, mGlobalInfinity);
+			final int oldProgressMeasure = workingVertex.getPM(scc, mGlobalInfinity);
 
 			// Update values of the working vertex
-			int oldBEff = workingVertex.getBEff();
+			final int oldBEff = workingVertex.getBEff();
 			workingVertex.setBEff(calcBestNghbMeasure(workingVertex, localInfinity, usedSCCForNeighborCalculation));
 			saveBEffChange(workingVertex, oldBEff, mCurrentChanges);
 
@@ -876,7 +876,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				mLogger.debug("\t\tUpdated BEff: " + oldBEff + " -> " + workingVertex.getBEff());
 			}
 
-			int oldC = workingVertex.getC();
+			final int oldC = workingVertex.getC();
 			workingVertex.setC(calcNghbCounter(workingVertex, localInfinity, usedSCCForNeighborCalculation));
 			saveCChange(workingVertex, oldC, mCurrentChanges);
 
@@ -884,7 +884,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				mLogger.debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
 			}
 
-			int currentProgressMeasure = increaseVector(mGame.getPriority(workingVertex), workingVertex.getBEff(),
+			final int currentProgressMeasure = increaseVector(mGame.getPriority(workingVertex), workingVertex.getBEff(),
 					localInfinity);
 			workingVertex.setPM(currentProgressMeasure);
 			savePmChange(workingVertex, oldProgressMeasure, mCurrentChanges);
@@ -896,13 +896,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// If vertex now defines a non trivial non possible simulation
 			if (currentProgressMeasure >= mGlobalInfinity) {
 				if (workingVertex.isSpoilerVertex() && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
-					boolean wasAdded = mNotSimulatingNonTrivialVertices
+					final boolean wasAdded = mNotSimulatingNonTrivialVertices
 							.add((SpoilerVertex<LETTER, STATE>) workingVertex);
 					if (mAttemptingChanges && wasAdded) {
 						// Abort simulation since progress measure
 						// has changed on a non trivial vertex
 						// which indicates language change
-						mNotSimulatingNonTrivialVertices.remove((SpoilerVertex<LETTER, STATE>) workingVertex);
+						mNotSimulatingNonTrivialVertices.remove(workingVertex);
 						mSimulationWasAborted = true;
 
 						if (debugSimulation) {
@@ -914,8 +914,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Skip updating predecessors if there are no
-			boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity && mGame.hasPushOverPredecessors(workingVertex);
-			Set<Vertex<LETTER, STATE>> predVertices = mGame.getPredecessors(workingVertex);
+			final boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity && mGame.hasPushOverPredecessors(workingVertex);
+			final Set<Vertex<LETTER, STATE>> predVertices = mGame.getPredecessors(workingVertex);
 			if ((predVertices == null || predVertices.isEmpty()) && !considerPushOverPredecessors) {
 				continue;
 			}
@@ -937,7 +937,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// considered in the SCC optimization.
 				predecessorsToConsider.addAll(mGame.getPushOverPredecessors(workingVertex));
 			}
-			for (Vertex<LETTER, STATE> pred : predecessorsToConsider) {
+			for (final Vertex<LETTER, STATE> pred : predecessorsToConsider) {
 				if (debugSimulation) {
 					mLogger.debug("\t\tWorking pred: " + pred);
 				}
@@ -951,7 +951,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// which is a 1-distance neighbor of SCC, is interested
 				boolean pokePossible = false;
 				if (isUsingSCCs() && !scc.contains(pred)) {
-					boolean hasNewlyReachedInfinity = currentProgressMeasure >= localInfinity
+					final boolean hasNewlyReachedInfinity = currentProgressMeasure >= localInfinity
 							&& oldProgressMeasure < localInfinity;
 					pokePossible = hasNewlyReachedInfinity && !mpokedFromNeighborSCC.contains(pred);
 
@@ -983,7 +983,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						// before accessing it
 						if (pokePossible) {
 							if (pred.getC() == 0) {
-								int oldPredC = pred.getC();
+								final int oldPredC = pred.getC();
 								pred.setC(mGame.getSuccessors(pred).size());
 								saveCChange(pred, oldPredC, mCurrentChanges);
 							}
@@ -1009,7 +1009,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							// It has a better alternative, reducing number of
 							// neighbors that represent the best choice for the
 							// predecessor
-							int oldPredC = pred.getC();
+							final int oldPredC = pred.getC();
 							pred.setC(pred.getC() - 1);
 							saveCChange(pred, oldPredC, mCurrentChanges);
 
@@ -1079,12 +1079,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// in the working list. Cross check by adding 'true' to the if-clause
 		// which adds all vertices to the working list (inefficient but result
 		// could then be correct).
-		boolean isDeadEnd = !mGame.hasSuccessors(vertex);
-		boolean hasPriorityOne = mGame.getPriority(vertex) == 1;
-		boolean isPokedVertex = isUsingSCCs() && mpokedFromNeighborSCC.contains(vertex);
-		boolean isNonTrivialAddedVertex = mAttemptingChanges && mCurrentChanges != null
+		final boolean isDeadEnd = !mGame.hasSuccessors(vertex);
+		final boolean hasPriorityOne = mGame.getPriority(vertex) == 1;
+		final boolean isPokedVertex = isUsingSCCs() && mpokedFromNeighborSCC.contains(vertex);
+		final boolean isNonTrivialAddedVertex = mAttemptingChanges && mCurrentChanges != null
 				&& mCurrentChanges.isAddedVertex(vertex) && mGame.getPriority(vertex) != 0;
-		boolean isVertexInvolvedInEdgeChanges = mAttemptingChanges && mCurrentChanges != null
+		final boolean isVertexInvolvedInEdgeChanges = mAttemptingChanges && mCurrentChanges != null
 				&& mCurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
 
 		// Possibly add vertex to working list
@@ -1103,15 +1103,15 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			if (mpokedFromNeighborSCC.contains(vertex)) {
 				usedSCCForNeighborCalculation = null;
 			}
-			int oldC = vertex.getC();
+			final int oldC = vertex.getC();
 			vertex.setC(calcNghbCounter(vertex, localInfinity, usedSCCForNeighborCalculation));
 			saveCChange(vertex, oldC, mCurrentChanges);
 		} else if (!isDeadEnd) {
-			boolean isFirstRun = !mAttemptingChanges;
-			boolean wasNotInitialized = vertex.getC() == 0;
+			final boolean isFirstRun = !mAttemptingChanges;
+			final boolean wasNotInitialized = vertex.getC() == 0;
 
 			if (isFirstRun || wasNotInitialized) {
-				int oldC = vertex.getC();
+				final int oldC = vertex.getC();
 				vertex.setC(mGame.getSuccessors(vertex).size());
 				saveCChange(vertex, oldC, mCurrentChanges);
 			}

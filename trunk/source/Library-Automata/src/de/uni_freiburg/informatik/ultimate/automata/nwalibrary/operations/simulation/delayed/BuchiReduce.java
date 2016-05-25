@@ -36,9 +36,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -133,15 +133,15 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		simulation.doSimulation();
 		mResult = simulation.getResult();
 
-		boolean compareWithNonSccResult = false;
+		final boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
+			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(mServices.getProgressMonitorService(),
+			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(mServices.getProgressMonitorService(),
 					mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
+			final INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

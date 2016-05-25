@@ -60,13 +60,16 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	 * Returns the procedure in which this variable was declared. If this a 
 	 * global variable, then null is returned.
 	 */
+	@Override
 	public String getProcedure() {
 		return null;
 	}
 
+	@Override
 	public boolean isGlobal() {
 		return true;
 	}
+	@Override
 	public boolean isOldvar() {
 		return false;
 	}
@@ -95,25 +98,33 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BoogieVar other = (BoogieVar) obj;
+		}
+		final BoogieVar other = (BoogieVar) obj;
 		if (getIdentifier() == null) {
-			if (other.getIdentifier() != null)
+			if (other.getIdentifier() != null) {
 				return false;
-		} else if (!getIdentifier().equals(other.getIdentifier()))
+			}
+		} else if (!getIdentifier().equals(other.getIdentifier())) {
 			return false;
-		if (isOldvar() != other.isOldvar())
+		}
+		if (isOldvar() != other.isOldvar()) {
 			return false;
+		}
 		if (getProcedure() == null) {
-			if (other.getProcedure() != null)
+			if (other.getProcedure() != null) {
 				return false;
-		} else if (!getProcedure().equals(other.getProcedure()))
+			}
+		} else if (!getProcedure().equals(other.getProcedure())) {
 			return false;
+		}
 		return true;
 	}
 	

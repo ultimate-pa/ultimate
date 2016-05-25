@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -54,7 +54,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	public MemoryModel_MultiBitprecise(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		for (PRIMITIVE primitive : PRIMITIVE.values()) {
+		for (final PRIMITIVE primitive : PRIMITIVE.values()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (!mSize2HeapDataArray.containsKey(bytesize)) {
 				final String name = "data" + bytesize;
@@ -67,6 +67,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
        	
 	
 	
+	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
 		final int bytesize = mTypeSizes.getSize(primitive);
 		return mSize2HeapDataArray.get(bytesize);
@@ -86,14 +87,14 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
 		}
-		List<ReadWriteDefinition> result = new ArrayList<>();
-		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+		final List<ReadWriteDefinition> result = new ArrayList<>();
+		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));

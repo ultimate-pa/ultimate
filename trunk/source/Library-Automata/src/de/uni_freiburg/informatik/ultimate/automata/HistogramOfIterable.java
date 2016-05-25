@@ -57,7 +57,7 @@ public class HistogramOfIterable<E> {
 	}
 
 	private Integer[] generateVisualizationArray(Map<E, Integer> histogramMap) {
-		Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
+		final Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
 		Arrays.sort(result, Collections.reverseOrder());
 		return result;
 	}
@@ -72,8 +72,8 @@ public class HistogramOfIterable<E> {
 	}
 
 	public static <E> Map<E, Integer> generateHistogramMap(Iterable<E> iterable) {
-		Map<E, Integer> result = new HashMap<E, Integer>();
-		for (E e : iterable) {
+		final Map<E, Integer> result = new HashMap<E, Integer>();
+		for (final E e : iterable) {
 			if (result.containsKey(e)) {
 				result.put(e, Integer.valueOf(result.get(e).intValue()+1));
 			} else {

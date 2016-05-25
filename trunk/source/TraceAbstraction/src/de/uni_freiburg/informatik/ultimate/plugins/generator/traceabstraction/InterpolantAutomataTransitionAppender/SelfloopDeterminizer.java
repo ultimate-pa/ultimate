@@ -83,7 +83,7 @@ public class SelfloopDeterminizer
 		mStateFactory = stateFactory;
 		mPowersetDeterminizer = 
 			new PowersetDeterminizer<CodeBlock, IPredicate>(mInterpolantAutomaton, true, mStateFactory);
-		for (IPredicate state : mInterpolantAutomaton.getStates()) {
+		for (final IPredicate state : mInterpolantAutomaton.getStates()) {
 			if (mInterpolantAutomatonFinalState == null) {
 				if (mInterpolantAutomaton.isFinal(state)) {
 					mInterpolantAutomatonFinalState = state;
@@ -114,15 +114,15 @@ public class SelfloopDeterminizer
 			mInternalSelfloop++;
 			return mResultFinalState;
 		}
-		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
 					mPowersetDeterminizer.internalSuccessor(detState, symbol);
 		if (containsFinal(powersetSucc)) {
 			mInternalNonSelfloop++;
 			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = getState(detState);
-			Validity isInductive = mHoareTriplechecker.checkInternal(detStateContent,
+			final IPredicate detStateContent = getState(detState);
+			final Validity isInductive = mHoareTriplechecker.checkInternal(detStateContent,
 													   (IInternalAction) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
 				mInternalSelfloop++;
@@ -142,15 +142,15 @@ public class SelfloopDeterminizer
 			mCallSelfloop++;
 			return mResultFinalState;
 		}
-		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
 					mPowersetDeterminizer.callSuccessor(detState, symbol);
 		if (containsFinal(powersetSucc)) {
 			mCallNonSelfloop++;
 			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = getState(detState);
-			Validity isInductive = mHoareTriplechecker.checkCall(detStateContent,
+			final IPredicate detStateContent = getState(detState);
+			final Validity isInductive = mHoareTriplechecker.checkCall(detStateContent,
 										   (Call) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
 				mCallSelfloop++;
@@ -174,16 +174,16 @@ public class SelfloopDeterminizer
 		if (derHier == mResultFinalState) {
 			throw new AssertionError("I guess this never happens");
 		}		
-		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
 			mPowersetDeterminizer.returnSuccessor(detState, derHier, symbol);
 		if (containsFinal(powersetSucc)) {
 			mReturnNonSelfloop++;
 			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
-			IPredicate detStateContent = getState(detState);
-			IPredicate detHierContent = getState(derHier);
-			Validity isInductive = mHoareTriplechecker.checkReturn(detStateContent, 
+			final IPredicate detStateContent = getState(detState);
+			final IPredicate detHierContent = getState(derHier);
+			final Validity isInductive = mHoareTriplechecker.checkReturn(detStateContent, 
 						detHierContent, (Return) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
 				mReturnSelfloop++;
@@ -199,8 +199,8 @@ public class SelfloopDeterminizer
 	
 	private boolean containsFinal(
 						DeterminizedState<CodeBlock, IPredicate> detState) {
-		for (IPredicate down : detState.getDownStates()) {
-			for (IPredicate up : detState.getUpStates(down)) {
+		for (final IPredicate down : detState.getDownStates()) {
+			for (final IPredicate up : detState.getUpStates(down)) {
 				if (up == mInterpolantAutomatonFinalState) {
 					return true;
 				}

@@ -43,12 +43,13 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE> extends Inclusio
 			List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services,stateFactory,a);
 		mLogger.info(startMessage());
-		for (INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
+		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			addSubtrahend(bi);
 		}
 		// obtain counterexample, counterexample is null if inclusion holds
 		mLogger.info(exitMessage());
 	}
+	@Override
 	public String operationName() {
 		return "IncrementalInclusionCheckDifference";
 	}
@@ -61,6 +62,7 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE> extends Inclusio
 	public String exitMessage() {
 		return "Exit " + operationName() + ". Result has " + size() + " states.";
 	}
+	@Override
 	public Boolean getResult() throws AutomataLibraryException{
 		return getCounterexample() == null;
 	}

@@ -39,8 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * This Class transforms a Boogie AST into a new one to generate data structure
- * invariants
+ * This Class transforms a Boogie AST into a new one to generate data structure invariants
  * 
  * @author arenis
  * 
@@ -55,32 +54,37 @@ public class DSITransformer implements IGenerator {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public IElement getModel() {
 		return mObserver.getRoot();
 	}
 
+	@Override
 	public String getPluginName() {
 		return "DSITransformer";
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
+		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mServices);
 		return Collections.singletonList((IObserver) mObserver);
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mInputType.getFileNames());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
 
+	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
@@ -88,10 +92,12 @@ public class DSITransformer implements IGenerator {
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
 
+	@Override
 	public void init() {
 	}
 
@@ -100,6 +106,7 @@ public class DSITransformer implements IGenerator {
 		return false;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		mInputType = graphType;
 	}
@@ -123,6 +130,6 @@ public class DSITransformer implements IGenerator {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

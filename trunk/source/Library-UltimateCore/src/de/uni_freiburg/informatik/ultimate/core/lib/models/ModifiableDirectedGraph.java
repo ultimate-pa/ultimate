@@ -97,16 +97,16 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean connectIncoming(T predecessor) {
-		boolean thisIncomingChanged = addIncoming(predecessor);
-		boolean predecessorOutgoingChanged = predecessor.addOutgoing((T) this);
+		final boolean thisIncomingChanged = addIncoming(predecessor);
+		final boolean predecessorOutgoingChanged = predecessor.addOutgoing((T) this);
 		assert (thisIncomingChanged == predecessorOutgoingChanged);
 		return thisIncomingChanged;
 	}
 
 	@Override
 	public boolean disconnectIncoming(T predecessor) {
-		boolean thisIncomingChanged = removeIncoming(predecessor);
-		boolean predecessorOutgoingChanged = predecessor.removeOutgoing(this);
+		final boolean thisIncomingChanged = removeIncoming(predecessor);
+		final boolean predecessorOutgoingChanged = predecessor.removeOutgoing(this);
 		assert (thisIncomingChanged == predecessorOutgoingChanged);
 		return thisIncomingChanged;
 	}
@@ -114,16 +114,16 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean connectOutgoing(T successor) {
-		boolean thisOutgoingChanged = addOutgoing(successor);
-		boolean predecessorIncomingChanged = successor.addIncoming((T) this);
+		final boolean thisOutgoingChanged = addOutgoing(successor);
+		final boolean predecessorIncomingChanged = successor.addIncoming((T) this);
 		assert (thisOutgoingChanged == predecessorIncomingChanged);
 		return thisOutgoingChanged;
 	}
 
 	@Override
 	public boolean disconnectOutgoing(T successor) {
-		boolean thisOutgoingChanged = removeOutgoing(successor);
-		boolean predecessorIncomingChanged = successor.removeIncoming(this);
+		final boolean thisOutgoingChanged = removeOutgoing(successor);
+		final boolean predecessorIncomingChanged = successor.removeIncoming(this);
 		assert (thisOutgoingChanged == predecessorIncomingChanged);
 		return thisOutgoingChanged;
 	}
@@ -140,7 +140,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 
 	@Override
 	public boolean addOutgoing(int index, T outgoing) {
-		int i = mOutgoingNodes.size();
+		final int i = mOutgoingNodes.size();
 		mOutgoingNodes.add(index, outgoing);
 		return i != mOutgoingNodes.size();
 	}
@@ -148,7 +148,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@Override
 	public boolean addAllOutgoing(Collection<? extends T> c) {
 		boolean rtr = false;
-		for (T outgoing : c) {
+		for (final T outgoing : c) {
 			rtr = rtr || addOutgoing(outgoing);
 		}
 		return rtr;
@@ -177,7 +177,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@Override
 	public boolean removeAllOutgoing(Collection<?> c) {
 		boolean rtr = false;
-		for (Object o : c) {
+		for (final Object o : c) {
 			rtr = rtr || removeOutgoing(o);
 		}
 		return rtr;
@@ -195,7 +195,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 
 	@Override
 	public boolean addIncoming(int index, T incoming) {
-		int i = mIncomingNodes.size();
+		final int i = mIncomingNodes.size();
 		mIncomingNodes.add(index, incoming);
 		return i != mIncomingNodes.size();
 	}
@@ -203,7 +203,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@Override
 	public boolean addAllIncoming(Collection<? extends T> c) {
 		boolean rtr = false;
-		for (T e : c) {
+		for (final T e : c) {
 			rtr = rtr || addIncoming(e);
 		}
 		return rtr;
@@ -232,7 +232,7 @@ public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph
 	@Override
 	public boolean removeAllIncoming(Collection<?> c) {
 		boolean rtr = false;
-		for (Object o : c) {
+		for (final Object o : c) {
 			rtr = rtr || removeIncoming(o);
 		}
 		return rtr;

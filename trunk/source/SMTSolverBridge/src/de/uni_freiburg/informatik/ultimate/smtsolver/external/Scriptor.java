@@ -86,7 +86,7 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
 		if (!opt.equals(":print-success")) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("(set-option ").append(opt);
 			if (value != null) {
 				sb.append(" ");
@@ -108,7 +108,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public void setInfo(String info, Object value) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(set-info ");
 		sb.append(info);
 		sb.append(' ');
@@ -122,7 +122,7 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
 		super.declareSort(sort, arity);
-		StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
+		final StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
 		sb.append(" ").append(arity).append(")");
 		mExecutor.input(sb.toString());
 		mExecutor.parseSuccess();
@@ -131,13 +131,13 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
 		super.defineSort(sort, sortParams, definition);
-		PrintTerm pt = new PrintTerm();
-		StringBuilder sb = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(define-sort ");
 		sb.append(PrintTerm.quoteIdentifier(sort));
 		sb.append(" (");
 		String delim = "";
-		for (Sort s : sortParams) {
+		for (final Sort s : sortParams) {
 			sb.append(delim);
 			pt.append(sb, s);
 			delim = " ";
@@ -152,13 +152,13 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
 		super.declareFun(fun, paramSorts, resultSort);
-		PrintTerm pt = new PrintTerm();
-		StringBuilder sb = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(declare-fun ");
 		sb.append(PrintTerm.quoteIdentifier(fun));
 		sb.append(" (");
 		String delim = "";
-		for (Sort s : paramSorts) {
+		for (final Sort s : paramSorts) {
 			sb.append(delim);
 			pt.append(sb, s);
 			delim = " ";
@@ -173,13 +173,13 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void defineFun(String fun, TermVariable[] params, Sort resultSort, Term definition) throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
-		PrintTerm pt = new PrintTerm();
-		StringBuilder sb = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(define-fun ");
 		sb.append(PrintTerm.quoteIdentifier(fun));
 		sb.append(" (");
 		String delim = "";
-		for (TermVariable t : params) {
+		for (final TermVariable t : params) {
 			sb.append(delim);
 			sb.append("(").append(t).append(" ");
 			pt.append(sb, t.getSort());
@@ -242,16 +242,17 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
-		for (Term t : terms) {
+		for (final Term t : terms) {
 			if (!t.getSort().isNumericSort() && t.getSort() != getTheory().getBooleanSort()
-					&& !t.getSort().getRealSort().getName().equals("BitVec"))
+					&& !t.getSort().getRealSort().getName().equals("BitVec")) {
 				throw new UnsupportedOperationException();
+			}
 		}
-		StringBuilder command = new StringBuilder();
-		PrintTerm pt = new PrintTerm();
+		final StringBuilder command = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
 		command.append("(get-value (");
 		String sep = "";
-		for (Term t : terms) {
+		for (final Term t : terms) {
 			command.append(sep);
 			pt.append(command, t);
 			sep = " ";
@@ -276,9 +277,10 @@ public class Scriptor extends NoopScript {
 	@Override
 	public Object getInfo(String info) throws UnsupportedOperationException {
 		mExecutor.input("(get-info " + info + ")");
-		Object[] result = mExecutor.parseGetInfoResult();
-		if (result.length == 1)
+		final Object[] result = mExecutor.parseGetInfoResult();
+		if (result.length == 1) {
 			return result[0];
+		}
 		return result;
 	}
 
@@ -298,7 +300,7 @@ public class Scriptor extends NoopScript {
 		super.reset();
 		try {
 			mExecutor.reset();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// this should only happen if the solver executable is removed
 			// between creating executor and calling reset.
 			e.printStackTrace();

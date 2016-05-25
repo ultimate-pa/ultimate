@@ -6,7 +6,7 @@ public class ClosureCacheTest {
 		int fails = 0;
 		int tests = 0;
 
-		OctMatrix[] testCases = new OctMatrix[500000];
+		final OctMatrix[] testCases = new OctMatrix[500000];
 
 		// put manual test cases here
 		
@@ -23,8 +23,8 @@ public class ClosureCacheTest {
 			// closure-updating operation under test
 			m.cachedTightClosure().negateVar(0);
 			
-			OctMatrix updatedCachedClosure = m.cachedTightClosure();
-			OctMatrix newlyComputedClosure = m.tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
+			final OctMatrix updatedCachedClosure = m.cachedTightClosure();
+			final OctMatrix newlyComputedClosure = m.tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 			if (!updatedCachedClosure.isEqualTo(newlyComputedClosure)) {
 				System.out.println("CLOSURES DIFFER");
 				System.out.println(updatedCachedClosure);

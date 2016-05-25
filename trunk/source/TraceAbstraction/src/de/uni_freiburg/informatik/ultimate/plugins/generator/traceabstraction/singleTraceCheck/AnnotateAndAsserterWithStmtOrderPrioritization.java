@@ -106,7 +106,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Returns a set of integers containing the values {lowerBound, lowerBound + 1, ..., upperBound - 1}.
 	 */
 	private Set<Integer> getSetOfIntegerForGivenInterval(int lowerBound, int upperBound) {
-		Set<Integer> result = new HashSet<Integer>();
+		final Set<Integer> result = new HashSet<Integer>();
 		for (int i = lowerBound; i < upperBound; i++) {
 			result.add(i);
 		}
@@ -118,10 +118,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Returns the set difference between first set and the second set.
 	 */
 	private Set<Integer> integerSetDifference(Set<Integer> firstSet, Set<Integer> secondSet) {
-		if (secondSet.isEmpty()) return firstSet;
+		if (secondSet.isEmpty()) {
+			return firstSet;
+		}
 		
-		Set<Integer> result = new HashSet<Integer>();
-		for (Integer i : firstSet) {
+		final Set<Integer> result = new HashSet<Integer>();
+		for (final Integer i : firstSet) {
 			if (!secondSet.contains(i)) {
 				result.add(i);
 			}
@@ -144,7 +146,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			if (rwt.getImage(pps.get(i)).size() >= 2 &&
 					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) != null &&
 					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) < upperIndex) {
-				int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i);
+				final int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
 				// recursively partition the statements within this loop 
 				dfsPartitionStatementsAccordingToDepth(i + 1, newUpperIndex, depth + 1,
@@ -178,7 +180,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		if (depth2Statements.keySet().contains(depth)) {
 			depth2Statements.get(depth).add(stmtPos);
 		} else {
-			Set<Integer> s = new HashSet<Integer>();
+			final Set<Integer> s = new HashSet<Integer>();
 			s.add(stmtPos);
 			depth2Statements.put(depth, s);
 		}
@@ -191,7 +193,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 */
 	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(NestedWord<? extends IAction> trace, RelationWithTreeSet<ProgramPoint, Integer> rwt,
 			List<ProgramPoint> pps) {
-		Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
+		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
 		
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
 		
@@ -200,25 +202,25 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) mTrace);
-		RelationWithTreeSet<ProgramPoint, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
+		final List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) mTrace);
+		final RelationWithTreeSet<ProgramPoint, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 		
-		Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
+		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 		mAnnotSSA = new ModifiableNestedFormulas<Term, Term>(mTrace, new TreeMap<Integer, Term>());
 		
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
-		Collection<Integer> callPositions = new ArrayList<Integer>();
-		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
+		final Collection<Integer> callPositions = new ArrayList<Integer>();
+		final Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
 		
-		Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(mTrace, rwt, pps);
+		final Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(mTrace, rwt, pps);
 		// Report benchmark
 		mTcbg.reportnewCodeBlocks(mTrace.length());
 		
 		// Apply 1. heuristic
 		if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1) {
 			// Statements outside of a loop have depth 0.
-			Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
+			final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 			// First, annotate and assert the statements, which doesn't occur within a loop
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions, stmtsOutsideOfLoop);
 
@@ -229,7 +231,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
 			// the rest of the statements
 			if (mSatisfiable != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
-				Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
+				final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
 				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions, stmtsWithinLoop);
 				assert callPositions.containsAll(mTrace.getCallPositions());
 				assert mTrace.getCallPositions().containsAll(callPositions);
@@ -270,10 +272,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements
 			) {
-		List<Integer> keysInSortedOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
+		final List<Integer> keysInSortedOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
 		Collections.sort(keysInSortedOrder);
 		LBool sat = null;
-		for (Integer key : keysInSortedOrder) {
+		for (final Integer key : keysInSortedOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, depth2Statements.get(key));
 			sat = mSmtManager.getScript().checkSat();
 			// Report benchmarks
@@ -293,7 +295,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements) {
-		List<Integer> keysInDescendingOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
+		final List<Integer> keysInDescendingOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
 		Collections.sort(keysInDescendingOrder, new Comparator<Integer>() {
 			@Override
 			public int compare(Integer i1, Integer i2) {
@@ -301,7 +303,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		});
 		LBool sat = null;
-		for (Integer key : keysInDescendingOrder) {
+		for (final Integer key : keysInDescendingOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, depth2Statements.get(key));
 			sat = mSmtManager.getScript().checkSat();
 			// Report benchmarks
@@ -321,7 +323,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements) {
-		LinkedList<Integer> depthAsQueue = new LinkedList<Integer>(depth2Statements.keySet()); 
+		final LinkedList<Integer> depthAsQueue = new LinkedList<Integer>(depth2Statements.keySet()); 
 		Collections.sort(depthAsQueue);
 		LBool sat = null;
 		boolean removeFirst = true;
@@ -351,14 +353,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 */
 	private boolean termHasConstantGreaterThan(Term t, int constantSize) {
 		if (t instanceof ApplicationTerm) {
-			Term[] args = ((ApplicationTerm)t).getParameters();
+			final Term[] args = ((ApplicationTerm)t).getParameters();
 			for (int i = 0; i < args.length; i++) {
 				if (termHasConstantGreaterThan(args[i], constantSize)) {
 					return true;
 				}
 			}
 		} else if (t instanceof ConstantTerm) {
-			Object val = ((ConstantTerm)t).getValue();
+			final Object val = ((ConstantTerm)t).getValue();
 			if (val instanceof BigInteger) {
 				return (((BigInteger) val).compareTo(BigInteger.valueOf(constantSize)) > 0);
 			} else if (val instanceof BigDecimal) {
@@ -379,10 +381,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * smaller than or equal to 'constantSize'. The second set contains the statements, which contain only constants greater than 'constantSize'. 
 	 */
 	private Set<Integer> partitionStmtsAccordingToConstantSize(NestedWord<? extends IAction> trace,	int constantSize) {
-		Set<Integer> result = new HashSet<Integer>();
+		final Set<Integer> result = new HashSet<Integer>();
 		
 		for (int i = 0; i < trace.length(); i++) {
-			Term t = ((CodeBlock) trace.getSymbolAt(i)).getTransitionFormula().getFormula();
+			final Term t = ((CodeBlock) trace.getSymbolAt(i)).getTransitionFormula().getFormula();
 			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}
@@ -397,8 +399,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions) {
 		// Choose statements that contains only constants <= constantSize and assert them
-		int constantSize = 10;
-		Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
+		final int constantSize = 10;
+		final Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
 		LBool sat = mSmtManager.getScript().checkSat();
 		// Report benchmarks
@@ -408,7 +410,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			return sat;
 		}
 		// Then assert the rest of statements
-		Set<Integer> remainingStmts = integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
+		final Set<Integer> remainingStmts = integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, 
 				remainingStmts);
 		sat = mSmtManager.getScript().checkSat();
@@ -424,7 +426,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private RelationWithTreeSet<ProgramPoint, Integer> computeRelationWithTreeSetForTrace(
 			int lowerIndex, int upperIndex,
 			List<ProgramPoint> pps) {
-		RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+		final RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			rwt.addPair(pps.get(i), i);
 		}
@@ -442,7 +444,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Set<Integer> stmtsToAssert) {
-		for (Integer i : stmtsToAssert) {
+		for (final Integer i : stmtsToAssert) {
 			if (trace.isCallPosition(i)) {
 				callPositions.add(i);
 				mAnnotSSA.setGlobalVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
@@ -460,20 +462,20 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-		for (Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
+		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert trace.isPendingReturn(positionOfPendingReturn);
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}

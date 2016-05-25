@@ -60,7 +60,7 @@ public abstract class AMemoryModel {
 	public AMemoryModel(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
        	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc), bytesizeOfStoredPointerComponents());
 	}
 	
@@ -95,11 +95,11 @@ public abstract class AMemoryModel {
 	}
 
 	public final Collection<HeapDataArray> getDataHeapArrays(RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
-		Set<HeapDataArray> result = new HashSet<>();
+		final Set<HeapDataArray> result = new HashSet<>();
 		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
 		}
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			result.add(getDataHeapArray(primitive));
 		}
 		return result;

@@ -69,7 +69,7 @@ public final class UltimatePreferenceItemContainer extends BaseUltimatePreferenc
 	
 	@Override
 	public List<UltimatePreferenceItem<?>> getFlattenedList() {
-		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
+		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 		
 		for (final BaseUltimatePreferenceItem item : mContainerItems) {
 			returnList.addAll(item.getFlattenedList());

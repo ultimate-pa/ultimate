@@ -65,7 +65,7 @@ public class UnaryExpressionAST extends AtsASTNode {
 	}
 
 	public void setOperator(UnaryOperatorAST operator) {
-		this.moperator = operator;
+		moperator = operator;
 	}
 
 	@Override

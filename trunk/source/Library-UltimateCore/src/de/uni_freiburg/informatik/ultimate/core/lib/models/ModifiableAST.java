@@ -88,7 +88,7 @@ public class ModifiableAST<T extends IModifiableAST<T, VisualizationNode>> exten
 
 	@Override
 	public boolean addOutgoing(int index, T outgoing) {
-		int size = mOutgoingNodes.size();
+		final int size = mOutgoingNodes.size();
 		mOutgoingNodes.add(index, outgoing);
 		return size != mOutgoingNodes.size();
 	}

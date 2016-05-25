@@ -50,9 +50,9 @@ public class MainMultipleFiles {
 	public static void main(String[] param) throws IOException {
 
 		/** Specify the solver command here. **/
-		String command = "z3 -smt2 -in";
+		final String command = "z3 -smt2 -in";
 
-		Logger logger = Logger.getRootLogger();
+		final Logger logger = Logger.getRootLogger();
 		int paramctr = 0;
 
 		String filename;
@@ -67,23 +67,26 @@ public class MainMultipleFiles {
 		}
 
 		// Oday: Read multiple files
-		File path = new File(filename);
-		List<String> files = getFiles(path);
+		final File path = new File(filename);
+		final List<String> files = getFiles(path);
 
-		if (files.isEmpty())
+		if (files.isEmpty()) {
 			return;
+		}
 		int count = 0;
 		for (int i = 0; i < files.size(); i++) {
-			if (files.get(i).contains(".svn"))
+			if (files.get(i).contains(".svn")) {
 				continue;
+			}
 
 			count++;
 			Script benchmark;
-			if (!command.equals("SMTInterpol"))
+			if (!command.equals("SMTInterpol")) {
 				benchmark = new Scriptor(command, new Log4JWrapper(logger), null, null,
 						"external in solverbridge (multiple files)");
-			else
+			} else {
 				benchmark = new SMTInterpol(logger, true);
+			}
 
 			while (paramctr < param.length && param[paramctr].startsWith("-")) {
 				if (param[paramctr].equals("--")) {
@@ -92,42 +95,42 @@ public class MainMultipleFiles {
 				} else if (param[paramctr].equals("-v")) {
 					try {
 						benchmark.setOption(":verbosity", BigInteger.valueOf(5));
-					} catch (SMTLIBException doesNotHappen) {
+					} catch (final SMTLIBException doesNotHappen) {
 					}
 					paramctr++;
 				} else if (param[paramctr].equals("-q")) {
 					try {
 						benchmark.setOption(":verbosity", BigInteger.valueOf(3));
-					} catch (SMTLIBException doesNotHappen) {
+					} catch (final SMTLIBException doesNotHappen) {
 					}
 					paramctr++;
 				} else if (param[paramctr].equals("-t") && ++paramctr < param.length) {
 					try {
-						int timeout = Integer.parseInt(param[paramctr]);
+						final int timeout = Integer.parseInt(param[paramctr]);
 						if (timeout < 0) {
 							logger.error("Cannot parse timeout " + "argument: Negative number");
 						} else {
 							try {
 								benchmark.setOption(":timeout", BigInteger.valueOf(timeout));
-							} catch (SMTLIBException doesNotHappen) {
+							} catch (final SMTLIBException doesNotHappen) {
 							}
 						}
-					} catch (NumberFormatException nfe) {
+					} catch (final NumberFormatException nfe) {
 						logger.error("Cannot parse timeout " + "argument: Not a number");
 					}
 					paramctr++;
 				} else if (param[paramctr].equals("-r") && ++paramctr < param.length) {
 					try {
-						int seed = Integer.parseInt(param[paramctr]);
+						final int seed = Integer.parseInt(param[paramctr]);
 						if (seed < 0) {
 							logger.error("Cannot parse random seed " + "argument: Negative number");
 						} else {
 							try {
 								benchmark.setOption(":random-seed", BigInteger.valueOf(seed));
-							} catch (SMTLIBException doesNotHappen) {
+							} catch (final SMTLIBException doesNotHappen) {
 							}
 						}
-					} catch (NumberFormatException nfe) {
+					} catch (final NumberFormatException nfe) {
 						logger.error("Cannot parse random seed " + "argument: Not a number");
 					}
 					paramctr++;
@@ -139,10 +142,10 @@ public class MainMultipleFiles {
 
 			System.out.println("\n--- Checking " + files.get(i) + "\n");
 
-			ParseEnvironment parseEnv = new ParseEnvironment(benchmark);
+			final ParseEnvironment parseEnv = new ParseEnvironment(benchmark);
 			try {
 				parseEnv.parseScript(files.get(i));
-			} catch (SMTLIBException exc) {
+			} catch (final SMTLIBException exc) {
 				parseEnv.printError(exc.getMessage());
 			}
 		}
@@ -150,17 +153,17 @@ public class MainMultipleFiles {
 	}
 
 	public static List<String> getFiles(File path) {
-		List<String> files = new ArrayList<String>();
+		final List<String> files = new ArrayList<String>();
 		if (path.isFile()) {
 			files.add(path.toString());
 			return files;
 		}
-		File[] children = path.listFiles();
+		final File[] children = path.listFiles();
 		for (int i = 0; i < children.length; i++) {
-			if (children[i].isFile())
+			if (children[i].isFile()) {
 				files.add(children[i].toString());
-			else {
-				File sub = new File(children[i].toString());
+			} else {
+				final File sub = new File(children[i].toString());
 				files.addAll(getFiles(sub));
 			}
 		}

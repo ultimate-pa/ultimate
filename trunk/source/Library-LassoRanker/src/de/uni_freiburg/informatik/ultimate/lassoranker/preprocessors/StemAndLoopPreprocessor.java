@@ -72,11 +72,11 @@ public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			LassoUnderConstruction lasso) throws TermException {
-		TransFormulaLR newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
+		final TransFormulaLR newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
 		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getStem(), newStem) : 
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
-		TransFormulaLR newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
-		LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
+		final TransFormulaLR newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
+		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getLoop(), newLoop) : 
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
 		return Collections.singleton(newLasso);

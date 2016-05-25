@@ -32,11 +32,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -56,7 +56,7 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
-    private boolean isOnHeap = false;;
+    private final boolean isOnHeap = false;;
     
     /**
      * Constructor.
@@ -143,10 +143,10 @@ public class CArray extends CType {
 
     @Override
     public String toString() {
-        StringBuilder id = new StringBuilder("ARRAY#");
-        StringBuilder dimString = new StringBuilder("_");
-        for (RValue rvalueDim : getDimensions()) {
-        	Expression dim = rvalueDim.getValue(); 
+        final StringBuilder id = new StringBuilder("ARRAY#");
+        final StringBuilder dimString = new StringBuilder("_");
+        for (final RValue rvalueDim : getDimensions()) {
+        	final Expression dim = rvalueDim.getValue(); 
             if (dim instanceof BinaryExpression ||
                     dim instanceof UnaryExpression) {
             	// 2015-11-08 Matthias: Use C representation or introduce a factory
@@ -216,10 +216,10 @@ public class CArray extends CType {
         }
         assert (e instanceof UnaryExpression || e instanceof BinaryExpression);
         if (e instanceof BinaryExpression) {
-            BinaryExpression be = (BinaryExpression)e;
-            BinaryExpression.Operator operator = be.getOperator();
-            int left = getArithmeticResultAsInteger(be.getLeft());
-            int right = getArithmeticResultAsInteger(be.getRight());
+            final BinaryExpression be = (BinaryExpression)e;
+            final BinaryExpression.Operator operator = be.getOperator();
+            final int left = getArithmeticResultAsInteger(be.getLeft());
+            final int right = getArithmeticResultAsInteger(be.getRight());
             if (operator.equals(Operator.ARITHPLUS)) {
                 return left + right;
             }
@@ -240,8 +240,8 @@ public class CArray extends CType {
                         "arithmetic expression with operator " + operator);
             }
         } else {
-            UnaryExpression ue = (UnaryExpression)e;
-            UnaryExpression.Operator operator = ue.getOperator();
+            final UnaryExpression ue = (UnaryExpression)e;
+            final UnaryExpression.Operator operator = ue.getOperator();
             if (! operator.equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
                 throw new UnsupportedSyntaxException(e.getLocation(),
                         "arithmetic expression with operator " + operator);
@@ -255,12 +255,12 @@ public class CArray extends CType {
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = ((CType)o).getUnderlyingType();
         if (!(oType instanceof CArray)) {
             return false;
         }
         
-        CArray oArr = (CArray)oType;
+        final CArray oArr = (CArray)oType;
         if (!(valueType.equals(oArr.valueType))) {
             return false;
         }
@@ -278,14 +278,16 @@ public class CArray extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+				((CPrimitive) o).getType() == PRIMITIVE.VOID) {
 			return true;
+		}
 		
-        CType oType = ((CType)o).getUnderlyingType();
-        if (!(oType instanceof CArray))
-            return false;
+        final CType oType = o.getUnderlyingType();
+        if (!(oType instanceof CArray)) {
+			return false;
+		}
         
-        CArray oArr = (CArray) oType;
+        final CArray oArr = (CArray) oType;
         if (!(valueType.isCompatibleWith(oArr.valueType))) {
             return false;
         }

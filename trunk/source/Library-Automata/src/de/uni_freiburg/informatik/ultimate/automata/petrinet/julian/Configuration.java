@@ -53,7 +53,7 @@ import java.util.Set;
 public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		Comparable<Configuration<S, C>> {
 
-	private Set<Event<S, C>> mEvents;
+	private final Set<Event<S, C>> mEvents;
 	private Set<Event<S, C>> mMin;
 	private ArrayList<Transition<S, C>> mPhi = null;
 
@@ -78,7 +78,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 
 		if (mPhi == null) {
 			mPhi = new ArrayList<Transition<S, C>>(mEvents.size());
-			for (Event<S, C> e : mEvents) {
+			for (final Event<S, C> e : mEvents) {
 				mPhi.add(e.getTransition());
 			}
 			Collections.sort(mPhi);
@@ -107,9 +107,9 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 */
 	public Configuration<S, C> getMin(BranchingProcess<S, C> unf) {
 		Set<Event<S, C>> result;
-		if (mMin != null)
+		if (mMin != null) {
 			result = mMin;
-		else {
+		} else {
 			result = new HashSet<Event<S, C>>(unf.getMinEvents());
 			result.retainAll(mEvents);
 			/*
@@ -163,9 +163,10 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @return
 	 */
 	public boolean containsAny(Collection<Event<S, C>> events) {
-		for (Event<S, C> place : events) {
-			if (mEvents.contains(place))
+		for (final Event<S, C> place : events) {
+			if (mEvents.contains(place)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -192,19 +193,19 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	public Configuration<S, C> removeMin() {
 		assert mMin != null : "getMin() must have been called before removeMin()";
 		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
-		HashSet<Event<S, C>> events = new HashSet<Event<S, C>>(mEvents);
+		final HashSet<Event<S, C>> events = new HashSet<Event<S, C>>(mEvents);
 		events.removeAll(mMin);
-		Set<Event<S, C>> min = Event.getSuccessorEvents(mMin);
+		final Set<Event<S, C>> min = Event.getSuccessorEvents(mMin);
 		min.retainAll(events);
-		HashSet<Event<S, C>> newmin = new HashSet<Event<S, C>>();
-		for (Event<S, C> e : min) {
-			Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
+		final HashSet<Event<S, C>> newmin = new HashSet<Event<S, C>>();
+		for (final Event<S, C> e : min) {
+			final Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
 			predEventsOfE.retainAll(mEvents);
 			if (mMin.containsAll(predEventsOfE)) {
 				newmin.add(e);
 			}
 		}
-		Configuration<S, C> result = new Configuration<S, C>(events, newmin);
+		final Configuration<S, C> result = new Configuration<S, C>(events, newmin);
 		return result;
 	}
 
@@ -235,14 +236,15 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 */
 	@Override
 	public int compareTo(Configuration<S, C> o) {
-		if (size() != o.size())
+		if (size() != o.size()) {
 			return size() - o.size();
-		List<Transition<S, C>> phi1 = getPhi();
-		List<Transition<S, C>> phi2 = o.getPhi();
+		}
+		final List<Transition<S, C>> phi1 = getPhi();
+		final List<Transition<S, C>> phi2 = o.getPhi();
 		for (int i = 0; i < phi1.size(); i++) {
-			Transition<S, C> t1 = phi1.get(i);
-			Transition<S, C> t2 = phi2.get(i);
-			int result = t1.getTotalOrderID() - t2.getTotalOrderID();
+			final Transition<S, C> t1 = phi1.get(i);
+			final Transition<S, C> t2 = phi2.get(i);
+			final int result = t1.getTotalOrderID() - t2.getTotalOrderID();
 			if (result != 0) {
 //				mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">")
 //						+ phi2.toString());

@@ -98,8 +98,9 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * where <i>up</i> is the current state and <i>down</i> is the topmost stack
 	 * element.
 	 */
+	@Override
 	public Set<STATE> getDownStates(STATE up) {
-		STATE entry = getEntry(up);
+		final STATE entry = getEntry(up);
 		return getCallPredecessors(entry);
 	}
 	
@@ -108,12 +109,13 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
 	 * stack element.
 	 */
+	@Override
 	public boolean isDoubleDecker(STATE up, STATE down) {
-		STATE entry = getEntry(up);
+		final STATE entry = getEntry(up);
 		if (entry == null) {
 			return false;
 		} else {
-			Set<STATE> downStates = getCallPredecessors(entry);
+			final Set<STATE> downStates = getCallPredecessors(entry);
 			return downStates.contains(down);
 		}
 	}
@@ -132,6 +134,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	/**
 	 * Don't use this for the construction of a Senwa. 
 	 */
+	@Override
 	public void addState(boolean isInitial, boolean isFinal, STATE state) {
 		throw new IllegalArgumentException("Specify entry");
 	}
@@ -162,16 +165,16 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 
 	@Override
 	public void removeState(STATE state) {
-		STATE entry = mState2Entry.get(state);
+		final STATE entry = mState2Entry.get(state);
 		assert entry != null;
-		Set<STATE> module = mEntry2Module.get(entry);
-		boolean success = module.remove(state);
+		final Set<STATE> module = mEntry2Module.get(entry);
+		final boolean success = module.remove(state);
 		assert success : "State was not in module";
 		
-		for (LETTER letter : lettersCall(state)) {
-			for (STATE succ : succCall(state, letter)) {
+		for (final LETTER letter : lettersCall(state)) {
+			for (final STATE succ : succCall(state, letter)) {
 				assert (isEntry(succ));
-				Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
+				final Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
 				callPreds.remove(state);
 			}
 		}
@@ -188,9 +191,9 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 
 	@Override
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-			STATE predEntry = mState2Entry.get(pred);
+			final STATE predEntry = mState2Entry.get(pred);
 			assert predEntry != null;
-			STATE succEntry = mState2Entry.get(succ);
+			final STATE succEntry = mState2Entry.get(succ);
 			assert succEntry != null;
 			if( predEntry != succEntry) {
 				throw new IllegalArgumentException("Result is no senwa");
@@ -201,7 +204,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 
 	@Override
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		STATE succEntry = mState2Entry.get(succ);
+		final STATE succEntry = mState2Entry.get(succ);
 		assert succ == succEntry;
 		Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
 		if (callPreds == null) {
@@ -216,11 +219,11 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	@Override
 	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
 			STATE succ) {
-		STATE predEntry = mState2Entry.get(pred);
+		final STATE predEntry = mState2Entry.get(pred);
 		assert predEntry != null;
-		STATE hierEntry = mState2Entry.get(hier);
+		final STATE hierEntry = mState2Entry.get(hier);
 		assert hierEntry != null;
-		STATE succEntry = mState2Entry.get(succ);
+		final STATE succEntry = mState2Entry.get(succ);
 		assert succEntry != null;
 		assert hierEntry == succEntry;
 		super.addReturnTransition(pred, hier, letter, succ);
@@ -231,17 +234,17 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	public boolean isModuleInformationConsistent() {
 		boolean result = true;
 		
-		for (STATE state : getStates()) {
-			STATE entry = getEntry(state);
+		for (final STATE state : getStates()) {
+			final STATE entry = getEntry(state);
 			if (entry == state) {
 				result &= isEntry(state);
 				assert result;
-				for (STATE callPred : getCallPredecessors(state)) {
+				for (final STATE callPred : getCallPredecessors(state)) {
 					result &= (getStates().contains(callPred) || callPred == getEmptyStackState());
 					assert result;
 				}
 			}
-			Set<STATE> module = getModuleStates(entry);
+			final Set<STATE> module = getModuleStates(entry);
 			result &= module.contains(state);
 			assert result;
 		}

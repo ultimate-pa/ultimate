@@ -61,14 +61,14 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	private HashSet<S> mNwaOnlyAlphabet;
 	private HashSet<S> mUnionAlphabet;
 	
-	private Map<Place<S,C>,Place<S,C>> oldPlace2newPlace = 
+	private final Map<Place<S,C>,Place<S,C>> oldPlace2newPlace = 
 		new HashMap<Place<S,C>,Place<S,C>>();
-	private Map<C,Place<S,C>> state2newPlace = 
+	private final Map<C,Place<S,C>> state2newPlace = 
 		new HashMap<C,Place<S,C>>();
 	
-	private Map<S,Collection<ITransition<S,C>>> symbol2netTransitions = 
+	private final Map<S,Collection<ITransition<S,C>>> symbol2netTransitions = 
 		new HashMap<S,Collection<ITransition<S,C>>>();
-	private Map<S,Collection<AutomatonTransition>> symbol2nwaTransitions = 
+	private final Map<S,Collection<AutomatonTransition>> symbol2nwaTransitions = 
 		new HashMap<S,Collection<AutomatonTransition>>();
 	
 	
@@ -131,6 +131,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		computeResult();
 	}
 	
+	@Override
 	public PetriNetJulian<S,C> getResult() throws AutomataLibraryException {
 		return this.mResult;
 	}
@@ -153,30 +154,30 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 										 constantTokenAmount);
 		
 		//add places of old net
-		for (Place<S,C> oldPlace : mNet.getPlaces()) {
-			C content = oldPlace.getContent();
-			boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
-			boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
-			Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+		for (final Place<S,C> oldPlace : mNet.getPlaces()) {
+			final C content = oldPlace.getContent();
+			final boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
+			final boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
+			final Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			oldPlace2newPlace.put(oldPlace, newPlace);
 		}
 		
 		//add states of automaton
-		for (C state : mNwa.getStates()) {
-			C content = state;
-			boolean isInitial = mNwa.getInitialStates().contains(state);
-			boolean isAccepting = mNwa.isFinal(state);
-			Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+		for (final C state : mNwa.getStates()) {
+			final C content = state;
+			final boolean isInitial = mNwa.getInitialStates().contains(state);
+			final boolean isAccepting = mNwa.isFinal(state);
+			final Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			state2newPlace.put(state, newPlace);
 		}
 		
-		for (ITransition<S,C> trans : mNet.getTransitions()) {
+		for (final ITransition<S,C> trans : mNet.getTransitions()) {
 			updateSymbol2netTransitions(trans.getSymbol(), trans);
 		}
 		
-		for (C state : mNwa.getStates()) {
-			for (S letter : mNwa.lettersInternal(state)) {
-				for (C succ : mNwa.succInternal(state, letter)) {
+		for (final C state : mNwa.getStates()) {
+			for (final S letter : mNwa.lettersInternal(state)) {
+				for (final C succ : mNwa.succInternal(state, letter)) {
 					Collection<AutomatonTransition> automatonTransitions = 
 							symbol2nwaTransitions.get(letter);
 					if (automatonTransitions == null) {
@@ -189,39 +190,39 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 			}
 		}
 		
-		for (S symbol : mNetOnlyAlphabet) {
-			for (ITransition<S,C> trans : symbol2netTransitions.get(symbol)) {
-				Collection<Place<S,C>> predecessors = 
+		for (final S symbol : mNetOnlyAlphabet) {
+			for (final ITransition<S,C> trans : symbol2netTransitions.get(symbol)) {
+				final Collection<Place<S,C>> predecessors = 
 											new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : trans.getPredecessors()) {
-					Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : trans.getPredecessors()) {
+					final Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors = 
 					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : trans.getSuccessors()) {
-					Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
+				for (final Place<S,C> oldPlace : trans.getSuccessors()) {
+					final Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				mResult.addTransition(trans.getSymbol(), predecessors, successors);
 			}
 		}
 		
-		for (S symbol : mNwaOnlyAlphabet) {
-			for (AutomatonTransition trans : 
+		for (final S symbol : mNwaOnlyAlphabet) {
+			for (final AutomatonTransition trans : 
 											symbol2nwaTransitions.get(symbol)) {
-				Collection<Place<S,C>> predecessors = 
+				final Collection<Place<S,C>> predecessors = 
 											new ArrayList<Place<S,C>>(1);
 				{
-					Place<S,C> newPlace = 
+					final Place<S,C> newPlace = 
 						state2newPlace.get(trans.getPredecessor());
 					predecessors.add(newPlace);
 				}
 				
-				Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors = 
 											new ArrayList<Place<S,C>>(1);
 				{
-					Place<S,C> newPlace = 
+					final Place<S,C> newPlace = 
 						state2newPlace.get(trans.getSuccessor());
 					successors.add(newPlace);
 				}
@@ -229,31 +230,33 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 			}
 		}
 		
-		for (S symbol : mSharedAlphabet) {
-			if (symbol2netTransitions.containsKey(symbol))
-			for (ITransition<S,C> netTrans : symbol2netTransitions.get(symbol)) {
-				if (symbol2nwaTransitions.containsKey(symbol))		
-				for (AutomatonTransition nwaTrans : 
-											symbol2nwaTransitions.get(symbol)) {
-				
-				Collection<Place<S,C>> predecessors = 
-											new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : netTrans.getPredecessors()) {
-					Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
-					predecessors.add(newPlace);
-				}
-				predecessors.add(state2newPlace.get(nwaTrans.getPredecessor()));
-				
-				
-				Collection<Place<S,C>> successors = 
-					new ArrayList<Place<S,C>>();
-				for (Place<S,C> oldPlace : netTrans.getSuccessors()) {
-					Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
-					successors.add(newPlace);
-				}
-				successors.add(state2newPlace.get(nwaTrans.getSuccessor()));
-				mResult.addTransition(netTrans.getSymbol(), predecessors, successors);
-				
+		for (final S symbol : mSharedAlphabet) {
+			if (symbol2netTransitions.containsKey(symbol)) {
+				for (final ITransition<S,C> netTrans : symbol2netTransitions.get(symbol)) {
+					if (symbol2nwaTransitions.containsKey(symbol)) {
+						for (final AutomatonTransition nwaTrans : 
+													symbol2nwaTransitions.get(symbol)) {
+						
+						final Collection<Place<S,C>> predecessors = 
+													new ArrayList<Place<S,C>>();
+						for (final Place<S,C> oldPlace : netTrans.getPredecessors()) {
+							final Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
+							predecessors.add(newPlace);
+						}
+						predecessors.add(state2newPlace.get(nwaTrans.getPredecessor()));
+						
+						
+						final Collection<Place<S,C>> successors = 
+							new ArrayList<Place<S,C>>();
+						for (final Place<S,C> oldPlace : netTrans.getSuccessors()) {
+							final Place<S,C> newPlace = oldPlace2newPlace.get(oldPlace);
+							successors.add(newPlace);
+						}
+						successors.add(state2newPlace.get(nwaTrans.getSuccessor()));
+						mResult.addTransition(netTrans.getSymbol(), predecessors, successors);
+						
+						}
+					}
 				}
 			}
 		}
@@ -290,9 +293,9 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
-		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(mServices, op1AsNwa, mNwa, true)).getResult();
+		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
+		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
+		final INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(mServices, op1AsNwa, mNwa, true)).getResult();
 		boolean correct = true;
 		correct &= (new IsIncluded(mServices, stateFactory, resultAsNwa,nwaResult)).getResult();
 		correct &= (new IsIncluded(mServices, stateFactory, nwaResult,resultAsNwa)).getResult();

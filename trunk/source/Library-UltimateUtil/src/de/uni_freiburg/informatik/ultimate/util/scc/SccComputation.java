@@ -92,7 +92,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		mSuccessorProvider = successorProvider;
 		mNumberOfAllStates = numberOfAllNodes;
 		
-		for (NODE node : startNodes) {
+		for (final NODE node : startNodes) {
 			if (!mIndices.containsKey(node)) {
 				strongconnect(node);
 			}
@@ -134,9 +134,9 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		mIndex++;
 		this.mNoScc.push(v);
 		
-		Iterator<NODE> it = mSuccessorProvider.getSuccessors(v);
+		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(v);
 		while(it.hasNext()) {
-			NODE succCont = it.next();
+			final NODE succCont = it.next();
 			processSuccessor(v, succCont);
 		}
 	
@@ -147,7 +147,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 
 	protected void establishNewComponent(NODE v) {
 		NODE w;
-		COMP scc = mSccFactory.constructNewSCComponent();
+		final COMP scc = mSccFactory.constructNewSCComponent();
 		do {
 			w = mNoScc.pop();
 			scc.addNode(w);
@@ -171,16 +171,16 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	}
 
 	protected void updateLowlink(NODE node, int newValueCandidate) {
-		int min = Math.min(mLowLinks.get(node), newValueCandidate);
+		final int min = Math.min(mLowLinks.get(node), newValueCandidate);
 		mLowLinks.put(node, min);
 	}
 
 	boolean isBall(StronglyConnectedComponent<NODE> scc) {
 		if (scc.getNumberOfStates() == 1) {
-			NODE cont = scc.getRootNode();
-			Iterator<NODE> it = mSuccessorProvider.getSuccessors(cont);
+			final NODE cont = scc.getRootNode();
+			final Iterator<NODE> it = mSuccessorProvider.getSuccessors(cont);
 			while(it.hasNext()) {
-				NODE succCont = it.next();
+				final NODE succCont = it.next();
 				if (cont.equals(succCont)) {
 					return true;
 				}
@@ -198,12 +198,12 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	protected boolean automatonPartitionedBySCCs() {
 		int statesInAllBalls = 0;
 		int max = 0;
-		for (StronglyConnectedComponent<NODE> scc : mBalls) {
+		for (final StronglyConnectedComponent<NODE> scc : mBalls) {
 			statesInAllBalls += scc.getNumberOfStates();
 			max = Math.max(max, scc.getNumberOfStates());
 		}
 		mLogger.debug("The biggest SCC has " + max + " vertices.");
-		boolean sameNumberOfVertices = (statesInAllBalls + mNumberOfNonBallSCCs == mNumberOfAllStates);
+		final boolean sameNumberOfVertices = (statesInAllBalls + mNumberOfNonBallSCCs == mNumberOfAllStates);
 		return sameNumberOfVertices;
 	}
 
@@ -219,14 +219,14 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		private final Set<NODE> mSet = new HashSet<>();
 		
 		public NODE pop() {
-			NODE node = mStack.pop();
+			final NODE node = mStack.pop();
 			mSet.remove(node);
 			return node;
 		}
 		
 		public void push(NODE node) {
 			mStack.push(node);
-			boolean modified = mSet.add(node);
+			final boolean modified = mSet.add(node);
 			if (!modified) {
 				throw new IllegalArgumentException("Illegal to add element twice " + node);
 			}

@@ -57,11 +57,11 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	/**
 	 * DecoratorNode children.
 	 */
-	private List<DecoratorNode> children;
+	private final List<DecoratorNode> children;
 	/**
 	 * DecoratorNode parent.
 	 */
-	private DecoratorNode parent;
+	private final DecoratorNode parent;
 
 	/**
 	 * Constructor.
@@ -105,7 +105,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 *            the reference to the parent node
 	 */
 	public DecoratorNode(DecoratorNode parent) {
-		this.children = new ArrayList<DecoratorNode>();
+		children = new ArrayList<DecoratorNode>();
 		this.parent = parent;
 	}
 
@@ -116,11 +116,11 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 *            decorator node
 	 */
 	public void addChildren(DecoratorNode child) {
-		if (this.acslNode != null)
+		if (acslNode != null) {
 			throw new IllegalArgumentException(
 					"DecoratorNode with ACSL can not have children!");
-		else if (this.cNode != null) {
-			this.children.add(child);
+		} else if (cNode != null) {
+			children.add(child);
 		} else {
 			throw new IllegalArgumentException("Node has neither ACSL nor C!");
 		}
@@ -133,10 +133,10 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 *            list of decorator nodes to add
 	 */
 	public void addAllChildren(List<DecoratorNode> children) {
-		if (this.acslNode != null)
+		if (acslNode != null) {
 			throw new IllegalArgumentException(
 					"DecoratorNode with ACSL can not have children!");
-		else if (this.cNode != null) {
+		} else if (cNode != null) {
 			this.children.addAll(children);
 		} else {
 			throw new IllegalArgumentException("Node has neither ACSL nor C!");
@@ -149,7 +149,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (cNode != null) {
 			sb.append(cNode);
 		} else if (acslNode != null) {

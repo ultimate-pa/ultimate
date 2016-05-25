@@ -26,8 +26,11 @@
  */
 package pea_to_boogie.generator;
 
-import pea.*;
-import java.util.*;
+import java.util.List;
+
+import pea.CDD;
+import pea.Decision;
+import pea.RangeDecision;
 public class StrictInvariant {
 
 	 public CDD genStrictInv(CDD cdd, List<String> resetList) {
@@ -39,14 +42,14 @@ public class StrictInvariant {
 	            return CDD.FALSE;
 	        }
 	        
-	    	CDD[] childs = cdd.getChilds();
-	    	Decision decision = cdd.getDecision();
+	    	final CDD[] childs = cdd.getChilds();
+	    	final Decision decision = cdd.getDecision();
             
           	CDD decisionCDD;
           	if (!resetList.contains(decision.getVar())) {
           	   decisionCDD = 
           			toStrictRange(decision.getVar(), ((RangeDecision) decision).getLimits()); 
-          	   CDD[] newChilds = new CDD[childs.length];
+          	   final CDD[] newChilds = new CDD[childs.length];
                for (int i = 0; i < childs.length; i++) {
 	        	newChilds[i] = genStrictInv(childs[i],resetList);	            	
 	           } 

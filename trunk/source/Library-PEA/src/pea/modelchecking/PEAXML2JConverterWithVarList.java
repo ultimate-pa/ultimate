@@ -29,11 +29,10 @@ package pea.modelchecking;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-
-import org.w3c.dom.Element;
 
 /**
  * This simple class works basically in the same way as its superclass with
@@ -52,7 +51,7 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 	
 	public PEAXML2JConverterWithVarList(boolean useZ) throws Exception {
 		super(useZ);
-		this.logger = ILogger.getLogger(PEAXML2JConverterWithVarList.DEFAULT_LOGGER);
+		logger = ILogger.getLogger(PEAXML2JConverterWithVarList.DEFAULT_LOGGER);
 	}
 
 	/**
@@ -60,12 +59,12 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 	 * @return Returns an ArrayList with all variables.
 	 */
 	public ArrayList[] getAdditionalVariables() {
-		Document document = this.parser.getDocument();
-		NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
+		final Document document = parser.getDocument();
+		final NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
         if (peaNodes.getLength() == 0) {
             throw new RuntimeException("PEA count = 0 is not allowed");
         }		
-		ArrayList[] additionalVariables = new ArrayList[peaNodes.getLength()];
+		final ArrayList[] additionalVariables = new ArrayList[peaNodes.getLength()];
 		for (int i = 0; i < additionalVariables.length; i++) {
 			additionalVariables[i] = getAdditionalVariablesForPEA((Element)peaNodes.item(i),
 					  											  XMLTags.NAME_Tag);
@@ -78,13 +77,13 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 	 * @return Returns an ArrayList with all clocks.
 	 */
 	public ArrayList<String> getClockList() {
-		Document document = this.parser.getDocument();
-		NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
+		final Document document = parser.getDocument();
+		final NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
         if (peaNodes.getLength() == 0) {
             throw new RuntimeException("PEA count = 0 is not allowed");
         }
-		NodeList clockNodes = document.getElementsByTagName(XMLTags.CLOCK_TAG);
-		ArrayList<String> clockList = new ArrayList<String>();
+		final NodeList clockNodes = document.getElementsByTagName(XMLTags.CLOCK_TAG);
+		final ArrayList<String> clockList = new ArrayList<String>();
 		for (int i = 0; i < clockNodes.getLength(); i++) {
 			clockList.add(((Element)clockNodes.item(i))
 						  .getAttribute(XMLTags.NAME_Tag));
@@ -98,12 +97,12 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 	 * @return Returns an ArrayList with all types (in the same order as the variables).
 	 */
 	public ArrayList[] getTypes() {
-		Document document = this.parser.getDocument();
-		NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
+		final Document document = parser.getDocument();
+		final NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
         if (peaNodes.getLength() == 0) {
             throw new RuntimeException("PEA count = 0 is not allowed");
         }
-		ArrayList[] types = new ArrayList[peaNodes.getLength()];
+		final ArrayList[] types = new ArrayList[peaNodes.getLength()];
 		for (int i = 0; i < types.length; i++) {
 			types[i] = getAdditionalVariablesForPEA((Element)peaNodes.item(i),
 																  XMLTags.TYPE_TAG);
@@ -123,12 +122,12 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 	 * @see pea.modelchecking.XMLTags
 	 */
 	private ArrayList getAdditionalVariablesForPEA(Element peaNode, String type) {
-		   NodeList variableNodes = peaNode.getElementsByTagName(XMLTags.VARIABLE_TAG);
-	       ArrayList<String> variablesForPEA = new ArrayList<String>();
+		   final NodeList variableNodes = peaNode.getElementsByTagName(XMLTags.VARIABLE_TAG);
+	       final ArrayList<String> variablesForPEA = new ArrayList<String>();
 	       variablesForPEA.clear();
 		   for (int i = 0; i < variableNodes.getLength(); i++) {
 	        	logger.info("Variable: " + i);
-	        	String temp = new String(((Element)variableNodes.item(i))
+	        	final String temp = new String(((Element)variableNodes.item(i))
 										             .getAttribute(type));
 	        	if(!temp.equals("")){
 	        		logger.info("Name: " + temp);

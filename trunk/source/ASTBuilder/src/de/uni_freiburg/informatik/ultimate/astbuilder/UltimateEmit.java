@@ -40,7 +40,8 @@ public class UltimateEmit extends Emit {
      * (de.uni_freiburg.informatik.ultimate.astbuilder.Node)
      */
     // @Override
-    public void emitClassDeclaration(Node node) throws IOException {
+    @Override
+	public void emitClassDeclaration(Node node) throws IOException {
         mWriter.println("public "
                 + (node.isAbstract() ? "abstract " : "")
                 + "class "
@@ -53,15 +54,18 @@ public class UltimateEmit extends Emit {
         mWriter.println("    private static final long serialVersionUID = 1L;");
     }
 
-    public String getConstructorParam(Node node, boolean optional) {
-        if (node == null)
-            return "loc";
+    @Override
+	public String getConstructorParam(Node node, boolean optional) {
+        if (node == null) {
+			return "loc";
+		}
         return super.getConstructorParam(node, optional);
     }
 
-    protected void fillConstructorParamComment(Node node, StringBuffer param,
+    @Override
+	protected void fillConstructorParamComment(Node node, StringBuffer param,
             StringBuffer comment, boolean optional) {
-        Node parent = node.getParent();
+        final Node parent = node.getParent();
         if (parent == null) {
             param.append("ILocation loc");
             comment.append("\n@param loc the node's location");
@@ -69,7 +73,8 @@ public class UltimateEmit extends Emit {
         super.fillConstructorParamComment(node, param, comment, optional);
     }
 
-    public void emitConstructors(Node node) throws IOException {
+    @Override
+	public void emitConstructors(Node node) throws IOException {
         int numNotWriteableParams = 1;
         int numNotOptionalParams = 1;
         int numTotalParams = 1;
@@ -78,12 +83,14 @@ public class UltimateEmit extends Emit {
         /* Optional constructor is only emitted if there are optional fields */
         Node ancestor = node;
         while (ancestor != null) {
-            for (Parameter p : ancestor.parameters) {
+            for (final Parameter p : ancestor.parameters) {
                 numTotalParams++;
-                if (!p.isWriteable())
-                    numNotWriteableParams++;
-                if (!p.isOptional())
-                    numNotOptionalParams++;
+                if (!p.isWriteable()) {
+					numNotWriteableParams++;
+				}
+                if (!p.isOptional()) {
+					numNotOptionalParams++;
+				}
             }
             ancestor = ancestor.getParent();
         }
@@ -94,10 +101,12 @@ public class UltimateEmit extends Emit {
             mWriter.println();
         }
 
-        if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams)
-            emitConstructor(node, false);
-        if (numTotalParams > 0)
-            emitConstructor(node, true);
+        if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams) {
+			emitConstructor(node, false);
+		}
+        if (numTotalParams > 0) {
+			emitConstructor(node, true);
+		}
     }
 
     /*
@@ -107,20 +116,23 @@ public class UltimateEmit extends Emit {
      * uni_freiburg.informatik.ultimate.astbuilder.Node)
      */
     // @Override
-    public void emitPreamble(Node node) throws IOException {
+    @Override
+	public void emitPreamble(Node node) throws IOException {
         super.emitPreamble(node);
         mWriter.println("import java.util.List;");
         mWriter.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
-        if (node.getParent() == null)
-            mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.BoogieASTNode;");
+        if (node.getParent() == null) {
+			mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.BoogieASTNode;");
+		}
 
     }
 
-    public void emitNodeHook(Node node) throws IOException {
+    @Override
+	public void emitNodeHook(Node node) throws IOException {
         mWriter.println();
         mWriter.println("    public List<Object> getChildren() {");
         mWriter.println("        List<Object> children = super.getChildren();");
-        Parameter[] parameters = node.getParameters();
+        final Parameter[] parameters = node.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             mWriter.println("        children.add(" + parameters[i].getName()
                     + ");");

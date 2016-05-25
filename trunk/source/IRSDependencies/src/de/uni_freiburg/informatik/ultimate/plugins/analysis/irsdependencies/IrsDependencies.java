@@ -36,8 +36,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetectorObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer.Mode;
 
 public class IrsDependencies implements IAnalysis {
 
@@ -74,21 +76,21 @@ public class IrsDependencies implements IAnalysis {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
-		IRSDependenciesPreferenceInitializer.Mode mode = IRSDependenciesPreferenceInitializer.getMode();
+		final IRSDependenciesPreferenceInitializer.Mode mode = new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(IRSDependenciesPreferenceInitializer.MODE, Mode.class);
 
 		switch (mode) {
 		case Default:
 			setInputDefinitionModeDefault(graphType);
 			break;
 		default:
-			String errorMsg = "Unknown mode: " + mode;
+			final String errorMsg = "Unknown mode: " + mode;
 			mLogger.fatal(errorMsg);
 			throw new IllegalArgumentException(errorMsg);
 		}
 	}
 
 	private void setInputDefinitionModeDefault(ModelType graphType) {
-		String creator = graphType.getCreator();
+		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mLogger.info("Preparing to process RCFG...");

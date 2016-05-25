@@ -36,15 +36,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class IntervalBinaryExpressionEvaluator
@@ -60,12 +57,11 @@ public class IntervalBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type) {
+	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type,final int maxParallelStates) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
-		mMaxParallelStates = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		mMaxParallelStates = maxParallelStates;
 	}
 
 	@Override

@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model;
 
 public class Literal extends Formula {
 
-	private String mName;
-	private LiteralType mLiteralType;
+	private final String mName;
+	private final LiteralType mLiteralType;
 
 	public Literal(String name, LiteralType literalType) {
 		mName = name;

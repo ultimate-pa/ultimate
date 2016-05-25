@@ -4,7 +4,9 @@
 
 package jdd.internal.tests;
 
-import jdd.util.*;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.Test;
 
 /**
  * test calls are invoked from here.
@@ -77,7 +79,7 @@ public class RunTests {
 
 			// *** hurrayy, we did it ***
 			JDDConsole.out.println("\nALL " + Test.total + " TESTS WERE SUCCESSFUL!");
-		} catch(Throwable exx) {
+		} catch(final Throwable exx) {
 			exx.printStackTrace();
 		}
 

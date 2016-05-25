@@ -60,10 +60,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
@@ -82,56 +82,56 @@ public abstract class Dispatcher {
 
 	protected final ILogger mLogger;
 
-	public RcpPreferenceProvider mPreferences;
+	private final IPreferenceProvider mPreferences;
 
 	/**
 	 * The side effect handler.
 	 */
-	public ISideEffectHandler sideEffectHandler;
+	public ISideEffectHandler mSideEffectHandler;
 	/**
 	 * The C+ACSL handler.
 	 */
-	public ICHandler cHandler;
+	public ICHandler mCHandler;
 	/**
 	 * The Type handler.
 	 */
-	public ITypeHandler typeHandler;
+	public ITypeHandler mTypeHandler;
 	/**
 	 * The ACSL handler.
 	 */
-	public IACSLHandler acslHandler;
+	public IACSLHandler mAcslHandler;
 	/**
 	 * The Name handler.
 	 */
-	public INameHandler nameHandler;
+	public INameHandler mNameHandler;
 	/**
 	 * Holds the next ACSL node in the decorator tree.
 	 */
-	public NextACSL nextAcsl;
+	public NextACSL mNextAcsl;
 	/**
 	 * The Preprocessor statement handler.
 	 */
-	public IPreprocessorHandler preprocessorHandler;
+	public IPreprocessorHandler mPreprocessorHandler;
 	/**
 	 * This plugin creates results for warnings if set to true.
 	 */
-	protected static boolean REPORT_WARNINGS = true;
+	protected boolean mReportWarnings = true;
 	/**
 	 * Translation from Boogie to C for traces and expressions.
 	 */
-	protected final CACSL2BoogieBacktranslator backtranslator;
+	protected final CACSL2BoogieBacktranslator mBacktranslator;
 	protected final IUltimateServiceProvider mServices;
-	
 
 	private final TypeSizes mTypeSizes;
 
 	private final TranslationSettings mTranslationSettings;
 
-	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, ILogger logger) {
-		this.backtranslator = backtranslator;
+	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
+			final ILogger logger) {
+		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-		mPreferences = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		mPreferences = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mTypeSizes = new TypeSizes(mPreferences);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 	}
@@ -208,38 +208,15 @@ public abstract class Dispatcher {
 	protected abstract void preRun(DecoratorNode node);
 
 	/**
-	 * Iterates to the next ACSL statement in the decorator tree and returns a
-	 * list of ACSL nodes until the next C node appears.
+	 * Iterates to the next ACSL statement in the decorator tree and returns a list of ACSL nodes until the next C node
+	 * appears.
 	 * 
 	 * @return a list of ACSL nodes until the next C node appears.
 	 * @throws ParseException
-	 *             if no trailing C node in the tree! The ACSL is in an
-	 *             unexpected and most probably unreachable location and should
-	 *             be ignored!
+	 *             if no trailing C node in the tree! The ACSL is in an unexpected and most probably unreachable
+	 *             location and should be ignored!
 	 */
 	public abstract NextACSL nextACSLStatement() throws ParseException;
-
-	// /**
-	// * Report a syntax error to Ultimate. This will cancel the toolchain.
-	// *
-	// * @param loc
-	// * where did it happen?
-	// * @param type
-	// * why did it happen?
-	// * @param msg
-	// * description.
-	// */
-	// public static void error(ILocation loc, SyntaxErrorType type, String msg)
-	// {
-	// SyntaxErrorResult<ILocation> result = new SyntaxErrorResult<ILocation>(
-	// loc, Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-	// .getTranslatorSequence(), loc, type);
-	// result.setLongDescription(msg);
-	// UltimateServices us = UltimateServices.getInstance();
-	// us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
-	// us.reportResult(Activator.s_PLUGIN_ID, result);
-	// us.cancelToolchain();
-	// }
 
 	/**
 	 * Report a syntax error to Ultimate. This will cancel the toolchain.
@@ -252,7 +229,7 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void syntaxError(ILocation loc, String msg) {
-		SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
+		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
@@ -269,7 +246,7 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void unsupportedSyntax(ILocation loc, String msg) {
-		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME, loc,
+		final UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME, loc,
 				msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
@@ -285,14 +262,14 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void warn(ILocation loc, String longDescription) {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		boolean reportUnsoundnessWarning = prefs
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean reportUnsoundnessWarning = prefs
 				.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
-			String shortDescription = "Unsoundness Warning";
+			final String shortDescription = "Unsoundness Warning";
 			mLogger.warn(shortDescription + " " + longDescription);
-			GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc,
-					shortDescription, longDescription, Severity.WARNING);
+			final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc, shortDescription,
+					longDescription, Severity.WARNING);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		}
 	}
@@ -303,11 +280,11 @@ public abstract class Dispatcher {
 	 * @return the checked method's name.
 	 */
 	public String getCheckedMethod() {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
 			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new IllegalArgumentException("Unable to determine specified checked method.");
 		}
 		return checkMethod;
@@ -326,37 +303,38 @@ public abstract class Dispatcher {
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
 	 */
 	public Map<String, String> getIdentifierMapping() {
-		return (cHandler.getSymbolTable().getIdentifierMapping());
+		return (mCHandler.getSymbolTable().getIdentifierMapping());
 	}
 
-	public LinkedHashMap<String,Integer> getFunctionToIndex() {
+	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
 	}
 
 	public TypeSizes getTypeSizes() {
 		return mTypeSizes;
 	}
-	
+
 	public TranslationSettings getTranslationSettings() {
 		return mTranslationSettings;
 	}
 
-	public class TranslationSettings {
+	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
+
+	public IPreferenceProvider getPreferences() {
+		return mPreferences;
+	}
+	
+	public static final class TranslationSettings {
 		private final POINTER_CHECKMODE mDivisionByZero;
 
-		public TranslationSettings(RcpPreferenceProvider preferences) {
-			mDivisionByZero = 
-					preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO, POINTER_CHECKMODE.class);
+		public TranslationSettings(IPreferenceProvider preferences) {
+			mDivisionByZero = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO,
+					POINTER_CHECKMODE.class);
 		}
 
 		public POINTER_CHECKMODE getDivisionByZero() {
 			return mDivisionByZero;
 		}
-		
-		
 	}
 
-	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
-	
-	
 }

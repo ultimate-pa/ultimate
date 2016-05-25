@@ -60,8 +60,8 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 		mContainedDisjunctions++;
 		mRating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfDisjunctions();
-		EncodingStatistics.setMaxDisjunctionsInOneEdge(this.mContainedDisjunctions);
-		EncodingStatistics.setMaxElementsInOneDisjunction(this.getElementCount());
+		EncodingStatistics.setMaxDisjunctionsInOneEdge(mContainedDisjunctions);
+		EncodingStatistics.setMaxElementsInOneDisjunction(getElementCount());
 	}
 
 	/**

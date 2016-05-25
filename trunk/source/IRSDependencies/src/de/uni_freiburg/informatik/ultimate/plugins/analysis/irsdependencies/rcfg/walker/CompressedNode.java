@@ -38,23 +38,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class CompressedNode extends RCFGNode {
 
 	private static final long serialVersionUID = 8389472937782033528L;
-	private HashMap<RCFGEdge,List<RCFGEdge>> mShortestPathsToExit;
+	private final HashMap<RCFGEdge,List<RCFGEdge>> mShortestPathsToExit;
 
-	private SCC mComponent;
+	private final SCC mComponent;
 
 	public CompressedNode(SCC component) {
 		if (component == null || component.isEmpty()) {
 			throw new IllegalArgumentException();
 		} else {
 
-			for (RCFGNode node : component) {
-				for (RCFGEdge edge : node.getIncomingEdges()) {
+			for (final RCFGNode node : component) {
+				for (final RCFGEdge edge : node.getIncomingEdges()) {
 					if (!component.contains(edge.getSource())) {
 						mIncomingEdges.add(edge);
 					}
 				}
 
-				for (RCFGEdge edge : node.getOutgoingEdges()) {
+				for (final RCFGEdge edge : node.getOutgoingEdges()) {
 					if (!component.contains(edge.getTarget())) {
 						mOutgoingEdges.add(edge);
 					}
@@ -86,7 +86,7 @@ public class CompressedNode extends RCFGNode {
 		if(mShortestPathsToExit.containsKey(start)){
 			return mShortestPathsToExit.get(start);
 		} else {
-			List<RCFGEdge> rtr = shortestPathToExit(start);
+			final List<RCFGEdge> rtr = shortestPathToExit(start);
 			mShortestPathsToExit.put(start, rtr);
 			return rtr;
 		}
@@ -96,9 +96,9 @@ public class CompressedNode extends RCFGNode {
 	
 	protected List<RCFGEdge> shortestPathToExit(RCFGEdge start) {
 
-		LinkedList<EdgeDecorator> queue = new LinkedList<>();
-		HashMap<RCFGEdge, EdgeDecorator> set = new HashMap<>();
-		LinkedList<EdgeDecorator> exits = new LinkedList<>();
+		final LinkedList<EdgeDecorator> queue = new LinkedList<>();
+		final HashMap<RCFGEdge, EdgeDecorator> set = new HashMap<>();
+		final LinkedList<EdgeDecorator> exits = new LinkedList<>();
 
 		EdgeDecorator old = getContainer(set, start);
 		old.Visits = 1;
@@ -107,7 +107,7 @@ public class CompressedNode extends RCFGNode {
 		while (!queue.isEmpty()) {
 			old = queue.poll();
 			EdgeDecorator next;
-			for (RCFGEdge edge : old.Node.getOutgoingEdges()) {
+			for (final RCFGEdge edge : old.Node.getOutgoingEdges()) {
 				if (edge instanceof Summary) {
 					continue;
 				}
@@ -115,7 +115,7 @@ public class CompressedNode extends RCFGNode {
 				if (next.Visits == 2) {
 					next.Visits = 1;
 					next.pre = old;
-					if (this.contains(next.Node)) {
+					if (contains(next.Node)) {
 						queue.push(next);
 					} else {
 						exits.add(next);
@@ -126,7 +126,7 @@ public class CompressedNode extends RCFGNode {
 			old.Visits = 0;
 		}
 
-		ArrayList<RCFGEdge> rtrList = new ArrayList<>();
+		final ArrayList<RCFGEdge> rtrList = new ArrayList<>();
 		EdgeDecorator current = exits.get(0);
 		while (current != null) {
 			rtrList.add(current.Edge);

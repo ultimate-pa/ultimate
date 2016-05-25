@@ -1,9 +1,12 @@
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
+import java.util.Collection;
 
-import java.util.*;
+import jdd.bdd.BDD;
+import jdd.bdd.Permutation;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
 
 /**
  * profiling the BDD by counting and timing each operation
@@ -50,8 +53,9 @@ public class ProfiledBDD2 extends BDD {
 
 	// ---------------------------------------------------------------
 	// Debugging stuff
+	@Override
 	public Collection addDebugger(BDDDebuger d) {
-		Collection v = super.addDebugger( d );
+		final Collection v = super.addDebugger( d );
 		v.add( quant_cache );
 		v.add( ite_cache );
 		v.add( not_cache );
@@ -63,149 +67,167 @@ public class ProfiledBDD2 extends BDD {
 	// ---------------------------------------------------------------
 
 
+	@Override
 	public int and(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_and++;
-		int ret = super.and(a,b);
+		final int ret = super.and(a,b);
 		t_and += ( System.currentTimeMillis() - t);
 		return ret;
 	}
+	@Override
 	public int or(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_or++;
-		int ret = super.or(a,b);
+		final int ret = super.or(a,b);
 		t_or += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int xor(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_xor++;
-		int ret = super.xor(a,b);
+		final int ret = super.xor(a,b);
 		t_xor += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int biimp(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_biimp++;
-		int ret =  super.biimp(a,b);
+		final int ret =  super.biimp(a,b);
 		t_biimp += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int imp(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_imp++;
-		int ret = super.imp(a,b);
+		final int ret = super.imp(a,b);
 		t_imp += ( System.currentTimeMillis() - t);
 		return ret;
 		}
 
+	@Override
 	public int nor(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_nor++;
-		int ret = super.nor(a,b);
+		final int ret = super.nor(a,b);
 		t_nor += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int nand(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_nand++;
-		int ret = super.nand(a,b);
+		final int ret = super.nand(a,b);
 		t_nand += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int not(int a) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_not++;
-		int ret = super.not(a);
+		final int ret = super.not(a);
 		t_not += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
 
+	@Override
 	public int replace(int a, Permutation b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_replace++;
-		int ret = super.replace(a,b);
+		final int ret = super.replace(a,b);
 		t_replace += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int exists(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_exists++;
-		int ret = super.exists(a,b);
+		final int ret = super.exists(a,b);
 		t_exists += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int forall(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_forall++;
-		int ret = super.forall(a,b);
+		final int ret = super.forall(a,b);
 		t_forall += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int relProd(int a, int b, int c) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_relprod++;
-		int ret = super.relProd(a,b,c);
+		final int ret = super.relProd(a,b,c);
 		t_relprod += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
 
+	@Override
 	public int support(int a) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_support++;
-		int ret = super.support(a);
+		final int ret = super.support(a);
 		t_support += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int restrict(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_restrict++;
-		int ret = super.restrict(a,b);
+		final int ret = super.restrict(a,b);
 		t_restrict += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public int simplify(int a, int b) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_simplify++;
-		int ret = super.simplify(a,b);
+		final int ret = super.simplify(a,b);
 		t_simplify += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
 
+	@Override
 	public int ite(int a, int b, int c ) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_ite++;
-		int ret = super.ite(a,b,c);
+		final int ret = super.ite(a,b,c);
 		t_ite += ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
 
+	@Override
 	public double satCount(int a) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_satcount++;
-		double ret = super.satCount(a);
+		final double ret = super.satCount(a);
 		t_satcount+= ( System.currentTimeMillis() - t);
 		return ret;
 	}
 
+	@Override
 	public Permutation createPermutation( int [] cube_from, int [] cube_to) {
-		long t = System.currentTimeMillis();
+		final long t = System.currentTimeMillis();
 		p_permutation++;
-		Permutation ret = super.createPermutation(cube_from, cube_to);
+		final Permutation ret = super.createPermutation(cube_from, cube_to);
 		t_permutation += ( System.currentTimeMillis() - t);
 		return ret;
 	}
@@ -213,15 +235,20 @@ public class ProfiledBDD2 extends BDD {
 	public void report(String what, long count, long time) {
 
 		if(count > 0) {
-			StringBuffer sb = new StringBuffer(256);
+			final StringBuffer sb = new StringBuffer(256);
 			sb.append("calls to " + what);
-			while(sb.length() < 28) sb.append(' ');
+			while(sb.length() < 28) {
+				sb.append(' ');
+			}
 			sb.append(" : "+ count + " times");
-			while(sb.length() < 48) sb.append(' ');
+			while(sb.length() < 48) {
+				sb.append(' ');
+			}
 			sb.append(" " + time + " [ms]");
 			JDDConsole.out.println(sb.toString() );
 		}
 	}
+	@Override
 	public void showStats() {
 		report("AND", p_and,t_and);
 		report("OR", p_or,t_or);

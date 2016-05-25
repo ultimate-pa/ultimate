@@ -57,9 +57,9 @@ public class ColumnDefinitionUtil {
 	public static ICsvProvider<String> makeHumanReadable(ICsvProvider<String> csv,
 			List<ColumnDefinition> columnDefinitions, int ignoreFirstNCells) {
 
-		ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
+		final ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
 
-		List<ConversionContext> conversionInfo = new ArrayList<>(
+		final List<ConversionContext> conversionInfo = new ArrayList<>(
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
 					@Override
 					public ConversionContext reduce(ColumnDefinition entry) {
@@ -67,18 +67,18 @@ public class ColumnDefinitionUtil {
 					}
 				}));
 
-		int rows = csv.getRowHeaders().size();
+		final int rows = csv.getRowHeaders().size();
 		for (int i = 0; i < rows; ++i) {
-			List<String> newRow = new ArrayList<>();
-			List<String> oldRow = csv.getRow(i);
+			final List<String> newRow = new ArrayList<>();
+			final List<String> oldRow = csv.getRow(i);
 
 			int cellCount = 0;
 			int contextCount = 0;
-			for (String cell : oldRow) {
+			for (final String cell : oldRow) {
 				if (cellCount < ignoreFirstNCells) {
 					newRow.add(cell);
 				} else {
-					ConversionContext cc = conversionInfo.get(contextCount);
+					final ConversionContext cc = conversionInfo.get(contextCount);
 					newRow.add(cc.makeHumanReadable(cell));
 					++contextCount;
 				}
@@ -96,7 +96,7 @@ public class ColumnDefinitionUtil {
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		List<String> columnsToKeep = new ArrayList<>(
+		final List<String> columnsToKeep = new ArrayList<>(
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(ColumnDefinition entry) {
@@ -105,7 +105,7 @@ public class ColumnDefinitionUtil {
 				}));
 
 		int i = 0;
-		for (ColumnDefinition.Aggregate aggregate : aggregates) {
+		for (final ColumnDefinition.Aggregate aggregate : aggregates) {
 			switch (aggregate) {
 			case Average:
 				avg.add(columnsToKeep.get(i));
@@ -122,22 +122,22 @@ public class ColumnDefinitionUtil {
 			++i;
 		}
 
-		ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
+		final ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
 				new IExplicitConverter<ICsvProvider<?>, ICsvProvider<String>>() {
 					@Override
 					public ICsvProvider<String> convert(ICsvProvider<?> input) {
-						ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
-						List<String> newRow = new ArrayList<>();
+						final ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
+						final List<String> newRow = new ArrayList<>();
 
 						int idx = 0;
 
-						for (String columnTitle : input.getColumnTitles()) {
+						for (final String columnTitle : input.getColumnTitles()) {
 							String finalValue = null;
 							BigDecimal numberValue = BigDecimal.ZERO;
-							List<String> cells = new ArrayList<>();
+							final List<String> cells = new ArrayList<>();
 
-							for (List<?> row : input.getTable()) {
-								Object cell = row.get(idx);
+							for (final List<?> row : input.getTable()) {
+								final Object cell = row.get(idx);
 								if (cell != null) {
 									cells.add(cell.toString());
 								}
@@ -147,36 +147,36 @@ public class ColumnDefinitionUtil {
 								finalValue = "-";
 
 							} else if (sum.contains(columnTitle)) {
-								for (String cell : cells) {
+								for (final String cell : cells) {
 									try {
-										numberValue = numberValue.add(new BigDecimal((String) cell));
+										numberValue = numberValue.add(new BigDecimal(cell));
 										finalValue = numberValue.toString();
-									} catch (Exception ex) {
+									} catch (final Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else if (max.contains(columnTitle)) {
-								for (String cell : cells) {
+								for (final String cell : cells) {
 									try {
-										numberValue = numberValue.max(new BigDecimal((String) cell));
+										numberValue = numberValue.max(new BigDecimal(cell));
 										finalValue = numberValue.toString();
-									} catch (Exception ex) {
+									} catch (final Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else if (avg.contains(columnTitle)) {
-								int size = cells.size();
-								for (String cell : cells) {
+								final int size = cells.size();
+								for (final String cell : cells) {
 									try {
-										numberValue = numberValue.add(new BigDecimal((String) cell));
+										numberValue = numberValue.add(new BigDecimal(cell));
 										finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP)
 												.toString();
-									} catch (Exception ex) {
+									} catch (final Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else {
-								for (String cell : cells) {
+								for (final String cell : cells) {
 									finalValue = cell;
 								}
 							}
@@ -290,8 +290,8 @@ public class ColumnDefinitionUtil {
 
 	static void renameHeadersToLatexTitles(ICsvProvider<String> csvTotal, List<ColumnDefinition> columnDefinitions) {
 		int i = 0;
-		for (String oldTitle : csvTotal.getColumnTitles()) {
-			String newTitle = columnDefinitions.get(i).getLatexTableTitle();
+		for (final String oldTitle : csvTotal.getColumnTitles()) {
+			final String newTitle = columnDefinitions.get(i).getLatexTableTitle();
 			if (newTitle != null) {
 				csvTotal.renameColumnTitle(oldTitle, columnDefinitions.get(i).getLatexTableTitle());
 			}

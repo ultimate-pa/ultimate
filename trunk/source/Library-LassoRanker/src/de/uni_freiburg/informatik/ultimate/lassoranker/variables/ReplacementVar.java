@@ -55,6 +55,7 @@ public class ReplacementVar extends RankVar {
 	 * @return the definition of this replacement variable, i.e., the term it
 	 *         replaces
 	 */
+	@Override
 	public Term getDefinition() {
 		return mdefinition;
 	}

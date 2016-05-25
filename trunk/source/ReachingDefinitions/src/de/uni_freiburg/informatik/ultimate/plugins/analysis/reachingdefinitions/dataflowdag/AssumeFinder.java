@@ -63,13 +63,13 @@ public class AssumeFinder extends BaseObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			RootNode rootNode = (RootNode) root;
+			final RootNode rootNode = (RootNode) root;
 
 			process(rootNode);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("AssumeFinder result (edge.hashCode(), pretty-printed assume statement):");
-				for (RCFGEdge e : mEdgesWithAssumes.keySet()) {
-					for (AssumeStatement ass : mEdgesWithAssumes.get(e)) {
+				for (final RCFGEdge e : mEdgesWithAssumes.keySet()) {
+					for (final AssumeStatement ass : mEdgesWithAssumes.get(e)) {
 						mLogger.debug(e.hashCode() + " " + BoogiePrettyPrinter.print(ass));
 					}
 				}
@@ -83,25 +83,25 @@ public class AssumeFinder extends BaseObserver {
 	}
 
 	private void process(RCFGNode node) {
-		Queue<RCFGEdge> openEdges = new LinkedList<>();
-		HashSet<RCFGEdge> completed = new HashSet<>();
-		AssumeFinderVisitor visitor = new AssumeFinderVisitor();
+		final Queue<RCFGEdge> openEdges = new LinkedList<>();
+		final HashSet<RCFGEdge> completed = new HashSet<>();
+		final AssumeFinderVisitor visitor = new AssumeFinderVisitor();
 
 		openEdges.addAll(node.getOutgoingEdges());
 
 		while (!openEdges.isEmpty()) {
-			RCFGEdge current = openEdges.poll();
+			final RCFGEdge current = openEdges.poll();
 
 			visitor.start(current);
 			completed.add(current);
 
-			RCFGNode target = current.getTarget();
+			final RCFGNode target = current.getTarget();
 			if (target == null) {
 				mLogger.warn("Empty target for edge " + current.hashCode());
 				continue;
 			}
 
-			for (RCFGEdge next : target.getOutgoingEdges()) {
+			for (final RCFGEdge next : target.getOutgoingEdges()) {
 				if (!completed.contains(next)) {
 					openEdges.add(next);
 				}
@@ -130,7 +130,7 @@ public class AssumeFinder extends BaseObserver {
 		@Override
 		protected void visit(StatementSequence sequence) {
 			super.visit(sequence);
-			for (Statement s : sequence.getStatements()) {
+			for (final Statement s : sequence.getStatements()) {
 				if (s instanceof AssumeStatement) {
 					getAssumeList(mMotherEdge).add((AssumeStatement) s);
 				}

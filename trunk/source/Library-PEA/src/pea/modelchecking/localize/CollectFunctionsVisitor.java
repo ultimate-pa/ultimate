@@ -98,19 +98,19 @@ public class CollectFunctionsVisitor implements
      * A map containing names and types of extension functions collected in several applications of 
      * this visitor.
      */
-    private Map<String,String> extFunctions = new HashMap<String,String>();
+    private final Map<String,String> extFunctions = new HashMap<String,String>();
 
     /**
      * A set containing names of base functions collected in several applications of 
      * this visitor.
      */
-    private Set<String> baseFunctions = new HashSet<String>();
+    private final Set<String> baseFunctions = new HashSet<String>();
     
     /**
      * A set containing names relations collected in several applications of 
      * this visitor.
      */
-    private Set<String> relations = new HashSet<String>();
+    private final Set<String> relations = new HashSet<String>();
 
 
     /**
@@ -119,7 +119,7 @@ public class CollectFunctionsVisitor implements
      *          a given map of variables to types
      */
     public CollectFunctionsVisitor(Map<String, String> variables) {
-        this.declarations = variables;
+        declarations = variables;
     }
 
     /*
@@ -127,7 +127,8 @@ public class CollectFunctionsVisitor implements
      * 
      * @see net.sourceforge.czt.base.visitor.TermVisitor#visitTerm(net.sourceforge.czt.base.ast.Term)
      */
-    @SuppressWarnings("unchecked")
+    @Override
+	@SuppressWarnings("unchecked")
     public Object visitTerm(Term zedObject) {
 /*        StringWriter sw = new StringWriter();
         PrintUtils.printUnicode(zedObject, sw, sectionInfo, ZWrapper.getSectionName());
@@ -141,8 +142,8 @@ public class CollectFunctionsVisitor implements
             System.out.println();
         }
 */
-        Object[] children = zedObject.getChildren();
-            for (Object child : children) {
+        final Object[] children = zedObject.getChildren();
+            for (final Object child : children) {
                     if (child instanceof Term) {
                             ((Term) child).accept(this);
                     }
@@ -168,9 +169,9 @@ public class CollectFunctionsVisitor implements
             System.out.println();
         }
 */
-        OperatorName opname = zname.getOperatorName();
+        final OperatorName opname = zname.getOperatorName();
         if(opname!= null){
-            String name = opname.getWord().replaceAll(ZString.ARG_TOK, "");
+            final String name = opname.getWord().replaceAll(ZString.ARG_TOK, "");
             if(ALL_RELATIONS.contains(name)){
 //                if(name.equals(ZString.NEQ))
 //                    relations.add(LocalizeString.EQUALS);
@@ -179,7 +180,7 @@ public class CollectFunctionsVisitor implements
             }
             //            Functions.put(name + strokes,declarations.get(name));
         }else {
-            String nameWithoutStrokes = zname.getWord();
+            final String nameWithoutStrokes = zname.getWord();
             if(declarations.containsKey(nameWithoutStrokes) && !extFunctions.containsKey(zname.toString())){
                 extFunctions.put(zname.toString(),declarations.get(nameWithoutStrokes));
             } 
@@ -208,25 +209,25 @@ public class CollectFunctionsVisitor implements
         }
 */
         ZName zname = null;
-        if(expr.getLeftExpr() instanceof RefExpr)
-            zname = ((RefExpr) expr.getLeftExpr()).getZName();
-        else if(expr.getLeftExpr() instanceof BindSelExpr)
-            zname = ((BindSelExpr) expr.getLeftExpr()).getZName();
-        else if(expr.getLeftExpr() instanceof ApplExpr) {
+        if(expr.getLeftExpr() instanceof RefExpr) {
+			zname = ((RefExpr) expr.getLeftExpr()).getZName();
+		} else if(expr.getLeftExpr() instanceof BindSelExpr) {
+			zname = ((BindSelExpr) expr.getLeftExpr()).getZName();
+		} else if(expr.getLeftExpr() instanceof ApplExpr) {
             expr.getLeftExpr().accept(this);
             expr.getRightExpr().accept(this);
             return null;
         }
-        String name = zname.toString();
-        String nameWithoutStrokes = zname.getWord();
+        final String name = zname.toString();
+        final String nameWithoutStrokes = zname.getWord();
         // We only allow functions as extension functions that are declared correctly.
         if(declarations.containsKey(nameWithoutStrokes) && !extFunctions.containsKey(name)){
             extFunctions.put(name,declarations.get(nameWithoutStrokes));
         }else if(!extFunctions.containsKey(name)){
-            String opname = name.replaceAll(ZString.ARG_TOK, "");
-            if(ALL_BASE_FUNCTIONS.contains(opname))
-                baseFunctions.add(opname);
-            else { // We do not know the function and, hence, raise an error.
+            final String opname = name.replaceAll(ZString.ARG_TOK, "");
+            if(ALL_BASE_FUNCTIONS.contains(opname)) {
+				baseFunctions.add(opname);
+			} else { // We do not know the function and, hence, raise an error.
                 throw new LocalizeException(LocalizeException.UNKNOWN_FUNCTION_SYMBOL +
                           name);
             }

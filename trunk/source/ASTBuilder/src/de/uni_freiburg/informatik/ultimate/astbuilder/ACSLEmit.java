@@ -45,7 +45,7 @@ public class ACSLEmit extends Emit {
 	private static final String[] sOthers = new String[] { sVisitorName, sTransformerName };
 
 	private boolean isOther(Node node) {
-		for (String s : sOthers) {
+		for (final String s : sOthers) {
 			if (node.getName().equals(s)) {
 				return true;
 			}
@@ -55,7 +55,7 @@ public class ACSLEmit extends Emit {
 
 	@Override
 	public void emitClassDeclaration(Node node) throws IOException {
-		StringBuilder classDecl = new StringBuilder();
+		final StringBuilder classDecl = new StringBuilder();
 		classDecl.append("public ");
 		if (node.isAbstract()) {
 			classDecl.append("abstract ");
@@ -87,7 +87,7 @@ public class ACSLEmit extends Emit {
 				mWriter.println("import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;");
 			}
 
-			for (Parameter p : getAllACSLParameters(node)) {
+			for (final Parameter p : getAllACSLParameters(node)) {
 				if (isArrayType(p)) {
 					mWriter.println("import java.util.ArrayList;");
 					break;
@@ -99,7 +99,7 @@ public class ACSLEmit extends Emit {
 	@Override
 	public void emitNodeHook(Node node) throws IOException {
 		if (node.name.equals(sVisitorName)) {
-			for (Node n : mGrammar.getNodeTable().values()) {
+			for (final Node n : mGrammar.getNodeTable().values()) {
 				mWriter.println();
 				mWriter.println("    public boolean visit(" + n.name + " node) {");
 				mWriter.println("        return true;");
@@ -107,7 +107,7 @@ public class ACSLEmit extends Emit {
 			}
 
 		} else if (node.name.equals(sTransformerName)) {
-			for (Node n : mGrammar.getNodeTable().values()) {
+			for (final Node n : mGrammar.getNodeTable().values()) {
 				mWriter.println();
 				mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
 				mWriter.println("        return node;");
@@ -118,7 +118,7 @@ public class ACSLEmit extends Emit {
 			mWriter.println();
 			mWriter.println("    public List<Object> getChildren() {");
 			mWriter.println("        List<Object> children = super.getChildren();");
-			Parameter[] parameters = node.getParameters();
+			final Parameter[] parameters = node.getParameters();
 			for (int i = 0; i < parameters.length; i++) {
 				mWriter.println("        children.add(" + parameters[i].getName() + ");");
 			}
@@ -126,7 +126,7 @@ public class ACSLEmit extends Emit {
 			mWriter.println("    }");
 
 			if (!node.isAbstract()) {
-				List<Parameter> allACSLParameters = getAllACSLParameters(node);
+				final List<Parameter> allACSLParameters = getAllACSLParameters(node);
 				writeVisitorAcceptMethod(node, allACSLParameters);
 				writeTransformerAcceptMethod(node, allACSLParameters);
 
@@ -153,9 +153,9 @@ public class ACSLEmit extends Emit {
 
 		boolean isChangedPrinted = false;
 
-		for (Parameter p : allACSLParameters) {
-			String newName = "new" + p.getName();
-			String listName = "tmpList" + newName;
+		for (final Parameter p : allACSLParameters) {
+			final String newName = "new" + p.getName();
+			final String listName = "tmpList" + newName;
 			// declarations
 			if (isArrayType(p)) {
 				if (!isChangedPrinted) {
@@ -182,18 +182,18 @@ public class ACSLEmit extends Emit {
 
 		if (allACSLParameters.size() > 0) {
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("        if(");
 
 			if (isChangedPrinted) {
 				sb.append("isChanged || ");
 			}
 
-			for (Parameter p : allACSLParameters) {
+			for (final Parameter p : allACSLParameters) {
 				if (isArrayType(p)) {
 					continue;
 				}
-				String newName = "new" + p.getName();
+				final String newName = "new" + p.getName();
 				sb.append(p.name + " != " + newName);
 				sb.append(" || ");
 			}
@@ -217,7 +217,7 @@ public class ACSLEmit extends Emit {
 	}
 
 	private String getBaseType(Parameter p) {
-		String typeStr = p.getType().replaceAll("\\[\\]", "");
+		final String typeStr = p.getType().replaceAll("\\[\\]", "");
 		return typeStr;
 	}
 
@@ -226,15 +226,16 @@ public class ACSLEmit extends Emit {
 			return "";
 		}
 
-		StringBuffer sb = new StringBuffer();
+		final StringBuffer sb = new StringBuffer();
 
 		sb.append(getNewCallParams(node.getParent()));
 
 		String comma = "";
-		if (sb.length() > 0)
+		if (sb.length() > 0) {
 			comma = ", ";
+		}
 
-		for (Parameter p : node.getParameters()) {
+		for (final Parameter p : node.getParameters()) {
 			String pname;
 			if (!mGrammar.nodeTable.containsKey(getBaseType(p))) {
 				pname = p.getName();
@@ -255,12 +256,12 @@ public class ACSLEmit extends Emit {
 		mWriter.println();
 		mWriter.println("    public void accept(" + sVisitorName + " visitor) {");
 
-		String lineSep = System.getProperty("line.separator");
+		final String lineSep = System.getProperty("line.separator");
 
 		Node parent = node.getParent();
-		String indent = "        ";
+		final String indent = "        ";
 		int i = 0;
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (parent != null) {
 			while (parent != null) {
 				int j = i + 1;
@@ -297,7 +298,7 @@ public class ACSLEmit extends Emit {
 		}
 
 		mWriter.println("        if(visitor.visit(this)){");
-		for (Parameter p : allACSLParameters) {
+		for (final Parameter p : allACSLParameters) {
 			mWriter.println("            if(" + p.getName() + "!=null){");
 			if (isArrayType(p)) {
 				mWriter.println("                for(" + getBaseType(p) + " elem : " + p.getName() + "){");
@@ -314,10 +315,10 @@ public class ACSLEmit extends Emit {
 	}
 
 	private List<Parameter> getAllACSLParameters(Node node) {
-		List<Parameter> allParameters = new ArrayList<>();
+		final List<Parameter> allParameters = new ArrayList<>();
 		Node current = node;
 		while (current != null) {
-			for (Parameter p : current.getParameters()) {
+			for (final Parameter p : current.getParameters()) {
 				if (mGrammar.nodeTable.containsKey(getBaseType(p))) {
 					allParameters.add(p);
 				}
@@ -329,8 +330,8 @@ public class ACSLEmit extends Emit {
 
 	@Override
 	public void setGrammar(Grammar grammar) {
-		HashSet<String> types = new HashSet<>();
-		for (Node n : grammar.getNodeTable().values()) {
+		final HashSet<String> types = new HashSet<>();
+		for (final Node n : grammar.getNodeTable().values()) {
 			types.add(n.name);
 		}
 		grammar.getNodeTable()

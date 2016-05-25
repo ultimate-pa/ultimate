@@ -43,33 +43,37 @@ public class ScopedArrayList<E> extends ArrayList<E> {
 	int[] mLevels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
 	int mCurscope = -1;
 	
+	@Override
 	public void clear() {
 		mLevels = new int[ScopeUtils.NUM_INITIAL_SCOPES];
 		mCurscope = -1;
 		super.clear();
 	}
 	public void beginScope() {
-		if (++mCurscope == mLevels.length)
+		if (++mCurscope == mLevels.length) {
 			mLevels = ScopeUtils.grow(mLevels);
+		}
 		mLevels[mCurscope] = size();		
 	}
 	public void endScope() {
-		int oldsize = mLevels[mCurscope];
+		final int oldsize = mLevels[mCurscope];
 		super.removeRange(oldsize, size());
-		if (ScopeUtils.shouldShrink(--mCurscope, mLevels.length))
+		if (ScopeUtils.shouldShrink(--mCurscope, mLevels.length)) {
 			mLevels = ScopeUtils.shrink(mLevels);
+		}
 	}
 	public int getLastScopeSize() {
 		return mLevels[mCurscope];
 	}
 	public void addToLevel(E obj, int level) {
-		if (level > mCurscope)
+		if (level > mCurscope) {
 			add(obj);
-		else {
-			int pos = mLevels[level];
+		} else {
+			final int pos = mLevels[level];
 			add(pos, obj);
-			for (int i = level; i <= mCurscope; ++i)
+			for (int i = level; i <= mCurscope; ++i) {
 				mLevels[level] += 1;
+			}
 		}
 	}
 	public Iterable<E> currentScope() {

@@ -35,14 +35,14 @@ import java.util.Map.Entry;
  *
  */
 class OpenItem<V, E> {
-	private V mNode;
-	private ScopedHashMap<V, AstarAnnotation<E>> mAnnotations;
+	private final V mNode;
+	private final ScopedHashMap<V, AstarAnnotation<E>> mAnnotations;
 	private AstarAnnotation<E> mAnnotation;
 
 	public OpenItem(V node, Map<V, AstarAnnotation<E>> annotations) {
 		mNode = node;
 		mAnnotations = new ScopedHashMap<>();
-		for (Entry<V, AstarAnnotation<E>> entry : annotations.entrySet()) {
+		for (final Entry<V, AstarAnnotation<E>> entry : annotations.entrySet()) {
 			mAnnotations.put(entry.getKey(), entry.getValue());
 		}
 	}

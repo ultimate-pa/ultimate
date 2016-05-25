@@ -69,7 +69,7 @@ public class ReachDefRCFG extends BaseObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			RootNode rootNode = (RootNode) root;
+			final RootNode rootNode = (RootNode) root;
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
@@ -82,17 +82,17 @@ public class ReachDefRCFG extends BaseObserver {
 
 	private void process(RootNode node) throws Throwable {
 
-		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
+		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
 		if (pa == null || pa.getSymbolTable() == null) {
-			String errorMsg = "No symbol table found on given RootNode.";
+			final String errorMsg = "No symbol table found on given RootNode.";
 			mLogger.fatal(errorMsg);
 			throw new UnsupportedOperationException(errorMsg);
 		}
-		ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
+		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
 
-		LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
+		final LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
 
-		for (RCFGEdge next : node.getOutgoingEdges()) {
+		for (final RCFGEdge next : node.getOutgoingEdges()) {
 			remaining.add(next);
 		}
 
@@ -102,16 +102,16 @@ public class ReachDefRCFG extends BaseObserver {
 				mLogger.debug("                    Open: "
 						+ Util.prettyPrintIterable(remaining, Util.<RCFGEdge> createHashCodePrinter()));
 			}
-			RCFGEdge current = remaining.iterator().next();
+			final RCFGEdge current = remaining.iterator().next();
 			remaining.remove(current);
-			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
+			final ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
 
-			boolean fxpReached = v.process(current);
+			final boolean fxpReached = v.process(current);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
-				for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+				for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
 					remaining.add(next);
 				}
 			}

@@ -75,12 +75,12 @@ public class LinearConstraint<N extends Number> {
 	/**
 	 * Stores each variable name.
 	 */
-	private List<String> mVariables;
+	private final List<String> mVariables;
 
 	/**
 	 * Stores for each variable its coefficient.
 	 */
-	private List<N> mCoefficients;
+	private final List<N> mCoefficients;
 
 	/**
 	 * The default constructor which creates a new {@link LinearConstraint} instance with a name.

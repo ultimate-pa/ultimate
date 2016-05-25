@@ -84,7 +84,7 @@ public class PetruchioWrapper<S,C> {
 	 */
 	private void constructNetPetruchio() {
 		//construct a Petruchio place for each NetJulian place
-		for(de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pJulian : mNetJulian.getPlaces()) {
+		for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pJulian : mNetJulian.getPlaces()) {
 			Place pPetruchio;
 			String pLabel = "";
 			pLabel += pJulian.getContent();
@@ -100,8 +100,8 @@ public class PetruchioWrapper<S,C> {
 			pJulian2pPetruchio.put(pJulian, pPetruchio);
 		}
 		//construct a Petruchio transition for each NetJulian transition
-		for(ITransition<S,C> tJulian : mNetJulian.getTransitions()) {
-			Transition transitionPetruchio = mNetPetruchio.addTransition(tJulian.toString());
+		for(final ITransition<S,C> tJulian : mNetJulian.getTransitions()) {
+			final Transition transitionPetruchio = mNetPetruchio.addTransition(tJulian.toString());
 			tPetruchio2tJulian.put(transitionPetruchio, tJulian);
 			// PTArcs kopieren
 			for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pJulian : tJulian.getSuccessors()) {

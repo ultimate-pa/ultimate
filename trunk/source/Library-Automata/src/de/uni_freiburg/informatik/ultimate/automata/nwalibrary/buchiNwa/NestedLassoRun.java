@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
  * @param <STATE>
  */
 public class NestedLassoRun<LETTER,STATE> {
-	private NestedRun<LETTER,STATE> stem;
-	private NestedRun<LETTER,STATE> loop;
+	private final NestedRun<LETTER,STATE> stem;
+	private final NestedRun<LETTER,STATE> loop;
 		
 	public NestedLassoRun(NestedRun<LETTER,STATE> stem, NestedRun<LETTER, STATE> loop) {
 		this.stem = stem;
@@ -59,6 +59,7 @@ public class NestedLassoRun<LETTER,STATE> {
 									  this.getLoop().getWord());
 	}
 	
+	@Override
 	public String toString() {
 		return "Stem: " + stem + " Loop:" + loop;
 	}

@@ -61,6 +61,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				+ mResult.sizeInformation();
 	}
 
+	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
@@ -92,7 +93,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			throws AutomataLibraryException {
 		mLogger.debug("Testing correctness of complement");
 		boolean correct = true;
-		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
+		final INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
 		correct &=  ((new IsEmpty(mServices, intersectionOperandResult)).getResult() == true);
 		mLogger.debug("Finished testing correctness of complement");
 		return correct;

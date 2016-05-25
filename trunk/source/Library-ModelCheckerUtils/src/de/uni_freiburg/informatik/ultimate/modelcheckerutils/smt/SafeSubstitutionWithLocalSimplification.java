@@ -54,12 +54,12 @@ public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		final Term result;
-		Term[] oldArgs = appTerm.getParameters();
+		final Term[] oldArgs = appTerm.getParameters();
 		if (oldArgs == newArgs) {
 			// no argument was changed, we can return the original term
 			result = appTerm;
 		} else {
-			String funcname = appTerm.getFunction().getName();
+			final String funcname = appTerm.getFunction().getName();
 			result = SmtUtils.termWithLocalSimplification(mScript, 
 					funcname, appTerm.getFunction().getIndices(), newArgs);
 		}

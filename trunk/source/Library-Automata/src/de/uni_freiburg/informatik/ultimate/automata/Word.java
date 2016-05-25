@@ -74,9 +74,9 @@ import java.util.List;
 		
 		@SuppressWarnings("unchecked")
 		public Word<Symbol> concatenate(Word<Symbol> nestedWord2) {
-			int lengthWord1 = this.length();
-			int lengthWord2 = nestedWord2.length();
-			Symbol[] concatenationSymbols = 
+			final int lengthWord1 = this.length();
+			final int lengthWord2 = nestedWord2.length();
+			final Symbol[] concatenationSymbols = 
 				(Symbol[]) new Object[lengthWord1 + lengthWord2];
 			
 			for (int i=0; i<lengthWord1; i++) {

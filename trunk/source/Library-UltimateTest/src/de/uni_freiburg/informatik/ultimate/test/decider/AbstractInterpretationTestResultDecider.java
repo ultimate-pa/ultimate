@@ -92,9 +92,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 	}
 
-	private String mInputFile;
+	private final String mInputFile;
 
-	private String mtoolIdentifier;
+	private final String mtoolIdentifier;
 
 	private ExpectedResultType mexpectedResult;
 
@@ -121,7 +121,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider services) {
 		final IResultService resultService = services.getResultService();
-		ILogger log = services.getLoggingService().getLogger(AbstractInterpretationTestResultDecider.class);
+		final ILogger log = services.getLoggingService().getLogger(AbstractInterpretationTestResultDecider.class);
 		final Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
 		mResults = new ArrayList<IResult>();
@@ -142,10 +142,11 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 					long memory = 0; // in bytes
 					double time = 0; // in milliseconds
 
-					for (String title : benchmark.getTitles()) {
-						long watchMem = benchmark.getStartHeapSize(title) + benchmark.getPeakMemoryConsumed(title);
-						if (watchMem > memory)
+					for (final String title : benchmark.getTitles()) {
+						final long watchMem = benchmark.getStartHeapSize(title) + benchmark.getPeakMemoryConsumed(title);
+						if (watchMem > memory) {
 							memory = watchMem;
+						}
 						time += benchmark.getElapsedTime(title, TimeUnit.MILLISECONDS);
 					}
 
@@ -155,7 +156,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			}
 		}
 
-		ExpectedResultType expected = getExpectedResult();
+		final ExpectedResultType expected = getExpectedResult();
 		if (expected != null) {
 			customMessages.add("Expected Result: " + expected);
 		}
@@ -163,7 +164,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		if (expected == ExpectedResultType.NOANNOTATION) {
 			customMessages.add("Couldn't understand the specification of the file \"" + mInputFile + "\".");
 		}
-		ActualResult scResult = getActualResult(mResults);
+		final ActualResult scResult = getActualResult(mResults);
 		if (scResult == null) {
 			testoutcome = TestResult.FAIL;
 		} else {
@@ -246,7 +247,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	public static ExpectedResultType getExpectedResult(File inputFile) {
-		String line = TestUtil.extractFirstLine(inputFile);
+		final String line = TestUtil.extractFirstLine(inputFile);
 		if (line != null) {
 			if (line.contains("#Safe") || line.contains("iSafe")) {
 				return ExpectedResultType.SAFE;
@@ -256,7 +257,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 				return ExpectedResultType.SYNTAXERROR;
 			}
 		}
-		String lowercaseFilename = inputFile.getName().toLowerCase();
+		final String lowercaseFilename = inputFile.getName().toLowerCase();
 		if (lowercaseFilename.contains("-safe") || lowercaseFilename.contains("_safe")
 				|| lowercaseFilename.contains("true-unreach-call")) {
 			return ExpectedResultType.SAFE;
@@ -294,7 +295,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 					+ safetyCheckerResult.getResultType().toString());
 		}
 
-		IResult iResult = safetyCheckerResult.getIResult();
+		final IResult iResult = safetyCheckerResult.getIResult();
 		if (iResult != null) {
 			setResultMessage(getResultMessage() + "\t ShortDescription: " + iResult.getShortDescription());
 			setResultMessage(getResultMessage() + "\t LongDescription: " + iResult.getLongDescription()
@@ -313,20 +314,22 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	private ActualResult getActualResult(Collection<IResult> results) {
 		final ActualResult returnValue;
-		Map<ActualResultType, ActualResult> resultSet = new HashMap<ActualResultType, ActualResult>();
+		final Map<ActualResultType, ActualResult> resultSet = new HashMap<ActualResultType, ActualResult>();
 		BenchmarkResult<?> benchmark = null;
-		for (IResult result : results) {
-			if (result instanceof BenchmarkResult)
+		for (final IResult result : results) {
+			if (result instanceof BenchmarkResult) {
 				benchmark = (BenchmarkResult<?>) result;
-			ActualResult extracted = extractResult(result);
+			}
+			final ActualResult extracted = extractResult(result);
 			if (extracted != null) {
 				resultSet.put(extracted.getResultType(), extracted);
 			}
 		}
 
 		// only benchmark result: assume timeout~
-		if ((benchmark != null) && results.size() == 1)
+		if ((benchmark != null) && results.size() == 1) {
 			return new ActualResult(ActualResultType.TIMEOUT, benchmark);
+		}
 
 		if (resultSet.containsKey(ActualResultType.EXCEPTION_OR_ERROR)) {
 			returnValue = resultSet.get(ActualResultType.EXCEPTION_OR_ERROR);
@@ -349,32 +352,41 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	private ActualResult extractResult(IResult result) {
-		if (result instanceof AllSpecificationsHoldResult)
+		if (result instanceof AllSpecificationsHoldResult) {
 			return new ActualResult(ActualResultType.SAFE, result);
+		}
 
-		if (result instanceof CounterExampleResult)
+		if (result instanceof CounterExampleResult) {
 			return new ActualResult(ActualResultType.UNSAFE, result);
+		}
 
-		if (result instanceof UnprovableResult)
+		if (result instanceof UnprovableResult) {
 			return new ActualResult(ActualResultType.UNKNOWN, result);
+		}
 
-		if (result instanceof TypeErrorResult)
+		if (result instanceof TypeErrorResult) {
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
+		}
 
-		if (result instanceof SyntaxErrorResult)
+		if (result instanceof SyntaxErrorResult) {
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
+		}
 
-		if (result instanceof ITimeoutResult)
+		if (result instanceof ITimeoutResult) {
 			return new ActualResult(ActualResultType.TIMEOUT, result);
+		}
 
-		if (result instanceof UnsupportedSyntaxResult)
+		if (result instanceof UnsupportedSyntaxResult) {
 			return new ActualResult(ActualResultType.UNSUPPORTED_SYNTAX, result);
+		}
 
-		if (result instanceof ExceptionOrErrorResult)
+		if (result instanceof ExceptionOrErrorResult) {
 			return new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, result);
+		}
 
-		if (result instanceof NoResult)
+		if (result instanceof NoResult) {
 			return new ActualResult(ActualResultType.NO_RESULT, result);
+		}
 
 		return null;
 	}

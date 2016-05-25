@@ -88,8 +88,8 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}

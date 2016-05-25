@@ -41,7 +41,7 @@ public class BoogieKojakTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
@@ -53,7 +53,7 @@ public class BoogieKojakTC extends WebToolchain {
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = new ArrayList<Setting>();
+		final List<Setting> rtr = new ArrayList<Setting>();
 
 //		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
 //				"main", true));

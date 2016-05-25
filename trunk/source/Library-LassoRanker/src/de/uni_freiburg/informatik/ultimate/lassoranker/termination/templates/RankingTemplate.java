@@ -154,8 +154,8 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * @return the new variable as a term
 	 */
 	protected Term newDelta(String name) {
-		Term delta = mtas.newConstant(name, "Real");
-		Term t = mscript.term(">", delta, mscript.decimal("0"));
+		final Term delta = mtas.newConstant(name, "Real");
+		final Term t = mscript.term(">", delta, mscript.decimal("0"));
 		mscript.assertTerm(t);
 		return delta;
 	}

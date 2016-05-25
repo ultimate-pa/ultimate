@@ -48,7 +48,7 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 
 	private Map<IElement, String> mSeenList;
 	private int mNumRoots;
-	private ILogger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PrintWriter mWriter;
 
@@ -84,11 +84,11 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 		mSeenList.put(node, numbering);
 		mWriter.println("Node " + numbering + ";Annotations: ");
 		if (node.hasPayload()) {
-			IPayload payload = node.getPayload();
+			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				for (Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
+				for (final Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
 					mWriter.println("  " + annotation.getKey());
-					for (Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
+					for (final Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
 						mWriter.print("    " + keyvalue.getKey() + ": ");
 						if (keyvalue.getValue() instanceof Term) {
 							new PrintTerm().append(mWriter, (Term) keyvalue.getValue());
@@ -101,22 +101,23 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 			}
 		}
 
-		List<IWalkable> newnodes = new ArrayList<IWalkable>();
-		List<IWalkable> children = node.getSuccessors();
+		final List<IWalkable> newnodes = new ArrayList<IWalkable>();
+		final List<IWalkable> children = node.getSuccessors();
 		int num = -1;
 		// Add new nodes and detect back edges...
-		for (IWalkable n : children) {
-			String backedge = mSeenList.get(n);
-			if (backedge != null)
+		for (final IWalkable n : children) {
+			final String backedge = mSeenList.get(n);
+			if (backedge != null) {
 				mWriter.println("Back edge from " + numbering + " to " + backedge);
-			else {
-				String newnumbering = numbering + "." + (++num);
+			} else {
+				final String newnumbering = numbering + "." + (++num);
 				mSeenList.put(n, newnumbering);
 				newnodes.add(n);
 			}
 		}
-		for (IWalkable n : newnodes)
+		for (final IWalkable n : newnodes) {
 			dfstraverse(n, mSeenList.get(n));
+		}
 	}
 
 	@Override

@@ -43,9 +43,9 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider  services) {
 		AutomataScriptInterpreterOverallResult asior = null;
-		Map<String, List<IResult>> allResults = services.getResultService().getResults();
-		for (Entry<String, List<IResult>> entry : allResults.entrySet()) {
-			for (IResult iResult : entry.getValue()) {
+		final Map<String, List<IResult>> allResults = services.getResultService().getResults();
+		for (final Entry<String, List<IResult>> entry : allResults.entrySet()) {
+			for (final IResult iResult : entry.getValue()) {
 				if (iResult instanceof AutomataScriptInterpreterOverallResult) {
 					asior = (AutomataScriptInterpreterOverallResult) iResult;
 				}

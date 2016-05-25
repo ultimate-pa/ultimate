@@ -61,10 +61,11 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "ProgramPoint")
+		if (field == "ProgramPoint") {
 			return mProcedures;
-		else
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 
 	@Override
@@ -75,14 +76,17 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	/**
 	 * @return the mAssertion
 	 */
+	@Override
 	public Term getFormula() {
 		return mFormula;
 	}
 
+	@Override
 	public Term getClosedFormula() {
 		return mClosedFormula;
 	}
 
+	@Override
 	public Set<BoogieVar> getVars() {
 		return mVars;
 	}
@@ -97,6 +101,7 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 		return result;
 	}
 
+	@Override
 	public boolean isUnknown() {
 		return false;
 	}

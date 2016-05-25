@@ -78,7 +78,7 @@ public class IterableWithAdditionalElement<E> implements Iterable<E> {
 			@Override
 			public E next() {
 				if (mIterator.hasNext()) {
-					E next = mIterator.next();
+					final E next = mIterator.next();
 					if (next == mAdditionalElement) {
 						mAdditionalElementSeen = true;
 					}

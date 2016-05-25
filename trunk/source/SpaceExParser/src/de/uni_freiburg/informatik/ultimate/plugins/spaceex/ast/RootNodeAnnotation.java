@@ -38,8 +38,8 @@ public class RootNodeAnnotation extends AbstractAnnotations {
 
 	private static final String[] sFieldNames = { "Math", "Version" };
 
-	private String mMath;
-	private String mVersion;
+	private final String mMath;
+	private final String mVersion;
 	
 	public RootNodeAnnotation(String math, String version) {
 		mMath = math;

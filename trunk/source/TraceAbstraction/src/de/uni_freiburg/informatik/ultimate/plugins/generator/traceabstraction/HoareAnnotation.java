@@ -123,14 +123,15 @@ public class HoareAnnotation extends SPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "Precondition2InvariantMapping")
+		if (field == "Precondition2InvariantMapping") {
 			return mPrecondition2Invariant;
-		else if (field == "StateIsUnknown")
+		} else if (field == "StateIsUnknown") {
 			return mIsUnknown;
-		else if (field == "Precondition2InvariantMappingAsStrings")
+		} else if (field == "Precondition2InvariantMappingAsStrings") {
 			return getPrecondition2InvariantMappingAsStrings();
-		else
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 
 	public void addInvariant(IPredicate procPrecond, IPredicate locInvar) {
@@ -139,15 +140,15 @@ public class HoareAnnotation extends SPredicate {
 					+ " computed it is not allowed to add new Formulas");
 		}
 		if (mPredicateFactory.isDontCare(procPrecond) || mPredicateFactory.isDontCare(locInvar)) {
-			this.mIsUnknown = true;
+			mIsUnknown = true;
 			return;
 		}
 		mVars.addAll(procPrecond.getVars());
 		mVars.addAll(locInvar.getVars());
-		Term procPrecondFormula = procPrecond.getFormula();
+		final Term procPrecondFormula = procPrecond.getFormula();
 		// procPrecondFormula = (new SimplifyDDA(mScript,
 		// s_Logger)).getSimplifiedTerm(procPrecondFormula);
-		Term locInvarFormula = locInvar.getFormula();
+		final Term locInvarFormula = locInvar.getFormula();
 		Term invarForPrecond = mPrecondition2Invariant.get(procPrecondFormula);
 		if (invarForPrecond == null) {
 			invarForPrecond = locInvarFormula;
@@ -180,7 +181,7 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	private void computeFormula() {
-		for (Term precond : getPrecondition2Invariant().keySet()) {
+		for (final Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
 			invariant = SmtUtils.simplify(mScript, invariant, mServices); 
 			Term precondTerm = Util.implies(mScript, precond, invariant);
@@ -194,7 +195,7 @@ public class HoareAnnotation extends SPredicate {
 				mFormula);
 		mFormula = SmtUtils.simplify(mScript, mFormula, mServices); 
 		mFormula = getPositiveNormalForm(mFormula);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mBoogie2Smt);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mBoogie2Smt);
 		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);
 	}
 	
@@ -207,12 +208,12 @@ public class HoareAnnotation extends SPredicate {
 	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars, Term term) {
 		final Set<BoogieVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
 				.getAssignedVars();
-		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
+		final List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
 
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (BoogieVar bv : vars) {
+		for (final BoogieVar bv : vars) {
 			if (bv instanceof BoogieOldVar) {
 				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
@@ -222,12 +223,12 @@ public class HoareAnnotation extends SPredicate {
 			}
 		}
 
-		TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] substValues = replacers.toArray(new Term[replacers.size()]);
+		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
 		Term result = mScript.let(substVars, substValues, term);
 		result = (new FormulaUnLet()).unlet(result);
 
-		for (BoogieVar bv : replacedOldVars) {
+		for (final BoogieVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((BoogieOldVar) bv).getNonOldVar());
 		}
@@ -236,8 +237,8 @@ public class HoareAnnotation extends SPredicate {
 	
 
 	private Term getPositiveNormalForm(Term term) {
-		Script script = mScript;
-		Term result = (new AffineSubtermNormalizer(mScript, mLogger)).transform(term);
+		final Script script = mScript;
+		final Term result = (new AffineSubtermNormalizer(mScript, mLogger)).transform(term);
 		assert (Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT);
 		return result;
 	}
@@ -255,8 +256,8 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	public Map<String, String> getPrecondition2InvariantMappingAsStrings() {
-		HashMap<String, String> result = new HashMap<String, String>();
-		for (Entry<Term, Term> entry : mPrecondition2Invariant.entrySet()) {
+		final HashMap<String, String> result = new HashMap<String, String>();
+		for (final Entry<Term, Term> entry : mPrecondition2Invariant.entrySet()) {
 			result.put(entry.getKey().toStringDirect(), entry.getValue().toStringDirect());
 		}
 		return result;

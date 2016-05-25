@@ -50,6 +50,6 @@ public class ExpressionListResult extends Result {
 	 */
 	public ExpressionListResult() {
 		super(null);
-		this.list = new ArrayList<ExpressionResult>();
+		list = new ArrayList<ExpressionResult>();
 	}
 }

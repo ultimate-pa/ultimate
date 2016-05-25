@@ -68,16 +68,16 @@ public class VPMergeOperator implements
 			return first;
 		}
 
-		final VPDomainState newState = (VPDomainState) first.copy();
+		final VPDomainState newState = first.copy();
 
-		Map<String, Set<Expression>> mergeExprMap = new HashMap<String, Set<Expression>>(
+		final Map<String, Set<Expression>> mergeExprMap = new HashMap<String, Set<Expression>>(
 				first.getExpressionMap());
-		Set<Expression> mergeExprSet = new HashSet<Expression>(
+		final Set<Expression> mergeExprSet = new HashSet<Expression>(
 				first.getExprSet());
-		Map<String, Set<Expression>> mergePtrReadinMap = new HashMap<String, Set<Expression>>(
+		final Map<String, Set<Expression>> mergePtrReadinMap = new HashMap<String, Set<Expression>>(
 				first.getPtrReadintMap());
 
-		for (String key : second.getExpressionMap().keySet()) {
+		for (final String key : second.getExpressionMap().keySet()) {
 			if (!mergeExprMap.containsKey(key)) {
 				mergeExprMap.put(key, second.getExpressionMap().get(key));
 			} else {
@@ -88,7 +88,7 @@ public class VPMergeOperator implements
 
 		mergeExprSet.addAll(second.getExprSet());
 		
-		for (String key : second.getPtrReadintMap().keySet()) {
+		for (final String key : second.getPtrReadintMap().keySet()) {
 			if (!mergePtrReadinMap.containsKey(key)) {
 				mergePtrReadinMap.put(key, second.getPtrReadintMap().get(key));
 			} else {

@@ -22,7 +22,7 @@ public class TypeUtil {
 	}
 
 	public static boolean isNumeric(IType type) {
-		Integer t = primitiveType(type);
+		final Integer t = primitiveType(type);
 		return INT.equals(t) || REAL.equals(t);
 	}
 

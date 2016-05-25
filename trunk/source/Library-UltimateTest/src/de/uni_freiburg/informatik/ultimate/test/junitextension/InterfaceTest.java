@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.junitextension;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 
 public abstract class InterfaceTest<T> {
 	
@@ -43,11 +43,11 @@ public abstract class InterfaceTest<T> {
 	
 	@Test
 	public void createInstanceCreatesDifferentInstances() {
-		T i1 = createInstance();
-		T i2 = createInstance();
+		final T i1 = createInstance();
+		final T i2 = createInstance();
 		
 		// Reference comparison
-		boolean same = i1 == i2;
+		final boolean same = i1 == i2;
 		
 		Assert.assertFalse("Instances must not be reference equal", same);
 	}

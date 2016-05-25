@@ -87,11 +87,11 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 	}
 
 	private List<ArrayList<ISmtCommand>> process(LinkedList<ArrayList<ISmtCommand>> commandStack, LBool status) {
-		ArrayList<ISmtCommand> flattenedStack = new ArrayList<>();
+		final ArrayList<ISmtCommand> flattenedStack = new ArrayList<>();
 		addInvarSynthCommands(flattenedStack, status);
 		boolean toKeepCommandsReached = false;
-		for (ArrayList<ISmtCommand> list : commandStack) {
-			for (ISmtCommand command : list) {
+		for (final ArrayList<ISmtCommand> list : commandStack) {
+			for (final ISmtCommand command : list) {
 				if (!toKeepCommandsReached) {
 					if (command.toString().contains("declare-fun")) {
 						toKeepCommandsReached = true;
@@ -108,14 +108,14 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 	}
 
 	private void addInvarSynthCommands(ArrayList<ISmtCommand> flattenedStack, LBool status) {
-		String logic = "(set-logic " + getLogic() + ")" + System.lineSeparator();
+		final String logic = "(set-logic " + getLogic() + ")" + System.lineSeparator();
 		flattenedStack.add(new SmtCommandInStringRepresentation(logic));
 		flattenedStack.add(new SmtCommandInStringRepresentation(getSourceInfo()));
-		String version = "(set-info :smt-lib-version 2.5)" + System.lineSeparator();
+		final String version = "(set-info :smt-lib-version 2.5)" + System.lineSeparator();
 		flattenedStack.add(new SmtCommandInStringRepresentation(version));
-		String category = "(set-info :category \"industrial\")" + System.lineSeparator();
+		final String category = "(set-info :category \"industrial\")" + System.lineSeparator();
 		flattenedStack.add(new SmtCommandInStringRepresentation(category));
-		String statusInfo = "(set-info :status " + status + ")" + System.lineSeparator();
+		final String statusInfo = "(set-info :status " + status + ")" + System.lineSeparator();
 		flattenedStack.add(new SmtCommandInStringRepresentation(statusInfo));
 	}
 	

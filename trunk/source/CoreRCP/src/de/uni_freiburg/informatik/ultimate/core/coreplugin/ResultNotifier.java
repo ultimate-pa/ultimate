@@ -82,8 +82,8 @@ public class ResultNotifier {
 		ToolchainResult toolchainResult = ToolchainResult.NORESULT;
 		String description = "Toolchain returned no Result.";
 
-		for (List<IResult> PluginResults : mServices.getResultService().getResults().values()) {
-			for (IResult result : PluginResults) {
+		for (final List<IResult> PluginResults : mServices.getResultService().getResults().values()) {
+			for (final IResult result : PluginResults) {
 				if (result instanceof SyntaxErrorResult) {
 					toolchainResult = ToolchainResult.SYNTAXERROR;
 					description = result.getShortDescription();
@@ -93,11 +93,13 @@ public class ResultNotifier {
 						description = "unable to determine feasibility of some traces";
 					}
 				} else if (result instanceof CounterExampleResult) {
-					if (toolchainResult.isLess(ToolchainResult.INCORRECT))
+					if (toolchainResult.isLess(ToolchainResult.INCORRECT)) {
 						toolchainResult = ToolchainResult.INCORRECT;
+					}
 				} else if (result instanceof PositiveResult) {
-					if (toolchainResult.isLess(ToolchainResult.CORRECT))
+					if (toolchainResult.isLess(ToolchainResult.CORRECT)) {
 						toolchainResult = ToolchainResult.CORRECT;
+					}
 				} else if (result instanceof TimeoutResultAtElement) {
 					if (toolchainResult.isLess(ToolchainResult.TIMEOUT)) {
 						toolchainResult = ToolchainResult.TIMEOUT;

@@ -93,7 +93,7 @@ public class ModifiableGlobalVariableManager {
 	 * procedure proc.
 	 */
 	public boolean isModifiable(BoogieOldVar bv, String proc) {
-		BoogieNonOldVar bnov = bv.getNonOldVar();
+		final BoogieNonOldVar bnov = bv.getNonOldVar();
 		return getModifiedBoogieVars(proc).contains(bnov);
 	}
 
@@ -144,35 +144,35 @@ public class ModifiableGlobalVariableManager {
 			vars = new HashSet<String>(0);
 		}
 
-		Map<BoogieVar,TermVariable> glob2oldInVars = new HashMap<BoogieVar,TermVariable>();
-		Map<BoogieVar,TermVariable> glob2oldOutVars = new HashMap<BoogieVar,TermVariable>();
-		Set<TermVariable> glob2oldAllVars = new HashSet<TermVariable>();
+		final Map<BoogieVar,TermVariable> glob2oldInVars = new HashMap<BoogieVar,TermVariable>();
+		final Map<BoogieVar,TermVariable> glob2oldOutVars = new HashMap<BoogieVar,TermVariable>();
+		final Set<TermVariable> glob2oldAllVars = new HashSet<TermVariable>();
 		Term glob2oldFormula = mBoogie2smt.getScript().term("true");
 		
-		Map<String, BoogieNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
-		for (String modVar : vars) {
-			BoogieNonOldVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = boogieVar.getOldVar();
-			Sort sort = boogieVar.getDefaultConstant().getSort();
+		final Map<String, BoogieNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		for (final String modVar : vars) {
+			final BoogieNonOldVar boogieVar = globals.get(modVar);
+			final BoogieVar boogieOldVar = boogieVar.getOldVar();
+			final Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
-				String nameIn = modVar + "_In";
-				TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
-				String nameOut = "old(" + modVar + ")" + "_Out";
-				TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
+				final String nameIn = modVar + "_In";
+				final TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
+				final String nameOut = "old(" + modVar + ")" + "_Out";
+				final TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
 				glob2oldInVars.put(boogieVar, tvIn);
 				glob2oldOutVars.put(boogieVar, tvIn);
 				glob2oldOutVars.put(boogieOldVar, tvOut);
 				glob2oldAllVars.add(tvIn);
 				glob2oldAllVars.add(tvOut);
-				Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
+				final Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
 				glob2oldFormula = Util.and(mBoogie2smt.getScript(), glob2oldFormula, assignment);
 			}
 		}
-		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-		Term closedFormula = TransFormula.computeClosedFormula(
+		final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
+		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
+		final Term closedFormula = TransFormula.computeClosedFormula(
 				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, false, mBoogie2smt);
-		TransFormula result = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
+		final TransFormula result = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
 				auxVars, branchEncoders,
 				TransFormula.Infeasibility.UNPROVEABLE, closedFormula);
 		return result;
@@ -187,35 +187,35 @@ public class ModifiableGlobalVariableManager {
 			vars = new HashSet<String>(0);
 		}
 	
-		Map<BoogieVar,TermVariable> old2globInVars = new HashMap<BoogieVar,TermVariable>();
-		Map<BoogieVar,TermVariable> old2globOutVars = new HashMap<BoogieVar,TermVariable>();
-		Set<TermVariable> old2globAllVars = new HashSet<TermVariable>();
+		final Map<BoogieVar,TermVariable> old2globInVars = new HashMap<BoogieVar,TermVariable>();
+		final Map<BoogieVar,TermVariable> old2globOutVars = new HashMap<BoogieVar,TermVariable>();
+		final Set<TermVariable> old2globAllVars = new HashSet<TermVariable>();
 		Term old2globFormula = mBoogie2smt.getScript().term("true");
 		
-		Map<String, BoogieNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
-		for (String modVar : vars) {
-			BoogieNonOldVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = boogieVar.getOldVar();
-			Sort sort = boogieVar.getDefaultConstant().getSort();
+		final Map<String, BoogieNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		for (final String modVar : vars) {
+			final BoogieNonOldVar boogieVar = globals.get(modVar);
+			final BoogieVar boogieOldVar = boogieVar.getOldVar();
+			final Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
-				String nameIn = "old(" + modVar + ")" + "_In";
-				TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
-				String nameOut = modVar + "_Out";
-				TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
+				final String nameIn = "old(" + modVar + ")" + "_In";
+				final TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
+				final String nameOut = modVar + "_Out";
+				final TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
 				old2globInVars.put(boogieOldVar, tvIn);
 				old2globOutVars.put(boogieOldVar, tvIn);
 				old2globOutVars.put(boogieVar, tvOut);
 				old2globAllVars.add(tvIn);
 				old2globAllVars.add(tvOut);
-				Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
+				final Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
 				old2globFormula = Util.and(mBoogie2smt.getScript(), old2globFormula, assignment);
 			}			
 		}
-		HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-		Term closedFormula = TransFormula.computeClosedFormula(
+		final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
+		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
+		final Term closedFormula = TransFormula.computeClosedFormula(
 				old2globFormula, old2globInVars, old2globOutVars, auxVars, false, mBoogie2smt);
-		TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
+		final TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
 				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 		return result;
 	}
@@ -233,8 +233,8 @@ public class ModifiableGlobalVariableManager {
 	 * procedure proc.
 	 */
 	public boolean containsNonModifiableOldVars(IPredicate pred, String proc) {
-		Set<String> modiableGlobals = mModifiedVars.get(proc);
-		for (BoogieVar bv : pred.getVars()) {
+		final Set<String> modiableGlobals = mModifiedVars.get(proc);
+		for (final BoogieVar bv : pred.getVars()) {
 			if (bv.isOldvar()) {
 				if (!modiableGlobals.contains(bv.getIdentifier())) {
 					return true;
@@ -251,9 +251,9 @@ public class ModifiableGlobalVariableManager {
 	 * the default constant.
 	 */
 	public static Term constructConstantOldVarEquality(BoogieNonOldVar bv, boolean primed, Script script) {
-		BoogieOldVar oldVar = bv.getOldVar();
-		Term nonOldConstant = (primed ? bv.getPrimedConstant() : bv.getDefaultConstant());
-		Term oldConstant = (primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant());
+		final BoogieOldVar oldVar = bv.getOldVar();
+		final Term nonOldConstant = (primed ? bv.getPrimedConstant() : bv.getDefaultConstant());
+		final Term oldConstant = (primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant());
 		return script.term("=", oldConstant, nonOldConstant);
 	}
 

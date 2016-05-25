@@ -89,7 +89,7 @@ public class AStar<V, E> {
 		final OpenItem<V, E> initialOpenItem = createInitialSuccessorItem(mStart);
 
 		// check for trivial paths
-		for (E edge : mGraph.getOutgoingEdges(mStart)) {
+		for (final E edge : mGraph.getOutgoingEdges(mStart)) {
 			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(initialOpenItem.getAnnotation()))) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Forbidden [" + edge.hashCode() + "] " + edge);
@@ -268,7 +268,7 @@ public class AStar<V, E> {
 	private final class BackpointerIterator implements Iterator<E> {
 
 		private AstarAnnotation<E> mAnnotation;
-		private Set<AstarAnnotation<E>> mClosed;
+		private final Set<AstarAnnotation<E>> mClosed;
 
 		private BackpointerIterator(AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;

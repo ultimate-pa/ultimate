@@ -48,7 +48,7 @@ public abstract class BinaryRelation {
 	    private final String mStringRepresentation;
 	    
 	    RelationSymbol(String stringRepresentation) {
-	    	this.mStringRepresentation = stringRepresentation;
+	    	mStringRepresentation = stringRepresentation;
 	    }
 	
 	    @Override
@@ -139,7 +139,7 @@ public abstract class BinaryRelation {
 			break;
 		case GEQ:
 		case GREATER:
-			RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
+			final RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
 			result = script.term(swapped.toString(), rhsTerm, lhsTerm);
 			break;
 		default:
@@ -172,7 +172,7 @@ public abstract class BinaryRelation {
 		boolean isNegated;
 		if (functionSymbolName.equals("not")) {
 			assert params.length == 1;
-			Term notTerm = params[0];
+			final Term notTerm = params[0];
 			if (!(notTerm instanceof ApplicationTerm)) {
 				throw new NoRelationOfThisKindException("no ApplicationTerm");
 			}
@@ -190,7 +190,7 @@ public abstract class BinaryRelation {
 
 		
 		RelationSymbol relSymb = getRelationSymbol(functionSymbolName, isNegated);
-		for (RelationSymbol symb : RelationSymbol.values()) {
+		for (final RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
 				relSymb = isNegated ? negateRelation(symb) : symb;
 				break;

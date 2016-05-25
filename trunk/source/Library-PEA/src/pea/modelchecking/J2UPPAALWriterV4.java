@@ -8,8 +8,8 @@ import java.util.Vector;
 import pea.CDD;
 import pea.EventDecision;
 import pea.Phase;
-import pea.Transition;
 import pea.PhaseEventAutomata;
+import pea.Transition;
 
 /**
  * The class <code>J2UPPAALWriterV4</code> transforms a Phase Event automaton object into a xml-File that can be read via UPPAAL.
@@ -23,22 +23,22 @@ import pea.PhaseEventAutomata;
  */
 
 public class J2UPPAALWriterV4 {
-private Vector<String> disjuncts = new Vector<String>();
+private final Vector<String> disjuncts = new Vector<String>();
     
     private int dnfCount=1;
     private int transCount = 0;
-    private String initialState = "initialState";
+    private final String initialState = "initialState";
     
     public String[] getDisjuncts(CDD cdd) {
-        this.disjuncts.clear();
-        System.out.println("Computing dnf "+dnfCount+"/"+this.transCount);
+        disjuncts.clear();
+        System.out.println("Computing dnf "+dnfCount+"/"+transCount);
         dnfCount++;
-        this.cddToDNF(new StringBuffer(), cdd);
+        cddToDNF(new StringBuffer(), cdd);
         
-        int disjunctCount = this.disjuncts.size();
-        String[] strings = new String[disjunctCount];
+        final int disjunctCount = disjuncts.size();
+        final String[] strings = new String[disjunctCount];
         for(int i=0; i<disjunctCount; i++) {
-            strings[i] = (String) this.disjuncts.elementAt(i);
+            strings[i] = disjuncts.elementAt(i);
         }
         
         return strings;
@@ -52,19 +52,19 @@ private Vector<String> disjuncts = new Vector<String>();
                 buf.delete(buf.length()-12, buf.length());
             }
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
             return;
         } else if (cdd == CDD.FALSE) {
             return;
         }
         for(int i=0;i<cdd.getChilds().length;i++) {
-            StringBuffer newBuf = new StringBuffer();
+            final StringBuffer newBuf = new StringBuffer();
             newBuf.append(buf.toString());
             
             newBuf.append(cdd.getDecision().toUppaalString(i));
             newBuf.append(" &amp;&amp; ");
             
-            this.cddToDNF(newBuf,cdd.getChilds()[i]);
+            cddToDNF(newBuf,cdd.getChilds()[i]);
         }
     }
     
@@ -76,12 +76,12 @@ private Vector<String> disjuncts = new Vector<String>();
                 buf.delete(buf.length()-12, buf.length());
             }
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
             return buf;
         } else if (cdd == CDD.FALSE) {
             return buf;
         }
-        StringBuffer newBuf = new StringBuffer();
+        final StringBuffer newBuf = new StringBuffer();
         for(int i=0;i<cdd.getChilds().length;i++) {
         	
         	newBuf.append(buf.toString());
@@ -89,7 +89,7 @@ private Vector<String> disjuncts = new Vector<String>();
         	newBuf.append(cdd.getDecision().toUppaalString(i));
         	newBuf.append(" &amp;&amp; ");
         
-        	this.cddToDNF(newBuf,cdd.getChilds()[i]);
+        	cddToDNF(newBuf,cdd.getChilds()[i]);
         	
         }
         return newBuf;
@@ -98,8 +98,8 @@ private Vector<String> disjuncts = new Vector<String>();
     //Uppaal supports only one initial state; Thus, if a pea has more than one initial state, 
     //we introduce a new state "initState" and an edge from this "initState" to all initial states of the PEA
     private String initialStates(PhaseEventAutomata pea){
-    	StringBuffer buf = new StringBuffer();
-    	Phase[] init = pea.getInit();
+    	final StringBuffer buf = new StringBuffer();
+    	final Phase[] init = pea.getInit();
     	
     	//if the PEA has only one init state, then we do not need the further initialState
     	if (init.length <2){
@@ -113,7 +113,7 @@ private Vector<String> disjuncts = new Vector<String>();
     }
     
     private String getClocksToReset(Phase state, List<String> peaClocks){
-    	String initClockString = state.getClockInvariant().toString();
+    	final String initClockString = state.getClockInvariant().toString();
     	Boolean firstClock = true;
 		//List<String> peaClocks = pea.getClocks();
 		String reset = ""; 
@@ -123,16 +123,17 @@ private Vector<String> disjuncts = new Vector<String>();
 					reset = peaClocks.get(j) + ":= 0 ";
 					firstClock = false;
 				}
-				else 
+				else {
 					reset = ", "+peaClocks.get(j) + ":= 0 "; // the clocks need to be separated via comma
+				}
 			}
 		}
     return reset;
     }
     
     private String initialTransitions(PhaseEventAutomata pea){
-    	StringBuffer buf = new StringBuffer();
-    	Phase[] init = pea.getInit();
+    	final StringBuffer buf = new StringBuffer();
+    	final Phase[] init = pea.getInit();
     	
     	//if the PEA has only one init state, then we do not need the further initialState
     	if (init.length >=2)
@@ -140,12 +141,12 @@ private Vector<String> disjuncts = new Vector<String>();
     		//if init.length <2 nothing needs to be done, as we use the initial state by PEA
     		for(int i=0; i<init.length; i++) {
     			
-    			Phase initState = init[i];
-    			CDD initClock = initState.getClockInvariant();
+    			final Phase initState = init[i];
+    			final CDD initClock = initState.getClockInvariant();
     			String reset;
     			
     			//What clocks are part of the clock invariant of the initial state?
-    			List<String> peaClocks = pea.getClocks();
+    			final List<String> peaClocks = pea.getClocks();
     			reset = getClocksToReset(initState, peaClocks);
     			
     	       buf.append("<transition>\n"+
@@ -166,10 +167,10 @@ private Vector<String> disjuncts = new Vector<String>();
     }
     
     private String createPEAString(PhaseEventAutomata pea) {
-        StringBuffer buf = new StringBuffer();
-        Phase[] phases = pea.getPhases();
-        int numberOfInitStates = pea.getInit().length;
-        Vector<Transition> transitions = new Vector<Transition>();
+        final StringBuffer buf = new StringBuffer();
+        final Phase[] phases = pea.getPhases();
+        final int numberOfInitStates = pea.getInit().length;
+        final Vector<Transition> transitions = new Vector<Transition>();
         
       //if there are more than one initial state in the pea, we need a further initial state
         //this further init state shall be committed, thus, there is no delay allowed in this state
@@ -178,29 +179,29 @@ private Vector<String> disjuncts = new Vector<String>();
                 "  <name>"+initialState+"</name>\n <committed/>\n </location>\n");
         }
         for(int i=0; i<phases.length; i++) {
-            buf.append(this.createPEAPhaseString(phases[i]));
+            buf.append(createPEAPhaseString(phases[i]));
             transitions.addAll(phases[i].getTransitions());
         }
         buf.append(initialStates(pea));
         buf.append(initialTransitions(pea));
         //Phase[] init = pea.getInit();
         //buf.append("<init ref = \""+init[0].getName()+"\"/>");
-        this.transCount = transitions.size();
-        Iterator transIter = transitions.iterator();
+        transCount = transitions.size();
+        final Iterator transIter = transitions.iterator();
         while (transIter.hasNext()) {
-            Transition actTrans = (Transition) transIter.next();
-            buf.append(this.createPEATransitionString(actTrans));
+            final Transition actTrans = (Transition) transIter.next();
+            buf.append(createPEATransitionString(actTrans));
         }
         return buf.toString();
     }
     
     private String createPEAPhaseString(Phase phase) {
-        StringBuffer buf = new StringBuffer();        
+        final StringBuffer buf = new StringBuffer();        
         buf.append("<location id = \""+phase.getName()+"\""+">\n"+
                 "  <name>"+phase.getName()+"</name>\n");
         if(phase.getClockInvariant()!=CDD.TRUE) {
 	    //StringBuffer formula = new StringBuffer();
-	    String[]formula2 = this.getDisjuncts(phase.getClockInvariant());
+	    final String[]formula2 = getDisjuncts(phase.getClockInvariant());
 	    buf.append("  <label kind = \"invariant\">"+formula2[0]);
 	    for (int i=1; i<formula2.length; i++){
 	    	 buf.append(" &amp;&amp; "+formula2[i]);
@@ -218,11 +219,11 @@ private Vector<String> disjuncts = new Vector<String>();
     
     
     private String createPEATransitionString(Transition transition) {
-        StringBuffer buf = new StringBuffer();
-        String[] disjuncts = this.getDisjuncts(transition.getGuard());
+        final StringBuffer buf = new StringBuffer();
+        final String[] disjuncts = getDisjuncts(transition.getGuard());
         
-        String[] resets = transition.getResets();
-        StringBuffer assignment = new StringBuffer();
+        final String[] resets = transition.getResets();
+        final StringBuffer assignment = new StringBuffer();
         for (int i = 0; i < resets.length; i++) {
             assignment.append(resets[i]).append(":=0, ");
         }
@@ -245,11 +246,11 @@ private Vector<String> disjuncts = new Vector<String>();
         return buf.toString();
     }
     public void writePEA2UppaalFile(String file, PhaseEventAutomata pea) {
-        long actTime = System.currentTimeMillis();
+        final long actTime = System.currentTimeMillis();
         try {
-        FileWriter writer = new FileWriter(file);
+        final FileWriter writer = new FileWriter(file);
         String clockDeclaration ="clock timer; \n";
-        int numberOfClocks = pea.getClocks().size();
+        final int numberOfClocks = pea.getClocks().size();
         for (int i=0; i<numberOfClocks; i++){
         	clockDeclaration = clockDeclaration + "clock "+pea.getClocks().get(i)+"; \n";
         }
@@ -261,39 +262,39 @@ private Vector<String> disjuncts = new Vector<String>();
                      "<template>\n" +
                      "<name>"+//pea.getName()
                      "DeadlockSystem"+"</name>\n");
-        writer.write(this.createPEAString(pea));
+        writer.write(createPEAString(pea));
         writer.write("</template>\n"+
                         "<system>system "+//pea.getName()
                         "DeadlockSystem"+";</system>\n"+
                         "</nta>");
         writer.flush();
         writer.close();
-        }catch(Exception e) {
+        }catch(final Exception e) {
             System.out.println("Errors writing the Uppaal representation of pea");
             e.printStackTrace();
         }
         System.out.println("Writing Uppaal representation took "+(System.currentTimeMillis()-actTime)+"ms");
-        System.out.println("Computed "+(--this.dnfCount)+" disjunctive normalforms");
+        System.out.println("Computed "+(--dnfCount)+" disjunctive normalforms");
         System.out.println("The transformed PEA has "+pea.getPhases().length+" phases");
     }
     
     public static void main(String[] param) {
-        CDD a = EventDecision.create("a");
-        CDD b = EventDecision.create("b");
-        CDD c = EventDecision.create("c");
-        CDD e = EventDecision.create("e");
+        final CDD a = EventDecision.create("a");
+        final CDD b = EventDecision.create("b");
+        final CDD c = EventDecision.create("c");
+        final CDD e = EventDecision.create("e");
         
-        CDD temp = a.and(b.or(c).and(e.negate()));
+        final CDD temp = a.and(b.or(c).and(e.negate()));
         System.out.println(temp.toString());
-        J2UPPAALWriter writer = new J2UPPAALWriter();
-        String[] result = writer.getDisjuncts(temp);
+        final J2UPPAALWriter writer = new J2UPPAALWriter();
+        final String[] result = writer.getDisjuncts(temp);
         System.out.println("Result = ");
         for(int i=0; i<result.length; i++) {
             System.out.println(result[i]);
         }
         //private static final String PATH = "C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/";
         try {
-            PEAXML2JConverter xml2JConverter = new PEAXML2JConverter(false);
+            final PEAXML2JConverter xml2JConverter = new PEAXML2JConverter(false);
             PhaseEventAutomata[] systemPeas = xml2JConverter
                     .convert("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/Environment.xml");
             PhaseEventAutomata toUppaal = systemPeas[0];
@@ -316,14 +317,14 @@ private Vector<String> disjuncts = new Vector<String>();
             for (int i = 0; i < systemPeas.length; i++) {
                 toUppaal = toUppaal.parallel(systemPeas[i]);
             }
-            PhaseEventAutomata[] propertyPeas = xml2JConverter
+            final PhaseEventAutomata[] propertyPeas = xml2JConverter
                     .convert("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/Property0.xml");
             for (int i = 0; i < propertyPeas.length; i++) {
                 toUppaal = toUppaal.parallel(propertyPeas[i]);
             }
-            J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
+            final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
             j2uppaalWriter.writePEA2UppaalFile("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/toCheck.xml", toUppaal);
-        }catch(Exception ex) {
+        }catch(final Exception ex) {
             ex.printStackTrace();
         }
     }

@@ -78,12 +78,12 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String STORE_KEY = "LoggingService";
 
-	private RcpPreferenceProvider mPreferenceStore;
+	private final RcpPreferenceProvider mPreferenceStore;
 	private List<String> mLiveLoggerIds;
 	private ConsoleAppender mConsoleAppender;
-	private IPreferenceChangeListener mRefreshingListener;
+	private final IPreferenceChangeListener mRefreshingListener;
 
-	private Set<Appender> mAdditionalAppenders;
+	private final Set<Appender> mAdditionalAppenders;
 	private String mCurrentControllerName;
 
 	private final Map<String, FileAppender> mLogFiles;
@@ -102,7 +102,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			final Appender appender = (Appender) forgeinAppenders.nextElement();
 			mAdditionalAppenders.add(appender);
 		}
-		for (Appender app : mAdditionalAppenders) {
+		for (final Appender app : mAdditionalAppenders) {
 			Logger.getRootLogger().removeAppender(app);
 		}
 
@@ -140,13 +140,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			// replace it with our own
 			Logger.getRootLogger().removeAppender("ConsoleAppender");
 
-			for (Appender appender : mAdditionalAppenders) {
+			for (final Appender appender : mAdditionalAppenders) {
 				Logger.getRootLogger().removeAppender(appender);
 			}
 
 			// first, handle console appender as we also configure it
 			// defining format of logging output
-			PatternLayout layout = new PatternLayout(
+			final PatternLayout layout = new PatternLayout(
 					mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 
 			// attaching output to console (stout)
@@ -154,12 +154,12 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			mConsoleAppender.setName("ConsoleAppender");
 			Logger.getRootLogger().addAppender(mConsoleAppender);
 
-			for (Appender appender : mAdditionalAppenders) {
+			for (final Appender appender : mAdditionalAppenders) {
 				// then, re-add all the other appenders
 				Logger.getRootLogger().addAppender(appender);
 			}
 
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			System.err.println("Error while initializing logger: " + ex);
 			ex.printStackTrace();
 		}
@@ -174,7 +174,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			final boolean append = mPreferenceStore.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
 			try {
 				addLogfile(patternLayout, logDir + File.separator + logName + ".log", append);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				System.err.println("Error while appending log file to logger: " + e);
 				e.printStackTrace();
 			}
@@ -261,60 +261,60 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private void refreshPropertiesLoggerHierarchie() {
 		mLiveLoggerIds = new LinkedList<String>();
-		Logger rootLogger = Logger.getRootLogger();
-		String level = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_ROOT_PREF);
+		final Logger rootLogger = Logger.getRootLogger();
+		final String level = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_ROOT_PREF);
 		rootLogger.setLevel(Level.toLevel(level));
 
 		// now create children of the rootLogger
 
 		// plug-ins
-		LoggerRepository rootRepos = rootLogger.getLoggerRepository();
-		Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
+		final LoggerRepository rootRepos = rootLogger.getLoggerRepository();
+		final Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
 		mLiveLoggerIds.add(LOGGER_NAME_PLUGINS);
-		String pluginslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
+		final String pluginslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
 		if (!pluginslevel.isEmpty()) {
 			pluginsLogger.setLevel(Level.toLevel(pluginslevel));
 		}
 
 		// external tools
-		Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
+		final Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
 		mLiveLoggerIds.add(LOGGER_NAME_TOOLS);
-		String toolslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_TOOLS_PREF);
+		final String toolslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_TOOLS_PREF);
 		if (!toolslevel.isEmpty()) {
 			toolslog.setLevel(Level.toLevel(toolslevel));
 		}
 
 		// controller
-		Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
-		String controllevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
+		final Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
+		final String controllevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
 		if (!controllevel.isEmpty()) {
 			controllogger.setLevel(Level.toLevel(controllevel));
 		}
 		mLiveLoggerIds.add(LOGGER_NAME_CONTROLLER);
 
 		// core
-		Logger corelogger = rootRepos.getLogger(Activator.PLUGIN_ID);
-		String corelevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CORE_PREF);
+		final Logger corelogger = rootRepos.getLogger(Activator.PLUGIN_ID);
+		final String corelevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CORE_PREF);
 		if (!corelevel.isEmpty()) {
 			corelogger.setLevel(Level.toLevel(corelevel));
 		}
 		mLiveLoggerIds.add(Activator.PLUGIN_ID);
 
 		// create children for plug-ins
-		LoggerRepository piRepos = pluginsLogger.getLoggerRepository();
-		String[] plugins = getDefinedLogLevels();
+		final LoggerRepository piRepos = pluginsLogger.getLoggerRepository();
+		final String[] plugins = getDefinedLogLevels();
 
-		for (String plugin : plugins) {
-			Logger logger = piRepos.getLogger(LOGGER_NAME_PLUGINS + "." + plugin);
+		for (final String plugin : plugins) {
+			final Logger logger = piRepos.getLogger(LOGGER_NAME_PLUGINS + "." + plugin);
 			logger.setLevel(Level.toLevel(getLogLevel(plugin)));
 			mLiveLoggerIds.add(logger.getName());
 		}
 
 		// create child loggers for external tools
-		LoggerRepository toolRepos = toolslog.getLoggerRepository();
-		String[] tools = getDefinedLogLevels();
-		for (String tool : tools) {
-			Logger logger = toolRepos.getLogger(LOGGER_NAME_TOOLS + "." + tool);
+		final LoggerRepository toolRepos = toolslog.getLoggerRepository();
+		final String[] tools = getDefinedLogLevels();
+		for (final String tool : tools) {
+			final Logger logger = toolRepos.getLogger(LOGGER_NAME_TOOLS + "." + tool);
 			logger.setLevel(Level.toLevel(getLogLevel(tool)));
 			mLiveLoggerIds.add(logger.getName());
 		}
@@ -328,8 +328,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	 * @return the log level or null if no log-level is directly associated
 	 */
 	private String getLogLevel(String id) {
-		String[] pref = getLoggingDetailsPreference();
-		for (String string : pref) {
+		final String[] pref = getLoggingDetailsPreference();
+		for (final String string : pref) {
 			if (string.startsWith(id + "=")) {
 				return string.substring(string.lastIndexOf("=") + 1);
 			}
@@ -526,18 +526,23 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			Log4JAppenderWrapper other = (Log4JAppenderWrapper) obj;
+			}
+			final Log4JAppenderWrapper other = (Log4JAppenderWrapper) obj;
 			if (mWriter == null) {
-				if (other.mWriter != null)
+				if (other.mWriter != null) {
 					return false;
-			} else if (!mWriter.equals(other.mWriter))
+				}
+			} else if (!mWriter.equals(other.mWriter)) {
 				return false;
+			}
 			return true;
 		}
 	}

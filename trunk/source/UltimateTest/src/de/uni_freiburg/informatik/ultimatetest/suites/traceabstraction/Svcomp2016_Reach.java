@@ -160,15 +160,15 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : mSettings_32bit) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings_32bit) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_32bit);
 				addTestCase(toolchain, setting, mCurrentBugs_32bit, new String[] {".c", ".i"});
 			}
 		}
 		
-		for (String setting : mSettings_64bit) {
-			for (String toolchain : mCToolchains) {
+		for (final String setting : mSettings_64bit) {
+			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_64bit);
 				addTestCase(toolchain, setting, mCurrentBugs_64bit, new String[] {".c", ".i"});
 			}

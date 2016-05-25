@@ -26,7 +26,10 @@ public abstract class symbol implements Comparable<symbol> {
    public symbol(String nm, String tp, int index)
      {
        /* sanity check */
-       if (nm == null) nm = "";
+       if (nm == null)
+	{
+	    nm = "";
+	  }
 
        _name = nm;
        _stack_type = tp;
@@ -85,16 +88,20 @@ public abstract class symbol implements Comparable<symbol> {
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
   
+  @Override
   public int compareTo(symbol other)
     {
       /* non terminals are larger than terminals */
       if (is_non_term() != other.is_non_term())
-	return is_non_term() ? 1 : -1;
+	{
+	    return is_non_term() ? 1 : -1;
+	  }
       /* Otherwise compare by index */
       return index() - other.index();
     }
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
       return name();

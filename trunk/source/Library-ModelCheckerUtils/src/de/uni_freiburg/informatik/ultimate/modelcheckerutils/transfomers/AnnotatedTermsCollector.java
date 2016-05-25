@@ -51,6 +51,7 @@ public class AnnotatedTermsCollector extends TermTransformer {
 	 * @see de.uni_freiburg.informatik.ultimate.logic.TermTransformer#convert(de.uni_freiburg.informatik.ultimate.logic.Term)
 	 */
 	
+	@Override
 	protected void convert(Term term) {
 //		if (term instanceof ApplicationTerm) {
 //			ApplicationTerm appTerm = (ApplicationTerm)term;
@@ -61,8 +62,8 @@ public class AnnotatedTermsCollector extends TermTransformer {
 //			return;
 //		} else 
 		if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm annotatedTerm = (AnnotatedTerm)term;
-			for (Annotation annotation: annotatedTerm.getAnnotations()) {
+			final AnnotatedTerm annotatedTerm = (AnnotatedTerm)term;
+			for (final Annotation annotation: annotatedTerm.getAnnotations()) {
 				if (annotation.getKey().equals(":location")) {
 					mAnnotatedTerms.add(annotatedTerm);
 					super.setResult(term);

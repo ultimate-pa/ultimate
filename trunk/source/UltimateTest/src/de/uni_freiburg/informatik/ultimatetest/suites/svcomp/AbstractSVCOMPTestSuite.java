@@ -137,7 +137,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 						super.getSummaries(), super.getIncrementalLogs());
 
 				testcases.add(testCase);
-			} catch (Throwable ex) {
+			} catch (final Throwable ex) {
 				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
 				ex.printStackTrace();
 			}
@@ -167,7 +167,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	private String createTestCaseName(File svcompRootDir, File input, SVCOMPTestDefinition def) {
 		// note: do not change the name without also checking
 		// SVCOMP15TestSummary
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(def.getSetName());
 		sb.append(" ");
 		sb.append(def.getToolchain().getName());
@@ -194,7 +194,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		//@formatter:off
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks
 			= new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
@@ -203,7 +203,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(SizeBenchmark.class);
 		
-		ColumnDefinition[] columnDef =  new ColumnDefinition[]{
+		final ColumnDefinition[] columnDef =  new ColumnDefinition[]{
 				new ColumnDefinition(
 						"Runtime (ns)", "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
@@ -262,7 +262,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	 * trunk/examples/svcomp .
 	 */
 	protected File getSVCOMP15RootDirectory() {
-		String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(TestUtil.getPathFromTrunk("examples/svcomp"));
+		final String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(TestUtil.getPathFromTrunk("examples/svcomp"));
 		return new File(svcompRootDir);
 	}
 
@@ -302,7 +302,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				regexes.add(line);
 			}
 			in.close();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -322,7 +322,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	}
 
 	private Collection<File> getFilesRecursively(File rootdir, String[] regex) {
-		ArrayList<File> singleFiles = new ArrayList<File>();
+		final ArrayList<File> singleFiles = new ArrayList<File>();
 		singleFiles.addAll(TestUtil.getFilesRegex(rootdir, regex));
 		return singleFiles;
 	}

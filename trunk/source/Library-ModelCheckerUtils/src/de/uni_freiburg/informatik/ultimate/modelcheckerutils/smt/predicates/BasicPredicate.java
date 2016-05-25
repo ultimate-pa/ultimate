@@ -71,17 +71,19 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field.equals("Procedures"))
+		if (field.equals("Procedures")) {
 			return mProcedures;
-		else if (field.equals("Formula"))
+		} else if (field.equals("Formula")) {
 			return mFormula;
-		else if (field.equals("Vars"))
+		} else if (field.equals("Vars")) {
 			return mVars;
-		else
+		} else {
 			throw new UnsupportedOperationException("Unknown field "+field);
+		}
 	}
 	
 	
+	@Override
 	public String[] getProcedures() {
 		return mProcedures;
 	}
@@ -89,14 +91,17 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	/**
 	 * @return the mAssertion
 	 */
+	@Override
 	public Term getFormula() {
 		return mFormula;
 	}
 	
+	@Override
 	public Term getClosedFormula() {
 		return mClosedFormula;
 	}
 
+	@Override
 	public Set<BoogieVar> getVars() {
 		return mVars;
 	}

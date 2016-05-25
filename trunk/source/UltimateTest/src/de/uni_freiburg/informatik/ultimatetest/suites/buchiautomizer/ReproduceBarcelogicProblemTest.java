@@ -70,8 +70,8 @@ public class ReproduceBarcelogicProblemTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		
-		for (String setting : mSettings) {
-			for (String toolchain : mBoogieToolchains) {
+		for (final String setting : mSettings) {
+			for (final String toolchain : mBoogieToolchains) {
 				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}

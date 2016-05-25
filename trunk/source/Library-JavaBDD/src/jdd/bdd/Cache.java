@@ -1,7 +1,10 @@
 package jdd.bdd;
 
-import jdd.util.*;
-import jdd.util.math.*;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Test;
+import jdd.util.math.Digits;
+import jdd.util.math.HashFunctions;
 
 
 // DONE: add a ref-count for entries so we dont remove the most useds
@@ -16,8 +19,12 @@ import jdd.util.math.*;
 public final class Cache {
 	private CacheEntry [] entries;
 	private int cache_bits, cache_size, cache_mask;
-	private long numaccess, last_access;
-	private int numclears, numpartial_clears, members, numgrows, possible_bins_count;
+	private long numaccess;
+	private final long last_access;
+	private int numclears, numpartial_clears;
+	private final int members;
+	private int numgrows;
+	private int possible_bins_count;
 
 	// private int numcols, numinserts, cache_hits, cache_misses;
 
@@ -25,17 +32,19 @@ public final class Cache {
 		Test.check(members >= 1, "Cache members must be greater than 0");
 		Test.check(members <= 3, "Cache members must be less than 4");
 
-		this.cache_bits = (size < 32) ? 5 : Digits.closest_log2(size); // min size 32
-		this.cache_size = (1 << cache_bits);
-		this.cache_mask = cache_size -1;
+		cache_bits = (size < 32) ? 5 : Digits.closest_log2(size); // min size 32
+		cache_size = (1 << cache_bits);
+		cache_mask = cache_size -1;
 		this.members = members;
-		this.numgrows = 0;
-		this.last_access = this.numaccess = 0;
-		this.possible_bins_count = 0;
-		this.numclears =  numpartial_clears = 0;
+		numgrows = 0;
+		last_access = numaccess = 0;
+		possible_bins_count = 0;
+		numclears =  numpartial_clears = 0;
 
 		entries = new CacheEntry[cache_size];
-		for(int i = 0; i < cache_size; i++) entries[i] = new CacheEntry();
+		for(int i = 0; i < cache_size; i++) {
+			entries[i] = new CacheEntry();
+		}
 	}
 
 
@@ -53,28 +62,36 @@ public final class Cache {
 	// seince the bounde-checking on t_var could not be moved out of loop (or something like that?)...
 	public void invalidate_cache(NodeTable nt, int size) {
 
-		if(possible_bins_count == 0) return;
+		if(possible_bins_count == 0) {
+			return;
+		}
 		numpartial_clears++;
 
 		int ok = 0;
 		if(members == 1) {
 			for(int i = 0; i < size; i++) {
 				if( !entries[i].invalid()) {
-					if( !nt.isValid( entries[i].op1) ||  nt.isValid( entries[i].ret) )
+					if( !nt.isValid( entries[i].op1) ||  nt.isValid( entries[i].ret) ) {
 						entries[i].clear();
-					else ok++;
+					} else {
+						ok++;
+					}
 				}
 			}
 		} else {
 			for(int i = 0; i < size; i++) {
 				if( !entries[i].invalid()) {
-					if( !nt.isValid( entries[i].op1)  ||  !nt.isValid(entries[i].op2)  ||  !nt.isValid(entries[i].ret) )
+					if( !nt.isValid( entries[i].op1)  ||  !nt.isValid(entries[i].op2)  ||  !nt.isValid(entries[i].ret) ) {
 						entries[i].clear();
-					else ok++;
+					} else {
+						ok++;
+					}
 				}
 			}
 		}
-		if(ok == 0) possible_bins_count = 0;
+		if(ok == 0) {
+			possible_bins_count = 0;
+		}
 	}
 
 	public void free_or_grow(NodeTable nt) {
@@ -89,15 +106,19 @@ public final class Cache {
 	/** grow the cache and invalidate everything [since the hash function hash chagned] */
 	private void grow_and_invalidate_cache(NodeTable nt) {
 		cache_bits++;
-		int size = 1 << cache_bits;
+		final int size = 1 << cache_bits;
 		cache_mask = size - 1;
 
 		numgrows++;
-		CacheEntry [] tmp = new CacheEntry[size];
-		for(int i = 0; i < cache_size; i++) tmp[i] = entries[i];
+		final CacheEntry [] tmp = new CacheEntry[size];
+		for(int i = 0; i < cache_size; i++) {
+			tmp[i] = entries[i];
+		}
 		invalidate_cache(nt, cache_size);
 
-		for(int i = cache_size; i < size; i++)  tmp[i]  = new CacheEntry();
+		for(int i = cache_size; i < size; i++) {
+			tmp[i]  = new CacheEntry();
+		}
 
 		cache_size = size;
 		entries = tmp;
@@ -107,10 +128,14 @@ public final class Cache {
 
 	/* just wipe the cache */
 	public void invalidate_cache() {
-		if(possible_bins_count == 0) return;
+		if(possible_bins_count == 0) {
+			return;
+		}
 		numclears++;
 
-		for(int i = 0; i < cache_size; i++) entries[i].clear();
+		for(int i = 0; i < cache_size; i++) {
+			entries[i].clear();
+		}
 		possible_bins_count = 0;
 	}
 
@@ -127,17 +152,19 @@ public final class Cache {
 	/** grow the cache and invalidate everything [since the hash function hash chagned] */
 	private void grow_and_invalidate_cache() {
 		cache_bits++;
-		int size = 1 << cache_bits;
+		final int size = 1 << cache_bits;
 		cache_mask = size - 1;
 
 
 		numgrows++;
-		CacheEntry [] tmp = new CacheEntry[size];
+		final CacheEntry [] tmp = new CacheEntry[size];
 		for(int i = 0; i < cache_size; i++){
 			tmp[i] = entries[i];
 			tmp[i].clear();
 		}
-		for(int i = cache_size; i < size; i++)  tmp[i]  = new CacheEntry();
+		for(int i = cache_size; i < size; i++) {
+			tmp[i]  = new CacheEntry();
+		}
 		cache_size = size;
 		entries = tmp;
 	}
@@ -185,7 +212,7 @@ public final class Cache {
 
 	// ------------------------------ private helpers for the tests
 	private void insert3(byte type, int op1, int op2, int answer) {
-		CacheEntry ce = access3(type, op1, op2);
+		final CacheEntry ce = access3(type, op1, op2);
 		ce.type = type;
 		ce.op1 = op1;
 		ce.op2 = op2;
@@ -193,29 +220,29 @@ public final class Cache {
 	}
 
 	private void insert2(byte type, int op, int answer) {
-		CacheEntry ce = access2(type, op);
+		final CacheEntry ce = access2(type, op);
 		ce.type = type;
 		ce.op1  = op;
 		ce.ret  = answer;
 	}
 	private  void insert1(int op, int answer) {
-		CacheEntry ce = access1( op);
+		final CacheEntry ce = access1( op);
 		ce.op1  = op;
 		ce.ret  = answer;
 	}
 
 
 	private int lookup3(byte type, int op1, int op2) {
-		CacheEntry ce = access3(type, op1, op2);
+		final CacheEntry ce = access3(type, op1, op2);
 		return (ce.op1 == op1 && ce.op2 == op2 && ce.type == type) ? ce.ret : -1;
 	}
 
 	private int lookup2(byte type, int op) {
-		CacheEntry ce = access2(type, op);
+		final CacheEntry ce = access2(type, op);
 		return (ce.op1 == op && ce.type == type) ? ce.ret : -1;
 	}
 	private int lookup1( int op) {
-		CacheEntry ce = access1(op);
+		final CacheEntry ce = access1(op);
 		return (ce.op1 == op) ? ce.ret : -1;
 	}
 
@@ -225,14 +252,20 @@ public final class Cache {
 	/** cache load factor, slow! */
 	public double computeLoadFactor() { // just see howmany buckts are in use
 		int bins = 0;
-		for( int i = 0; i < cache_size; i++) if(!entries[i].invalid() )	bins++;
-		return ((int)(bins * 10000) / cache_size) / 100.0;
+		for( int i = 0; i < cache_size; i++) {
+			if(!entries[i].invalid() ) {
+				bins++;
+			}
+		}
+		return (bins * 10000 / cache_size) / 100.0;
 	}
 
 	/* hit-rate since the last clear */
 	public double computeHitRate() {
 		long hits = 0;
-		for( int i = 0; i < cache_size; i++)  hits +=  entries[i].found;
+		for( int i = 0; i < cache_size; i++) {
+			hits +=  entries[i].found;
+		}
 		return ((int)( (hits * 10000) / ( numaccess ))) / 100.0;
 	}
 
@@ -249,7 +282,9 @@ public final class Cache {
 			JDDConsole.out.print("clrs=" + numclears+ "/" + numpartial_clears + " ");
 
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
-			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
+			if(numgrows > 0) {
+				JDDConsole.out.print("grws=" + numgrows + " ");
+			}
 
 
 			showDeviation();
@@ -261,8 +296,10 @@ public final class Cache {
 		double mean = 0.0, meansq = 0.0;
 		int max = 0, min = Integer.MAX_VALUE, used = 0;
 		for( int i = 0; i < cache_size; i++) {
-			int x = entries[i].found;
-			if(x > 0) used++;
+			final int x = entries[i].found;
+			if(x > 0) {
+				used++;
+			}
 			mean += x;
 			meansq +=  x * x;
 			max = Math.max( entries[i].overwrite, max);
@@ -271,8 +308,8 @@ public final class Cache {
 		mean /= cache_size;
 		meansq /= cache_size;
 
-		double stddev = Math.sqrt( meansq  - mean * mean);
-		double e_stddev = Math.sqrt(( 1.0 - 1.0 / cache_size) * numaccess / cache_size);
+		final double stddev = Math.sqrt( meansq  - mean * mean);
+		final double e_stddev = Math.sqrt(( 1.0 - 1.0 / cache_size) * numaccess / cache_size);
 		JDDConsole.out.print("use/exp=" + (100 * used / cache_size) + "/" +
 			(int)(100 * (1 - Math.pow(Math.E, -mean))) + "%");
 
@@ -296,8 +333,8 @@ public final class Cache {
 
 	/* package */ void show_cache() {
 
-		for(int i = 0; i < cache_size; i++)
-			if(!entries[i].invalid() )
+		for(int i = 0; i < cache_size; i++) {
+			if(!entries[i].invalid() ) {
 				switch(members) {
 					case 1:
 						JDDConsole.out.println("" + i + " --> " + entries[i].op1 + "/"+  entries[i].ret);
@@ -309,6 +346,8 @@ public final class Cache {
 						JDDConsole.out.println("" + i + " --> " +  entries[i].op1 + "/" +  entries[i].op2 + "/"+ entries[i].ret + "  " +  entries[i].type);
 						break;
 				}
+			}
+		}
 
 	}
 

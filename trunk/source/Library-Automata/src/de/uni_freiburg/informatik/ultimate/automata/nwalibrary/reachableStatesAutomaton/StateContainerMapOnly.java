@@ -91,7 +91,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs
 	 * 
 	 */
-	private Map<LETTER,Map<STATE,Set<STATE>>> mReturnSummary =
+	private final Map<LETTER,Map<STATE,Set<STATE>>> mReturnSummary =
 			new HashMap<LETTER,Map<STATE,Set<STATE>>>();
 
 	/**
@@ -102,9 +102,9 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	private Map<LETTER,Map<STATE,Set<STATE>>> mReturnIn =
 			new HashMap<LETTER,Map<STATE,Set<STATE>>>();
 
-	private Set<LETTER> mEmptySetOfLetters = new HashSet<LETTER>(0);
+	private final Set<LETTER> mEmptySetOfLetters = new HashSet<LETTER>(0);
 
-	private Collection<STATE> mEmptySetOfStates = new HashSet<STATE>(0);
+	private final Collection<STATE> mEmptySetOfStates = new HashSet<STATE>(0);
 
 	StateContainerMapOnly(STATE state, int serialNumber, 
 			HashMap<STATE,Integer> downStates, boolean canHaveOutgoingReturn) {
@@ -114,8 +114,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	@Override
 	void addInternalOutgoing(OutgoingInternalTransition<LETTER, STATE> internalOutgoing) {
-		LETTER letter = internalOutgoing.getLetter();
-		STATE succ = internalOutgoing.getSucc();
+		final LETTER letter = internalOutgoing.getLetter();
+		final STATE succ = internalOutgoing.getSucc();
 		if (mInternalOut == null) {
 			mInternalOut = new HashMap<LETTER, Set<STATE>>();
 		}
@@ -129,8 +129,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	@Override
 	void addInternalIncoming(IncomingInternalTransition<LETTER, STATE> internalIncoming) {
-		LETTER letter = internalIncoming.getLetter();
-		STATE pred = internalIncoming.getPred();
+		final LETTER letter = internalIncoming.getLetter();
+		final STATE pred = internalIncoming.getPred();
 		if (mInternalIn == null) {
 			mInternalIn = new HashMap<LETTER, Set<STATE>>();
 		}
@@ -144,8 +144,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	@Override
 	void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> callOutgoing) {
-		LETTER letter = callOutgoing.getLetter();
-		STATE succ = callOutgoing.getSucc();
+		final LETTER letter = callOutgoing.getLetter();
+		final STATE succ = callOutgoing.getSucc();
 		if (mCallOut == null) {
 			mCallOut = new HashMap<LETTER, Set<STATE>>();
 		}
@@ -158,8 +158,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	}
 	@Override
 	void addCallIncoming(IncomingCallTransition<LETTER, STATE> callIncoming) {
-		LETTER letter = callIncoming.getLetter();
-		STATE pred = callIncoming.getPred();
+		final LETTER letter = callIncoming.getLetter();
+		final STATE pred = callIncoming.getPred();
 		if (mCallIn == null) {
 			mCallIn = new HashMap<LETTER, Set<STATE>>();
 		}
@@ -172,9 +172,9 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	}
 	@Override
 	void addReturnOutgoing(OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
-		LETTER letter = returnOutgoing.getLetter();
-		STATE hier = returnOutgoing.getHierPred();
-		STATE succ = returnOutgoing.getSucc();
+		final LETTER letter = returnOutgoing.getLetter();
+		final STATE hier = returnOutgoing.getHierPred();
+		final STATE succ = returnOutgoing.getSucc();
 		if (mReturnOut == null) {
 			mReturnOut = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
 		}
@@ -192,9 +192,9 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	}
 	@Override
 	void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> returnIncoming) {
-		LETTER letter = returnIncoming.getLetter();
-		STATE hier = returnIncoming.getHierPred();
-		STATE pred = returnIncoming.getLinPred();
+		final LETTER letter = returnIncoming.getLetter();
+		final STATE hier = returnIncoming.getHierPred();
+		final STATE pred = returnIncoming.getLinPred();
 		if (mReturnIn == null) {
 			mReturnIn = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
 		}
@@ -215,127 +215,127 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	@Override
 	public Set<LETTER> lettersInternal() {
-		Map<LETTER, Set<STATE>> map = mInternalOut;
+		final Map<LETTER, Set<STATE>> map = mInternalOut;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 
 	@Override
 	public Set<LETTER> lettersInternalIncoming() {
-		Map<LETTER, Set<STATE>> map = mInternalIn;
+		final Map<LETTER, Set<STATE>> map = mInternalIn;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCall() {
-		Map<LETTER, Set<STATE>> map = mCallOut;
+		final Map<LETTER, Set<STATE>> map = mCallOut;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCallIncoming() {
-		Map<LETTER, Set<STATE>> map = mCallIn;
+		final Map<LETTER, Set<STATE>> map = mCallIn;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn() {
-		Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
+		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 	@Override
 	public Set<LETTER> lettersReturnIncoming() {
-		Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnIn;
+		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnIn;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 
 
 	@Override
 	public Collection<STATE> succInternal(LETTER letter) {
-		Map<LETTER, Set<STATE>> map = mInternalOut;
+		final Map<LETTER, Set<STATE>> map = mInternalOut;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = map.get(letter);
+		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> predInternal(LETTER letter) {
-		Map<LETTER, Set<STATE>> map = mInternalIn;
+		final Map<LETTER, Set<STATE>> map = mInternalIn;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = map.get(letter);
+		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> succCall(LETTER letter) {
-		Map<LETTER, Set<STATE>> map = mCallOut;
+		final Map<LETTER, Set<STATE>> map = mCallOut;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = map.get(letter);
+		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> predCall(LETTER letter) {
-		Map<LETTER, Set<STATE>> map = mCallIn;
+		final Map<LETTER, Set<STATE>> map = mCallIn;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = map.get(letter);
+		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> hierPred(LETTER letter) {
-		Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
+		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Map<STATE, Set<STATE>> hier2succs = map.get(letter);
+		final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
 		return hier2succs == null ? mEmptySetOfStates : hier2succs.keySet();
 	}
 
 	@Override
 	public Collection<STATE> succReturn(STATE hier, LETTER letter) {
-		Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
+		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut;
 		if (map == null) {
 			return mEmptySetOfStates;
 		}
-		Map<STATE, Set<STATE>> hier2succs = map.get(letter);
+		final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
 		if (hier2succs == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = hier2succs.get(hier);
+		final Set<STATE> result = hier2succs.get(hier);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> predReturnLin(LETTER letter, STATE hier) {
-		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = mReturnIn;
+		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = mReturnIn;
 		if (letter2hier2preds == null) {
 			return mEmptySetOfStates;
 		}
-		Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
+		final Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
 		if (hier2preds == null) {
 			return mEmptySetOfStates;
 		}
-		Set<STATE> result = hier2preds.get(hier);
+		final Set<STATE> result = hier2preds.get(hier);
 		return result == null ? mEmptySetOfStates : result;
 	}
 
 	@Override
 	public Collection<STATE> predReturnHier(LETTER letter) {
-		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = mReturnIn;
+		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = mReturnIn;
 		if (letter2hier2preds == null) {
 			return mEmptySetOfStates ;
 		}
-		Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
+		final Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
 		if (hier2preds == null) {
 			return mEmptySetOfStates;
 		}
@@ -352,11 +352,11 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<IncomingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Set<STATE>> letter2pred = mInternalIn;
+						final Map<LETTER, Set<STATE>> letter2pred = mInternalIn;
 						if (letter2pred != null) {
 							if (letter2pred.get(letter) != null) {
 								mIterator = letter2pred.get(letter).iterator();
@@ -378,7 +378,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE pred = mIterator.next(); 
+							final STATE pred = mIterator.next(); 
 							return new IncomingInternalTransition<LETTER, STATE>(pred, letter);
 						}
 					}
@@ -405,7 +405,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<IncomingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -443,7 +443,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							IncomingInternalTransition<LETTER, STATE> result = 
+							final IncomingInternalTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -472,11 +472,11 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingCallTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Set<STATE>> letter2pred = mCallIn;
+						final Map<LETTER, Set<STATE>> letter2pred = mCallIn;
 						if (letter2pred != null) {
 							if (letter2pred.get(letter) != null) {
 								mIterator = letter2pred.get(letter).iterator();
@@ -498,7 +498,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE pred = mIterator.next(); 
+							final STATE pred = mIterator.next(); 
 							return new IncomingCallTransition<LETTER, STATE>(pred, letter);
 						}
 					}
@@ -525,7 +525,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingCallTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -563,7 +563,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							IncomingCallTransition<LETTER, STATE> result = 
+							final IncomingCallTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -590,13 +590,13 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = mReturnIn;
+						final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = mReturnIn;
 						if (letter2hier2pred != null) {
-							Map<STATE, Set<STATE>> hier2pred = letter2hier2pred.get(letter);
+							final Map<STATE, Set<STATE>> hier2pred = letter2hier2pred.get(letter);
 							if (hier2pred != null) {
 								if (hier2pred.get(hier) != null) {
 									mIterator = hier2pred.get(hier).iterator();
@@ -621,7 +621,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE pred = mIterator.next(); 
+							final STATE pred = mIterator.next(); 
 							return new IncomingReturnTransition<LETTER, STATE>(pred, hier, letter);
 						}
 					}
@@ -648,7 +648,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 					Iterator<STATE> mHierIterator;
 					STATE mCurrentHier;
@@ -686,7 +686,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentHier == null) {
 							throw new NoSuchElementException();
 						} else {
-							IncomingReturnTransition<LETTER, STATE> result = 
+							final IncomingReturnTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextHier();
@@ -716,7 +716,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<IncomingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -754,7 +754,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							IncomingReturnTransition<LETTER, STATE> result = 
+							final IncomingReturnTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -781,11 +781,11 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Set<STATE>> letter2succ = mInternalOut;
+						final Map<LETTER, Set<STATE>> letter2succ = mInternalOut;
 						if (letter2succ != null) {
 							if (letter2succ.get(letter) != null) {
 								mIterator = letter2succ.get(letter).iterator();
@@ -807,7 +807,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE succ = mIterator.next(); 
+							final STATE succ = mIterator.next(); 
 							return new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 						}
 					}
@@ -832,7 +832,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -870,7 +870,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingInternalTransition<LETTER, STATE> result = 
+							final OutgoingInternalTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -899,11 +899,11 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Set<STATE>> letter2succ = mCallOut;
+						final Map<LETTER, Set<STATE>> letter2succ = mCallOut;
 						if (letter2succ != null) {
 							if (letter2succ.get(letter) != null) {
 								mIterator = letter2succ.get(letter).iterator();
@@ -925,7 +925,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE succ = mIterator.next(); 
+							final STATE succ = mIterator.next(); 
 							return new OutgoingCallTransition<LETTER, STATE>(letter, succ);
 						}
 					}
@@ -950,7 +950,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -987,7 +987,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingCallTransition<LETTER, STATE> result = 
+							final OutgoingCallTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -1019,13 +1019,13 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
-						Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = mReturnOut;
+						final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = mReturnOut;
 						if (letter2hier2succ != null) {
-							Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
+							final Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
 							if (hier2succ != null) {
 								if (hier2succ.get(hier) != null) {
 									mIterator = hier2succ.get(hier).iterator();
@@ -1050,7 +1050,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE succ = mIterator.next(); 
+							final STATE succ = mIterator.next(); 
 							return new OutgoingReturnTransition<LETTER, STATE>(hier, letter, succ);
 						}
 					}
@@ -1077,7 +1077,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 					Iterator<STATE> mHierIterator;
 					STATE mCurrentHier;
@@ -1115,7 +1115,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentHier == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingReturnTransition<LETTER, STATE> result = 
+							final OutgoingReturnTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextHier();
@@ -1146,7 +1146,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -1184,7 +1184,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingReturnTransition<LETTER, STATE> result = 
+							final OutgoingReturnTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
@@ -1215,7 +1215,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -1252,7 +1252,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingReturnTransition<LETTER, STATE> result = 
+							final OutgoingReturnTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();

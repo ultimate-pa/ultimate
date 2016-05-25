@@ -51,26 +51,26 @@ final class Solver {
 	private int numVars;
 
 	/** the problem in CNF */
-	private Horn3Array clauses;
+	private final Horn3Array clauses;
 
 	/** variable -> clauses in which it occurs */
-	private IntArray[] occur;
+	private final IntArray[] occur;
 
 	/** variable -> assigned value (NONE, TRUE, FALSE) */
-	private char[] assign;
+	private final char[] assign;
 
 	/** last assignment operations */
-	private IntArray op;
+	private final IntArray op;
 
 	/** pre-allocate a clause to avoid garbage collection overhead */
-	private Horn3Clause clause;
+	private final Horn3Clause clause;
 
 	Solver(Horn3Array clauses) {
 		this.clauses = clauses;
-		this.clause = new Horn3Clause(-1,-1,-1);
+		clause = new Horn3Clause(-1,-1,-1);
 
 		numVars = 2; // const true and const false
-		for (Horn3Clause c : clauses) {
+		for (final Horn3Clause c : clauses) {
 			assert 0 <= c.x;
 			assert 0 <= c.y;
 			assert 0 <= c.z;
@@ -84,8 +84,9 @@ final class Solver {
 		op = new IntArray();
 
 		occur = new IntArray[numVars];
-		for (int i = 0; i < numVars; i++)
+		for (int i = 0; i < numVars; i++) {
 			occur[i] = new IntArray();
+		}
 
 		for (int i = 0; i < clauses.size(); i++) {
 			clauses.get(i, clause);
@@ -95,8 +96,9 @@ final class Solver {
 			occur[clause.z].add(i);
 		}
 
-		for (int i = 0; i < numVars; i++)
+		for (int i = 0; i < numVars; i++) {
 			assign[i] = NONE;
+		}
 		assign[Horn3Clause.TRUEVAR] = TRUE;
 		assign[Horn3Clause.FALSEVAR] = FALSE;
 	}
@@ -111,20 +113,21 @@ final class Solver {
 	private Sat check(Horn3Clause c) {
 		if (assign[c.x] == TRUE &&
 			assign[c.y] == TRUE &&
-			assign[c.z] == FALSE)
+			assign[c.z] == FALSE) {
 			return Sat.UNSATISFIABLE;
-		else if (assign[c.x] == NONE &&
+		} else if (assign[c.x] == NONE &&
 				 assign[c.y] == TRUE &&
-				 assign[c.z] == FALSE)
+				 assign[c.z] == FALSE) {
 			setVar(c.x, FALSE);
-		else if (assign[c.x] == TRUE &&
+		} else if (assign[c.x] == TRUE &&
 				 assign[c.y] == NONE &&
-				 assign[c.z] == FALSE)
+				 assign[c.z] == FALSE) {
 			setVar(c.y, FALSE);
-		else if (assign[c.x] == TRUE &&
+		} else if (assign[c.x] == TRUE &&
 				 assign[c.y] == TRUE &&
-				 assign[c.z] == NONE)
+				 assign[c.z] == NONE) {
 			setVar(c.z, TRUE);
+		}
 		return Sat.OK;
 	}
 
@@ -132,7 +135,7 @@ final class Solver {
 		/* NOTE: the termination condition is "flexible" since the
 		 * loop body might insert new elements into `op' */
 		for (int i = 0; i < op.size(); i++) {
-			for (int c : occur[op.get(i)]) {
+			for (final int c : occur[op.get(i)]) {
 				if (check(clauses.get(c, clause)) == Sat.UNSATISFIABLE) {
 					return Sat.UNSATISFIABLE;
 				}
@@ -146,8 +149,9 @@ final class Solver {
 		setVar(v, a);
 		if (propagate() == Sat.UNSATISFIABLE) {
 			/* rollback */
-			for (int v2 : op)
+			for (final int v2 : op) {
 				assign[v2] = NONE;
+			}
 			op.clear();
 			return Sat.UNSATISFIABLE;
 		}
@@ -169,11 +173,14 @@ final class Solver {
 	char[] solve() {
 		assert op.size() == 0;
 
-		for (Horn3Clause c : clauses)
-			if (check(c) == Sat.UNSATISFIABLE)
+		for (final Horn3Clause c : clauses) {
+			if (check(c) == Sat.UNSATISFIABLE) {
 				return null;
-		if (propagate() == Sat.UNSATISFIABLE)
+			}
+		}
+		if (propagate() == Sat.UNSATISFIABLE) {
 			return null;
+		}
 		op.clear();
 
 		for (int v = 0; v < numVars; v++) {
@@ -187,7 +194,7 @@ final class Solver {
 		}
 
 		/* test */
-		for (Horn3Clause c : clauses) {
+		for (final Horn3Clause c : clauses) {
 			assert assign[c.x] == FALSE
 					|| assign[c.y] == FALSE
 					|| assign[c.z] == TRUE;

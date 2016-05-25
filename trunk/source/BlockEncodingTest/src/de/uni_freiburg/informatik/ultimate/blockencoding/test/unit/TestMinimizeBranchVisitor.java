@@ -96,7 +96,7 @@ public class TestMinimizeBranchVisitor extends TestCase {
 		// first over the RootEdges
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
 			testMinimizationOfFunction((ProgramPoint) edge.getTarget());
@@ -130,7 +130,7 @@ public class TestMinimizeBranchVisitor extends TestCase {
 		if (node.getOutgoingEdges().size() == 0) {
 			return;
 		}
-		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+		for (final IMinimizedEdge edge : node.getOutgoingEdges()) {
 			// We ignore Call- and Return-Edges
 			// They will be processed later
 			if (edge.isBasicEdge()
@@ -148,7 +148,7 @@ public class TestMinimizeBranchVisitor extends TestCase {
 			assertNotNull(edge.getTarget().getIncomingEdges());
 			if (edge.getTarget().getIncomingEdges().size() == 1) {
 				if (edge.getTarget().getOutgoingEdges().size() == 1) {
-					IMinimizedEdge minEdge = edge.getTarget()
+					final IMinimizedEdge minEdge = edge.getTarget()
 							.getOutgoingEdges().get(0);
 					assertTrue(minEdge.isBasicEdge());
 					assertTrue(((IBasicEdge) minEdge).getOriginalEdge() instanceof Summary
@@ -160,7 +160,7 @@ public class TestMinimizeBranchVisitor extends TestCase {
 			}
 			// check if this edge can be merged parallel
 			assertNotNull(edge.getSource().getOutgoingEdges());
-			for (IMinimizedEdge checkEdge : edge.getSource().getOutgoingEdges()) {
+			for (final IMinimizedEdge checkEdge : edge.getSource().getOutgoingEdges()) {
 				if (checkEdge == edge) {
 					continue;
 				}
@@ -176,14 +176,14 @@ public class TestMinimizeBranchVisitor extends TestCase {
 		}
 		if (edge instanceof ConjunctionEdge) {
 			// check the sequential merge
-			ConjunctionEdge conjunction = (ConjunctionEdge) edge;
+			final ConjunctionEdge conjunction = (ConjunctionEdge) edge;
 			assertTrue(conjunction.getCompositeEdges().length == 2);
-			IMinimizedEdge left = conjunction.getCompositeEdges()[0];
-			IMinimizedEdge right = conjunction.getCompositeEdges()[1];
+			final IMinimizedEdge left = conjunction.getCompositeEdges()[0];
+			final IMinimizedEdge right = conjunction.getCompositeEdges()[1];
 			assertEquals(left.getTarget(), right.getSource());
 			assertEquals(left.getTarget().getOriginalNode(), right.getSource()
 					.getOriginalNode());
-			MinimizedNode inspectNode = left.getTarget();
+			final MinimizedNode inspectNode = left.getTarget();
 			assertTrue(inspectNode.getOutgoingEdges().size() == 1);
 			assertTrue(inspectNode.getIncomingEdges().size() == 1);
 			assertEquals(left, inspectNode.getIncomingEdges().get(0));
@@ -194,14 +194,14 @@ public class TestMinimizeBranchVisitor extends TestCase {
 		}
 		if (edge instanceof DisjunctionEdge) {
 			// check the parallel merge
-			DisjunctionEdge disjunction = (DisjunctionEdge) edge;
+			final DisjunctionEdge disjunction = (DisjunctionEdge) edge;
 			assertTrue(disjunction.getCompositeEdges().length == 2);
-			IMinimizedEdge left = disjunction.getCompositeEdges()[0];
-			IMinimizedEdge right = disjunction.getCompositeEdges()[1];
+			final IMinimizedEdge left = disjunction.getCompositeEdges()[0];
+			final IMinimizedEdge right = disjunction.getCompositeEdges()[1];
 			assertEquals(left.getSource(), right.getSource());
 			assertEquals(left.getTarget(), right.getTarget());
-			MinimizedNode source = left.getSource();
-			MinimizedNode target = left.getTarget();
+			final MinimizedNode source = left.getSource();
+			final MinimizedNode target = left.getTarget();
 			assertEquals(disjunction.getSource(), source);
 			assertEquals(disjunction.getTarget(), target);
 			analyzeMinimizedEdge(left);

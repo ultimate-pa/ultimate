@@ -1,7 +1,8 @@
 
 package jdd.examples;
 
-import jdd.util.*;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
 
 
 
@@ -27,8 +28,8 @@ public class ConfigExample {
 	/** build the adder once and print its memory and time consumption */
 	private static void test() {
 		long time = System.currentTimeMillis();
-		Adder adder = new Adder(N);
-		long  memory = (long)(adder.getMemoryUsage() / 1024);
+		final Adder adder = new Adder(N);
+		final long  memory = adder.getMemoryUsage() / 1024;
 		time  = System.currentTimeMillis() - time;
 
 		// REMOVE this line if you getting too much information :)

@@ -37,7 +37,7 @@ import java.util.Set;
  * set of Map.Entry in the constructor.
  */
 public class SimpleMap<Keys,Values> extends AbstractMap<Keys,Values> {
-    private Set<Entry<Keys,Values>> backing;
+    private final Set<Entry<Keys,Values>> backing;
 
     public SimpleMap() {
 	backing = new SimpleSet<Entry<Keys,Values>>();
@@ -51,7 +51,8 @@ public class SimpleMap<Keys,Values> extends AbstractMap<Keys,Values> {
 	backing = fromSet;
     }
 	
-    public Set<Entry<Keys, Values>> entrySet() {
+    @Override
+	public Set<Entry<Keys, Values>> entrySet() {
 	return backing;
     }
 
@@ -71,37 +72,44 @@ public class SimpleMap<Keys,Values> extends AbstractMap<Keys,Values> {
 	    this.value = value;
 	}
 
+	@Override
 	public K getKey() {
 	    return key;
 	}
 
+	@Override
 	public V getValue() {
 	    return value;
 	}
 
+	@Override
 	public V setValue(V newValue) {
-	    V old = value;
+	    final V old = value;
 	    value = newValue;
 	    return old;
 	}
 	
+	@Override
 	public int hashCode() {
 	    return key.hashCode() ^ value.hashCode();
 	}
 
+	@Override
 	public boolean equals(Object o) {
 	    if (o instanceof Entry) {
-		Entry e = (Entry) o;
+		final Entry e = (Entry) o;
 		return key.equals(e.getKey()) && value.equals(e.getValue());
 	    }
 	    return false;
 	}
     }
 
-    public Values put(Keys key, Values value) {
-	for (Entry<Keys,Values> entry: backing) {
-	    if (key.equals(entry.getKey()))
-		return entry.setValue(value);
+    @Override
+	public Values put(Keys key, Values value) {
+	for (final Entry<Keys,Values> entry: backing) {
+	    if (key.equals(entry.getKey())) {
+			return entry.setValue(value);
+		}
 	}
 	backing.add(new SimpleEntry<Keys,Values>(key, value));
 	return null;

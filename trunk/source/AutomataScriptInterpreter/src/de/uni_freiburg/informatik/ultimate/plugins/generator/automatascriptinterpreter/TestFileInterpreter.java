@@ -68,11 +68,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterp
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
@@ -129,7 +129,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * A map from variable names to the type they represent. This is needed to check for type conformity, e.g.
 		 * variable assignment.
 		 */
-		private Map<String, Class<?>> mLocalVariables = new HashMap<String, Class<?>>();
+		private final Map<String, Class<?>> mLocalVariables = new HashMap<String, Class<?>>();
 
 		/**
 		 * Checks the test file for type errors and for undeclared variables.
@@ -139,7 +139,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * @throws InterpreterException
 		 */
 		public void checkTestFile(AtsASTNode n) throws InterpreterException {
-			for (Map.Entry<String, Object> entry : mVariables.entrySet()) {
+			for (final Map.Entry<String, Object> entry : mVariables.entrySet()) {
 				mLocalVariables.put(entry.getKey(), entry.getValue().getClass());
 			}
 			checkType(n);
@@ -163,7 +163,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			} else if (n instanceof RelationalExpressionAST) {
 				checkType((RelationalExpressionAST) n);
 			} else if (n instanceof StatementListAST) {
-				for (AtsASTNode stmt : ((StatementListAST) n).getOutgoingNodes()) {
+				for (final AtsASTNode stmt : ((StatementListAST) n).getOutgoingNodes()) {
 					checkType(stmt);
 				}
 			} else if (n instanceof UnaryExpressionAST) {
@@ -179,22 +179,22 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 
 		private void checkType(AssignmentExpressionAST as) throws InterpreterException {
-			List<AtsASTNode> children = as.getOutgoingNodes();
-			ILocation errorLocation = as.getLocation();
+			final List<AtsASTNode> children = as.getOutgoingNodes();
+			final ILocation errorLocation = as.getLocation();
 			if (children.size() != 2) {
 				String message = "Assignment should have 2 operands." + System.getProperty("line.separator");
 				message = message.concat("On the left-hand side there  must be a variable, ");
 				message = message.concat("on the right-hand side there can be an arbitrary expression.");
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check the type of children
 			checkType(children.get(0));
 			checkType(children.get(1));
 
-			VariableExpressionAST var = (VariableExpressionAST) children.get(0);
+			final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 			// Check whether the right-hand side has expected type.
-			for (Class<?> c : getTypes(children.get(1))) {
+			for (final Class<?> c : getTypes(children.get(1))) {
 				children.get(1).setType(c);
 				// Check for correct types
 				if (AssignableTest.isAssignableFrom(var.getReturnType(), c)) {
@@ -204,18 +204,18 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String message = "Right side has incorrect type." + System.getProperty("line.separator");
 			message = message.concat("Expected: " + var.getReturnType().getSimpleName() + "\tGot: "
 					+ children.get(1).getReturnType().getSimpleName() + "");
-			String longDescription = message;
+			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 
 		}
 
 		private void checkType(BinaryExpressionAST be) throws InterpreterException {
-			List<AtsASTNode> children = be.getOutgoingNodes();
-			ILocation errorLocation = be.getLocation();
+			final List<AtsASTNode> children = be.getOutgoingNodes();
+			final ILocation errorLocation = be.getLocation();
 			if (children.size() != 2) {
-				String message = be.getOperatorAsString() + " should have 2 operands of type \"int\"."
+				final String message = be.getOperatorAsString() + " should have 2 operands of type \"int\"."
 						+ System.getProperty("line.separator") + "Num of operands: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check children for correct type
@@ -231,7 +231,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
-			for (Class<?> c : getTypes(children.get(0))) {
+			for (final Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
 					firstChildHasCorrectType = true;
 				}
@@ -242,12 +242,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 						+ System.getProperty("line.separator");
 				message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 
 			// Check whether second child has expected type.
-			for (Class<?> c : getTypes(children.get(1))) {
+			for (final Class<?> c : getTypes(children.get(1))) {
 				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
 					return;
 				}
@@ -256,36 +256,37 @@ public class TestFileInterpreter implements IMessagePrinter {
 					+ System.getProperty("line.separator");
 			message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: "
 					+ children.get(1).getReturnType().getSimpleName() + "");
-			String longDescription = message;
+			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
 
 		private void checkType(ConditionalBooleanExpressionAST cbe) throws InterpreterException {
-			List<AtsASTNode> children = cbe.getOutgoingNodes();
-			ILocation errorLocation = cbe.getLocation();
+			final List<AtsASTNode> children = cbe.getOutgoingNodes();
+			final ILocation errorLocation = cbe.getLocation();
 			if ((cbe.getOperator() == ConditionalBooleanOperatorAST.NOT) && (children.size() != 1)) {
-				String message = "\"!\" operator should have 1 operand." + System.getProperty("line.separator")
+				final String message = "\"!\" operator should have 1 operand." + System.getProperty("line.separator")
 						+ "Num of operands: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperatorAST.AND) && (children.size() != 2)) {
-				String message = "\"&&\" operator should have 2 operands." + System.getProperty("line.separator")
+				final String message = "\"&&\" operator should have 2 operands." + System.getProperty("line.separator")
 						+ "Num of operands: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperatorAST.OR) && (children.size() != 2)) {
-				String message = " \"||\" operator should have 2 operands." + System.getProperty("line.separator")
+				final String message = " \"||\" operator should have 2 operands." + System.getProperty("line.separator")
 						+ "Num of operands: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check children for correct type
 			checkType(children.get(0));
-			if (children.size() == 2)
+			if (children.size() == 2) {
 				checkType(children.get(1));
+			}
 			// Check whether first child has type 'int'
 			boolean firstChildHasCorrectType = false;
-			for (Class<?> c : getTypes(children.get(0))) {
+			for (final Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
 					firstChildHasCorrectType = true;
 				}
@@ -295,12 +296,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 						+ System.getProperty("line.separator");
 				message = message.concat("Expected: " + cbe.getReturnType().getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check whether second child has type 'int'
 			if (children.size() == 2) {
-				for (Class<?> c : getTypes(children.get(1))) {
+				for (final Class<?> c : getTypes(children.get(1))) {
 					if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
 						return;
 					}
@@ -308,19 +309,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 				String message = "Right argument has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + cbe.getReturnType().getSimpleName() + "\tGot: "
 						+ children.get(1).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
 
 		private void checkType(ForStatementAST fs) throws InterpreterException {
-			List<AtsASTNode> children = fs.getOutgoingNodes();
-			ILocation errorLocation = fs.getLocation();
+			final List<AtsASTNode> children = fs.getOutgoingNodes();
+			final ILocation errorLocation = fs.getLocation();
 			if (children.size() != 4) {
 				String message = "ForStatement should have 4 arguments (initStmt, condition, updateStmt) {stmtList}."
 						+ System.getProperty("line.separator");
 				message = message.concat("Num of children: " + children.size());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// First child is the loop condition.
@@ -328,19 +329,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 				String message = "Loopcondition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
 
 		private void checkType(IfElseStatementAST is) throws InterpreterException {
-			List<AtsASTNode> children = is.getOutgoingNodes();
-			ILocation errorLocation = is.getLocation();
+			final List<AtsASTNode> children = is.getOutgoingNodes();
+			final ILocation errorLocation = is.getLocation();
 			if (children.size() != 3) {
 				String message = "IfElseStatement should have 3 operands (Condition) { Thenstatements} {Elsestatements})"
 						+ System.getProperty("line.separator");
 				message = message.concat("Num of operands: " + children.size());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check the children for correct type.
@@ -350,19 +351,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 				String message = "Condition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
 
 		private void checkType(IfStatementAST is) throws InterpreterException {
-			List<AtsASTNode> children = is.getOutgoingNodes();
-			ILocation errorLocation = is.getLocation();
+			final List<AtsASTNode> children = is.getOutgoingNodes();
+			final ILocation errorLocation = is.getLocation();
 			if (children.size() != 2) {
 				String message = "IfStatement should have 2 operands (condition) {thenStatements}"
 						+ System.getProperty("line.separator");
 				message = message.concat("Num of operands: " + children.size());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check the first child for correct type
@@ -372,38 +373,39 @@ public class TestFileInterpreter implements IMessagePrinter {
 				String message = "Condition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
 
 		private void checkType(OperationInvocationExpressionAST oe) throws InterpreterException {
-			ILocation errorLocation = oe.getLocation();
-			String opName = oe.getOperationName().toLowerCase();
+			final ILocation errorLocation = oe.getLocation();
+			final String opName = oe.getOperationName().toLowerCase();
 			if (!mExistingOperations.containsKey(opName)) {
 				if (!opName.equals("assert") && !opName.equals("print") && !opName.equals("write")) {
-					String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
-					String shortDescription = shortDescr;
-					String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
-					String longDescr = "We support only the following operations "
+					final String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
+					final String shortDescription = shortDescr;
+					final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
+					final String longDescr = "We support only the following operations "
 							+ System.getProperty("line.separator") + allOperations;
-					String longDescription = longDescr;
+					final String longDescription = longDescr;
 					throw new InterpreterException(errorLocation, shortDescription, longDescription);
 				}
 			}
 			// Check the arguments of this operation for correct type.
 			if ((oe.getOutgoingNodes() != null) && (oe.getOutgoingNodes().get(0) != null)) {
-				for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
+				for (final AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
 					checkType(n);
 				}
 			}
-			if (opName.equals("print"))
+			if (opName.equals("print")) {
 				return;
+			}
 			/*
 			 * Set type of this operation, because until now, it didn't have any type. It is not relevant for further
 			 * type checking results, but it avoids NullPointerExceptions.
 			 */
-			Set<Class<?>> types = getTypes(oe);
+			final Set<Class<?>> types = getTypes(oe);
 			if (!types.isEmpty()) {
 				Class<?>[] arr = new Class<?>[1];
 				arr = types.toArray(arr);
@@ -413,12 +415,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 
 		private void checkType(RelationalExpressionAST re) throws InterpreterException {
-			List<AtsASTNode> children = re.getOutgoingNodes();
-			ILocation errorLocation = re.getLocation();
+			final List<AtsASTNode> children = re.getOutgoingNodes();
+			final ILocation errorLocation = re.getLocation();
 			if (children.size() != 2) {
-				String message = "\"" + re.getOperatorAsString() + " should have 2 operands."
+				final String message = "\"" + re.getOperatorAsString() + " should have 2 operands."
 						+ System.getProperty("line.separator") + "Num of operands: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check children for correct type
@@ -426,7 +428,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			checkType(children.get(1));
 			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
-			for (Class<?> c : getTypes(children.get(0))) {
+			for (final Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(re.getExpectingType(), c)) {
 					firstChildHasCorrectType = true;
 				}
@@ -435,11 +437,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 				String message = "Left operand has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + re.getExpectingType().getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check whether second child has expected type.
-			for (Class<?> c : getTypes(children.get(1))) {
+			for (final Class<?> c : getTypes(children.get(1))) {
 				if (AssignableTest.isAssignableFrom(re.getExpectingType(), c)) {
 					return;
 				}
@@ -447,32 +449,32 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String message = "Right operand has incorrect type." + System.getProperty("line.separator");
 			message = message.concat("Expected: " + re.getExpectingType().getSimpleName() + "\tGot: "
 					+ children.get(1).getReturnType().getSimpleName());
-			String longDescription = message;
+			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
 
 		private void checkType(UnaryExpressionAST ue) throws InterpreterException {
-			List<AtsASTNode> children = ue.getOutgoingNodes();
-			ILocation errorLocation = ue.getLocation();
+			final List<AtsASTNode> children = ue.getOutgoingNodes();
+			final ILocation errorLocation = ue.getLocation();
 			if (children.size() != 1) {
-				String message = "\"" + ue.getOperatorAsString() + "\" should have one variable as argument."
+				final String message = "\"" + ue.getOperatorAsString() + "\" should have one variable as argument."
 						+ System.getProperty("line.separator") + "Num of arguments: " + children.size();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check children for correct type
 			checkType(children.get(0));
 
 			if (!(children.get(0) instanceof VariableExpressionAST)) {
-				String message = "Unary operators are applicable only on variables."
+				final String message = "Unary operators are applicable only on variables."
 						+ System.getProperty("line.separator") + "You want to apply it on "
 						+ children.get(0).getClass().getSimpleName();
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			// Check if variable has expected type, namely
 			// type 'int'
-			for (Class<?> c : getTypes(children.get(0))) {
+			for (final Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(ue.getExpectingType(), c)) {
 					return;
 				}
@@ -480,68 +482,69 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String message = "Operand has incorrect type." + System.getProperty("line.separator");
 			message = message.concat("Expected: " + ue.getExpectingType().getSimpleName() + "\tGot: "
 					+ children.get(0).getReturnType().getSimpleName());
-			String longDescription = message;
+			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
 
 		private void checkType(VariableExpressionAST v) throws InterpreterException {
-			ILocation errorLocation = v.getLocation();
+			final ILocation errorLocation = v.getLocation();
 			if (mLocalVariables.containsKey(v.getIdentifier())) {
 				v.setType(mLocalVariables.get(v.getIdentifier()));
 			} else {
-				String shortDescription = "Undeclared variable";
+				final String shortDescription = "Undeclared variable";
 				// String message = "Variable \"" + v.getIdentifier() +
 				// "\" at line " + v.getLocation().getStartLine()
 				// + " was not declared.";
-				String longDescription = "Variable \"" + v.getIdentifier() + "\" was not declared.";
+				final String longDescription = "Variable \"" + v.getIdentifier() + "\" was not declared.";
 				throw new InterpreterException(errorLocation, shortDescription, longDescription);
 			}
 		}
 
 		private void checkType(VariableDeclarationAST vd) throws InterpreterException {
-			List<AtsASTNode> children = vd.getOutgoingNodes();
-			ILocation errorLocation = vd.getLocation();
+			final List<AtsASTNode> children = vd.getOutgoingNodes();
+			final ILocation errorLocation = vd.getLocation();
 			if ((children.size() != 0) && (children.size() != 1)) {
-				String message = "Variabledeclaration can have at most one operand. (the value to assign)";
-				String longDescription = message;
+				final String message = "Variabledeclaration can have at most one operand. (the value to assign)";
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
-			for (String id : vd.getIdentifiers()) {
+			for (final String id : vd.getIdentifiers()) {
 				mLocalVariables.put(id, vd.getExpectingType());
 			}
 			// if the variable doesn't get assigned a value, then return.
-			if (children.size() == 0)
+			if (children.size() == 0) {
 				return;
+			}
 
 			// Check type of the right-hand side of the variable assignment.
 			checkType(children.get(0));
-			for (Class<?> c : getTypes(children.get(0))) {
+			for (final Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(vd.getReturnType(), c)) {
 					return;
 				}
 			}
-			String message = "Operand on the right side has incorrect type." + System.getProperty("line.separator")
+			final String message = "Operand on the right side has incorrect type." + System.getProperty("line.separator")
 					+ "Expected: " + vd.getExpectingType().getSimpleName() + "\tGot: "
 					+ children.get(0).getReturnType().getSimpleName();
-			String longDescription = message;
+			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
 
 		private void checkType(WhileStatementAST ws) throws InterpreterException {
-			List<AtsASTNode> children = ws.getOutgoingNodes();
-			ILocation errorLocation = ws.getLocation();
+			final List<AtsASTNode> children = ws.getOutgoingNodes();
+			final ILocation errorLocation = ws.getLocation();
 			if (children.size() != 2) {
 				String message = "WhileStatement should have 2 operands (condition) {stmtList}"
 						+ System.getProperty("line.separator");
 				message = message.concat("Number of children: " + children.size());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
 				String message = "Condition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: "
 						+ children.get(0).getReturnType().getSimpleName());
-				String longDescription = message;
+				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
@@ -559,16 +562,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 */
 		private Set<Class<?>> getTypes(AtsASTNode n) throws UnsupportedOperationException {
 			if (n instanceof OperationInvocationExpressionAST) {
-				OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
-				String opName = oe.getOperationName().toLowerCase();
-				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
+				final OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
+				final String opName = oe.getOperationName().toLowerCase();
+				final Set<Class<?>> returnTypes = new HashSet<Class<?>>();
 				if (opName.equals("print") || opName.equals("assert") || opName.equals("write")) {
 					return returnTypes;
 				}
 				if (mExistingOperations.containsKey(opName)) {
-					Set<Class<?>> operationClasses = mExistingOperations.get(opName);
-					for (Class<?> operationClass : operationClasses) {
-						for (Method m : operationClass.getMethods()) {
+					final Set<Class<?>> operationClasses = mExistingOperations.get(opName);
+					for (final Class<?> operationClass : operationClasses) {
+						for (final Method m : operationClass.getMethods()) {
 							if (m.getName().equals("getResult")) {
 								returnTypes.add(m.getReturnType());
 							}
@@ -584,7 +587,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					throw new UnsupportedOperationException("Operation \"" + opName + "\" was not found!");
 				}
 			} else {
-				Set<Class<?>> returnType = new HashSet<Class<?>>();
+				final Set<Class<?>> returnType = new HashSet<Class<?>>();
 				returnType.add(n.getReturnType());
 				return returnType;
 			}
@@ -596,13 +599,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * Contains the declared variables, automata variables too. It is a map from variable name to the object it
 	 * represents.
 	 */
-	private Map<String, Object> mVariables;
+	private final Map<String, Object> mVariables;
 	/**
 	 * Contains current existing automata operations. It is a map from operation name to a set of class types, because
 	 * there might be operations with the same name, but with different parameter types and in different packages. e.g.
 	 * Accepts for NestedWord automata and Accepts for Petri nets.
 	 */
-	private Map<String, Set<Class<?>>> mExistingOperations;
+	private final Map<String, Set<Class<?>>> mExistingOperations;
 	/**
 	 * The current flow of the program.
 	 */
@@ -610,12 +613,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * Our interpreter for automata definitions.
 	 */
-	private AutomataDefinitionInterpreter mAutomataInterpreter;
+	private final AutomataDefinitionInterpreter mAutomataInterpreter;
 	/**
 	 * Our type checker for the automatascript file.
 	 */
-	private AutomataScriptTypeChecker mTypeChecker;
-	private ILogger mLogger;
+	private final AutomataScriptTypeChecker mTypeChecker;
+	private final ILogger mLogger;
 	/**
 	 * The automaton, which was lastly printed by a print operation.
 	 */
@@ -642,7 +645,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * If an error occurred during the interpretation this is set to true and further interpretation is aborted.
 	 */
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	public TestFileInterpreter(IUltimateServiceProvider services) {
 		readPreferences();
@@ -657,26 +660,26 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mLastPrintedAutomaton = null;
 		mResultOfAssertStatements = new ArrayList<GenericResultAtElement<AtsASTNode>>();
 		if (mPrintAutomataToFile) {
-			String path = mPath + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
-			File file = new File(path);
+			final String path = mPath + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
+			final File file = new File(path);
 			try {
-				FileWriter writer = new FileWriter(file);
+				final FileWriter writer = new FileWriter(file);
 				mPrintWriter = new PrintWriter(writer);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new AssertionError(e);
 			}
 		}
 	}
 
 	private void readPreferences() {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		mPath = prefs.getString(PreferenceInitializer.Name_Path);
 	}
 
 	private static String getDateTime() {
-		DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-		Date date = new Date();
+		final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		final Date date = new Date();
 		return dateFormat.format(date);
 	}
 
@@ -701,7 +704,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		// Interpret automata definitions
 		try {
 			mAutomataInterpreter.interpret(ats.getAutomataDefinitions());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			reportToLogger(LoggerSeverity.INFO, "Error during interpreting automata definitions.");
 			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
@@ -717,7 +720,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			// Type checking
 			try {
 				mTypeChecker.checkTestFile(ats.getStatementList());
-			} catch (InterpreterException e) {
+			} catch (final InterpreterException e) {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 				reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 				String shortDescription = e.getShortDescription();
@@ -740,7 +743,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			} else {
 				try {
 					result = interpret(ats.getStatementList());
-				} catch (InterpreterException e) {
+				} catch (final InterpreterException e) {
 					if (e.getLongDescription().equals("Timeout")) {
 						interpretationFinished = Finished.TIMEOUT;
 					} else if (e.getLongDescription().equals("OutOfMemoryError")) {
@@ -772,18 +775,18 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(AssignmentExpressionAST as) throws InterpreterException {
-		List<AtsASTNode> children = as.getOutgoingNodes();
-		VariableExpressionAST var = (VariableExpressionAST) children.get(0);
+		final List<AtsASTNode> children = as.getOutgoingNodes();
+		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 		if (!mVariables.containsKey(var.getIdentifier())) {
-			String message = as.getLocation().getStartLine() + ": Variable \"" + var.getIdentifier()
+			final String message = as.getLocation().getStartLine() + ": Variable \"" + var.getIdentifier()
 					+ "\" was not declared before.";
 			throw new InterpreterException(as.getLocation(), message);
 		}
-		Object oldValue = mVariables.get(var.getIdentifier());
-		Object newValue = interpret(children.get(1));
+		final Object oldValue = mVariables.get(var.getIdentifier());
+		final Object newValue = interpret(children.get(1));
 
 		if (newValue == null) {
-			String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
+			final String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
 			throw new InterpreterException(as.getLocation(), longDescr);
 		}
 
@@ -792,22 +795,22 @@ public class TestFileInterpreter implements IMessagePrinter {
 			mVariables.put(var.getIdentifier(), newValue);
 			break;
 		case PLUSASSIGN: {
-			Integer assignValue = ((Integer) oldValue) + ((Integer) newValue);
+			final Integer assignValue = ((Integer) oldValue) + ((Integer) newValue);
 			mVariables.put(var.getIdentifier(), assignValue);
 			break;
 		}
 		case MINUSASSIGN: {
-			Integer assignValue = ((Integer) oldValue) - ((Integer) newValue);
+			final Integer assignValue = ((Integer) oldValue) - ((Integer) newValue);
 			mVariables.put(var.getIdentifier(), assignValue);
 			break;
 		}
 		case MULTASSIGN: {
-			Integer assignValue = ((Integer) oldValue) * ((Integer) newValue);
+			final Integer assignValue = ((Integer) oldValue) * ((Integer) newValue);
 			mVariables.put(var.getIdentifier(), assignValue);
 			break;
 		}
 		case DIVASSIGN: {
-			Integer assignValue = ((Integer) oldValue) / ((Integer) newValue);
+			final Integer assignValue = ((Integer) oldValue) / ((Integer) newValue);
 			mVariables.put(var.getIdentifier(), assignValue);
 			break;
 		}
@@ -865,7 +868,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(BinaryExpressionAST be) throws InterpreterException {
-		List<AtsASTNode> children = be.getOutgoingNodes();
+		final List<AtsASTNode> children = be.getOutgoingNodes();
 		// If the return type is 'String', we just call the toString method of
 		// each operand
 		// and return the concatenation of these strings.
@@ -874,8 +877,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = result.concat(interpret(children.get(1)).toString());
 			return result;
 		}
-		Integer v1 = (Integer) interpret(children.get(0));
-		Integer v2 = (Integer) interpret(children.get(1));
+		final Integer v1 = (Integer) interpret(children.get(0));
+		final Integer v2 = (Integer) interpret(children.get(1));
 
 		switch (be.getOperator()) {
 		case PLUS:
@@ -899,28 +902,28 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Boolean interpret(ConditionalBooleanExpressionAST cbe) throws InterpreterException {
-		List<AtsASTNode> children = cbe.getOutgoingNodes();
+		final List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT:
 			return !((Boolean) interpret(children.get(0)));
 		case AND: {
-			Boolean v1 = (Boolean) interpret(children.get(0));
+			final Boolean v1 = (Boolean) interpret(children.get(0));
 			if (!v1) {
 				return false;
 			} // Short-circuit and
-			Boolean v2 = (Boolean) interpret(children.get(1));
+			final Boolean v2 = (Boolean) interpret(children.get(1));
 			return v2;
 		}
 		case OR: {
-			Boolean v1 = (Boolean) interpret(children.get(0));
+			final Boolean v1 = (Boolean) interpret(children.get(0));
 			if (v1) {
 				return true;
 			} // Short-circuit or
-			Boolean v2 = (Boolean) interpret(children.get(1));
+			final Boolean v2 = (Boolean) interpret(children.get(1));
 			return v2;
 		}
 		default: {
-			String message = "ConditionalBooleanExpression: This type of operator is not supported: "
+			final String message = "ConditionalBooleanExpression: This type of operator is not supported: "
 					+ cbe.getOperator();
 			throw new InterpreterException(cbe.getLocation(), message);
 		}
@@ -938,7 +941,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(ForStatementAST fs) throws InterpreterException {
-		List<AtsASTNode> children = fs.getOutgoingNodes();
+		final List<AtsASTNode> children = fs.getOutgoingNodes();
 
 		Boolean loopCondition = false;
 		// If the loopcondition is missing, we just execute the loop forever
@@ -951,7 +954,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		if (loopCondition) {
 			for (;;) {
-				List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
+				final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
 				secondLoop: for (int i = 0; i < statementList.size(); i++) {
 					interpret(statementList.get(i));
 					if (mFlow != Flow.NORMAL) {
@@ -977,7 +980,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		} else {
 			for (; (Boolean) interpret(children.get(0));) {
-				List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
+				final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
 				secondLoop: for (int i = 0; i < statementList.size(); i++) {
 					interpret(statementList.get(i));
 					if (mFlow != Flow.NORMAL) {
@@ -1006,7 +1009,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(IfElseStatementAST is) throws InterpreterException {
-		List<AtsASTNode> children = is.getOutgoingNodes();
+		final List<AtsASTNode> children = is.getOutgoingNodes();
 
 		// children(0) is the condition
 		if ((Boolean) interpret(children.get(0))) {
@@ -1018,7 +1021,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(IfStatementAST is) throws InterpreterException {
-		List<AtsASTNode> children = is.getOutgoingNodes();
+		final List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
 				interpret(children.get(i));
@@ -1032,13 +1035,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private NestedLassoWord<String> interpret(NestedLassowordAST nw) {
-		NestedWord<String> stem = interpret(nw.getStem());
-		NestedWord<String> loop = interpret(nw.getLoop());
+		final NestedWord<String> stem = interpret(nw.getStem());
+		final NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<String>(stem, loop);
 	}
 
 	private Object interpret(OperationInvocationExpressionAST oe) throws InterpreterException {
-		List<AtsASTNode> children = oe.getOutgoingNodes();
+		final List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
 			String message = "OperationExpression should have only 1 child (ArgumentList)";
 			message = message.concat("Num of children: " + children.size());
@@ -1074,7 +1077,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new AssertionError("assert expects boolean result, type checker should have found this");
 			}
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
-			String argsAsString = children.get(0).getAsString();
+			final String argsAsString = children.get(0).getAsString();
 			// ILocation loc = children.get(0).getLocation();
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
 			final String text;
@@ -1086,7 +1089,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					if (arguments.get(1) instanceof String) {
 						try {
 							format = Format.valueOf((String) arguments.get(1));
-						} catch (Exception e) {
+						} catch (final Exception e) {
 							throw new InterpreterException(oe.getLocation(),
 									"unknown format " + (String) arguments.get(1));
 						}
@@ -1116,7 +1119,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
 			if (mPrintAutomataToFile) {
-				String comment = "/* " + oe.getAsString() + " */";
+				final String comment = "/* " + oe.getAsString() + " */";
 				mPrintWriter.println(comment);
 				mPrintWriter.println(text);
 			}
@@ -1124,31 +1127,31 @@ public class TestFileInterpreter implements IMessagePrinter {
 			if (arguments.size() != 3) {
 				throw new InterpreterException(oe.getLocation(), "write needs three arguments");
 			}
-			IAutomaton<String, String> automaton = (IAutomaton<String, String>) arguments.get(0);
-			String filename = (String) arguments.get(1);
+			final IAutomaton<String, String> automaton = (IAutomaton<String, String>) arguments.get(0);
+			final String filename = (String) arguments.get(1);
 			final Format format;
-			String formatAsString = (String) arguments.get(2);
+			final String formatAsString = (String) arguments.get(2);
 			try {
 				format = Format.valueOf(formatAsString);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new InterpreterException(oe.getLocation(),
 						"unknown format " + (String) arguments.get(1));
 			}
-			String argsAsString = children.get(0).getAsString();
+			final String argsAsString = children.get(0).getAsString();
 			reportToLogger(LoggerSeverity.INFO,
 					"Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
 			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
 					format, "hello", automaton);
 		} else {
-			IOperation<String, String> op = getAutomataOperation(oe, arguments);
+			final IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
 					assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
 							+ " is wrong (according to its checkResult method)";
 					result = op.getResult();
-				} catch (AutomataLibraryException e) {
+				} catch (final AutomataLibraryException e) {
 					throw new InterpreterException(oe.getLocation(), e.getMessage());
-				} catch (OutOfMemoryError e) {
+				} catch (final OutOfMemoryError e) {
 					throw new InterpreterException(oe.getLocation(), "OutOfMemoryError");
 				}
 			}
@@ -1157,10 +1160,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Boolean interpret(RelationalExpressionAST re) throws InterpreterException {
-		List<AtsASTNode> children = re.getOutgoingNodes();
+		final List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
-			int v1 = (Integer) interpret(children.get(0));
-			int v2 = (Integer) interpret(children.get(1));
+			final int v1 = (Integer) interpret(children.get(0));
+			final int v2 = (Integer) interpret(children.get(1));
 			switch (re.getOperator()) {
 			case GREATERTHAN:
 				return v1 > v2;
@@ -1183,7 +1186,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(ReturnStatementAST rst) throws InterpreterException {
-		List<AtsASTNode> children = rst.getOutgoingNodes();
+		final List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		mFlow = Flow.RETURN;
 		if (children.size() == 0) {
@@ -1194,17 +1197,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(StatementListAST stmtList) throws InterpreterException {
-		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
+		for (final AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 			interpret(stmt);
 		}
 		return null;
 	}
 
 	private Integer interpret(UnaryExpressionAST ue) throws InterpreterException {
-		List<AtsASTNode> children = ue.getOutgoingNodes();
+		final List<AtsASTNode> children = ue.getOutgoingNodes();
 
-		VariableExpressionAST var = (VariableExpressionAST) children.get(0);
-		Integer oldVal = (Integer) interpret(var);
+		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
+		final Integer oldVal = (Integer) interpret(var);
 
 		switch (ue.getOperator()) {
 		case EXPR_PLUSPLUS: {
@@ -1224,7 +1227,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			return oldVal - 1;
 		}
 		default: {
-			String message = ue.getLocation().getStartLine()
+			final String message = ue.getLocation().getStartLine()
 					+ ": UnaryExpression: This type of operator is not supported: " + ue.getOperator();
 			throw new InterpreterException(ue.getLocation(), message);
 		}
@@ -1232,15 +1235,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private Object interpret(VariableDeclarationAST vd) throws InterpreterException {
-		List<AtsASTNode> children = vd.getOutgoingNodes();
+		final List<AtsASTNode> children = vd.getOutgoingNodes();
 		Object value = null;
 		if (children.size() == 1) {
 			value = interpret(children.get(0));
 		}
 
-		for (String id : vd.getIdentifiers()) {
+		for (final String id : vd.getIdentifiers()) {
 			if (value == null) {
-				String longDescr = "Var \"" + id + "\" is assigned \"null\".";
+				final String longDescr = "Var \"" + id + "\" is assigned \"null\".";
 				throw new InterpreterException(vd.getLocation(), longDescr);
 			}
 			mVariables.put(id, value);
@@ -1250,17 +1253,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 	private Object interpret(VariableExpressionAST v) throws InterpreterException {
 		if (!mVariables.containsKey(v.getIdentifier())) {
-			String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
+			final String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
 			throw new InterpreterException(v.getLocation(), longDescr);
 		}
 		return mVariables.get(v.getIdentifier());
 	}
 
 	private Object interpret(WhileStatementAST ws) throws InterpreterException {
-		List<AtsASTNode> children = ws.getOutgoingNodes();
+		final List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
-			List<AtsASTNode> statementList = children.get(1).getOutgoingNodes();
+			final List<AtsASTNode> statementList = children.get(1).getOutgoingNodes();
 			secondLoop: for (int i = 0; i < statementList.size(); i++) {
 				interpret(statementList.get(i));
 				if (mFlow != Flow.NORMAL) {
@@ -1292,7 +1295,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private void reportResult(Finished finished, String errorMessage) {
 		mLogger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
-		for (GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
+		for (final GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, test);
 			if (test.getSeverity() == Severity.ERROR) {
 				oneOrMoreAssertionsFailed = true;
@@ -1323,7 +1326,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		IResult result = new AutomataScriptInterpreterOverallResult(Activator.PLUGIN_ID, overallResult, errorMessage);
+		final IResult result = new AutomataScriptInterpreterOverallResult(Activator.PLUGIN_ID, overallResult, errorMessage);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
@@ -1401,35 +1404,35 @@ public class TestFileInterpreter implements IMessagePrinter {
 	@SuppressWarnings("unchecked")
 	private IOperation<String, String> getAutomataOperation(OperationInvocationExpressionAST oe,
 			ArrayList<Object> arguments) throws InterpreterException {
-		String operationName = oe.getOperationName().toLowerCase();
+		final String operationName = oe.getOperationName().toLowerCase();
 		IOperation<String, String> result = null;
 		if (mExistingOperations.containsKey(operationName)) {
-			Set<Class<?>> operationClasses = mExistingOperations.get(operationName);
-			for (Class<?> operationClass : operationClasses) {
-				Constructor<?>[] operationConstructors = operationClass.getConstructors();
+			final Set<Class<?>> operationClasses = mExistingOperations.get(operationName);
+			for (final Class<?> operationClass : operationClasses) {
+				final Constructor<?>[] operationConstructors = operationClass.getConstructors();
 				if (operationConstructors.length == 0) {
-					String description = "Error in automata library: operation " + operationName
+					final String description = "Error in automata library: operation " + operationName
 							+ " does not have a constructor";
 					throw new InterpreterException(oe.getLocation(), description, description);
 				}
 				// Find the constructor which expects the correct arguments
-				for (Constructor<?> c : operationConstructors) {
+				for (final Constructor<?> c : operationConstructors) {
 					// Convention: If the first parameter is a StateFactory, we
 					// prepend a StringFactory to the arguments.
-					Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
-					Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
+					final Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
+					final Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 					if (allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
 						try {
 							result = (IOperation<String, String>) c.newInstance(argumentsWithServices);
 							return result;
-						} catch (InstantiationException e) {
+						} catch (final InstantiationException e) {
 							e.printStackTrace();
 							throw new AssertionError(e);
-						} catch (IllegalAccessException e) {
+						} catch (final IllegalAccessException e) {
 							e.printStackTrace();
 							throw new AssertionError(e);
-						} catch (InvocationTargetException e) {
-							Throwable targetException = e.getTargetException();
+						} catch (final InvocationTargetException e) {
+							final Throwable targetException = e.getTargetException();
 							if (targetException instanceof RuntimeException) {
 								throw (RuntimeException) targetException;
 							} else if (targetException instanceof InterpreterException) {
@@ -1441,29 +1444,29 @@ public class TestFileInterpreter implements IMessagePrinter {
 							} else if (targetException instanceof Error) {
 								throw (Error) targetException;
 							} else {
-								String message = "Non runtime Exception" + targetException.getMessage();
+								final String message = "Non runtime Exception" + targetException.getMessage();
 								throw new AssertionError(message);
 							}
-						} catch (OutOfMemoryError e) {
+						} catch (final OutOfMemoryError e) {
 							throw new InterpreterException(oe.getLocation(), "OutOfMemoryError");
 						}
 					}
 				}
 			}
 		} else {
-			String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
-			String longDescr = "Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator")
+			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
+			final String longDescr = "Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator")
 					+ "We support only the following operations " + System.getProperty("line.separator")
 					+ allOperations;
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 		assert (result == null);
 		{
-			String shortDescr = "Operation error";
+			final String shortDescr = "Operation error";
 			String longDescr = "Operation \"" + oe.getOperationName() + "\" is not defined for "
 					+ (arguments.size() == 1 ? "this type of argument." : "these types of arguments.");
 			longDescr += " (";
-			for (Object argument : arguments) {
+			for (final Object argument : arguments) {
 				longDescr += argument.getClass().getSimpleName() + " ";
 			}
 			longDescr += ")";
@@ -1479,7 +1482,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private Object[] prependAutomataLibraryServicesIfNecessary(Constructor<?> c, Object[] args) {
 		boolean firstParameterIsAutomataLibraryServices;
-		Class<?> fstParam = c.getParameterTypes()[0];
+		final Class<?> fstParam = c.getParameterTypes()[0];
 		if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
 			firstParameterIsAutomataLibraryServices = true;
 		} else {
@@ -1487,7 +1490,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		Object[] result;
 		if (firstParameterIsAutomataLibraryServices) {
-			List<Object> list = new ArrayList<>();
+			final List<Object> list = new ArrayList<>();
 			list.add(new AutomataLibraryServices(mServices));
 			list.addAll(Arrays.asList(args));
 			result = list.toArray();
@@ -1503,7 +1506,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private Object[] prependStateFactoryIfNecessary(Constructor<?> c, List<Object> args) {
 		boolean firstParameterIsStateFactory;
-		Class<?> fstParam = c.getParameterTypes()[0];
+		final Class<?> fstParam = c.getParameterTypes()[0];
 		if (StateFactory.class.isAssignableFrom(fstParam)) {
 			firstParameterIsStateFactory = true;
 		} else {
@@ -1517,7 +1520,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = new Object[args.size() + 1];
 			result[0] = new StringFactory();
 			int offset = 1;
-			for (Object arg : args) {
+			for (final Object arg : args) {
 				result[offset] = arg;
 				offset++;
 			}
@@ -1536,7 +1539,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (c.getParameterTypes().length < 2) {
 			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
 		} else {
-			Class<?> sndParam = c.getParameterTypes()[1];
+			final Class<?> sndParam = c.getParameterTypes()[1];
 			if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
 				if (StateFactory.class.isAssignableFrom(sndParam)) {
 					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
@@ -1562,7 +1565,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, Object[] arguments) {
 		if (arguments.length == c.getParameterTypes().length) {
 			int i = 0;
-			for (Class<?> type : c.getParameterTypes()) {
+			for (final Class<?> type : c.getParameterTypes()) {
 				if (AssignableTest.isAssignableFrom(type, arguments[i].getClass())) {
 					i++;
 				} else {
@@ -1618,7 +1621,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final Class<?> clazz;
 		try {
 			clazz = Class.forName(qualifiedName);
-		} catch (ClassNotFoundException e) {
+		} catch (final ClassNotFoundException e) {
 			mLogger.error("Couldn't load/find class " + qualifiedName);
 			throw new RuntimeException(e);
 		}
@@ -1653,7 +1656,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final String fullname = file.getAbsolutePath();
 		final String filenameWithoutSuffix = fullname.substring(0, fullname.length() - 6);
 		final String knownPath = getPathFromPackageName(packageName);
-		int validAfter = filenameWithoutSuffix.indexOf(knownPath);
+		final int validAfter = filenameWithoutSuffix.indexOf(knownPath);
 		assert validAfter != -1;
 
 		return filenameWithoutSuffix.substring(validAfter).replace(File.separatorChar, '.');
@@ -1696,15 +1699,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (protocol.equals("file")) {
 			try {
 				dirFile = new File(dirURL.toURI());
-			} catch (URISyntaxException e) {
+			} catch (final URISyntaxException e) {
 				mLogger.error("Directory \"" + dir + "\" does not exist");
 				return Collections.emptyList();
 			}
 		} else if (protocol.equals("bundleresource")) {
 			try {
-				URL fileURL = FileLocator.toFileURL(dirURL);
+				final URL fileURL = FileLocator.toFileURL(dirURL);
 				dirFile = new File(fileURL.getFile());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				mLogger.error("Directory \"" + dir + "\" does not exist");
 				return Collections.emptyList();
 			}

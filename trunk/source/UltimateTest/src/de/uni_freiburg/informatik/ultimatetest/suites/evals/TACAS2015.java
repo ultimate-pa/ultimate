@@ -32,8 +32,8 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 public abstract class TACAS2015 extends AbstractEvalTestSuite {
 
@@ -44,7 +44,7 @@ public abstract class TACAS2015 extends AbstractEvalTestSuite {
 
 	protected String[] getDirectories() {
 		// @formatter:off
-		String[] directories = {
+		final String[] directories = {
 			"examples/svcomp/ntdrivers-simplified/",
 	   		"examples/svcomp/ssh-simplified/", 
 			"examples/svcomp/locks/",
@@ -107,16 +107,16 @@ public abstract class TACAS2015 extends AbstractEvalTestSuite {
 	}
 
 	protected DirectoryFileEndingsPair[] getPairs(int limit) {
-		List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
-		for (String directory : getDirectories()) {
+		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
+		for (final String directory : getDirectories()) {
 			rtr.add(getPair(directory, limit));
 		}
 		return rtr.toArray(new DirectoryFileEndingsPair[rtr.size()]);
 	}
 
 	protected DirectoryFileEndingsPair[] getPairs() {
-		List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
-		for (String directory : getDirectories()) {
+		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
+		for (final String directory : getDirectories()) {
 			rtr.add(getPair(directory));
 		}
 		return rtr.toArray(new DirectoryFileEndingsPair[rtr.size()]);

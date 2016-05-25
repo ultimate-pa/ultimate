@@ -33,10 +33,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import pea.CDD;
-import pea.Phase;
-import pea.PhaseEventAutomata;
-
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -45,6 +41,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import pea.CDD;
+import pea.Phase;
+import pea.PhaseEventAutomata;
 
 /**
  * 
@@ -85,14 +84,14 @@ public class PEAXML2JConverter {
      */
     public PEAXML2JConverter(String loggerName, boolean useZ) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = ILogger.getLogger(PEAXML2JConverter.DEFAULT_LOGGER);
+            logger = ILogger.getLogger(PEAXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = ILogger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.formulaConverter = new FormulaXML2JConverter(useZ);
+        formulaConverter = new FormulaXML2JConverter(useZ);
 
-        this.initialiseParser();
+        initialiseParser();
     }
 
     /**
@@ -114,18 +113,18 @@ public class PEAXML2JConverter {
      * @see org.apache.xerces.parsers.DOMParser;
      */
     protected void initialiseParser() throws Exception {
-        this.parser = new DOMParser();
+        parser = new DOMParser();
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\" successful");
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, false);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, false);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\" successful");
 
     }
@@ -150,20 +149,20 @@ public class PEAXML2JConverter {
      */
     public PhaseEventAutomata[] convert(String file) throws SAXException,
             IOException {
-        Document document = this.parse(file);
+        final Document document = parse(file);
 
-        NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
-        int peaCount = peaNodes.getLength();
+        final NodeList peaNodes = document.getElementsByTagName(XMLTags.PEA_TAG);
+        final int peaCount = peaNodes.getLength();
         if (peaCount == 0) {
             throw new RuntimeException("PEA count = 0 is not allowed");
         }
 
-        PhaseEventAutomata[] peas = new PhaseEventAutomata[peaCount];
+        final PhaseEventAutomata[] peas = new PhaseEventAutomata[peaCount];
         for (int i = 0; i < peaCount; i++) {
-            Element actPEANode = (Element) peaNodes.item(i);
-            this.logger.info("Trying to build pea " + i);
-            peas[i] = this.createPhaseEventAutomaton(actPEANode);
-            this.logger.info("Building pea " + i + " successful");
+            final Element actPEANode = (Element) peaNodes.item(i);
+            logger.info("Trying to build pea " + i);
+            peas[i] = createPhaseEventAutomaton(actPEANode);
+            logger.info("Building pea " + i + " successful");
         }
 
         return peas;
@@ -176,8 +175,8 @@ public class PEAXML2JConverter {
      */
     protected Document parse(String file) throws SAXException, IOException {
 	//        this.parser.parse(this.getClass().getClassLoader().getResource(file).toString());
-        this.parser.parse(file);
-        return this.parser.getDocument();
+        parser.parse(file);
+        return parser.getDocument();
     }
 
     /**
@@ -195,50 +194,50 @@ public class PEAXML2JConverter {
      */
 
     protected PhaseEventAutomata createPhaseEventAutomaton(Element peaNode) {
-        NodeList phaseNodes = peaNode.getElementsByTagName(XMLTags.PHASE_TAG);
-        int phaseCount = phaseNodes.getLength();
+        final NodeList phaseNodes = peaNode.getElementsByTagName(XMLTags.PHASE_TAG);
+        final int phaseCount = phaseNodes.getLength();
         if (phaseCount == 0) {
             throw new RuntimeException("Phase count = 0 is not allowed");
         }
 
-        HashMap<String,Phase> phases = new HashMap<String,Phase>();
-        HashMap<String,Phase> initialPhases = new HashMap<String,Phase>();
+        final HashMap<String,Phase> phases = new HashMap<String,Phase>();
+        final HashMap<String,Phase> initialPhases = new HashMap<String,Phase>();
 
         //Get Clocks
-        NodeList clockNodes = peaNode.getElementsByTagName(XMLTags.CLOCK_TAG);
-        ArrayList<String> peaClocks = new ArrayList<String>();
-        int clockNodeCount = clockNodes.getLength();
+        final NodeList clockNodes = peaNode.getElementsByTagName(XMLTags.CLOCK_TAG);
+        final ArrayList<String> peaClocks = new ArrayList<String>();
+        final int clockNodeCount = clockNodes.getLength();
         for(int i=0; i<clockNodeCount; i++) {
-        	Element actClockNode = (Element) clockNodes.item(i);
-        	String actClock = actClockNode.getAttribute(XMLTags.NAME_Tag);
+        	final Element actClockNode = (Element) clockNodes.item(i);
+        	final String actClock = actClockNode.getAttribute(XMLTags.NAME_Tag);
         	peaClocks.add(actClock);
         }
         
         //Get Variables
-        NodeList variableNodes = peaNode.getElementsByTagName(XMLTags.VARIABLE_TAG);
-        Map<String,String> variablesForPEA = new HashMap<String, String>();
+        final NodeList variableNodes = peaNode.getElementsByTagName(XMLTags.VARIABLE_TAG);
+        final Map<String,String> variablesForPEA = new HashMap<String, String>();
         for (int i = 0; i < variableNodes.getLength(); i++) {
-            Element node = (Element)variableNodes.item(i);
-            String varName = node.getAttribute("name");
-            String type = node.getAttribute("type");
+            final Element node = (Element)variableNodes.item(i);
+            final String varName = node.getAttribute("name");
+            final String type = node.getAttribute("type");
             variablesForPEA.put(varName, type);
         }
         
         //Get Variables
-        NodeList eventNodes = peaNode.getElementsByTagName(XMLTags.EVENT_TAG);
-        Set<String> eventsForPEA = new HashSet<String>();
+        final NodeList eventNodes = peaNode.getElementsByTagName(XMLTags.EVENT_TAG);
+        final Set<String> eventsForPEA = new HashSet<String>();
         for (int i = 0; i < eventNodes.getLength(); i++) {
-            Element node = (Element)eventNodes.item(i);
-            String eventName = node.getAttribute("name");
+            final Element node = (Element)eventNodes.item(i);
+            final String eventName = node.getAttribute("name");
             eventsForPEA.add(eventName);
         }
         
         //Build Java phases
         for (int i = 0; i < phaseCount; i++) {
-            Element actPhaseNode = (Element) phaseNodes.item(i);
-            this.logger.info("Trying to build phase " + i);
-            Phase actPhase = this.createJavaPhase(actPhaseNode);
-            this.logger.info("Building phase " + i + " successful");
+            final Element actPhaseNode = (Element) phaseNodes.item(i);
+            logger.info("Trying to build phase " + i);
+            final Phase actPhase = createJavaPhase(actPhaseNode);
+            logger.info("Building phase " + i + " successful");
             phases.put(actPhase.getName(), actPhase);
             if (actPhaseNode.hasAttribute(XMLTags.INITIAL_TAG)) {
                 if (actPhaseNode.getAttribute(XMLTags.INITIAL_TAG).equals(
@@ -249,22 +248,22 @@ public class PEAXML2JConverter {
         }
 
         //Build Java transitions
-        NodeList transitionNodes = peaNode
+        final NodeList transitionNodes = peaNode
                 .getElementsByTagName(XMLTags.TRANSITION_TAG);
-        int transitionCount = transitionNodes.getLength();
+        final int transitionCount = transitionNodes.getLength();
         for (int i = 0; i < transitionCount; i++) {
-            Element actTransitionNode = (Element) transitionNodes.item(i);
-            this.logger.info("Trying to build transition " + i);
-            this.createJavaTransition(actTransitionNode, phases);
-            this.logger.info("Building transition " + i + " successful");
+            final Element actTransitionNode = (Element) transitionNodes.item(i);
+            logger.info("Trying to build transition " + i);
+            createJavaTransition(actTransitionNode, phases);
+            logger.info("Building transition " + i + " successful");
         }
 
-        Phase[] phasesArray = (Phase[]) phases.values().toArray(
+        final Phase[] phasesArray = phases.values().toArray(
                 new Phase[phases.size()]);
-        Phase[] initPhasesArray = (Phase[]) initialPhases.values().toArray(
+        final Phase[] initPhasesArray = initialPhases.values().toArray(
                 new Phase[initialPhases.size()]);
-        String peaName = this.getNameAttribute(peaNode);
-        PhaseEventAutomata pea = new PhaseEventAutomata(peaName, phasesArray,
+        final String peaName = getNameAttribute(peaNode);
+        final PhaseEventAutomata pea = new PhaseEventAutomata(peaName, phasesArray,
                 initPhasesArray, peaClocks, variablesForPEA, eventsForPEA, null);
         return pea;
     }
@@ -273,7 +272,7 @@ public class PEAXML2JConverter {
      * Returns the name attribute. Raises an exception if the name is empty.
      */
     private String getNameAttribute(Element node) {
-        String name = node.getAttribute(XMLTags.NAME_Tag);
+        final String name = node.getAttribute(XMLTags.NAME_Tag);
         if (name.equals("")) {
             throw new RuntimeException("Empty name attributes are not allowed");
         }
@@ -294,38 +293,38 @@ public class PEAXML2JConverter {
      * @see <code>PEA.xsd</code>
      */
     protected void createJavaTransition(Element transitionNode, Map<String,Phase> phases) {
-        NodeList resetNodes = transitionNode
+        final NodeList resetNodes = transitionNode
                 .getElementsByTagName(XMLTags.RESET_TAG);
-        int resetNodeCount = resetNodes.getLength();
-        String[] resets = new String[resetNodeCount];
+        final int resetNodeCount = resetNodes.getLength();
+        final String[] resets = new String[resetNodeCount];
         for (int i = 0; i < resetNodeCount; i++) {
-            resets[i] = this.getNameAttribute((Element) resetNodes.item(i));
-            this.logger.info("resets[" + i + "]=" + resets[i]);
+            resets[i] = getNameAttribute((Element) resetNodes.item(i));
+            logger.info("resets[" + i + "]=" + resets[i]);
         }
 
-        NodeList guardNode = transitionNode
+        final NodeList guardNode = transitionNode
                 .getElementsByTagName(XMLTags.GUARD_TAG);
         if (guardNode.getLength() != 1) {
             throw new RuntimeException("Guard node count != 1 not allowed");
         }
-        CDD guard = this.formulaConverter.convert((Element) guardNode.item(0));
-        this.logger.info("guard=" + guard);
+        final CDD guard = formulaConverter.convert((Element) guardNode.item(0));
+        logger.info("guard=" + guard);
 
-        String sourceName = transitionNode.getAttribute(XMLTags.SOURCE_TAG);
+        final String sourceName = transitionNode.getAttribute(XMLTags.SOURCE_TAG);
         if (sourceName.equals("")) {
             throw new RuntimeException(
                     "Source attribute is not allowed to be empty");
         }
-        Phase sourcePhase = phases.get(sourceName);
-        this.logger.info("source=" + sourceName);
+        final Phase sourcePhase = phases.get(sourceName);
+        logger.info("source=" + sourceName);
 
-        String targetName = transitionNode.getAttribute(XMLTags.TARGET_TAG);
+        final String targetName = transitionNode.getAttribute(XMLTags.TARGET_TAG);
         if (targetName.equals("")) {
             throw new RuntimeException(
                     "Target attribute is not allowed to be empty");
         }
-        Phase targetPhase = phases.get(targetName);
-        this.logger.info("target=" + targetName);
+        final Phase targetPhase = phases.get(targetName);
+        logger.info("target=" + targetName);
 
         sourcePhase.addTransition(targetPhase, guard, resets);
     }
@@ -338,23 +337,23 @@ public class PEAXML2JConverter {
      * @return CDD The Java representation of the phase
      */
     protected Phase createJavaPhase(Element phaseNode) {
-        String name = this.getNameAttribute(phaseNode);
-        this.logger.info("name=" + name);
+        final String name = getNameAttribute(phaseNode);
+        logger.info("name=" + name);
 
-        NodeList invariantNodes = phaseNode
+        final NodeList invariantNodes = phaseNode
                 .getElementsByTagName(XMLTags.INVARIANT_TAG);
         if (invariantNodes.getLength() != 1) {
             throw new RuntimeException(
                     "Invariant node count != 1 is not allowed");
         }
-        CDD invariant = this.formulaConverter.convert((Element) invariantNodes
+        final CDD invariant = formulaConverter.convert((Element) invariantNodes
                 .item(0));
-        this.logger.info("invariant=" + invariant);
+        logger.info("invariant=" + invariant);
 
-        CDD clockInvariant = this.createClockInvariant(phaseNode);
-        this.logger.info("clockInvariant=" + clockInvariant);
+        final CDD clockInvariant = createClockInvariant(phaseNode);
+        logger.info("clockInvariant=" + clockInvariant);
 
-        Phase result = new Phase(name, invariant, clockInvariant);
+        final Phase result = new Phase(name, invariant, clockInvariant);
         return result;
     }
 
@@ -370,14 +369,14 @@ public class PEAXML2JConverter {
      */
     protected CDD createClockInvariant(Element phaseNode) {
         CDD clockInvariant = CDD.TRUE;
-        NodeList clockInvariantNodes = phaseNode
+        final NodeList clockInvariantNodes = phaseNode
                 .getElementsByTagName(XMLTags.CLOCKINVARIANT_TAG);
         if (clockInvariantNodes.getLength() > 1) {
             throw new RuntimeException(
                     "Clockinvariant node count > 1 is not allowed");
         }
         if (clockInvariantNodes.getLength() == 1) {
-            clockInvariant = clockInvariant.and(this.formulaConverter
+            clockInvariant = clockInvariant.and(formulaConverter
                     .convert((Element) clockInvariantNodes.item(0)));
         }
 
@@ -391,16 +390,16 @@ public class PEAXML2JConverter {
         try {
             PropertyConfigurator
                     .configure("/home/roland/Desktop/Arbeit/PUMLaut/Parser/src/LogConfiguration.txt");
-            PEAXML2JConverter fileParser = new PEAXML2JConverter(false);
-            PhaseEventAutomata[] output = fileParser
+            final PEAXML2JConverter fileParser = new PEAXML2JConverter(false);
+            final PhaseEventAutomata[] output = fileParser
                     .convert("./pea/modelchecking/CaseStudy/Property0_par.xml");
-            PhaseEventAutomata[] irgendwann = fileParser
+            final PhaseEventAutomata[] irgendwann = fileParser
                     .convert("./pea/modelchecking/CaseStudy/ComNW.xml");
             //PEAJ2UPPAALConverter converter = new PEAJ2UPPAALConverter();
             //PhaseEventAutomata[] array = new PhaseEventAutomata[1];
             //output[0].dump();
             //irgendwann[1].dump();
-            PhaseEventAutomata newAut = output[0].parallel(irgendwann[1]).parallel(irgendwann[1]);
+            final PhaseEventAutomata newAut = output[0].parallel(irgendwann[1]).parallel(irgendwann[1]);
             newAut.dump();
             //output[0].parallel(irgendwann[0]).dump();
             //array[0] = output[0].parallel(irgendwann[0]);
@@ -410,7 +409,7 @@ public class PEAXML2JConverter {
             //XMLWriter writer = new XMLWriter();
             //writer.writeXMLDocumentToFile(uppaal,
             //        "src/pea/modelchecking/example/toCheck.xml");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

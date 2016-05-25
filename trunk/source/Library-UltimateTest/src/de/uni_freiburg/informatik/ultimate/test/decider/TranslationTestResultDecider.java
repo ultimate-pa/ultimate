@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class TranslationTestResultDecider extends TestResultDecider {
 
-	private String mInputFile;
+	private final String mInputFile;
 
 	public TranslationTestResultDecider(String inputFile) {
 		mInputFile = inputFile;
@@ -75,13 +75,13 @@ public class TranslationTestResultDecider extends TestResultDecider {
 				+ "and no generic result \"Unhandled Backtranslation\"");
 		boolean fail = false;
 
-		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
+		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		if (resultSet.size() == 0) {
 			setResultCategory("No results");
 			customMessages.add("There were no results (this is good for this test)");
 		} else {
-			for (Entry<String, List<IResult>> x : resultSet) {
-				for (IResult result : x.getValue()) {
+			for (final Entry<String, List<IResult>> x : resultSet) {
+				for (final IResult result : x.getValue()) {
 					if (result instanceof TypeErrorResult || result instanceof SyntaxErrorResult
 							|| result instanceof ExceptionOrErrorResult) {
 						setResultCategory(result.getShortDescription());
@@ -100,31 +100,31 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			// If there are no existing files, we just assume it was only a test
 			// against syntax errors.
 
-			File inputFile = new File(mInputFile);
-			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
-			File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
+			final File inputFile = new File(mInputFile);
+			final String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
+			final File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
 					Path.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
-			File actualBplFile = TestUtil
+			final File actualBplFile = TestUtil
 					.getFilesRegex(inputFile.getParentFile(),
 							new String[] { String.format(".*%s\\.bpl", inputFileNameWithoutEnding) })
 					.toArray(new File[1])[0];
 			if (actualBplFile != null) {
 
 				try {
-					String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(desiredBplFile);
-					String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(actualBplFile);
+					final String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(desiredBplFile);
+					final String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(actualBplFile);
 
 					if (!desiredContent.equals(actualContent)) {
-						String message = "Desired content does not match actual content.";
+						final String message = "Desired content does not match actual content.";
 						setResultCategory("Mismatch between .bpl and .c");
 						setResultMessage(message);
 						customMessages.add(message);
 						customMessages.add("Desired content:");
-						for (String s : desiredContent.split("\n")) {
+						for (final String s : desiredContent.split("\n")) {
 							customMessages.add(s);
 						}
 						customMessages.add("Actual content:");
-						for (String s : actualContent.split("\n")) {
+						for (final String s : actualContent.split("\n")) {
 							customMessages.add(s);
 						}
 						fail = true;
@@ -132,7 +132,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 						setResultCategory(".bpl file equals expected .bpl file");
 					}
 
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					setResultCategory(e.getMessage());
 					setResultMessage(e.toString());
 					e.printStackTrace();

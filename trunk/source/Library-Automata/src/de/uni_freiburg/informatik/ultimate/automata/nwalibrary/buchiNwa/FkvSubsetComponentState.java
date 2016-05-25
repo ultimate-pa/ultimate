@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * 
@@ -46,8 +46,8 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 	FkvSubsetComponentState(DeterminizedState<LETTER, STATE> detState) {
 		mDeterminizedState = detState;
 		mDown2Up = new HashRelation<>();
-		for (STATE down : detState.getDownStates()) {
-			for (STATE up : detState.getUpStates(down)) {
+		for (final STATE down : detState.getDownStates()) {
+			for (final STATE up : detState.getUpStates(down)) {
 				mDown2Up.addPair(new StateWithRankInfo<STATE>(down), new StateWithRankInfo<STATE>(up));
 			}
 		}
@@ -80,18 +80,23 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		FkvSubsetComponentState other = (FkvSubsetComponentState) obj;
+		}
+		final FkvSubsetComponentState other = (FkvSubsetComponentState) obj;
 		if (mDeterminizedState == null) {
-			if (other.mDeterminizedState != null)
+			if (other.mDeterminizedState != null) {
 				return false;
-		} else if (!mDeterminizedState.equals(other.mDeterminizedState))
+			}
+		} else if (!mDeterminizedState.equals(other.mDeterminizedState)) {
 			return false;
+		}
 		return true;
 	}
 	

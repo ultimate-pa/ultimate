@@ -47,13 +47,13 @@ public class DefinitionExpander extends LoggingScript {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String infile = args[0];
-		String outfile = args[1];
+		final String infile = args[0];
+		final String outfile = args[1];
 		try {
-			ParseEnvironment pe = new ParseEnvironment(
+			final ParseEnvironment pe = new ParseEnvironment(
 					new DefinitionExpander(outfile));
 			pe.parseScript(infile);
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}

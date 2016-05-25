@@ -1,13 +1,26 @@
 
 package jdd.applet;
 
-import java.applet.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.applet.Applet;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Checkbox;
+import java.awt.Choice;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextArea;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-
-import jdd.examples.*;
-import jdd.util.*;
+import jdd.examples.BDDQueens;
+import jdd.examples.Queens;
+import jdd.examples.ZDDCSPQueens;
+import jdd.examples.ZDDQueens;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.TextAreaTarget;
 
 
 /** Applet interface for the N Queens problem and its solvers */
@@ -19,11 +32,11 @@ public class QueensApplet extends Applet implements ActionListener  {
 	private Checkbox cbVerbose;
 
 	public QueensApplet() {
-		Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
+		final Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
 		setBackground( bgcolor );
 		setLayout( new BorderLayout() );
 
-		Panel p = new Panel( new FlowLayout( FlowLayout.LEFT) );
+		final Panel p = new Panel( new FlowLayout( FlowLayout.LEFT) );
 		p.setBackground( bgcolor );
 		add(p, BorderLayout.NORTH);
 		p.add( bSolve = new Button("Solve!") );
@@ -32,7 +45,9 @@ public class QueensApplet extends Applet implements ActionListener  {
 
 		p.add( new Label("        N = ") );
 		p.add( cSize= new Choice() );
-		for(int i = 4; i < 14;i++) cSize.add("" + i	);
+		for(int i = 4; i < 14;i++) {
+			cSize.add("" + i	);
+		}
 		cSize.select(5);
 
 
@@ -54,10 +69,14 @@ public class QueensApplet extends Applet implements ActionListener  {
 		JDDConsole.out = new TextAreaTarget(msg) ;
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
-		if(src == bSolve) doSolve();
-		else if(src == bClear) doClear();
+		final Object src = e.getSource();
+		if(src == bSolve) {
+			doSolve();
+		} else if(src == bClear) {
+			doClear();
+		}
 	}
 
 	// ----------------------------------
@@ -66,7 +85,7 @@ public class QueensApplet extends Applet implements ActionListener  {
 	private Queens getSolver(int n) {
 		JDDConsole.out.println("Loading solver '" + cSolver.getSelectedItem()  + "'...");
 
-		int type = cSolver.getSelectedIndex();
+		final int type = cSolver.getSelectedIndex();
 		switch(type) {
 			case 0: return new BDDQueens( n);
 			case 1: return new ZDDQueens( n);
@@ -77,14 +96,16 @@ public class QueensApplet extends Applet implements ActionListener  {
 
 	private void doSolve() {
 		try {
-			int n = Integer.parseInt ( cSize.getSelectedItem() );
+			final int n = Integer.parseInt ( cSize.getSelectedItem() );
 
 			Options.verbose = cbVerbose.getState();
-			Queens q = getSolver( n);
-			boolean [] sol = q.getOneSolution();
+			final Queens q = getSolver( n);
+			final boolean [] sol = q.getOneSolution();
 			JDDConsole.out.println("" + q.numberOfSolutions() + " solutions /" + q.getTime() + "ms");
-			if(sol != null)  new QueensBoard(sol);
-		} catch(Exception exx) {
+			if(sol != null) {
+				new QueensBoard(sol);
+			}
+		} catch(final Exception exx) {
 			JDDConsole.out.println("Failed: " + exx.toString() );
 			exx.printStackTrace();
 			// throw exx;

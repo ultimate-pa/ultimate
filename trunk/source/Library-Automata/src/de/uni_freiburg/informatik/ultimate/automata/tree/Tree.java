@@ -12,8 +12,8 @@ public class Tree<LETTER> {
 	/*
 	 * Variables
 	 */
-	private TreeNode<LETTER> mRoot;
-	private List<TreeNode<LETTER>> mLeafList;
+	private final TreeNode<LETTER> mRoot;
+	private final List<TreeNode<LETTER>> mLeafList;
 	
 	public Tree(TreeNode<LETTER> root) {
 		this.mRoot = root;

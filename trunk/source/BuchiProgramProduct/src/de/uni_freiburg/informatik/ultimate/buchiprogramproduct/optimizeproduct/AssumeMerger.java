@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -64,21 +63,21 @@ public class AssumeMerger extends BaseProductOptimizer {
 	@Override
 	protected void init(RootNode root, IUltimateServiceProvider services) {
 		mAssumesMerged = 0;
-		mRewriteNotEquals = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		mRewriteNotEquals = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
-		mUseSBE = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
 	}
 
 	@Override
 	protected RootNode process(RootNode root) {
-		ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		HashSet<RCFGEdge> closed = new HashSet<>();
+		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
+		final HashSet<RCFGEdge> closed = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			RCFGEdge current = edges.removeFirst();
+			final RCFGEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -93,16 +92,16 @@ public class AssumeMerger extends BaseProductOptimizer {
 	}
 
 	private void mergeEdge(RootNode root, CodeBlock current) {
-		List<Statement> stmts = new StatementExtractor(mLogger).process(current);
+		final List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
 			return;
 		}
 
-		List<Statement> newStmts = new ArrayList<>();
+		final List<Statement> newStmts = new ArrayList<>();
 		List<AssumeStatement> successiveAssumes = new ArrayList<>();
 		boolean successive = false;
-		for (Statement stmt : stmts) {
+		for (final Statement stmt : stmts) {
 			if (stmt instanceof AssumeStatement) {
 				successive = true;
 				successiveAssumes.add((AssumeStatement) stmt);
@@ -135,7 +134,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 
 	private void createNewEdges(RootNode root, CodeBlock current, List<Statement> newStmts) {
 		boolean allAssumes = true;
-		for (Statement stmt : newStmts) {
+		for (final Statement stmt : newStmts) {
 			if (!(stmt instanceof AssumeStatement)) {
 				allAssumes = false;
 				break;
@@ -145,18 +144,18 @@ public class AssumeMerger extends BaseProductOptimizer {
 			// a new edge would contain only assumes. We check if we can split
 			// them into multiple edges
 			assert newStmts.size() == 1;
-			AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
-			NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+			final AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
+			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 			Expression formula = stmt.getFormula();
 			if (mRewriteNotEquals) {
 				formula = ct.rewriteNotEquals(formula);
 			}
-			Collection<Expression> disjuncts = ct.toDnfDisjuncts(formula);
+			final Collection<Expression> disjuncts = ct.toDnfDisjuncts(formula);
 			if (disjuncts.size() > 1) {
 				// yes we can
-				for (Expression disjunct : disjuncts) {
-					StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
+				for (final Expression disjunct : disjuncts) {
+					final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 							(ProgramPoint) current.getTarget(), new AssumeStatement(stmt.getLocation(), disjunct),
 							Origin.IMPLEMENTATION);
 					generateTransFormula(root, ss);
@@ -165,7 +164,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 			}
 			// no, we cannot, just make a normal edge
 		}
-		StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
+		final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 				(ProgramPoint) current.getTarget(), newStmts, Origin.IMPLEMENTATION);
 		generateTransFormula(root, ss);
 		if (mLogger.isDebugEnabled()) {
@@ -176,21 +175,21 @@ public class AssumeMerger extends BaseProductOptimizer {
 	}
 
 	private AssumeStatement mergeAssumes(List<AssumeStatement> successiveAssumes) {
-		List<Expression> assumeExpressions = new ArrayList<>();
+		final List<Expression> assumeExpressions = new ArrayList<>();
 		mLogger.debug("Trying to merge the following assume statements:");
-		for (AssumeStatement stmt : successiveAssumes) {
+		for (final AssumeStatement stmt : successiveAssumes) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(BoogiePrettyPrinter.print(stmt));
 			}
 			assumeExpressions.add(stmt.getFormula());
 		}
 
-		BoogieExpressionTransformer bcw = new BoogieExpressionTransformer();
-		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(bcw);
-		int assumeExprSize = assumeExpressions.size();
-		Collection<Expression> disjuncts = new ArrayList<>(
+		final BoogieExpressionTransformer bcw = new BoogieExpressionTransformer();
+		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(bcw);
+		final int assumeExprSize = assumeExpressions.size();
+		final Collection<Expression> disjuncts = new ArrayList<>(
 				ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
-		int disjunctsSize = disjuncts.size();
+		final int disjunctsSize = disjuncts.size();
 
 		if (successiveAssumes.size() > 1) {
 			mAssumesMerged += successiveAssumes.size();
@@ -199,7 +198,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 			mLogger.debug("Result: Keep it, already minimal");
 			return successiveAssumes.get(0);
 		}
-		AssumeStatement rtr = new AssumeStatement(null, bcw.makeOr(disjuncts.iterator()));
+		final AssumeStatement rtr = new AssumeStatement(null, bcw.makeOr(disjuncts.iterator()));
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + BoogiePrettyPrinter.print(rtr));
 		}
@@ -214,8 +213,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 				return false;
 			} else {
 				for (int i = 0; i < stmts.size(); ++i) {
-					Statement stmt = stmts.get(i);
-					Statement newStmt = newStmts.get(i);
+					final Statement stmt = stmts.get(i);
+					final Statement newStmt = newStmts.get(i);
 					if (!stmt.equals(newStmt)) {
 						return false;
 					}

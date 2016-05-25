@@ -79,17 +79,17 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
-		Translator translator = new Translator();
-		String inputPath = file.getAbsolutePath();
+		final Translator translator = new Translator();
+		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<String>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
-		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
+		final srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
 		// TODO: Add options to this cruel program
-		BitSet vacuityChecks = new BitSet(patterns.length);
+		final BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
 
-		int combinationNum = Math.min(patterns.length, 2); // TODO preference
+		final int combinationNum = Math.min(patterns.length, 2); // TODO preference
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
 		translator.setInputFilePath(inputPath);
@@ -105,7 +105,7 @@ public class PeaToBoogie implements ISource {
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}

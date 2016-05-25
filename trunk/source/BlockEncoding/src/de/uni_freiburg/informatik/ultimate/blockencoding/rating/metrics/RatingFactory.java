@@ -96,7 +96,7 @@ public class RatingFactory {
 	 * We do not allow to create instances of this class.
 	 */
 	private RatingFactory() {
-		this.strategy = RatingFactory.RatingStrategy.DEFAULT;
+		strategy = RatingFactory.RatingStrategy.DEFAULT;
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class RatingFactory {
 	public void setRatingStrategy(String value) {
 		try {
 			strategy = RatingStrategy.values()[Integer.parseInt(value)];
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new IllegalArgumentException(
 					"There is something wrong, with the enum setup");
 		}

@@ -81,8 +81,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		this.predUnifier = predUnifier;
 		this.smtManager = smtManager;
 		this.strategy = strategy;
-		this.mUseNonlinearConstraints = useNonlinerConstraints;
-		this.mSolverSettings = solverSettings;
+		mUseNonlinearConstraints = useNonlinerConstraints;
+		mSolverSettings = solverSettings;
 	}
 
 	/**
@@ -124,9 +124,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 */
 	@Deprecated
 	private Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = false;
-		String pathOfDumpedScript = ".";
-		String baseNameOfDumpedScript = "contraintSolving";
+		final boolean dumpSmtScriptToFile = false;
+		final String pathOfDumpedScript = ".";
+		final String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;
 		if (mUseNonlinearConstraints) {
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";

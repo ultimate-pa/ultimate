@@ -87,7 +87,7 @@ public class ACSLLocation extends CACSLLocation {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mNode != null) {
 			sb.append("ACSL: ");
 			sb.append(mNode.toString());

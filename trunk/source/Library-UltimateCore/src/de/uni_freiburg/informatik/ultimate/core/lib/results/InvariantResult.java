@@ -60,7 +60,7 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 	@SuppressWarnings("unchecked")
 	@Override
 	public String getLongDescription() {
-		StringBuffer sb = new StringBuffer();
+		final StringBuffer sb = new StringBuffer();
 		sb.append("Derived loop invariant: ");
 		sb.append(mTranslatorSequence.translateExpressionToString(mInvariant, (Class<E>) mInvariant.getClass()));
 		return sb.toString();

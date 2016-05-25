@@ -119,34 +119,34 @@ public class NonTerminationArgument implements Serializable {
 	 */
 	public NonTerminationArgument join(NonTerminationArgument other) {
 		// Check for compatibility
-		for (RankVar rankVar : mStateInit.keySet()) {
+		for (final RankVar rankVar : mStateInit.keySet()) {
 			if (other.mStateInit.containsKey(rankVar)) {
 				assert mStateInit.get(rankVar).equals(
 						other.mStateInit.get(rankVar));
 			}
 		}
-		for (RankVar rankVar : mStateHonda.keySet()) {
+		for (final RankVar rankVar : mStateHonda.keySet()) {
 			if (other.mStateHonda.containsKey(rankVar)) {
 				assert mStateHonda.get(rankVar).equals(
 						other.mStateHonda.get(rankVar));
 			}
 		}
 		
-		Map<RankVar, Rational> stateInit = new HashMap<RankVar, Rational>();
-		Map<RankVar, Rational> stateHonda = new HashMap<RankVar, Rational>();
-		List<Map<RankVar, Rational>> gevs =
+		final Map<RankVar, Rational> stateInit = new HashMap<RankVar, Rational>();
+		final Map<RankVar, Rational> stateHonda = new HashMap<RankVar, Rational>();
+		final List<Map<RankVar, Rational>> gevs =
 				new ArrayList<Map<RankVar, Rational>>();
-		List<Rational> lambdas = new ArrayList<Rational>();
-		List<Rational> nus = new ArrayList<Rational>();
-		stateInit.putAll(this.mStateInit);
+		final List<Rational> lambdas = new ArrayList<Rational>();
+		final List<Rational> nus = new ArrayList<Rational>();
+		stateInit.putAll(mStateInit);
 		stateInit.putAll(other.mStateInit);
-		stateHonda.putAll(this.mStateHonda);
+		stateHonda.putAll(mStateHonda);
 		stateHonda.putAll(other.mStateHonda);
-		gevs.addAll(this.mGEVs);
+		gevs.addAll(mGEVs);
 		gevs.addAll(other.mGEVs);
-		lambdas.addAll(this.mLambdas);
+		lambdas.addAll(mLambdas);
 		lambdas.addAll(other.mLambdas);
-		nus.addAll(this.mNus);
+		nus.addAll(mNus);
 		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #gevs-1
 		nus.addAll(other.mNus);
 		return new NonTerminationArgument(stateInit, stateHonda, gevs, lambdas, nus);
@@ -178,9 +178,9 @@ public class NonTerminationArgument implements Serializable {
 	 */
 	public List<Map<RankVar, Rational>> getGEVs() {
 		// Make unmodifiable view
-		List<Map<RankVar, Rational>> gevs =
+		final List<Map<RankVar, Rational>> gevs =
 				new ArrayList<Map<RankVar, Rational>>();
-		for (Map<RankVar, Rational> gev : mGEVs) {
+		for (final Map<RankVar, Rational> gev : mGEVs) {
 			gevs.add(Collections.unmodifiableMap(gev));
 		}
 		return Collections.unmodifiableList(gevs);
@@ -201,8 +201,9 @@ public class NonTerminationArgument implements Serializable {
 	}
 	
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Non-Termination argument consisting of:\n");
 		sb.append("Initial state: ");
 		sb.append(mStateInit);

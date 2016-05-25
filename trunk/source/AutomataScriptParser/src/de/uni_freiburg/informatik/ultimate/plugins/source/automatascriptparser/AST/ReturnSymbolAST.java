@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class ReturnSymbolAST {
-	private String mSymbol;
+	private final String mSymbol;
 	public ReturnSymbolAST(String sym) {
 		mSymbol = sym;
 	}

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -54,13 +54,13 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		/*
 		 * In our Lindenmann-Hoenicke memory model, we use an array for all
 		 * integer data on the heap. This method returns the CType that we use to
 		 * represents this data.
 		 */
-        ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
         		new CPrimitive(PRIMITIVE.INT));
         
     	/*
@@ -68,7 +68,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
     	 * floating type data on the heap. This method returns the CType that we 
     	 * use to represent this data.
     	 */
-        ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
         		new CPrimitive(PRIMITIVE.FLOAT));
         
        	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
@@ -96,14 +96,14 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = 0;
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
 		}
-		List<ReadWriteDefinition> result = new ArrayList<>();
-		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+		final List<ReadWriteDefinition> result = new ArrayList<>();
+		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));

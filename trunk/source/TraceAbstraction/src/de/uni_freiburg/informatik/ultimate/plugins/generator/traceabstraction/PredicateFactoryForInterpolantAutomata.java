@@ -56,6 +56,7 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 		memtpyStack = mSmtManager.getPredicateFactory().newEmptyStackPredicate();
 	}
 
+	@Override
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		throw new AssertionError(
 				"intersect is only required for refinement, not for construction of interpolant automaton");
@@ -66,23 +67,24 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 		if (mPref.computeHoareAnnotation()) {
 			assert ((mPref.interprocedural()) || down2up.keySet().size() <= 1) : "more than one down state";
 
-			List<IPredicate> upPredicates = new ArrayList<IPredicate>();
-			for (IPredicate caller : down2up.keySet()) {
-				for (IPredicate current : down2up.get(caller)) {
+			final List<IPredicate> upPredicates = new ArrayList<IPredicate>();
+			for (final IPredicate caller : down2up.keySet()) {
+				for (final IPredicate current : down2up.get(caller)) {
 					if (mSmtManager.getPredicateFactory().isDontCare(current)) {
 						return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
 					}
 					upPredicates.add(current);
 				}
 			}
-			Term conjunction = mSmtManager.getPredicateFactory().and(upPredicates);
-			IPredicate result = mSmtManager.getPredicateFactory().newPredicate(conjunction);
+			final Term conjunction = mSmtManager.getPredicateFactory().and(upPredicates);
+			final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(conjunction);
 			return result;
 		} else {
 			return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
 		}
 	}
 
+	@Override
 	public IPredicate createSinkStateContent() {
 		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
 	}
@@ -99,8 +101,8 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
-		Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
-		IPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
+		final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
+		final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
 		return result;
 	}
 
@@ -136,16 +138,16 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 			programPoints = new ProgramPoint[2];
 			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
 		} else if (c1 instanceof IMLPredicate) {
-			IMLPredicate mlpred = (IMLPredicate) c1;
-			int newLength = mlpred.getProgramPoints().length + 1;
+			final IMLPredicate mlpred = (IMLPredicate) c1;
+			final int newLength = mlpred.getProgramPoints().length + 1;
 			programPoints = Arrays.copyOf(mlpred.getProgramPoints(), newLength);
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
+		final ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		Term conjunction = mSmtManager.getPredicateFactory().and(c1, c2);
-		IMLPredicate result = mSmtManager.getPredicateFactory().newMLPredicate(programPoints, conjunction);
+		final Term conjunction = mSmtManager.getPredicateFactory().and(c1, c2);
+		final IMLPredicate result = mSmtManager.getPredicateFactory().newMLPredicate(programPoints, conjunction);
 		return result;
 	}
 

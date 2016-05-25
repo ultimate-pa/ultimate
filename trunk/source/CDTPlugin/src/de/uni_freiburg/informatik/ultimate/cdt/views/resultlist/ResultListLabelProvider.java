@@ -108,7 +108,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	@Override
 	public String getColumnText(Object element, int columnIndex) {
 		if (element instanceof IResult) {
-			IResult res = (IResult)element;
+			final IResult res = (IResult)element;
 			switch(columnIndex) {
 			case 0:
 				if (res instanceof IResultWithLocation) {

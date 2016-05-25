@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -65,17 +64,17 @@ public class RCFG2AnnotatedRCFG {
 	}
 
 	public ImpRootNode convert(IUltimateServiceProvider mServices, RootNode oldRoot) {
-		RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(),
+		final RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(),
 				oldRoot.getRootAnnot().getBoogie2SMT(), null);
 
-		ImpRootNode newRoot = new ImpRootNode(ra);
+		final ImpRootNode newRoot = new ImpRootNode(ra);
 
-		ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
+		final ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
 		moldPpTonew = new HashMap<ProgramPoint, AnnotatedProgramPoint>();
 
-		for (RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
-			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
-			AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
+		for (final RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
+			final ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
+			final AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
 
 			newRoot.connectOutgoing(new DummyCodeBlock(mLogger), newNode);
 			openNodes.add(oldNode);
@@ -86,18 +85,20 @@ public class RCFG2AnnotatedRCFG {
 		 * collect all Nodes and create AnnotatedProgramPoints
 		 */
 		while (!openNodes.isEmpty()) {
-			ProgramPoint currentNode = openNodes.pollFirst();
+			final ProgramPoint currentNode = openNodes.pollFirst();
 
-			for (RCFGEdge outEdge : currentNode.getOutgoingEdges()) {
-				ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
-				if (moldPpTonew.containsKey(newNode))
+			for (final RCFGEdge outEdge : currentNode.getOutgoingEdges()) {
+				final ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
+				if (moldPpTonew.containsKey(newNode)) {
 					continue;
+				}
 				moldPpTonew.put(newNode, createAnnotatedProgramPoint(newNode));
 				openNodes.add(newNode);
 				if (outEdge instanceof Return) {
-					ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
-					if (moldPpTonew.containsKey(hier))
+					final ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
+					if (moldPpTonew.containsKey(hier)) {
 						continue;
+					}
 					moldPpTonew.put(hier, createAnnotatedProgramPoint(hier));
 					openNodes.add(hier);
 				}
@@ -107,12 +108,12 @@ public class RCFG2AnnotatedRCFG {
 		/*
 		 * put edges into annotated program points
 		 */
-		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry : moldPpTonew.entrySet()) {
-			for (RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
-				AnnotatedProgramPoint annotatedTarget = (AnnotatedProgramPoint) moldPpTonew.get(outEdge.getTarget());
+		for (final Entry<ProgramPoint, AnnotatedProgramPoint> entry : moldPpTonew.entrySet()) {
+			for (final RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
+				final AnnotatedProgramPoint annotatedTarget = moldPpTonew.get(outEdge.getTarget());
 
 				if (outEdge instanceof Return) {
-					AnnotatedProgramPoint callPred = moldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
+					final AnnotatedProgramPoint callPred = moldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
 					entry.getValue().connectOutgoingReturn(callPred, (Return) outEdge, annotatedTarget);
 				} else {
 					entry.getValue().connectOutgoing((CodeBlock) outEdge, annotatedTarget);
@@ -130,7 +131,7 @@ public class RCFG2AnnotatedRCFG {
 	 */
 	private AnnotatedProgramPoint createAnnotatedProgramPoint(ProgramPoint pp) {
 		if (museInitialPredicates) {
-			Term aiTerm = minitialPredicates.get(pp);
+			final Term aiTerm = minitialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
 				aiPredicate = msmtManager.getPredicateFactory().newPredicate(aiTerm);

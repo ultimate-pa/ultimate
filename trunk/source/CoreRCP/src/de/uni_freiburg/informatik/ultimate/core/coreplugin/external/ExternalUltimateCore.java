@@ -87,7 +87,7 @@ public class ExternalUltimateCore {
 
 		final ActualUltimateRunnable runnable = new ActualUltimateRunnable();
 
-		Thread thread = new Thread(runnable, "ActualUltimateInstance");
+		final Thread thread = new Thread(runnable, "ActualUltimateInstance");
 
 		thread.start();
 		mStarterContinue.acquireUninterruptibly();
@@ -97,24 +97,23 @@ public class ExternalUltimateCore {
 		return mReturnStatus;
 	}
 
-	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService) {
-		return init(core, loggingService, null, 0, null);
+	public IStatus init(ICore<ToolchainListType> core) {
+		return init(core, null, 0, null);
 	}
 
-	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService, File[] inputFiles) {
-		return init(core, loggingService, null, 0, inputFiles);
+	public IStatus init(ICore<ToolchainListType> core, File[] inputFiles) {
+		return init(core, null, 0, inputFiles);
 	}
 
-	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService, File settingsFile, long deadline,
-			File[] inputFiles) {
+	public IStatus init(ICore<ToolchainListType> core, File settingsFile, long deadline, File[] inputFiles) {
 		ILogger logger = null;
 		try {
 			mReachedInit = true;
-			if (core == null || loggingService == null) {
+			if (core == null) {
 				return new Status(Status.ERROR, Activator.PLUGIN_ID, Status.ERROR, "Initialization failed", null);
 			}
 
-			logger = getLogger(loggingService);
+			logger = getLogger(core.getCoreLoggingService());
 
 			if (settingsFile != null) {
 				core.loadPreferences(settingsFile.getAbsolutePath());
@@ -126,7 +125,7 @@ public class ExternalUltimateCore {
 			mJob.schedule();
 			mJob.join();
 			mReturnStatus = mJob.getResult();
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			logger.error("Exception during toolchain execution.", e);
 		} finally {
 			mStarterContinue.release();
@@ -157,8 +156,8 @@ public class ExternalUltimateCore {
 		@Override
 		public void run() {
 			try {
-				mCurrentUltimateInstance.start(mController, false);
-			} catch (Throwable e) {
+				mCurrentUltimateInstance.startManually(mController);
+			} catch (final Throwable e) {
 				mUltimateThrowable = e;
 			}
 

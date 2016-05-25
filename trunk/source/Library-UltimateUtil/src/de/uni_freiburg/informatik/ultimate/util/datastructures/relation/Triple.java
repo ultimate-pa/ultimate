@@ -69,28 +69,37 @@ public class Triple<E1, E2, E3> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Triple other = (Triple) obj;
+		}
+		final Triple other = (Triple) obj;
 		if (mFirstElement == null) {
-			if (other.mFirstElement != null)
+			if (other.mFirstElement != null) {
 				return false;
-		} else if (!mFirstElement.equals(other.mFirstElement))
+			}
+		} else if (!mFirstElement.equals(other.mFirstElement)) {
 			return false;
+		}
 		if (mSecondElement == null) {
-			if (other.mSecondElement != null)
+			if (other.mSecondElement != null) {
 				return false;
-		} else if (!mSecondElement.equals(other.mSecondElement))
+			}
+		} else if (!mSecondElement.equals(other.mSecondElement)) {
 			return false;
+		}
 		if (mThirdElement == null) {
-			if (other.mThirdElement != null)
+			if (other.mThirdElement != null) {
 				return false;
-		} else if (!mThirdElement.equals(other.mThirdElement))
+			}
+		} else if (!mThirdElement.equals(other.mThirdElement)) {
 			return false;
+		}
 		return true;
 	}
 

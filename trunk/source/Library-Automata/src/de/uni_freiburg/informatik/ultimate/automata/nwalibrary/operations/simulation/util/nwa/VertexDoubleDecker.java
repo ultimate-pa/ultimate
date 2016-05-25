@@ -92,7 +92,7 @@ public final class VertexDoubleDecker<STATE> {
 		if (!(obj instanceof VertexDoubleDecker)) {
 			return false;
 		}
-		VertexDoubleDecker<?> other = (VertexDoubleDecker<?>) obj;
+		final VertexDoubleDecker<?> other = (VertexDoubleDecker<?>) obj;
 		if (mVertexDownState == null) {
 			if (other.mVertexDownState != null) {
 				return false;

@@ -64,7 +64,7 @@ public class ArrayUpdate {
 		BinaryEqualityRelation ber = null;
 		try {
 			ber = new BinaryEqualityRelation(term);
-		} catch (NoRelationOfThisKindException e) {
+		} catch (final NoRelationOfThisKindException e) {
 			throw new ArrayUpdateException(e.getMessage());
 		}
 		if (isNegated && ber.getRelationSymbol() != RelationSymbol.DISTINCT) {
@@ -75,8 +75,8 @@ public class ArrayUpdate {
 		}
 		mArrayUpdateTerm = term;
 		mIsNegatedEquality = isNegated;
-		Term lhs = ber.getLhs();
-		Term rhs = ber.getRhs();
+		final Term lhs = ber.getLhs();
+		final Term rhs = ber.getRhs();
 		ApplicationTerm allegedStoreTerm;
 		if (isArrayTermVariable(lhs)) {
 			if (isStoreTerm(rhs)) {
@@ -131,7 +131,7 @@ public class ArrayUpdate {
 	 */
 	private boolean isStoreTerm(Term term) {
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("store")) {
 				return true;
 			}
@@ -211,11 +211,11 @@ public class ArrayUpdate {
 		 */
 		public ArrayUpdateExtractor(boolean negatedUpdate, 
 				boolean oldArrayIsTermVariable, Term... terms) {
-			for (Term term : terms) {
+			for (final Term term : terms) {
 				ArrayUpdate au;
 				try {
 					au = new ArrayUpdate(term, negatedUpdate, oldArrayIsTermVariable);
-				} catch (ArrayUpdateException e) {
+				} catch (final ArrayUpdateException e) {
 					au = null;
 				}
 				if (au == null) {

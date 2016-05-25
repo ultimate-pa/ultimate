@@ -26,7 +26,6 @@ package pea.modelchecking;
 import java.util.ArrayList;
 
 import net.sourceforge.czt.z.util.ZString;
-
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.Decision;
@@ -51,19 +50,20 @@ public class FormulaJ2ARMCConverter extends TCSFormulaJ2XMLConverter{
                 numberOfDNFs);
     }
     
-    protected void appendDecisionToBuffer(StringBuffer buf, Decision dec, int i, boolean primed){
+    @Override
+	protected void appendDecisionToBuffer(StringBuffer buf, Decision dec, int i, boolean primed){
         String sep = "";
         if(!buf.toString().equals("")){
             sep = " /\\ ";
         }
     	if(dec instanceof RangeDecision){
-    		String variable = ((RangeDecision)dec).getVar();
+    		final String variable = ((RangeDecision)dec).getVar();
     		buf.append(sep).append("_"+variable);
     		if(primed){
     			buf.append("'");
     		}
 
-    		int[] limits = ((RangeDecision)dec).getLimits();
+    		final int[] limits = ((RangeDecision)dec).getLimits();
     		if (i == 0) {
     			if ((limits[0] & 1) == 0) {
     				buf.append(" < ");
@@ -122,23 +122,26 @@ public class FormulaJ2ARMCConverter extends TCSFormulaJ2XMLConverter{
     			if(primed){ 
     				throw new RuntimeException("No primed variable allowed here");
     			}
-    			String event = ((EventDecision)dec).getEvent();
+    			final String event = ((EventDecision)dec).getEvent();
     			buf.append(sep).append(event+" > "+event+"'");
     		} else if (dec instanceof ZDecision) {
     		        String toWrite = ((ZDecision)dec).getPredicate();
-                        if (primed && toWrite.contains(ZString.PRIME))
-                            throw new RuntimeException("No primed variable allowed here");
+                        if (primed && toWrite.contains(ZString.PRIME)) {
+							throw new RuntimeException("No primed variable allowed here");
+						}
                         toWrite = toWrite.replaceAll(ZString.PRIME, "'");
                         toWrite = toWrite.replace(ZString.MINUS, "-");
-                        if (primed)
-                            toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "$1$2'");
+                        if (primed) {
+							toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "$1$2'");
+						}
                         toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "_$1$2");
                         if (!toWrite.contains(ZString.LEQ) && !toWrite.contains(ZString.GEQ)
                             && !toWrite.contains("<") && !toWrite.contains(">")
-                            && !toWrite.contains("="))
-                            System.err.println(
+                            && !toWrite.contains("=")) {
+							System.err.println(
                                     "warning: unknown operator in ZDecision: ("
                                             + toWrite + ")");
+						}
                         toWrite = toWrite.replace(ZString.LEQ, "=<");
                         toWrite = toWrite.replace(ZString.GEQ, ">=");
                         buf.append(sep).append(toWrite);
@@ -166,14 +169,16 @@ public class FormulaJ2ARMCConverter extends TCSFormulaJ2XMLConverter{
     			if(primed){ 
     				throw new RuntimeException("No primed variable allowed here");
     			}
-    			String event = ((EventDecision)dec).getEvent();
+    			final String event = ((EventDecision)dec).getEvent();
     			buf.append(sep).append(event+" = "+event+"'");    		
     		} else if (dec instanceof ZDecision) {
                         String toWrite = ((ZDecision)dec).getPredicate();
-                        if (primed && toWrite.contains(ZString.PRIME))
-                            throw new RuntimeException("No primed variable allowed here");
-                        if (primed)
-                            toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "$1$2'");
+                        if (primed && toWrite.contains(ZString.PRIME)) {
+							throw new RuntimeException("No primed variable allowed here");
+						}
+                        if (primed) {
+							toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "$1$2'");
+						}
                         toWrite = toWrite.replaceAll(ZString.PRIME, "'");
                         toWrite = toWrite.replace(ZString.MINUS, "-");
                         toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "_$1$2");

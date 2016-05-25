@@ -43,18 +43,18 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		this.alphabet = alphabet;
 		this.stateFactory = stateFactory;
 	}
-	private Set<LETTER> alphabet;
-	private StateFactory<STATE> stateFactory;
-	private ArrayList<STATE> states = new ArrayList<STATE>();
-	private HashMap<STATE, Integer> statesIndices = new HashMap<STATE, Integer>();
-	private HashMap<LETTER, BooleanExpression[]> transitionFunction = new HashMap<LETTER, BooleanExpression[]>();
+	private final Set<LETTER> alphabet;
+	private final StateFactory<STATE> stateFactory;
+	private final ArrayList<STATE> states = new ArrayList<STATE>();
+	private final HashMap<STATE, Integer> statesIndices = new HashMap<STATE, Integer>();
+	private final HashMap<LETTER, BooleanExpression[]> transitionFunction = new HashMap<LETTER, BooleanExpression[]>();
 	private BooleanExpression acceptingFunction;
-	private BitSet finalStatesBitVector = new BitSet();
+	private final BitSet finalStatesBitVector = new BitSet();
 	private boolean isReversed;
 	
 	public void addState(STATE state){
 		if(!states.contains(state)){
-			int stateIndex = states.size();
+			final int stateIndex = states.size();
 			states.add(state);
 			statesIndices.put(state, stateIndex);
 		}
@@ -66,7 +66,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 			letterTransitions = new BooleanExpression[64];
 			transitionFunction.put(letter, letterTransitions);
 		}
-		int stateIndex = getStateIndex(state);
+		final int stateIndex = getStateIndex(state);
 		if(letterTransitions[stateIndex] == null){
 			letterTransitions[stateIndex] = booleanExpression;
 		}
@@ -85,32 +85,32 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	}
 	
 	public BooleanExpression generateCube(STATE[] resultStates, STATE[] negatedResultStates){
-		BitSet alpha = new BitSet(states.size());
-		BitSet beta = new BitSet(states.size());
-		for(STATE resultState : resultStates){
-			int stateIndex = getStateIndex(resultState);
+		final BitSet alpha = new BitSet(states.size());
+		final BitSet beta = new BitSet(states.size());
+		for(final STATE resultState : resultStates){
+			final int stateIndex = getStateIndex(resultState);
 			alpha.set(stateIndex);
 			beta.set(stateIndex);
 		}
-		for(STATE resultState : negatedResultStates){
-			int stateIndex = getStateIndex(resultState);
+		for(final STATE resultState : negatedResultStates){
+			final int stateIndex = getStateIndex(resultState);
 			alpha.set(stateIndex);
 		}
 		return new BooleanExpression(alpha, beta);
 	}
 	
 	public void setStateFinal(STATE state){
-		int stateIndex = getStateIndex(state);
+		final int stateIndex = getStateIndex(state);
 		finalStatesBitVector.set(stateIndex);
 	}
 	
 	public boolean isStateFinal(STATE state){
-		int stateIndex = getStateIndex(state);
+		final int stateIndex = getStateIndex(state);
 		return finalStatesBitVector.get(stateIndex);
 	}
 	
 	public boolean accepts(Word<LETTER> word){
-		BitSet resultingStates = (BitSet) finalStatesBitVector.clone();
+		final BitSet resultingStates = (BitSet) finalStatesBitVector.clone();
 		if(isReversed){
 			for(int i=0;i<word.length();i++){
 				resolveLetter(word.getSymbol(i), resultingStates);
@@ -125,11 +125,11 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	}
 	
 	public void resolveLetter(LETTER letter, BitSet currentStates){
-		BooleanExpression[] letterTransitions = transitionFunction.get(letter);
+		final BooleanExpression[] letterTransitions = transitionFunction.get(letter);
 		if(letterTransitions != null){
-			BitSet tmpCurrentStates = (BitSet) currentStates.clone();
+			final BitSet tmpCurrentStates = (BitSet) currentStates.clone();
 			for(int i=0;i<states.size();i++){
-				boolean result = ((letterTransitions[i] != null)?letterTransitions[i].getResult(tmpCurrentStates):false);
+				final boolean result = ((letterTransitions[i] != null)?letterTransitions[i].getResult(tmpCurrentStates):false);
 				currentStates.set(i, result);
 			}
 		}
@@ -189,7 +189,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	@Override
 	public String toString(){
 		String text = "[AlternatingAutomaton\n\tAlphabet = {";
-		Iterator<LETTER> letterIterator = alphabet.iterator();
+		final Iterator<LETTER> letterIterator = alphabet.iterator();
 		int r = 0;
 		while(letterIterator.hasNext()){
 			if(r != 0){
@@ -218,7 +218,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 		text += "}\n\tAcceptingFunction = " + acceptingFunction.toString(states) + "\n\tTransistions = {\n";
 		r = 0;
-		for(Entry<LETTER, BooleanExpression[]> entry : transitionFunction.entrySet()){
+		for(final Entry<LETTER, BooleanExpression[]> entry : transitionFunction.entrySet()){
 			text += "\t\t" + entry.getKey() + " => {\n";
 			int z = 0;
 			for(int i=0;i<states.size();i++){

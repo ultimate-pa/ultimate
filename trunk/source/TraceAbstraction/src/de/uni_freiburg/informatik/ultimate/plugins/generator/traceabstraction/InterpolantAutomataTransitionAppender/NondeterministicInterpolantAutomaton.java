@@ -100,7 +100,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 				interpolantAutomaton, logger);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
-		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
+		final Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
@@ -110,13 +110,13 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 		mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
 
 		mNonTrivialPredicates = new HashSet<IPredicate>();
-		for (IPredicate state : allPredicates) {
+		for (final IPredicate state : allPredicates) {
 			if (state != mIaTrueState && state != mIaFalseState) {
 				mNonTrivialPredicates.add(state);
 				// the following two lines are important if not (only) 
 				// true/false are initial/final states of the automaton.
-				boolean isInitial = interpolantAutomaton.isInitial(state);
-				boolean isFinal = interpolantAutomaton.isFinal(state);
+				final boolean isInitial = interpolantAutomaton.isInitial(state);
+				final boolean isFinal = interpolantAutomaton.isFinal(state);
 				mAlreadyConstrucedAutomaton.addState(isInitial, isFinal, state);
 			}
 		}
@@ -127,7 +127,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	
 	@Override
 	protected String startMessage() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Constructing nondeterministic interpolant automaton ");
 		sb.append(" with ");
 		sb.append(mNonTrivialPredicates.size() + 2);
@@ -137,7 +137,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	
 	@Override
 	protected String switchToReadonlyMessage() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: nondeterministic interpolant automaton has ");
 		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
@@ -145,7 +145,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	
 	@Override
 	protected String switchToOnTheFlyConstructionMessage() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: nondeterministic interpolant automaton has ");
 		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
@@ -153,6 +153,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 
 
 	
+	@Override
 	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
 			CodeBlock letter, SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
@@ -171,9 +172,9 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 		} else {
 			successorCandidates = mNonTrivialPredicates;
 		}
-		for (IPredicate succCand : mNonTrivialPredicates) {
+		for (final IPredicate succCand : mNonTrivialPredicates) {
 			if (!inputSuccs.contains(succCand)) {
-				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+				final Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				if (sat == Validity.VALID) {
 					inputSuccs.add(succCand);
 				}
@@ -202,27 +203,28 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	 * the "true" state if it is a successor. Additionally, we also add
 	 * all successors of the "true" state.
 	 */
+	@Override
 	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-			Collection<IPredicate> succs = 
+			final Collection<IPredicate> succs = 
 					sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
 			copyAllButTrue(inputSuccs, succs);
-			Collection<IPredicate> succsOfTrue = 
+			final Collection<IPredicate> succsOfTrue = 
 					sch.getSuccsInterpolantAutomaton(mIaTrueState, resHier, letter);
 			copyAllButTrue(inputSuccs, succsOfTrue);
 			if (resHier != null) {
-				Collection<IPredicate> succsForResPredTrue = 
+				final Collection<IPredicate> succsForResPredTrue = 
 						sch.getSuccsInterpolantAutomaton(resPred, mIaTrueState, letter);
 				copyAllButTrue(inputSuccs, succsForResPredTrue);
-				Collection<IPredicate> succsForTrueTrue = 
+				final Collection<IPredicate> succsForTrueTrue = 
 						sch.getSuccsInterpolantAutomaton(mIaTrueState, mIaTrueState, letter);
 				copyAllButTrue(inputSuccs, succsForTrueTrue);
 			}
 	}
 	
 	private void copyAllButTrue(Set<IPredicate> target,	Collection<IPredicate> source) {
-		for (IPredicate pred : source) {
+		for (final IPredicate pred : source) {
 			if (pred == mIaTrueState) {
 				// do nothing, transition to the "true" state are useless
 			} else {
@@ -235,7 +237,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	protected void constructSuccessorsAndTransitions(IPredicate resPred,
 			IPredicate resHier, CodeBlock letter, 
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-		for (IPredicate succ : inputSuccs) {
+		for (final IPredicate succ : inputSuccs) {
 			sch.addTransition(resPred, resHier, letter, succ);
 		}
 		sch.reportSuccsComputed(resPred, resHier, letter);

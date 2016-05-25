@@ -48,43 +48,46 @@ public class PropProofChecker {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean run() {
 		while (!mTodo.isEmpty()) {
-			Clause clause = mTodo.removeLast();
+			final Clause clause = mTodo.removeLast();
 			if (!mCorrect.contains(clause)) {
-				ProofNode pn = clause.getProof();
-				if (pn.isLeaf())
+				final ProofNode pn = clause.getProof();
+				if (pn.isLeaf()) {
 					// I assume all leaves are correct!
 					mCorrect.add(clause);
-				else {
-					Antecedent[] antes = ((ResolutionNode) pn).getAntecedents();
-					Clause prim = ((ResolutionNode) pn).getPrimary();
+				} else {
+					final Antecedent[] antes = ((ResolutionNode) pn).getAntecedents();
+					final Clause prim = ((ResolutionNode) pn).getPrimary();
 					boolean unknownChild = false;
 					if (!mCorrect.contains(prim)) {
-						if (!unknownChild)
+						if (!unknownChild) {
 							// We add ourselves in front of all unknown
 							// children to be reevaluated after they have
 							// been processed.
 							mTodo.addLast(clause);
+						}
 						unknownChild = true;
 						mTodo.addLast(prim);
 					}
-					for (Antecedent ante : antes) {
+					for (final Antecedent ante : antes) {
 						if (!mCorrect.contains(ante.mAntecedent)) {
-							if (!unknownChild)
+							if (!unknownChild) {
 								// We add ourselves in front of all unknown
 								// children to be reevaluated after they have
 								// been processed.
 								mTodo.addLast(clause);
+							}
 							unknownChild = true;
 							mTodo.addLast(ante.mAntecedent);
 						}
 					}
 					if (!unknownChild) {
 						// All children were known to be correct => check clause
-						HashSet<Literal> clauselits = new HashSet<Literal>();
-						for (int i = 0; i < prim.getSize(); ++i)
+						final HashSet<Literal> clauselits = new HashSet<Literal>();
+						for (int i = 0; i < prim.getSize(); ++i) {
 							clauselits.add(prim.getLiteral(i));
-						for (Antecedent ante : antes) {
-							Clause antecls = ante.mAntecedent;
+						}
+						for (final Antecedent ante : antes) {
+							final Clause antecls = ante.mAntecedent;
 							if (!antecls.contains(ante.mPivot)) {
 								System.err.println("Pivot literal "
 										+ ante.mPivot + " not in antecedent");
@@ -97,29 +100,31 @@ public class PropProofChecker {
 								return false;
 							}
 							for (int i = 0; i < antecls.getSize(); ++i) {
-								Literal lit = antecls.getLiteral(i);
-								if (lit != ante.mPivot)
+								final Literal lit = antecls.getLiteral(i);
+								if (lit != ante.mPivot) {
 									clauselits.add(lit);
+								}
 							}
 						}
 						// Here, we have done all resolution steps.  Check the
 						// resulting clause
-						HashSet<Literal> clslits = new HashSet<Literal>();
-						for (int i = 0; i < clause.getSize(); ++i)
+						final HashSet<Literal> clslits = new HashSet<Literal>();
+						for (int i = 0; i < clause.getSize(); ++i) {
 							clslits.add(clause.getLiteral(i));
+						}
 						if (clauselits.containsAll(clslits)
-								&& clslits.containsAll(clauselits))
+								&& clslits.containsAll(clauselits)) {
 							mCorrect.add(clause);
-						else {
+						} else {
 							System.err.println("Result of resolution incorrect");
 							System.err.println();
 							System.err.println("Result misses:");
-							Set<Literal> clauseremain = (Set)clauselits.clone();
+							final Set<Literal> clauseremain = (Set)clauselits.clone();
 							clauseremain.removeAll(clslits);
 							System.err.println(clauseremain);
 							System.err.println();
 							System.err.println("Result additionally has:");
-							Set<Literal> clsremain = (Set)clslits.clone();
+							final Set<Literal> clsremain = (Set)clslits.clone();
 							clsremain.removeAll(clauselits);
 							System.err.println(clsremain);
 							return false;

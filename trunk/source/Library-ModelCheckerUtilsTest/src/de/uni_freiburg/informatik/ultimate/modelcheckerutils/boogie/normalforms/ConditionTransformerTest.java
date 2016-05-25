@@ -60,8 +60,8 @@ public class ConditionTransformerTest {
 		mD = var("D");
 		mExp1 = or(mB, mC);
 
-		Expression aord = or(mA, mD);
-		Expression aandborc = and(mA, mExp1);
+		final Expression aord = or(mA, mD);
+		final Expression aandborc = and(mA, mExp1);
 
 		mExp2 = and(aandborc, aord);
 		mExp3 = or(mExp2, mExp2);
@@ -120,24 +120,24 @@ public class ConditionTransformerTest {
 
 	@Test
 	public void TestRewriteA() {
-		Expression input = term(mA, 1, Operator.COMPNEQ);
-		Expression afterRewrite = or(term(mA, 1, Operator.COMPLT), term(mA, 1, Operator.COMPGT));
+		final Expression input = term(mA, 1, Operator.COMPNEQ);
+		final Expression afterRewrite = or(term(mA, 1, Operator.COMPLT), term(mA, 1, Operator.COMPGT));
 		TestRewrite(input, afterRewrite);
 	}
 
 	@Test
 	public void TestRewriteB() {
-		Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
-		Expression afterRewrite = or(or(and(and(or(mA, mD), or(mB, mC)), mA), term(mA, 1, Operator.COMPGT)),
+		final Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
+		final Expression afterRewrite = or(or(and(and(or(mA, mD), or(mB, mC)), mA), term(mA, 1, Operator.COMPGT)),
 				term(mA, 1, Operator.COMPLT));
 		TestRewrite(input, afterRewrite);
 	}
 
 	@Test
 	public void TestRewriteC() {
-		Expression input = and(and(not(term(mA, 0, Operator.COMPNEQ)), not(term(mB, 1, Operator.COMPEQ))),
+		final Expression input = and(and(not(term(mA, 0, Operator.COMPNEQ)), not(term(mB, 1, Operator.COMPEQ))),
 				not(term(mC, 1, Operator.COMPEQ)));
-		Expression afterRewrite = and(
+		final Expression afterRewrite = and(
 				and(term(mA, 0, Operator.COMPEQ), or(term(mB, 1, Operator.COMPLT), term(mB, 1, Operator.COMPGT))),
 				or(term(mC, 1, Operator.COMPLT), term(mC, 1, Operator.COMPGT)));
 		TestRewrite(input, afterRewrite);
@@ -145,59 +145,59 @@ public class ConditionTransformerTest {
 
 	@Test
 	public void TestSimplifyA() {
-		Expression input = and(mA, mA);
-		Expression afterSimplify = mA;
+		final Expression input = and(mA, mA);
+		final Expression afterSimplify = mA;
 		TestSimplify(input, afterSimplify);
 	}
 
 	// @Test
 	public void TestSimplifyB() {
 		// TODO: Implement this
-		Expression input = and(mA, or(mA, mB));
-		Expression afterSimplify = mA;
+		final Expression input = and(mA, or(mA, mB));
+		final Expression afterSimplify = mA;
 		TestSimplify(input, afterSimplify);
 	}
 
 	@Test
 	public void TestA() {
-		Expression input = not(mExp1);
-		Expression nnf = and(not(mB), not(mC));
-		Expression dnf = and(not(mC), not(mB));
+		final Expression input = not(mExp1);
+		final Expression nnf = and(not(mB), not(mC));
+		final Expression dnf = and(not(mC), not(mB));
 		Test(input, nnf, dnf);
 	}
 
 	@Test
 	public void TestB() {
-		Expression input = mExp2;
-		Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
-		Expression dnf = or(and(mA, mB), and(mA, mC));
+		final Expression input = mExp2;
+		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
+		final Expression dnf = or(and(mA, mB), and(mA, mC));
 		Test(input, nnf, dnf);
 	}
 
 	@Test
 	public void TestC() {
-		Expression input = mExp3;
-		Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
-		Expression dnf = or(and(mA, mB), and(mA, mC));
+		final Expression input = mExp3;
+		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
+		final Expression dnf = or(and(mA, mB), and(mA, mC));
 		Test(input, nnf, dnf);
 	}
 
 	@Test
 	public void TestD() {
-		Expression input = mExp4;
-		Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
-		Expression dnf = or(and(not(mC), not(mB)), not(mA));
+		final Expression input = mExp4;
+		final Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
+		final Expression dnf = or(and(not(mC), not(mB)), not(mA));
 		Test(input, nnf, dnf);
 	}
 
 	@Test
 	public void TestE() {
 		// (((A || B) && (C || D)) && (E || F)) && (G || H)
-		Expression input = and(and(and(or(var("A"), var("B")), or(var("C"), var("D"))), or(var("E"), var("F"))),
+		final Expression input = and(and(and(or(var("A"), var("B")), or(var("C"), var("D"))), or(var("E"), var("F"))),
 				or(var("G"), var("H")));
-		Expression nnf = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
+		final Expression nnf = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
 				or(var("H"), var("G")));
-		Expression dnf = or(
+		final Expression dnf = or(
 				and(var("C"), var("A"), var("G"), var("E")), and(var("C"), var("A"), var("G"), var("E")),
 				and(var("C"), var("A"), var("H"), var("E")), and(var("C"), var("A"), var("G"), var("F")),
 				and(var("C"), var("A"), var("H"), var("F")), and(var("D"), var("A"), var("G"), var("E")),
@@ -212,11 +212,11 @@ public class ConditionTransformerTest {
 	}
 
 	private void TestRewrite(Expression input, Expression afterRewrite) {
-		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
 		ct.simplify(input);
-		Expression result = ct.rewriteNotEquals(input);
+		final Expression result = ct.rewriteNotEquals(input);
 		System.out.println("Rewri: " + printExpression(result));
 
 		Assert.assertEquals("Rewrite of " + printExpression(input) + " not correct,", printExpression(afterRewrite),
@@ -224,11 +224,11 @@ public class ConditionTransformerTest {
 	}
 
 	private void TestSimplify(Expression input, Expression afterSimplify) {
-		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
 		ct.simplify(input);
-		Expression result = ct.simplify(input);
+		final Expression result = ct.simplify(input);
 		System.out.println("Simpl: " + printExpression(result));
 
 		Assert.assertEquals("Simplify of " + printExpression(input) + " not correct,", printExpression(afterSimplify),
@@ -237,7 +237,7 @@ public class ConditionTransformerTest {
 
 	private void Test(Expression input, Expression afterNnf, Expression afterDnf) {
 		System.out.println();
-		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println("Input: " + printExpression(input));
 		Expression result = ct.toNnf(input);
 		System.out.println("NNF  : " + printExpression(result));

@@ -49,33 +49,33 @@ public class OurPea {
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
         PhaseEventAutomata pea;
-        Phase[] phases = new Phase[2];
+        final Phase[] phases = new Phase[2];
 
         try {
             phases[0] = new Phase("{0}", ZDecision.createSimplified("\u2577 x: \u2119 [] | x \u2029")); //TODO what is this for?
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
         phases[1] = new Phase("{0,1}");
         // phases[0] = new Phase("{0}");
-        String[] resets = { "c" };
+        final String[] resets = { "c" };
         phases[0].addTransition(phases[1], CDD.TRUE, resets);
         phases[1].addTransition(phases[0], CDD.TRUE, new String[0]);
         phases[0].addTransition(phases[0], CDD.TRUE, new String[0]);
         phases[1].addTransition(phases[1], CDD.TRUE, new String[0]);
-        LinkedList<String> l = new LinkedList<String>();
+        final LinkedList<String> l = new LinkedList<String>();
         l.add(resets[0]);
         pea = new PhaseEventAutomata("ourPEA", phases, phases.clone(), l);
         pea.dump();
         try {
-            PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
+            final PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
 
-            ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+            final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
             peaList.add(pea);
-            PEANet peanet = new PEANet();
+            final PEANet peanet = new PEANet();
             peanet.setPeas(peaList);
             conv.convert(peanet, "/tmp/test.xml");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

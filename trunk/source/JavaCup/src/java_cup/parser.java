@@ -6,10 +6,11 @@
 
 package java_cup;
 
-import java_cup.runtime.*;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+
+import java_cup.runtime.Symbol;
 
 /** CUP v0.12joho 20110608 generated parser.
   * @version Sat Oct 26 18:34:29 CEST 2013
@@ -25,6 +26,7 @@ public class parser extends java_cup.runtime.LRParser {
   /** Constructor which sets the default scanner. */
   public parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf) {super(s,sf);}
   /** Return action table */
+  @Override
   protected String[] action_table() { 
     return new String[] {
     "\212\000\002\031\007\031\005\001\003\001\000" +
@@ -197,12 +199,14 @@ public class parser extends java_cup.runtime.LRParser {
   protected Action$ action_obj;
 
   /** Action encapsulation object initializer. */
+  @Override
   protected void init_actions()
     {
       action_obj = new Action$(this);
     }
 
   /** Invoke a user supplied parse action. */
+  @Override
   public java_cup.runtime.Symbol do_action(
     int                        act_num,
     java.util.ArrayList<java_cup.runtime.Symbol> stack)
@@ -218,22 +222,32 @@ public class parser extends java_cup.runtime.LRParser {
   emit emit;
   
  /* override error routines */
+  @Override
   public void report_fatal_error(
     String   message,
     Object   info)
     {
       done_parsing();
-      if (info instanceof Symbol) ErrorManager.getManager().emit_fatal(message+ "\nCan't recover from previous error(s), giving up.",(Symbol)info);
-      else ErrorManager.getManager().emit_fatal(message + "\nCan't recover from previous error(s), giving up.",cur_token);
+      if (info instanceof Symbol)
+	{
+	    ErrorManager.getManager().emit_fatal(message+ "\nCan't recover from previous error(s), giving up.",(Symbol)info);
+	  } else
+	{
+	    ErrorManager.getManager().emit_fatal(message + "\nCan't recover from previous error(s), giving up.",cur_token);
+	  }
       System.exit(1);
     }
 
+    @Override
     public void report_error(String message, Object info)
     {
       if (info instanceof Symbol)
-         ErrorManager.getManager().emit_error(message,(Symbol)info);
-      else
-         ErrorManager.getManager().emit_error(message,cur_token);
+	{
+	    ErrorManager.getManager().emit_error(message,(Symbol)info);
+	  } else
+	{
+	    ErrorManager.getManager().emit_error(message,cur_token);
+	  }
     }
 
 
@@ -244,7 +258,7 @@ static class Action$ {
   Grammar grammar = new Grammar();
 
   /** table of declared symbols -- contains production parts indexed by name */
-  private HashMap<String, symbol> symbols = new HashMap<String, symbol>();
+  private final HashMap<String, symbol> symbols = new HashMap<String, symbol>();
 
   /** left hand side non terminal of the current production */
   private non_terminal lhs_nt;
@@ -275,14 +289,16 @@ static class Action$ {
   
   private terminal get_term(Symbol location, String id)
     {
-      symbol sym = symbols.get(id);
+      final symbol sym = symbols.get(id);
 
       /* if it wasn't declared of the right type, emit a message */
       if (!(sym instanceof terminal))
 	{
 	  if (ErrorManager.getManager().getErrorCount() == 0)
-	    ErrorManager.getManager().emit_warning("Terminal \"" + id + 
-	    "\" has not been declared", location);
+	    {
+		ErrorManager.getManager().emit_warning("Terminal \"" + id + 
+		"\" has not been declared", location);
+	      }
 	  return null;
 	}
       return (terminal)sym;
@@ -290,14 +306,16 @@ static class Action$ {
   
   private non_terminal get_nonterm(Symbol location, String id)
     {
-      symbol sym = symbols.get(id);
+      final symbol sym = symbols.get(id);
 
       /* if it wasn't declared of the right type, emit a message */
       if (!(sym instanceof non_terminal))
 	{
 	  if (ErrorManager.getManager().getErrorCount() == 0)
-	    ErrorManager.getManager().emit_warning("Non-terminal \"" + id + 
-	    "\" has not been declared", location);
+	    {
+		ErrorManager.getManager().emit_warning("Non-terminal \"" + id + 
+		"\" has not been declared", location);
+	      }
 	  return null;
 	}
       return (non_terminal)sym;
@@ -318,7 +336,7 @@ static class Action$ {
     throws java.lang.Exception
     {
       /* Stack size for peeking into the stack */
-      int CUP$size = CUP$stack.size();
+      final int CUP$size = CUP$stack.size();
 
       /* select the action based on the action number */
       switch (CUP$act_num)
@@ -327,8 +345,8 @@ static class Action$ {
           case 0:
             {
               Object RESULT;
-              java_cup.runtime.Symbol CUP$rhs$ = CUP$stack.get(CUP$size - 2);
-              Grammar CUP$rhs = (Grammar) CUP$rhs$.value;
+              final java_cup.runtime.Symbol CUP$rhs$ = CUP$stack.get(CUP$size - 2);
+              final Grammar CUP$rhs = (Grammar) CUP$rhs$.value;
 RESULT = CUP$rhs;
 /* ACCEPT */
 parser.done_parsing();
@@ -354,8 +372,8 @@ parser.done_parsing();
           // package_spec ::= PACKAGE multipart_id SEMI 
           case 3:
             {
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 2);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 2);
+              final StringBuilder id = (StringBuilder) id$.value;
 
 	  /* save the package name */
 	  parser.main.setOption("package", id.toString());
@@ -366,15 +384,15 @@ parser.done_parsing();
           // package_spec ::= 
           case 4:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("package_spec", 1, CUP$sym, CUP$sym);
             }
 
           // import_spec ::= IMPORT import_id SEMI 
           case 5:
             {
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 2);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 2);
+              final StringBuilder id = (StringBuilder) id$.value;
  
 	  /* save this import on the imports list */
 	  parser.emit.import_list.add(id.toString());
@@ -385,7 +403,7 @@ parser.done_parsing();
           // code_parts ::= 
           case 6:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("code_parts", 7, CUP$sym, CUP$sym);
             }
 
@@ -398,8 +416,8 @@ parser.done_parsing();
           // parser_spec ::= PARSER multipart_id SEMI 
           case 8:
             {
-              java_cup.runtime.Symbol name$ = CUP$stack.get(CUP$size - 2);
-              StringBuilder name = (StringBuilder) name$.value;
+              final java_cup.runtime.Symbol name$ = CUP$stack.get(CUP$size - 2);
+              final StringBuilder name = (StringBuilder) name$.value;
  parser.main.setOption("parser", name.toString()); 
               return parser.getSymbolFactory().newSymbol("parser_spec", 2, CUP$stack.get(CUP$size - 3), CUP$stack.get(CUP$size - 1));
             }
@@ -407,10 +425,10 @@ parser.done_parsing();
           // parser_spec ::= PARSER multipart_id LT typearglist GT SEMI 
           case 9:
             {
-              java_cup.runtime.Symbol types$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder types = (StringBuilder) types$.value;
-              java_cup.runtime.Symbol name$ = CUP$stack.get(CUP$size - 5);
-              StringBuilder name = (StringBuilder) name$.value;
+              final java_cup.runtime.Symbol types$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder types = (StringBuilder) types$.value;
+              final java_cup.runtime.Symbol name$ = CUP$stack.get(CUP$size - 5);
+              final StringBuilder name = (StringBuilder) name$.value;
  parser.main.setOption("parser", name.toString());
 	    parser.main.setOption("typearg", types.toString()); 
               return parser.getSymbolFactory().newSymbol("parser_spec", 2, CUP$stack.get(CUP$size - 6), CUP$stack.get(CUP$size - 1));
@@ -431,8 +449,8 @@ parser.done_parsing();
           // option_ ::= robust_id 
           case 12:
             {
-              java_cup.runtime.Symbol opt$ = CUP$stack.get(CUP$size - 1);
-              String opt = (String) opt$.value;
+              final java_cup.runtime.Symbol opt$ = CUP$stack.get(CUP$size - 1);
+              final String opt = (String) opt$.value;
  parser.main.setOption(opt); 
               return parser.getSymbolFactory().newSymbol("option_", 5, opt$, opt$);
             }
@@ -440,10 +458,10 @@ parser.done_parsing();
           // option_ ::= robust_id EQUALS robust_id 
           case 13:
             {
-              java_cup.runtime.Symbol val$ = CUP$stack.get(CUP$size - 1);
-              String val = (String) val$.value;
-              java_cup.runtime.Symbol opt$ = CUP$stack.get(CUP$size - 3);
-              String opt = (String) opt$.value;
+              final java_cup.runtime.Symbol val$ = CUP$stack.get(CUP$size - 1);
+              final String val = (String) val$.value;
+              final java_cup.runtime.Symbol opt$ = CUP$stack.get(CUP$size - 3);
+              final String opt = (String) opt$.value;
  parser.main.setOption(opt, val); 
               return parser.getSymbolFactory().newSymbol("option_", 5, opt$, val$);
             }
@@ -451,13 +469,16 @@ parser.done_parsing();
           // action_code_part ::= ACTION CODE CODE_STRING SEMI? 
           case 14:
             {
-              java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
-              String user_code = (String) user_code$.value;
+              final java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
+              final String user_code = (String) user_code$.value;
 
 	  if (parser.emit.action_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant action code (skipping)");
-	  else /* save the user included code string */
-	    parser.emit.action_code = user_code;
+	    {
+		ErrorManager.getManager().emit_warning("Redundant action code (skipping)");
+	      } else
+	    {
+		parser.emit.action_code = user_code;
+	      }
 	
               return parser.getSymbolFactory().newSymbol("action_code_part", 6, CUP$stack.get(CUP$size - 4), CUP$stack.get(CUP$size - 1));
             }
@@ -465,13 +486,16 @@ parser.done_parsing();
           // parser_code_part ::= PARSER CODE CODE_STRING SEMI? 
           case 15:
             {
-              java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
-              String user_code = (String) user_code$.value;
+              final java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
+              final String user_code = (String) user_code$.value;
 
 	  if (parser.emit.parser_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant parser code (skipping)");
-	  else /* save the user included code string */
-	    parser.emit.parser_code = user_code;
+	    {
+		ErrorManager.getManager().emit_warning("Redundant parser code (skipping)");
+	      } else
+	    {
+		parser.emit.parser_code = user_code;
+	      }
 	
               return parser.getSymbolFactory().newSymbol("parser_code_part", 9, CUP$stack.get(CUP$size - 4), CUP$stack.get(CUP$size - 1));
             }
@@ -479,13 +503,16 @@ parser.done_parsing();
           // init_code ::= INIT WITH CODE_STRING SEMI? 
           case 16:
             {
-              java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
-              String user_code = (String) user_code$.value;
+              final java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
+              final String user_code = (String) user_code$.value;
  
 	  if (parser.emit.init_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant init code (skipping)");
-	  else /* save the user code */
-	    parser.emit.init_code = user_code;
+	    {
+		ErrorManager.getManager().emit_warning("Redundant init code (skipping)");
+	      } else
+	    {
+		parser.emit.init_code = user_code;
+	      }
 	
               return parser.getSymbolFactory().newSymbol("init_code", 12, CUP$stack.get(CUP$size - 4), CUP$stack.get(CUP$size - 1));
             }
@@ -493,13 +520,16 @@ parser.done_parsing();
           // scan_code ::= SCAN WITH CODE_STRING SEMI? 
           case 17:
             {
-              java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
-              String user_code = (String) user_code$.value;
+              final java_cup.runtime.Symbol user_code$ = CUP$stack.get(CUP$size - 2);
+              final String user_code = (String) user_code$.value;
  
 	  if (parser.emit.scan_code!=null)
-	    ErrorManager.getManager().emit_warning("Redundant scan code (skipping)");
-	  else /* save the user code */
-	    parser.emit.scan_code = user_code;
+	    {
+		ErrorManager.getManager().emit_warning("Redundant scan code (skipping)");
+	      } else
+	    {
+		parser.emit.scan_code = user_code;
+	      }
 	
               return parser.getSymbolFactory().newSymbol("scan_code", 13, CUP$stack.get(CUP$size - 4), CUP$stack.get(CUP$size - 1));
             }
@@ -507,8 +537,8 @@ parser.done_parsing();
           // symbol ::= terminal_non_terminal type_id NT$0 decl_symbol_list SEMI 
           case 18:
             {
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 4);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 4);
+              final StringBuilder id = (StringBuilder) id$.value;
  _cur_symbol_type = null; 
               return parser.getSymbolFactory().newSymbol("symbol", 14, CUP$stack.get(CUP$size - 5), CUP$stack.get(CUP$size - 1));
             }
@@ -516,8 +546,8 @@ parser.done_parsing();
           // NT$0 ::= 
           case 19:
             {
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
+              final StringBuilder id = (StringBuilder) id$.value;
  _cur_symbol_type = id.toString(); 
               return parser.getSymbolFactory().newSymbol("NT$0", 45, CUP$stack.get(CUP$size - 2), id$);
             }
@@ -534,7 +564,7 @@ parser.done_parsing();
           case 21:
             {
  _cur_is_nonterm = false; 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("terminal_non_terminal", 15, CUP$sym, CUP$sym);
             }
 
@@ -549,7 +579,7 @@ parser.done_parsing();
           case 23:
             {
  _cur_is_nonterm = true; 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("terminal_non_terminal", 15, CUP$sym, CUP$sym);
             }
 
@@ -562,8 +592,8 @@ parser.done_parsing();
           // new_symbol_id ::= symbol_id 
           case 25:
             {
-              java_cup.runtime.Symbol symid$ = CUP$stack.get(CUP$size - 1);
-              String symid = (String) symid$.value;
+              final java_cup.runtime.Symbol symid$ = CUP$stack.get(CUP$size - 1);
+              final String symid = (String) symid$.value;
  
 	  /* see if this terminal has been declared before */
 	  if (symbols.get(symid) != null)
@@ -576,10 +606,13 @@ parser.done_parsing();
 	    {
 	      /* build the symbol and put it in the symbol table */
 	      symbol sym;
-	      if (_cur_is_nonterm) 
-	      	sym = grammar.add_non_terminal(symid, _cur_symbol_type);
-	      else
-	      	sym = grammar.add_terminal(symid, _cur_symbol_type);
+	      if (_cur_is_nonterm)
+		{
+		    sym = grammar.add_non_terminal(symid, _cur_symbol_type);
+		  } else
+		{
+		    sym = grammar.add_terminal(symid, _cur_symbol_type);
+		  }
 	      symbols.put(symid, sym);
 	    }
 	
@@ -596,7 +629,7 @@ parser.done_parsing();
           case 27:
             {
  update_precedence(assoc.left); 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("assoc", 19, CUP$sym, CUP$sym);
             }
 
@@ -604,7 +637,7 @@ parser.done_parsing();
           case 28:
             {
  update_precedence(assoc.right); 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("assoc", 19, CUP$sym, CUP$sym);
             }
 
@@ -612,7 +645,7 @@ parser.done_parsing();
           case 29:
             {
  update_precedence(assoc.nonassoc); 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("assoc", 19, CUP$sym, CUP$sym);
             }
 
@@ -625,8 +658,8 @@ parser.done_parsing();
           // precterminal_id ::= symbol_id 
           case 31:
             {
-              java_cup.runtime.Symbol term$ = CUP$stack.get(CUP$size - 1);
-              String term = (String) term$.value;
+              final java_cup.runtime.Symbol term$ = CUP$stack.get(CUP$size - 1);
+              final String term = (String) term$.value;
 	
 	  get_term(term$, term).set_precedence(_cur_side, _cur_prec);
 	
@@ -636,11 +669,13 @@ parser.done_parsing();
           // start_spec ::= START WITH symbol_id SEMI 
           case 32:
             {
-              java_cup.runtime.Symbol start_name$ = CUP$stack.get(CUP$size - 2);
-              String start_name = (String) start_name$.value;
- non_terminal nt = get_nonterm(start_name$, start_name);
-	   if (nt != null) 
-	     grammar.set_start_symbol(nt); 
+              final java_cup.runtime.Symbol start_name$ = CUP$stack.get(CUP$size - 2);
+              final String start_name = (String) start_name$.value;
+ final non_terminal nt = get_nonterm(start_name$, start_name);
+	   if (nt != null)
+	    {
+		grammar.set_start_symbol(nt);
+	      } 
 	
               return parser.getSymbolFactory().newSymbol("start_spec", 10, CUP$stack.get(CUP$size - 4), CUP$stack.get(CUP$size - 1));
             }
@@ -648,23 +683,23 @@ parser.done_parsing();
           // start_spec ::= 
           case 33:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("start_spec", 10, CUP$sym, CUP$sym);
             }
 
           // production ::= symbol_id NT$1 COLON_COLON_EQUALS rhs_list SEMI 
           case 34:
             {
-              java_cup.runtime.Symbol lhs_id$ = CUP$stack.get(CUP$size - 5);
-              String lhs_id = (String) lhs_id$.value;
+              final java_cup.runtime.Symbol lhs_id$ = CUP$stack.get(CUP$size - 5);
+              final String lhs_id = (String) lhs_id$.value;
               return parser.getSymbolFactory().newSymbol("production", 22, lhs_id$, CUP$stack.get(CUP$size - 1));
             }
 
           // NT$1 ::= 
           case 35:
             {
-              java_cup.runtime.Symbol lhs_id$ = CUP$stack.get(CUP$size - 1);
-              String lhs_id = (String) lhs_id$.value;
+              final java_cup.runtime.Symbol lhs_id$ = CUP$stack.get(CUP$size - 1);
+              final String lhs_id = (String) lhs_id$.value;
 
 	  /* lookup the lhs nt */
 	  lhs_nt = get_nonterm(lhs_id$, lhs_id);
@@ -688,8 +723,8 @@ parser.done_parsing();
           case 38:
             {
               symbol RESULT;
-              java_cup.runtime.Symbol term$ = CUP$stack.get(CUP$size - 1);
-              String term = (String) term$.value;
+              final java_cup.runtime.Symbol term$ = CUP$stack.get(CUP$size - 1);
+              final String term = (String) term$.value;
  RESULT = get_term(term$, term); 
               return parser.getSymbolFactory().newSymbol("prod_precedence", 37, CUP$stack.get(CUP$size - 2), term$, RESULT);
             }
@@ -699,23 +734,23 @@ parser.done_parsing();
             {
               symbol RESULT;
  RESULT = null; 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("prod_precedence", 37, CUP$sym, CUP$sym, RESULT);
             }
 
           // rhs ::= prod_part* prod_precedence 
           case 40:
             {
-              java_cup.runtime.Symbol precsym$ = CUP$stack.get(CUP$size - 1);
-              symbol precsym = (symbol) precsym$.value;
-              java_cup.runtime.Symbol rhs$ = CUP$stack.get(CUP$size - 2);
-              java.util.ArrayList<production_part> CUP$list$rhs = (java.util.ArrayList<production_part>) rhs$.value;
-              production_part[] rhs = CUP$list$rhs.toArray(new production_part[CUP$list$rhs.size()]);
+              final java_cup.runtime.Symbol precsym$ = CUP$stack.get(CUP$size - 1);
+              final symbol precsym = (symbol) precsym$.value;
+              final java_cup.runtime.Symbol rhs$ = CUP$stack.get(CUP$size - 2);
+              final java.util.ArrayList<production_part> CUP$list$rhs = (java.util.ArrayList<production_part>) rhs$.value;
+              final production_part[] rhs = CUP$list$rhs.toArray(new production_part[CUP$list$rhs.size()]);
 
 	  if (lhs_nt != null) 
 	    {
 	      /* build the production */
-	      ArrayList<production_part> rhs_list = 
+	      final ArrayList<production_part> rhs_list = 
 	      	new ArrayList<production_part>(rhs.length);
 	      rhs_list.addAll(Arrays.asList(rhs));
 	      grammar.build_production(lhs_nt, rhs_list, (terminal) precsym);
@@ -728,10 +763,10 @@ parser.done_parsing();
           case 41:
             {
               production_part RESULT;
-              java_cup.runtime.Symbol labid$ = CUP$stack.get(CUP$size - 1);
-              String labid = (String) labid$.value;
-              java_cup.runtime.Symbol symb$ = CUP$stack.get(CUP$size - 2);
-              symbol symb = (symbol) symb$.value;
+              final java_cup.runtime.Symbol labid$ = CUP$stack.get(CUP$size - 1);
+              final String labid = (String) labid$.value;
+              final java_cup.runtime.Symbol symb$ = CUP$stack.get(CUP$size - 2);
+              final symbol symb = (symbol) symb$.value;
  
 	  /* add a labeled production part */
 	  RESULT = new symbol_part(symb, labid);
@@ -743,8 +778,8 @@ parser.done_parsing();
           case 42:
             {
               production_part RESULT;
-              java_cup.runtime.Symbol code_str$ = CUP$stack.get(CUP$size - 1);
-              String code_str = (String) code_str$.value;
+              final java_cup.runtime.Symbol code_str$ = CUP$stack.get(CUP$size - 1);
+              final String code_str = (String) code_str$.value;
  
 	  /* add a new production part */
 	  RESULT = new action_part(code_str);
@@ -756,8 +791,8 @@ parser.done_parsing();
           case 43:
             {
               symbol RESULT;
-              java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
-              symbol s = (symbol) s$.value;
+              final java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
+              final symbol s = (symbol) s$.value;
  RESULT = grammar.star_symbol(s); 
               return parser.getSymbolFactory().newSymbol("wild_symbol_id", 35, s$, CUP$stack.get(CUP$size - 1), RESULT);
             }
@@ -766,8 +801,8 @@ parser.done_parsing();
           case 44:
             {
               symbol RESULT;
-              java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
-              symbol s = (symbol) s$.value;
+              final java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
+              final symbol s = (symbol) s$.value;
  RESULT = grammar.plus_symbol(s); 
               return parser.getSymbolFactory().newSymbol("wild_symbol_id", 35, s$, CUP$stack.get(CUP$size - 1), RESULT);
             }
@@ -776,8 +811,8 @@ parser.done_parsing();
           case 45:
             {
               symbol RESULT;
-              java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
-              symbol s = (symbol) s$.value;
+              final java_cup.runtime.Symbol s$ = CUP$stack.get(CUP$size - 2);
+              final symbol s = (symbol) s$.value;
  RESULT = grammar.opt_symbol(s); 
               return parser.getSymbolFactory().newSymbol("wild_symbol_id", 35, s$, CUP$stack.get(CUP$size - 1), RESULT);
             }
@@ -786,17 +821,19 @@ parser.done_parsing();
           case 46:
             {
               symbol RESULT;
-              java_cup.runtime.Symbol symid$ = CUP$stack.get(CUP$size - 1);
-              String symid = (String) symid$.value;
+              final java_cup.runtime.Symbol symid$ = CUP$stack.get(CUP$size - 1);
+              final String symid = (String) symid$.value;
  /* try to look up the id */
-	   symbol symb = symbols.get(symid);
+	   final symbol symb = symbols.get(symid);
 
 	   /* if that fails, symbol is undeclared */
 	   if (symb == null)
 	     {
 	       if (ErrorManager.getManager().getErrorCount() == 0)
-	         ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + 
-			        "\" has not been declared");
+		{
+		    ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + 
+		    	        "\" has not been declared");
+		  }
 	       RESULT = null;
 	     }
 	   else
@@ -811,8 +848,8 @@ parser.done_parsing();
           case 47:
             {
               String RESULT;
-              java_cup.runtime.Symbol labid$ = CUP$stack.get(CUP$size - 1);
-              String labid = (String) labid$.value;
+              final java_cup.runtime.Symbol labid$ = CUP$stack.get(CUP$size - 1);
+              final String labid = (String) labid$.value;
  RESULT = labid; 
               return parser.getSymbolFactory().newSymbol("label_id", 27, CUP$stack.get(CUP$size - 2), labid$, RESULT);
             }
@@ -821,10 +858,10 @@ parser.done_parsing();
           case 48:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol another_id$ = CUP$stack.get(CUP$size - 1);
-              String another_id = (String) another_id$.value;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol another_id$ = CUP$stack.get(CUP$size - 1);
+              final String another_id = (String) another_id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder id = (StringBuilder) id$.value;
  id.append('.').append(another_id); RESULT=id; 
               return parser.getSymbolFactory().newSymbol("multipart_id", 29, id$, another_id$, RESULT);
             }
@@ -833,8 +870,8 @@ parser.done_parsing();
           case 49:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol an_id$ = CUP$stack.get(CUP$size - 1);
-              String an_id = (String) an_id$.value;
+              final java_cup.runtime.Symbol an_id$ = CUP$stack.get(CUP$size - 1);
+              final String an_id = (String) an_id$.value;
  RESULT = new StringBuilder(an_id); 
               return parser.getSymbolFactory().newSymbol("multipart_id", 29, an_id$, an_id$, RESULT);
             }
@@ -843,8 +880,8 @@ parser.done_parsing();
           case 50:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder id = (StringBuilder) id$.value;
  id.append(".*"); RESULT = id; 
               return parser.getSymbolFactory().newSymbol("import_id", 30, id$, CUP$stack.get(CUP$size - 1), RESULT);
             }
@@ -853,8 +890,8 @@ parser.done_parsing();
           case 51:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder id = (StringBuilder) id$.value;
  id.append("[]"); RESULT = id; 
               return parser.getSymbolFactory().newSymbol("type_id", 31, id$, CUP$stack.get(CUP$size - 1), RESULT);
             }
@@ -863,10 +900,10 @@ parser.done_parsing();
           case 52:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol types$ = CUP$stack.get(CUP$size - 2);
-              StringBuilder types = (StringBuilder) types$.value;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 4);
-              StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol types$ = CUP$stack.get(CUP$size - 2);
+              final StringBuilder types = (StringBuilder) types$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 4);
+              final StringBuilder id = (StringBuilder) id$.value;
  id.append('<').append(types).append('>');
             RESULT=id; 
               return parser.getSymbolFactory().newSymbol("type_id", 31, id$, CUP$stack.get(CUP$size - 1), RESULT);
@@ -876,10 +913,10 @@ parser.done_parsing();
           case 53:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol arg$ = CUP$stack.get(CUP$size - 1);
-              StringBuilder arg = (StringBuilder) arg$.value;
-              java_cup.runtime.Symbol list$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder list = (StringBuilder) list$.value;
+              final java_cup.runtime.Symbol arg$ = CUP$stack.get(CUP$size - 1);
+              final StringBuilder arg = (StringBuilder) arg$.value;
+              final java_cup.runtime.Symbol list$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder list = (StringBuilder) list$.value;
  RESULT = list.append(",").append(arg); 
               return parser.getSymbolFactory().newSymbol("typearglist", 32, list$, arg$, RESULT);
             }
@@ -889,7 +926,7 @@ parser.done_parsing();
             {
               StringBuilder RESULT;
  RESULT = new StringBuilder("?"); 
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("wildcard", 34, CUP$sym, CUP$sym, RESULT);
             }
 
@@ -897,10 +934,10 @@ parser.done_parsing();
           case 55:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
-              StringBuilder id = (StringBuilder) id$.value;
-              java_cup.runtime.Symbol w$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder w = (StringBuilder) w$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
+              final StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol w$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder w = (StringBuilder) w$.value;
  RESULT = w.append(" extends ").append(id); 
               return parser.getSymbolFactory().newSymbol("wildcard", 34, w$, id$, RESULT);
             }
@@ -909,10 +946,10 @@ parser.done_parsing();
           case 56:
             {
               StringBuilder RESULT;
-              java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
-              StringBuilder id = (StringBuilder) id$.value;
-              java_cup.runtime.Symbol w$ = CUP$stack.get(CUP$size - 3);
-              StringBuilder w = (StringBuilder) w$.value;
+              final java_cup.runtime.Symbol id$ = CUP$stack.get(CUP$size - 1);
+              final StringBuilder id = (StringBuilder) id$.value;
+              final java_cup.runtime.Symbol w$ = CUP$stack.get(CUP$size - 3);
+              final StringBuilder w = (StringBuilder) w$.value;
  RESULT = w.append(" super ").append(id); 
               return parser.getSymbolFactory().newSymbol("wildcard", 34, w$, id$, RESULT);
             }
@@ -925,21 +962,21 @@ parser.done_parsing();
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");
 		RESULT="ILLEGAL";
 	
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("robust_id", 28, CUP$sym, CUP$sym, RESULT);
             }
 
           // SEMI? ::= 
           case 58:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("SEMI?", 44, CUP$sym, CUP$sym);
             }
 
           // import_spec* ::= 
           case 59:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("import_spec*", 39, CUP$sym, CUP$sym);
             }
 
@@ -958,7 +995,7 @@ parser.done_parsing();
           // preced* ::= 
           case 62:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("preced*", 42, CUP$sym, CUP$sym);
             }
 
@@ -979,22 +1016,22 @@ parser.done_parsing();
             {
               String RESULT;
 RESULT=null;
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("label_id?", 49, CUP$sym, CUP$sym, RESULT);
             }
 
           // prod_part* ::= 
           case 66:
             {
-              java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$sym = CUP$stack.get(CUP$size - 1);
               return parser.getSymbolFactory().newSymbol("prod_part*", 48, CUP$sym, CUP$sym, new java.util.ArrayList<production_part>());
             }
 
           // prod_part+ ::= prod_part 
           case 67:
             {
-              java_cup.runtime.Symbol CUP$0 = CUP$stack.get(CUP$size - 1);
-              java.util.ArrayList<production_part> RESULT = new java.util.ArrayList<production_part>();
+              final java_cup.runtime.Symbol CUP$0 = CUP$stack.get(CUP$size - 1);
+              final java.util.ArrayList<production_part> RESULT = new java.util.ArrayList<production_part>();
               RESULT.add((production_part) CUP$0.value);
               return parser.getSymbolFactory().newSymbol("prod_part+", 47, CUP$0, CUP$0, RESULT);
             }
@@ -1002,9 +1039,9 @@ RESULT=null;
           // prod_part+ ::= prod_part+ prod_part 
           case 68:
             {
-              java_cup.runtime.Symbol CUP$1 = CUP$stack.get(CUP$size - 1);
-              java_cup.runtime.Symbol CUP$0 = CUP$stack.get(CUP$size - 2);
-              java.util.ArrayList<production_part> RESULT = (java.util.ArrayList<production_part>) CUP$0.value;
+              final java_cup.runtime.Symbol CUP$1 = CUP$stack.get(CUP$size - 1);
+              final java_cup.runtime.Symbol CUP$0 = CUP$stack.get(CUP$size - 2);
+              final java.util.ArrayList<production_part> RESULT = (java.util.ArrayList<production_part>) CUP$0.value;
               RESULT.add((production_part) CUP$1.value);
               return parser.getSymbolFactory().newSymbol("prod_part+", 47, CUP$0, CUP$1, RESULT);
             }

@@ -85,11 +85,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		c.getPrettyPrintedStatements();
 		termSet.addAll(new ArrayIndexFinder().findArrayIndex(c.getTransitionFormula().getFormula()));
 
-		Iterator<ApplicationTerm> termSetIter = termSet.iterator();
+		final Iterator<ApplicationTerm> termSetIter = termSet.iterator();
 		ApplicationTerm term;
 		Term[] terms;
 		TermVariable[] termVariableArray;
-		Set<PointerExpression> ptrExprSet = new HashSet<PointerExpression>();
+		final Set<PointerExpression> ptrExprSet = new HashSet<PointerExpression>();
 		PointerExpression ptrExpr;
 		Map<TermVariable, BoogieVar> ptrExprTermMap;
 
@@ -103,16 +103,16 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 				termVariableArray = term.getFreeVars();
 				ptrExprTermMap = new HashMap<TermVariable, BoogieVar>();
-				TermVariable[] termVar = terms[1].getFreeVars();
-				BoogieVar pointerMapKey = termVarToBooVarMap.get(termVariableArray[0]);
+				final TermVariable[] termVar = terms[1].getFreeVars();
+				final BoogieVar pointerMapKey = termVarToBooVarMap.get(termVariableArray[0]);
 
-				for (TermVariable tv : termVar) {
-					BoogieVar indexTermVar = termVarToBooVarMap.get(tv);
+				for (final TermVariable tv : termVar) {
+					final BoogieVar indexTermVar = termVarToBooVarMap.get(tv);
 					if (indexTermVar != null) {
 						ptrExprTermMap.put(tv, indexTermVar);
 
 						if (!indexToArraysMap.containsKey(indexTermVar)) {
-							Set<BoogieVar> indexToArraySet = new HashSet<BoogieVar>();
+							final Set<BoogieVar> indexToArraySet = new HashSet<BoogieVar>();
 							indexToArraySet.add(pointerMapKey);
 							indexToArraysMap.put(indexTermVar, indexToArraySet);
 						} else {
@@ -160,9 +160,9 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private Map<TermVariable, BoogieVar> getTermVarToBooVar(Map<BoogieVar, TermVariable> map) {
 
-		Map<TermVariable, BoogieVar> result = new HashMap<TermVariable, BoogieVar>();
+		final Map<TermVariable, BoogieVar> result = new HashMap<TermVariable, BoogieVar>();
 
-		for (Entry<BoogieVar, TermVariable> entry : map.entrySet()) {
+		for (final Entry<BoogieVar, TermVariable> entry : map.entrySet()) {
 			result.put(entry.getValue(), entry.getKey());
 		}
 

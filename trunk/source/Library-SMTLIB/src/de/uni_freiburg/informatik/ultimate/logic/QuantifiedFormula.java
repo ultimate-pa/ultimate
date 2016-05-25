@@ -48,9 +48,9 @@ public class QuantifiedFormula extends Term {
 	
 	QuantifiedFormula(int quant, TermVariable[] vars, Term f, int hash) {
 		super(hash);
-		this.mQuantifier = quant;
-		this.mVariables = vars;
-		this.mSubFormula = f;
+		mQuantifier = quant;
+		mVariables = vars;
+		mSubFormula = f;
 	}
 	
 	/**
@@ -81,6 +81,7 @@ public class QuantifiedFormula extends Term {
 		return mSubFormula.getSort();
 	}
 
+	@Override
 	public int hashCode() {
 		return hashQuantifier(mQuantifier, mVariables, mSubFormula);
 	}
@@ -99,7 +100,7 @@ public class QuantifiedFormula extends Term {
 		mTodo.addLast(")) ");
 		
 		// Add variables
-		TermVariable[] vars = getVariables();
+		final TermVariable[] vars = getVariables();
 		for (int i = vars.length - 1; i > 0; i--) {
 			mTodo.addLast(vars[i].getSort());
 			mTodo.addLast(") (" + vars[i] + " ");

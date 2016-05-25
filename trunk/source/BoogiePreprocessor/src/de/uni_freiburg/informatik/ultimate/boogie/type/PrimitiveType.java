@@ -53,35 +53,42 @@ public class PrimitiveType extends BoogieType {
 	}
 
 	//@Override
+	@Override
 	public BoogieType getUnderlyingType() {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
 		return false;
 	}
 
 	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other,
 			ArrayList<BoogieType> subst) {
-		if (other instanceof PlaceholderType)
+		if (other instanceof PlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
+		}
 		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int depth,
 			BoogieType[] substType) {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected String toString(int depth, boolean needParentheses) {
 		switch (type) {
 		case INT:
@@ -105,6 +112,7 @@ public class PrimitiveType extends BoogieType {
 	}
 	
 	//@Override
+	@Override
 	protected boolean unify(int depth, BoogieType other,
 			BoogieType[] substitution) {
 		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
@@ -114,6 +122,7 @@ public class PrimitiveType extends BoogieType {
 		return type;
 	}
 
+	@Override
 	public boolean isFinite() {
 		/* Everything except INT may be finite */
 		return type != INT;

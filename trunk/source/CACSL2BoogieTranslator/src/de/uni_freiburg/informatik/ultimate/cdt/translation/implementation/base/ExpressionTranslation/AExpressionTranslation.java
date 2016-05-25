@@ -81,19 +81,19 @@ public abstract class AExpressionTranslation {
 	public AExpressionTranslation(TypeSizes typeSizes, ITypeHandler typeHandler, 
 			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
 		super();
-		this.mTypeSizes = typeSizes;
-		this.mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
-		this.mTypeHandler = typeHandler;
+		mTypeSizes = typeSizes;
+		mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
+		mTypeHandler = typeHandler;
 		switch (pointerIntegerConversion) {
 		case IdentityAxiom:
 			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.IdentityAxiom);
 		case NonBijectiveMapping:
-			this.mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeHandler);
+			mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeHandler);
 			break;
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.NutzBijection);
 		case Overapproximate:
-			this.mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler);
+			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + pointerIntegerConversion);
@@ -102,13 +102,13 @@ public abstract class AExpressionTranslation {
 	}
 
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
-		ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_float_constant:
 		{
-			String val = new String(node.getValue());
-			RValue rVal = translateFloatingLiteral(loc, val);
+			final String val = new String(node.getValue());
+			final RValue rVal = translateFloatingLiteral(loc, val);
 			assert rVal != null : "result must not be null";
 			return new ExpressionResult(rVal);
 		}
@@ -116,20 +116,20 @@ public abstract class AExpressionTranslation {
 			throw new AssertionError("To be handled by subclass");
 		case IASTLiteralExpression.lk_integer_constant:
 		{
-			String val = new String(node.getValue());
-			RValue rVal = translateIntegerLiteral(loc, val);
+			final String val = new String(node.getValue());
+			final RValue rVal = translateIntegerLiteral(loc, val);
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
-			CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
-			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+			final CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
+			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
-			ArrayList<Declaration> decls = new ArrayList<Declaration>();
+			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
+			final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
-			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		case IASTLiteralExpression.lk_false:
@@ -137,7 +137,7 @@ public abstract class AExpressionTranslation {
 		case IASTLiteralExpression.lk_true:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
 		default:
-			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
+			final String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
@@ -213,8 +213,8 @@ public abstract class AExpressionTranslation {
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
 		} else if ((typeLeft.isUnsigned() && typeRight.isUnsigned()) || (!typeLeft.isUnsigned() && !typeRight.isUnsigned())) {
-			Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
-			Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
+			final Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
+			final Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
 			
 			if (sizeLeft.compareTo(sizeRight) >= 0) {
 				return typeLeft;
@@ -364,13 +364,13 @@ public abstract class AExpressionTranslation {
 	 * operand.
 	 */
 	public final void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
-		CType ctype = CEnum.replaceEnumWithInt(operand.lrVal.getCType().getUnderlyingType());
+		final CType ctype = CEnum.replaceEnumWithInt(operand.lrVal.getCType().getUnderlyingType());
 		if (!(ctype instanceof CPrimitive)) {
 			throw new IllegalArgumentException("integer promotions not applicable to " + ctype);
 		}
-		CPrimitive cPrimitive = (CPrimitive) ctype;
+		final CPrimitive cPrimitive = (CPrimitive) ctype;
 		if (integerPromotionNeeded(cPrimitive)) {
-			CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
 			convertIntToInt(loc, operand, promotedType);
 		}
 	}
@@ -405,8 +405,8 @@ public abstract class AExpressionTranslation {
 	
 		
 	private CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
-		int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
-		int sizeofInt = mTypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
+		final int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
+		final int sizeofInt = mTypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
 		
 		if (sizeOfArgument < sizeofInt || !cPrimitive.isUnsigned()) {
 			return new CPrimitive(PRIMITIVE.INT);
@@ -430,13 +430,13 @@ public abstract class AExpressionTranslation {
 
 	
 	protected String declareConversionFunctionOverApprox(ILocation loc, CPrimitive oldType, CPrimitive newType) {
-		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "convert" + oldType.toString() +"To" + newType.toString();
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
@@ -445,37 +445,37 @@ public abstract class AExpressionTranslation {
 	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
 	
 	protected String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
-		String functionName = "someBinary" + type.toString() +"ComparisonOperation";
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "someBinary" + type.toString() +"ComparisonOperation";
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType paramAstType = mTypeHandler.ctype2asttype(loc, type);
-			ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType paramAstType = mTypeHandler.ctype2asttype(loc, type);
+			final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType, paramAstType);
 		}
 		return prefixedFunctionName;
 	}
 	
 	private String declareBinaryArithmeticFloatOperation(ILocation loc, CPrimitive type) {
-		String functionName = "someBinaryArithmetic" + type.toString() +"operation";
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "someBinaryArithmetic" + type.toString() +"operation";
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 		}
 		return prefixedFunctionName;
 	}
 	
 	private String declareUnaryFloatOperation(ILocation loc, CPrimitive type) {
-		String functionName = "someUnary" + type.toString() +"operation";
-		String prefixedFunctionName = "~" + functionName;
+		final String functionName = "someUnary" + type.toString() +"operation";
+		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 		}
 		return prefixedFunctionName;
@@ -498,29 +498,29 @@ public abstract class AExpressionTranslation {
 
 	public void convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		Expression oldExpression = rexp.lrVal.getValue();
-		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
-		RValue rValue = new RValue(resultExpression, newType, false, false);
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 	}
 
 	public void convertIntToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		Expression oldExpression = rexp.lrVal.getValue();
-		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
-		RValue rValue = new RValue(resultExpression, newType, false, false);
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 
 	}
 	
 	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		Expression oldExpression = rexp.lrVal.getValue();
-		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
-		RValue rValue = new RValue(resultExpression, newType, false, false);
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 	}
 	
@@ -544,10 +544,10 @@ public abstract class AExpressionTranslation {
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
-		Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ZERO);
-		Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ONE);
-		Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
-		RValue rValue = new RValue(resultExpression, new CPrimitive(PRIMITIVE.BOOL), false, false);
+		final Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ZERO);
+		final Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ONE);
+		final Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		final RValue rValue = new RValue(resultExpression, new CPrimitive(PRIMITIVE.BOOL), false, false);
 		rexp.lrVal = rValue;
 	}
 	
@@ -561,9 +561,9 @@ public abstract class AExpressionTranslation {
 	}
 	
 	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
-		Expression base = constructLiteralForIntegerType(loc, 
+		final Expression base = constructLiteralForIntegerType(loc, 
 				getCTypeOfPointerComponents(), baseValue);
-		Expression offset = constructLiteralForIntegerType(loc, 
+		final Expression offset = constructLiteralForIntegerType(loc, 
 				getCTypeOfPointerComponents(), offsetValue);
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc); 
 	}

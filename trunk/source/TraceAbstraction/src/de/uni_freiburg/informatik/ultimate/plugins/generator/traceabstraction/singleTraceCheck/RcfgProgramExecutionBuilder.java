@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
 public class RcfgProgramExecutionBuilder {
 
@@ -84,15 +84,15 @@ public class RcfgProgramExecutionBuilder {
 	private boolean isReAssigned(BoogieVar bv, int position) {
 		boolean result;
 		if (mTrace.isInternalPosition(position) || mTrace.isReturnPosition(position)) {
-			TransFormula tf = mTrace.getSymbolAt(position).getTransitionFormula();
+			final TransFormula tf = mTrace.getSymbolAt(position).getTransitionFormula();
 			result = tf.getAssignedVars().contains(bv);
 		} else if (mTrace.isCallPosition(position)) {
-			Call call = (Call) mTrace.getSymbolAt(position);
-			String callee = call.getCallStatement().getMethodName();
+			final Call call = (Call) mTrace.getSymbolAt(position);
+			final String callee = call.getCallStatement().getMethodName();
 			if (bv.isGlobal()) {
-				Set<BoogieVar> modGlobals = mModifiableGlobalVariableManager.getGlobalVarsAssignment(callee)
+				final Set<BoogieVar> modGlobals = mModifiableGlobalVariableManager.getGlobalVarsAssignment(callee)
 						.getOutVars().keySet();
-				Set<BoogieVar> modOldGlobals = mModifiableGlobalVariableManager.getOldVarsAssignment(callee)
+				final Set<BoogieVar> modOldGlobals = mModifiableGlobalVariableManager.getOldVarsAssignment(callee)
 						.getOutVars().keySet();
 				result = modGlobals.contains(bv) || modOldGlobals.contains(bv);
 			} else {
@@ -137,7 +137,7 @@ public class RcfgProgramExecutionBuilder {
 			if (bv.isGlobal() && !bv.isOldvar()) {
 				return indexWhereVarWasAssignedTheLastTime(bv, pos - 1);
 			} else {
-				int callPos = mTrace.getCallPosition(pos);
+				final int callPos = mTrace.getCallPosition(pos);
 				return indexWhereVarWasAssignedTheLastTime(bv, callPos - 1);
 			}
 		} else {
@@ -147,14 +147,14 @@ public class RcfgProgramExecutionBuilder {
 	}
 
 	public Map<BoogieVar, Expression> varValAtPos(int position) {
-		Map<BoogieVar, Expression> result = new HashMap<BoogieVar, Expression>();
-		Set<BoogieVar> vars = mRelevantVariables.getForwardRelevantVariables()[position + 1];
-		for (BoogieVar bv : vars) {
+		final Map<BoogieVar, Expression> result = new HashMap<BoogieVar, Expression>();
+		final Set<BoogieVar> vars = mRelevantVariables.getForwardRelevantVariables()[position + 1];
+		for (final BoogieVar bv : vars) {
 			if (bv.getTermVariable().getSort().isNumericSort()
 					|| bv.getTermVariable().getSort().getRealSort().getName().equals("Bool")
 					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")) {
-				int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
-				Expression value = mvar2pos2value.get(bv).get(assignPos);
+				final int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
+				final Expression value = mvar2pos2value.get(bv).get(assignPos);
 				assert value != null;
 				result.put(bv, value);
 			}
@@ -163,19 +163,19 @@ public class RcfgProgramExecutionBuilder {
 	}
 
 	private RcfgProgramExecution computeRcfgProgramExecution() {
-		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
+		final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
 				new HashMap<Integer, ProgramState<Expression>>();
 		for (int i = 0; i < mTrace.length(); i++) {
-			Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
-			Map<Expression, Collection<Expression>> variable2Values = 
+			final Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
+			final Map<Expression, Collection<Expression>> variable2Values = 
 					new HashMap<Expression, Collection<Expression>>();
-			for (Entry<BoogieVar, Expression> entry : varValAtPos.entrySet()) {
-				BoogieVar bv = entry.getKey();
-				ILocation loc = mSymbolTable.getAstNode(bv).getLocation();
-				DeclarationInformation declInfo = 
+			for (final Entry<BoogieVar, Expression> entry : varValAtPos.entrySet()) {
+				final BoogieVar bv = entry.getKey();
+				final ILocation loc = mSymbolTable.getAstNode(bv).getLocation();
+				final DeclarationInformation declInfo = 
 						mSymbolTable.getDeclarationInformation(bv);
-				IType iType = entry.getKey().getIType();
-				IdentifierExpression idExpr = new IdentifierExpression(
+				final IType iType = entry.getKey().getIType();
+				final IdentifierExpression idExpr = new IdentifierExpression(
 						loc, iType, entry.getKey().getIdentifier(), declInfo);
 				Expression expr;
 				if (bv instanceof BoogieOldVar) {
@@ -185,7 +185,7 @@ public class RcfgProgramExecutionBuilder {
 				}
 				variable2Values.put(expr, Collections.singleton(entry.getValue()));
 			}
-			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
+			final ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
 		return new RcfgProgramExecution(mTrace.lettersAsList(), partialProgramStateMapping, mBranchEncoders);

@@ -120,7 +120,7 @@ public class Check extends AbstractAnnotations {
 
 	}
 
-	private Spec mSpec;
+	private final Spec mSpec;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -217,10 +217,11 @@ public class Check extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field.equals("Check"))
+		if (field.equals("Check")) {
 			return mSpec.toString();
-		else
+		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
+		}
 	}
 
 	/**

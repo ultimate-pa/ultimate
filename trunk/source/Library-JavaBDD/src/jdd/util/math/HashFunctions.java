@@ -1,7 +1,8 @@
 
 package jdd.util.math;
 
-import jdd.util.*;	// for Test
+// for Test
+import jdd.util.Test;
 
 
 /**
@@ -171,8 +172,9 @@ public final class HashFunctions {
 	 */
 	public static final int hash_FNV(int [] data, int offset, int len) {
 		int hash = FNV_OFFSET;
-		for(int i = 0; i < len; i++)
+		for(int i = 0; i < len; i++) {
 			hash = hash_FNV_round(hash, data[offset + i]);
+		}
 		return hash;
 	}
 
@@ -187,42 +189,44 @@ public final class HashFunctions {
 		// the chi^2 test, so this testbed is really not very accurate.
 
 		// my kingdom for a good random generator!
-		int table_size = 10000;
+		final int table_size = 10000;
 
 		// get the tester objects
-		Chi2Test c2t[] = new Chi2Test[7];
-		for(int i = 0; i < c2t.length; i++) c2t[i] = new Chi2Test(table_size);
+		final Chi2Test c2t[] = new Chi2Test[7];
+		for(int i = 0; i < c2t.length; i++) {
+			c2t[i] = new Chi2Test(table_size);
+		}
 
 
 		// and get random hashes until we have enough to do a chi^2 test!
 		do {
 			// first, we need some random numbers
-			int rnd3 = FastRandom.mtrand() % table_size;
-			int rnd2 = FastRandom.mtrand() % table_size;
-			int rnd1 = FastRandom.mtrand() % table_size;
+			final int rnd3 = FastRandom.mtrand() % table_size;
+			final int rnd2 = FastRandom.mtrand() % table_size;
+			final int rnd1 = FastRandom.mtrand() % table_size;
 
 			c2t[0].add(rnd1); // the primes themself should be tested too :)
 
 			// pair hashes
-			int hp2 = hash_pair(rnd1, rnd2);
-			int hp3 = hash_pair(rnd1, rnd2, rnd3);
+			final int hp2 = hash_pair(rnd1, rnd2);
+			final int hp3 = hash_pair(rnd1, rnd2, rnd3);
 			c2t[1].add( (0x7FFFFFFF & mix(hp2)) % table_size );
 			c2t[2].add( (0x7FFFFFFF & mix(hp3)) % table_size );
 
 
 			// prime hashes
-			int hr2 = hash_prime(rnd1, rnd2);
-			int hr3 = hash_prime(rnd1, rnd2, rnd3);
+			final int hr2 = hash_prime(rnd1, rnd2);
+			final int hr3 = hash_prime(rnd1, rnd2, rnd3);
 			c2t[3].add( (0x7FFFFFFF & mix(hr2)) % table_size );
 			c2t[4].add( (0x7FFFFFFF & mix(hr3)) % table_size );
 
 			// jenkins
-			int hj3 = hash_jenkins(rnd1, rnd2, rnd3);
+			final int hj3 = hash_jenkins(rnd1, rnd2, rnd3);
 			c2t[5].add( (0x7FFFFFFF & mix(hj3)) %  table_size );
 
 
 			// FNV
-			int hfnv3 = hash_FNV(rnd1, rnd2, rnd3);
+			final int hfnv3 = hash_FNV(rnd1, rnd2, rnd3);
 			c2t[6].add( (0x7FFFFFFF & mix(hfnv3)) %  table_size );
 
 

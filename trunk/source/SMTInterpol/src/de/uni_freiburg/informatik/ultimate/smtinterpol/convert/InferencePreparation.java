@@ -45,17 +45,19 @@ public class InferencePreparation {
 	}
 	public Term prepare(Term body) {
 		assert body.getSort() == mTeory.getBooleanSort() : "Non-boolean term as quantifier sub?";
-		FormulaUnLet unflet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+		final FormulaUnLet unflet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 		return recprepare(unflet.unlet(body));
 	}
 	
 	private Term recprepare(Term subterm) {
-		if (!CollectionsHelper.containsAny(subterm.getFreeVars(), mVars))
+		if (!CollectionsHelper.containsAny(subterm.getFreeVars(), mVars)) {
 			return subterm;
-		while (subterm instanceof AnnotatedTerm)
+		}
+		while (subterm instanceof AnnotatedTerm) {
 			subterm = ((AnnotatedTerm)subterm).getSubterm();
+		}
 		if (subterm instanceof ApplicationTerm) {
-			ApplicationTerm app = (ApplicationTerm)subterm;
+			final ApplicationTerm app = (ApplicationTerm)subterm;
 			if (app.getSort() == mTeory.getBooleanSort()) {
 				mBoolTerms.push(subterm);
 			} else if (app.getFunction().isIntern() 
@@ -64,45 +66,49 @@ public class InferencePreparation {
 				mSubst = mIte = app;
 				return null;
 			}
-			Term[] params = app.getParameters();
-			Term[] newparams = new Term[params.length];
+			final Term[] params = app.getParameters();
+			final Term[] newparams = new Term[params.length];
 			for (int i = 0; i < params.length; ++i) {
 				newparams[i] = recprepare(params[i]);
 				while (newparams[i] == null) {
 					// Found term ite in parameter i
 					// TODO This does not work: (and p q) vs. (p (f...))
-					if (mBoolTerms.peek() != subterm)
+					if (mBoolTerms.peek() != subterm) {
 						return null;
+					}
 					if (mBoolTerms.peek() == subterm) {
 						mBoolTerms.pop();
 						return recprepare(generateIte(subterm));
 					}
 				}
 			}
-			if (mBoolTerms.peek() == subterm)
+			if (mBoolTerms.peek() == subterm) {
 				mBoolTerms.pop();
+			}
 			return mTeory.term(app.getFunction(), newparams);
 		}
 		return subterm;
 	}
 	private Term generateIte(Term subterm) {
-		Term trueCase = generateCase(subterm,true);
-		Term falseCase = generateCase(subterm,false);
-		Term res = mTeory.ifthenelse(
+		final Term trueCase = generateCase(subterm,true);
+		final Term falseCase = generateCase(subterm,false);
+		final Term res = mTeory.ifthenelse(
 				mIte.getParameters()[0], trueCase, falseCase);
 		mIte = null; 
 		mSubst = null;
 		return res;
 	}
 	private Term generateCase(Term subterm,boolean which) {
-		while (subterm instanceof AnnotatedTerm)
+		while (subterm instanceof AnnotatedTerm) {
 			subterm = ((AnnotatedTerm)subterm).getSubterm();
-		if (subterm == mSubst)
+		}
+		if (subterm == mSubst) {
 			return mIte.getParameters()[which ? 1 : 2];
+		}
 		if (subterm instanceof ApplicationTerm) {
-			ApplicationTerm at = (ApplicationTerm)subterm;
-			Term[] params = at.getParameters();
-			Term[] newparams = new Term[params.length];
+			final ApplicationTerm at = (ApplicationTerm)subterm;
+			final Term[] params = at.getParameters();
+			final Term[] newparams = new Term[params.length];
 			boolean changed = false;
 			for (int i = 0; i < params.length; ++i) {
 				newparams[i] = generateCase(params[i], which);

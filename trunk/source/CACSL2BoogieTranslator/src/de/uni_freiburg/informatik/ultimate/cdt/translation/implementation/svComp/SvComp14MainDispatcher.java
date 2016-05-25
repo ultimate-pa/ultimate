@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
  * TODO: rename this to 2015 perhaps??
@@ -55,13 +55,13 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 
 	@Override
 	protected void init() {
-		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new SVCompTypeHandler(!mBitvectorTranslation);
-		acslHandler = new ACSLHandler(mWitnessInvariants != null);
-		nameHandler = new NameHandler(backtranslator);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, mBitvectorTranslation, mOverapproximateFloatingPointOperations, nameHandler);
-		this.backtranslator.setExpressionTranslation(((SvComp14CHandler) cHandler).getExpressionTranslation());
-		preprocessorHandler = new SvComp14PreprocessorHandler();
-		REPORT_WARNINGS = false;
+		mSideEffectHandler = new SideEffectHandler();
+		mTypeHandler = new SVCompTypeHandler(!mBitvectorTranslation);
+		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
+		mNameHandler = new NameHandler(mBacktranslator);
+		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation, mOverapproximateFloatingPointOperations, mNameHandler);
+		mBacktranslator.setExpressionTranslation(((SvComp14CHandler) mCHandler).getExpressionTranslation());
+		mPreprocessorHandler = new SvComp14PreprocessorHandler();
+		mReportWarnings = false;
 	}
 }

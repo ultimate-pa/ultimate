@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.ast;
 
 public class SkipStatement extends AstNode {
 	
+	@Override
 	public String toString()
 	{
 		return "skip";

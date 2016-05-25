@@ -93,7 +93,7 @@ public class CachedTransFormulaLinearizer {
 		mSmtManager = smtManager;
 		mReplacementVarFactory = new ReplacementVarFactory(mSmtManager
 				.getBoogie2Smt().getVariableManager());
-		Collection<Term> axioms = mSmtManager.getBoogie2Smt().getAxioms();
+		final Collection<Term> axioms = mSmtManager.getBoogie2Smt().getAxioms();
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
 		mCache = new HashMap<TransFormula, LinearTransition>();
@@ -151,17 +151,17 @@ public class CachedTransFormulaLinearizer {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
 				mReplacementVarFactory);
 
-		for (TransitionPreprocessor tpp : getPreprocessors()) {
+		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
 				tflr = tpp.process(mSmtManager.getScript(), tflr);
-			} catch (TermException e) {
+			} catch (final TermException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		LinearTransition lt;
 		try {
 			lt = LinearTransition.fromTransFormulaLR(tflr, NlaHandling.EXCEPTION);
-		} catch (TermException e) {
+		} catch (final TermException e) {
 			throw new RuntimeException(e);
 		}
 		return lt;

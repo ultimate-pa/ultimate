@@ -41,8 +41,8 @@ public class ApplicationTerm extends Term {
 	ApplicationTerm(FunctionSymbol function, Term[] parameters, int hash) {
 		super(hash);
 		function.typecheck(parameters);
-		this.mFunction   = function;
-		this.mParameters = parameters;
+		mFunction   = function;
+		mParameters = parameters;
 	}
 
 	/**
@@ -66,6 +66,7 @@ public class ApplicationTerm extends Term {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public Sort getSort() {
 		return mFunction.mReturnSort.getRealSort();
 	}
@@ -80,8 +81,8 @@ public class ApplicationTerm extends Term {
 	 */
 	@Override
 	public void toStringHelper(ArrayDeque<Object> mTodo) {
-		String func = getFunction().getApplicationString();
-		Term[] args = getParameters();
+		final String func = getFunction().getApplicationString();
+		final Term[] args = getParameters();
 		if (args.length == 0) {
 			mTodo.add(func);
 		} else {

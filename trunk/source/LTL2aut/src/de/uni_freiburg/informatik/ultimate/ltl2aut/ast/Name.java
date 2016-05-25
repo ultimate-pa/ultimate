@@ -32,15 +32,16 @@ public class Name extends AstNode {
 	
 	public Name(String name)
 	{
-		this.value = name;
+		value = name;
 	}
 	
+	@Override
 	public String toString()
 	{
 		return value;
 	}
 	
 	public String getIdent()
-	{return this.value;}
+	{return value;}
 
 }

@@ -107,7 +107,7 @@ public class PetriNetAutomatonAST extends AutomatonAST {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("PetriNet(" + mName + ") "+ "[Size of alphabet: ");
 		builder.append(malphabet.size());
 		builder.append(" Num of places: ");

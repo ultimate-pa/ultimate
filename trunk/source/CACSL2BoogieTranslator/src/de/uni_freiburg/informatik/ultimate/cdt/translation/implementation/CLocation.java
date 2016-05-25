@@ -85,7 +85,7 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mNode != null) {
 			sb.append("C: ");
 			sb.append(mNode.getRawSignature());

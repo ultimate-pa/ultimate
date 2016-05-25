@@ -47,16 +47,16 @@ public class GenericServiceProvider implements IStorable {
 		assert toolchainStorage != null;
 
 		// first, check if this instance already exists in storage
-		IStorable storable = toolchainStorage
+		final IStorable storable = toolchainStorage
 				.getStorable(serviceType.getName());
 		if (storable != null) {
 			return (T) storable;
 		}
 
 		// no it doesnt, we need to create a new one
-		GenericServiceProvider instance = (GenericServiceProvider) toolchainStorage
+		final GenericServiceProvider instance = (GenericServiceProvider) toolchainStorage
 				.getStorable(sKey);
-		T rtrValue = instance.mFactory.createService(serviceType,
+		final T rtrValue = instance.mFactory.createService(serviceType,
 				toolchainStorage, toolchainStorage);
 		toolchainStorage.putStorable(serviceType.getName(), rtrValue);
 		return rtrValue;

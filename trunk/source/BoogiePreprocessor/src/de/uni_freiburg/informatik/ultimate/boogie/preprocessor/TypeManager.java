@@ -45,18 +45,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class TypeManager {
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
-	private HashMap<String, TypeConstructor> typeConstructors = new HashMap<String, TypeConstructor>();
-	private HashMap<String, TypeDeclaration> declarations = new HashMap<String, TypeDeclaration>();
-	private Stack<String> visiting = new Stack<String>();
-	private Stack<TypeParameters> typeParamScopes = new Stack<TypeParameters>();
+	private final HashMap<String, TypeConstructor> typeConstructors = new HashMap<String, TypeConstructor>();
+	private final HashMap<String, TypeDeclaration> declarations = new HashMap<String, TypeDeclaration>();
+	private final Stack<String> visiting = new Stack<String>();
+	private final Stack<TypeParameters> typeParamScopes = new Stack<TypeParameters>();
 
 	public TypeManager(Declaration[] decls, ILogger logger) {
 		mLogger = logger;
-		for (Declaration d : decls) {
+		for (final Declaration d : decls) {
 			if (d instanceof TypeDeclaration) {
-				TypeDeclaration td = (TypeDeclaration) d;
+				final TypeDeclaration td = (TypeDeclaration) d;
 				declarations.put(td.getIdentifier(), td);
 			}
 		}
@@ -71,14 +71,14 @@ public class TypeManager {
 	}
 
 	public BoogieType getPrimitiveType(String typeName) {
-		if (typeName.equals("int"))
+		if (typeName.equals("int")) {
 			return BoogieType.TYPE_INT;
-		else if (typeName == "real")
+		} else if (typeName == "real") {
 			return BoogieType.TYPE_REAL;
-		else if (typeName == "bool")
+		} else if (typeName == "bool") {
 			return BoogieType.TYPE_BOOL;
-		else if (typeName.startsWith("bv")) {
-			int length = Integer.parseInt(typeName.substring(2));
+		} else if (typeName.startsWith("bv")) {
+			final int length = Integer.parseInt(typeName.substring(2));
 			return BoogieType.createBitvectorType(length);
 		} else {
 			mLogger.fatal("getPrimitiveType called with unknown type " + typeName + "!");
@@ -87,14 +87,14 @@ public class TypeManager {
 	}
 
 	public BoogieType resolveNamedType(NamedType type, boolean markUsed) {
-		String name = type.getName();
-		int numParam = type.getTypeArgs().length;
+		final String name = type.getName();
+		final int numParam = type.getTypeArgs().length;
 
-		ListIterator<TypeParameters> it = typeParamScopes.listIterator(typeParamScopes.size());
+		final ListIterator<TypeParameters> it = typeParamScopes.listIterator(typeParamScopes.size());
 		int increment = 0;
 		while (it.hasPrevious()) {
-			TypeParameters tp = it.previous();
-			BoogieType placeholderType = tp.findType(name, increment, markUsed);
+			final TypeParameters tp = it.previous();
+			final BoogieType placeholderType = tp.findType(name, increment, markUsed);
 			if (placeholderType != null) {
 				if (numParam != 0) {
 					mLogger.error("Bounded type " + name + " used with arguments.");
@@ -106,23 +106,24 @@ public class TypeManager {
 		}
 
 		if (!typeConstructors.containsKey(name)) {
-			TypeDeclaration decl = declarations.get(name);
+			final TypeDeclaration decl = declarations.get(name);
 			if (decl == null) {
 				mLogger.error("Type " + name + " is never defined.");
 				return BoogieType.TYPE_ERROR;
 			}
 			resolve(decl);
 		}
-		TypeConstructor tc = typeConstructors.get(name);
-		if (tc == null) /* cyclic definition, already reported */
+		final TypeConstructor tc = typeConstructors.get(name);
+		if (tc == null) {
 			return BoogieType.TYPE_ERROR;
+		}
 
 		if (tc.getParamCount() != numParam) {
 			mLogger.error("Type " + name + " used with wrong number of arguments.");
 			return BoogieType.TYPE_ERROR;
 		}
-		BoogieType[] typeArgs = new BoogieType[numParam];
-		for (int i : tc.getParamOrder()) {
+		final BoogieType[] typeArgs = new BoogieType[numParam];
+		for (final int i : tc.getParamOrder()) {
 			typeArgs[i] = resolveType(type.getTypeArgs()[i], markUsed);
 		}
 		for (int i = 0; i < numParam; i++) {
@@ -130,55 +131,57 @@ public class TypeManager {
 			 * Resolve the other type arguments without marking place holders as
 			 * used. Place holders are actually instantiated as tError.
 			 */
-			if (typeArgs[i] == null)
+			if (typeArgs[i] == null) {
 				typeArgs[i] = resolveType(type.getTypeArgs()[i], false);
+			}
 		}
 		return BoogieType.createConstructedType(tc, typeArgs);
 	}
 
 	public BoogieType resolveArrayType(ArrayType type, boolean markUsed) {
-		TypeParameters typeParams = new TypeParameters(type.getTypeParams());
+		final TypeParameters typeParams = new TypeParameters(type.getTypeParams());
 		pushTypeScope(typeParams);
-		int numIndices = type.getIndexTypes().length;
-		BoogieType[] indexTypes = new BoogieType[numIndices];
+		final int numIndices = type.getIndexTypes().length;
+		final BoogieType[] indexTypes = new BoogieType[numIndices];
 		for (int i = 0; i < numIndices; i++) {
 			indexTypes[i] = resolveType(type.getIndexTypes()[i], markUsed);
 		}
-		if (!typeParams.fullyUsed())
+		if (!typeParams.fullyUsed()) {
 			mLogger.error("ArrayType generics not used in index types: " + type);
-		BoogieType resultType = resolveType(type.getValueType(), markUsed);
+		}
+		final BoogieType resultType = resolveType(type.getValueType(), markUsed);
 		popTypeScope();
 
 		return BoogieType.createArrayType(type.getTypeParams().length, indexTypes, resultType);
 	}
 
 	private BoogieType resolveStructType(StructType type, boolean markUsed) {
-		ArrayList<String> names = new ArrayList<String>(type.getFields().length);
-		ArrayList<BoogieType> types = new ArrayList<BoogieType>(type.getFields().length);
+		final ArrayList<String> names = new ArrayList<String>(type.getFields().length);
+		final ArrayList<BoogieType> types = new ArrayList<BoogieType>(type.getFields().length);
 
 		for (int i = 0; i < type.getFields().length; i++) {
-			BoogieType fieldType = resolveType(type.getFields()[i].getType(), markUsed);
-			for (String id : type.getFields()[i].getIdentifiers()) {
+			final BoogieType fieldType = resolveType(type.getFields()[i].getType(), markUsed);
+			for (final String id : type.getFields()[i].getIdentifiers()) {
 				names.add(id);
 				types.add(fieldType);
 			}
 		}
-		String[] fNames = names.toArray(new String[names.size()]);
-		BoogieType[] fTypes = types.toArray(new BoogieType[types.size()]);
+		final String[] fNames = names.toArray(new String[names.size()]);
+		final BoogieType[] fTypes = types.toArray(new BoogieType[types.size()]);
 		return BoogieType.createStructType(fNames, fTypes);
 	}
 
 	public BoogieType resolveType(ASTType type, boolean markUsed) {
 		BoogieType boogieType;
-		if (type instanceof PrimitiveType)
+		if (type instanceof PrimitiveType) {
 			boogieType = getPrimitiveType(((PrimitiveType) type).getName());
-		else if (type instanceof NamedType)
+		} else if (type instanceof NamedType) {
 			boogieType = resolveNamedType((NamedType) type, markUsed);
-		else if (type instanceof ArrayType)
+		} else if (type instanceof ArrayType) {
 			boogieType = resolveArrayType((ArrayType) type, markUsed);
-		else if (type instanceof StructType)
+		} else if (type instanceof StructType) {
 			boogieType = resolveStructType((StructType) type, markUsed);
-		else {
+		} else {
 			mLogger.fatal("Unknown ASTType " + type);
 			boogieType = BoogieType.TYPE_ERROR;
 		}
@@ -196,12 +199,12 @@ public class TypeManager {
 			typeConstructors.put(td.getIdentifier(), null);
 		}
 		visiting.push(td.getIdentifier());
-		String name = td.getIdentifier();
-		String[] typeParams = td.getTypeParams();
+		final String name = td.getIdentifier();
+		final String[] typeParams = td.getTypeParams();
 		BoogieType synonym = null;
 		int[] order;
 		if (td.getSynonym() != null) {
-			TypeParameters tp = new TypeParameters(typeParams, true);
+			final TypeParameters tp = new TypeParameters(typeParams, true);
 			pushTypeScope(tp);
 			synonym = resolveType(td.getSynonym());
 			order = new int[tp.getNumUsed()];
@@ -209,17 +212,19 @@ public class TypeManager {
 			popTypeScope();
 		} else {
 			order = new int[typeParams.length];
-			for (int i = 0; i < order.length; i++)
+			for (int i = 0; i < order.length; i++) {
 				order[i] = i;
+			}
 		}
 		visiting.pop();
 		typeConstructors.put(name, new TypeConstructor(name, td.isFinite(), typeParams.length, order, synonym));
 	}
 
 	public void init() {
-		for (TypeDeclaration td : declarations.values()) {
-			if (typeConstructors.containsKey(td.getIdentifier()))
+		for (final TypeDeclaration td : declarations.values()) {
+			if (typeConstructors.containsKey(td.getIdentifier())) {
 				continue;
+			}
 			resolve(td);
 		}
 	}

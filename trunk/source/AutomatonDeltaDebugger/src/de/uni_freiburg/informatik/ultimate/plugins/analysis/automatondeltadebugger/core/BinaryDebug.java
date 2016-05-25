@@ -122,7 +122,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 	 */
 	public boolean run() {
 		boolean result = false;
-		List<T> list = mShrinker.extractList();
+		final List<T> list = mShrinker.extractList();
 		if (list.isEmpty()) {
 			return result;
 		}

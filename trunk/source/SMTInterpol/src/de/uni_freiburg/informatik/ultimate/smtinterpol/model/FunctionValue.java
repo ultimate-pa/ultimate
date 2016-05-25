@@ -32,17 +32,21 @@ class FunctionValue {
 			mIdx = idx;
 			mHash = Arrays.hashCode(mIdx);
 		}
+		@Override
 		public int hashCode() {
 			return mHash;
 		}
+		@Override
 		public boolean equals(Object o) {
-			if (o instanceof Index)
+			if (o instanceof Index) {
 				return Arrays.equals(mIdx, ((Index) o).mIdx);
+			}
 			return false;
 		}
 		public int[] getArray() {
 			return mIdx;
 		}
+		@Override
 		public String toString() {
 			return Arrays.toString(mIdx);
 		}
@@ -65,18 +69,21 @@ class FunctionValue {
 			assert mDefault == 0;
 			mDefault = value;
 		} else {
-			if (mValues == null)
+			if (mValues == null) {
 				mValues = new HashMap<Index, Integer>();
+			}
 			mValues.put(new Index(idx), value);
 		}
 	}
 	
 	public int get(int[] idx, boolean partial) {
-		if (idx == null || idx.length == 0)
+		if (idx == null || idx.length == 0) {
 			return mDefault;
-		if (mValues == null)
+		}
+		if (mValues == null) {
 			return partial ? -1 : mDefault;
-		Integer res = mValues.get(new Index(idx));
+		}
+		final Integer res = mValues.get(new Index(idx));
 		return res == null ? partial ? -1 : mDefault : res.intValue();
 	}
 
@@ -85,7 +92,7 @@ class FunctionValue {
 	}
 	
 	public Map<Index, Integer> values() {
-		Map<Index, Integer> empty = Collections.emptyMap();
+		final Map<Index, Integer> empty = Collections.emptyMap();
 		return mValues == null ? empty : mValues;
 	}
 }

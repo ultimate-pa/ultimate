@@ -60,9 +60,9 @@ public class SMTSolver {
 	 */
 	public static Script newScript(LassoRankerPreferences preferences, String constraintsName,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
-		Settings settings = preferences.getSolverConstructionSettings(
+		final Settings settings = preferences.getSolverConstructionSettings(
 				preferences.baseNameOfDumpedScript + "+" + constraintsName);
-		Script script = SolverBuilder.buildScript(services, storage, settings);
+		final Script script = SolverBuilder.buildScript(services, storage, settings);
 		
 		// Set options
 		script.setOption(":produce-models", true);

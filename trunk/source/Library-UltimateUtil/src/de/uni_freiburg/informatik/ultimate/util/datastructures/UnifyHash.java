@@ -29,9 +29,13 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.ref.WeakReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
+import java.lang.ref.WeakReference;
+import java.util.AbstractCollection;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * A UnifyHash is a collection that helps to implement the fly-weight design
@@ -143,16 +147,17 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	 */
 	@SuppressWarnings("unchecked")
 	private void grow() {
-		Bucket<E>[] oldBuckets = mBuckets;
-		int newCap = mBuckets.length * 2 + 1;
+		final Bucket<E>[] oldBuckets = mBuckets;
+		final int newCap = mBuckets.length * 2 + 1;
 		mThreshold = (int) (mLoadFactor * newCap);
 		mBuckets = new Bucket[newCap];
 		for (int i = 0; i < oldBuckets.length; i++) {
 			Bucket<E> nextBucket;
 			for (Bucket<E> b = oldBuckets[i]; b != null; b = nextBucket) {
-				if (i != Math.abs(b.mHash % oldBuckets.length))
+				if (i != Math.abs(b.mHash % oldBuckets.length)) {
 					throw new RuntimeException(i + ", hash: " + b.mHash + ", oldlength: " + oldBuckets.length);
-				int newSlot = Math.abs(b.mHash % newCap);
+				}
+				final int newSlot = Math.abs(b.mHash % newCap);
 				nextBucket = b.mNext;
 				b.mNext = mBuckets[newSlot];
 				mBuckets[newSlot] = b;
@@ -169,13 +174,14 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	public final void cleanUp() {
 		Bucket<E> died;
 		while ((died = (Bucket<E>) mQueue.poll()) != null) {
-			int diedSlot = Math.abs(died.mHash % mBuckets.length);
-			if (mBuckets[diedSlot] == died)
+			final int diedSlot = Math.abs(died.mHash % mBuckets.length);
+			if (mBuckets[diedSlot] == died) {
 				mBuckets[diedSlot] = died.mNext;
-			else {
+			} else {
 				Bucket<E> b = mBuckets[diedSlot];
-				while (b.mNext != died)
+				while (b.mNext != died) {
 					b = b.mNext;
+				}
 				b.mNext = died.mNext;
 			}
 			mSize--;
@@ -185,6 +191,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	/**
 	 * The number of objects that are stored in this collection.
 	 */
+	@Override
 	public int size() {
 		return mSize;
 	}
@@ -192,12 +199,13 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	/**
 	 * Gets an iterator of all objects in this collection.
 	 */
+	@Override
 	public Iterator<E> iterator() {
 		cleanUp();
 
 		return new Iterator<E>() {
 			private int mBucket = 0;
-			private int mKnown = mModCount;
+			private final int mKnown = mModCount;
 			private Bucket<E> mNextBucket;
 			private E mNextVal;
 
@@ -208,34 +216,41 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 			private void internalNext() {
 				while (true) {
 					while (mNextBucket == null) {
-						if (mBucket == mBuckets.length)
+						if (mBucket == mBuckets.length) {
 							return;
+						}
 						mNextBucket = mBuckets[mBucket++];
 					}
 
 					mNextVal = mNextBucket.get();
-					if (mNextVal != null)
+					if (mNextVal != null) {
 						return;
+					}
 
 					mNextBucket = mNextBucket.mNext;
 				}
 			}
 
+			@Override
 			public boolean hasNext() {
 				return mNextBucket != null;
 			}
 
+			@Override
 			public E next() {
-				if (mKnown != mModCount)
+				if (mKnown != mModCount) {
 					throw new ConcurrentModificationException();
-				if (mNextBucket == null)
+				}
+				if (mNextBucket == null) {
 					throw new NoSuchElementException();
-				E result = mNextVal;
+				}
+				final E result = mNextVal;
 				mNextBucket = mNextBucket.mNext;
 				internalNext();
 				return result;
 			}
 
+			@Override
 			public void remove() {
 				throw new UnsupportedOperationException();
 			}
@@ -249,6 +264,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	public Iterable<E> iterateHashCode(final int hash) {
 		cleanUp();
 		return new Iterable<E>() {
+			@Override
 			public Iterator<E> iterator() {
 				return new Iterator<E>() {
 					private int mKnown = mModCount;
@@ -266,24 +282,29 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 						while (mNextBucket != null) {
 							if (mNextBucket.mHash == hash) {
 								mNextVal = mNextBucket.get();
-								if (mNextVal != null)
+								if (mNextVal != null) {
 									return;
+								}
 							}
 							mPrevBucket = mNextBucket;
 							mNextBucket = mNextBucket.mNext;
 						}
 					}
 
+					@Override
 					public boolean hasNext() {
 						return mNextBucket != null;
 					}
 
+					@Override
 					public E next() {
-						if (mKnown != mModCount)
+						if (mKnown != mModCount) {
 							throw new ConcurrentModificationException();
-						if (mNextBucket == null)
+						}
+						if (mNextBucket == null) {
 							throw new NoSuchElementException();
-						E result = mNextVal;
+						}
+						final E result = mNextVal;
 						mRemoveBucket = mPrevBucket;
 						mRemoveOk = true;
 						mPrevBucket = mNextBucket;
@@ -292,15 +313,19 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 						return result;
 					}
 
+					@Override
 					public void remove() {
-						if (mKnown != mModCount)
+						if (mKnown != mModCount) {
 							throw new ConcurrentModificationException();
-						if (!mRemoveOk)
+						}
+						if (!mRemoveOk) {
 							throw new IllegalStateException();
-						if (mRemoveBucket == null)
+						}
+						if (mRemoveBucket == null) {
 							mBuckets[Math.abs(hash % mBuckets.length)] = mBuckets[Math.abs(hash % mBuckets.length)].mNext;
-						else
+						} else {
 							mRemoveBucket.mNext = mRemoveBucket.mNext.mNext;
+						}
 						mKnown = ++mModCount;
 						mSize--;
 					}
@@ -320,12 +345,13 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	 *            the object to add to this collection.
 	 */
 	public void put(int hash, E o) {
-		if (mSize++ > mThreshold)
+		if (mSize++ > mThreshold) {
 			grow();
+		}
 		mModCount++;
 
-		int slot = Math.abs(hash % mBuckets.length);
-		Bucket<E> b = new Bucket<E>(o, mQueue);
+		final int slot = Math.abs(hash % mBuckets.length);
+		final Bucket<E> b = new Bucket<E>(o, mQueue);
 		b.mHash = hash;
 		b.mNext = mBuckets[slot];
 		mBuckets[slot] = b;
@@ -335,7 +361,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	 * Remove the object o from the collection.
 	 */
 	public boolean remove(int hash, E o) {
-		Iterator<E> i = iterateHashCode(hash).iterator();
+		final Iterator<E> i = iterateHashCode(hash).iterator();
 		while (i.hasNext()) {
 			if (i.next() == o) {
 				i.remove();
@@ -366,12 +392,13 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	 */
 	public E unify(E o, int hash, Comparator<E> comparator) {
 		cleanUp();
-		int slot = Math.abs(hash % mBuckets.length);
+		final int slot = Math.abs(hash % mBuckets.length);
 		for (Bucket<E> b = mBuckets[slot]; b != null; b = b.mNext) {
 			if (b.mHash == hash) {
-				E old = b.get();
-				if (old != null && comparator.compare(o, old) == 0)
+				final E old = b.get();
+				if (old != null && comparator.compare(o, old) == 0) {
 					return old;
+				}
 			}
 		}
 
@@ -389,13 +416,14 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	 */
 	public E unify(E o) {
 		cleanUp();
-		int hash = o.hashCode();
-		int slot = Math.abs(hash % mBuckets.length);
+		final int hash = o.hashCode();
+		final int slot = Math.abs(hash % mBuckets.length);
 		for (Bucket<E> b = mBuckets[slot]; b != null; b = b.mNext) {
 			if (b.mHash == hash) {
-				E old = b.get();
-				if (old != null && o.equals(old))
+				final E old = b.get();
+				if (old != null && o.equals(old)) {
 					return old;
+				}
 			}
 		}
 
@@ -408,7 +436,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 		oos.writeInt(mBuckets.length);
 		for (Bucket<E> b : mBuckets) {
 			while (b != null) {
-				E elem = b.get();
+				final E elem = b.get();
 				if (elem != null) {
 					oos.writeInt(b.mHash);
 					oos.writeObject(elem);
@@ -426,13 +454,14 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 		mQueue = new ReferenceQueue<E>();
 		mModCount = 0;
 		ois.defaultReadObject();
-		int bucketsize = ois.readInt();
-		mBuckets = (Bucket<E>[]) new Bucket[bucketsize];
+		final int bucketsize = ois.readInt();
+		mBuckets = new Bucket[bucketsize];
 		while (true) {
-			int hash = ois.readInt();
-			E obj = (E) ois.readObject();
-			if (obj == null)
+			final int hash = ois.readInt();
+			final E obj = (E) ois.readObject();
+			if (obj == null) {
 				break;
+			}
 			put(hash, obj);
 		}
 	}

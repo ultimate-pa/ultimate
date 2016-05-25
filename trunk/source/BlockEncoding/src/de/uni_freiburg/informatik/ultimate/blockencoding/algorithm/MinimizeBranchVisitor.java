@@ -73,9 +73,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (notReachableNodes.contains(node)) {
 			return new MinimizedNode[0];
 		}
-		ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
+		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
 		// First check is for parallel edges, we want to merge
-		IMinimizedEdge[] parallelEdges = checkForParallelMerge(node);
+		final IMinimizedEdge[] parallelEdges = checkForParallelMerge(node);
 		if (parallelEdges.length == 2) {
 			mLogger.debug("Parallel Merge: " + parallelEdges[0] + " v "
 					+ parallelEdges[1]);
@@ -83,18 +83,18 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		}
 		// Sequential-Merge of two edges:
 		if (checkForSequentialMerge(node)) {
-			IMinimizedEdge out = node.getMinimalOutgoingEdgeLevel().get(0);
-			IMinimizedEdge in = node.getMinimalIncomingEdgeLevel().get(0);
+			final IMinimizedEdge out = node.getMinimalOutgoingEdgeLevel().get(0);
+			final IMinimizedEdge in = node.getMinimalIncomingEdgeLevel().get(0);
 			if (mVisitedEdges.contains(in) && mVisitedEdges.contains(out)) {
 				return reVisitNodes.toArray(new MinimizedNode[0]);
 			}
 			mLogger.debug("Sequential Merge: " + in + " /\\ " + out);
-			MinimizedNode[] succNodes = mergeSequential(in, out);
+			final MinimizedNode[] succNodes = mergeSequential(in, out);
 
 			// In every case we revisit the merged node
 			mVisitedEdges.add(out);
 			mVisitedEdges.add(in);
-			for (MinimizedNode succ : succNodes) {
+			for (final MinimizedNode succ : succNodes) {
 				reVisitNodes.add(succ);
 			}
 		}
@@ -115,9 +115,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				|| node.getIncomingEdges().size() <= 1) {
 			return new IMinimizedEdge[0];
 		}
-		HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
-		ArrayList<IMinimizedEdge> parallelEdges = new ArrayList<IMinimizedEdge>();
-		for (IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
+		final HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> parallelEdges = new ArrayList<IMinimizedEdge>();
+		for (final IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
 			if (!pointingMap.containsKey(incomingEdge.getSource())) {
 				pointingMap.put(incomingEdge.getSource(), incomingEdge);
 			} else {
@@ -125,7 +125,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				// TODO: can there exist more than two parallel edges?
 				parallelEdges.add(incomingEdge);
 				parallelEdges.add(pointingMap.get(incomingEdge.getSource()));
-				IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
+				final IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
 						.getSource());
 				// ParallelEdges maybe Return-Edges, we do not merge them
 				if (incomingEdge.isBasicEdge()
@@ -166,9 +166,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		// First condition: --->(node)--->
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() == 1) {
-			IMinimizedEdge incoming = (IMinimizedEdge) node.getIncomingEdges()
+			final IMinimizedEdge incoming = node.getIncomingEdges()
 					.get(0);
-			IMinimizedEdge outgoing = (IMinimizedEdge) node.getOutgoingEdges()
+			final IMinimizedEdge outgoing = node.getOutgoingEdges()
 					.get(0);
 
 			// If they are basic edges, we do not want to have Call, Return,
@@ -217,15 +217,15 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 */
 	private MinimizedNode mergeParallel(IMinimizedEdge edge1,
 			IMinimizedEdge edge2) {
-		DisjunctionEdge disjunction = new DisjunctionEdge(edge1, edge2);
-		ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
+		final DisjunctionEdge disjunction = new DisjunctionEdge(edge1, edge2);
+		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		outgoingList.add(disjunction);
 		// the outgoing edges of disjunction.getSource() maybe not initialized
 		if (disjunction.getSource().getOutgoingEdges() == null) {
 			initializeOutgoingEdges(disjunction.getSource());
 		}
 
-		for (IMinimizedEdge edge : disjunction.getSource()
+		for (final IMinimizedEdge edge : disjunction.getSource()
 				.getMinimalOutgoingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				outgoingList.add(edge);
@@ -236,9 +236,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (disjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(disjunction.getTarget());
 		}
-		ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
 		incomingList.add(disjunction);
-		for (IMinimizedEdge edge : disjunction.getTarget()
+		for (final IMinimizedEdge edge : disjunction.getTarget()
 				.getMinimalIncomingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				incomingList.add(edge);
@@ -273,13 +273,13 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 			conjunction = new ConjunctionEdge(edge1, edge2);
 		}
 		// We have to compute the new outgoing edge level list
-		ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		outgoingList.add(conjunction);
 		// the outgoing edges of conjunction.getSource() maybe not initialized
 		if (conjunction.getSource().getOutgoingEdges() == null) {
 			initializeOutgoingEdges(conjunction.getSource());
 		}
-		for (IMinimizedEdge edge : conjunction.getSource()
+		for (final IMinimizedEdge edge : conjunction.getSource()
 				.getMinimalOutgoingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				outgoingList.add(edge);
@@ -290,9 +290,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (conjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(conjunction.getTarget());
 		}
-		ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
 		incomingList.add(conjunction);
-		for (IMinimizedEdge edge : conjunction.getTarget()
+		for (final IMinimizedEdge edge : conjunction.getTarget()
 				.getMinimalIncomingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				incomingList.add(edge);

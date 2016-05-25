@@ -38,13 +38,15 @@ public class LinTerm {
 	LinTerm(Map<LinVar,BigInteger> coeffmap) {
 		mCoeffs = coeffmap;
 	}
+	@Override
 	public String toString() {
-		if (mCoeffs.isEmpty())
+		if (mCoeffs.isEmpty()) {
 			return "0";
-		StringBuilder sb = new StringBuilder();
+		}
+		final StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (Entry<LinVar,BigInteger> entry : mCoeffs.entrySet()) {
-			LinVar var = entry.getKey();
+		for (final Entry<LinVar,BigInteger> entry : mCoeffs.entrySet()) {
+			final LinVar var = entry.getKey();
 			BigInteger fact = entry.getValue();
 			if (fact.signum() == -1) {
 				sb.append(isFirst ? "-" : " - ");
@@ -52,19 +54,23 @@ public class LinTerm {
 				sb.append(isFirst ? "" : " + ");
 			}
 			fact = fact.abs();
-			if (!fact.equals(BigInteger.ONE))
+			if (!fact.equals(BigInteger.ONE)) {
 				sb.append(fact).append('*');
+			}
 			sb.append(var);
 			isFirst = false;
 		}
 		return sb.toString();
 	}
+	@Override
 	public int hashCode() {
 		return mCoeffs.hashCode();
 	}
+	@Override
 	public boolean equals(Object o) {
-		if (o instanceof LinTerm)
+		if (o instanceof LinTerm) {
 			return mCoeffs.equals(((LinTerm)o).mCoeffs);
+		}
 		return false;
 	}
 }

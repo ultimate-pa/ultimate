@@ -58,8 +58,9 @@ public class CCInterpolator {
 	 */
 	private int getParent(int color) {
 		int parent = color + 1;
-		while (mInterpolator.mStartOfSubtrees[parent] > color)
+		while (mInterpolator.mStartOfSubtrees[parent] > color) {
 			parent++;
+		}
 		return parent;
 	}
 	
@@ -72,8 +73,9 @@ public class CCInterpolator {
 		/* find A-local child of m_Color */
 		int child = color - 1;
 		while (child >= mInterpolator.mStartOfSubtrees[color]) {
-			if (occur.isALocal(child))
+			if (occur.isALocal(child)) {
 				return child;
+			}
 			child = mInterpolator.mStartOfSubtrees[child] - 1;
 		}
 		return -1;
@@ -149,7 +151,7 @@ public class CCInterpolator {
 				// this should be empty now, since we anded it with
 				// occur.mInA and the occurrence is not in A for color.
 				assert mHasABPath.isEmpty();
-				int color = mColor;
+				final int color = mColor;
 				mColor = getParent(color);
 				if (color < mMaxColor) {
 					addPre(color, Coercion.buildEq(boundaryTerm, mTerm[color]));
@@ -183,7 +185,7 @@ public class CCInterpolator {
 				if (mHasABPath.get(child)) {
 					mMaxColor = other.mColor = mColor = child;
 					// compute all nodes below child excluding child itself
-					BitSet subtree = new BitSet();
+					final BitSet subtree = new BitSet();
 					subtree.set(mInterpolator.mStartOfSubtrees[child], 
 							child);
 					// keep only those below the current child.
@@ -209,10 +211,11 @@ public class CCInterpolator {
 			public void openAPath(
 			        PathEnd other, Term boundaryTerm, Occurrence occur) {
 				while (true) {
-					int child = getChild(mColor, occur);
+					final int child = getChild(mColor, occur);
 					/* if there is no A-local child, we are done. */
-					if (child < 0)
+					if (child < 0) {
 						break;
+					}
 					assert occur.isALocal(child);
 					openSingleAPath(other, boundaryTerm, child);
 				}
@@ -220,30 +223,33 @@ public class CCInterpolator {
 
 			public Term getBoundTerm(int color) {
 				if (color < mColor) {
-					CCTerm first = this == mHead ? mPath[0] 
+					final CCTerm first = this == mHead ? mPath[0] 
 							: mPath[mPath.length - 1];
 					return first.toSMTTerm(mTheory);
 				} else if (color < mMaxColor) {
 					return mTerm[color];
 				} else {
-					CCTerm last = this == mTail ? mPath[0] 
+					final CCTerm last = this == mTail ? mPath[0] 
 							: mPath[mPath.length - 1];
 					return last.toSMTTerm(mTheory);
 				}
 			}
 			
 			public void addPre(int color, Term pre) {
-				if (mPre[color] == null)
+				if (mPre[color] == null) {
 					mPre[color] = new HashSet<Term>();
+				}
 				mPre[color].add(pre);
 			}
 			
 			public void addAllPre(int color, PathEnd src) {
-				Set<Term> pre = src.mPre[color];
-				if (pre == null)
+				final Set<Term> pre = src.mPre[color];
+				if (pre == null) {
 					return;
-				if (mPre[color] == null)
+				}
+				if (mPre[color] == null) {
 					mPre[color] = new HashSet<Term>();
+				}
 				mPre[color].addAll(pre);
 			}
 			
@@ -253,18 +259,18 @@ public class CCInterpolator {
 				while (term instanceof CCAppTerm) {
 					term = ((CCAppTerm) term).getFunc();
 				}
-				int rightColor = mInterpolator
+				final int rightColor = mInterpolator
 					.getOccurrence(end.getFlatTerm()).getALocalColor();
-				Occurrence rightOccur = mInterpolator.new Occurrence();
+				final Occurrence rightOccur = mInterpolator.new Occurrence();
 				rightOccur.occursIn(rightColor);
-				Occurrence leftOccur = mInterpolator.new Occurrence();
+				final Occurrence leftOccur = mInterpolator.new Occurrence();
 				leftOccur.occursIn(mColor);
-				FunctionSymbol func = ((CCBaseTerm)term).getFunctionSymbol();
-				int numArgs = func.getParameterSorts().length;
-				PathInfo[] argPaths = new PathInfo[numArgs];
-				PathEnd[] head = new PathEnd[numArgs];
-				PathEnd[] tail = new PathEnd[numArgs];
-				boolean[] isReverse = new boolean[numArgs];
+				final FunctionSymbol func = ((CCBaseTerm)term).getFunctionSymbol();
+				final int numArgs = func.getParameterSorts().length;
+				final PathInfo[] argPaths = new PathInfo[numArgs];
+				final PathEnd[] head = new PathEnd[numArgs];
+				final PathEnd[] tail = new PathEnd[numArgs];
+				final boolean[] isReverse = new boolean[numArgs];
 				int arg = numArgs;
 				while (true) {
 					arg--;
@@ -275,14 +281,15 @@ public class CCInterpolator {
 					isReverse[arg] = (start.getArg() != argPaths[arg].mPath[0]);
 					head[arg] = isReverse[arg] ? argPaths[arg].mTail : argPaths[arg].mHead;
 					tail[arg] = isReverse[arg] ? argPaths[arg].mHead : argPaths[arg].mTail;
-					Term startTerm = start.getArg().toSMTTerm(mTheory);
+					final Term startTerm = start.getArg().toSMTTerm(mTheory);
 					head[arg].closeAPath(tail[arg], startTerm, leftOccur);
 					head[arg].openAPath(tail[arg], startTerm, leftOccur);
-					Term endTerm = end.getArg().toSMTTerm(mTheory);
+					final Term endTerm = end.getArg().toSMTTerm(mTheory);
 					tail[arg].closeAPath(head[arg], endTerm, rightOccur);
 					tail[arg].openAPath(head[arg], endTerm, rightOccur);
-					if (arg == 0)
+					if (arg == 0) {
 						break;
+					}
 					
 					start = (CCAppTerm) start.getFunc();
 					end = (CCAppTerm) end.getFunc();
@@ -290,50 +297,54 @@ public class CCInterpolator {
 				
 				mHasABPath.and(rightOccur.mInA);
 				while (rightOccur.isBLocal(mColor)) {
-					Term[] boundaryParams = new Term[numArgs];
+					final Term[] boundaryParams = new Term[numArgs];
 					for (int i = 0; i < numArgs; i++) {
 						boundaryParams[i] = head[i].getBoundTerm(mColor);
 						addAllPre(mColor, tail[i]);
 					}
-					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
+					final Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
 					closeSingleAPath(other, boundaryTerm);
 				}
-				int highColor = mColor;
+				final int highColor = mColor;
 				while (true) {
 					/* find A-local child of m_Color */
-					int child = getChild(mColor, rightOccur);
-					if (child < 0)
+					final int child = getChild(mColor, rightOccur);
+					if (child < 0) {
 						break;
-					Term[] boundaryParams = new Term[numArgs];
+					}
+					final Term[] boundaryParams = new Term[numArgs];
 					for (int i = 0; i < numArgs; i++) {
 						boundaryParams[i] = tail[i].getBoundTerm(child);
 						addAllPre(child, tail[i]);
 					}
-					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
+					final Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
 					openSingleAPath(other, boundaryTerm, child);
 				}
 				assert (mColor == rightColor);
 				for (int color = highColor; 
 						color < mNumInterpolants; color = getParent(color)) {
 					for (int i = 0; i < numArgs; i++) {
-						if (color < argPaths[i].mMaxColor)
+						if (color < argPaths[i].mMaxColor) {
 							addPre(color, Coercion.buildDistinct(
 									head[i].getBoundTerm(color),
 									tail[i].getBoundTerm(color)));
+						}
 						addAllPre(color, head[i]);
 						addAllPre(color, tail[i]);
 					}
 				}
 			}
 			
+			@Override
 			public String toString() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				String comma = "";
 				sb.append(mColor).append(":[");
 				for (int i = mColor; i < mMaxColor; i++) {
 					sb.append(comma);
-					if (mPre[i] != null)
+					if (mPre[i] != null) {
 						sb.append(mPre[i]).append(" or ");
+					}
 					sb.append(mTerm[i]);
 					comma = ",";
 				}
@@ -384,9 +395,10 @@ public class CCInterpolator {
 		}
 
 		public void interpolatePathInfo() {
-			if (mComputed)
+			if (mComputed) {
 				return;
-			Occurrence headOccur = 
+			}
+			final Occurrence headOccur = 
 					mInterpolator.getOccurrence(mPath[0].getFlatTerm());
 			mHead = new PathEnd();
 			mTail = new PathEnd();
@@ -394,14 +406,14 @@ public class CCInterpolator {
 			mTail.openAPath(mHead, null, headOccur);
 			
 			for (int i = 0; i < mPath.length - 1; i++) {
-				CCTerm left = mPath[i];
-				CCTerm right = mPath[i + 1];
-				CCEquality lit = 
+				final CCTerm left = mPath[i];
+				final CCTerm right = mPath[i + 1];
+				final CCEquality lit = 
 						mEqualities.get(new SymmetricPair<CCTerm>(left, right));
 				if (lit == null) {
 					mTail.mergeCongPath(mHead, (CCAppTerm) left, (CCAppTerm) right);
 				} else {
-					LitInfo info = mInterpolator.getLiteralInfo(lit);
+					final LitInfo info = mInterpolator.getLiteralInfo(lit);
 					Term boundaryTerm;
 					boundaryTerm = mPath[i].toSMTTerm(mTheory);
 					if (info.getMixedVar() == null) {
@@ -410,7 +422,7 @@ public class CCInterpolator {
 					} else {
 						mTail.closeAPath(mHead, boundaryTerm, info);
 						mTail.openAPath(mHead, boundaryTerm, info);
-						Occurrence occ = mInterpolator.getOccurrence(
+						final Occurrence occ = mInterpolator.getOccurrence(
 								mPath[i + 1].getFlatTerm());
 						boundaryTerm = info.getMixedVar();
 						mTail.closeAPath(mHead, boundaryTerm, occ);
@@ -430,18 +442,19 @@ public class CCInterpolator {
 		 * @param isNegated True, if there is a disequality in the chain.
 		 */
 		private void addInterpolantClause(int color, Set<Term> pre) {
-			Term clause = pre == null ? mTheory.mFalse
+			final Term clause = pre == null ? mTheory.mFalse
 						: mTheory.or(pre.toArray(new Term[pre.size()]));
 			mInterpolants[color].add(clause);
 		}
 
+		@Override
 		public String toString() {
 			return "PathInfo[" + Arrays.toString(mPath) + ","
 					+ mHead + ',' + mTail + "," + mMaxColor + "]";
 		}
 
 		public void addDiseq(CCEquality diseq) {
-			LitInfo info = mInterpolator.getLiteralInfo(diseq);
+			final LitInfo info = mInterpolator.getLiteralInfo(diseq);
 			Term boundaryTailTerm, boundaryHeadTerm;
 			boundaryHeadTerm = mPath[0].toSMTTerm(mTheory);
 			boundaryTailTerm = mPath[mPath.length - 1].toSMTTerm(mTheory);
@@ -451,11 +464,11 @@ public class CCInterpolator {
 				mHead.closeAPath(mTail, boundaryHeadTerm, info);
 				mHead.openAPath(mTail, boundaryHeadTerm, info);
 			} else {
-				Occurrence occHead = mInterpolator.getOccurrence(
+				final Occurrence occHead = mInterpolator.getOccurrence(
 						mPath[0].getFlatTerm());
 				mHead.closeAPath(mTail, boundaryHeadTerm, info);
 				mHead.openAPath(mTail, boundaryHeadTerm, info);
-				Occurrence occTail = mInterpolator.getOccurrence(
+				final Occurrence occTail = mInterpolator.getOccurrence(
 						mPath[mPath.length - 1].getFlatTerm());
 				mTail.closeAPath(mHead, boundaryTailTerm, info);
 				mTail.openAPath(mHead, boundaryTailTerm, info);
@@ -474,8 +487,9 @@ public class CCInterpolator {
 							mTail.getBoundTerm(mMaxColor)));
 					addInterpolantClause(mHead.mColor, mHead.mPre[mHead.mColor]);
 					int parent = mHead.mColor + 1;
-					while (mInterpolator.mStartOfSubtrees[parent] > mHead.mColor)
+					while (mInterpolator.mStartOfSubtrees[parent] > mHead.mColor) {
 						parent++;
+					}
 					mHead.mColor = parent;
 				} else if (mHead.mColor == mTail.mColor) {
 					mHead.addAllPre(mHead.mColor, mTail);
@@ -487,8 +501,9 @@ public class CCInterpolator {
 					}
 					addInterpolantClause(mHead.mColor, mHead.mPre[mHead.mColor]);
 					int parent = mHead.mColor + 1;
-					while (mInterpolator.mStartOfSubtrees[parent] > mHead.mColor)
+					while (mInterpolator.mStartOfSubtrees[parent] > mHead.mColor) {
 						parent++;
+					}
 					mHead.mColor = parent;
 					mTail.mColor = parent;
 				} else {
@@ -497,8 +512,9 @@ public class CCInterpolator {
 					        mTail.getBoundTerm(mTail.mColor)));
 					addInterpolantClause(mTail.mColor, mTail.mPre[mTail.mColor]);
 					int parent = mTail.mColor + 1;
-					while (mInterpolator.mStartOfSubtrees[parent] > mTail.mColor)
+					while (mInterpolator.mStartOfSubtrees[parent] > mTail.mColor) {
 						parent++;
+					}
 					mTail.mColor = parent;
 				}
 			}
@@ -512,38 +528,41 @@ public class CCInterpolator {
 		mTheory = ipolator.mTheory;
 		mPaths = new HashMap<SymmetricPair<CCTerm>, PathInfo>();
 		mInterpolants = new Set[mNumInterpolants];
-		for (int i = 0; i < mNumInterpolants; i++)
+		for (int i = 0; i < mNumInterpolants; i++) {
 			mInterpolants[i] = new HashSet<Term>();
+		}
 	}
 	
 	public Term[] computeInterpolants(Clause cl, CCAnnotation annot) {
 		mEqualities = new HashMap<SymmetricPair<CCTerm>,  CCEquality>();
 		for (int i = 0; i < cl.getSize(); i++) {
-			Literal lit = cl.getLiteral(i);
+			final Literal lit = cl.getLiteral(i);
 			if (lit.negate() instanceof CCEquality) {
-				CCEquality eq = (CCEquality) lit.negate();
+				final CCEquality eq = (CCEquality) lit.negate();
 				mEqualities.put(
 					new SymmetricPair<CCTerm>(eq.getLhs(), eq.getRhs()), eq);
 			}
 		}
 
 		PathInfo mainPath = null;
-		CCTerm[][] paths = annot.getPaths();
+		final CCTerm[][] paths = annot.getPaths();
 		for (int i = 0; i < paths.length; i++) {
-			CCTerm first = paths[i][0];
-			CCTerm last = paths[i][paths[i].length - 1];
-			PathInfo pathInfo = new PathInfo(paths[i]);
+			final CCTerm first = paths[i][0];
+			final CCTerm last = paths[i][paths[i].length - 1];
+			final PathInfo pathInfo = new PathInfo(paths[i]);
 			mPaths.put(new SymmetricPair<CCTerm>(first, last), 
 					pathInfo);
-			if (i == 0)
+			if (i == 0) {
 				mainPath = pathInfo;
+			}
 		}
 		mainPath.interpolatePathInfo();
-		CCEquality diseq = annot.getDiseq();
-		if (diseq != null)
+		final CCEquality diseq = annot.getDiseq();
+		if (diseq != null) {
 			mainPath.addDiseq(diseq);
+		}
 		mainPath.close();
-		Term[] interpolants = new Term[mNumInterpolants];
+		final Term[] interpolants = new Term[mNumInterpolants];
 		for (int i = 0; i < mNumInterpolants; i++) {
 			interpolants[i] = mTheory.and(mInterpolants[i].toArray(
 					new Term[mInterpolants[i].size()]));
@@ -551,6 +570,7 @@ public class CCInterpolator {
 		return interpolants;
 	}
 	
+	@Override
 	public String toString() {
 		return Arrays.toString(mInterpolants); 
 	}

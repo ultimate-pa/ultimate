@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.NoopProofTracker;
 public class EqualityDestructor extends NonRecursive {
 	
 	private static final class SearchEqualities implements NonRecursive.Walker {
-		private Term mTerm;
-		private boolean mPositive;
+		private final Term mTerm;
+		private final boolean mPositive;
 		public SearchEqualities(Term term) {
 			this(term, true);
 		}
@@ -52,46 +52,49 @@ public class EqualityDestructor extends NonRecursive {
 		@Override
 		public void walk(NonRecursive engine) {
 			if (mTerm instanceof ApplicationTerm) {
-				ApplicationTerm at = (ApplicationTerm) mTerm;
-				if (at.getFunction() == at.getTheory().mNot)
+				final ApplicationTerm at = (ApplicationTerm) mTerm;
+				if (at.getFunction() == at.getTheory().mNot) {
 					engine.enqueueWalker(new SearchEqualities(
 							at.getParameters()[0], !mPositive));
-				else if (!mPositive && at.getFunction() == at.getTheory().mOr)
-					for (Term t : at.getParameters())
+				} else if (!mPositive && at.getFunction() == at.getTheory().mOr) {
+					for (final Term t : at.getParameters()) {
 						engine.enqueueWalker(new SearchEqualities(t, false));
-				else if (at.getFunction().getName().equals("=")) {
+					}
+				} else if (at.getFunction().getName().equals("=")) {
 					// An interesting equality?
-					Term[] args = at.getParameters();
+					final Term[] args = at.getParameters();
 					assert args.length == 2;
-					EqualityDestructor ed =
+					final EqualityDestructor ed =
 						(EqualityDestructor) engine;
 					if (args[0] instanceof TermVariable) {
-						TermVariable v0 = (TermVariable) args[0];
+						final TermVariable v0 = (TermVariable) args[0];
 						if (args[1] instanceof TermVariable) {
-							TermVariable v1 = (TermVariable) args[1];
+							final TermVariable v1 = (TermVariable) args[1];
 							// This cannot happen due to simplification
 //									if (v0 == v1)
 //										return;
 							if (ed.mEqs.containsKey(v0)) {
-								if (ed.mEqs.containsKey(v1))
+								if (ed.mEqs.containsKey(v1)) {
 									// We are already rewriting v0, v1
 									// Skip this equality.
 									return;
+								}
 								// Rewrite v1 to the same value we are
 								// rewriting v0
 								ed.mEqs.put(v1, ed.mEqs.get(v0));
-							} else if (ed.mEqs.containsKey(v1))
+							} else if (ed.mEqs.containsKey(v1)) {
 								// See above
 								ed.mEqs.put(v0, ed.mEqs.get(v1));
-							else
+							} else {
 								// Use one variable from now on
 								ed.mEqs.put(v1, v0);
+							}
 						} else { // (= x c)
 							checkVariable(ed, v0, args[1]);
 						}
 					} else if (args[1] instanceof TermVariable) {
 						// (= c x)
-						TermVariable v1 = (TermVariable) args[1];
+						final TermVariable v1 = (TermVariable) args[1];
 						checkVariable(ed, v1, args[0]);						
 					}
 				}
@@ -103,13 +106,16 @@ public class EqualityDestructor extends NonRecursive {
 				TermVariable var, Term val) {
 			// rewrite loop check
 			// FIXME: This is ugly
-			TermVariable[] freeVars =
+			final TermVariable[] freeVars =
 					SMTAffineTerm.cleanup(val).getFreeVars();
-			for (TermVariable v : freeVars)
-				if (v == var)
+			for (final TermVariable v : freeVars) {
+				if (v == var) {
 					return;
-			if (!ed.mEqs.containsKey(var))
+				}
+			}
+			if (!ed.mEqs.containsKey(var)) {
 				ed.mEqs.put(var, val);
+			}
 		}
 	}
 	
@@ -125,7 +131,7 @@ public class EqualityDestructor extends NonRecursive {
 			@Override
 			protected void convert(Term term) {
 				if (term instanceof TermVariable) {
-					Term replacement = mEqs.get(term);
+					final Term replacement = mEqs.get(term);
 					if (replacement != null) {
 						setResult(replacement);
 						return;
@@ -137,22 +143,22 @@ public class EqualityDestructor extends NonRecursive {
 			@Override
 			public void convertApplicationTerm(ApplicationTerm appTerm,
 					Term[] newArgs) {
-				if (newArgs == appTerm.getParameters())
+				if (newArgs == appTerm.getParameters()) {
 					setResult(appTerm);
-				else {
-					Theory t = appTerm.getTheory();
-					if (appTerm.getFunction() == t.mNot)
+				} else {
+					final Theory t = appTerm.getTheory();
+					if (appTerm.getFunction() == t.mNot) {
 						setResult(mUtils.createNot(newArgs[0]));
-					else if (appTerm.getFunction() == t.mOr)
+					} else if (appTerm.getFunction() == t.mOr) {
 						setResult(mUtils.createOr(newArgs));
-					else if (appTerm.getFunction().getName().equals("="))
+					} else if (appTerm.getFunction().getName().equals("=")) {
 						setResult(mUtils.createEq(newArgs));
-					else if (appTerm.getFunction().getName().equals("<="))
-						setResult(mUtils.createLeq0((SMTAffineTerm) newArgs[0]));
-					else if (appTerm.getFunction().getName().equals("ite"))
+					} else if (appTerm.getFunction().getName().equals("<=")) {
+						setResult(mUtils.createLeq0(newArgs[0]));
+					} else if (appTerm.getFunction().getName().equals("ite")) {
 						setResult(mUtils.createIte(
 								newArgs[0], newArgs[1], newArgs[2]));
-					else {
+					} else {
 						assert !appTerm.getFunction().isIntern();
 						setResult(t.term(appTerm.getFunction(), newArgs));
 					}

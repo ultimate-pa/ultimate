@@ -40,8 +40,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -136,7 +136,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * This variable will be true as soon as the mappings of states to integer
 	 * are entirely computed.
 	 */
-	private boolean minitialized = false;
+	private final boolean minitialized = false;
 
 	/**
 	 * Method for setting the flag before constructor is called.
@@ -320,20 +320,20 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		mmappings = Collections.synchronizedMap(new HashMap<Integer, Block>());
 		mworklist = new HashSet<Block>();
 		mblocks = new ArrayList<Block>();
-		Collection<STATE> finalStatesCol = moperand.getFinalStates();
-		Collection<STATE> statesCol = moperand.getStates();
+		final Collection<STATE> finalStatesCol = moperand.getFinalStates();
+		final Collection<STATE> statesCol = moperand.getStates();
 
-		int nOfFinalStates = finalStatesCol.size();
-		int nOfStates = statesCol.size();
+		final int nOfFinalStates = finalStatesCol.size();
+		final int nOfStates = statesCol.size();
 
 		Block.ID = 0;
-		Block acceptingStates = new Block(new HashSet<Integer>(nOfFinalStates));
-		Block nonAcceptingStates = new Block(new HashSet<Integer>(nOfStates
+		final Block acceptingStates = new Block(new HashSet<Integer>(nOfFinalStates));
+		final Block nonAcceptingStates = new Block(new HashSet<Integer>(nOfStates
 				- nOfFinalStates));
 
-		Iterator<STATE> it = statesCol.iterator();
+		final Iterator<STATE> it = statesCol.iterator();
 		while (it.hasNext()) {
-			STATE st = it.next();
+			final STATE st = it.next();
 			if (finalStatesCol.contains(st)) {
 				mmappings.put(mstate2int.get(st), acceptingStates);
 				acceptingStates.add(mstate2int.get(st));
@@ -356,7 +356,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private void initializeMappings() {
 
-		int nOfStates = moperand.getStates().size();
+		final int nOfStates = moperand.getStates().size();
 
 		// Allocate the finite space in ArrayList and HashMap.
 		mint2state = new ArrayList<STATE>(nOfStates);
@@ -383,16 +383,16 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			if ((minterrupt != null) && (minterrupt.getStatus())) {
 				return;
 			}
-			Block currentBlock = mworklist.iterator().next();
+			final Block currentBlock = mworklist.iterator().next();
 			mworklist.remove(currentBlock);
 
-			HashSet<Integer> elem = currentBlock.getStates();
+			final HashSet<Integer> elem = currentBlock.getStates();
 
-			for (LETTER letter : moperand.getAlphabet()) {
+			for (final LETTER letter : moperand.getAlphabet()) {
 				// Initialize Predecessors on letter.
-				Set<Integer> x = new HashSet<Integer>();
-				for (int state : elem) {
-					for (IncomingInternalTransition<LETTER, STATE> transition : moperand
+				final Set<Integer> x = new HashSet<Integer>();
+				for (final int state : elem) {
+					for (final IncomingInternalTransition<LETTER, STATE> transition : moperand
 							.internalPredecessors(letter,
 									mint2state.get(state))) {
 						x.add(mstate2int.get(transition.getPred()));
@@ -405,9 +405,9 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 				// end initialization of X.
 
 				// Find blocks
-				HashSet<Block> blocks = new HashSet<Block>();
-				for (Integer state : x) {
-					Block b = mmappings.get(state);
+				final HashSet<Block> blocks = new HashSet<Block>();
+				for (final Integer state : x) {
+					final Block b = mmappings.get(state);
 					if (b == null) {
 						continue;
 					}
@@ -416,24 +416,24 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 				}
 
 				// test non-empty condition
-				for (Block b : blocks) {
+				for (final Block b : blocks) {
 					if (b.doSplit()) {
 
-						Block newBlock = b.split();
+						final Block newBlock = b.split();
 
 						// Remove singleton partitions.
 						if (newBlock.getStates().size() == 1) {
-							int state = newBlock.getStates().iterator().next();
+							final int state = newBlock.getStates().iterator().next();
 							mmappings.remove(state);
 							// mfinalPartition.add(newBlock.getStates());
 							if (b.getStates().size() == 1) {
-								int state2 = b.getStates().iterator().next();
+								final int state2 = b.getStates().iterator().next();
 								mmappings.remove(state2);
 								// mfinalPartition.add(b.getStates());
 							}
 						} else {
 							// Update Map.
-							for (int state : newBlock.getStates()) {
+							for (final int state : newBlock.getStates()) {
 								mmappings.put(state, newBlock);
 							}
 						}
@@ -447,7 +447,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 										new HashSet<Integer>(b.getStates()),
 										new HashSet<Integer>(newBlock
 												.getStates())));
-							} catch (InterruptedException e) {
+							} catch (final InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
@@ -480,7 +480,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 
 		// construct result
 		final StateFactory<STATE> stateFactory = moperand.getStateFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
+		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
 				mServices, moperand.getInternalAlphabet(),
 				moperand.getCallAlphabet(), moperand.getReturnAlphabet(),
 				stateFactory);
@@ -538,24 +538,24 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 				computeHashCap(moperand.size()));
 
 		// Collection<Block> values = mpartitions.values();
-		HashSet<Block> blocks = new HashSet<Block>(mmappings.values());
-		for (Block b : blocks) {
+		final HashSet<Block> blocks = new HashSet<Block>(mmappings.values());
+		for (final Block b : blocks) {
 			if (b.getStates().isEmpty()) {
 				continue;
 			}
 			final int representative = b.getStates().iterator().next();
-			LinkedList<STATE> equivStates = new LinkedList<STATE>();
-			for (int j : b.getStates()) {
+			final LinkedList<STATE> equivStates = new LinkedList<STATE>();
+			for (final int j : b.getStates()) {
 				equivStates.add(mint2state.get(j));
 				mstate2representative[j] = representative;
 			}
 			state2equivStates.put(representative, equivStates);
 		}
 
-		for (Block elem : mblocks) {
+		for (final Block elem : mblocks) {
 			final int representative = elem.getStates().iterator().next();
-			LinkedList<STATE> equivStates = new LinkedList<STATE>();
-			for (int j : elem.getStates()) {
+			final LinkedList<STATE> equivStates = new LinkedList<STATE>();
+			for (final int j : elem.getStates()) {
 				equivStates.add(mint2state.get(j));
 				mstate2representative[j] = representative;
 			}
@@ -597,7 +597,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private static class Block {
 		public static int ID = 0;
-		private int mid;
+		private final int mid;
 
 		/**
 		 * Keeps all states that are important for one iteration.
@@ -630,7 +630,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		}
 
 		public HashSet<Integer> getAll() {
-			HashSet<Integer> all = new HashSet<Integer>(munmarked);
+			final HashSet<Integer> all = new HashSet<Integer>(munmarked);
 			all.addAll(mmarked);
 			return all;
 
@@ -647,11 +647,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 
 		public Block split() {
 			if (mmarked.size() <= munmarked.size()) {
-				Block b = new Block(mmarked);
+				final Block b = new Block(mmarked);
 				mmarked = new HashSet<Integer>();
 				return b;
 			} else {
-				Block b = new Block(munmarked);
+				final Block b = new Block(munmarked);
 				munmarked = mmarked;
 				mmarked = new HashSet<Integer>();
 				return b;

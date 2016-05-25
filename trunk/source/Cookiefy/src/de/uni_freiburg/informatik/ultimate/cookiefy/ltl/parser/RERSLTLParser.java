@@ -28,7 +28,18 @@ package de.uni_freiburg.informatik.ultimate.cookiefy.ltl.parser;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.*;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.And;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Finally;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Formula;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Globally;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Literal;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.LiteralType;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Next;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Not;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Or;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Release;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Until;
+import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.WeakUntil;
 
 /**
  * Provides a parser for the 'properties'-files from ISOLA 2012 / RERS
@@ -80,8 +91,8 @@ public class RERSLTLParser {
 	 * @return
 	 */
 	public List<Formula> parse(List<String> input) {
-		ArrayList<Formula> formulas = new ArrayList<Formula>();
-		for (String line : input) {
+		final ArrayList<Formula> formulas = new ArrayList<Formula>();
+		for (final String line : input) {
 			if (line.startsWith("(")) {
 				formulas.add(parseRoot(line));
 			}
@@ -101,13 +112,13 @@ public class RERSLTLParser {
 	 * @return
 	 */
 	public List<Formula> testParse(List<String> input) {
-		ArrayList<Formula> formulas = new ArrayList<Formula>();
+		final ArrayList<Formula> formulas = new ArrayList<Formula>();
 		int i = 0;
 		int j = 0;
-		for (String line : input) {
+		for (final String line : input) {
 			if (line.startsWith("(")) {
 				i++;
-				Formula f = parseRoot(line);
+				final Formula f = parseRoot(line);
 
 				formulas.add(f);
 
@@ -135,7 +146,7 @@ public class RERSLTLParser {
 		char currentChar = ' ';
 
 		StringBuilder subformula = new StringBuilder();
-		List<String> parts = new ArrayList<String>();
+		final List<String> parts = new ArrayList<String>();
 
 		while (true) {
 			while (pos < input.length()) {
@@ -167,7 +178,7 @@ public class RERSLTLParser {
 			}
 
 			if (bracketCount == 0) {
-				String s = subformula.toString().trim();
+				final String s = subformula.toString().trim();
 				if (!s.isEmpty()) {
 					parts.add(s);
 				}
@@ -223,7 +234,7 @@ public class RERSLTLParser {
 
 		}
 
-		int partSize = parts.size();
+		final int partSize = parts.size();
 		if (partSize == 2) {
 			return constructFormula(parts.get(0), parts.get(1), parts.get(1));
 		} else if (partSize < 2) {
@@ -232,7 +243,7 @@ public class RERSLTLParser {
 			int op = -1;
 
 			for (int i = 0; i < partSize; ++i) {
-				String s = parts.get(i);
+				final String s = parts.get(i);
 				if (s.equals("U"))
 				{
 					op = i;
@@ -314,26 +325,27 @@ public class RERSLTLParser {
 		if (operand2.isEmpty()) {
 			operand2 = operand1;
 		}
-		if (operator.equals("U"))
-				return new Until(parseRoot(operand1), parseRoot(operand2));
-		else if (operator.equals("R"))
-				return new Release(parseRoot(operand1), parseRoot(operand2));
-		else if (operator.equals("WU"))
-				return new WeakUntil(parseRoot(operand1), parseRoot(operand2));
-		else if (operator.equals("|"))
-				return new Or(parseRoot(operand1), parseRoot(operand2));
-		else if (operator.equals("&"))
-				return new And(parseRoot(operand1), parseRoot(operand2));
-		else if (operator.equals("X"))
-				return new Next(parseRoot(operand2));
-		else if (operator.equals("F"))
-				return new Finally(parseRoot(operand2));
-		else if (operator.equals("G"))
-				return new Globally(parseRoot(operand2));
-		else if (operator.equals("!"))
-				return new Not(parseRoot(operand2));
-		else 
+		if (operator.equals("U")) {
+			return new Until(parseRoot(operand1), parseRoot(operand2));
+		} else if (operator.equals("R")) {
+			return new Release(parseRoot(operand1), parseRoot(operand2));
+		} else if (operator.equals("WU")) {
+			return new WeakUntil(parseRoot(operand1), parseRoot(operand2));
+		} else if (operator.equals("|")) {
+			return new Or(parseRoot(operand1), parseRoot(operand2));
+		} else if (operator.equals("&")) {
+			return new And(parseRoot(operand1), parseRoot(operand2));
+		} else if (operator.equals("X")) {
+			return new Next(parseRoot(operand2));
+		} else if (operator.equals("F")) {
+			return new Finally(parseRoot(operand2));
+		} else if (operator.equals("G")) {
+			return new Globally(parseRoot(operand2));
+		} else if (operator.equals("!")) {
+			return new Not(parseRoot(operand2));
+		} else {
 			throw new IllegalArgumentException();
+		}
 	}
 
 	private Formula constructLiteral(String literal) {

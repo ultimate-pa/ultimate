@@ -217,7 +217,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Collection<LinearPatternBase>> disjunction;
 		if (cfg.getEntry().equals(location)) {
 			// entry pattern is equivalent to true
-			Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
 			disjunction = Collections.singleton(emptyConjunction);
 		} else if (cfg.getExit().equals(location)) {
 			// exit pattern is equivalent to false
@@ -328,10 +328,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
 			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
-		Collection<Collection<E>> result = new ArrayList<>();
-		for (Collection<E> disjunct : dnf) {
-			for (E item : conjunct) {
-				Collection<E> resultItem = new ArrayList<>();
+		final Collection<Collection<E>> result = new ArrayList<>();
+		for (final Collection<E> disjunct : dnf) {
+			for (final E item : conjunct) {
+				final Collection<E> resultItem = new ArrayList<>();
 				resultItem.addAll(disjunct);
 				resultItem.add(item);
 				result.add(resultItem);
@@ -355,16 +355,16 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static <E> Collection<Collection<E>> expandCnfToDnf(
 			final Collection<Collection<E>> cnf) {
 		if (cnf.isEmpty()) {
-			Collection<E> empty = Collections.emptyList();
+			final Collection<E> empty = Collections.emptyList();
 			return Collections.singleton(empty);
 		}
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
-		for (Collection<E> conjunct : cnf) {
+		for (final Collection<E> conjunct : cnf) {
 			if (firstElement) {
 				expandedDnf = new ArrayList<>();
-				for(E e : conjunct){
-					Collection<E> conjunctSingleton = new ArrayList<>();
+				for(final E e : conjunct){
+					final Collection<E> conjunctSingleton = new ArrayList<>();
 					conjunctSingleton.add(e);
 					expandedDnf.add(conjunctSingleton);
 				}
@@ -387,7 +387,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static <E> Collection<Collection<E>> expandConjunctionSingle(
 			Collection<Collection<E>> a, Collection<Collection<E>> b) {
-		Collection<Collection<E>> result = new ArrayList<>();
+		final Collection<Collection<E>> result = new ArrayList<>();
 		for (final Collection<E> aItem : a) {
 			for (final Collection<E> bItem : b) {
 				final Collection<E> resultItem = new ArrayList<>();
@@ -413,7 +413,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<Collection<E>>... dnfs) {
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
-		for (Collection<Collection<E>> currentDnf : dnfs) {
+		for (final Collection<Collection<E>> currentDnf : dnfs) {
 			if (firstElement) {
 				expandedDnf = currentDnf;
 				firstElement = false;
@@ -536,22 +536,22 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
 		final Collection<List<LinearInequality>> conditionDNF_ = condition
 				.getPolyhedra();
-		Collection<Collection<LinearInequality>> conditionDNF = new ArrayList<>();
-		for (List<LinearInequality> list : conditionDNF_) {
-			Collection<LinearInequality> newList = new ArrayList<>();
+		final Collection<Collection<LinearInequality>> conditionDNF = new ArrayList<>();
+		for (final List<LinearInequality> list : conditionDNF_) {
+			final Collection<LinearInequality> newList = new ArrayList<>();
 			newList.addAll(list);
 			conditionDNF.add(newList);
 		}
 		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(
 				pattern, primedMapping);
 		int numberOfInequalities = 0;
-		for (Collection<LinearInequality> conjunct : negPatternDNF) {
+		for (final Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
 		}
 		logger.info( "[LIIPP] Got an implication term with "
@@ -576,28 +576,28 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
 		final Collection<List<LinearInequality>> conditionCNF_ = condition
 				.getPolyhedra();
-		Collection<Collection<LinearInequality>> conditionCNF = new ArrayList<>();
-		for (List<LinearInequality> list : conditionCNF_) {
-			ArrayList<LinearInequality> newList = new ArrayList<>();
-			for (LinearInequality li : list) {
-				LinearInequality newLi = new LinearInequality(li);
+		final Collection<Collection<LinearInequality>> conditionCNF = new ArrayList<>();
+		for (final List<LinearInequality> list : conditionCNF_) {
+			final ArrayList<LinearInequality> newList = new ArrayList<>();
+			for (final LinearInequality li : list) {
+				final LinearInequality newLi = new LinearInequality(li);
 				newLi.negate();
 				newList.add(newLi);
 			}
 			conditionCNF.add(newList);
 		}
-		Collection<Collection<LinearInequality>> newConditionDNF = expandCnfToDnf(conditionCNF);
+		final Collection<Collection<LinearInequality>> newConditionDNF = expandCnfToDnf(conditionCNF);
 
 		final Collection<Collection<LinearInequality>> PatternDNF = mapPattern(
 				pattern, primedMapping);
 		int numberOfInequalities = 0;
-		for (Collection<LinearInequality> conjunct : PatternDNF) {
+		for (final Collection<LinearInequality> conjunct : PatternDNF) {
 			numberOfInequalities += conjunct.size();
 		}
 		logger.info( "[LIIPP] Got an implication term with "
@@ -618,10 +618,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
 		final LinearTransition transition = linearizer.linearize(predicate
 				.getTransition());
-		Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(
+		final Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(
 				transition.getInVars());
 		completeMapping(unprimedMapping);
-		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
 
@@ -630,16 +630,16 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Collection<LinearInequality>> endInvariantDNF = mapAndNegatePattern(
 				predicate.getInvEnd(), primedMapping);
 		int numberOfInequalities = 0;
-		for (Collection<LinearInequality> conjunct : endInvariantDNF) {
+		for (final Collection<LinearInequality> conjunct : endInvariantDNF) {
 			numberOfInequalities += conjunct.size();
 		}
 		logger.info( "[LIIPP] Got a predicate term with "
 				+ numberOfInequalities + " conjuncts");
 		final Collection<List<LinearInequality>> transitionDNF_ = transition
 				.getPolyhedra();
-		Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
-		for (List<LinearInequality> list : transitionDNF_) {
-			Collection<LinearInequality> newList = new ArrayList<>();
+		final Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
+		for (final List<LinearInequality> list : transitionDNF_) {
+			final Collection<LinearInequality> newList = new ArrayList<>();
 			newList.addAll(list);
 			transitionDNF.add(newList);
 		}
@@ -677,7 +677,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 
 		logger.info( "[LIIPP] Solution found!");
-		Collection<Term> coefficientsOfAllInvariants = patternVariables;
+		final Collection<Term> coefficientsOfAllInvariants = patternVariables;
 		try {
 			if (mSimplifySatisfyingAssignment) {
 				valuation = ModelExtractionUtils.getSimplifiedAssignment(
@@ -686,7 +686,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				valuation = ModelExtractionUtils.getValuation(solver,
 						coefficientsOfAllInvariants);
 			}
-		} catch (TermException e) {
+		} catch (final TermException e) {
 			e.printStackTrace();
 			throw new AssertionError("model extraction failed");
 		}
@@ -780,7 +780,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private void reinitializeSolver() {
 		solver.reset();
 		solver.setOption(":produce-models", true);
-		boolean someExtendedDebugging = false;
+		final boolean someExtendedDebugging = false;
 		if (someExtendedDebugging) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
@@ -796,7 +796,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	@Override
 	public IPredicate applyConfiguration(
 			Collection<Collection<LinearPatternBase>> pattern) {
-		Term term = getValuatedTermForPattern(pattern);
+		final Term term = getValuatedTermForPattern(pattern);
 		return predicateUnifier.getOrConstructPredicate(term);
 	}
 

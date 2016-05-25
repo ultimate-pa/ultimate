@@ -3,7 +3,6 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
-import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.util.StringTokenizer;
 
 /**
  * TryVarOrder
@@ -38,9 +38,12 @@ public class TryVarOrder {
     void initBDDFactory(String s) {
         try {
             ClassLoader cl;
-            if (bddoperation != null) cl = bddoperation.getClass().getClassLoader();
-            else cl = makeClassLoader();
-            Class c = cl.loadClass("net.sf.javabdd.BDDFactory");
+            if (bddoperation != null) {
+				cl = bddoperation.getClass().getClassLoader();
+			} else {
+				cl = makeClassLoader();
+			}
+            final Class c = cl.loadClass("net.sf.javabdd.BDDFactory");
             Method m = c.getMethod("init", new Class[] { String.class, int.class, int.class });
             bdd = m.invoke(null, new Object[] { s, new Integer(nodeTableSize), new Integer(cacheSize) });
             m = c.getMethod("setMaxIncrease", new Class[] { int.class });
@@ -50,18 +53,22 @@ public class TryVarOrder {
             try {
                 in = new BufferedReader(new FileReader(filename0));
                 for (;;) {
-                    String s2 = in.readLine();
-                    if (s2 == null || s2.equals("")) break;
-                    StringTokenizer st = new StringTokenizer(s2);
-                    String name = st.nextToken();
-                    long size = Long.parseLong(st.nextToken())-1;
+                    final String s2 = in.readLine();
+                    if (s2 == null || s2.equals("")) {
+						break;
+					}
+                    final StringTokenizer st = new StringTokenizer(s2);
+                    final String name = st.nextToken();
+                    final long size = Long.parseLong(st.nextToken())-1;
                     makeDomain(c, name, BigInteger.valueOf(size).bitLength());
                 }
-            } catch (IOException x) {
+            } catch (final IOException x) {
             } finally {
-                if (in != null) try { in.close(); } catch (IOException _) { }
+                if (in != null) {
+					try { in.close(); } catch (final IOException _) { }
+				}
             }
-        } catch (Exception x) {
+        } catch (final Exception x) {
             System.err.println("Exception occurred while initializing BDD factory: "+x.getLocalizedMessage());
             x.printStackTrace();
         }
@@ -72,11 +79,11 @@ public class TryVarOrder {
      */
     void destroyBDDFactory() {
         if (bdd != null) {
-            Class c = bdd.getClass();
+            final Class c = bdd.getClass();
             try {
-                Method m = c.getMethod("done", new Class[] { });
+                final Method m = c.getMethod("done", new Class[] { });
                 m.invoke(bdd, new Object[] { });
-            } catch (Exception x) {
+            } catch (final Exception x) {
                 System.err.println("Exception occurred while destroying BDD factory: "+x.getLocalizedMessage());
                 x.printStackTrace();
             }
@@ -85,11 +92,11 @@ public class TryVarOrder {
     }
     
     void setBDDError(int code) {
-        Class c = bdd.getClass();
+        final Class c = bdd.getClass();
         try {
-            Method m = c.getMethod("setError", new Class[] { int.class });
+            final Method m = c.getMethod("setError", new Class[] { int.class });
             m.invoke(bdd, new Object[] { new Integer(code) });
-        } catch (Exception x) {
+        } catch (final Exception x) {
             System.err.println("Exception occurred while setting error for BDD factory: "+x.getLocalizedMessage());
             x.printStackTrace();
         }
@@ -105,7 +112,7 @@ public class TryVarOrder {
      */
     static void makeDomain(Class c, String name, int bits) throws Exception {
         Method m = c.getMethod("extDomain", new Class[] { long[].class });
-        Object[] ds = (Object[]) m.invoke(null, new Object[] { new long[] { 1L << bits } });
+        final Object[] ds = (Object[]) m.invoke(null, new Object[] { new long[] { 1L << bits } });
         c = c.getClassLoader().loadClass("net.sf.javabdd.BDDDomain");
         m = c.getMethod("setName", new Class[] { String.class });
         m.invoke(ds[0], new Object[] { name });
@@ -120,8 +127,8 @@ public class TryVarOrder {
         } else {
             cl = makeClassLoader();
         }
-        Class bddop_class = cl.loadClass("net.sf.javabdd.TryVarOrder$BDDOperation");
-        Constructor c = bddop_class.getConstructor(new Class[0]);
+        final Class bddop_class = cl.loadClass("net.sf.javabdd.TryVarOrder$BDDOperation");
+        final Constructor c = bddop_class.getConstructor(new Class[0]);
         bddoperation = c.newInstance(null);
         Method m = bddop_class.getMethod("setOp", new Class[] { int.class });
         m.invoke(bddoperation, new Object[] { new Integer(op.id) });
@@ -130,27 +137,27 @@ public class TryVarOrder {
     }
     
     void setVarOrder(boolean reverse, String varOrderToTry) throws Exception {
-        Class bddop_class = bddoperation.getClass();
-        Method m = bddop_class.getMethod("setVarOrder", new Class[] { boolean.class, String.class });
+        final Class bddop_class = bddoperation.getClass();
+        final Method m = bddop_class.getMethod("setVarOrder", new Class[] { boolean.class, String.class });
         m.invoke(bddoperation, new Object[] { Boolean.valueOf(reverse), varOrderToTry });
     }
     
     void load() throws Exception {
-        Class bddop_class = bddoperation.getClass();
-        Method m = bddop_class.getMethod("load", new Class[] { });
+        final Class bddop_class = bddoperation.getClass();
+        final Method m = bddop_class.getMethod("load", new Class[] { });
         m.invoke(bddoperation, new Object[] { });
     }
     
     long doIt() throws Exception {
-        Class bddop_class = bddoperation.getClass();
-        Method m = bddop_class.getMethod("doIt", new Class[] { });
-        Long result = (Long) m.invoke(bddoperation, new Object[] { });
+        final Class bddop_class = bddoperation.getClass();
+        final Method m = bddop_class.getMethod("doIt", new Class[] { });
+        final Long result = (Long) m.invoke(bddoperation, new Object[] { });
         return result.longValue();
     }
     
     void free() throws Exception {
-        Class bddop_class = bddoperation.getClass();
-        Method m = bddop_class.getMethod("free", new Class[] { });
+        final Class bddop_class = bddoperation.getClass();
+        final Method m = bddop_class.getMethod("free", new Class[] { });
         m.invoke(bddoperation, new Object[] { });
     }
     
@@ -180,9 +187,9 @@ public class TryVarOrder {
         }
         
         public void setFilenames(String f1, String f2, String f3) {
-            this.filename1 = f1;
-            this.filename2 = f2;
-            this.filename3 = f3;
+            filename1 = f1;
+            filename2 = f2;
+            filename3 = f3;
         }
         
         /** Operation for applyEx. */
@@ -199,13 +206,13 @@ public class TryVarOrder {
         BDD b3 = null;
         
         public void setVarOrder(boolean reverse, String varOrderToTry) {
-            BDDFactory f = (BDDFactory) bdd;
-            int[] varorder = f.makeVarOrdering(reverse, varOrderToTry);
+            final BDDFactory f = (BDDFactory) bdd;
+            final int[] varorder = f.makeVarOrdering(reverse, varOrderToTry);
             f.setVarOrder(varorder);
         }
         
         public void load() throws IOException {
-            BDDFactory f = (BDDFactory) bdd;
+            final BDDFactory f = (BDDFactory) bdd;
             if (b1 == null) {
                 b1 = f.load(filename1);
                 b2 = f.load(filename2);
@@ -214,9 +221,9 @@ public class TryVarOrder {
         }
         
         public long doIt() {
-            long t = System.currentTimeMillis();
-            BDD result = b1.applyEx(b2, op, b3);
-            long time = System.currentTimeMillis() - t;
+            final long t = System.currentTimeMillis();
+            final BDD result = b1.applyEx(b2, op, b3);
+            final long time = System.currentTimeMillis() - t;
             result.free();
             return time;
         }
@@ -259,12 +266,12 @@ public class TryVarOrder {
     /** Construct a new TryVarOrder. */
     public TryVarOrder(int nodeTableSize, int cacheSize, int maxIncrease,
                        long bestTime, long delayTime) {
-        this.bestCalcTime = bestTime;
+        bestCalcTime = bestTime;
         //this.nodeTableSize = b1.getFactory().getAllocNum();
         this.nodeTableSize = nodeTableSize;
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
-        this.DELAY_TIME = delayTime;
+        DELAY_TIME = delayTime;
     }
     
     /**
@@ -299,7 +306,7 @@ public class TryVarOrder {
         //System.out.println("done.");
         try {
             initBDDOperation();
-        } catch (Exception x) {
+        } catch (final Exception x) {
             System.err.println("Exception occurred while initializing: "+x.getLocalizedMessage());
             x.printStackTrace();
         }
@@ -316,7 +323,7 @@ public class TryVarOrder {
             f2.delete();
             f3.delete();
             free();
-        } catch (Exception x) {
+        } catch (final Exception x) {
             System.err.println("Exception occurred while cleaning up: "+x.getLocalizedMessage());
             x.printStackTrace();
         }
@@ -334,11 +341,13 @@ public class TryVarOrder {
         try {
             dos = new BufferedWriter(new FileWriter(fileName));
             for (int i = 0; i < bdd.numberOfDomains(); ++i) {
-                BDDDomain d = bdd.getDomain(i);
+                final BDDDomain d = bdd.getDomain(i);
                 dos.write(d.getName()+" "+d.size()+"\n");
             }
         } finally {
-            if (dos != null) dos.close();
+            if (dos != null) {
+				dos.close();
+			}
         }
     }
     
@@ -350,23 +359,25 @@ public class TryVarOrder {
      * @return  time spent, or Long.MAX_VALUE if it didn't terminate
      */
     public long tryOrder(String factory, boolean reverse, String varOrder) {
-        if (bdd == null) initBDDFactory(factory);
+        if (bdd == null) {
+			initBDDFactory(factory);
+		}
         //System.gc();
-        TryThread t = new TryThread(reverse, varOrder);
+        final TryThread t = new TryThread(reverse, varOrder);
         t.start();
-        boolean stopped;
+        final boolean stopped;
         try {
             t.join(DELAY_TIME);
             if (t.initTime >= 0L) {
                 t.join(bestCalcTime);
             }
-        } catch (InterruptedException x) {
+        } catch (final InterruptedException x) {
         }
         if (t.isAlive()) {
             setBDDError(1);
             try {
                 t.join();
-            } catch (InterruptedException x) {
+            } catch (final InterruptedException x) {
             }
             System.out.print("Free memory: "+Runtime.getRuntime().freeMemory());
             destroyBDDFactory();
@@ -406,17 +417,18 @@ public class TryVarOrder {
             varOrderToTry = v;
         }
         
-        public void run() {
+        @Override
+		public void run() {
             //System.out.println("\nTrying ordering "+varOrderToTry);
             try {
-                long time = System.currentTimeMillis();
+                final long time = System.currentTimeMillis();
                 setVarOrder(reverse, varOrderToTry);
                 load();
                 initTime = time - System.currentTimeMillis();
                 computeTime = doIt();
                 free();
                 System.out.println("Ordering: "+varOrderToTry+" time: "+time);
-            } catch (Exception x) {
+            } catch (final Exception x) {
                 System.err.println("Exception occurred while trying order: "+x.getLocalizedMessage());
                 x.printStackTrace();
             }

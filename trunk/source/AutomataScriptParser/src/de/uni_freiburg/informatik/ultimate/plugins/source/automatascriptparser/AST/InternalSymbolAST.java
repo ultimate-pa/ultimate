@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class InternalSymbolAST {
-	private String mSymbol;
+	private final String mSymbol;
 	public InternalSymbolAST(String sym) {
 		mSymbol = sym;
 	}

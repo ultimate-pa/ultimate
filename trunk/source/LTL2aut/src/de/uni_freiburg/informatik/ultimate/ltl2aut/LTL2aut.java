@@ -75,7 +75,7 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<String>();
 		filenames.add("Hardcoded");
 
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, filenames);
@@ -116,7 +116,7 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new LTL2autObserver(mServices, mStorage);
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (mProcess && !mSkip) {
 			observers.add(mObserver);
 		}
@@ -142,7 +142,7 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
+		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
 	}

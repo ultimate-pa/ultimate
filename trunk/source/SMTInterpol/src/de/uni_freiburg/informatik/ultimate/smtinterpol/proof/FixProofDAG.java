@@ -65,11 +65,11 @@ public class FixProofDAG {
 		}
 		@Override
 		public void process(FixProofDAG engine) {
-			ResolutionNode rn = (ResolutionNode) mCls.getProof();
+			final ResolutionNode rn = (ResolutionNode) mCls.getProof();
 			// Simplify rn
-			Set<Literal> removed = engine.mDeletedNodes.get(mCls);
-			Antecedent[] antes = rn.getAntecedents();
-			ArrayDeque<Antecedent> newAntes = 
+			final Set<Literal> removed = engine.mDeletedNodes.get(mCls);
+			final Antecedent[] antes = rn.getAntecedents();
+			final ArrayDeque<Antecedent> newAntes = 
 					new ArrayDeque<ResolutionNode.Antecedent>();
 			boolean deleted = false;
 			boolean changed = false;
@@ -87,16 +87,16 @@ public class FixProofDAG {
 						deleted = removed.contains(antes[i].mPivot.negate());
 					}
 					
-					Clause cls = engine.mTransformed.get(antes[i].mAntecedent);
+					final Clause cls = engine.mTransformed.get(antes[i].mAntecedent);
 					if (deleted || !cls.contains(antes[i].mPivot)) {
 						primary = cls;
 						changed = true;
 						break newprimary;
 					}
 					
-					if (cls == antes[i].mAntecedent)
+					if (cls == antes[i].mAntecedent) {
 						newAntes.addFirst(antes[i]);
-					else {
+					} else {
 						newAntes.addFirst(new Antecedent(antes[i].mPivot, cls));
 						changed = true;
 					}	
@@ -106,35 +106,39 @@ public class FixProofDAG {
 			}
 			if (changed) {
 				// recompute clause
-				HashSet<Literal> lits = new HashSet<Literal>();
-				for (int i = 0; i < primary.getSize(); ++i)
+				final HashSet<Literal> lits = new HashSet<Literal>();
+				for (int i = 0; i < primary.getSize(); ++i) {
 					lits.add(primary.getLiteral(i));
-				for (Iterator<Antecedent> it = newAntes.iterator(); it.hasNext(); ) {
-					Antecedent a = it.next();
-					boolean resolutionStepUsed = lits.remove(a.mPivot.negate());
+				}
+				for (final Iterator<Antecedent> it = newAntes.iterator(); it.hasNext(); ) {
+					final Antecedent a = it.next();
+					final boolean resolutionStepUsed = lits.remove(a.mPivot.negate());
 					if (!resolutionStepUsed) {
 						it.remove();
 						continue;
 					}
 					for (int j = 0; j < a.mAntecedent.getSize(); ++j) {
-						Literal lit = a.mAntecedent.getLiteral(j);
-						if (lit != a.mPivot)
+						final Literal lit = a.mAntecedent.getLiteral(j);
+						if (lit != a.mPivot) {
 							lits.add(lit);
+						}
 					}
 				}
 				Clause result;
 				if (newAntes.isEmpty()) {
 					result = primary;
 				} else {
-					Antecedent[] nantes = newAntes.toArray(
+					final Antecedent[] nantes = newAntes.toArray(
 						new Antecedent[newAntes.size()]);
 					result = new Clause(lits.toArray(new Literal[lits.size()]),
 						new ResolutionNode(primary, nantes));
 				}
 				engine.mTransformed.put(mCls, result);
-			} else
+			} else {
 				engine.mTransformed.put(mCls, mCls);
+			}
 		}
+		@Override
 		public String toString() {
 			return "Collect: " + mCls.toString();
 		}
@@ -158,31 +162,35 @@ public class FixProofDAG {
 		
 		@Override
 		public void process(FixProofDAG engine) {
-			if (engine.mTransformed.containsKey(mCls))
+			if (engine.mTransformed.containsKey(mCls)) {
 				return;
-			Set<Literal> removed = engine.mDeletedNodes.get(mCls);
-			ProofNode pn = mCls.getProof();
-			if (pn.isLeaf())
+			}
+			final Set<Literal> removed = engine.mDeletedNodes.get(mCls);
+			final ProofNode pn = mCls.getProof();
+			if (pn.isLeaf()) {
 				// m_Cls stays unchanged
 				engine.mTransformed.put(mCls, mCls);
-			else {
-				ResolutionNode rn = (ResolutionNode) pn;
+			} else {
+				final ResolutionNode rn = (ResolutionNode) pn;
 				engine.mTodo.push(new CollectClause(mCls));
-				Antecedent[] antes = rn.getAntecedents();
+				final Antecedent[] antes = rn.getAntecedents();
 				boolean deleted = false;
 				for (int i = antes.length - 1; !deleted && i >= 0; --i) {
 					if (removed != null) {
-						if (removed.contains(antes[i].mPivot))
+						if (removed.contains(antes[i].mPivot)) {
 							// Antecedent has been removed
 							continue;
+						}
 						deleted = removed.contains(antes[i].mPivot.negate());
 					}
 					engine.mTodo.push(new ExpandClause(antes[i].mAntecedent));
 				}
-				if (!deleted)
+				if (!deleted) {
 					engine.mTodo.push(new ExpandClause(rn.getPrimary()));
+				}
 			}
 		}
+		@Override
 		public String toString() {
 			return "Expand: " + mCls.toString();
 		}
@@ -225,7 +233,7 @@ public class FixProofDAG {
 	 */
 	private final void run() {
 		while (!mTodo.isEmpty()) {
-			Worker w = mTodo.pop();
+			final Worker w = mTodo.pop();
 			w.process(this);
 		}
 	}

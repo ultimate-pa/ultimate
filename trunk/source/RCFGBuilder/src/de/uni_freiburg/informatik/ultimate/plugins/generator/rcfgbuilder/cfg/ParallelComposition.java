@@ -34,7 +34,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -87,14 +86,14 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
-		Script script = boogie2smt.getScript();
+		final Script script = boogie2smt.getScript();
 		mCodeBlocks = codeBlocks;
 
 		String prettyPrinted = "";
 
-		TransFormula[] transFormulas = new TransFormula[codeBlocks.size()];
-		TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
-		TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
+		final TransFormula[] transFormulas = new TransFormula[codeBlocks.size()];
+		final TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
+		final TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
 		for (int i = 0; i < codeBlocks.size(); i++) {
 			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || 
 					codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof GotoEdge)) {
@@ -106,9 +105,9 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			prettyPrinted += "PARALLEL" + codeBlocks.get(i).getPrettyPrintedStatements();
 			transFormulas[i] = codeBlocks.get(i).getTransitionFormula();
 			transFormulasWithBranchEncoders[i] = codeBlocks.get(i).getTransitionFormulaWithBranchEncoders();
-			String varname = "LBE" + codeBlocks.get(i).getSerialNumer();
-			Sort boolSort = script.sort("Bool");
-			TermVariable tv = script.variable(varname, boolSort);
+			final String varname = "LBE" + codeBlocks.get(i).getSerialNumer();
+			final Sort boolSort = script.sort("Bool");
+			final TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
 			mBranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
 			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
@@ -118,7 +117,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		mPrettyPrinted = prettyPrinted;
 
-		boolean s_TransformToCNF = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean s_TransformToCNF = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,
@@ -143,7 +142,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("BeginParallelComposition{");
 		for (int i = 0; i < mCodeBlocks.size(); i++) {
 			sb.append("ParallelCodeBlock" + i + ": ");

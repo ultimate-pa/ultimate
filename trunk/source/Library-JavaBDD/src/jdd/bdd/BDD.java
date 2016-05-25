@@ -24,8 +24,12 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
-import jdd.util.math.*;
+import jdd.util.Allocator;
+import jdd.util.Array;
+import jdd.util.Configuration;
+import jdd.util.NodeName;
+import jdd.util.Test;
+import jdd.util.math.Prime;
 
 /**
  * <b>BDD main class. All BDD code uses this</b> .<br>
@@ -121,6 +125,7 @@ public class BDD extends NodeTable {
 
 	// ---------------------------------------------------------------
 	/** this function is called at exit, cleans up and frees allocated memory */
+	@Override
 	public void cleanup() {
 		super.cleanup();
 		sign_vec = varset_vec = null;
@@ -150,8 +155,8 @@ public class BDD extends NodeTable {
 
 	/** create a new BDD variable */
 	public int createVar() {
-		int var = work_stack[work_stack_tos++] = mk(numvars, 0, 1);
-		int nvar = mk(numvars, 1, 0);
+		final int var = work_stack[work_stack_tos++] = mk(numvars, 0, 1);
+		final int nvar = mk(numvars, 1, 0);
 		work_stack_tos--;
 		numvars++;
 
@@ -163,7 +168,7 @@ public class BDD extends NodeTable {
 
 
 		// we want to keep the work stack at least so large
-		int need = 6 * numvars + 1;
+		final int need = 6 * numvars + 1;
 		if(work_stack.length < need) {
 			work_stack = Array.resize(work_stack, work_stack_tos, need);
 		}
@@ -174,8 +179,9 @@ public class BDD extends NodeTable {
 		}
 
 
-		if(support_buffer.length < numvars)
+		if(support_buffer.length < numvars) {
 			support_buffer = new boolean[numvars * 3];
+		}
 
 		tree_depth_changed(numvars); // MUST be called
 
@@ -192,6 +198,7 @@ public class BDD extends NodeTable {
 	 * when we get here, data structures such as caches are instable, so we have to clean up
 	 * after the garbage collector.
 	 */
+	@Override
 	protected void post_removal_callbak() {
 		// NOTE: dont do any advanced stuffs here, HashTable is invalid at this point!!
 
@@ -210,7 +217,9 @@ public class BDD extends NodeTable {
 
 	/** mk operator as defined in Andersens lecture notes */
 	public int mk(int i, int l, int h) {
-		if(l == h) return l;
+		if(l == h) {
+			return l;
+		}
 		return add(i,l,h);
 	}
 
@@ -227,11 +236,14 @@ public class BDD extends NodeTable {
 	 * @see #forall
 	 */
 	public final int cube(boolean [] v) {
-		int last = 1, len = Math.min(v.length, numvars);
+		int last = 1;
+		final int len = Math.min(v.length, numvars);
 		for(int i = 0; i < len; i++) {
-			int var = len - i - 1;
+			final int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
-			if(v[var]) last = mk(var, 0, last);
+			if(v[var]) {
+				last = mk(var, 0, last);
+			}
 			work_stack_tos--;
 		}
 		return last;
@@ -244,11 +256,14 @@ public class BDD extends NodeTable {
 	 * @see #cube
 	 */
 	public final int cube(String s) {
-		int len = s.length(), last = 1;
+		final int len = s.length();
+		int last = 1;
 		for(int i = 0; i < len;i++) {
-			int var = len - i - 1;
+			final int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
-			if(s.charAt(var) == '1') last = mk(var, 0, last);
+			if(s.charAt(var) == '1') {
+				last = mk(var, 0, last);
+			}
 			work_stack_tos--;
 		}
 		return last;
@@ -260,9 +275,10 @@ public class BDD extends NodeTable {
 	 * @see #minterm
 	 */
 	public final int minterm(boolean [] v) {
-		int last = 1, len = Math.min(v.length, numvars);
+		int last = 1;
+		final int len = Math.min(v.length, numvars);
 		for(int i = 0; i < len; i++) {
-			int var = len - i - 1;
+			final int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
 			last = (v[var] ? mk(var, 0, last) : mk(var, last, 0));
 			work_stack_tos--;
@@ -279,9 +295,10 @@ public class BDD extends NodeTable {
 	 */
 
 	public final int minterm(String s) {
-		int len = s.length(), last = 1;
+		final int len = s.length();
+		int last = 1;
 		for(int i = 0; i < len;i++) {
-			int var = len - i - 1;
+			final int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
 			last = ((s.charAt(var) == '1') ? mk(var, 0, last) :
 				( (s.charAt(var) == '0') ? mk(var, last, 0) : last));
@@ -301,14 +318,24 @@ public class BDD extends NodeTable {
 	 */
 
 	public int ite(int f, int then_, int else_ ) {
-		if(f == 0) return else_;
-		if(f == 1) return then_;
+		if(f == 0) {
+			return else_;
+		}
+		if(f == 1) {
+			return then_;
+		}
 
 		if((getLow(f) < 2 && getHigh(f) < 2) && (getVar(f) < getVar(then_)) && (getVar(f) < getVar(else_))) {
-			if(getLow(f) == 0) return mk(getVar(f), else_, then_); 	// f is a variable
-			if(getLow(f) == 1) mk(getVar(f), then_, else_ ); 	// f is inverse of a variable
-			// XXX: even if f.var is larger/equal to then_.var or else_.var, we can
-			//      optimize this by calling COFACTOR and then OR...
+			if(getLow(f) == 0)
+			 {
+				return mk(getVar(f), else_, then_); 	// f is a variable
+			}
+			if(getLow(f) == 1)
+			 {
+				mk(getVar(f), then_, else_ ); 	// f is inverse of a variable
+				// XXX: even if f.var is larger/equal to then_.var or else_.var, we can
+				//      optimize this by calling COFACTOR and then OR...
+			}
 		}
 		return ite_rec(f, then_, else_);
 	}
@@ -318,13 +345,25 @@ public class BDD extends NodeTable {
 	  * note that are ITE terminal cases differs from BuDDy since our 0/1 constant variables differs
 	  */
 	private final int ite_rec(int f, int g, int h) {
-		if(f == 1) return g;
-		if(f == 0) return h;
-		if(g == h) return g;
-		if(g == 1 && h == 0) return f;
-		if(g == 0 && h == 1) return not_rec(f);
+		if(f == 1) {
+			return g;
+		}
+		if(f == 0) {
+			return h;
+		}
+		if(g == h) {
+			return g;
+		}
+		if(g == 1 && h == 0) {
+			return f;
+		}
+		if(g == 0 && h == 1) {
+			return not_rec(f);
+		}
 
-		if(g == 1) return or_rec(f,h);
+		if(g == 1) {
+			return or_rec(f,h);
+		}
 		if(g == 0) {
 			int tmp = work_stack[work_stack_tos++] = not_rec(h);
 			tmp = nor_rec(f,tmp);
@@ -332,7 +371,9 @@ public class BDD extends NodeTable {
 			return tmp;
 		}
 
-		if(h == 0) return and_rec(f,g);
+		if(h == 0) {
+			return and_rec(f,g);
+		}
 		if(h == 1) {
 			int tmp = work_stack[work_stack_tos++] = not_rec(g);
 			tmp = nand_rec(f,tmp);
@@ -340,14 +381,16 @@ public class BDD extends NodeTable {
 			return tmp;
 		}
 
-		if(ite_cache.lookup(f,g,h)) return ite_cache.answer;
-		int hash = ite_cache.hash_value;
+		if(ite_cache.lookup(f,g,h)) {
+			return ite_cache.answer;
+		}
+		final int hash = ite_cache.hash_value;
 
-		int v = Math.min(getVar(f), Math.min(getVar(g), getVar(h)));
+		final int v = Math.min(getVar(f), Math.min(getVar(g), getVar(h)));
 		int l = work_stack[work_stack_tos++] = ite_rec(
 				(v == getVar(f)) ? getLow(f) : f, (v == getVar(g)) ? getLow(g) : g, (v == getVar(h)) ? getLow(h) : h);
 
-		int H = work_stack[work_stack_tos++] = ite_rec(
+		final int H = work_stack[work_stack_tos++] = ite_rec(
 				(v == getVar(f)) ? getHigh(f) : f, (v == getVar(g)) ? getHigh(g) : g, (v == getVar(h)) ? getHigh(h) : h);
 
 		l = mk(v,l,H);
@@ -366,22 +409,30 @@ public class BDD extends NodeTable {
 	public int and(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = and_rec(u1,u2);
+		final int ret = and_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 
 	}
 	private final int and_rec(int u1, int u2) {
 		// terminal cases
-		if(u1 == u2 || u2 == 1) return u1;
-		if(u1 == 0 || u2 == 0) return 0;
-		if(u1 == 1) return u2;
+		if(u1 == u2 || u2 == 1) {
+			return u1;
+		}
+		if(u1 == 0 || u2 == 0) {
+			return 0;
+		}
+		if(u1 == 1) {
+			return u2;
+		}
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);	}
 
-		if(op_cache.lookup(u1, u2, CACHE_AND)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_AND)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = and_rec(getLow(u1), getLow(u2));
@@ -391,7 +442,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = and_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		work_stack_tos -= 2;
 
 		op_cache.insert(hash, u1, u2, CACHE_AND, l);
@@ -400,27 +453,37 @@ public class BDD extends NodeTable {
 
 	// this is the original one from buddy
 	private final int and_rec_original(int u1, int u2) {
-		if(u1 == u2) return u1;
-		if(u1 == 0 || u2 == 0) return 0;
-		if(u1 == 1) return u2;
-		if(u2 == 1) return u1;
+		if(u1 == u2) {
+			return u1;
+		}
+		if(u1 == 0 || u2 == 0) {
+			return 0;
+		}
+		if(u1 == 1) {
+			return u2;
+		}
+		if(u2 == 1) {
+			return u1;
+		}
 
 
-		if(op_cache.lookup(u1, u2, CACHE_AND)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_AND)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		int ret;
 		if( getVar(u1) == getVar(u2)) {
-			int l = work_stack[work_stack_tos++] = and_rec(getLow(u1), getLow(u2));
-			int h = work_stack[work_stack_tos++] = and_rec(getHigh(u1), getHigh(u2));
+			final int l = work_stack[work_stack_tos++] = and_rec(getLow(u1), getLow(u2));
+			final int h = work_stack[work_stack_tos++] = and_rec(getHigh(u1), getHigh(u2));
 			ret = mk( getVar(u1), l, h);
 		} else if( getVar(u1) < getVar(u2) ) {
-			int l = work_stack[work_stack_tos++] = and_rec(getLow(u1), u2);
-			int h = work_stack[work_stack_tos++] = and_rec(getHigh(u1), u2);
+			final int l = work_stack[work_stack_tos++] = and_rec(getLow(u1), u2);
+			final int h = work_stack[work_stack_tos++] = and_rec(getHigh(u1), u2);
 			ret = mk( getVar(u1), l, h);
 		} else {
-			int l = work_stack[work_stack_tos++] = and_rec(u1, getLow(u2));
-			int h = work_stack[work_stack_tos++] = and_rec(u1, getHigh(u2));
+			final int l = work_stack[work_stack_tos++] = and_rec(u1, getLow(u2));
+			final int h = work_stack[work_stack_tos++] = and_rec(u1, getHigh(u2));
 			ret = mk( getVar(u2), l, h);
 		}
 		work_stack_tos -= 2;
@@ -437,21 +500,30 @@ public class BDD extends NodeTable {
 	public int nand(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = nand_rec(u1,u2);
+		final int ret = nand_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 	}
 
 	private final int nand_rec(int u1, int u2) {
-		if(u1 == 0 || u2 == 0) return 1;
-		if(u1 == 1 || u1 == u2) return not_rec(u2); // arash: early term
-		if(u2 == 1) return not_rec(u1);
+		if(u1 == 0 || u2 == 0) {
+			return 1;
+		}
+		if(u1 == 1 || u1 == u2)
+		 {
+			return not_rec(u2); // arash: early term
+		}
+		if(u2 == 1) {
+			return not_rec(u1);
+		}
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);}
 
-		if( op_cache.lookup(u1, u2, CACHE_NAND) ) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if( op_cache.lookup(u1, u2, CACHE_NAND) ) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = nand_rec(getLow(u1), getLow(u2));
@@ -461,7 +533,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = nand_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_NAND, l);
 		work_stack_tos -= 2;
 		return l;
@@ -477,22 +551,30 @@ public class BDD extends NodeTable {
 	public int or(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = or_rec(u1,u2);
+		final int ret = or_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 
 	}
 	private final int or_rec(int u1, int u2) {
-		if(u1 == 1 || u2 == 1) return 1;
-		if(u1 == 0 || u1 == u2) return u2;
-		if(u2 == 0) return u1;
+		if(u1 == 1 || u2 == 1) {
+			return 1;
+		}
+		if(u1 == 0 || u1 == u2) {
+			return u2;
+		}
+		if(u2 == 0) {
+			return u1;
+		}
 
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);}
 
-		if( op_cache.lookup(u1, u2, CACHE_OR)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if( op_cache.lookup(u1, u2, CACHE_OR)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = or_rec(getLow(u1), getLow(u2));
@@ -502,7 +584,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = or_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_OR, l);
 		work_stack_tos -= 2;
 		return l;
@@ -517,23 +601,32 @@ public class BDD extends NodeTable {
 	public int nor(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = nor_rec(u1,u2);
+		final int ret = nor_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 
 	}
 	private final int nor_rec(int u1, int u2) {
 		// terminal cases
-		if(u1 == 1 || u2 == 1) return 0;
-		if(u1 == 0 || u1 == u2) return not_rec(u2);	 // ARASH: testing early termination if u1 = u2
-		if(u2 == 0) return not_rec(u1);
+		if(u1 == 1 || u2 == 1) {
+			return 0;
+		}
+		if(u1 == 0 || u1 == u2)
+		 {
+			return not_rec(u2);	 // ARASH: testing early termination if u1 = u2
+		}
+		if(u2 == 0) {
+			return not_rec(u1);
+		}
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);}
 
 
-		if(op_cache.lookup(u1, u2, CACHE_NOR) ) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_NOR) ) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = nor_rec(getLow(u1), getLow(u2));
@@ -543,7 +636,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = nor_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_NOR, l);
 		work_stack_tos -= 2;
 
@@ -560,7 +655,7 @@ public class BDD extends NodeTable {
 	public int xor(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = xor_rec(u1,u2);
+		final int ret = xor_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 
@@ -568,18 +663,30 @@ public class BDD extends NodeTable {
 	private final int xor_rec(int u1, int u2) {
 		// terminal cases
 
-		if(u1 == u2) return 0;
-		if(u1 == 0) return u2;
-		if(u2 == 0) return u1;
-		if(u1 == 1) return not_rec(u2);
-		if(u2 == 1) return not_rec(u1);
+		if(u1 == u2) {
+			return 0;
+		}
+		if(u1 == 0) {
+			return u2;
+		}
+		if(u2 == 0) {
+			return u1;
+		}
+		if(u1 == 1) {
+			return not_rec(u2);
+		}
+		if(u2 == 1) {
+			return not_rec(u1);
+		}
 
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);}
 
-		if(op_cache.lookup(u1, u2, CACHE_XOR)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_XOR)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = xor_rec(getLow(u1), getLow(u2));
@@ -589,7 +696,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = xor_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_XOR, l);
 		work_stack_tos -= 2;
 		return l;
@@ -604,25 +713,37 @@ public class BDD extends NodeTable {
 	public int biimp(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = biimp_rec(u1,u2);
+		final int ret = biimp_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 	}
 
 	private final int biimp_rec(int u1, int u2) {
 		// terminal cases
-		if(u1 == u2) return 1;
-		if(u1 == 0) return not_rec(u2);
-		if(u1 == 1) return u2;
-		if(u2 == 0) return not_rec(u1);
-		if(u2 == 1) return u1;
+		if(u1 == u2) {
+			return 1;
+		}
+		if(u1 == 0) {
+			return not_rec(u2);
+		}
+		if(u1 == 1) {
+			return u2;
+		}
+		if(u2 == 0) {
+			return not_rec(u1);
+		}
+		if(u2 == 1) {
+			return u1;
+		}
 
 
 		int l, h, v = getVar(u1);
 		if(v > getVar(u2)) {v = u1; u1 = u2; u2 = v; v = getVar(u1);}
 
-		if(op_cache.lookup(u1, u2, CACHE_BIIMP)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_BIIMP)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		if( v == getVar(u2)) {
 			l = work_stack[work_stack_tos++] = biimp_rec(getLow(u1), getLow(u2));
@@ -632,7 +753,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = biimp_rec(getHigh(u1), u2);
 		}
 
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_BIIMP, l);
 		work_stack_tos -= 2;
 		return l;
@@ -646,7 +769,7 @@ public class BDD extends NodeTable {
 	public int imp(int u1, int u2) {
 		work_stack[work_stack_tos++] = u1;
 		work_stack[work_stack_tos++] = u2;
-		int ret = imp_rec(u1,u2);
+		final int ret = imp_rec(u1,u2);
 		work_stack_tos -= 2;
 		return ret;
 
@@ -654,13 +777,21 @@ public class BDD extends NodeTable {
 
 	private final int imp_rec(int u1, int u2) {
 		// terminal cases
-		if(u1 == 0 || u2 == 1 || u1 == u2) return 1;
-		if(u1 == 1) return u2;
-		if(u2 == 0) return not_rec(u1);
+		if(u1 == 0 || u2 == 1 || u1 == u2) {
+			return 1;
+		}
+		if(u1 == 1) {
+			return u2;
+		}
+		if(u2 == 0) {
+			return not_rec(u1);
+		}
 
 
-		if(op_cache.lookup(u1, u2, CACHE_IMP)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u1, u2, CACHE_IMP)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 
 		int l, h, v = getVar(u1);
 		if( getVar(u1) == getVar(u2)) {
@@ -674,7 +805,9 @@ public class BDD extends NodeTable {
 			h = work_stack[work_stack_tos++] = imp_rec(u1, getHigh(u2));
 			v = getVar(u2);
 		}
-		if(l != h) l = mk(v,l,h);
+		if(l != h) {
+			l = mk(v,l,h);
+		}
 		op_cache.insert(hash, u1, u2, CACHE_IMP, l);
 		work_stack_tos -= 2;
 
@@ -689,20 +822,27 @@ public class BDD extends NodeTable {
 
 	public int not(int u1) {
 		work_stack[work_stack_tos++] = u1;
-		int ret = not_rec(u1);
+		final int ret = not_rec(u1);
 		work_stack_tos --;
 		return ret;
 	}
 
 	private final int not_rec(int bdd) {
-		if(bdd < 2) return (bdd ^ 1);// 1-->0 and 0-->1
+		if(bdd < 2)
+		 {
+			return (bdd ^ 1);// 1-->0 and 0-->1
+		}
 
-		if( not_cache.lookup(bdd)) return not_cache.answer;
-		int hash = not_cache.hash_value;
+		if( not_cache.lookup(bdd)) {
+			return not_cache.answer;
+		}
+		final int hash = not_cache.hash_value;
 
 		int l = work_stack[work_stack_tos++] = not_rec(getLow(bdd));
-		int h = work_stack[work_stack_tos++] = not_rec(getHigh(bdd));
-		if(l != h)  l = mk( getVar(bdd), l, h);
+		final int h = work_stack[work_stack_tos++] = not_rec(getHigh(bdd));
+		if(l != h) {
+			l = mk( getVar(bdd), l, h);
+		}
 		work_stack_tos -= 2;
 
 		not_cache.insert(hash, bdd, l);
@@ -717,7 +857,9 @@ public class BDD extends NodeTable {
 		Test.check(bdd > 1, "BAD varset");
 
 		// for(int i = 0; i < numvars; i++) varset_vec[i] = false;
-		for(int i = numvars; i != 0; ) varset_vec[--i] = false;
+		for(int i = numvars; i != 0; ) {
+			varset_vec[--i] = false;
+		}
 
 		while( bdd > 1) {
 			// this assume that BDD variables grow from root. otherwise, varset_last will be incorrect
@@ -730,7 +872,9 @@ public class BDD extends NodeTable {
 	private void varset_signed(int bdd) {
 		Test.check(bdd > 1, "BAD varset");
 
-		for(int i = 0; i < numvars; i++) varset_vec[i] = false;
+		for(int i = 0; i < numvars; i++) {
+			varset_vec[i] = false;
+		}
 		while( bdd > 1) {
 			// XXX: this assumes correct order on varset_last, does not apply to Z-BDDs for example!
 			varset_last = getVar(bdd);
@@ -754,7 +898,9 @@ public class BDD extends NodeTable {
 	 */
 
 	public int exists(int bdd, int cube) {
-		if(cube == 1) return bdd;
+		if(cube == 1) {
+			return bdd;
+		}
 		Test.check(cube != 0, "Empty cube");
 		quant_conj = false;
 		quant_id = CACHE_EXISTS;
@@ -775,7 +921,9 @@ public class BDD extends NodeTable {
 	 * @see #exists
 	 */
 	public int forall(int bdd, int cube) {
-		if(cube == 1) return bdd;
+		if(cube == 1) {
+			return bdd;
+		}
 		Test.check(cube != 0, "Empty cube");
 		quant_conj = true;
 		quant_id = CACHE_FORALL;
@@ -790,20 +938,25 @@ public class BDD extends NodeTable {
 		int entry;
 		int res;
 
-		if (r < 2 || getVar(r) > varset_last)
+		if (r < 2 || getVar(r) > varset_last) {
 			return r;
+		}
 
-		if(quant_cache.lookup(r, quant_cube, quant_id)) return quant_cache.answer;
+		if(quant_cache.lookup(r, quant_cube, quant_id)) {
+			return quant_cache.answer;
+		}
 		entry = quant_cache.hash_value;
 
 
 
-		int a = work_stack[work_stack_tos++] = quant_rec( getLow(r) );
-		int b = work_stack[work_stack_tos++] = quant_rec( getHigh(r) );
+		final int a = work_stack[work_stack_tos++] = quant_rec( getLow(r) );
+		final int b = work_stack[work_stack_tos++] = quant_rec( getHigh(r) );
 
 		if(varset_vec[ getVar(r)]) {
 			res = quant_conj ? and_rec(a,b) : or_rec(a,b);
-		} else res = mk( getVar(r), a, b);
+		} else {
+			res = mk( getVar(r), a, b);
+		}
 		work_stack_tos -= 2;
 
 		quant_cache.insert(entry, r, quant_cube, quant_id, res );
@@ -812,11 +965,15 @@ public class BDD extends NodeTable {
 
 	/** internal quantificator, optimized and unreadable :) */
 	private final int quant_rec(int bdd) {
-		int var = getVar(bdd);
-		if(bdd < 2 || var > varset_last) return bdd;
+		final int var = getVar(bdd);
+		if(bdd < 2 || var > varset_last) {
+			return bdd;
+		}
 
-		if(quant_cache.lookup(bdd, quant_cube, quant_id)) return quant_cache.answer;
-		int hash = quant_cache.hash_value;
+		if(quant_cache.lookup(bdd, quant_cube, quant_id)) {
+			return quant_cache.answer;
+		}
+		final int hash = quant_cache.hash_value;
 
 		int l = 0;
 		if(varset_vec[ var ])  {
@@ -845,7 +1002,7 @@ public class BDD extends NodeTable {
 			}
 		} else {
 			l = work_stack[work_stack_tos++] = quant_rec( getLow(bdd) );
-			int h = work_stack[work_stack_tos++] = quant_rec( getHigh(bdd) );
+			final int h = work_stack[work_stack_tos++] = quant_rec( getHigh(bdd) );
 			l = mk( var, l, h);
 			work_stack_tos -= 2;
 		}
@@ -867,7 +1024,9 @@ public class BDD extends NodeTable {
 
 
 
-		if(c < 2) return and_rec(u1, u2);
+		if(c < 2) {
+			return and_rec(u1, u2);
+		}
 
 		varset(c);
 
@@ -893,36 +1052,55 @@ public class BDD extends NodeTable {
 		int entry;
 		int res;
 
-		if (l == 0 || r == 0)				return 0;
-		if (l == r)				return quant_rec(l);
-		if (l == 1)				return quant_rec(r);
-		if (r == 1)				return quant_rec(l);
+		if (l == 0 || r == 0) {
+			return 0;
+		}
+		if (l == r) {
+			return quant_rec(l);
+		}
+		if (l == 1) {
+			return quant_rec(r);
+		}
+		if (r == 1) {
+			return quant_rec(l);
+		}
 
-		int LEVEL_l = getVar(l);
-		int LEVEL_r = getVar(r);
+		final int LEVEL_l = getVar(l);
+		final int LEVEL_r = getVar(r);
 
 
 		if (LEVEL_l > varset_last && LEVEL_r > varset_last) {
 			res = and_rec(l, r);
 		} else {
-			if(relprod_cache.lookup(l, r, quant_cube))   return relprod_cache.answer;
+			if(relprod_cache.lookup(l, r, quant_cube)) {
+				return relprod_cache.answer;
+			}
 			entry = relprod_cache.hash_value;
 
 			if (LEVEL_l == LEVEL_r) {
-				int a = work_stack[work_stack_tos++] = relProd_rec( getLow(l), getLow(r) );
-				int b = work_stack[work_stack_tos++] = relProd_rec( getHigh(l), getHigh(r) );
-				if( varset_vec[LEVEL_l] ) res = or_rec(a,b);
-				else res = mk(LEVEL_l, a, b);
+				final int a = work_stack[work_stack_tos++] = relProd_rec( getLow(l), getLow(r) );
+				final int b = work_stack[work_stack_tos++] = relProd_rec( getHigh(l), getHigh(r) );
+				if( varset_vec[LEVEL_l] ) {
+					res = or_rec(a,b);
+				} else {
+					res = mk(LEVEL_l, a, b);
+				}
 			} else if (LEVEL_l < LEVEL_r) {
-				int a = work_stack[work_stack_tos++] = relProd_rec( getLow(l), r );
-				int b = work_stack[work_stack_tos++] = relProd_rec( getHigh(l), r );
-				if( varset_vec[LEVEL_l] ) res = or_rec(a,b);
-				else res = mk(LEVEL_l, a, b);
+				final int a = work_stack[work_stack_tos++] = relProd_rec( getLow(l), r );
+				final int b = work_stack[work_stack_tos++] = relProd_rec( getHigh(l), r );
+				if( varset_vec[LEVEL_l] ) {
+					res = or_rec(a,b);
+				} else {
+					res = mk(LEVEL_l, a, b);
+				}
 			} else {
-				int a = work_stack[work_stack_tos++] = relProd_rec( l, getLow(r) );
-				int b = work_stack[work_stack_tos++] = relProd_rec( l, getHigh(r) );
-				if( varset_vec[LEVEL_r] ) res = or_rec(a,b);
-				else res = mk(LEVEL_r, a, b);
+				final int a = work_stack[work_stack_tos++] = relProd_rec( l, getLow(r) );
+				final int b = work_stack[work_stack_tos++] = relProd_rec( l, getHigh(r) );
+				if( varset_vec[LEVEL_r] ) {
+					res = or_rec(a,b);
+				} else {
+					res = mk(LEVEL_r, a, b);
+				}
 			}
 			work_stack_tos -= 2;
 			relprod_cache.insert(entry, l, r, quant_cube, res );
@@ -933,14 +1111,27 @@ public class BDD extends NodeTable {
 	/** 1. the simplest relProd_rec without input re-ordering */
 	private final int relProd_rec_ORG(int u1, int u2) {
 
-		if(u1 == 0 || u2 == 0) return 0; // a & 0 = 0
-		if(u1 == u2 || u2 == 1) return quant_rec(u1); // a & 1 = a & a = a
-		if(u1 == 1) return quant_rec(u2);	// b & 1 = b
+		if(u1 == 0 || u2 == 0)
+		 {
+			return 0; // a & 0 = 0
+		}
+		if(u1 == u2 || u2 == 1)
+		 {
+			return quant_rec(u1); // a & 1 = a & a = a
+		}
+		if(u1 == 1)
+		 {
+			return quant_rec(u2);	// b & 1 = b
+		}
 
-		if(getVar(u1) > varset_last && getVar(u2) > varset_last) return and_rec(u1, u2);
+		if(getVar(u1) > varset_last && getVar(u2) > varset_last) {
+			return and_rec(u1, u2);
+		}
 
-		if(relprod_cache.lookup(u1, u2, quant_cube))  return relprod_cache.answer;
-		int hash = relprod_cache.hash_value;
+		if(relprod_cache.lookup(u1, u2, quant_cube)) {
+			return relprod_cache.answer;
+		}
+		final int hash = relprod_cache.hash_value;
 
 		int l, h;
 
@@ -967,17 +1158,30 @@ public class BDD extends NodeTable {
 	// XXX: same bug as in the optimizer versions!!
 	private final int relProd_rec_OPT(int u1, int u2) {
 
-		if(u1 == 0 || u2 == 0) return 0; // a & 0 = 0
-		if(u1 == u2 || u2 == 1) return quant_rec(u1); // a & 1 = a & a = a
-		if(u1 == 1) return quant_rec(u2);	// b & 1 = b
+		if(u1 == 0 || u2 == 0)
+		 {
+			return 0; // a & 0 = 0
+		}
+		if(u1 == u2 || u2 == 1)
+		 {
+			return quant_rec(u1); // a & 1 = a & a = a
+		}
+		if(u1 == 1)
+		 {
+			return quant_rec(u2);	// b & 1 = b
+		}
 
-		if(getVar(u1) > varset_last && getVar(u2) > varset_last) return and_rec(u1, u2);
+		if(getVar(u1) > varset_last && getVar(u2) > varset_last) {
+			return and_rec(u1, u2);
+		}
 
 
-		if(getVar(u1) < getVar(u2)) { int tmp = u1; u1 = u2; u2 = tmp; } // SWAP
+		if(getVar(u1) < getVar(u2)) { final int tmp = u1; u1 = u2; u2 = tmp; } // SWAP
 
-		if(relprod_cache.lookup(u1, u2, quant_cube))  return relprod_cache.answer;
-		int hash = relprod_cache.hash_value;
+		if(relprod_cache.lookup(u1, u2, quant_cube)) {
+			return relprod_cache.answer;
+		}
+		final int hash = relprod_cache.hash_value;
 
 		int l, h;
 		if(getVar(u1) == getVar(u2)) {
@@ -1007,28 +1211,43 @@ public class BDD extends NodeTable {
 
 
 	private final int relProd_rec(int u1, int u2) {
-		if(u1 == 0 || u2 == 0) return 0;
-		if(u1 == u2 || u2 == 1) return quant_rec(u1);
-		if(u1 == 1) return quant_rec(u2);
+		if(u1 == 0 || u2 == 0) {
+			return 0;
+		}
+		if(u1 == u2 || u2 == 1) {
+			return quant_rec(u1);
+		}
+		if(u1 == 1) {
+			return quant_rec(u2);
+		}
 
 		if(getVar(u1) > varset_last && getVar(u2) > varset_last)  {
 			return and_rec(u1, u2);
 		}
 
-		if(getVar(u2) < getVar(u1)) { int tmp = u1; u1 = u2; u2 = tmp; } // SWAP
+		if(getVar(u2) < getVar(u1)) { final int tmp = u1; u1 = u2; u2 = tmp; } // SWAP
 
-		if(relprod_cache.lookup(u1, u2, quant_cube)) return relprod_cache.answer;
-		int hash = relprod_cache.hash_value;
+		if(relprod_cache.lookup(u1, u2, quant_cube)) {
+			return relprod_cache.answer;
+		}
+		final int hash = relprod_cache.hash_value;
 
-		int l,h, v = getVar(u1);
+		int l,h;
+		final int v = getVar(u1);
 		l = relProd_rec(getLow(u1), (v == getVar(u2)) ? getLow(u2)  : u2);
 
 
 		// early termination, see Yangs thesis...
 		if(varset_vec[ v ]) {
-			if(l == 1) return l;
-			if(l == getHigh(u1)) return l;
-			if(l == getHigh(u2) && getVar(u2) == v) return l;
+			if(l == 1) {
+				return l;
+			}
+			if(l == getHigh(u1)) {
+				return l;
+			}
+			if(l == getHigh(u2) && getVar(u2) == v) {
+				return l;
+			}
 		}
 
 
@@ -1036,8 +1255,11 @@ public class BDD extends NodeTable {
 		h = work_stack[work_stack_tos++] = relProd_rec( getHigh(u1), (v == getVar(u2)) ? getHigh(u2) : u2);
 
 		if(l != h) {
-			if(varset_vec[ v ]) l = or_rec(l, h);
-			else l = mk(v, l ,h);
+			if(varset_vec[ v ]) {
+				l = or_rec(l, h);
+			} else {
+				l = mk(v, l ,h);
+			}
 		}
 
 		relprod_cache.insert(hash, u1, u2, quant_cube, l );
@@ -1086,7 +1308,7 @@ public class BDD extends NodeTable {
 		permvec = perm.perm;
 		permlast = perm.last;
 		permid   = perm.id;
-		int ret = replace_rec( bdd );
+		final int ret = replace_rec( bdd );
 		permvec = null; // help GC ?
 		return ret;
 	}
@@ -1096,14 +1318,18 @@ public class BDD extends NodeTable {
 	 * <p> uses the variables permvec, permid and permlast and sets permvar
 	 */
 	private final int replace_rec(int bdd) {
-		if(bdd < 2 || getVar(bdd) > permlast)	return bdd;
+		if(bdd < 2 || getVar(bdd) > permlast) {
+			return bdd;
+		}
 
 
-		if(replace_cache.lookup(bdd, permid)) return replace_cache.answer;
-		int hash = replace_cache.hash_value;
+		if(replace_cache.lookup(bdd, permid)) {
+			return replace_cache.answer;
+		}
+		final int hash = replace_cache.hash_value;
 
 		int l = work_stack[work_stack_tos++] = replace_rec( getLow(bdd) );
-		int h = work_stack[work_stack_tos++] = replace_rec( getHigh(bdd) );
+		final int h = work_stack[work_stack_tos++] = replace_rec( getHigh(bdd) );
 
 		permvar = permvec[ getVar(bdd) ];
 		l = mkAndOrder(l,h);
@@ -1119,9 +1345,11 @@ public class BDD extends NodeTable {
 		// XXX: do we need a cache here??
 		// XXX: probably not if we use a S->S' permutation, but otherwise....
 
-		int vl = getVar(l);
-		int vh = getVar(h);
-		if(permvar < vl && permvar < vh) return mk(permvar, l, h);
+		final int vl = getVar(l);
+		final int vh = getVar(h);
+		if(permvar < vl && permvar < vh) {
+			return mk(permvar, l, h);
+		}
 
 		Test.check(permvar != vl && permvar != vh, "Replacing to a variable already in the BDD");
 
@@ -1151,7 +1379,10 @@ public class BDD extends NodeTable {
 	 * @see #simplify
 	 */
 	public int restrict(int u, int v) {
-		if(v == 1) return u; // XXX: not sure about his one
+		if(v == 1)
+		 {
+			return u; // XXX: not sure about his one
+		}
 
 		varset_signed(v);
 		restrict_careset = v;
@@ -1159,19 +1390,23 @@ public class BDD extends NodeTable {
 	}
 
 	private int restrict_rec(int u) {
-		if(u < 2 || getVar(u) > varset_last) return u;
+		if(u < 2 || getVar(u) > varset_last) {
+			return u;
+		}
 
 
-		if(op_cache.lookup(u, restrict_careset, CACHE_RESTRICT)) return op_cache.answer;
-		int hash = op_cache.hash_value;
+		if(op_cache.lookup(u, restrict_careset, CACHE_RESTRICT)) {
+			return op_cache.answer;
+		}
+		final int hash = op_cache.hash_value;
 		int ret = 0;
 
 
 		if(varset_vec[ getVar(u)] ) {
 				ret = restrict_rec( sign_vec[getVar(u)] ? getHigh(u) : getLow(u) );
 		} else {
-			int l = work_stack[work_stack_tos++] = restrict_rec( getLow(u) );
-			int h = work_stack[work_stack_tos++] = restrict_rec( getHigh(u) );
+			final int l = work_stack[work_stack_tos++] = restrict_rec( getLow(u) );
+			final int h = work_stack[work_stack_tos++] = restrict_rec( getHigh(u) );
 			ret = mk( getVar(u), l, h);
 			work_stack_tos -= 2;
 		}
@@ -1190,33 +1425,41 @@ public class BDD extends NodeTable {
 	 * @see #restrict
 	 */
 	public int simplify(int d, int u) {
-		if(d == 0) return 0;
-		if(u <  2) return u;
+		if(d == 0) {
+			return 0;
+		}
+		if(u <  2) {
+			return u;
+		}
 
 		if(d == 1) {
-			int l = work_stack[work_stack_tos++] = simplify(d, getLow(u) );
+			final int l = work_stack[work_stack_tos++] = simplify(d, getLow(u) );
 			int h = work_stack[work_stack_tos++] = simplify(d, getHigh(u) );
 			h = mk( getVar(u), l, h);
 			work_stack_tos -= 2;
 			return h;
 		} else if( getVar(d) == getVar(u)) {
-			if(getLow(d)  == 0) return simplify(getHigh(d), getHigh(u));
-			if(getHigh(d) == 0) return simplify( getLow(d),  getLow(u));
+			if(getLow(d)  == 0) {
+				return simplify(getHigh(d), getHigh(u));
+			}
+			if(getHigh(d) == 0) {
+				return simplify( getLow(d),  getLow(u));
+			}
 
-			int l = work_stack[work_stack_tos++] = simplify( getLow(d),  getLow(u) );
+			final int l = work_stack[work_stack_tos++] = simplify( getLow(d),  getLow(u) );
 			int h = work_stack[work_stack_tos++] = simplify(getHigh(d), getHigh(u) );
 
 			h = mk( getVar(u), l, h);
 			work_stack_tos -= 2;
 			return h;
 		} else if( getVar(d) < getVar(u)) {
-			int l = work_stack[work_stack_tos++] = simplify( getLow(d), u );
+			final int l = work_stack[work_stack_tos++] = simplify( getLow(d), u );
 			int h = work_stack[work_stack_tos++] = simplify(getHigh(d), u );
 			h = mk( getVar(d), l, h);
 			work_stack_tos -= 2;
 			return h;
 		} else {
-			int l = work_stack[work_stack_tos++] = simplify( d,  getLow(u) );
+			final int l = work_stack[work_stack_tos++] = simplify( d,  getLow(u) );
 			int h = work_stack[work_stack_tos++] = simplify( d, getHigh(u) );
 
 			h = mk( getVar(u), l, h);
@@ -1232,7 +1475,9 @@ public class BDD extends NodeTable {
 	 * @return true if the BDD is representing a variable.
 	 */
 	public boolean isVariable(int bdd) {
-		if(bdd < 2 || bdd > table_size || !isValid(bdd)) return false;
+		if(bdd < 2 || bdd > table_size || !isValid(bdd)) {
+			return false;
+		}
 		return (getLow(bdd) == 0 && getHigh(bdd) == 1);
 	}
 
@@ -1249,22 +1494,28 @@ public class BDD extends NodeTable {
 	public double satCount(int bdd) {
 
 		// if the number of variables has changed since the last time, the cache is invalid!
-		if(last_sat_vars != -1 && last_sat_vars != numvars) sat_cache.invalidate_cache();
+		if(last_sat_vars != -1 && last_sat_vars != numvars) {
+			sat_cache.invalidate_cache();
+		}
 		last_sat_vars = numvars;
 
 		return Math.pow(2, getVar(bdd)) * satCount_rec(bdd);
 	}
 
 	protected double satCount_rec(int bdd) {
-		if(bdd < 2) return bdd;
+		if(bdd < 2) {
+			return bdd;
+		}
 
-		if(sat_cache.lookup(bdd)) return sat_cache.answer;
-		int hash = sat_cache.hash_value;
+		if(sat_cache.lookup(bdd)) {
+			return sat_cache.answer;
+		}
+		final int hash = sat_cache.hash_value;
 
-		int low = getLow(bdd);
-		int high = getHigh(bdd);
+		final int low = getLow(bdd);
+		final int high = getHigh(bdd);
 
-		double ret = (satCount_rec(low) * Math.pow(2, getVar(low)  - getVar(bdd)  -1)) +
+		final double ret = (satCount_rec(low) * Math.pow(2, getVar(low)  - getVar(bdd)  -1)) +
 				(satCount_rec(high) * Math.pow(2, getVar(high) - getVar(bdd)  -1));
 
 		sat_cache.insert(hash, bdd, ret);
@@ -1284,9 +1535,13 @@ public class BDD extends NodeTable {
 
 	/** recursively mark and count nodes, used by nodeCount*/
 	private final void nodeCount_mark(int bdd) {
-		if(bdd < 2) return;
+		if(bdd < 2) {
+			return;
+		}
 
-		if( isNodeMarked(bdd)) return;
+		if( isNodeMarked(bdd)) {
+			return;
+		}
 		mark_node(bdd);
 		node_count_int++;
 		nodeCount_mark( getLow(bdd) );
@@ -1296,7 +1551,9 @@ public class BDD extends NodeTable {
 
 	/** faster nodeCount, but doesn't take the shared child-trees into account */
 	public final int quasiReducedNodeCount(int bdd) {
-		if(bdd < 2) return 0;
+		if(bdd < 2) {
+			return 0;
+		}
 		return 1 + quasiReducedNodeCount(getLow(bdd)) + quasiReducedNodeCount(getHigh(bdd));
 	}
 
@@ -1306,16 +1563,18 @@ public class BDD extends NodeTable {
 	 * bdd may not be the constant ONE or ZERO.
 	 */
 	public int oneSat(int bdd) {
-		if( bdd < 2) return bdd;
+		if( bdd < 2) {
+			return bdd;
+		}
 
 		if(getLow(bdd) == 0) {
-			int high = work_stack[work_stack_tos++] = oneSat(getHigh(bdd));
-			int u = mk( getVar(bdd), 0, high);
+			final int high = work_stack[work_stack_tos++] = oneSat(getHigh(bdd));
+			final int u = mk( getVar(bdd), 0, high);
 			work_stack_tos--;
 			return u;
 		} else {
-			int low= work_stack[work_stack_tos++] = oneSat(getLow(bdd));
-			int u = mk( getVar(bdd), low, 0);
+			final int low= work_stack[work_stack_tos++] = oneSat(getLow(bdd));
+			final int u = mk( getVar(bdd), low, 0);
 			work_stack_tos--;
 			return u;
 		}
@@ -1327,7 +1586,9 @@ public class BDD extends NodeTable {
 	 * if buffer is null, a new vector is created otherwise  buffer is used an returned </pre>
 	 */
 	public int [] oneSat(int bdd, int [] buffer) {
-		if(buffer == null) buffer = new int[numvars];
+		if(buffer == null) {
+			buffer = new int[numvars];
+		}
 
 		oneSat_buffer = buffer;
 		Array.set(buffer, -1);
@@ -1337,7 +1598,9 @@ public class BDD extends NodeTable {
 	}
 
 	protected void oneSat_rec(int bdd) {
-		if( bdd < 2) return;
+		if( bdd < 2) {
+			return;
+		}
 
 		if(getLow(bdd) == 0) {
 			oneSat_buffer[ getVar(bdd) ] = 1;
@@ -1357,13 +1620,17 @@ public class BDD extends NodeTable {
 
 		support_rec(bdd);
 		unmark_tree(bdd);
-		int ret = cube(support_buffer);
+		final int ret = cube(support_buffer);
 		return ret;
 	}
 	private final void support_rec(int bdd) {
-		if(bdd < 2) return;
+		if(bdd < 2) {
+			return;
+		}
 
-		if( isNodeMarked(bdd) ) return;
+		if( isNodeMarked(bdd) ) {
+			return;
+		}
 		support_buffer[ getVar(bdd) ] = true;
 		mark_node(bdd);
 
@@ -1380,8 +1647,9 @@ public class BDD extends NodeTable {
 	 */
 	public boolean member(int bdd, boolean [] minterm ) {
 
-		while(bdd >= 2)
+		while(bdd >= 2) {
 			bdd = (minterm[getVar(bdd)]) ? getHigh(bdd) : getLow(bdd);
+		}
 		return (bdd == 0) ? false : true;
 	}
 
@@ -1391,7 +1659,7 @@ public class BDD extends NodeTable {
 	 * this operation also handles the ref-counting
 	 */
 	public int orTo(int bdd1, int bdd2) {
-		int tmp = ref( or(bdd1, bdd2) );
+		final int tmp = ref( or(bdd1, bdd2) );
 		deref(bdd1);
 		return tmp;
 	}
@@ -1401,12 +1669,13 @@ public class BDD extends NodeTable {
 	 * this operation also handles the ref-counting
 	 */
 	public int andTo(int bdd1, int bdd2) {
-		int tmp = ref( and(bdd1, bdd2) );
+		final int tmp = ref( and(bdd1, bdd2) );
 		deref(bdd1);
 		return tmp;
 	}
 
 	// --- [ debug ] ----------------------
+	@Override
 	public void showStats() {
 		super.showStats();
 		op_cache.showStats();
@@ -1420,22 +1689,44 @@ public class BDD extends NodeTable {
 
 
 	/* return the amount of internally allocated memory in bytes */
+	@Override
 	public long getMemoryUsage() {
 		long ret = super.getMemoryUsage();
 
 		// small buffers, but still
-		if(varset_vec != null) ret += varset_vec.length * 4;
-		if(oneSat_buffer != null) ret += oneSat_buffer.length * 4;
-		if(support_buffer != null) ret += support_buffer.length * 1;		 // we assume one byte per boolean :(
+		if(varset_vec != null) {
+			ret += varset_vec.length * 4;
+		}
+		if(oneSat_buffer != null) {
+			ret += oneSat_buffer.length * 4;
+		}
+		if(support_buffer != null)
+		 {
+			ret += support_buffer.length * 1;		 // we assume one byte per boolean :(
+		}
 
 		// caches eat a lot of memory
-		if(op_cache != null) ret += op_cache.getMemoryUsage();
-		if(relprod_cache != null) ret += relprod_cache.getMemoryUsage();
-		if(not_cache != null) ret += not_cache.getMemoryUsage();
-		if(ite_cache != null) ret += ite_cache.getMemoryUsage();
-		if(quant_cache != null) ret += quant_cache.getMemoryUsage();
-		if(sat_cache != null) ret += sat_cache.getMemoryUsage();
-		if(replace_cache != null) ret += replace_cache.getMemoryUsage();
+		if(op_cache != null) {
+			ret += op_cache.getMemoryUsage();
+		}
+		if(relprod_cache != null) {
+			ret += relprod_cache.getMemoryUsage();
+		}
+		if(not_cache != null) {
+			ret += not_cache.getMemoryUsage();
+		}
+		if(ite_cache != null) {
+			ret += ite_cache.getMemoryUsage();
+		}
+		if(quant_cache != null) {
+			ret += quant_cache.getMemoryUsage();
+		}
+		if(sat_cache != null) {
+			ret += sat_cache.getMemoryUsage();
+		}
+		if(replace_cache != null) {
+			ret += replace_cache.getMemoryUsage();
+		}
 
 		// permutations also use some memory
 		Permutation tmp = firstPermutation ;
@@ -1476,7 +1767,7 @@ public class BDD extends NodeTable {
 		int v1 = jdd.createVar();
 		int v2 = jdd.createVar();
 		int v3 = jdd.createVar();
-		int v4 = jdd.createVar();
+		final int v4 = jdd.createVar();
 
 		// check deadnodes counter
 		int dum = jdd.and(v3,v2);
@@ -1490,8 +1781,8 @@ public class BDD extends NodeTable {
 
 		// test garbage collection:
 		jdd.grow(); // make sure there is room for it
-		int g1 = jdd.and(v3,v2);
-		int g2 = jdd.ref(jdd.or(g1, v1) );
+		final int g1 = jdd.and(v3,v2);
+		final int g2 = jdd.ref(jdd.or(g1, v1) );
 		Test.check(jdd.gc() == 0, "should not free g1 (recusrive dep)");
 		jdd.deref(g2);
 
@@ -1499,14 +1790,14 @@ public class BDD extends NodeTable {
 		Test.check(jdd.gc() == 2, "should free g2 thus also g1 (recusrive dep)");
 		jdd.gc(); // Should free g1 and g2
 
-		int nv1 = jdd.ref( jdd.not(v1) );
-		int nv2 = jdd.ref( jdd.not(v2) );
-		int nv3 = jdd.ref( jdd.not(v3) );
+		final int nv1 = jdd.ref( jdd.not(v1) );
+		final int nv2 = jdd.ref( jdd.not(v2) );
+		final int nv3 = jdd.ref( jdd.not(v3) );
 
 		// test restrict:
-		int res0 = jdd.ref( jdd.and( v1, nv3) );
-		int res1 = jdd.ref( jdd.xor(v1, v2) );
-		int res2 = jdd.ref( jdd.not(res1) );
+		final int res0 = jdd.ref( jdd.and( v1, nv3) );
+		final int res1 = jdd.ref( jdd.xor(v1, v2) );
+		final int res2 = jdd.ref( jdd.not(res1) );
 		Test.checkEquality( jdd.restrict( v1, res0), 1, "restrict 1");
 		Test.checkEquality( jdd.restrict( v2, res0), v2, "restrict 2");
 		Test.checkEquality( jdd.restrict( v3, res0), 0, "restrict 3");
@@ -1518,18 +1809,18 @@ public class BDD extends NodeTable {
 
 
 		// and, or, not [MUST REF INTERMEDIATE STUFF OR THEY WILL DISSAPPEAR DURING GC]
-		int n1 = jdd.ref(jdd.and(v1,v2));
-		int orn12 = jdd.ref( jdd.or(nv1, nv2));
-		int n2 = jdd.ref( jdd.not(orn12) );
+		final int n1 = jdd.ref(jdd.and(v1,v2));
+		final int orn12 = jdd.ref( jdd.or(nv1, nv2));
+		final int n2 = jdd.ref( jdd.not(orn12) );
 		Test.check(n1 == n2, "BDD canonicity (and/or/not)");
 
 		// XOR:
-		int h1 = jdd.ref( jdd.and( v1, nv2 ) );
-		int h2 = jdd.ref( jdd.and( v2, nv1 ) );
-		int x1 = jdd.ref( jdd.or( h1, h2) );
+		final int h1 = jdd.ref( jdd.and( v1, nv2 ) );
+		final int h2 = jdd.ref( jdd.and( v2, nv1 ) );
+		final int x1 = jdd.ref( jdd.or( h1, h2) );
 		jdd.deref(h1);
 		jdd.deref(h2);
-		int x2 = jdd.ref( jdd.xor(v1, v2) );
+		final int x2 = jdd.ref( jdd.xor(v1, v2) );
 		Test.checkEquality(x1, x2, "BDD canonicity (XOR)");
 		jdd.deref(x1);
 		jdd.deref(x2);
@@ -1537,17 +1828,17 @@ public class BDD extends NodeTable {
 
 
 		// biimp
-		int b1 = jdd.ref( jdd.or( n1, jdd.and( jdd.not(v1), jdd.not(v2)) ) );
-		int b2 = jdd.biimp(v1, v2);
+		final int b1 = jdd.ref( jdd.or( n1, jdd.and( jdd.not(v1), jdd.not(v2)) ) );
+		final int b2 = jdd.biimp(v1, v2);
 		Test.check(b1 == b2, "BDD canonicity (biimp)");
 
 
 		// NAND
-		int a1 = jdd.ref( jdd.and(v1,v2) );
-		int na1 = jdd.ref( jdd.not(a1) );
+		final int a1 = jdd.ref( jdd.and(v1,v2) );
+		final int na1 = jdd.ref( jdd.not(a1) );
 		jdd.deref(a1);
-		int na2 = jdd.ref( jdd.nand( v1, v2) );
-		int naeq = jdd.ref( jdd.biimp(na1, na2) );
+		final int na2 = jdd.ref( jdd.nand( v1, v2) );
+		final int naeq = jdd.ref( jdd.biimp(na1, na2) );
 		Test.check( na1 ==  na2, "NAND consitency");
 		jdd.deref(na1);
 		jdd.deref(na2);
@@ -1555,11 +1846,11 @@ public class BDD extends NodeTable {
 
 
 		// NOR
-		int o1 = jdd.ref( jdd.or(v1,v2) );
-		int no1 = jdd.ref( jdd.not(o1) );
+		final int o1 = jdd.ref( jdd.or(v1,v2) );
+		final int no1 = jdd.ref( jdd.not(o1) );
 		jdd.deref(o1);
-		int no2= jdd.ref( jdd.nor( v1, v2) );
-		int noeq = jdd.ref( jdd.biimp(no1, no2) );
+		final int no2= jdd.ref( jdd.nor( v1, v2) );
+		final int noeq = jdd.ref( jdd.biimp(no1, no2) );
 		Test.check( no2 ==  no1, "NOR consitency");
 		jdd.deref(no1);
 		jdd.deref(no2);
@@ -1588,9 +1879,9 @@ public class BDD extends NodeTable {
 
 
 		// this shows the difference
-		int qs1 = jdd.ref( jdd.xor(v1, v2) );
-		int qs2 = jdd.ref( jdd.xor(v3, v4) );
-		int qs3 = jdd.ref( jdd.xor(qs1, qs2) );
+		final int qs1 = jdd.ref( jdd.xor(v1, v2) );
+		final int qs2 = jdd.ref( jdd.xor(v3, v4) );
+		final int qs3 = jdd.ref( jdd.xor(qs1, qs2) );
 		Test.checkEquality(jdd.quasiReducedNodeCount( qs1),3,  "quasiReducedNodeCount (7)");
 		Test.checkEquality(jdd.quasiReducedNodeCount( qs2),3,  "quasiReducedNodeCount (8)");
 		Test.checkEquality(jdd.quasiReducedNodeCount( qs3),15,  "quasiReducedNodeCount (9)");
@@ -1610,9 +1901,9 @@ public class BDD extends NodeTable {
 
 
 		// Test quantification:
-		int cube = jdd.ref( jdd.and(v2, v3));
-		int toq  = jdd.ref( jdd.and(v1,v3));
-		int qor = jdd.ref( jdd.or(v1,v2) );
+		final int cube = jdd.ref( jdd.and(v2, v3));
+		final int toq  = jdd.ref( jdd.and(v1,v3));
+		final int qor = jdd.ref( jdd.or(v1,v2) );
 		Test.check( jdd.exists( toq, cube) == v1, "Exist failed (1)");
 		Test.check( jdd.exists( nv1, cube) == nv1, "Exist failed (2)");
 		Test.check( jdd.forall( toq, cube) == 0, "Forall failed (1)");
@@ -1622,16 +1913,16 @@ public class BDD extends NodeTable {
 
 
 		// test relProd:
-		int rel0 = jdd.ref( jdd.xor(v1, v2) );
-		int rel1 = jdd.ref( jdd.relProd( rel0, v1, v1) );
-		int rel2 = jdd.ref( jdd.relProd( rel0, nv1, v1) );
+		final int rel0 = jdd.ref( jdd.xor(v1, v2) );
+		final int rel1 = jdd.ref( jdd.relProd( rel0, v1, v1) );
+		final int rel2 = jdd.ref( jdd.relProd( rel0, nv1, v1) );
 
 		int reltmp = jdd.ref( jdd.and( rel0, v1) );
-		int rel1c = jdd.ref( jdd.exists(reltmp, v1) );
+		final int rel1c = jdd.ref( jdd.exists(reltmp, v1) );
 		jdd.deref(reltmp);
 
 		reltmp = jdd.ref( jdd.and( rel0, nv1) );
-		int rel2c = jdd.ref( jdd.exists(reltmp, v1) );
+		final int rel2c = jdd.ref( jdd.exists(reltmp, v1) );
 		jdd.deref(reltmp);
 
 		Test.checkEquality(rel1, rel1c, "relProd (1)");
@@ -1644,21 +1935,21 @@ public class BDD extends NodeTable {
 
 
 		// test permutation:
-		int []c1 = new int[]{ v1, v2 };
-		int []c2 = new int[]{ v3, v4 };
-		int []c3 = new int[]{ v1, v3 };
-		int []c4 = new int[]{ v2, v4 };
+		final int []c1 = new int[]{ v1, v2 };
+		final int []c2 = new int[]{ v3, v4 };
+		final int []c3 = new int[]{ v1, v3 };
+		final int []c4 = new int[]{ v2, v4 };
 
-		Permutation perm1 = jdd.createPermutation(c1, c2);
-		Permutation perm2 = jdd.createPermutation(c2, c1);
-		Permutation perm3 = jdd.createPermutation(c3, c4);
-		Permutation perm4 = jdd.createPermutation(c4, c3);
+		final Permutation perm1 = jdd.createPermutation(c1, c2);
+		final Permutation perm2 = jdd.createPermutation(c2, c1);
+		final Permutation perm3 = jdd.createPermutation(c3, c4);
+		final Permutation perm4 = jdd.createPermutation(c4, c3);
 
 
-		int v1v2 = jdd.ref( jdd.and(v1,v2) );
-		int v3v4 = jdd.ref( jdd.and(v4,v3) );
-		int v1v3 = jdd.ref( jdd.and(v1,v3) );
-		int v2v4 = jdd.ref( jdd.and(v2,v4) );
+		final int v1v2 = jdd.ref( jdd.and(v1,v2) );
+		final int v3v4 = jdd.ref( jdd.and(v4,v3) );
+		final int v1v3 = jdd.ref( jdd.and(v1,v3) );
+		final int v2v4 = jdd.ref( jdd.and(v2,v4) );
 		int p1 = jdd.replace( v1v2, perm1);
 		int p2 = jdd.replace( v3v4, perm2);
 		int p3 = jdd.replace( v1v3, perm3);
@@ -1679,14 +1970,14 @@ public class BDD extends NodeTable {
 
 		// test support:
 
-		int sx1 = jdd.xor(v2,v3);
-		int sx2 = jdd.imp(v1,v3);
-		int sx3 = jdd.biimp(v2,v4);
-		int s12 = jdd.ref(jdd.cube("1100"));
-		int s13 = jdd.ref(jdd.cube("1010"));
-		int s24 = jdd.ref(jdd.cube("0101"));
-		int s23 = jdd.ref(jdd.cube("0110"));
-		int s34 = jdd.ref(jdd.cube("0011"));
+		final int sx1 = jdd.xor(v2,v3);
+		final int sx2 = jdd.imp(v1,v3);
+		final int sx3 = jdd.biimp(v2,v4);
+		final int s12 = jdd.ref(jdd.cube("1100"));
+		final int s13 = jdd.ref(jdd.cube("1010"));
+		final int s24 = jdd.ref(jdd.cube("0101"));
+		final int s23 = jdd.ref(jdd.cube("0110"));
+		final int s34 = jdd.ref(jdd.cube("0011"));
 
 
 		Test.checkEquality(s12, jdd.support(v1v2), "Support (1)");
@@ -1711,7 +2002,7 @@ public class BDD extends NodeTable {
 		jdd = new BDD(7);
 		v1 = jdd.createVar();
 		v2 = jdd.createVar();
-		int tmp = jdd.work_stack[jdd.work_stack_tos++] = jdd.and(v1,v2); // use one node...
+		final int tmp = jdd.work_stack[jdd.work_stack_tos++] = jdd.and(v1,v2); // use one node...
 		jdd.gc();
 		Test.check( jdd.isValid( tmp), "intermediate node not garbage collected");
 		jdd.work_stack_tos --;
@@ -1767,7 +2058,7 @@ public class BDD extends NodeTable {
 		p4 = jdd.ref( jdd.and(jdd.not(v2),v1) );
 
 
-		boolean []mb =  new boolean[]{ false, true};
+		final boolean []mb =  new boolean[]{ false, true};
 		Test.checkEquality(jdd.member(p1, mb), false, "member (1)");
 		Test.checkEquality(jdd.member(p2, mb), true, "member (2)");
 		Test.checkEquality(jdd.member(p3, mb), true, "member (3)");

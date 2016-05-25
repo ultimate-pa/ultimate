@@ -67,19 +67,19 @@ public class CsvUtils {
 	 * @return
 	 */
 	public static <T, K> ICsvProvider<K> convertPerValue(ICsvProvider<T> provider, IExplicitConverter<T, K> converter) {
-		ICsvProvider<K> rtr = new SimpleCsvProvider<>(provider.getColumnTitles());
-		List<String> rowTitles = provider.getRowHeaders();
-		List<List<T>> table = provider.getTable();
+		final ICsvProvider<K> rtr = new SimpleCsvProvider<>(provider.getColumnTitles());
+		final List<String> rowTitles = provider.getRowHeaders();
+		final List<List<T>> table = provider.getTable();
 
 		for (int i = 0; i < table.size(); ++i) {
-			List<T> oldrow = table.get(i);
-			List<K> newrow = new ArrayList<>();
+			final List<T> oldrow = table.get(i);
+			final List<K> newrow = new ArrayList<>();
 
-			for (T oldentry : oldrow) {
+			for (final T oldentry : oldrow) {
 				newrow.add(converter.convert(oldentry));
 			}
 
-			String rowTitle = rowTitles.get(i);
+			final String rowTitle = rowTitles.get(i);
 			rtr.addRow(rowTitle, newrow);
 		}
 		return rtr;
@@ -100,20 +100,20 @@ public class CsvUtils {
 	 * @return
 	 */
 	public static <T> ICsvProvider<T> flatten(ICsvProvider<T> provider, String headerSeparator) {
-		ArrayList<String> newHeader = new ArrayList<>();
-		ArrayList<T> newRow = new ArrayList<>();
-		List<List<T>> currentMap = provider.getTable();
+		final ArrayList<String> newHeader = new ArrayList<>();
+		final ArrayList<T> newRow = new ArrayList<>();
+		final List<List<T>> currentMap = provider.getTable();
 
 		for (int i = 0; i < provider.getColumnTitles().size(); i++) {
-			String currentColumnHeader = provider.getColumnTitles().get(i);
+			final String currentColumnHeader = provider.getColumnTitles().get(i);
 
 			for (int j = 0; j < provider.getRowHeaders().size(); j++) {
-				String currentRowHeader = provider.getRowHeaders().get(j);
+				final String currentRowHeader = provider.getRowHeaders().get(j);
 				newHeader.add(currentColumnHeader + headerSeparator + currentRowHeader);
 				newRow.add(currentMap.get(j).get(i));
 			}
 		}
-		ICsvProvider<T> rtr = new SimpleCsvProvider<>(newHeader);
+		final ICsvProvider<T> rtr = new SimpleCsvProvider<>(newHeader);
 		rtr.addRow(newRow);
 		return rtr;
 	}
@@ -151,18 +151,18 @@ public class CsvUtils {
 	 * @return
 	 */
 	public static <T> ICsvProvider<T> projectColumn(ICsvProvider<T> provider, Collection<String> newColumnTitles) {
-		ICsvProvider<T> newProvider = new SimpleCsvProvider<>(new ArrayList<>(newColumnTitles));
+		final ICsvProvider<T> newProvider = new SimpleCsvProvider<>(new ArrayList<>(newColumnTitles));
 
 		if (provider.isEmpty()) {
 			return newProvider;
 		}
 
 		// build index list
-		List<Integer> indexList = new ArrayList<>();
-		for (String newColumnTitle : newColumnTitles) {
+		final List<Integer> indexList = new ArrayList<>();
+		for (final String newColumnTitle : newColumnTitles) {
 			int newIdx = -1;
 			for (int i = 0; i < provider.getColumnTitles().size(); ++i) {
-				String oldColumnTitle = provider.getColumnTitles().get(i);
+				final String oldColumnTitle = provider.getColumnTitles().get(i);
 				if (oldColumnTitle.equals(newColumnTitle)) {
 					newIdx = i;
 					break;
@@ -172,9 +172,9 @@ public class CsvUtils {
 		}
 
 		int rowIndex = 0;
-		for (String rowTitle : provider.getRowHeaders()) {
-			List<T> newRow = new ArrayList<>();
-			for (int cellIndex : indexList) {
+		for (final String rowTitle : provider.getRowHeaders()) {
+			final List<T> newRow = new ArrayList<>();
+			for (final int cellIndex : indexList) {
 				if (cellIndex == -1) {
 					newRow.add(null);
 				} else {
@@ -199,8 +199,8 @@ public class CsvUtils {
 		if (index < 0 || index > provider.getColumnTitles().size()) {
 			throw new IllegalArgumentException();
 		}
-		List<String> oldTitles = provider.getColumnTitles();
-		List<String> newTitles = new ArrayList<>();
+		final List<String> oldTitles = provider.getColumnTitles();
+		final List<String> newTitles = new ArrayList<>();
 
 		for (int i = 0, j = 0; i < oldTitles.size() + 1; ++i) {
 			if (i == index) {
@@ -211,12 +211,12 @@ public class CsvUtils {
 			}
 		}
 
-		SimpleCsvProvider<T> newProvider = new SimpleCsvProvider<>(newTitles);
+		final SimpleCsvProvider<T> newProvider = new SimpleCsvProvider<>(newTitles);
 
 		int k = 0;
 
-		for (List<T> oldRow : provider.getTable()) {
-			List<T> newRow = new ArrayList<>();
+		for (final List<T> oldRow : provider.getTable()) {
+			final List<T> newRow = new ArrayList<>();
 
 			for (int i = 0, j = 0; i < newTitles.size(); ++i) {
 				if (i == index) {
@@ -245,16 +245,16 @@ public class CsvUtils {
 			throw new IllegalArgumentException("provider may not be null or empty");
 		}
 
-		List<String> newColumnTitles = new ArrayList<>(provider.getRowHeaders());
-		ICsvProvider<T> rtr = new SimpleCsvProvider<>(newColumnTitles);
+		final List<String> newColumnTitles = new ArrayList<>(provider.getRowHeaders());
+		final ICsvProvider<T> rtr = new SimpleCsvProvider<>(newColumnTitles);
 
-		List<String> newRowTitles = new ArrayList<>(provider.getColumnTitles());
+		final List<String> newRowTitles = new ArrayList<>(provider.getColumnTitles());
 
 		int i = 0;
-		for (String newRowTitle : newRowTitles) {
-			List<T> newRow = new ArrayList<T>();
+		for (final String newRowTitle : newRowTitles) {
+			final List<T> newRow = new ArrayList<T>();
 
-			for (List<T> oldRow : provider.getTable()) {
+			for (final List<T> oldRow : provider.getTable()) {
 				newRow.add(oldRow.get(i));
 			}
 
@@ -279,11 +279,11 @@ public class CsvUtils {
 	 * @return
 	 */
 	public static <T> ICsvProvider<T> concatenateRows(ICsvProvider<T> providerA, ICsvProvider<T> providerB) {
-		List<String> providerAColumns = providerA.getColumnTitles();
-		List<String> providerBColumns = providerB.getColumnTitles();
+		final List<String> providerAColumns = providerA.getColumnTitles();
+		final List<String> providerBColumns = providerB.getColumnTitles();
 		List<String> resultColumns;
-		List<Integer> additionalColumnForProviderA = new ArrayList<Integer>();
-		List<Integer> additionalColumnForProviderB = new ArrayList<Integer>();
+		final List<Integer> additionalColumnForProviderA = new ArrayList<Integer>();
+		final List<Integer> additionalColumnForProviderB = new ArrayList<Integer>();
 		if (providerAColumns.size() == 0) {
 			resultColumns = providerBColumns;
 		} else if (providerBColumns.size() == 0) {
@@ -320,16 +320,16 @@ public class CsvUtils {
 				}
 			}
 		}
-		ICsvProvider<T> result = new SimpleCsvProvider<>(resultColumns);
+		final ICsvProvider<T> result = new SimpleCsvProvider<>(resultColumns);
 		int rowIndex = 0;
-		for (String rowTitle : providerA.getRowHeaders()) {
-			List<T> p1Row = providerA.getRow(rowIndex);
+		for (final String rowTitle : providerA.getRowHeaders()) {
+			final List<T> p1Row = providerA.getRow(rowIndex);
 			result.addRow(rowTitle, insertNullElements(p1Row, additionalColumnForProviderA));
 			++rowIndex;
 		}
 		rowIndex = 0;
-		for (String rowTitle : providerB.getRowHeaders()) {
-			List<T> p2Row = providerB.getRow(rowIndex);
+		for (final String rowTitle : providerB.getRowHeaders()) {
+			final List<T> p2Row = providerB.getRow(rowIndex);
 			result.addRow(rowTitle, insertNullElements(p2Row, additionalColumnForProviderB));
 			++rowIndex;
 		}
@@ -343,7 +343,7 @@ public class CsvUtils {
 	 */
 	public static <T, K extends ICsvProvider<T>> ICsvProvider<T> concatenateRows(List<K> csvProviders) {
 		ICsvProvider<T> result = new SimpleCsvProvider<>(new ArrayList<String>());
-		for (ICsvProvider<T> csvProvider : csvProviders) {
+		for (final ICsvProvider<T> csvProvider : csvProviders) {
 			result = concatenateRows(result, csvProvider);
 		}
 		return result;
@@ -356,7 +356,7 @@ public class CsvUtils {
 	 * is null.
 	 */
 	private static <T> List<T> insertNullElements(List<T> array, List<Integer> additionalNullValuePositions) {
-		List<T> result = new LinkedList<T>(array);
+		final List<T> result = new LinkedList<T>(array);
 		for (int i = additionalNullValuePositions.size() - 1; i >= 0; i--) {
 			result.add(additionalNullValuePositions.get(i), null);
 		}
@@ -369,10 +369,10 @@ public class CsvUtils {
 	 * map.
 	 */
 	public static <T> ICsvProvider<T> constructCvsProviderFromMap(Map<String, T> map) {
-		List<String> keys = new ArrayList<String>(map.keySet());
-		SimpleCsvProvider<T> scp = new SimpleCsvProvider<T>(keys);
-		List<T> values = new ArrayList<T>();
-		for (String key : keys) {
+		final List<String> keys = new ArrayList<String>(map.keySet());
+		final SimpleCsvProvider<T> scp = new SimpleCsvProvider<T>(keys);
+		final List<T> values = new ArrayList<T>();
+		for (final String key : keys) {
 			values.add(map.get(key));
 		}
 		scp.addRow(values);
@@ -397,7 +397,7 @@ public class CsvUtils {
 			};
 		}
 
-		String linebreak = System.getProperty("line.separator");
+		final String linebreak = System.getProperty("line.separator");
 
 		if (withHTMLHeaders) {
 			currentBuilder.append("<html><body>").append(linebreak);
@@ -405,37 +405,37 @@ public class CsvUtils {
 		currentBuilder.append("<table style=\"width:100%\">").append(linebreak);
 
 		if (hasRowHeaders(provider)) {
-			List<String> columnHeaders = provider.getColumnTitles();
+			final List<String> columnHeaders = provider.getColumnTitles();
 			currentBuilder.append("<tr><th></th>");
-			for (String header : columnHeaders) {
+			for (final String header : columnHeaders) {
 				currentBuilder.append("<th>").append(header).append("</th>");
 			}
 			currentBuilder.append("</tr>").append(linebreak);
 
-			List<String> rowHeaders = provider.getRowHeaders();
-			List<List<T>> rows = provider.getTable();
+			final List<String> rowHeaders = provider.getRowHeaders();
+			final List<List<T>> rows = provider.getTable();
 			for (int i = 0; i < rows.size(); ++i) {
 				currentBuilder.append("<tr><td>");
 				currentBuilder.append(rowHeaders.get(i));
 				currentBuilder.append("</td>");
-				for (T cell : rows.get(i)) {
+				for (final T cell : rows.get(i)) {
 					currentBuilder.append("<td>").append(cellDecorator.convert(cell)).append("</td>");
 				}
 				currentBuilder.append("</tr>").append(linebreak);
 			}
 
 		} else {
-			List<String> columnHeaders = provider.getColumnTitles();
+			final List<String> columnHeaders = provider.getColumnTitles();
 			currentBuilder.append("<tr>");
-			for (String header : columnHeaders) {
+			for (final String header : columnHeaders) {
 				currentBuilder.append("<th>").append(header).append("</th>");
 			}
 			currentBuilder.append("</tr>").append(linebreak);
 
-			List<List<T>> rows = provider.getTable();
+			final List<List<T>> rows = provider.getTable();
 			for (int i = 0; i < rows.size(); ++i) {
 				currentBuilder.append("<tr>");
-				for (T cell : rows.get(i)) {
+				for (final T cell : rows.get(i)) {
 					currentBuilder.append("<td>").append(cellDecorator.convert(cell)).append("</td>");
 				}
 				currentBuilder.append("</tr>").append(linebreak);
@@ -451,12 +451,12 @@ public class CsvUtils {
 	}
 
 	private static <T> boolean hasRowHeaders(ICsvProvider<T> provider) {
-		List<String> rowHeaders = provider.getRowHeaders();
+		final List<String> rowHeaders = provider.getRowHeaders();
 		if (rowHeaders == null || rowHeaders.isEmpty()) {
 			return false;
 		}
 
-		for (String header : rowHeaders) {
+		for (final String header : rowHeaders) {
 			if (header != null && !header.isEmpty()) {
 				return true;
 			}

@@ -43,7 +43,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
 	private INestedWordAutomatonOldApi<LETTER,STATE> mResult;
 	
 	private boolean mbuchiComplementREApplicable;
@@ -87,22 +87,22 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
+		final INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
 				(new ReachableStatesCopy<LETTER,STATE>(mServices, operand, false, false, false, true)).getResult();
 		if (operandWithoutNonLiveStates.isDeterministic()) {
 			mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
 			mResult = (new BuchiComplementDeterministic<LETTER,STATE>(mServices, operandWithoutNonLiveStates)).getResult();
 		}
 		else {
-			PowersetDeterminizer<LETTER,STATE> pd = 
+			final PowersetDeterminizer<LETTER,STATE> pd = 
 					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true, stateFactory);
-			INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
+			final INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
 					(new DeterminizeUnderappox<LETTER,STATE>(mServices, operandWithoutNonLiveStates,pd)).getResult();
-			INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =
+			final INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =
 					(new BuchiComplementDeterministic<LETTER,STATE>(mServices, determinized)).getResult();
-			INestedWordAutomatonOldApi<LETTER,STATE> intersectionWithOperand =
+			final INestedWordAutomatonOldApi<LETTER,STATE> intersectionWithOperand =
 					(new BuchiIntersectDD<LETTER,STATE>(mServices, operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
-			NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
+			final NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
 				mLogger.info("Rüdigers determinization knack applicable");
 				mbuchiComplementREApplicable = true;

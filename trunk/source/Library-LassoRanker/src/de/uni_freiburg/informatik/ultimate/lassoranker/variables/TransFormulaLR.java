@@ -107,15 +107,15 @@ public class TransFormulaLR implements Serializable {
 	 */
 	public static TransFormulaLR buildTransFormula(TransFormula transition,
 			ReplacementVarFactory replacementVarFactory) {
-		TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
+		final TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
 		
 		// Add existing in- and outVars
-		for (Map.Entry<BoogieVar, TermVariable> entry
+		for (final Map.Entry<BoogieVar, TermVariable> entry
 				: transition.getInVars().entrySet()) {
 			tf.addInVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());
 		}
-		for (Map.Entry<BoogieVar, TermVariable> entry
+		for (final Map.Entry<BoogieVar, TermVariable> entry
 				: transition.getOutVars().entrySet()) {
 			tf.addOutVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());
@@ -123,8 +123,8 @@ public class TransFormulaLR implements Serializable {
 		tf.addAuxVars(transition.getAuxVars());
 		
 		// Add constant variables as in- and outVars
-		for (ApplicationTerm constVar : transition.getConstants()) {
-			ReplacementVar repVar = 
+		for (final ApplicationTerm constVar : transition.getConstants()) {
+			final ReplacementVar repVar = 
 					replacementVarFactory.getOrConstuctReplacementVar(constVar); 
 			tf.addInVar(repVar, constVar);
 			tf.addOutVar(repVar, constVar);
@@ -176,7 +176,7 @@ public class TransFormulaLR implements Serializable {
 	 *            (unprimed version)
 	 */
 	public void addInVar(RankVar rkVar, Term var) {
-		Term oldValue = minVars.put(rkVar, var);
+		final Term oldValue = minVars.put(rkVar, var);
 		if (oldValue == null) {
 			minVarsReverseMapping.put(var, rkVar);
 		} else {
@@ -191,7 +191,7 @@ public class TransFormulaLR implements Serializable {
 	 * Remove an inVar from the collection
 	 */
 	public void removeInVar(RankVar rkVar) {
-		Term tv = minVars.remove(rkVar);
+		final Term tv = minVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
@@ -207,7 +207,7 @@ public class TransFormulaLR implements Serializable {
 	 *            (primed version)
 	 */
 	public void addOutVar(RankVar rkVar, Term var) {
-		Term oldValue = moutVars.put(rkVar, var);
+		final Term oldValue = moutVars.put(rkVar, var);
 		if (oldValue == null) {
 			moutVarsReverseMapping.put(var, rkVar);
 		} else {
@@ -222,7 +222,7 @@ public class TransFormulaLR implements Serializable {
 	 * Remove an outVar from the collection
 	 */
 	public void removeOutVar(RankVar rkVar) {
-		Term tv = moutVars.remove(rkVar);
+		final Term tv = moutVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
@@ -232,7 +232,7 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	public void removeAuxVar(TermVariable auxVar) {
-		boolean modified = mAuxVars.remove(auxVar);
+		final boolean modified = mAuxVars.remove(auxVar);
 		if (!modified) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
@@ -268,7 +268,7 @@ public class TransFormulaLR implements Serializable {
 	 * This property should always hold.
 	 */
 	public boolean auxVarsDisjointFromInOutVars() {
-		for (Term auxVar : mAuxVars) {
+		for (final Term auxVar : mAuxVars) {
 			if (minVarsReverseMapping.containsKey(auxVar)) {
 				return false;
 			}
@@ -287,7 +287,7 @@ public class TransFormulaLR implements Serializable {
 	 * VarCollector the result should always be null.
 	 */
 	public TermVariable allAreInOutAux(TermVariable[] tvs) {
-		for (TermVariable tv : tvs) {
+		for (final TermVariable tv : tvs) {
 			if (!isInOurAux(tv)) {
 				return tv;
 			}
@@ -312,7 +312,7 @@ public class TransFormulaLR implements Serializable {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("InVars: ");
 		sb.append(minVars.toString());
 		sb.append("\nOutVars: ");

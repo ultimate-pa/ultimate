@@ -148,10 +148,10 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		// stem. 
 		// Honda denotes the part of the lasso where stem and loop are connected.
 		// Therefore we call theses stats Honda states.
-		Set<STATE> hondaStates = new HashSet<STATE>();
-		Collection<STATE> InitialStates = nwa.getInitialStates();
-		for (STATE initialState : InitialStates) {
-			Set<STATE> reach = 
+		final Set<STATE> hondaStates = new HashSet<STATE>();
+		final Collection<STATE> InitialStates = nwa.getInitialStates();
+		for (final STATE initialState : InitialStates) {
+			final Set<STATE> reach = 
 				getReachableStates(0, initialState, new LinkedList<STATE>());
 			hondaStates.addAll(reach);
 		}
@@ -159,7 +159,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		// Compute for each hondaState if processing mLoop can lead to a run that
 		// contains an accepting state and brings the automaton back to the honda state.
 		boolean result = false;
-		for (STATE hondaState : hondaStates) {
+		for (final STATE hondaState : hondaStates) {
 			result = result || isCompleteableToAcceptingRun(
 					new HashMap<STATE,Boolean>(), 
 					0, 
@@ -195,12 +195,12 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			STATE currentState,
 			List<STATE> callStack) {
 		if (currentPosition >= mStem.length()) {
-			Set<STATE> result = new HashSet<STATE>();
+			final Set<STATE> result = new HashSet<STATE>();
 			result.add(currentState);
 			return result;
 		}
 		else {
-			LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
+			final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
 
 			Iterable<STATE> succStatesCollection;
 			if (mStem.isInternalPosition(currentPosition)) {
@@ -213,7 +213,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			else if (mStem.isReturnPosition(currentPosition)) {
 				assert (!callStack.isEmpty()) : "restricted to stem without pending return";
 				//pop the top element from the callStack
-				STATE linearPred = callStack.remove(callStack.size()-1);
+				final STATE linearPred = callStack.remove(callStack.size()-1);
 				succStatesCollection = mNwa.succReturn(currentState, linearPred, currentSymbol);
 			}
 			else {
@@ -225,11 +225,11 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			}
 
 			else{
-				List<STATE> succStates = new ArrayList<STATE>();
-				for (STATE succ : succStatesCollection) {
+				final List<STATE> succStates = new ArrayList<STATE>();
+				for (final STATE succ : succStatesCollection) {
 					succStates.add(succ);
 				}
-				Set<STATE> result = new HashSet<STATE>();
+				final Set<STATE> result = new HashSet<STATE>();
 				for (int i=0; i<succStates.size(); i++) {
 					// in case of nondeterminism, i.e. several successor states for 
 					// currentSymbol, every recursive call of this procedure needs its own
@@ -242,7 +242,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 					else {
 						callStackcopy = callStack;
 					}
-					Set<STATE> returnValue = getReachableStates(
+					final Set<STATE> returnValue = getReachableStates(
 							currentPosition+1, 
 							succStates.get(i), 
 							callStackcopy);
@@ -299,12 +299,12 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			}
 		}
 		if (mNwa.isFinal(currentState)) {
-			for (STATE hondaCandidate : hondaCandidates2visitedFinal.keySet()) {
+			for (final STATE hondaCandidate : hondaCandidates2visitedFinal.keySet()) {
 				hondaCandidates2visitedFinal.put(hondaCandidate, true);
 			}
 		}
 
-		LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
+		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
 
 		Iterable<STATE> succStatesCollection;
 		if (mLoop.isInternalPosition(currentPosition)) {
@@ -317,7 +317,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		else if (mLoop.isReturnPosition(currentPosition)) {
 			assert (!callStack.isEmpty()) : "restricted to loop without pending return";
 			//pop the top element from the callStack
-			STATE linearPred = callStack.remove(callStack.size()-1);
+			final STATE linearPred = callStack.remove(callStack.size()-1);
 			succStatesCollection = mNwa.succReturn(currentState, linearPred, currentSymbol);
 		}
 		else {
@@ -329,8 +329,9 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		}
 		else{
 			@SuppressWarnings("unchecked")
+			final
 			List<STATE> succStates = new ArrayList<STATE>();
-			for (STATE succ : succStatesCollection) {
+			for (final STATE succ : succStatesCollection) {
 				succStates.add(succ);
 			}
 			boolean result = false;

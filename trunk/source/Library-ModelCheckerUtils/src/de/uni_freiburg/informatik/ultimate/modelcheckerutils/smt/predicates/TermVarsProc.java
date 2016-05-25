@@ -79,10 +79,10 @@ public class TermVarsProc {
 	 * procedures of these BoogieVariables.
 	 */
 	public static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt) {
-		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
+		final Set<String> procs = new HashSet<String>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final BoogieVar bv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}
@@ -91,7 +91,7 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
+		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 	
@@ -109,17 +109,17 @@ public class TermVarsProc {
 	@Deprecated
 	private static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt, 
 			boolean replaceNonModifiableOldVars, Set<BoogieVar> modifiableGlobals) {
-		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
-		List<BoogieOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
-		Set<String> procs = new HashSet<String>();
-		for (TermVariable tv : term.getFreeVars()) {
+		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
+		final List<BoogieOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
+		final Set<String> procs = new HashSet<String>();
+		for (final TermVariable tv : term.getFreeVars()) {
 			BoogieVar bv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}
 			if (replaceNonModifiableOldVars) {
 				if (bv instanceof BoogieOldVar) {
-					BoogieNonOldVar nonOld = ((BoogieOldVar) bv).getNonOldVar();
+					final BoogieNonOldVar nonOld = ((BoogieOldVar) bv).getNonOldVar();
 					if (modifiableGlobals.contains(nonOld)) {
 						// do nothing - is modifiable
 					} else {
@@ -134,14 +134,14 @@ public class TermVarsProc {
 			}
 		}
 		if (!oldVarsThatHaveToBeReplaced.isEmpty()) {
-			Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (BoogieOldVar oldVar : oldVarsThatHaveToBeReplaced) {
-				BoogieNonOldVar nonOld = ((BoogieOldVar) oldVar).getNonOldVar();
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (final BoogieOldVar oldVar : oldVarsThatHaveToBeReplaced) {
+				final BoogieNonOldVar nonOld = oldVar.getNonOldVar();
 				substitutionMapping.put(oldVar.getTermVariable(), nonOld.getTermVariable());
 			}
 			term = (new SafeSubstitution(boogie2smt.getScript(), substitutionMapping)).transform(term);
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
+		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 

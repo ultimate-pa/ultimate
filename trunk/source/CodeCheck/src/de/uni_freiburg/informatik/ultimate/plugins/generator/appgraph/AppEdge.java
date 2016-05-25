@@ -48,15 +48,16 @@ public class AppEdge extends
 
 	public void disconnect() {
 		boolean success = true;
-		success &= this.mSource.removeOutgoing(this);
-		success &= this.mTarget.removeIncoming(this);
+		success &= mSource.removeOutgoing(this);
+		success &= mTarget.removeIncoming(this);
 		assert success;
-		this.mSource = null;
-		this.mTarget = null;
+		mSource = null;
+		mTarget = null;
 	}
 	
+	@Override
 	public String toString() {
-		return String.format("%s -- %s --> %s", this.mSource, this.statement, this.mTarget);
+		return String.format("%s -- %s --> %s", mSource, statement, mTarget);
 	}
 
 	@Override

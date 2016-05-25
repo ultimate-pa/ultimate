@@ -89,14 +89,14 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 
 		{
 			// Tests with TreeInterpolation
-			for (String setting : mSettings_TreeInterpolation) {
-				for (String toolchain : mBoogieToolchains) {
+			for (final String setting : mSettings_TreeInterpolation) {
+				for (final String toolchain : mBoogieToolchains) {
 					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
 							new String[] {".bpl"});
 				}
 			}
-			for (String setting : mSettings_TreeInterpolation) {
-				for (String toolchain : mCToolchains) {
+			for (final String setting : mSettings_TreeInterpolation) {
+				for (final String toolchain : mCToolchains) {
 					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
 							new String[] {".c", ".i"});
 				}
@@ -104,14 +104,14 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 		}
 		
 		{	// Tests with ForwardPredicates
-			for (String setting : mSettings_ForwardPredicates) {
-				for (String toolchain : mBoogieToolchains) {
+			for (final String setting : mSettings_ForwardPredicates) {
+				for (final String toolchain : mBoogieToolchains) {
 					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, 
 							new String[] {".bpl"});
 				}
 			}
-			for (String setting : mSettings_ForwardPredicates) {
-				for (String toolchain : mCToolchains) {
+			for (final String setting : mSettings_ForwardPredicates) {
+				for (final String toolchain : mCToolchains) {
 					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, 
 							new String[] {".c", ".i"});
 				}

@@ -73,7 +73,7 @@ public final class VisualizationEdge
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof VisualizationEdge) {
-			VisualizationEdge other = (VisualizationEdge) obj;
+			final VisualizationEdge other = (VisualizationEdge) obj;
 			if (mBacking == null && other.mBacking == null) {
 				return super.equals(obj);
 			} else if (mBacking == null) {

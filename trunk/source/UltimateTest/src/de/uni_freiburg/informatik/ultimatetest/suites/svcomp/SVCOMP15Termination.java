@@ -54,7 +54,7 @@ public class SVCOMP15Termination extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("Termination-crafted", "BuchiAutomizerCWithBlockEncoding.xml",

@@ -330,7 +330,7 @@ public final class SFO {
 		// tempVar = new VarList(loc, new String[] { tmpName },
 		// pt);
 		// }
-		VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
+		final VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 	};
 

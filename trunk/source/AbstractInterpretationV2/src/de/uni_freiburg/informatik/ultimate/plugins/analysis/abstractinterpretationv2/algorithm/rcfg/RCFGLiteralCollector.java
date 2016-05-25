@@ -70,6 +70,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
 
+	@Override
 	public LiteralCollection getLiteralCollection() {
 		return mLiteralCollection;
 	}
@@ -132,7 +133,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		@Override
 		protected void visit(IntegerLiteral expr) {
 			super.visit(expr);
-			StringBuilder litBuilder = new StringBuilder();
+			final StringBuilder litBuilder = new StringBuilder();
 			if (mNegate) {
 				litBuilder.append("-");
 			}
@@ -159,7 +160,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		@Override
 		protected void visit(RealLiteral expr) {
 			super.visit(expr);
-			StringBuilder litBuilder = new StringBuilder();
+			final StringBuilder litBuilder = new StringBuilder();
 			if (mNegate) {
 				litBuilder.append("-");
 			}

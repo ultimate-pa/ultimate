@@ -86,21 +86,21 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		mPredicateFactory = new PredicateFactoryResultChecking(smtManager);
 		mCfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
 		mSmtManager = smtManager;
-		NestedLassoRun<CodeBlock, IPredicate> run = 
+		final NestedLassoRun<CodeBlock, IPredicate> run = 
 				(new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mCfgAutomaton)).getAcceptingNestedLassoRun();
 
 		if (run == null) {
 			mLassoFound = false;
 			mSomeNoneForErrorReport = extractSomeNodeForErrorReport(rootNode);
 		} else {
-			NestedLassoWord<CodeBlock> nlw = run.getNestedLassoWord();
-			InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
+			final NestedLassoWord<CodeBlock> nlw = run.getNestedLassoWord();
+			final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
 			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet, 
 					mPredicateFactory, nlw.getStem(), nlw.getLoop())).getResult();
-			INestedWordAutomaton<CodeBlock, IPredicate> difference = 
+			final INestedWordAutomaton<CodeBlock, IPredicate> difference = 
 					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactory, 
 							mCfgAutomaton, mLassoAutomaton)).getResult();
-			boolean isEmpty = (new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), difference)).getResult();
+			final boolean isEmpty = (new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), difference)).getResult();
 			if (isEmpty) {
 				mLassoFound = true;
 				mHonda = extractHonda(run);
@@ -126,10 +126,10 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 
 	private INestedWordAutomaton<CodeBlock, IPredicate> constructCfgAutomaton(
 			RootNode rootNode, SmtManager smtManager) {
-		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
+		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mLogger);
-		Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
-		for (Map<String, ProgramPoint> prog2pp : 
+		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
+		for (final Map<String, ProgramPoint> prog2pp : 
 						rootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
@@ -153,8 +153,8 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 							alphabet.getCallAlphabet(),
 							alphabet.getReturnAlphabet(),
 							predicateFactory);
-			List<IPredicate> stemStates = constructListOfDontCarePredicates(stem.length());
-			List<IPredicate> loopStates = constructListOfDontCarePredicates(loop.length());
+			final List<IPredicate> stemStates = constructListOfDontCarePredicates(stem.length());
+			final List<IPredicate> loopStates = constructListOfDontCarePredicates(loop.length());
 			IPredicate initialState;
 			if (stem.length() == 0) {
 				initialState = loopStates.get(0);
@@ -163,7 +163,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 				initialState = stemStates.get(0);
 				mResult.addState(true, false, initialState);
 			}
-			IPredicate hondaState = loopStates.get(0);
+			final IPredicate hondaState = loopStates.get(0);
 			if (stem.length() > 0) {
 				mResult.addState(false, true, hondaState);
 			}
@@ -175,13 +175,13 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			mResult.addTransitions(loop, loopStates);
 			try {
 				assert (new BuchiAccepts<>(new AutomataLibraryServices(mServices), mResult, new NestedLassoWord<>(stem, loop)).getResult());
-			} catch (AutomataLibraryException e) {
+			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e);
 			}
 		}
 		
 		private List<IPredicate> constructListOfDontCarePredicates(int length) {
-			ArrayList<IPredicate> result = new ArrayList<IPredicate>(length);
+			final ArrayList<IPredicate> result = new ArrayList<IPredicate>(length);
 			for (int i=0; i<length; i++) {
 				result.add(mSmtManager.getPredicateFactory().newDontCarePredicate(null));
 			}

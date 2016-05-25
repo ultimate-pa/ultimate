@@ -59,7 +59,7 @@ public class UnionFind<E> {
 	 * Returns the representative of the equivalence class of element e.
 	 */
 	public E find(E e) {
-		Set<E> set = mEquivalenceClass.get(e);
+		final Set<E> set = mEquivalenceClass.get(e);
 		return mRepresentative.get(set);
 	}
 
@@ -71,7 +71,7 @@ public class UnionFind<E> {
 		if (mEquivalenceClass.containsKey(e)) {
 			throw new IllegalArgumentException("Already contained " + e);
 		}
-		Set<E> result = new HashSet<E>();
+		final Set<E> result = new HashSet<E>();
 		result.add(e);
 		mEquivalenceClass.put(e, result);
 		mRepresentative.put(result, e);
@@ -82,13 +82,13 @@ public class UnionFind<E> {
 	 * not have to be the representatives of this equivalence classes).
 	 */
 	public void union(E e1, E e2) {
-		Set<E> set1 = mEquivalenceClass.get(e1);
-		Set<E> set2 = mEquivalenceClass.get(e2);
-		E set1rep = mRepresentative.get(set1);
+		final Set<E> set1 = mEquivalenceClass.get(e1);
+		final Set<E> set2 = mEquivalenceClass.get(e2);
+		final E set1rep = mRepresentative.get(set1);
 		mRepresentative.remove(set1);
 		mRepresentative.remove(set2);
 		set1.addAll(set2);
-		for (E e : set2) {
+		for (final E e : set2) {
 			mEquivalenceClass.put(e, set1);
 		} 
 		mRepresentative.put(set1, set1rep);

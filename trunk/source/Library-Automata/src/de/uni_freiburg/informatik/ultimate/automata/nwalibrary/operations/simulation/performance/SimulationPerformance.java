@@ -63,7 +63,7 @@ public final class SimulationPerformance {
 	 */
 	public static SimulationPerformance createOutOfMemoryPerformance(final ESimulationType type,
 			final boolean useSCCs) {
-		SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+		final SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
 		performance.outOfMemory();
 		return performance;
 	}
@@ -78,7 +78,7 @@ public final class SimulationPerformance {
 	 * @return The timed out simulation performance object
 	 */
 	public static SimulationPerformance createTimedOutPerformance(final ESimulationType type, final boolean useSCCs) {
-		SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+		final SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
 		performance.timeOut();
 		return performance;
 	}
@@ -146,16 +146,16 @@ public final class SimulationPerformance {
 	 *            Simulation object to add measures from
 	 */
 	public void addAllMeasures(final SimulationPerformance other) {
-		LinkedHashMap<ECountingMeasure, Integer> countingMeasuresToAdd = other.getCountingMeasures();
-		LinkedHashMap<ETimeMeasure, List<Long>> timeMeasuresToAdd = other.getTimeMeasures();
+		final LinkedHashMap<ECountingMeasure, Integer> countingMeasuresToAdd = other.getCountingMeasures();
+		final LinkedHashMap<ETimeMeasure, List<Long>> timeMeasuresToAdd = other.getTimeMeasures();
 
-		for (Entry<ETimeMeasure, List<Long>> timeMeasure : timeMeasuresToAdd.entrySet()) {
-			for (Long duration : timeMeasure.getValue()) {
+		for (final Entry<ETimeMeasure, List<Long>> timeMeasure : timeMeasuresToAdd.entrySet()) {
+			for (final Long duration : timeMeasure.getValue()) {
 				addTimeMeasureValue(timeMeasure.getKey(), duration);
 			}
 		}
-		for (Entry<ECountingMeasure, Integer> countingMeasure : countingMeasuresToAdd.entrySet()) {
-			int current = getCountingMeasureResult(countingMeasure.getKey());
+		for (final Entry<ECountingMeasure, Integer> countingMeasure : countingMeasuresToAdd.entrySet()) {
+			final int current = getCountingMeasureResult(countingMeasure.getKey());
 			int valueToSet = current;
 			if (current != NO_COUNTING_RESULT) {
 				valueToSet += countingMeasure.getValue();
@@ -238,13 +238,13 @@ public final class SimulationPerformance {
 	 * @return The time measure result to get
 	 */
 	public long getTimeMeasureResult(final ETimeMeasure type, final EMultipleDataOption option) {
-		List<Long> measureList = mTimeMeasures.get(type);
+		final List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null || measureList.isEmpty()) {
 			return NO_TIME_RESULT;
 		}
 
 		long timeResult = 0;
-		for (long timeMeasure : measureList) {
+		for (final long timeMeasure : measureList) {
 			if (timeMeasure == NO_TIME_RESULT) {
 				continue;
 			}
@@ -312,7 +312,7 @@ public final class SimulationPerformance {
 		if (!mCountingMeasures.containsKey(type)) {
 			mCountingMeasures.put(type, 1);
 		} else {
-			int counter = mCountingMeasures.get(type);
+			final int counter = mCountingMeasures.get(type);
 			mCountingMeasures.put(type, counter + 1);
 		}
 	}
@@ -376,7 +376,7 @@ public final class SimulationPerformance {
 	 *            Type of the time measure to start
 	 */
 	public void startTimeMeasure(final ETimeMeasure type) {
-		long startTime = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
 		mTimeMeasureStartTimes.put(type, startTime);
 	}
 
@@ -389,12 +389,12 @@ public final class SimulationPerformance {
 	 * @return The duration of the measure.
 	 */
 	public long stopTimeMeasure(final ETimeMeasure type) {
-		long endTime = System.currentTimeMillis();
+		final long endTime = System.currentTimeMillis();
 		long startTime = mTimeMeasureStartTimes.get(type);
 		if (!mTimeMeasureStartTimes.containsKey(type)) {
 			startTime = 0;
 		}
-		long duration = endTime - startTime;
+		final long duration = endTime - startTime;
 		saveTimeMeasureResult(type, duration);
 		return duration;
 	}

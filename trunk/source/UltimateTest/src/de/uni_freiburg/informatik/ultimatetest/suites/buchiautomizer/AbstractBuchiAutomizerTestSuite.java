@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkR
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -62,13 +62,13 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
 				new ColumnDefinition(
 						CegarLoopStatisticsDefinitions.OverallTime.toString(), "runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),	

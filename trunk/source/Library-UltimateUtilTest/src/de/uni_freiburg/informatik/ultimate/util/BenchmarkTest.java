@@ -49,12 +49,12 @@ public class BenchmarkTest {
 	@Test
 	public void TimeStartStopSingle() throws InterruptedException {
 
-		long actualTime = 100;
+		final long actualTime = 100;
 		double measuredTime = -1;
-		double allowedEpsilon = 1;
-		String title = "TimeStartStopSingle";
+		final double allowedEpsilon = 1;
+		final String title = "TimeStartStopSingle";
 
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 
 		bench.start(title);
 		Thread.sleep(actualTime);
@@ -71,8 +71,8 @@ public class BenchmarkTest {
 	@Test
 	public void HeapStartStopSingle() throws InterruptedException {
 
-		int numInt = 1000000;
-		int intSize = (Integer.SIZE / Byte.SIZE);
+		final int numInt = 1000000;
+		final int intSize = (Integer.SIZE / Byte.SIZE);
 		// overhead for array is 12 bytes, total number is rounded up to a
 		// multiple of 8
 		// see http://www.javamex.com/tutorials/memory/array_memory_usage.shtml
@@ -80,22 +80,22 @@ public class BenchmarkTest {
 		actualHeapSize = actualHeapSize + (actualHeapSize % 8);
 
 		long measuredHeapDelta = -1;
-		double allowedEpsilon = 0;
-		String title = "HeapStartStopSingle";
+		final double allowedEpsilon = 0;
+		final String title = "HeapStartStopSingle";
 
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 		System.gc();
 		Thread.sleep(100);
 		bench.start(title);
-		int[] array = new int[numInt];
+		final int[] array = new int[numInt];
 		for (int i = 0; i < numInt; ++i) {
 			array[i] = i;
 		}
 		Thread.sleep(100);
 		bench.stop(title);
 
-		long startSize = bench.getStartMemoryFreeSize(title);
-		long stopSize = bench.getStopMemoryFreeSize(title);
+		final long startSize = bench.getStartMemoryFreeSize(title);
+		final long stopSize = bench.getStopMemoryFreeSize(title);
 		measuredHeapDelta = startSize - stopSize;
 
 		System.out.println("sizeof(int) = " + intSize + " byte");
@@ -117,10 +117,10 @@ public class BenchmarkTest {
 
 		long actualTime = 100;
 		double measuredTime = -1;
-		double allowedEpsilon = 1;
-		String title = "TimePauseSingle";
+		final double allowedEpsilon = 1;
+		final String title = "TimePauseSingle";
 
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 
 		bench.start(title);
 		Thread.sleep(actualTime);
@@ -152,13 +152,13 @@ public class BenchmarkTest {
 
 	@Test
 	public void AllSingle() throws InterruptedException {
-		long sleepTime = 100;
+		final long sleepTime = 100;
 		double measuredTime = -1;
-		double allowedEpsilon = 1;
+		final double allowedEpsilon = 1;
 		long actualTime = 2 * sleepTime;
-		String title = "AllSingle";
+		final String title = "AllSingle";
 
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 
 		bench.start(title);
 		Thread.sleep(sleepTime);
@@ -209,18 +209,18 @@ public class BenchmarkTest {
 
 	@Test
 	public void AllMultiple() throws InterruptedException {
-		long sleepTime = 100;
+		final long sleepTime = 100;
 		double measuredTime = -1;
-		double allowedEpsilon = 1;
+		final double allowedEpsilon = 1;
 		long actualTime = 3 * sleepTime;
-		int watches = 10;
+		final int watches = 10;
 
-		String[] titles = new String[watches];
+		final String[] titles = new String[watches];
 		for (int i = watches - 1; i >= 0; i--) {
 			titles[i] = "AllMultiple-" + i;
 		}
 
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 
 		for (int i = watches - 1; i >= 0; i--) {
 			bench.register(titles[i]);

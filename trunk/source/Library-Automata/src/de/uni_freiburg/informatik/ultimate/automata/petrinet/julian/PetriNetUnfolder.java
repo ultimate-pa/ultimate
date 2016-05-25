@@ -34,9 +34,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -90,17 +90,20 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 	private final Order<S, C> ESPARZAS_ROEMER_VOGLER_ORDER = new Order<S, C>() {
 
+		@Override
 		public int compare(Configuration<S, C> c1, Configuration<S, C> c2) {
 			int result = c1.compareTo(c2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			Configuration<S, C> min1 = c1.getMin(mUnfolding);
-			Configuration<S, C> min2 = c2.getMin(mUnfolding);
+			}
+			final Configuration<S, C> min1 = c1.getMin(mUnfolding);
+			final Configuration<S, C> min2 = c2.getMin(mUnfolding);
 			result = min1.compareTo(min2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			Configuration<S, C> c1withoutMin1 = c1.removeMin();
-			Configuration<S, C> c2withoutMin2 = c2.removeMin();
+			}
+			final Configuration<S, C> c1withoutMin1 = c1.removeMin();
+			final Configuration<S, C> c2withoutMin2 = c2.removeMin();
 
 			assert (c1.equals(c2) || !c1withoutMin1.equals(c2withoutMin2)) : "\ne1\t="
 					+ c1
@@ -130,12 +133,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		@Override
 		public int compare(Event<S, C> o1, Event<S, C> o2) {
 			int result = MC_MILLANS_ORDER.compare(o1, o2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			if (!o1.getMark().equals(o2.getMark()))
+			}
+			if (!o1.getMark().equals(o2.getMark())) {
 				return 0;
-			Configuration<S, C> c1 = o1.getLocalConfiguration();
-			Configuration<S, C> c2 = o2.getLocalConfiguration();
+			}
+			final Configuration<S, C> c1 = o1.getLocalConfiguration();
+			final Configuration<S, C> c2 = o2.getLocalConfiguration();
 			assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
 					+ c1.equals(c2);
 			result = compare(c1, c2);
@@ -149,7 +154,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		}
 	};
 	
-	private PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
+	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
 
 	/**
 	 * 
@@ -201,10 +206,10 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
 		while (!mPossibleExtensions.isEmpy()) {
-			Event<S, C> e = mPossibleExtensions.remove();
+			final Event<S, C> e = mPossibleExtensions.remove();
 
 			if (!parentIsCutoffEvent(e)) {
-				boolean succOfEventIsAccpting = mUnfolding.addEvent(e);
+				final boolean succOfEventIsAccpting = mUnfolding.addEvent(e);
 				// assert !unfolding.pairwiseConflictOrCausalRelation(
 				// e.getPredecessorConditions());
 				if (succOfEventIsAccpting && mRun == null) {
@@ -274,19 +279,20 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		PetriNetRun<S, C> run = new PetriNetRun<S, C>(
 				initialMarking.getMarking());
 		ConditionMarking<S, C> current = initialMarking;
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
-			if (current.contains(c))
+		for (final Condition<S, C> c : e.getPredecessorConditions()) {
+			if (current.contains(c)) {
 				continue;
-			RunAndConditionMarking result = constructRun(
+			}
+			final RunAndConditionMarking result = constructRun(
 					c.getPredecessorEvent(), current);
 			run = run.concatenate(result.Run);
 			current = result.Marking;
 		}
 		assert (current != null);
 
-		ConditionMarking<S, C> finalMarking = current.fireEvent(e);
-		ITransition<S, C> t = e.getTransition();
-		PetriNetRun<S, C> appendix = new PetriNetRun<S, C>(
+		final ConditionMarking<S, C> finalMarking = current.fireEvent(e);
+		final ITransition<S, C> t = e.getTransition();
+		final PetriNetRun<S, C> appendix = new PetriNetRun<S, C>(
 				current.getMarking(), t.getSymbol(), finalMarking.getMarking());
 		run = run.concatenate(appendix);
 
@@ -307,7 +313,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	private boolean parentIsCutoffEvent(Event<S, C> e) {
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
+		for (final Condition<S, C> c : e.getPredecessorConditions()) {
 			if (c.getPredecessorEvent().isCutoffEvent()) {
 				return true;
 			}
@@ -366,8 +372,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		int mNonCutOffEvents = 0;
 
 		public void add(Event<S, C> e) {
-			Marking<S, C> marking = e.getMark();
-			ITransition<S, C> transition = e.getTransition();
+			final Marking<S, C> marking = e.getMark();
+			final ITransition<S, C> transition = e.getTransition();
 			Map<Marking<S, C>, Set<Event<S, C>>> mark2Events = mTrans2Mark2Events
 					.get(transition);
 			if (mark2Events == null) {
@@ -385,7 +391,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 				mLogger.info("new Event has " + e.getAncestors()
 						+ " ancestors and is "
 						+ (e.isCutoffEvent() ? "" : "not ") + "cut-off event");
-				for (Event<S, C> event : events) {
+				for (final Event<S, C> event : events) {
 					mLogger.info("  existing Event has "
 							+ event.getAncestors() + " ancestors and is "
 							+ (e.isCutoffEvent() ? "" : "not ")
@@ -427,14 +433,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		boolean correct = true;
 		if (mRun == null) {
-			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult())).getNestedRun();
+			final NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
 				mLogger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
 			}
 			correct = (automataRun == null);
 		} else {
-			Word<S> word = mRun.getWord();
+			final Word<S> word = mRun.getWord();
 			if (mNet.accepts(word)) {
 				correct = true;
 			}

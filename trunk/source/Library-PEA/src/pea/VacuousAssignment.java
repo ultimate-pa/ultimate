@@ -29,11 +29,11 @@ public class VacuousAssignment extends TCSWriter{
     
     public VacuousAssignment(String fileName, PhaseEventAutomata pea) {
         super(fileName);
-        this.pea2write = pea;
-        this.possiblyVacuous = new Vector<CDD>();
-        this.setVacuous(new Vector<CDD>());
-        this.setPossibleVacuousMaker(new Vector<CDD>());
-        this.setVacuousReqNames(new Vector<String>());
+        pea2write = pea;
+        possiblyVacuous = new Vector<CDD>();
+        setVacuous(new Vector<CDD>());
+        setPossibleVacuousMaker(new Vector<CDD>());
+        setVacuousReqNames(new Vector<String>());
     }
 
     /**
@@ -48,57 +48,57 @@ public class VacuousAssignment extends TCSWriter{
 	public VacuousAssignment(String destfile, boolean rename, PhaseEventAutomata pea) {
 		this(destfile, pea);
         this.rename = rename;
-        this.possiblyVacuous = new Vector<CDD>();
-        this.setVacuous(new Vector<CDD>());
-        this.setPossibleVacuousMaker(new Vector<CDD>());
-        this.setVacuousReqNames(new Vector<String>());
+        possiblyVacuous = new Vector<CDD>();
+        setVacuous(new Vector<CDD>());
+        setPossibleVacuousMaker(new Vector<CDD>());
+        setVacuousReqNames(new Vector<String>());
 	}
 
 	public void getVacuousAssignments(PhaseEventAutomata pea) throws IOException{
 		System.out.println("*********************************************************");
 		System.out.println("Queries to check for a vacuous satisfaction for PEA "+pea.getName());
-		Phase[] init = pea.getInit();
-		int numberOfLocations = pea.getPhases().length;
+		final Phase[] init = pea.getInit();
+		final int numberOfLocations = pea.getPhases().length;
 		if (numberOfLocations <0) {
 			System.out.println("ERROR: The pea is empty");
 		}
 		if (numberOfLocations ==1){
-			CDD cdd = pea.getPhases()[0].getStateInvariant();
+			final CDD cdd = pea.getPhases()[0].getStateInvariant();
 
-			int length = this.getPossibleVacuousMakerLength();
+			final int length = getPossibleVacuousMakerLength();
 			for (int i=0; i<length; i++){
-				CDD poss = this.getPossibleVacuousMaker().elementAt(i);
+				final CDD poss = getPossibleVacuousMaker().elementAt(i);
 				if (cdd.implies(poss)){
-					this.addToVacuous(cdd);
+					addToVacuous(cdd);
 				}
 				else if (poss.implies(cdd)){
-					this.addToVacuous(poss);	
+					addToVacuous(poss);	
 				}
 			}
-			this.addToPossVacuousMaker(cdd);
+			addToPossVacuousMaker(cdd);
 
-			String vacString = cdd.toString("uppaal", true);	        			
+			final String vacString = cdd.toString("uppaal", true);	        			
 			System.out.println("A[]("+vacString+");");
-			this.writer.write("A[]("+vacString+");");
-			this.writer.newLine();
-			this.writer.flush();
+			writer.write("A[]("+vacString+");");
+			writer.newLine();
+			writer.flush();
 
 		}
 		else{
-			int numberOfInitStates = init.length;
+			final int numberOfInitStates = init.length;
 			for (int i=0; i<numberOfInitStates; i++){
-				Phase initState = init[i];
+				final Phase initState = init[i];
 				//States that have a clockinvariant !=0 have to be left when the clock is expired
 				//Thus such states cannot lead to a vacuous satisfaction
 				if (initState.getClockInvariant() == CDD.TRUE){
-					CDD vac = initState.getStateInvariant();
-					this.addToPossiblyVacuous(vac);
+					final CDD vac = initState.getStateInvariant();
+					addToPossiblyVacuous(vac);
 
-					String vacString = vac.toString("uppaal", true);	        			
+					final String vacString = vac.toString("uppaal", true);	        			
 					System.out.println("A[]("+vacString+");");
-					this.writer.write("A[]("+vacString+");");
-					this.writer.newLine();
-					this.writer.flush();
+					writer.write("A[]("+vacString+");");
+					writer.newLine();
+					writer.flush();
 				}
 
 			}
@@ -181,7 +181,7 @@ public class VacuousAssignment extends TCSWriter{
 	 //INPUT: PEA as parallel product of the requirements you want to check for vacuous satisfaction
 	 //Precondition: you built up the parallel product and in doing so built-up the vector "vacuous" as well
 	 public void checkVacuousSatisfiability(PhaseEventAutomata pea){
-		 Vector<CDD> vac = this.getPossiblyVacuous();
+		 final Vector<CDD> vac = getPossiblyVacuous();
 		 
 		 if (vac.isEmpty()){
 			 System.out.println("Before checking for vacuous satisfaction, you need to built-up the vacuous-vector");
@@ -194,31 +194,31 @@ public class VacuousAssignment extends TCSWriter{
 	 }
 	 
 	 private void checkPossiblyVacuous(PhaseEventAutomata pea){
-		 Phase[] phases = pea.getPhases();  
-		 Vector<CDD> vac = this.getPossiblyVacuous();
+		 final Phase[] phases = pea.getPhases();  
+		 final Vector<CDD> vac = getPossiblyVacuous();
 		 
 		 if (phases.length>1){
 			 for (int j=0; j<vac.size(); j++){
 				 Boolean testVacuous = true;
-				 CDD formula = vac.elementAt(j);
+				 final CDD formula = vac.elementAt(j);
 				 
 				 for (int q=0; q<phases.length; q++){
-					 Phase a = phases[q];
-					 CDD state = a.getStateInvariant();
+					 final Phase a = phases[q];
+					 final CDD state = a.getStateInvariant();
 					 if (state.and(formula) == CDD.FALSE){
 						 testVacuous = false;
 					 }
 				 }
 				 if (testVacuous == true){
-					 this.addToVacuous(formula);
+					 addToVacuous(formula);
 				 }
 			 }
 		 }		
 	 }
 	 
 	 private void checkPossibleVacuousMaker(PhaseEventAutomata pea){
-		 Vector<CDD> possMaker = this.getPossibleVacuousMaker();
-		 Vector<CDD> vacCandidate = this.getPossiblyVacuous();
+		 final Vector<CDD> possMaker = getPossibleVacuousMaker();
+		 final Vector<CDD> vacCandidate = getPossiblyVacuous();
 		 
 		 if (possMaker.isEmpty()||vacCandidate.isEmpty()){
 			 System.out.println("no possible vacuous formulas known OR no possible vacuous maker known");
@@ -229,14 +229,14 @@ public class VacuousAssignment extends TCSWriter{
 			 Boolean testVacuous = false;
 			 for (int j=0; j<possMaker.size() && !testVacuous; j++){
 				 
-				 CDD formula = possMaker.elementAt(j);
+				 final CDD formula = possMaker.elementAt(j);
 				 
 				 for (int q=0; q<vacCandidate.size(); q++){
-					 CDD state = vacCandidate.elementAt(q);
+					 final CDD state = vacCandidate.elementAt(q);
 					 if (formula.implies(state)){
 						 testVacuous = true;
-						 this.addToVacuous(state);
-						 this.addToVacuous(formula);
+						 addToVacuous(state);
+						 addToVacuous(formula);
 					 }
 				 }
 		}}
@@ -246,23 +246,23 @@ public class VacuousAssignment extends TCSWriter{
 	 public void startWriting(){
 		 try {
 	            //this.writer = new FileWriter(fileName);
-	            this.writer = new BufferedWriter(new FileWriter(fileName));
+	            writer = new BufferedWriter(new FileWriter(fileName));
 
-	            this.writer
+	            writer
 	            .write("Preamble:\n"
 	                        + " Queries to check for a vacuous satisfaction for PEA"); 
-	            this.writer.newLine();
+	            writer.newLine();
 	            
-	            this.writer.flush();
+	            writer.flush();
 	           
-	        } catch (IOException e) {
+	        } catch (final IOException e) {
 	            throw new RuntimeException(e);
 	        }
 			
 	 }
 	 
 	 public void stopWriting() throws IOException{
-		 this.writer.close();
+		 writer.close();
 		System.out.println("Successfully written to "+fileName);
 			
 	 }
@@ -270,13 +270,13 @@ public class VacuousAssignment extends TCSWriter{
 	@Override
 	public void write() {
 		try {
-            this.writer = new BufferedWriter(new FileWriter("fileName"));            
+            writer = new BufferedWriter(new FileWriter("fileName"));            
             //init();
             this.getVacuousAssignments(pea2write);         
-            this.writer.flush();
-            this.writer.close();
+            writer.flush();
+            writer.close();
             System.out.println("Successfully written to "+fileName);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
 		
@@ -284,13 +284,13 @@ public class VacuousAssignment extends TCSWriter{
 	
 	public void writePEA(PhaseEventAutomata pea) {
 		try {
-			this.writer.write("Queries to check for requirement "+i);
-			this.writer.newLine();
+			writer.write("Queries to check for requirement "+i);
+			writer.newLine();
 			i++;
             this.getVacuousAssignments(pea);  
-            this.writer.newLine();
-            this.writer.flush();
-        } catch (IOException e) {
+            writer.newLine();
+            writer.flush();
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
 		
@@ -328,35 +328,35 @@ public class VacuousAssignment extends TCSWriter{
 	}
 	
 	public void addToVacuous(CDD cdd) {
-		if (this.vacuous.contains(cdd)){
+		if (vacuous.contains(cdd)){
 			return;
+		} else {
+			vacuous.add(cdd);
 		}
-		else
-		this.vacuous.add(cdd);
 	}
 	
 	public void addToPossiblyVacuous(CDD cdd) {
-		if (this.possiblyVacuous.contains(cdd)){
+		if (possiblyVacuous.contains(cdd)){
 			return;
+		} else {
+			possiblyVacuous.add(cdd);
 		}
-		else
-		this.possiblyVacuous.add(cdd);
 	}
 	
 	public void addToPossVacuousMaker(CDD cdd) {
-		if (this.possibleVacuousMaker.contains(cdd)){
+		if (possibleVacuousMaker.contains(cdd)){
 			return;
+		} else {
+			possibleVacuousMaker.add(cdd);
 		}
-		else
-		this.possibleVacuousMaker.add(cdd);
 	}
 	
 	public void addToVacuousReqNames(String name) {
-		if (this.vacuousReqNames.contains(name)){
+		if (vacuousReqNames.contains(name)){
 			return;
+		} else {
+			vacuousReqNames.add(name);
 		}
-		else
-		this.vacuousReqNames.add(name);
 	}
 	
 	public Vector<CDD> getPossibleVacuousMaker() {

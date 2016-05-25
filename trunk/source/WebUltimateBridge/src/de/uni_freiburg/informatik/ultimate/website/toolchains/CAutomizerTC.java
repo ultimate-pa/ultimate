@@ -64,7 +64,7 @@ public class CAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 
 		tools.add(new Tool(PrefStrings.s_syntaxchecker));
 		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
@@ -75,7 +75,7 @@ public class CAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = BoogieAutomizerTC.boogieAutomizerAdditionalSettings();
+		final List<Setting> rtr = BoogieAutomizerTC.boogieAutomizerAdditionalSettings();
 		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_MemoryLeak, SettingType.BOOLEAN, "Check for memory leak in main procedure", "false", true));
 		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_SignedIntegerOverflow, SettingType.BOOLEAN, "Check for overflows of signed integers", "false", true));
 		return rtr;

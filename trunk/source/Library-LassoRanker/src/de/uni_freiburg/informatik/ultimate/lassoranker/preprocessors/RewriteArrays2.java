@@ -199,18 +199,18 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(LassoUnderConstruction lasso) throws TermException {
-		boolean overapproximate = true;
-		TransFormulaLRWithArrayInformation stemTfwai = new TransFormulaLRWithArrayInformation(
+		final boolean overapproximate = true;
+		final TransFormulaLRWithArrayInformation stemTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getStem(), mReplacementVarFactory, mScript, mboogie2smt, null);
-		TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
+		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
-		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
-		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, mboogie2smt, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
+		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, mboogie2smt, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
-		TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
-		TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);
-		LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
+		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
+		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);
+		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !s_AdditionalChecksIfAssertionsEnabled || checkStemImplication(
 				mServices, mLogger, lasso, newLasso, mboogie2smt) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
@@ -222,7 +222,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 			LassoUnderConstruction oldLasso,
 			LassoUnderConstruction newLasso,
 			Boogie2SMT boogie2smt) {
-		LBool implies = TransFormulaUtils.implies(mServices, mLogger, 
+		final LBool implies = TransFormulaUtils.implies(mServices, mLogger, 
 				oldLasso.getStem(), newLasso.getStem(), mScript, boogie2smt.getBoogie2SmtSymbolTable());
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);

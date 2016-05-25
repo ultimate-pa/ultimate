@@ -49,9 +49,9 @@ public class CsvSummary extends BaseCsvProviderSummary {
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
-		PartitionedResults results = partitionResults(mResults.entrySet());
-		ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
+		final StringBuilder sb = new StringBuilder();
+		final PartitionedResults results = partitionResults(mResults.entrySet());
+		final ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
 		csvTotal.toCsv(sb, null);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		return sb.toString();

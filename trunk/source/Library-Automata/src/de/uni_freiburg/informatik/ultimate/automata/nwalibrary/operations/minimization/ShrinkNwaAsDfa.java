@@ -42,8 +42,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class minimizes nested word automata.
@@ -164,7 +164,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			
-			EquivalenceClass a = mworkList.next();
+			final EquivalenceClass a = mworkList.next();
 			
 			// internal split
 			if (a.mincomingInt == EIncomingStatus.inWL) {
@@ -205,7 +205,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashSet<STATE> finals = new HashSet<STATE>();
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
 			
-			for (STATE state : mOperand.getStates()) {
+			for (final STATE state : mOperand.getStates()) {
 				if (mOperand.isFinal(state)) {
 					finals.add(state);
 				} else {
@@ -225,7 +225,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			assert assertStatesSeparation(
 					modules) : "The states in the initial modules are not separated with " +
 							"respect to their final status.";
-			for (Set<STATE> module : modules) {
+			for (final Set<STATE> module : modules) {
 				mpartition.addEcInitialization(module);
 			}
 		}
@@ -573,7 +573,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		private void addEcInitialization(final Set<STATE> module) {
 			final EquivalenceClass ec = new EquivalenceClass(module);
 			mequivalenceClasses.add(ec);
-			for (STATE state : module) {
+			for (final STATE state : module) {
 				mstate2EquivalenceClass.put(state, ec);
 			}
 		}
@@ -593,7 +593,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 			final EquivalenceClass ec = new EquivalenceClass(newStates, parent);
 			mequivalenceClasses.add(ec);
-			for (STATE state : ec.mstates) {
+			for (final STATE state : ec.mstates) {
 				mstate2EquivalenceClass.put(state, ec);
 			}
 			return ec;
@@ -662,7 +662,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// check and finalize splits
 			for (final EquivalenceClass ec : splitEcs) {
 				if ((letter != null) && (!ec.mstates.isEmpty())) {
-					final STATE hier = (STATE) letter.getSecond();
+					final STATE hier = letter.getSecond();
 					// return split, also add neutral states
 					final ArrayList<STATE> ecStates =
 							new ArrayList<STATE>(ec.mstates);
@@ -1041,7 +1041,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						new HashMap<LETTER, Set<STATE>>();
 						
 				// internal transitions
-				HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
+				final HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
 						new HashSet<OutgoingInternalTransition<LETTER, STATE>>();
 						
 				for (final OutgoingInternalTransition<LETTER, STATE> edge : moldNwa
@@ -1087,7 +1087,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					letter2succs = new HashMap<LETTER, Set<STATE>>();
 					
 					// call transitions
-					HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
+					final HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
 							new HashSet<OutgoingCallTransition<LETTER, STATE>>();
 							
 					for (final OutgoingCallTransition<LETTER, STATE> edge : moldNwa
@@ -1135,10 +1135,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					 * return transitions NOTE: Return transitions need not be
 					 * present everywhere, so each state must be visited.
 					 */
-					HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
+					final HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
 							new HashSet<OutgoingReturnTransition<LETTER, STATE>>();
 							
-					HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
+					final HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
 							new HashMap<LETTER, HashMap<STATE, HashSet<STATE>>>();
 					for (final STATE state : ec.mstates) {
 						for (final OutgoingReturnTransition<LETTER, STATE> edge : moldNwa

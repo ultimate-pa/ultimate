@@ -33,9 +33,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -78,11 +78,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		// Test correctness of operation using random automata or single given
 		// instances
 
-		ToolchainStorage services = new ToolchainStorage();
-		StateFactory<String> snf = new StringFactory();
+		final ToolchainStorage services = new ToolchainStorage();
+		final StateFactory<String> snf = new StringFactory();
 
 		// Buechi automaton
-		Set<String> alphabet = new HashSet<>();
+		final Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
 		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
@@ -173,14 +173,14 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		// buechi.addInternalTransition("q10", "b", "q10");
 
 		// Comparing test
-		boolean logNoErrorDebug = false;
+		final boolean logNoErrorDebug = false;
 
-		int n = 50;
-		int k = 20;
-		int f = 10;
-		int totalityInPerc = 5;
-		int debugPrintEvery = 10;
-		int amount = 100;
+		final int n = 50;
+		final int k = 20;
+		final int f = 10;
+		final int totalityInPerc = 5;
+		final int debugPrintEvery = 10;
+		final int amount = 100;
 
 		System.out.println("Start comparing test 'SCC vs. nonSCC' with " + amount + " random automata (n=" + n + ", k="
 				+ k + ", f=" + f + ", totPerc=" + totalityInPerc + ")...");
@@ -196,7 +196,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			}
 
 			// Generate automaton
-			boolean useNwaInsteadDfaMethod = false;
+			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
 				buechi = new GetRandomNwa(new AutomataLibraryServices(services), k, n, 0.2, 0, 0,
 						(totalityInPerc + 0.0f) / 100).getResult();
@@ -211,7 +211,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			}
 
 			// Check correctness
-			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
+			final ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
 					new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
@@ -266,35 +266,40 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			operationSCC = operation;
 			simulationSCC = operationSCC.mSimulation;
 
-			if (logNoErrorDebug)
+			if (logNoErrorDebug) {
 				logMessage("Start Cross-Simulation without SCC...", logger);
+			}
 
 			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, false);
 			simulationNoSCC = operationNoSCC.mSimulation;
-			if (logNoErrorDebug)
+			if (logNoErrorDebug) {
 				logMessage("", logger);
+			}
 		} else {
-			if (logNoErrorDebug)
+			if (logNoErrorDebug) {
 				logMessage("Start Cross-Simulation with SCC...", logger);
+			}
 			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, true);
 			simulationSCC = operationSCC.mSimulation;
-			if (logNoErrorDebug)
+			if (logNoErrorDebug) {
 				logMessage("", logger);
+			}
 
 			operationNoSCC = operation;
 			simulationNoSCC = operationNoSCC.mSimulation;
 		}
 
 		// Start comparing results
-		if (logNoErrorDebug)
+		if (logNoErrorDebug) {
 			logMessage("Start comparing results...", logger);
+		}
 		boolean errorOccurred = false;
-		FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
-		Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
-		Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
-		int globalInfinity = simNoSCCGraph.getGlobalInfinity();
+		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
+		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
+		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
+		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
 
 		// Compare size
 		if (simSCCVertices.size() != simSCCVertices.size()) {
@@ -309,17 +314,17 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			errorOccurred = true;
 		}
 		// Compare progress measure of vertices
-		for (Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
+		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
 			if (simSCCVertex.isSpoilerVertex()) {
-				SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
-				SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(),
+				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
+				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(),
 						false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
 					errorOccurred = true;
 				} else {
-					int sccPM = asSV.getPM(null, globalInfinity);
-					int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					final int sccPM = asSV.getPM(null, globalInfinity);
+					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
 					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
 						logMessage(
 								"SCCVertex is not infinity but nonSCC is (" + asSV + "): " + sccPM + " & " + nonSCCPM,
@@ -333,15 +338,15 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					}
 				}
 			} else {
-				DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
-				DuplicatorVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
+				final DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
+				final DuplicatorVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
 						asDV.getQ1(), asDV.getLetter(), false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asDV, logger);
 					errorOccurred = true;
 				} else {
-					int sccPM = asDV.getPM(null, globalInfinity);
-					int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					final int sccPM = asDV.getPM(null, globalInfinity);
+					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
 					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
 						logMessage(
 								"SCCVertex is not infinity but nonSCC is (" + asDV + "): " + sccPM + " & " + nonSCCPM,
@@ -367,7 +372,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 				logMessage("OperationNoSCC is not correct.", logger);
 				errorOccurred = true;
 			}
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			e.printStackTrace();
 		}
 
@@ -375,8 +380,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			logMessage("End comparing results, a problem occurred. Logging buechi...", logger);
 			logMessage(operation.mOperand.toString(), logger);
 		} else {
-			if (logNoErrorDebug)
+			if (logNoErrorDebug) {
 				logMessage("End comparing results, no problem occurred.", logger);
+			}
 		}
 
 		return errorOccurred;
@@ -585,7 +591,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		// Debugging flag
 		if (checkOperationDeeply) {
 			mLogger.info("Start testing correctness of operation deeply...");
-			boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
+			final boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
 			if (operationIsNotCorrect) {
 				mLogger.info("End testing correctness of operation deeply, it is not correct.");
 				// throw new AssertionError("The operation " + operationName() +
@@ -608,7 +614,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		boolean correct = ResultChecker.reduceBuchi(mServices, mOperand, mResult);
+		final boolean correct = ResultChecker.reduceBuchi(mServices, mOperand, mResult);
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

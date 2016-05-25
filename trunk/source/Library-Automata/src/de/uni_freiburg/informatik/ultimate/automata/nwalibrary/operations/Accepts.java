@@ -31,8 +31,8 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -92,7 +92,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	@Override
 	public String exitMessage() {
 		String message = "Finished " + operationName() + ". ";
-		String quantifier = mIsAccepted ? "some " : "each ";
+		final String quantifier = mIsAccepted ? "some " : "each ";
 		if (mInputIsSuffixOfAcceptedWord) {
 			if (mPrefixOfInputIsAccepted) {
 				message += quantifier + "prefix of " + quantifier + "suffix ";
@@ -145,7 +145,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 */
 	public boolean containsAcceptingConfiguration(Set<Stack<STATE>> configurations,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		for (Stack<STATE> config : configurations) {
+		for (final Stack<STATE> config : configurations) {
 			if (isAcceptingConfiguration(config, mAutomaton)) {
 				return true;
 			}

@@ -37,7 +37,9 @@ public final class HashUtils {
 	}
 	
 	public static int hashJenkins(int init, Object... vals) {
-		if (vals == null || vals.length == 0) return init;
+		if (vals == null || vals.length == 0) {
+			return init;
+		}
 		int a,b,c;
 		a = b = c = BASE + (vals.length << 2) + init;
 		int pos = 0;
@@ -88,13 +90,15 @@ public final class HashUtils {
 	}
 	
 	public static int hashHsieh(int init, Object... vals) {
-		if (vals == null || vals.length == 0) return init;
+		if (vals == null || vals.length == 0) {
+			return init;
+		}
 		int hash = init;
 		/* Main loop */
-		for (Object o : vals) {
-			int thingHash = o.hashCode();
+		for (final Object o : vals) {
+			final int thingHash = o.hashCode();
 			hash += (thingHash >>> 16); //NOCHECKSTYLE
-			int tmp = ((thingHash & 0xffff) << 11) ^ hash; //NOCHECKSTYLE
+			final int tmp = ((thingHash & 0xffff) << 11) ^ hash; //NOCHECKSTYLE
 			hash = (hash << 16) ^ tmp; //NOCHECKSTYLE
 			hash += (hash >> 11); //NOCHECKSTYLE
 		}
@@ -111,9 +115,9 @@ public final class HashUtils {
 	
 	public static int hashHsieh(int init, Object val) {
 		int hash = init;
-		int thingHash = val.hashCode();
+		final int thingHash = val.hashCode();
 		hash += (thingHash >>> 16); //NOCHECKSTYLE
-		int tmp = ((thingHash & 0xffff) << 11) ^ hash; //NOCHECKSTYLE
+		final int tmp = ((thingHash & 0xffff) << 11) ^ hash; //NOCHECKSTYLE
 		hash = (hash << 16) ^ tmp; //NOCHECKSTYLE
 		hash += (hash >> 11); //NOCHECKSTYLE
 		/* Force "avalanching" of final 127 bits */

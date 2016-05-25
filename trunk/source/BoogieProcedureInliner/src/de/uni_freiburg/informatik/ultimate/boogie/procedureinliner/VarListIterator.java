@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 public class VarListIterator {
 	
 	/** Number of VarList groups. */
-	private int mGroups;
+	private final int mGroups;
 	
 	/** Number of variables per group. This is the "length" of the iterator. */
 	private int mVars;
@@ -51,7 +51,7 @@ public class VarListIterator {
 	private int mCursor = -1;
 	
 	/** Groups of VarLists. Use mVarListGroups[group][listFromTheGroup]. All groups contain {@link #mVars} variables. */
-	private VarList[][] mVarListGroups;
+	private final VarList[][] mVarListGroups;
 	
 	/**
 	 * mVarListIndices[group][var] contains the index of the VarList inside "group"-th group
@@ -77,7 +77,7 @@ public class VarListIterator {
 		int prevGroupVars = 0;
 		for (int group = 0; group < mGroups; ++group) {
 			int groupVars = 0;
-			for (VarList vl : mVarListGroups[group]) {
+			for (final VarList vl : mVarListGroups[group]) {
 				groupVars += vl.getIdentifiers().length;
 			}
 			if (group > 0 && groupVars != prevGroupVars) {
@@ -92,8 +92,8 @@ public class VarListIterator {
 		mVarListIndices = new int[mGroups][];
 		mIdIndices = new int[mGroups][];
 		for (int group = 0; group < mGroups; ++group) {
-			int[] groupVarListIndices = new int[mVars];
-			int[] groupIdIndices = new int[mVars]; 
+			final int[] groupVarListIndices = new int[mVars];
+			final int[] groupIdIndices = new int[mVars]; 
 			int varListIndex = 0;
 			int idIndex = 0;
 			for (int var = 0; var < mVars; ++var) {
@@ -145,7 +145,7 @@ public class VarListIterator {
 	
 	public boolean varListChanged(int group) {
 		if (mCursor > 0) {
-			int[] varListIndicies = mVarListIndices[group];
+			final int[] varListIndicies = mVarListIndices[group];
 			return varListIndicies[mCursor - 1] != varListIndicies[mCursor];
 		} else {
 			return true;

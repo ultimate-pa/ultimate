@@ -38,8 +38,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -523,7 +523,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		
 		// construct result
 		final StateFactory<STATE> stateFactory = mOperand.getStateFactory();
-		NestedWordAutomaton<LETTER, STATE> result =
+		final NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(
 						mServices, 
 						mOperand.getInternalAlphabet(),
@@ -633,10 +633,10 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @return representative of the given state
 	 */
 	private int find(int oldRepresentative) {
-		LinkedList<Integer> path = new LinkedList<Integer>();
+		final LinkedList<Integer> path = new LinkedList<Integer>();
 		
 		while (true) {
-			int newRepresentative = munionFind[oldRepresentative];
+			final int newRepresentative = munionFind[oldRepresentative];
 			
 			// found the representative
 			if (oldRepresentative == newRepresentative) {
@@ -701,6 +701,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		}
 		
 		// TODO: What is a good hash function?
+		@Override
 		public int hashCode() {
 			return mfirst + 17 * msecond;
 		}

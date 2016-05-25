@@ -64,8 +64,9 @@ public class IdentityHashSet<E> extends AbstractSet<E> {
 	@Override
 	public boolean removeAll(Collection<?> c) {
 		boolean changed = false;
-		for (Object o : c)
+		for (final Object o : c) {
 			changed |= remove(o);
+		}
 		return changed;
 	}
 

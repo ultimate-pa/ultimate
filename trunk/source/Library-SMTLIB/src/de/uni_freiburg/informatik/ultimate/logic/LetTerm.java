@@ -61,16 +61,17 @@ public class LetTerm extends Term {
 
 	LetTerm(TermVariable[] vars, Term[] vals, Term t, int hash) {
 		super(hash);
-		this.mVariables = vars;
-		this.mValues = vals;
-		this.mSubterm = t;
+		mVariables = vars;
+		mValues = vals;
+		mSubterm = t;
 	}
 	
 	@Override
 	public Sort getSort() {
 		LetTerm sortterm = this;
-		while (sortterm.mSubterm instanceof LetTerm)
+		while (sortterm.mSubterm instanceof LetTerm) {
 			sortterm = (LetTerm) sortterm.mSubterm;
+		}
 		return sortterm.mSubterm.getSort();
 	}
 
@@ -90,8 +91,8 @@ public class LetTerm extends Term {
 		mTodo.addLast(getSubTerm());
 		mTodo.addLast(")) ");
 		// Add assigned values to stack
-		TermVariable[] vars = getVariables();
-		Term[] values = getValues();
+		final TermVariable[] vars = getVariables();
+		final Term[] values = getValues();
 		for (int i = values.length - 1; i > 0; i--) {
 			mTodo.addLast(values[i]);
 			mTodo.addLast(") (" + vars[i].toString() + " ");

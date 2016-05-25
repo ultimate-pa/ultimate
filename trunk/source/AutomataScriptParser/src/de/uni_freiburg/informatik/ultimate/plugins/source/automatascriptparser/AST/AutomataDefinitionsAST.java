@@ -45,7 +45,7 @@ public class AutomataDefinitionsAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = 302216547472553949L;
 	
-	private List<AutomatonAST> mAutomataDefinitions;
+	private final List<AutomatonAST> mAutomataDefinitions;
 	public AutomataDefinitionsAST() {
 		super(null);
 		mAutomataDefinitions = new ArrayList<AutomatonAST>();
@@ -75,7 +75,7 @@ public class AutomataDefinitionsAST extends AtsASTNode {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("AutomataDefinitions [");
 		if (mAutomataDefinitions != null) {
 			builder.append("#AutomataDefinitions: ");

@@ -43,10 +43,11 @@ public class SharedTerm {
 	public SharedTerm(Clausifier clausifier, Term term) {
 		mClausifier = clausifier;
 		mTerm = term;
-		if (clausifier.getEngine().isProofGenerationEnabled())
+		if (clausifier.getEngine().isProofGenerationEnabled()) {
 			mAnnot = mClausifier.getAnnotation();
-		else
+		} else {
 			mAnnot = null;
+		}
 	}
 	
 	public void setLinVar(Rational factor, LinVar linvar, Rational offset) {
@@ -56,16 +57,18 @@ public class SharedTerm {
 	}
 	
 	public void share() {
-		if (mClausifier.getLogger().isInfoEnabled())
+		if (mClausifier.getLogger().isInfoEnabled()) {
 			mClausifier.getLogger().info("Sharing term: " + this);
+		}
 		assert (mCCterm != null && mOffset != null);
 		mClausifier.getLASolver().share(this);
 		mCCterm.share(mClausifier.getCClosure(), this);
 	}
 		
 	public void shareWithLinAr() {
-		if (mOffset != null)
+		if (mOffset != null) {
 			return;
+		}
 		assert getSort().isNumericSort() : "Sharing non-numeric sort?";
 		
 		if (mTerm instanceof SMTAffineTerm) {
@@ -74,7 +77,7 @@ public class SharedTerm {
 							(SMTAffineTerm) mTerm),
 					mClausifier.getStackLevel());
 		} else {
-			boolean isint = getSort().getName().equals("Int");
+			final boolean isint = getSort().getName().equals("Int");
 			mLinVar = mClausifier.getLASolver().addVar(this, isint,
 					mClausifier.getStackLevel());
 			
@@ -82,8 +85,9 @@ public class SharedTerm {
 			mOffset = Rational.ZERO;
 		}
 		mClausifier.addUnshareLA(this);
-		if (mCCterm != null)
+		if (mCCterm != null) {
 			share();
+		}
 	}
 	
 	public EqualityProxy createEquality(SharedTerm other) {
@@ -129,8 +133,9 @@ public class SharedTerm {
 	 * @return A cleaned up term.
 	 */
 	public Term getRealTerm() {
-		if (mRealTerm == null)
+		if (mRealTerm == null) {
 			mRealTerm = SMTAffineTerm.cleanup(mTerm);
+		}
 		return mRealTerm;
 	}
 	
@@ -146,10 +151,12 @@ public class SharedTerm {
 		return mCCterm;
 	}
 	
+	@Override
 	public int hashCode() {
 		return mTerm.hashCode();
 	}
 	
+	@Override
 	public String toString() {
 		return SMTAffineTerm.cleanup(mTerm).toString();
 	}
@@ -158,7 +165,8 @@ public class SharedTerm {
 		assert(mCCterm == null);
 		mCCterm = ccterm;
 		mClausifier.addUnshareCC(this);
-		if (mOffset != null)
+		if (mOffset != null) {
 			share();
+		}
 	}
 }

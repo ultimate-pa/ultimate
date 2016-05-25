@@ -23,7 +23,7 @@ package jdd.util.zip;
 
 	/** create an empty memory chunk */
 	public MemoryChunk() {
-		this.next = null;
+		next = null;
 		data = new byte[ size = CHUNK_SIZE];
 		curr = 0;
 	}

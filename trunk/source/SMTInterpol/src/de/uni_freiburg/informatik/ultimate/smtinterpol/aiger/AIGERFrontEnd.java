@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 
 public class AIGERFrontEnd implements IParser {
@@ -115,7 +115,9 @@ public class AIGERFrontEnd implements IParser {
 		if (mBufpos >= mBufsize) {
 			mBufsize = mInputStream.read(mBuffer);
 			if (mBufsize == -1)
+			 {
 				return -1; // EOF
+			}
 			mBufpos = 0;
 		}
 		++mCol;
@@ -134,38 +136,44 @@ public class AIGERFrontEnd implements IParser {
 			String result;
 			switch (expected) {
 			case TT_MAGIC: // magic: only "aig" supported
-				if (ch != 'a')
+				if (ch != 'a') {
 					return null;
+				}
 				ch = nextChar();
-				if (ch != 'i')
+				if (ch != 'i') {
 					return null;
+				}
 				ch = nextChar();
-				if (ch != 'g')
+				if (ch != 'g') {
 					return null;
+				}
 				return "aig";
 			case TT_SPACE:
-				if (ch == ' ')
+				if (ch == ' ') {
 					return " ";
-				else {
+				} else {
 					ungetLastChar();
 					return null;
 				}
 			case TT_NUMBER:
 			{
-				StringBuilder buffer = new StringBuilder();
+				final StringBuilder buffer = new StringBuilder();
 				while (ch != -1 && Character.isDigit((char) ch)) {
 					buffer.append((char) ch);
 					ch = nextChar();
 				}
 				ungetLastChar();
-				if (buffer.length() == 0)
+				if (buffer.length() == 0) {
 					return null;
+				}
 				result = buffer.toString();
 				return result;
 			}
 			case TT_EOF:
 				if (ch == -1)
+				 {
 					return "";// Result has to be non-null but isn't interesting
+				}
 				ungetLastChar();
 				return null;
 			case TT_NEWLINE:
@@ -177,13 +185,14 @@ public class AIGERFrontEnd implements IParser {
 				ungetLastChar();
 				return null;
 			case TT_STS:
-				if (ch == 'i' || ch == 'l' || ch == 'o')
+				if (ch == 'i' || ch == 'l' || ch == 'o') {
 					return Character.toString((char) ch);
+				}
 				ungetLastChar();
 				return null;
 			case TT_STRING:
 			{
-				StringBuilder buffer = new StringBuilder();
+				final StringBuilder buffer = new StringBuilder();
 				// Strings expand until the next newline
 				// They may contain any ascii symbol
 				while (ch != -1 && ch != '\n') {
@@ -195,8 +204,9 @@ public class AIGERFrontEnd implements IParser {
 				return result;
 			}
 			case TT_COMMENT:
-				if (ch == 'c')
+				if (ch == 'c') {
 					return "c";
+				}
 				ungetLastChar();
 				return null;
 			case TT_BNUMBER: {
@@ -223,7 +233,7 @@ public class AIGERFrontEnd implements IParser {
 				ungetLastChar();
 				return null;
 			}
-		} catch (IOException eioe) {
+		} catch (final IOException eioe) {
 			System.err.println(eioe.getMessage());
 			System.exit(1);
 			// Unreachable, but Java does not detect this...
@@ -232,19 +242,22 @@ public class AIGERFrontEnd implements IParser {
 	}
 	
 	private final void getOneSpace() {
-		if (nextToken(TT_SPACE) == null)
+		if (nextToken(TT_SPACE) == null) {
 			reportError("Expected one space");
+		}
 	}
 	
 	private final void getNewline() {
-		if (nextToken(TT_NEWLINE) == null)
+		if (nextToken(TT_NEWLINE) == null) {
 			reportError("Expected newline");
+		}
 	}
 	
 	private final String getNumber() {
-		String res = (String) nextToken(TT_NUMBER);
-		if (res == null)
+		final String res = (String) nextToken(TT_NUMBER);
+		if (res == null) {
 			reportError("Expected a number");
+		}
 		return res;
 	}
 	
@@ -253,10 +266,11 @@ public class AIGERFrontEnd implements IParser {
 	 * format.
 	 */
 	private void parseHeader() {
-		if (nextToken(TT_MAGIC) == null)
+		if (nextToken(TT_MAGIC) == null) {
 			reportError("Expected magic (\"aig\")");
+		}
 		getOneSpace();
-		BigInteger maxVarNum = new BigInteger(getNumber());
+		final BigInteger maxVarNum = new BigInteger(getNumber());
 		getOneSpace();
 		mInputs = new String[Integer.parseInt(getNumber())];
 		getOneSpace();
@@ -283,16 +297,16 @@ public class AIGERFrontEnd implements IParser {
 	private void parseSymbolTable() {
 		String sts;
 		while ((sts = (String) nextToken(TT_STS)) != null) {
-			String num = getNumber();
+			final String num = getNumber();
 			getOneSpace();
-			String name = (String) nextToken(TT_STRING);
+			final String name = (String) nextToken(TT_STRING);
 			if (name == null) {
 				reportError("Expected a string");
 				System.exit(2);
 			}
 			getNewline();
 			if (sts.equals("i")) {
-				int idx = Integer.parseInt(num);
+				final int idx = Integer.parseInt(num);
 				mInputs[idx] = name;
 			}
 			// I ignore a possible name for the output
@@ -304,50 +318,56 @@ public class AIGERFrontEnd implements IParser {
 			while (true) {
 				getNewline();
 				if (nextToken(TT_STRING) == null)
+				 {
 					break; // Token is EOF;
+				}
 			}
 		}
 	}
 	
 	private Term toTerm(BigInteger lit) {
-		if (lit.equals(BigInteger.ZERO))
+		if (lit.equals(BigInteger.ZERO)) {
 			return mSolver.term("false");
-		if (lit.equals(BigInteger.ONE))
+		}
+		if (lit.equals(BigInteger.ONE)) {
 			return mSolver.term("true");
+		}
 		Term res = mSolver.term(lit.shiftRight(1).toString());
-		if (lit.testBit(0))
+		if (lit.testBit(0)) {
 			res = mSolver.term("not", res);
+		}
 		return res;
 	}
 	
 	private void parse() {
 		parseHeader();
-		Sort bool = mSolver.sort("Bool");
-		Sort[] empty = new Sort[0];
-		for (int i = 0; i < mInputs.length; ++i)
+		final Sort bool = mSolver.sort("Bool");
+		final Sort[] empty = new Sort[0];
+		for (int i = 0; i < mInputs.length; ++i) {
 			mSolver.declareFun(Integer.toString(i + 1), empty, bool);
+		}
 		// No latches...
-		BigInteger output = new BigInteger(getNumber());
+		final BigInteger output = new BigInteger(getNumber());
 		getNewline();
-		TermVariable[] emptyVars = new TermVariable[0];
+		final TermVariable[] emptyVars = new TermVariable[0];
 		BigInteger start = BigInteger.valueOf(mInputs.length);
-		BigInteger end = start.add(mNumAnds);
+		final BigInteger end = start.add(mNumAnds);
 		for (start = start.add(BigInteger.ONE); start.compareTo(end) <= 0;
 				start = start.add(BigInteger.ONE)) {
-			BigInteger delta0 = (BigInteger) nextToken(TT_BNUMBER);
-			BigInteger delta1 = (BigInteger) nextToken(TT_BNUMBER);
-			BigInteger rhs0 = start.shiftLeft(1).subtract(delta0);
+			final BigInteger delta0 = (BigInteger) nextToken(TT_BNUMBER);
+			final BigInteger delta1 = (BigInteger) nextToken(TT_BNUMBER);
+			final BigInteger rhs0 = start.shiftLeft(1).subtract(delta0);
 			assert(start.shiftLeft(1).compareTo(rhs0) > 0);
-			Term[] args = new Term[2];
+			final Term[] args = new Term[2];
 			args[0] = toTerm(rhs0);
-			BigInteger rhs1 = rhs0.subtract(delta1);
+			final BigInteger rhs1 = rhs0.subtract(delta1);
 			assert (rhs0.compareTo(rhs1) >= 0);
 			args[1] = toTerm(rhs1);
-			if (USE_DEFINITIONS)
+			if (USE_DEFINITIONS) {
 				mSolver.defineFun(start.toString(), emptyVars, bool,
 						mSolver.term("and", args));
-			else {
-				String name = start.toString();
+			} else {
+				final String name = start.toString();
 				mSolver.declareFun(name, empty, bool);
 				mSolver.assertTerm(mSolver.term("=",
 						mSolver.term(name),
@@ -359,12 +379,13 @@ public class AIGERFrontEnd implements IParser {
 		// Make some space for solving
 		mBuffer = null;
 		Logger.getRootLogger().info("Finished parsing");
-		Term formula = toTerm(output);
+		final Term formula = toTerm(output);
 		if (USE_DEFINITIONS) {
-			FormulaUnLet unlet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+			final FormulaUnLet unlet = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 			mSolver.assertTerm(unlet.unlet(formula));
-		} else
+		} else {
 			mSolver.assertTerm(formula);
+		}
 		Logger.getRootLogger().info("Asserted formula");
 	}
 
@@ -377,7 +398,7 @@ public class AIGERFrontEnd implements IParser {
 		} else {
 			try {
 				mInputStream = new FileInputStream(filename);
-			} catch (FileNotFoundException efnfe) {
+			} catch (final FileNotFoundException efnfe) {
 				System.err.println(efnfe.getMessage());
 				return 4;// NOCHECKSTYLE
 			}
@@ -386,16 +407,17 @@ public class AIGERFrontEnd implements IParser {
 		mSolver.setOption(":produce-models", Boolean.TRUE);
 		mSolver.setLogic(Logics.CORE);
 		parse();
-		LBool isSat = mSolver.checkSat();
+		final LBool isSat = mSolver.checkSat();
 		System.out.println(isSat);
 		if (isSat == LBool.SAT) {
 			System.out.println("Stimuli:");
-			Model m = mSolver.getModel();
-			Term trueTerm = mSolver.term("true");
+			final Model m = mSolver.getModel();
+			final Term trueTerm = mSolver.term("true");
 			for (int i = 0; i < mInputs.length; ++i) {
-				Term var = mSolver.term(Integer.toString(i));
-				if (m.evaluate(var) != trueTerm)
+				final Term var = mSolver.term(Integer.toString(i));
+				if (m.evaluate(var) != trueTerm) {
 					System.out.print("not ");
+				}
 				// Variable 0 is reserved for false...
 				System.out.println(mInputs[i] == null ? (i + 1) : mInputs[i]);
 			}

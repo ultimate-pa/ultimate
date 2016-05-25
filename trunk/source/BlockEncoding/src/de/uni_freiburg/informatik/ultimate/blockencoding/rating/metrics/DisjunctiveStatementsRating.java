@@ -72,18 +72,18 @@ public class DisjunctiveStatementsRating implements IRating {
 	 * @param edge
 	 */
 	DisjunctiveStatementsRating(IMinimizedEdge edge) {
-		this.underStmtBound = Integer.MIN_VALUE;
-		this.upperStmtBound = Integer.MAX_VALUE;
+		underStmtBound = Integer.MIN_VALUE;
+		upperStmtBound = Integer.MAX_VALUE;
 		// For Basic-Edges we first initialize our map
 		if (edge.isBasicEdge()) {
 			value = new RatingValueContainer<Map<DisjunctionEdge, Integer>>(
 					new HashMap<DisjunctionEdge, Integer>());
 		} else if (edge instanceof ICompositeEdge) {
 			// in all other case we should handle ICompositeEdges
-			HashMap<DisjunctionEdge, Integer> valueMap = new HashMap<DisjunctionEdge, Integer>();
-			ICompositeEdge compEdge = (ICompositeEdge) edge;
-			IMinimizedEdge left = compEdge.getCompositeEdges()[0];
-			IMinimizedEdge right = compEdge.getCompositeEdges()[1];
+			final HashMap<DisjunctionEdge, Integer> valueMap = new HashMap<DisjunctionEdge, Integer>();
+			final ICompositeEdge compEdge = (ICompositeEdge) edge;
+			final IMinimizedEdge left = compEdge.getCompositeEdges()[0];
+			final IMinimizedEdge right = compEdge.getCompositeEdges()[1];
 			if (!(left.getRating() instanceof DisjunctiveStatementsRating)
 					|| !(right.getRating() instanceof DisjunctiveStatementsRating)) {
 				throw new IllegalArgumentException(
@@ -117,23 +117,23 @@ public class DisjunctiveStatementsRating implements IRating {
 	public DisjunctiveStatementsRating(String prefValue) {
 		// Here the preference string should have the following format
 		// #Disjunctions|underBoundary|upperBoundary
-		String[] prefs = prefValue.split("-");
+		final String[] prefs = prefValue.split("-");
 		if (prefs.length != 3) {
 			throw new IllegalArgumentException("Preference String should"
 					+ " contain exactly three items!");
 		}
-		int countOfDisjunctions = Integer.parseInt(prefs[0]);
-		this.underStmtBound = Integer.parseInt(prefs[1]);
-		this.upperStmtBound = Integer.parseInt(prefs[2]);
+		final int countOfDisjunctions = Integer.parseInt(prefs[0]);
+		underStmtBound = Integer.parseInt(prefs[1]);
+		upperStmtBound = Integer.parseInt(prefs[2]);
 		// we initialize the map with the amount of disjunctions, we specified
 		// before in the preferences, for statement counts, we take
 		// (underStmtBound + upperStmtBound) / 2
-		HashMap<DisjunctionEdge, Integer> fakeMap = new HashMap<DisjunctionEdge, Integer>();
+		final HashMap<DisjunctionEdge, Integer> fakeMap = new HashMap<DisjunctionEdge, Integer>();
 		for (int i = 0; i < countOfDisjunctions; i++) {
 			fakeMap.put(new DisjunctionEdge(),
 					((underStmtBound + upperStmtBound) / 2));
 		}
-		this.value = new RatingValueContainer<Map<DisjunctionEdge, Integer>>(
+		value = new RatingValueContainer<Map<DisjunctionEdge, Integer>>(
 				fakeMap);
 	}
 
@@ -148,13 +148,13 @@ public class DisjunctiveStatementsRating implements IRating {
 			throw new IllegalArgumentException(
 					"Comparison of different Ratings is forbidden!");
 		}
-		DisjunctiveStatementsRating otherRating = (DisjunctiveStatementsRating) other;
+		final DisjunctiveStatementsRating otherRating = (DisjunctiveStatementsRating) other;
 		// first we have to set under and upper boundary for contained statements
 		if (otherRating.getUnderStmtBound() != Integer.MIN_VALUE) {
-			this.underStmtBound = otherRating.getUnderStmtBound();
+			underStmtBound = otherRating.getUnderStmtBound();
 		}
 		if (otherRating.getUpperStmtBound() != Integer.MAX_VALUE) {
-			this.upperStmtBound = otherRating.getUpperStmtBound();
+			upperStmtBound = otherRating.getUpperStmtBound();
 		}
 		// to compare we count the disjunctions
 		int thisDisjunctions = value.getValue().size();
@@ -162,7 +162,7 @@ public class DisjunctiveStatementsRating implements IRating {
 				.getValue().size();
 		// value - 1, if stmtCount <= underStmtBound
 		// value + 1, if stmtCount > upperStmtBound
-		for (DisjunctionEdge edge : value.getValue().keySet()) {
+		for (final DisjunctionEdge edge : value.getValue().keySet()) {
 			if (value.getValue().get(edge) <= underStmtBound) {
 				thisDisjunctions--;
 			} else if (value.getValue().get(edge) > upperStmtBound) {
@@ -170,7 +170,7 @@ public class DisjunctiveStatementsRating implements IRating {
 			}
 		}
 		// now the same for the other side
-		for (DisjunctionEdge edge : otherRating.getRatingValueContainer()
+		for (final DisjunctionEdge edge : otherRating.getRatingValueContainer()
 				.getValue().keySet()) {
 			if (otherRating.getRatingValueContainer().getValue().get(edge) <= underStmtBound) {
 				otherDisjunctions--;

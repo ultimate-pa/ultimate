@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.test.mocks;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -66,6 +67,11 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
 		//never find the matching service
 		return null;
+	}
+
+	@Override
+	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+		throw new UnsupportedOperationException("Not yet supported");
 	}
 
 }

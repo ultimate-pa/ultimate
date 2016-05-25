@@ -26,26 +26,27 @@ public class IRAConstantFormatter extends TermTransformer {
 	@Override
 	protected void convert(Term term) {
 		if (term instanceof ConstantTerm) {
-			ConstantTerm ct = (ConstantTerm) term;
+			final ConstantTerm ct = (ConstantTerm) term;
 			Rational rat = null;
-			if (ct.getValue() instanceof Rational) 
+			if (ct.getValue() instanceof Rational) {
 				rat = (Rational) ct.getValue();
-			else if (ct.getValue() instanceof BigDecimal) {
-				BigDecimal val = (BigDecimal) ct.getValue();
-				int scale = val.scale();
-				BigInteger unscaled = val.unscaledValue();
-				BigInteger scaler = BigInteger.TEN.pow(scale);
+			} else if (ct.getValue() instanceof BigDecimal) {
+				final BigDecimal val = (BigDecimal) ct.getValue();
+				final int scale = val.scale();
+				final BigInteger unscaled = val.unscaledValue();
+				final BigInteger scaler = BigInteger.TEN.pow(scale);
 				rat = Rational.valueOf(unscaled, scaler);
-			} else if (ct.getValue() instanceof BigInteger)
+			} else if (ct.getValue() instanceof BigInteger) {
 				rat = Rational.valueOf(
 						(BigInteger) ct.getValue(), BigInteger.ONE);
-			else {
+			} else {
 				setResult(ct);
 				return;
 			}
 			setResult(ct.getTheory().modelRational(rat, ct.getSort()));
-		} else
+		} else {
 			super.convert(term);
+		}
 	}
 
 }

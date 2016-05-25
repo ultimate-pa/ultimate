@@ -34,7 +34,7 @@ public class FormulaLet extends NonRecursive {
 	private ArrayDeque<Map<Term, TermInfo>> mVisited;
 	private ArrayDeque<Term> mResultStack;
 	private int mCseNum;
-	private LetFilter mFilter;
+	private final LetFilter mFilter;
 	
 	public static interface LetFilter {
 		public boolean isLettable(Term t);
@@ -45,7 +45,7 @@ public class FormulaLet extends NonRecursive {
 	}
 
 	public FormulaLet(LetFilter filter) {
-		this.mFilter = filter;
+		mFilter = filter;
 	}
 	/**
 	 * Compute the cse form of a term.  Note that all lets will be removed from
@@ -59,7 +59,7 @@ public class FormulaLet extends NonRecursive {
 		mVisited = new ArrayDeque<Map<Term,TermInfo>>();
 		mResultStack = new ArrayDeque<Term>();
 		run(new Letter(input));
-		Term result = mResultStack.removeLast();
+		final Term result = mResultStack.removeLast();
 		assert mResultStack.size() == 0 && mVisited.size() == 0;
 		assert new TermEquivalence().equal(
 				new FormulaUnLet().unlet(result), input);
@@ -74,6 +74,7 @@ public class FormulaLet extends NonRecursive {
 			mTerm = term;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
 			if (mTerm instanceof TermVariable
 				|| mTerm instanceof ConstantTerm) {
@@ -82,9 +83,10 @@ public class FormulaLet extends NonRecursive {
 			}
 			((FormulaLet) engine).mVisited.addLast(
 					new HashMap<Term, FormulaLet.TermInfo>());
-			TermInfo info = new TermInfo(mTerm);
+			final TermInfo info = new TermInfo(mTerm);
 			((FormulaLet) engine).mVisited.getLast().put(mTerm, info);
 			engine.enqueueWalker(new Walker() {
+				@Override
 				public void walk(NonRecursive engine) {
 					((FormulaLet) engine).mVisited.removeLast();
 				}
@@ -103,17 +105,19 @@ public class FormulaLet extends NonRecursive {
 		int                 mPDepth;
 		public TermInfo(Term term) {
 			super(term);
-			this.mCount = 1;
+			mCount = 1;
 		}
 
 		public boolean shouldBuildLet() {
 			TermInfo info = this;
 			while (info.mCount == 1) {
 				info = info.mParent;
-				if (info == null)
+				if (info == null) {
 					return false;
-				if (info.mSubst != null)
+				}
+				if (info.mSubst != null) {
 					return false;
+				}
 			}
 			return true;
 		}
@@ -144,15 +148,17 @@ public class FormulaLet extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			if (!isNamed(term))
+			if (!isNamed(term)) {
 				visitChild((FormulaLet) walker, term.getSubterm());
+			}
 		}
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			Term[] args = term.getParameters();
-			for (Term t : args)
+			final Term[] args = term.getParameters();
+			for (final Term t : args) {
 				visitChild((FormulaLet) walker, t);
+			}
 		}
 
 		@Override
@@ -180,8 +186,9 @@ public class FormulaLet extends NonRecursive {
 				return;
 			}
 			if (term instanceof ApplicationTerm
-				&& ((ApplicationTerm) term).getParameters().length == 0)
+				&& ((ApplicationTerm) term).getParameters().length == 0) {
 				return;
+			}
 	
 			TermInfo child = let.mVisited.getLast().get(term);
 			if (child == null) {
@@ -202,32 +209,35 @@ public class FormulaLet extends NonRecursive {
 			mIsCounted = isCounted;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = ((FormulaLet) engine);
-			Term term = mTermInfo.mTerm;
+			final FormulaLet let = ((FormulaLet) engine);
+			final Term term = mTermInfo.mTerm;
 			if (mIsCounted) {
 				let.enqueueWalker(new BuildLet(mTermInfo));
 				mTermInfo.mLettedTerms = new ArrayList<TermInfo>();
 			}
 			if (term instanceof QuantifiedFormula) {
-				QuantifiedFormula quant = (QuantifiedFormula) term;
+				final QuantifiedFormula quant = (QuantifiedFormula) term;
 				let.enqueueWalker(new BuildQuantifier(quant));
 				let.enqueueWalker(new Letter(quant.getSubformula()));
 			} else if (term instanceof AnnotatedTerm) {
-				AnnotatedTerm at = (AnnotatedTerm) term;
+				final AnnotatedTerm at = (AnnotatedTerm) term;
 				let.enqueueWalker(new BuildAnnotatedTerm(at));
-				if (isNamed(at))
+				if (isNamed(at)) {
 					let.enqueueWalker(new Letter(at.getSubterm()));
-				else
+				} else {
 					let.enqueueWalker(
 						new Converter(mTermInfo, at.getSubterm(), mIsCounted));
+				}
 			} else if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				let.enqueueWalker(new BuildApplicationTerm(appTerm));
-				Term[] params = appTerm.getParameters();
-				for (int i = params.length - 1; i >= 0; i--)
+				final Term[] params = appTerm.getParameters();
+				for (int i = params.length - 1; i >= 0; i--) {
 					let.enqueueWalker(
 						new Converter(mTermInfo, params[i], mIsCounted));
+				}
 			} else {
 				let.mResultStack.addLast(term);
 			}
@@ -243,10 +253,11 @@ public class FormulaLet extends NonRecursive {
 			mIsCounted = isCounted;
 		}
 
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = ((FormulaLet) engine);
-			Term child = mTerm;
-			TermInfo info = let.mVisited.getLast().get(child);
+			final FormulaLet let = ((FormulaLet) engine);
+			final Term child = mTerm;
+			final TermInfo info = let.mVisited.getLast().get(child);
 			if (info == null) {
 				let.mResultStack.addLast(child);
 				return;
@@ -254,20 +265,21 @@ public class FormulaLet extends NonRecursive {
 			info.mergeParent(mParent);
 			if (info.shouldBuildLet() && info.mSubst == null 
 				&& (let.mFilter == null || let.mFilter.isLettable(child))) {
-				Term t = info.mTerm; 
+				final Term t = info.mTerm; 
 				info.mSubst = t.getTheory().
 					createTermVariable(".cse" + let.mCseNum++, t.getSort());
 			}
 			if (mIsCounted && ++info.mSeen == info.mCount) {
-				if (info.mSubst == null)
+				if (info.mSubst == null) {
 					let.enqueueWalker(new Transformer(info, true));
-				else {
+				} else {
 					let.mResultStack.addLast(info.mSubst);
 					TermInfo ancestor = info.mParent;
 					TermInfo letPos = ancestor;
 					while (ancestor != null && ancestor.mSubst == null) {
-						if (ancestor.mCount > 1)
+						if (ancestor.mCount > 1) {
 							letPos = ancestor.mParent;
+						}
 						ancestor = ancestor.mParent;
 					}
 					letPos.mLettedTerms.add(info);
@@ -275,10 +287,11 @@ public class FormulaLet extends NonRecursive {
 				return;
 			}
 			
-			if (info.mSubst == null)
+			if (info.mSubst == null) {
 				let.enqueueWalker(new Transformer(info, false));
-			else
+			} else {
 				let.mResultStack.addLast(info.mSubst);
+			}
 		}
 	}
 	
@@ -288,16 +301,18 @@ public class FormulaLet extends NonRecursive {
 			mTermInfo = parent;
 		}
 		
+		@Override
 		public void walk(NonRecursive engine) {
-			List<TermInfo> lettedTerms = mTermInfo.mLettedTerms;
-			if (lettedTerms.isEmpty())
+			final List<TermInfo> lettedTerms = mTermInfo.mLettedTerms;
+			if (lettedTerms.isEmpty()) {
 				return;
-			FormulaLet let = ((FormulaLet) engine);
-			TermVariable[] tvs = new TermVariable[lettedTerms.size()];
+			}
+			final FormulaLet let = ((FormulaLet) engine);
+			final TermVariable[] tvs = new TermVariable[lettedTerms.size()];
 			let.enqueueWalker(this);
 			let.enqueueWalker(new BuildLetTerm(tvs));
 			int i = 0;
-			for (TermInfo ti : lettedTerms) {
+			for (final TermInfo ti : lettedTerms) {
 				tvs[i++] = ti.mSubst;
 				let.enqueueWalker(new Transformer(ti, true));
 			}
@@ -310,14 +325,16 @@ public class FormulaLet extends NonRecursive {
 		public BuildLetTerm(TermVariable[] vars) {
 			mVars = vars;
 		}
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = (FormulaLet)engine;
-			Term[] values = new Term[mVars.length];
-			for (int i = 0; i < values.length; i++)
+			final FormulaLet let = (FormulaLet)engine;
+			final Term[] values = new Term[mVars.length];
+			for (int i = 0; i < values.length; i++) {
 				values[i] = let.mResultStack.removeLast();
-			Term newBody = let.mResultStack.removeLast();
-			Theory theory = newBody.getTheory();
-			Term result = theory.let(mVars, values, newBody);
+			}
+			final Term newBody = let.mResultStack.removeLast();
+			final Theory theory = newBody.getTheory();
+			final Term result = theory.let(mVars, values, newBody);
 			let.mResultStack.addLast(result);
 		}
 	}
@@ -327,12 +344,13 @@ public class FormulaLet extends NonRecursive {
 		public BuildApplicationTerm(ApplicationTerm term) {
 			mOldTerm = term;
 		}
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = (FormulaLet)engine;
-			Term[] newParams = let.getTerms(mOldTerm.getParameters());
+			final FormulaLet let = (FormulaLet)engine;
+			final Term[] newParams = let.getTerms(mOldTerm.getParameters());
 			Term result = mOldTerm;
 			if (newParams != mOldTerm.getParameters()) {
-				Theory theory = mOldTerm.getTheory();
+				final Theory theory = mOldTerm.getTheory();
 				result = theory.term(mOldTerm.getFunction(), newParams);
 			}
 			let.mResultStack.addLast(result);
@@ -344,16 +362,18 @@ public class FormulaLet extends NonRecursive {
 		public BuildQuantifier(QuantifiedFormula term) {
 			mOldTerm = term;
 		}
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = (FormulaLet)engine;
-			Term newBody = let.mResultStack.removeLast();
+			final FormulaLet let = (FormulaLet)engine;
+			final Term newBody = let.mResultStack.removeLast();
 			Term result = mOldTerm;
 			if (newBody != mOldTerm.getSubformula()) {
-				Theory theory = mOldTerm.getTheory();
-				if (mOldTerm.getQuantifier() == QuantifiedFormula.EXISTS)
+				final Theory theory = mOldTerm.getTheory();
+				if (mOldTerm.getQuantifier() == QuantifiedFormula.EXISTS) {
 					result = theory.exists(mOldTerm.getVariables(), newBody);
-				else
+				} else {
 					result = theory.forall(mOldTerm.getVariables(), newBody);
+				}
 			}
 			let.mResultStack.addLast(result);
 		}
@@ -364,12 +384,13 @@ public class FormulaLet extends NonRecursive {
 		public BuildAnnotatedTerm(AnnotatedTerm term) {
 			mOldTerm = term;
 		}
+		@Override
 		public void walk(NonRecursive engine) {
-			FormulaLet let = (FormulaLet)engine;
-			Term newBody = let.mResultStack.removeLast();
+			final FormulaLet let = (FormulaLet)engine;
+			final Term newBody = let.mResultStack.removeLast();
 			Term result = mOldTerm;
 			if (newBody != mOldTerm.getSubterm()) {
-				Theory theory = mOldTerm.getTheory();
+				final Theory theory = mOldTerm.getTheory();
 				result = theory.annotatedTerm(
 						mOldTerm.getAnnotations(), newBody);
 			}
@@ -378,7 +399,7 @@ public class FormulaLet extends NonRecursive {
 	}
 
 	private static boolean isNamed(AnnotatedTerm at) {
-		for (Annotation a : at.getAnnotations()) {
+		for (final Annotation a : at.getAnnotations()) {
 			if (a.getKey().equals(":named")) {
 				return true;
 			}
@@ -389,10 +410,11 @@ public class FormulaLet extends NonRecursive {
 	public Term[] getTerms(Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
 		for (int i = oldArgs.length - 1; i >= 0; i--) {
-			Term newTerm = mResultStack.removeLast();
+			final Term newTerm = mResultStack.removeLast();
 			if (newTerm != oldArgs[i]) {
-				if (newArgs == oldArgs)
+				if (newArgs == oldArgs) {
 					newArgs = oldArgs.clone();
+				}
 				newArgs[i] = newTerm;
 			}
 		}

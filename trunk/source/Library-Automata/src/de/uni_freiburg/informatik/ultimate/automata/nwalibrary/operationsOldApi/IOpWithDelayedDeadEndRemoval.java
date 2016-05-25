@@ -80,28 +80,37 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		}
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			UpDownEntry other = (UpDownEntry) obj;
+			}
+			final UpDownEntry other = (UpDownEntry) obj;
 			if (mDown == null) {
-				if (other.mDown != null)
+				if (other.mDown != null) {
 					return false;
-			} else if (!mDown.equals(other.mDown))
+				}
+			} else if (!mDown.equals(other.mDown)) {
 				return false;
+			}
 			if (mEntry == null) {
-				if (other.mEntry != null)
+				if (other.mEntry != null) {
 					return false;
-			} else if (!mEntry.equals(other.mEntry))
+				}
+			} else if (!mEntry.equals(other.mEntry)) {
 				return false;
+			}
 			if (mUp == null) {
-				if (other.mUp != null)
+				if (other.mUp != null) {
 					return false;
-			} else if (!mUp.equals(other.mUp))
+				}
+			} else if (!mUp.equals(other.mUp)) {
 				return false;
+			}
 			return true;
 		}
 	}

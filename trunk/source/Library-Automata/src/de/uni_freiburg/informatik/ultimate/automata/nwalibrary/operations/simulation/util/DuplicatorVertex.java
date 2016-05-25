@@ -97,6 +97,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 			return false;
 		}
 		@SuppressWarnings("rawtypes")
+		final
 		DuplicatorVertex other = (DuplicatorVertex) obj;
 		if (a == null) {
 			if (other.a != null) {
@@ -148,7 +149,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",").append(a).append("),p:");
 		sb.append(getPriority()).append(",pm:").append(pm);

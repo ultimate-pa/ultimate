@@ -36,11 +36,11 @@ public abstract class Order<S, C> implements Comparator<Event<S, C>> {
 			//mLogger.info("compared " + o1 + " with itsself.");
 			return 0;
 		}
-		Configuration<S, C> c1 = o1.getLocalConfiguration();
-		Configuration<S, C> c2 = o2.getLocalConfiguration();
+		final Configuration<S, C> c1 = o1.getLocalConfiguration();
+		final Configuration<S, C> c2 = o2.getLocalConfiguration();
 		assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
 				+ c1.equals(c2);
-		int result = compare(c1, c2);
+		final int result = compare(c1, c2);
 
 		return result;
 	}

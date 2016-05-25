@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 public class UtilsTest {

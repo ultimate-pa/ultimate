@@ -112,9 +112,9 @@ public class CDTResultStore {
 	 */
 	public static List<IResult> getResults(String key) {
 		if (fileToResults != null && fileToResults.containsKey(key)) {
-			ArrayList<IResult> compResults = new ArrayList<IResult>();
-			for (String toolId : fileToResults.get(key).keySet()) {
-				List<IResult> results = fileToResults.get(key).get(toolId);
+			final ArrayList<IResult> compResults = new ArrayList<IResult>();
+			for (final String toolId : fileToResults.get(key).keySet()) {
+				final List<IResult> results = fileToResults.get(key).get(toolId);
 				if(results == null){
 					continue;
 				}

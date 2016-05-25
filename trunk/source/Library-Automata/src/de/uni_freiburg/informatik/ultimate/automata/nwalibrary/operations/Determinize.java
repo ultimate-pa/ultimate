@@ -98,10 +98,10 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// should have same number of states as old determinization
-			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
+			final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
 			correct &= (resultDD.size() == mResult.size());
 			// should recognize same language as old computation

@@ -63,7 +63,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	}
 	
 	private void addOutgoingInternal(LETTER letter, STATE succ) {
-		OutgoingInternalTransition<LETTER, STATE> trans = 
+		final OutgoingInternalTransition<LETTER, STATE> trans = 
 				new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 		if (inOutMapMode()) {
 			addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, letter, succ);
@@ -85,13 +85,13 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		assert mOut1 != null && !(mOut1 instanceof Map);
 		assert mOut2 != null && !(mOut2 instanceof Map);
 		assert mOut3 != null && !(mOut3 instanceof Map);
-		Object[] outgoings = new Object[]{mOut1, mOut2, mOut3};
+		final Object[] outgoings = new Object[]{mOut1, mOut2, mOut3};
 		mOut1 = new HashMap<LETTER, Set<STATE>>();
 		mOut2 = new HashMap<LETTER, Set<STATE>>();
 		mOut3 = new HashMap<Map<LETTER,STATE>, Set<STATE>>();
-		for (Object out : outgoings) {
+		for (final Object out : outgoings) {
 			if (out instanceof OutgoingInternalTransition) {
-				OutgoingInternalTransition<LETTER, STATE> internal = (OutgoingInternalTransition<LETTER, STATE>) out;
+				final OutgoingInternalTransition<LETTER, STATE> internal = (OutgoingInternalTransition<LETTER, STATE>) out;
 				addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, internal.getLetter(), internal.getSucc());
 			} else {
 				throw new AssertionError();
@@ -113,7 +113,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					/**
 					 * Points to next field that has OutgoingInternalTransition.
@@ -177,7 +177,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					Iterator<STATE> mIterator;
 					{
@@ -202,7 +202,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE succ = mIterator.next(); 
+							final STATE succ = mIterator.next(); 
 							return new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 						}
 					}
@@ -227,7 +227,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			 */
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					Iterator<LETTER> mLetterIterator;
 					LETTER mCurrentLetter;
@@ -265,7 +265,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
-							OutgoingInternalTransition<LETTER, STATE> result = 
+							final OutgoingInternalTransition<LETTER, STATE> result = 
 									mCurrentIterator.next();
 							if (!mCurrentIterator.hasNext()) {
 								nextLetter();

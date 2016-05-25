@@ -40,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -99,7 +101,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
-		INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
+		final INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
 			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
@@ -117,12 +119,12 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
-		SimulationPerformance performance = getSimulationPerformance();
+		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
 
 		// Log performance
 		if (performance != null) {
@@ -144,7 +146,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 		mGeneration.generateGameGraphFromAutomaton();
 
 		// Set values for compatibility with non nwa graph
-		SimulationPerformance performance = mGeneration.getSimulationPerformance();
+		final SimulationPerformance performance = mGeneration.getSimulationPerformance();
 		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
 		setBuechiAmountOfStates(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
 		setBuechiAmountOfTransitions(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));

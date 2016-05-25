@@ -59,7 +59,7 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 		mTraversedNwa = operand;
 		mLogger.info(startMessage());
 		traverseDoubleDeckerGraph();
-		for (STATE state : mTraversedNwa.getStates()) {
+		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mVisitedStates.contains(state)) {
 				mUnreachalbeStates++;
 				mLogger.warn("Unreachalbe state: " + state);
@@ -77,10 +77,10 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE state = doubleDecker.getUp();
-		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : mTraversedNwa.lettersInternal(state)) {
-			for (STATE succ : mTraversedNwa.succInternal(state, letter)) {
+		final STATE state = doubleDecker.getUp();
+		final Set<STATE> succs = new HashSet<STATE>();
+		for (final LETTER letter : mTraversedNwa.lettersInternal(state)) {
+			for (final STATE succ : mTraversedNwa.succInternal(state, letter)) {
 				succs.add(succ);
 			}
 		}
@@ -93,10 +93,10 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE state = doubleDecker.getUp();
-		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : mTraversedNwa.lettersCall(state)) {
-			for (STATE succ : mTraversedNwa.succCall(state, letter)) {
+		final STATE state = doubleDecker.getUp();
+		final Set<STATE> succs = new HashSet<STATE>();
+		for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
+			for (final STATE succ : mTraversedNwa.succCall(state, letter)) {
 				succs.add(succ);
 			}
 		}
@@ -109,11 +109,11 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE state = doubleDecker.getUp();
-		STATE hier = doubleDecker.getDown();
-		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : mTraversedNwa.lettersReturn(state)) {
-			for (STATE succ : mTraversedNwa.succReturn(state, hier, letter)) {
+		final STATE state = doubleDecker.getUp();
+		final STATE hier = doubleDecker.getDown();
+		final Set<STATE> succs = new HashSet<STATE>();
+		for (final LETTER letter : mTraversedNwa.lettersReturn(state)) {
+			for (final STATE succ : mTraversedNwa.succReturn(state, hier, letter)) {
 				succs.add(succ);
 			}
 		}

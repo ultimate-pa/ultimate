@@ -46,8 +46,8 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 
-	private List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
-	private List<NestedLassoWord<LETTER>> mNestedLassoWords;
+	private final List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
+	private final List<NestedLassoWord<LETTER>> mNestedLassoWords;
 
 	public LassoExtractor(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
@@ -66,7 +66,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		if (mNestedLassoRuns.isEmpty() && mReach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(mServices, mReach)).getResult();
 		} else {
-			for (NestedLassoRun<LETTER, STATE> nlr  : mNestedLassoRuns) {
+			for (final NestedLassoRun<LETTER, STATE> nlr  : mNestedLassoRuns) {
 				mNestedLassoWords.add(nlr.getNestedLassoWord());
 			}
 		}

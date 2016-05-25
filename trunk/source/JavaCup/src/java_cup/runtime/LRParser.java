@@ -257,7 +257,7 @@ public abstract class LRParser {
    *  scan() should return a fresh object.
    */
   public Symbol scan() throws java.lang.Exception {
-    Symbol sym = getScanner().next_token();
+    final Symbol sym = getScanner().next_token();
     return (sym!=null) ? sym : getSymbolFactory().newSymbol("END_OF_FILE",0);
   }
 
@@ -302,11 +302,19 @@ public abstract class LRParser {
       System.err.print(message);
       System.err.flush();
       if (info instanceof Symbol)
-	if (((Symbol)info).left != -1)
-	System.err.println(" at character " + ((Symbol)info).left + 
-			   " of input");
-	else System.err.println("");
-      else System.err.println("");
+	{
+	    if (((Symbol)info).left != -1)
+	      {
+	          System.err.println(" at character " + ((Symbol)info).left + 
+	          		   " of input");
+	        } else
+	      {
+	          System.err.println("");
+	        }
+	  } else
+	{
+	    System.err.println("");
+	  }
     }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -344,9 +352,11 @@ public abstract class LRParser {
    */
   private final short get_action(int state, int sym)
     {
-      int base = base_table[state]+2*sym;
+      final int base = base_table[state]+2*sym;
       if (action_table[base] == state)
-	return action_table[base + 1];
+	{
+	    return action_table[base + 1];
+	  }
       /* no entry; return default */
       return action_table[state];
     }
@@ -416,13 +426,15 @@ public abstract class LRParser {
 	    {
 	      act = (act >> 1)-1;
 	      /* perform the action for the reduce */
-	      Symbol lhs_sym = do_action(act, stack);
+	      final Symbol lhs_sym = do_action(act, stack);
 
 	      /* look up information about the production */
 	      int handle_size = production_table[2*act+1];
 	      /* pop the handle off the stack */
 	      while (handle_size-- > 0)
-		stack.remove(stack.size()-1);
+		{
+		    stack.remove(stack.size()-1);
+		  }
 	      
 	      /* look up the state to go to from the one popped back to */
 	      parse_state = get_reduce(stack.get(stack.size()-1).parse_state, lhs_sym.sym);
@@ -436,7 +448,9 @@ public abstract class LRParser {
 	    {
 	      error_recovery(false);
 	      if (!stack.isEmpty())
-		parse_state = stack.get(stack.size()-1).parse_state;
+		{
+		    parse_state = stack.get(stack.size()-1).parse_state;
+		  }
 	    }
 	}
       /* clean-up tables to save space */
@@ -513,7 +527,7 @@ public abstract class LRParser {
   public void debug_stack() {
       StringBuffer sb=new StringBuffer("## STACK:");
       for (int i=0; i<stack.size(); i++) {
-	  Symbol s = stack.get(i);
+	  final Symbol s = stack.get(i);
 	  sb.append(" <state "+s.parse_state+", sym "+s.sym+">");
 	  if ((i%3)==2 || (i==(stack.size()-1))) {
 	      debug_message(sb.toString());
@@ -561,7 +575,9 @@ public abstract class LRParser {
 	{
 	  /* Check current token for freshness. */
 	  if (cur_token.used_by_parser)
-	    throw new Error("Symbol recycling detected (fix your scanner).");
+	    {
+		throw new Error("Symbol recycling detected (fix your scanner).");
+	      }
 
 	  /* current state is always on the top of the stack */
 	  //debug_stack();
@@ -587,7 +603,7 @@ public abstract class LRParser {
 	    {
 	      act = (act >> 1)-1;
 	      /* perform the action for the reduce */
-	      Symbol lhs_sym = do_action(act, stack);
+	      final Symbol lhs_sym = do_action(act, stack);
 
 	      /* look up information about the production */
 	      int handle_size = production_table[2*act+1];
@@ -596,7 +612,9 @@ public abstract class LRParser {
 
 	      /* pop the handle off the stack */
 	      while (handle_size-- > 0)
-		stack.remove(stack.size()-1);
+		{
+		    stack.remove(stack.size()-1);
+		  }
 	      
 	      /* look up the state to go to from the one popped back to */
 	      act = get_reduce(stack.get(stack.size()-1).parse_state, lhs_sym.sym);
@@ -617,7 +635,9 @@ public abstract class LRParser {
 	      /* try to error recover */
 	      error_recovery(true);
 	      if (!stack.isEmpty())
-		parse_state = stack.get(stack.size()-1).parse_state;
+		{
+		    parse_state = stack.get(stack.size()-1).parse_state;
+		  }
 	    }
 	}
       /* clean-up tables to save space */
@@ -659,13 +679,19 @@ public abstract class LRParser {
       /* call user syntax error reporting routine */
       syntax_error(cur_token);
 
-      if (debug) debug_message("# Attempting error recovery");
+      if (debug)
+	{
+	    debug_message("# Attempting error recovery");
+	  }
 
       /* first pop the stack back into a state that can shift on error and 
 	 do that shift (if that fails, we fail) */
       if (!find_recovery_config(debug))
 	{
-	  if (debug) debug_message("# Error recovery fails");
+	  if (debug)
+	    {
+		debug_message("# Error recovery fails");
+	      }
 
 	  /* if that fails give up with a fatal syntax error */
 	  unrecovered_syntax_error(cur_token);
@@ -677,7 +703,7 @@ public abstract class LRParser {
 	}
 
       /* read ahead to create lookahead we can parse multiple times */
-      Symbol[] lookaheads = new Symbol[error_sync_size()];
+      final Symbol[] lookaheads = new Symbol[error_sync_size()];
       lookaheads[0] = cur_token;
       for (int i = 1; i < lookaheads.length; i++)
 	{
@@ -688,7 +714,10 @@ public abstract class LRParser {
       for (;;)
 	{
 	  /* try to parse forward, if it makes it, bail out of loop */
-	  if (debug) debug_message("# Trying to parse ahead");
+	  if (debug)
+	    {
+		debug_message("# Trying to parse ahead");
+	      }
 	  if (try_parse_ahead(debug, lookaheads))
 	    {
 	      break;
@@ -697,7 +726,10 @@ public abstract class LRParser {
 	  /* if we are now at EOF, we have failed */
 	  if (lookaheads[0].sym == EOF) 
 	    {
-	      if (debug) debug_message("# Error recovery fails at EOF");
+	      if (debug)
+		{
+		    debug_message("# Error recovery fails at EOF");
+		  }
 	      /* if that fails give up with a fatal syntax error */
 	      unrecovered_syntax_error(cur_token);
 
@@ -713,17 +745,24 @@ public abstract class LRParser {
 	  // Auckland, New Zealand.
 	  // It is the first token that is being consumed, not the one 
 	  // we were up to parsing
-	  if (debug) 
-	      debug_message("# Consuming Symbol #" + lookaheads[ 0 ].sym);
+	  if (debug)
+	    {
+		debug_message("# Consuming Symbol #" + lookaheads[ 0 ].sym);
+	      }
 	  
 	  /* move all the existing input over */
 	  for (int i = 1; i < lookaheads.length; i++)
-	    lookaheads[i-1] = lookaheads[i];
+	    {
+		lookaheads[i-1] = lookaheads[i];
+	      }
 	  lookaheads[lookaheads.length-1] = scan();
 	}
 
       /* we have consumed to a point where we can parse forward */
-      if (debug) debug_message("# Parse-ahead ok, going back to normal parse");
+      if (debug)
+	{
+	    debug_message("# Parse-ahead ok, going back to normal parse");
+	  }
 
       /* do the real parse (including actions) across the lookahead */
       parse_lookahead(debug, lookaheads);
@@ -747,10 +786,13 @@ public abstract class LRParser {
       Symbol error_token;
       int act;
 
-      if (debug) debug_message("# Finding recovery state on stack");
+      if (debug)
+	{
+	    debug_message("# Finding recovery state on stack");
+	  }
 
       /* Remember the right-position of the top symbol on the stack */
-      Symbol right = stack.get(stack.size()-1);	
+      final Symbol right = stack.get(stack.size()-1);	
       Symbol left  = cur_token;
 
       /* Now fire reduce actions that have error as lookahead;
@@ -762,15 +804,19 @@ public abstract class LRParser {
 	    {
 	      /* pop the stack */
 	      if (debug)
-		debug_message("# Pop stack by one, state was # "
-		    + stack.get(stack.size()-1).parse_state);
+		{
+		    debug_message("# Pop stack by one, state was # "
+		        + stack.get(stack.size()-1).parse_state);
+		  }
 	      left = stack.remove(stack.size()-1);
 		  
 	      /* if we have hit bottom, we fail */
 	      if (stack.isEmpty())
 		{
 		  if (debug)
-		    debug_message("# No recovery state found on stack");
+		    {
+			debug_message("# No recovery state found on stack");
+		      }
 		  return false;
 		}
 	    }
@@ -779,17 +825,21 @@ public abstract class LRParser {
 	      /* reduce under error symbol */
 	      act = (act >> 1) - 1;
 	      /* perform the action for the reduce */
-	      Symbol lhs_sym = do_action(act, stack);
+	      final Symbol lhs_sym = do_action(act, stack);
 
 	      /* look up information about the production */
 	      int handle_size = production_table[2*act+1];
 
 	      if (debug)
-		debug_reduce(act, lhs_sym, handle_size);
+		{
+		    debug_reduce(act, lhs_sym, handle_size);
+		  }
 
 	      /* pop the handle off the stack */
 	      while (handle_size-- > 0)
-		stack.remove(stack.size()-1);
+		{
+		    stack.remove(stack.size()-1);
+		  }
 
 	      /* look up the state to go to from the one popped back to */
 	      act = get_reduce(stack.get(stack.size()-1).parse_state, lhs_sym.sym);
@@ -799,7 +849,10 @@ public abstract class LRParser {
 	      lhs_sym.used_by_parser = true;
 	      stack.add(lhs_sym);
 
-	      if (debug) debug_message("# Goto state #" + act);
+	      if (debug)
+		{
+		    debug_message("# Goto state #" + act);
+		  }
 	    }
 	}
 
@@ -837,7 +890,7 @@ public abstract class LRParser {
       int act;
 
       /* create a virtual stack from the real parse stack */
-      virtual_parse_stack vstack = new virtual_parse_stack(stack);
+      final virtual_parse_stack vstack = new virtual_parse_stack(stack);
       int parse_state = vstack.top();
       int lookahead_pos = 0;
       cur_token = lookaheads[lookahead_pos++];
@@ -856,12 +909,17 @@ public abstract class LRParser {
 	      /* push the new state on the stack */
 	      vstack.push(parse_state);
 
-	      if (debug) debug_message("# Parse-ahead shifts Symbol #" + 
-		       cur_token.sym + " into state #" + parse_state);
+	      if (debug)
+		{
+		    debug_message("# Parse-ahead shifts Symbol #" + 
+		           cur_token.sym + " into state #" + parse_state);
+		  }
 
 	      /* advance simulated input, if we run off the end, we are done */
 	      if (lookahead_pos == lookaheads.length)
-		return true;
+		{
+		    return true;
+		  }
 	      cur_token = lookaheads[lookahead_pos++];
 	    }
 	  /* even encodes a reduce */
@@ -872,30 +930,38 @@ public abstract class LRParser {
 	      /* if this is a reduce with the start production we are done */
 	      if (act == 0) 
 		{
-		  if (debug) debug_message("# Parse-ahead accepts");
+		  if (debug)
+		    {
+			debug_message("# Parse-ahead accepts");
+		      }
 		  return true;
 		}
 
 	      /* get the lhs Symbol and the rhs size */
-	      int lhs = production_table[2*act];
-	      int rhs_size = production_table[2*act+1];
+	      final int lhs = production_table[2*act];
+	      final int rhs_size = production_table[2*act+1];
 
 	      /* pop handle off the stack */
 	      vstack.pop(rhs_size);
 
-	      if (debug) 
-		debug_message("# Parse-ahead reduces: handle size = " + 
-	          rhs_size + " lhs = #" + lhs + " from state #" + vstack.top());
+	      if (debug)
+		{
+		    debug_message("# Parse-ahead reduces: handle size = " + 
+		      rhs_size + " lhs = #" + lhs + " from state #" + vstack.top());
+		  }
 
 	      /* look up goto and push it onto the stack */
 	      parse_state = get_reduce(vstack.top(), lhs);
 	      vstack.push(parse_state);
-	      if (debug) 
-		debug_message("# Goto state #" + vstack.top());
+	      if (debug)
+		{
+		    debug_message("# Goto state #" + vstack.top());
+		  }
 	    }
-	  /* if its an error, we fail */
-	  else
-	    return false;
+	  /* if its an error, we fail */ else
+	    {
+		return false;
+	      }
 	}
     }
 
@@ -946,14 +1012,19 @@ public abstract class LRParser {
 	      /* shift to the encoded state by pushing it on the stack */
 	      cur_token.parse_state = (act>>1);
 	      cur_token.used_by_parser = true;
-	      if (debug) debug_shift(cur_token);
+	      if (debug)
+		{
+		    debug_shift(cur_token);
+		  }
 	      stack.add(cur_token);
 
 	      /* advance to the next Symbol */
 	      cur_token = lookaheads[lookahead_pos++];
 
-	      if (debug) 
-		debug_message("# Current Symbol is #" + cur_token.sym);
+	      if (debug)
+		{
+		    debug_message("# Current Symbol is #" + cur_token.sym);
+		  }
 	    }
 	  /* if its even, then it encodes a reduce action */
 	  else
@@ -967,11 +1038,15 @@ public abstract class LRParser {
 	      int handle_size = production_table[2*act+1];
 
 	      if (debug)
-		debug_reduce(act, lhs_sym, handle_size);
+		{
+		    debug_reduce(act, lhs_sym, handle_size);
+		  }
 
 	      /* pop the handle off the stack */
 	      while (handle_size-- > 0)
-		stack.remove(stack.size()-1);
+		{
+		    stack.remove(stack.size()-1);
+		  }
 	      
 	      /* look up the state to go to from the one popped back to */
 	      act = get_reduce(stack.get(stack.size()-1).parse_state, lhs_sym.sym);
@@ -981,12 +1056,18 @@ public abstract class LRParser {
 	      lhs_sym.used_by_parser = true;
 	      stack.add(lhs_sym);
 	       
-	      if (debug) debug_message("# Goto state #" + act);
+	      if (debug)
+		{
+		    debug_message("# Goto state #" + act);
+		  }
 
 	    }
 	}
 
-      if (debug) debug_message("# Completed reparse");
+      if (debug)
+	{
+	    debug_message("# Completed reparse");
+	  }
       /* go back to normal parser */
       return;
     }
@@ -996,7 +1077,7 @@ public abstract class LRParser {
   /** Utility function: unpacks parse tables from strings */
   private void unpackStrings(String[] sa)
     {
-      TableDecoder decoder = new TableDecoder(sa);
+      final TableDecoder decoder = new TableDecoder(sa);
       production_table = decoder.decodeShortArray();
       base_table = decoder.decodeIntArray();
       action_table = decoder.decodeShortArray();

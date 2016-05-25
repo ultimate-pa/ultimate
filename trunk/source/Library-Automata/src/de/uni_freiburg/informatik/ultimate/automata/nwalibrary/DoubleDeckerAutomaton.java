@@ -51,6 +51,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		return mUp2Down != null; 
 	}
 	
+	@Override
 	@Deprecated
 	public Set<STATE> getDownStates(STATE up) {
 		return mUp2Down.get(up).keySet();
@@ -71,13 +72,14 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
 	 * stack element.
 	 */
+	@Override
 	public boolean isDoubleDecker(STATE up, STATE down) {
 		if (mUp2Down == null) {
 			throw new AssertionError("up2down not set");
 		} else {
-			if (this.getStates().contains(up)) {
-				Map<STATE, ReachFinal> downStates = mUp2Down.get(up);
-				if (this.getStates().contains(down)) {
+			if (getStates().contains(up)) {
+				final Map<STATE, ReachFinal> downStates = mUp2Down.get(up);
+				if (getStates().contains(down)) {
 					return downStates.get(down) != null;
 				} else {
 					return false;

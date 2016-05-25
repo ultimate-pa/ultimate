@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
 	private HashSet<MinimizedNode> mActualCallStack;
 
@@ -68,9 +68,9 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * We need this list of nodes where we replaced an call edge by substitution.
 	 * Maybe it is possible to minimize them again, in a later step.
 	 */
-	private HashSet<MinimizedNode> nodesForReVisit;
+	private final HashSet<MinimizedNode> nodesForReVisit;
 	
-	private AbstractMinimizationVisitor amVisitor;
+	private final AbstractMinimizationVisitor amVisitor;
 
 	/**
 	 * 
@@ -100,9 +100,9 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		IMinimizedEdge substituteEdge = null;
 		IMinimizedEdge[] edges = null;
 		// we need a copy of the incoming edge list
-		List<IMinimizedEdge> incomingEdgeList = new ArrayList<IMinimizedEdge>(
+		final List<IMinimizedEdge> incomingEdgeList = new ArrayList<IMinimizedEdge>(
 				node.getMinimalIncomingEdgeLevel());
-		for (IMinimizedEdge edge : incomingEdgeList) {
+		for (final IMinimizedEdge edge : incomingEdgeList) {
 			// Check if predecessor has successors. This is not the case
 			// if predecessor is deadcode.
 			if (predecessorSuccIsNull(edge)) {
@@ -169,13 +169,13 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				// We build the edge Call + Substitute,
 				// the Return is still missing!
 				// Remark 06.06.2013: Call + Substitute builds a new edge!
-				ConjunctionEdge callAndSubstitute = new ConjunctionEdge(edge, substituteEdge);
+				final ConjunctionEdge callAndSubstitute = new ConjunctionEdge(edge, substituteEdge);
 				minimizeCallReturnEdge(((IBasicEdge) edge), callAndSubstitute);
 				// so we replaced an call here, so we may have to revisit this node
 				nodesForReVisit.add(amVisitor.getCorrespondingStartNode(edge.getSource()));
 				// Since we have replaced the call-edge, we create a new
 				// incoming edge level for the Method-Entry-Node
-				ArrayList<IMinimizedEdge> incomingListLevel = new ArrayList<IMinimizedEdge>(
+				final ArrayList<IMinimizedEdge> incomingListLevel = new ArrayList<IMinimizedEdge>(
 						node.getMinimalIncomingEdgeLevel());
 				incomingListLevel.remove(edge);
 				node.addNewIncomingEdgeLevel(incomingListLevel);
@@ -191,7 +191,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * Added by Matthias 24.10.2013
 	 */
 	private boolean predecessorSuccIsNull(IMinimizedEdge edge) {
-		MinimizedNode predecessor = edge.getSource();
+		final MinimizedNode predecessor = edge.getSource();
 		return predecessor.getOutgoingEdges() == null;
 	}
 
@@ -207,11 +207,11 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	private void directEdgesToErrorLocation(IMinimizedEdge callEdge,
 			IMinimizedEdge[] subEdges) {
 		// First step is to add the new edges to callEdge.getSource->Outgoing
-		ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
+		final ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
 				callEdge.getSource().getOutgoingEdges());
-		ArrayList<IMinimizedEdge> shortcuts = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> shortcuts = new ArrayList<IMinimizedEdge>();
 		for (int i = 1; i < subEdges.length; i++) {
-			ShortcutErrEdge shortcut = new ShortcutErrEdge(callEdge,
+			final ShortcutErrEdge shortcut = new ShortcutErrEdge(callEdge,
 					subEdges[i]);
 			newOutEdgeLevel.add(shortcut);
 			shortcuts.add(shortcut);
@@ -219,8 +219,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		callEdge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel, null);
 		// Second step is to add the new edges to the incoming set of the error
 		// locations
-		for (IMinimizedEdge shortcutEdge : shortcuts) {
-			ArrayList<IMinimizedEdge> newIncomingEdgeLevel = new ArrayList<IMinimizedEdge>(
+		for (final IMinimizedEdge shortcutEdge : shortcuts) {
+			final ArrayList<IMinimizedEdge> newIncomingEdgeLevel = new ArrayList<IMinimizedEdge>(
 					shortcutEdge.getTarget().getIncomingEdges());
 			newIncomingEdgeLevel.add(shortcutEdge);
 			shortcutEdge.getTarget().addNewIncomingEdgeLevel(
@@ -239,7 +239,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		// Remark 04.04.2013: It may be possible that one incoming edge is a
 		// self-loop, if one incoming edge is not a call or root edge should be
 		// sufficient as check
-		for (IMinimizedEdge edge : node.getIncomingEdges()) {
+		for (final IMinimizedEdge edge : node.getIncomingEdges()) {
 			if (!edge.isBasicEdge()) {
 				return null;
 			}
@@ -252,8 +252,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		// Now we have a call edge directly in the method entry point
 		// If we find an call edge we return it!
 		IMinimizedEdge subsituteEdge = null;
-		ArrayList<IMinimizedEdge> errorLocationEdges = new ArrayList<IMinimizedEdge>();
-		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+		final ArrayList<IMinimizedEdge> errorLocationEdges = new ArrayList<IMinimizedEdge>();
+		for (final IMinimizedEdge edge : node.getOutgoingEdges()) {
 			// If the oldVar-Operator is involved we do not minimize such
 			// methods! Due to a problem while composing with
 			// SequentialComposition, there is a scoping problem with old(g)
@@ -261,7 +261,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				return null;
 			}
 			if (edge.isBasicEdge()) {
-				IBasicEdge basicEdge = (IBasicEdge) edge;
+				final IBasicEdge basicEdge = (IBasicEdge) edge;
 				if (basicEdge.getOriginalEdge() instanceof Call) {
 					return new IMinimizedEdge[] { basicEdge };
 				}
@@ -271,10 +271,10 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 			if (edge.getTarget().getOriginalNode().isErrorLocation()) {
 				errorLocationEdges.add(edge);
 			}
-			for (IMinimizedEdge possibleReturnEdge : edge.getTarget()
+			for (final IMinimizedEdge possibleReturnEdge : edge.getTarget()
 					.getOutgoingEdges()) {
 				if (possibleReturnEdge.isBasicEdge()) {
-					IBasicEdge basicEdge = (IBasicEdge) possibleReturnEdge;
+					final IBasicEdge basicEdge = (IBasicEdge) possibleReturnEdge;
 					if (basicEdge.getOriginalEdge() instanceof Call) {
 						return new IMinimizedEdge[] { basicEdge };
 					}
@@ -290,7 +290,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		// further
 		if (subsituteEdge != null
 				&& errorLocationEdges.size() == (node.getOutgoingEdges().size() - 1)) {
-			ArrayList<IMinimizedEdge> edges = new ArrayList<IMinimizedEdge>();
+			final ArrayList<IMinimizedEdge> edges = new ArrayList<IMinimizedEdge>();
 			edges.add(subsituteEdge);
 			edges.addAll(errorLocationEdges);
 			return edges.toArray(new IMinimizedEdge[0]);
@@ -312,19 +312,19 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 */
 	private void minimizeCallReturnEdge(IBasicEdge callEdge,
 			IMinimizedEdge substitute) {
-		MinimizedNode callingNode = callEdge.getSource();
+		final MinimizedNode callingNode = callEdge.getSource();
 		// Note: It is possible that callingNode has more than two outgoing
 		// edges!
 		// --> we have to care for the edges which should be part of the new
 		// outgoing edge level
-		ArrayList<IMinimizedEdge> callNodeOutEdges = new ArrayList<IMinimizedEdge>(
+		final ArrayList<IMinimizedEdge> callNodeOutEdges = new ArrayList<IMinimizedEdge>(
 				callingNode.getMinimalOutgoingEdgeLevel());
 		// We first remove the call node from this list
 		callNodeOutEdges.remove(callEdge);
 
 		// We to find the corresponding SummaryEdge
 		IBasicEdge summaryEdge = null;
-		for (IMinimizedEdge edge : callingNode.getMinimalOutgoingEdgeLevel()) {
+		for (final IMinimizedEdge edge : callingNode.getMinimalOutgoingEdgeLevel()) {
 			if (edge.isBasicEdge()
 					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Summary) {
 				summaryEdge = (IBasicEdge) edge;
@@ -339,8 +339,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
 		// Now we search the corresponding ReturnEdge
 		IBasicEdge returnEdge = null;
-		MinimizedNode returningNode = summaryEdge.getTarget();
-		for (IMinimizedEdge edge : returningNode.getMinimalIncomingEdgeLevel()) {
+		final MinimizedNode returningNode = summaryEdge.getTarget();
+		for (final IMinimizedEdge edge : returningNode.getMinimalIncomingEdgeLevel()) {
 			if (edge.isBasicEdge()
 					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Return) {
 				returnEdge = (IBasicEdge) edge;
@@ -361,7 +361,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		callNodeOutEdges.add(substitute);
 		callingNode.addNewOutgoingEdgeLevel(callNodeOutEdges, null);
 		// We have to replace the Return Edge on both sides
-		List<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>(
+		final List<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>(
 				returnEdge.getSource().getMinimalOutgoingEdgeLevel());
 		outgoingList.remove(returnEdge);
 		returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList, substitute);

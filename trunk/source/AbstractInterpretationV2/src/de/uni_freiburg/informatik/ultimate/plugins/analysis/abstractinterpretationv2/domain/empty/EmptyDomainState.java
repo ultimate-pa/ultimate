@@ -94,7 +94,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		assert !variables.isEmpty();
 
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
-		for (Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
 			final VARDECL old = newMap.put(entry.getKey(), entry.getValue());
 			if (old != null) {
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
@@ -109,7 +109,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		assert !variables.isEmpty();
 
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
-		for (Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
 			newMap.remove(entry.getKey());
 		}
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
@@ -128,7 +128,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
-		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
+		for (final Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
 		}
 		return sb.toString();

@@ -14,11 +14,10 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
-
 import pea.CDD;
 import pea.Phase;
-import pea.Transition;
 import pea.PhaseEventAutomata;
+import pea.Transition;
 
 
 
@@ -53,9 +52,9 @@ import pea.PhaseEventAutomata;
 
 public class J2UPPAALConverterDOM {
 
-	private String initialState = "initialState";
+	private final String initialState = "initialState";
 	Element templateElem = new Element("template");
-	private Vector<String> disjuncts = new Vector<String>();
+	private final Vector<String> disjuncts = new Vector<String>();
 	private int dnfCount=1;
 	private int transCount = 0;
 	
@@ -63,16 +62,16 @@ public class J2UPPAALConverterDOM {
 	BufferedWriter out; 
 
 	public void create(String file, PhaseEventAutomata pea){
-		String rulesFileName = file;
+		final String rulesFileName = file;
 		Document doc = null;
 
-		SAXBuilder parser = new SAXBuilder();
-		long actTime = System.currentTimeMillis();
+		final SAXBuilder parser = new SAXBuilder();
+		final long actTime = System.currentTimeMillis();
 
 		try {
 			doc = parser.build(rulesFileName);
-		} catch (JDOMException e) {
-		} catch (IOException e) {
+		} catch (final JDOMException e) {
+		} catch (final IOException e) {
 		}
 
 		doc = new Document();
@@ -86,7 +85,7 @@ public class J2UPPAALConverterDOM {
 			out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			
 			//set doctype			
-			DocType doctype = new DocType("nta");
+			final DocType doctype = new DocType("nta");
 			doctype.setPublicID("-//Uppaal Team//DTD Flat System 1.0//EN");
 			doctype.setSystemID("http://www.docs.uu.se/docs/rtmv/uppaal/xml/flat-1_0.dtd");
 			doc.addContent(doctype);
@@ -94,13 +93,13 @@ public class J2UPPAALConverterDOM {
 			
 			//set nta
 			doc.addContent(new Element("nta"));
-			Element ntaElem = doc.getRootElement();
+			final Element ntaElem = doc.getRootElement();
 			out.newLine();
 			out.write("<nta>");
 			out.newLine();
 			
 			//set global declaration
-			Element globalDeclarationElem = new Element("declaration");
+			final Element globalDeclarationElem = new Element("declaration");
 			ntaElem.addContent(globalDeclarationElem);    	
 			serializer.output(globalDeclarationElem, out);
 			out.newLine();
@@ -112,31 +111,31 @@ public class J2UPPAALConverterDOM {
 
 			//set template
 			//start template def
-			Element templateNameElem = new Element("name");
+			final Element templateNameElem = new Element("name");
 			templateNameElem.setText(pea.getName());
 			templateElem.addContent(templateNameElem);
 			serializer.output(templateNameElem, out);
 			out.newLine();
 
 			//local declaration 			
-			Element templateDeclarationElem = new Element("declaration");
-			String clockDeclaration = addDeclarationOfClocks(pea);  
+			final Element templateDeclarationElem = new Element("declaration");
+			final String clockDeclaration = addDeclarationOfClocks(pea);  
 			templateDeclarationElem.setText(clockDeclaration);
 			templateElem.addContent(templateDeclarationElem);    
 			serializer.output(templateDeclarationElem, out);
 			out.newLine();
 			
 
-			this.addLocations(pea);
-			this.addInitialRef(pea);
-			this.addInitialTransitions(pea);
-			this.addPEATransitions(pea);
+			addLocations(pea);
+			addInitialRef(pea);
+			addInitialTransitions(pea);
+			addPEATransitions(pea);
 			
 			out.write("\n </template> \n");
 			//end template def			
 
 			//set system
-			Element systemElem = new Element("system");
+			final Element systemElem = new Element("system");
 			systemElem.setText("system "+pea.getName()+";");
 			ntaElem.addContent(systemElem);    			
 
@@ -147,10 +146,10 @@ public class J2UPPAALConverterDOM {
 			out.close();
 			
 		}
-		catch (IOException e) {
+		catch (final IOException e) {
 		}
 		System.out.println("Writing Uppaal representation took "+(System.currentTimeMillis()-actTime)+"ms");
-        System.out.println("Computed "+(--this.dnfCount)+" disjunctive normalforms");
+        System.out.println("Computed "+(--dnfCount)+" disjunctive normalforms");
         System.out.println("The transformed PEA has "+pea.getPhases().length+" phases");
 	}
 
@@ -159,7 +158,7 @@ public class J2UPPAALConverterDOM {
 		//we add a new clock "timer" to ensure that every state stays active for some time >0
 		String clockDeclaration ="clock timer; "; 
 		//and (of course) we also add the clocks of the pea
-		int numberOfClocks = pea.getClocks().size();
+		final int numberOfClocks = pea.getClocks().size();
 		for (int i=0; i<numberOfClocks; i++){
 			clockDeclaration = clockDeclaration + "clock "+pea.getClocks().get(i)+"; ";
 		}
@@ -169,7 +168,7 @@ public class J2UPPAALConverterDOM {
 	//Uppaal supports only one initial state; Thus, if a pea has more than one initial state, 
 	//we introduce a new state "initialState"
 	private void addInitialRef(PhaseEventAutomata pea) throws IOException{
-		Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit();
 		//the following case should never occur if the pea was properly built, but you can never be sure...
 		if (init.length <=0){
 			System.out.println("ERROR: The pea has no init state");
@@ -177,14 +176,14 @@ public class J2UPPAALConverterDOM {
 		//if the PEA has only one init state, then we do not need the further initialState
 
 		if (init.length ==1){
-			Element initRef = new Element("init");
+			final Element initRef = new Element("init");
 			initRef.setAttribute("ref", init[0].getName());
 			templateElem.addContent(initRef);
 			serializer.output(initRef, out);
 		}
 		else //we need the further init state
 		{	    		
-			Element initRef = new Element("init");
+			final Element initRef = new Element("init");
 			initRef.setAttribute("ref", initialState);
 			templateElem.addContent(initRef);  
 			serializer.output(initRef, out);
@@ -195,24 +194,24 @@ public class J2UPPAALConverterDOM {
 
 
 	private void addLocations(PhaseEventAutomata pea) throws IOException{
-		Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit();
 		//add all locations of the pea
-		Phase[] phases = pea.getPhases();  
+		final Phase[] phases = pea.getPhases();  
 		for(int i=0; i<phases.length; i++) {
-			Phase phase = phases[i];
-			Element location = new Element("location");
+			final Phase phase = phases[i];
+			final Element location = new Element("location");
 			location.setAttribute("id", phase.getName());	
-			Element tempLocName = new Element("name");
+			final Element tempLocName = new Element("name");
 			tempLocName.setText(phase.getName());
 			location.addContent(tempLocName);
 
 			if(phase.getClockInvariant()!=CDD.TRUE) {
-				String[]formula = this.getDisjuncts(phase.getClockInvariant());
+				final String[]formula = getDisjuncts(phase.getClockInvariant());
 				String clockInvariant = formula[0];
 				for (int j=1; j<formula.length; j++){
 					clockInvariant = clockInvariant + " && " + formula[j];
 				}
-				Element tempLocLabel = new Element("label");
+				final Element tempLocLabel = new Element("label");
 				tempLocLabel.setAttribute("kind", "invariant");
 				tempLocLabel.setText(clockInvariant); 
 				location.addContent(tempLocLabel);
@@ -224,11 +223,11 @@ public class J2UPPAALConverterDOM {
 		//check whether a further initial state is needed
 		if (init.length > 1){
 			//this further init state shall be committed, thus, there is no delay allowed in this state
-			Element initLocation = new Element("location");
+			final Element initLocation = new Element("location");
 			initLocation.setAttribute("id", initialState);
-			Element locationName = new Element("name");
+			final Element locationName = new Element("name");
 			locationName.setText(initialState);
-			Element locationCommit = new Element("committed");
+			final Element locationCommit = new Element("committed");
 			templateElem.addContent(initLocation);
 			initLocation.addContent(locationName);
 			initLocation.addContent(locationCommit);
@@ -241,26 +240,26 @@ public class J2UPPAALConverterDOM {
 	//add the transitions of the pea
 	private void addPEATransitions(PhaseEventAutomata pea) throws IOException {
 
-		Phase[] phases = pea.getPhases();  
-		Vector<Transition> transitions = new Vector<Transition>();   
+		final Phase[] phases = pea.getPhases();  
+		final Vector<Transition> transitions = new Vector<Transition>();   
 
 		for(int i=0; i<phases.length; i++) {
-			Phase phase = phases[i];
+			final Phase phase = phases[i];
 			transitions.addAll(phase.getTransitions());
 		}    
 
-		this.transCount = transitions.size();
+		transCount = transitions.size();
 		for (int j=0; j<transCount; j++){
-			Transition trans = transitions.elementAt(j);
-			this.createPEATransitionString(trans);
+			final Transition trans = transitions.elementAt(j);
+			createPEATransitionString(trans);
 		}       
 
 	}
 
 	private void createPEATransitionString(Transition transition) throws IOException{
-		String[] disjuncts = this.getDisjuncts(transition.getGuard());        
-		String[] resets = transition.getResets();
-		StringBuffer assignment = new StringBuffer();
+		final String[] disjuncts = getDisjuncts(transition.getGuard());        
+		final String[] resets = transition.getResets();
+		final StringBuffer assignment = new StringBuffer();
 
 		for (int i = 0; i < resets.length; i++) {
 			assignment.append(resets[i]).append(":=0, ");
@@ -269,19 +268,19 @@ public class J2UPPAALConverterDOM {
 
 		for(int i=0; i<disjuncts.length; i++) {
 
-			String source = transition.getSrc().getName();
-			String destination = transition.getDest().getName();
+			final String source = transition.getSrc().getName();
+			final String destination = transition.getDest().getName();
 
 			if(source.matches(destination)&& (resets.length<=0)){
 				//selfloops in which no clock is reset do not need to be transfered to the uppaal model
 			}
 			else
 			{
-				Element transitionEl = new Element("transition");
-				Element sourceEl = new Element("source");
-				Element targetEl = new Element("target");
-				Element labelElGuard = new Element("label");
-				Element labelElAssignment = new Element("label");
+				final Element transitionEl = new Element("transition");
+				final Element sourceEl = new Element("source");
+				final Element targetEl = new Element("target");
+				final Element labelElGuard = new Element("label");
+				final Element labelElAssignment = new Element("label");
 
 				sourceEl.setAttribute("ref", source);
 				targetEl.setAttribute("ref", destination);
@@ -310,7 +309,7 @@ public class J2UPPAALConverterDOM {
 	}
 
 	private void addInitialTransitions(PhaseEventAutomata pea) throws IOException {
-		Phase[] init = pea.getInit();
+		final Phase[] init = pea.getInit();
 
 		//if the PEA has only one init state, then we do not need the further initialState, and thus no further transitions
 		//otherwise add transitions from initialState to every init state and if this init state has a clock invariant
@@ -319,16 +318,16 @@ public class J2UPPAALConverterDOM {
 		{  		
 			for(int i=0; i<init.length; i++) { //for all init states
 
-				Phase initState = init[i];
-				CDD initClock = initState.getClockInvariant();
-				List<String> peaClocks = pea.getClocks();
+				final Phase initState = init[i];
+				final CDD initClock = initState.getClockInvariant();
+				final List<String> peaClocks = pea.getClocks();
 				//What clocks are part of the clock invariant of the initial state    		
-				String reset = getClocksToReset(initState, peaClocks);  
+				final String reset = getClocksToReset(initState, peaClocks);  
 
-				Element transitionEl = new Element("transition");
-				Element sourceEl = new Element("source");
-				Element targetEl = new Element("target");
-				Element labelElAssignment = new Element("label");
+				final Element transitionEl = new Element("transition");
+				final Element sourceEl = new Element("source");
+				final Element targetEl = new Element("target");
+				final Element labelElAssignment = new Element("label");
 
 				sourceEl.setAttribute("ref", initialState);
 				targetEl.setAttribute("ref", initState.getName());
@@ -350,7 +349,7 @@ public class J2UPPAALConverterDOM {
 	}
 
 	private String getClocksToReset(Phase state, List<String> peaClocks){
-		String initClockString = state.getClockInvariant().toString();
+		final String initClockString = state.getClockInvariant().toString();
 		Boolean firstClock = true;
 		//List<String> peaClocks = pea.getClocks();
 		String reset = ""; 
@@ -360,23 +359,24 @@ public class J2UPPAALConverterDOM {
 					reset = peaClocks.get(j) + ":= 0 ";
 					firstClock = false;
 				}
-				else 
+				else {
 					reset = reset + ", "+peaClocks.get(j) + ":= 0 "; // the clocks need to be separated via comma
+				}
 			}
 		}
 		return reset;
 	}
 
 	public String[] getDisjuncts(CDD cdd) {
-		this.disjuncts.clear();
-		System.out.println("Computing dnf "+dnfCount+"/"+this.transCount);
+		disjuncts.clear();
+		System.out.println("Computing dnf "+dnfCount+"/"+transCount);
 		dnfCount++;
-		this.cddToDNF(new StringBuffer(), cdd);
+		cddToDNF(new StringBuffer(), cdd);
 
-		int disjunctCount = this.disjuncts.size();
-		String[] strings = new String[disjunctCount];
+		final int disjunctCount = disjuncts.size();
+		final String[] strings = new String[disjunctCount];
 		for(int i=0; i<disjunctCount; i++) {
-			strings[i] = (String) this.disjuncts.elementAt(i);
+			strings[i] = disjuncts.elementAt(i);
 		}
 
 		return strings;
@@ -413,19 +413,19 @@ public class J2UPPAALConverterDOM {
 				buf.delete(buf.length()-4, buf.length());
             }
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
             return;
         } else if (cdd == CDD.FALSE) {
             return;
         }
         for(int i=0;i<cdd.getChilds().length;i++) {
-            StringBuffer newBuf = new StringBuffer();
+            final StringBuffer newBuf = new StringBuffer();
             newBuf.append(buf.toString());
             
             newBuf.append(cdd.getDecision().toUppaalStringDOM(i));
             newBuf.append(" && ");
             
-            this.cddToDNF(newBuf,cdd.getChilds()[i]);
+            cddToDNF(newBuf,cdd.getChilds()[i]);
         }
     }
 

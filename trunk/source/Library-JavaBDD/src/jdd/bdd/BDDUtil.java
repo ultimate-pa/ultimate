@@ -18,7 +18,7 @@ public class BDDUtil {
 		int ret = 1;
 
 		for(int i = 0; i < vars.length; i++) {
-			int next = (num & (1L << i)) == 0 ? jdd.not(vars[i]) : vars[i];
+			final int next = (num & (1L << i)) == 0 ? jdd.not(vars[i]) : vars[i];
 			jdd.ref(next);
 			ret = jdd.andTo(ret, next);
 			jdd.deref(next);
@@ -34,7 +34,8 @@ public class BDDUtil {
 	 * @see #numberToBDD
 	 */
 	public static void numberToMinterm(int num, int length, int index, boolean [] output) {
-		for(int i = 0; i < length; i++)
+		for(int i = 0; i < length; i++) {
 			output[index++] = ((num & (1L << i)) != 0) ;
+		}
 	}
 }

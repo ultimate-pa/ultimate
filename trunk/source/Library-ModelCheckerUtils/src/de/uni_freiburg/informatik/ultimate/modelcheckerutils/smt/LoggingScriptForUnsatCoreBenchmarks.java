@@ -47,7 +47,7 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		Term[] result = super.getUnsatCore();
+		final Term[] result = super.getUnsatCore();
 		mCommandStackAtLastGetUnsatCore = deepCopyOfCommandStack();
 		return result;
 	}

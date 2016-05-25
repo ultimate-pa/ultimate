@@ -28,14 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
 import org.junit.Test;
-
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 
 /**
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -45,30 +43,30 @@ public class IntervalDomainValueTest {
 	@Test
 	public void testInfiniteIntervalValue() {
 
-		IntervalValue infiniteValue = new IntervalValue();
+		final IntervalValue infiniteValue = new IntervalValue();
 		assertTrue(infiniteValue.getValue() == null);
 		assertTrue(infiniteValue.isInfinity());
 	}
 
 	@Test
 	public void testBoundedIntervalValue() {
-		IntervalValue intv = new IntervalValue(BigDecimal.ZERO);
+		final IntervalValue intv = new IntervalValue(BigDecimal.ZERO);
 
 		assertTrue(intv.getValue().equals(BigDecimal.ZERO));
 		assertFalse(intv.isInfinity());
 
-		IntervalValue intvNeg = new IntervalValue(new BigDecimal(-1));
+		final IntervalValue intvNeg = new IntervalValue(new BigDecimal(-1));
 		assertTrue(intvNeg.getValue().equals(new BigDecimal(-1)));
 		assertFalse(intvNeg.isInfinity());
 
-		IntervalValue intvPos = new IntervalValue(BigDecimal.ONE);
+		final IntervalValue intvPos = new IntervalValue(BigDecimal.ONE);
 		assertTrue(intvPos.getValue().equals(BigDecimal.ONE));
 		assertFalse(intvPos.isInfinity());
 	}
 
 	@Test
 	public void testInfiniteInterval() {
-		IntervalDomainValue intv = new IntervalDomainValue();
+		final IntervalDomainValue intv = new IntervalDomainValue();
 
 		assertTrue(intv.getUpper().equals(new IntervalValue()));
 		assertTrue(intv.getUpper().isInfinity());
@@ -78,13 +76,13 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBoundedInterval() {
-		IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO),
+		final IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO),
 		        new IntervalValue());
 
 		assertFalse(intvUpperOpen.getLower().isInfinity());
 		assertTrue(intvUpperOpen.getUpper().isInfinity());
 
-		IntervalDomainValue intvLowerOpen = new IntervalDomainValue(new IntervalValue(),
+		final IntervalDomainValue intvLowerOpen = new IntervalDomainValue(new IntervalValue(),
 		        new IntervalValue(new BigDecimal(100)));
 
 		assertTrue(intvLowerOpen.getLower().isInfinity());
@@ -93,7 +91,7 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBottomIntervals() {
-		IntervalDomainValue bottomInterval = new IntervalDomainValue(true);
+		final IntervalDomainValue bottomInterval = new IntervalDomainValue(true);
 		assertTrue(bottomInterval.isBottom());
 		assertTrue(bottomInterval.getLower() == null);
 		assertTrue(bottomInterval.getUpper() == null);

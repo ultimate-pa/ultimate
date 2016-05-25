@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvi
 
 public class TrayIconNotifier {
 
-	private ApplicationWorkbenchAdvisor mWorkbenchAdvisor;
-	private boolean mIsResultDisplayActive;
+	private final ApplicationWorkbenchAdvisor mWorkbenchAdvisor;
+	private final boolean mIsResultDisplayActive;
 
 	TrayIconNotifier(ApplicationWorkbenchAdvisor workbenchAdvisor) {
 		mWorkbenchAdvisor = workbenchAdvisor;
@@ -47,7 +47,7 @@ public class TrayIconNotifier {
 	}
 
 	private boolean isTrayBalloonEnabled() {
-		IPreferencesService prefService = Platform.getPreferencesService();
+		final IPreferencesService prefService = Platform.getPreferencesService();
 		if (prefService == null) {
 			return false;
 		}

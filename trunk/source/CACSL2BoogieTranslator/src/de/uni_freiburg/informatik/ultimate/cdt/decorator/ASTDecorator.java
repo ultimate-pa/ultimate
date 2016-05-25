@@ -73,7 +73,7 @@ public class ASTDecorator {
 			throw new IllegalArgumentException("First node of C-AST must be TU!");
 		}
 		mCurrentStartLineNr = 1;
-		DecoratorNode result = mapASTs(node, null).get(0);
+		final DecoratorNode result = mapASTs(node, null).get(0);
 		assert mAcslASTs.isEmpty();
 		setRootNode(result);
 	}
@@ -88,11 +88,12 @@ public class ASTDecorator {
 	 * @return the children list or null
 	 */
 	private List<DecoratorNode> mapASTs(IASTNode node, DecoratorNode parent) {
-		if (node.getFileLocation() == null)
+		if (node.getFileLocation() == null) {
 			return null;
+		}
 
 		// there is acsl between the previous node and this one.
-		List<DecoratorNode> list = new ArrayList<DecoratorNode>();
+		final List<DecoratorNode> list = new ArrayList<DecoratorNode>();
 		if (parent != null && containsAcsl(mCurrentStartLineNr, node.getFileLocation()
 				.getStartingLineNumber())) {
 			list.addAll(getAllTheAcsl(parent, mCurrentStartLineNr, node
@@ -105,14 +106,14 @@ public class ASTDecorator {
 			return list;
 		}
 		// there is ACSL ... take care for all the children
-		DecoratorNode result = new DecoratorNode(parent, node);
+		final DecoratorNode result = new DecoratorNode(parent, node);
 		list.add(result);
 		for (int i = 0; i < node.getChildren().length; i++) {
 			if (i == 0) {
 				mCurrentStartLineNr = node.getFileLocation()
 						.getStartingLineNumber();
 			}
-			List<DecoratorNode> newChildren = mapASTs(node.getChildren()[i],
+			final List<DecoratorNode> newChildren = mapASTs(node.getChildren()[i],
 					result);
 			for (int j = 0; j < newChildren.size(); j++) {
 				if (newChildren.get(j) != null) {
@@ -143,7 +144,7 @@ public class ASTDecorator {
 	 */
 	private List<DecoratorNode> getAllTheAcsl(DecoratorNode parent, int start,
 			int end) {
-		List<DecoratorNode> list = new ArrayList<DecoratorNode>();
+		final List<DecoratorNode> list = new ArrayList<DecoratorNode>();
 		for (int i = 0; i < mAcslASTs.size(); i++) {
 			if (mAcslASTs.get(i).getEndingLineNumber() <= end
 					&& mAcslASTs.get(i).getStartingLineNumber() >= start) {
@@ -161,10 +162,11 @@ public class ASTDecorator {
 	 * @return true iff the given node contains ACSL statements.
 	 */
 	private boolean containsAcsl(IASTNode node) {
-		if (node.getFileLocation() == null)
+		if (node.getFileLocation() == null) {
 			return false;
-		int start = node.getFileLocation().getStartingLineNumber();
-		int end = node.getFileLocation().getEndingLineNumber();
+		}
+		final int start = node.getFileLocation().getStartingLineNumber();
+		final int end = node.getFileLocation().getEndingLineNumber();
 		return containsAcsl(start, end);
 	}
 
@@ -178,7 +180,7 @@ public class ASTDecorator {
 	 * @return true iff the given line numbers contain ACSL statements.
 	 */
 	private boolean containsAcsl(int start, int end) {
-		for (ACSLNode acsl : mAcslASTs) {
+		for (final ACSLNode acsl : mAcslASTs) {
 			if (start <= acsl.getStartingLineNumber()
 					&& end >= acsl.getEndingLineNumber()) {
 				return true;

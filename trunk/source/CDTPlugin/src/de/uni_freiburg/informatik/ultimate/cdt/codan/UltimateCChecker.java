@@ -83,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * @author Markus Lindenmann
@@ -100,13 +99,13 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	/**
 	 * In this map we store the listed files out of the directory.
 	 */
-	private HashMap<String, File> mToolchainFiles;
+	private final HashMap<String, File> mToolchainFiles;
 
 	private IUltimateServiceProvider mServices;
 
 	private static IToolchainStorage sStorage;
 
-	private CDTController mController;
+	private final CDTController mController;
 
 	/**
 	 * The Constructor of this Checker
@@ -134,7 +133,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// run ultimate
 		try {
 			mController.runToolchain(getToolchainPath(), ast);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -154,10 +153,10 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private String getToolchainPath() {
 		// obtain selected toolchain from preferences
-		String selectedToolchain = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+		final String selectedToolchain = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
 
-		File tc = mToolchainFiles.get(selectedToolchain);
+		final File tc = mToolchainFiles.get(selectedToolchain);
 		String path = null;
 		if (tc != null) {
 			path = tc.getAbsolutePath();
@@ -173,20 +172,20 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 			@Override
 			public void run() {
 				// Present results of the actual run!
-				IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+				final IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 						.findView(ResultList.ID);
 				if (vpart instanceof ResultList) {
 					((ResultList) vpart).setViewerInput(completePath);
 				}
 				// open the file on which the actual run happened!
-				File fileToOpen = new File(completePath);
+				final File fileToOpen = new File(completePath);
 				if (fileToOpen.exists() && fileToOpen.isFile()) {
-					IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
-					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+					final IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
+					final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
 					try {
 						IDE.openEditorOnFileStore(page, fileStore);
-					} catch (PartInitException e) {
+					} catch (final PartInitException e) {
 						// Put your exception handler here if you wish to
 					}
 				}
@@ -201,20 +200,20 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 *            the FileName
 	 */
 	private void reportProblems(String fileName) {
-		ILogger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
-		Set<String> tools = mServices.getResultService().getResults().keySet();
+		final Set<String> tools = mServices.getResultService().getResults().keySet();
 
 		// we iterate over the key set, each key represents the name
 		// of the tool, which created the results
-		for (String toolID : tools) {
-			List<IResult> resultsOfTool = mServices.getResultService().getResults().get(toolID);
+		for (final String toolID : tools) {
+			final List<IResult> resultsOfTool = mServices.getResultService().getResults().get(toolID);
 			CDTResultStore.addResults(fileName, toolID, resultsOfTool);
 			if (resultsOfTool == null) {
 				log.debug("No results for " + toolID);
 				continue;
 			}
-			for (IResult result : resultsOfTool) {
+			for (final IResult result : resultsOfTool) {
 				if (result instanceof IResultWithLocation) {
 					reportProblemWithLocation((IResultWithLocation) result, log);
 				} else {
@@ -247,7 +246,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 			return;
 		}
 
-		CACSLLocation loc = (CACSLLocation) result.getLocation();
+		final CACSLLocation loc = (CACSLLocation) result.getLocation();
 		// seems legit, start the reporting
 
 		if (result instanceof CounterExampleResult) {
@@ -285,7 +284,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
 		if (loc instanceof CLocation) {
-			IASTNode node = ((CLocation) loc).getNode();
+			final IASTNode node = ((CLocation) loc).getNode();
 			if (node != null) {
 				reportProblem(descriptorId, node, result.getShortDescription(), CDTResultStore.addHackyResult(result));
 				return;
@@ -318,21 +317,21 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// we want to choose the toolchains which we use!
 		// we read out the Directory "Toolchains", and create prefs
 		File toolchainDir = null;
-		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
+		final URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
 		try {
-			URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
+			final URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
 			toolchainDir = new File(uri);
-		} catch (IOException e2) {
+		} catch (final IOException e2) {
 			e2.printStackTrace();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			e.printStackTrace();
 		}
 
 		// Iterate over all Files in the Directory
 		// to create the internal map of all possible toolchains!
-		for (File f : toolchainDir.listFiles()) {
-			String[] params = f.getName().split("\\.");
-			String tName = params[0];
+		for (final File f : toolchainDir.listFiles()) {
+			final String[] params = f.getName().split("\\.");
+			final String tName = params[0];
 			if (tName.equals("") || params.length < 2 || !params[1].equals("xml")) {
 				continue;
 			}

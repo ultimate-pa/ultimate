@@ -33,7 +33,9 @@ import javax.xml.bind.JAXBException;
 
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This interface describes the object that is passed to {@link IController#init(ICore, ILoggingService)}.
@@ -112,4 +114,18 @@ public interface ICore<T> {
 	 * plugins.
 	 */
 	String[] getRegisteredUltimatePluginIDs();
+
+	/**
+	 * Get the core logging service. This service can be different from toolchain logging services because multiple
+	 * toolchains can run in parallel.
+	 */
+	ILoggingService getCoreLoggingService();
+
+	/**
+	 * Get a preference provider for the specified plugin. You should use this method to retrieve preferences for the
+	 * core or the currently active controller. For other plugins you should use the methods of the
+	 * {@link IUltimateServiceProvider} provided by the toolchain, because multiple toolchains can run in parallel with
+	 * different preferences.
+	 */
+	IPreferenceProvider getPreferenceProvider(String pluginId);
 }

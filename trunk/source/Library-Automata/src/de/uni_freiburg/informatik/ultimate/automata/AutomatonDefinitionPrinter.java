@@ -126,11 +126,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		StringWriter mStringWriter;
 		
 		private void initializePrintWriter(String filename, Format format) {
-			File testfile = new File(filename + "." + format.getFileEnding());
+			final File testfile = new File(filename + "." + format.getFileEnding());
 			try {
-				FileWriter fileWriter = new FileWriter(testfile);
+				final FileWriter fileWriter = new FileWriter(testfile);
 				mprintWriter = new PrintWriter(fileWriter);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			} 
 		}
@@ -194,7 +194,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				} else {
 					try {
 						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, (INestedWordAutomatonSimple<LETTER, STATE>) automaton);
-					} catch (AutomataLibraryException e) {
+					} catch (final AutomataLibraryException e) {
 						throw new AssertionError("Timeout while preparing automaton for printing.");
 					}
 				}
@@ -217,7 +217,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			else if (automaton instanceof IPetriNet) {
-				IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
+				final IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
 				if (format == Format.ATS) {
 					new NetTestFileWriterToString(net);
 				} else if (format == Format.ATS_QUOTED) {
@@ -231,7 +231,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			else if(automaton instanceof AlternatingAutomaton){
-				AlternatingAutomaton<LETTER,STATE> aa = (AlternatingAutomaton<LETTER,STATE>) automaton;
+				final AlternatingAutomaton<LETTER,STATE> aa = (AlternatingAutomaton<LETTER,STATE>) automaton;
 				new AATestFileWriter(aa);
 			}
 			mprintWriter.close();
@@ -240,8 +240,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 
 	    private String getDateTime() {
-	        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-	        Date date = new Date();
+	        final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	        final Date date = new Date();
 	        return dateFormat.format(date);
 	    }
 	    
@@ -279,8 +279,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			protected Map<LETTER,String> getAlphabetMapping(Collection<LETTER> alphabet,
 					String symbol) {
 				Integer counter = 0;
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, symbol + counter.toString());
 					counter++;
 				}
@@ -289,8 +289,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			protected Map<STATE,String> getStateMapping(Collection<STATE> states) {
 				Integer counter = 0;
-				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
-				for (STATE state : states) {
+				final Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (final STATE state : states) {
 					stateMapping.put(state, "s" + counter.toString());
 					counter++;
 				}
@@ -312,14 +312,14 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			private void printAlphabet(Map<LETTER,String> alphabet) {
-				for (LETTER letter : alphabet.keySet()) {
+				for (final LETTER letter : alphabet.keySet()) {
 					mprintWriter.print(alphabet.get(letter) + " ");		
 				}
 			}
 
 			private void printStates() {
 				mprintWriter.print('\t' + "states = {");
-				for (STATE state : stateMapping.keySet()) {
+				for (final STATE state : stateMapping.keySet()) {
 					mprintWriter.print(stateMapping.get(state) + " ");		
 				}
 				mprintWriter.print("},\n");
@@ -327,7 +327,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private void printInitialStates(Collection<STATE> initialStates) {
 				mprintWriter.print('\t' + "initialStates = {");
-				for (STATE state : initialStates) {
+				for (final STATE state : initialStates) {
 					mprintWriter.print(stateMapping.get(state) + " ");		
 				}
 				mprintWriter.print("},\n");
@@ -335,7 +335,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private void printFinalStates(Collection<STATE> allStates) {
 				mprintWriter.print('\t' + "finalStates = {");
-				for (STATE state : allStates) {
+				for (final STATE state : allStates) {
 					if (mNwa.isFinal(state)) {
 						mprintWriter.print(stateMapping.get(state) + " ");
 					}
@@ -345,8 +345,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private void printCallTransitions(Collection<STATE> allStates) {
 				mprintWriter.println('\t' + "callTransitions = {");
-				for (STATE state : allStates) {
-					for (OutgoingCallTransition<LETTER, STATE> outTrans : mNwa.callSuccessors(state)) {
+				for (final STATE state : allStates) {
+					for (final OutgoingCallTransition<LETTER, STATE> outTrans : mNwa.callSuccessors(state)) {
 						printCallTransition(state, outTrans);
 					}
 				}
@@ -355,8 +355,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private void printInternalTransitions(Collection<STATE> allStates) {
 				mprintWriter.println('\t' + "internalTransitions = {");
-				for (STATE state : allStates) {
-					for (OutgoingInternalTransition<LETTER, STATE> outTrans : mNwa.internalSuccessors(state)) {
+				for (final STATE state : allStates) {
+					for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mNwa.internalSuccessors(state)) {
 						printInternalTransition(state, outTrans);
 					}
 				}
@@ -365,8 +365,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private void printReturnTransitions(Collection<STATE> allStates) {
 				mprintWriter.println('\t' + "returnTransitions = {");
-				for (STATE state : allStates) {
-					for (OutgoingReturnTransition<LETTER, STATE> outTrans : mNwa.returnSuccessors(state)) {
+				for (final STATE state : allStates) {
+					for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mNwa.returnSuccessors(state)) {
 						printReturnTransition(state, outTrans);
 					}
 				}
@@ -415,8 +415,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet,
 					String symbol) {
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return alphabetMapping;
@@ -425,8 +425,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<STATE, String> getStateMapping(
 					Collection<STATE> states) {
-				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
-				for (STATE state : states) {
+				final Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (final STATE state : states) {
 					stateMapping.put(state, "\"" + state.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return stateMapping;
@@ -447,8 +447,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet,
 					String symbol) {
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + (letter.hashCode()/mHashDivisor) + "\"");
 				}
 				return alphabetMapping;
@@ -457,8 +457,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<STATE, String> getStateMapping(
 					Collection<STATE> states) {
-				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
-				for (STATE state : states) {
+				final Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (final STATE state : states) {
 					stateMapping.put(state, "\"" + state.toString().replaceAll("\"", "\\\"") + (state.hashCode()/mHashDivisor) + "\"");
 				}
 				return stateMapping;
@@ -498,8 +498,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			protected Map<LETTER,String> getAlphabetMapping(Collection<LETTER> alphabet) {
 				Integer counter = 0;
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, "a" + counter.toString());
 					counter++;
 				}
@@ -508,8 +508,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			protected Map<Place<LETTER, STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
 				Integer counter = 0;
-				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
-				for (Place<LETTER,STATE> place : places) {
+				final HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
+				for (final Place<LETTER,STATE> place : places) {
 					placesMapping.put(place, "p" + counter.toString());
 					counter++;
 				}
@@ -523,14 +523,14 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			private void printAlphabet(Map<LETTER,String> alphabet) {
-				for (LETTER letter : alphabet.keySet()) {
+				for (final LETTER letter : alphabet.keySet()) {
 					mprintWriter.print(alphabet.get(letter) + " ");		
 				}
 			}
 			
 			private void printPlaces() {
 				mprintWriter.print('\t' + "places = {");
-				for (Place<LETTER,STATE> place : placesMapping.keySet()) {
+				for (final Place<LETTER,STATE> place : placesMapping.keySet()) {
 					mprintWriter.print(placesMapping.get(place) + " ");		
 				}
 				mprintWriter.print("},\n");
@@ -539,7 +539,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			private void printInternalTransitions(
 					Collection<ITransition<LETTER,STATE>> transitions) {
 				mprintWriter.println('\t' + "transitions = {");
-				for (ITransition<LETTER,STATE> transition : transitions) {
+				for (final ITransition<LETTER,STATE> transition : transitions) {
 					printTransition(transition);
 				}
 				mprintWriter.println("\t},");
@@ -557,7 +557,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			private void printMarking(Marking<LETTER,STATE> marking) {
 				mprintWriter.print("{" );
-				for (Place<LETTER,STATE> place : marking) {
+				for (final Place<LETTER,STATE> place : marking) {
 					mprintWriter.print(placesMapping.get(place) + " ");
 				}
 				mprintWriter.print("}" );
@@ -565,7 +565,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			private void printMarking(Collection<Place<LETTER,STATE>> marking) {
 				mprintWriter.print("{" );
-				for (Place<LETTER,STATE> place : marking) {
+				for (final Place<LETTER,STATE> place : marking) {
 					mprintWriter.print(placesMapping.get(place) + " ");
 				}
 				mprintWriter.print("}" );
@@ -595,8 +595,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			@Override
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet) {
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return alphabetMapping;
@@ -605,8 +605,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
 				Integer counter = 0;
-				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
-				for (Place<LETTER,STATE> place : places) {
+				final HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
+				for (final Place<LETTER,STATE> place : places) {
 					placesMapping.put(place, "\"" +place.toString().replaceAll("\"", "\\\"") + "\"");
 					counter++;
 				}
@@ -627,8 +627,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet) {
 				int counter = 0;
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + (counter++));
 				}
 				return alphabetMapping;
@@ -637,8 +637,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			@Override
 			protected Map<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
 				int counter = 0;
-				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
-				for (Place<LETTER,STATE> place : places) {
+				final HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
+				for (final Place<LETTER,STATE> place : places) {
 					placesMapping.put(place, "\"" +place.toString().replaceAll("\"", "\\\"") + (counter++));
 				}
 				return placesMapping;
@@ -756,8 +756,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			private Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
 				Integer counter = 0;
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
+				final Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (final LETTER letter : alphabet) {
 					alphabetMapping.put(letter, counter.toString());
 					counter++;
 				}
@@ -766,8 +766,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			private Map<STATE,String> computeStateMapping(Collection<STATE> states) {
 				Integer counter = 0;
-				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
-				for (STATE state : states) {
+				final Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (final STATE state : states) {
 					stateMapping.put(state, counter.toString());
 					counter++;
 				}
@@ -784,9 +784,9 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			protected void doPrint() {
-				StringBuilder initStateSb = computeStateString(mNwa.getInitialStates(), mStateMapping);
-				StringBuilder transSb = computeTransitionString(mNwa, mStateMapping, mAlphabetMapping);
-				StringBuilder finalStateSb = computeStateString(mNwa.getFinalStates(), mStateMapping);
+				final StringBuilder initStateSb = computeStateString(mNwa.getInitialStates(), mStateMapping);
+				final StringBuilder transSb = computeTransitionString(mNwa, mStateMapping, mAlphabetMapping);
+				final StringBuilder finalStateSb = computeStateString(mNwa.getFinalStates(), mStateMapping);
 				mprintWriter.print(initStateSb);
 				mprintWriter.print(transSb);
 				mprintWriter.print(finalStateSb);
@@ -795,8 +795,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			private StringBuilder computeStateString(
 					Collection<STATE> initialStates,
 					Map<STATE, String> stateMapping) {
-				StringBuilder result = new StringBuilder();
-				for (STATE state : initialStates) {
+				final StringBuilder result = new StringBuilder();
+				for (final STATE state : initialStates) {
 					result.append("[" + stateMapping.get(state) + "]" + System.lineSeparator());
 				}
 				return result;
@@ -806,9 +806,9 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					INestedWordAutomaton<LETTER, STATE> nwa,
 					Map<STATE, String> stateMapping,
 					Map<LETTER, String> alphabetMapping) {
-				StringBuilder result = new StringBuilder();
-				for (STATE state : nwa.getStates()) {
-					for (OutgoingInternalTransition<LETTER, STATE> outTrans : nwa.internalSuccessors(state)) {
+				final StringBuilder result = new StringBuilder();
+				for (final STATE state : nwa.getStates()) {
+					for (final OutgoingInternalTransition<LETTER, STATE> outTrans : nwa.internalSuccessors(state)) {
 						result.append(
 								alphabetMapping.get(outTrans.getLetter()) + 
 								"," + 
@@ -844,41 +844,41 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			protected void doPrint() {
-				String header = constructHeader();
+				final String header = constructHeader();
 				mprintWriter.print(header);
-				String bodyToken = "--BODY--";
+				final String bodyToken = "--BODY--";
 				mprintWriter.print(bodyToken);
 				mprintWriter.print(System.lineSeparator());
-				String body = constructBody();
+				final String body = constructBody();
 				mprintWriter.print(body);
-				String endToken = "--END--";
+				final String endToken = "--END--";
 				mprintWriter.print(endToken);
 			}
 
 			private String constructHeader() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("HOA: v1");
 				sb.append(System.lineSeparator());
 				
 				sb.append("States: " + mNwa.getStates().size());
 				sb.append(System.lineSeparator());
 				
-				for (STATE state : mNwa.getInitialStates()) {
+				for (final STATE state : mNwa.getInitialStates()) {
 					sb.append("Start: " + mStateMapping.get(state));
 					sb.append(System.lineSeparator());
 				}
 				
 				sb.append("AP: " + mNwa.getInternalAlphabet().size());
-				for (LETTER letter : mNwa.getInternalAlphabet()) {
+				for (final LETTER letter : mNwa.getInternalAlphabet()) {
 					sb.append(" \"p" + mLetterConverterAP.convert(letter) + "\"");
 				}
 				sb.append(System.lineSeparator());
 				
-				for (LETTER letter : mNwa.getInternalAlphabet()) {
+				for (final LETTER letter : mNwa.getInternalAlphabet()) {
 					sb.append("Alias: @");
 					sb.append(mAlphabetMapping.get(letter));
 					boolean firstOther = true;
-					for (LETTER otherLetter : mNwa.getInternalAlphabet()) {
+					for (final LETTER otherLetter : mNwa.getInternalAlphabet()) {
 						if (firstOther) {
 							firstOther = false;
 						} else {
@@ -910,10 +910,10 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private String constructBody() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 
-				String accSig = "{0}";
-				for (STATE state : mNwa.getStates()) {
+				final String accSig = "{0}";
+				for (final STATE state : mNwa.getStates()) {
 					sb.append("State: " + mStateMapping.get(state));
 					if (mUseLabels) {
 						sb.append(" \"");
@@ -924,8 +924,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 						sb.append(" " + accSig);
 					}
 					sb.append(System.lineSeparator());
-					for (LETTER letter : mNwa.lettersInternal(state)) {
-						for (OutgoingInternalTransition<LETTER, STATE> tes : mNwa.internalSuccessors(state, letter)) {
+					for (final LETTER letter : mNwa.lettersInternal(state)) {
+						for (final OutgoingInternalTransition<LETTER, STATE> tes : mNwa.internalSuccessors(state, letter)) {
 							sb.append("[@");
 							sb.append(mAlphabetMapping.get(tes.getLetter()));
 							sb.append("] ");
@@ -957,7 +957,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			protected void doPrint() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
 				sb.append(System.lineSeparator());
 				sb.append("<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">");
@@ -973,11 +973,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private String constuctAlphabetSection() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t");
 				sb.append("<Alphabet type=\"Classical\">");
 				sb.append(System.lineSeparator());
-				for (LETTER letter : mNwa.getInternalAlphabet()) {
+				for (final LETTER letter : mNwa.getInternalAlphabet()) {
 					sb.append("\t");
 					sb.append("\t");
 					sb.append("<Symbol>");
@@ -992,11 +992,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private String constuctStateSection() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t");
 				sb.append("<StateSet>");
 				sb.append(System.lineSeparator());
-				for (STATE state : mNwa.getStates()) {
+				for (final STATE state : mNwa.getStates()) {
 					sb.append("\t");
 					sb.append("\t");
 					sb.append("<State sid=\"");
@@ -1011,11 +1011,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private String constuctInitialStateSection() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t");
 				sb.append("<InitialStateSet>");
 				sb.append(System.lineSeparator());
-				for (STATE state : mNwa.getInitialStates()) {
+				for (final STATE state : mNwa.getInitialStates()) {
 					sb.append("\t");
 					sb.append("\t");
 					sb.append("<StateID>");
@@ -1031,12 +1031,12 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 			private String constuctTransitionSection() {
 				int tid = 0;
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t");
 				sb.append("<TransitionSet complete=\"false\">");
 				sb.append(System.lineSeparator());
-				for (STATE state : mNwa.getStates()) {
-					for (OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+				for (final STATE state : mNwa.getStates()) {
+					for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
 						sb.append("\t");
 						sb.append("\t");
 						sb.append("<Transition tid=\"");
@@ -1062,11 +1062,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private String constuctAcceptingStateSection() {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				sb.append("\t");
 				sb.append("<Acc type=\"Buchi\">");
 				sb.append(System.lineSeparator());
-				for (STATE state : mNwa.getFinalStates()) {
+				for (final STATE state : mNwa.getFinalStates()) {
 					sb.append("\t");
 					sb.append("\t");
 					sb.append("<StateID>");
@@ -1109,7 +1109,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 		@Override
 		public String convert(E elem) {
-			V value = mMap.get(elem);
+			final V value = mMap.get(elem);
 			if (value == null) {
 				throw new IllegalArgumentException("unknown element: " + elem);
 			}

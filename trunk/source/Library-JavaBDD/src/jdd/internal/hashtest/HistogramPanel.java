@@ -3,7 +3,10 @@ package jdd.internal.hashtest;
 
 
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Panel;
 
 /**
  * GUI component for the histogram class.
@@ -12,34 +15,40 @@ import java.awt.*;
 public class HistogramPanel extends Panel {
 	private static final int PANEL_WIDTH = 640;
 	private static final int PANEL_HEIGHT = 128;
-	private Histogram histogram;
-	private double [] values;
+	private final Histogram histogram;
+	private final double [] values;
 	private double max, chi2, std_dev;
 
 	public HistogramPanel(Histogram histogram) {
 		this.histogram = histogram;
-		this.values = new double[PANEL_WIDTH];
-		this.max = 0.0;
+		values = new double[PANEL_WIDTH];
+		max = 0.0;
 
 		setBackground( Color.lightGray);
 	}
 
 	// ----------------------------------------------------------------------------
 
+	@Override
 	public Dimension getPreferredSize() { return new Dimension(PANEL_WIDTH, PANEL_HEIGHT); }
+	@Override
 	public Dimension getMinimumSize() { return getPreferredSize(); }
+	@Override
 	public Dimension getMaximumSize() { return getPreferredSize(); }
 
 	// ----------------------------------------------------------------------------
+	@Override
 	public void paint(Graphics g) {
-		if(max <= 0.0)  g.drawString("no input", 50, 30);
-		else {
+		if(max <= 0.0) {
+			g.drawString("no input", 50, 30);
+		} else {
 
 			g.setColor(Color.red);
 			g.drawRect(0,0, PANEL_WIDTH-1, PANEL_HEIGHT-1);
 			g.setColor(Color.white);
-			for(int i = 0; i < PANEL_WIDTH; i++)
+			for(int i = 0; i < PANEL_WIDTH; i++) {
 				g.drawLine(i, PANEL_HEIGHT, i, PANEL_HEIGHT - (int) (values[i] * PANEL_HEIGHT / max) );
+			}
 
 
 			g.setColor(Color.black);
@@ -50,23 +59,29 @@ public class HistogramPanel extends Panel {
 
 	public void update() {
 
-		int size = histogram.getSize();
-		double size2 = values.length;
+		final int size = histogram.getSize();
+		final double size2 = values.length;
 
-		for(int i = 0; i < values.length; i++) values[i] = 0.0;
+		for(int i = 0; i < values.length; i++) {
+			values[i] = 0.0;
+		}
 
 
 		for(int i = 0; i < size; i++) {
-			int x = histogram.getCount(i);
+			final int x = histogram.getCount(i);
 			double pos = i * size2 / size;
 
-			int pi = (int)pos; pos -= pi;
+			final int pi = (int)pos; pos -= pi;
 			values[pi]   += (1 - pos) *x;
-			if(pi+1 < PANEL_WIDTH) values[pi+1] += pos * x;
+			if(pi+1 < PANEL_WIDTH) {
+				values[pi+1] += pos * x;
+			}
 		}
 
 		max = 0;
-		for(int i = 0; i < values.length; i++) max = Math.max(max, values[i]);
+		for(int i = 0; i < values.length; i++) {
+			max = Math.max(max, values[i]);
+		}
 
 		chi2 = histogram.getChi2();
 		std_dev = histogram.getStandardDeviation();

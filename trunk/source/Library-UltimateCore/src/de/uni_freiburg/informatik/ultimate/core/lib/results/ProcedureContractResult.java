@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class ProcedureContractResult<ELEM extends IElement, E> 
 		extends AbstractResultAtElement<ELEM> implements IResultWithLocation {
 	
-	private E mContract;
+	private final E mContract;
 	private final String mProcedureName;
 	
 	/**
@@ -67,7 +67,7 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 	@SuppressWarnings("unchecked")
 	@Override
 	public String getLongDescription() {
-		StringBuffer sb = new StringBuffer();
+		final StringBuffer sb = new StringBuffer();
 		sb.append("Derived contract for procedure ");
 		sb.append(mProcedureName);
 		sb.append(": ");

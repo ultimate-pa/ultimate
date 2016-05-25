@@ -79,7 +79,7 @@ public class FilteredIterable<T> implements Iterable<T> {
 
 			@Override
 			public T next() {
-				T result = mnext;
+				final T result = mnext;
 				getNextThatSatisfiesPredicate();
 				return result;
 			}

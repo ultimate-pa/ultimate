@@ -9,7 +9,7 @@ public class terminal_set {
   private final static int LOG_BITS_PER_UNIT = 6;
   private final static int BITS_PER_UNIT = 64;
   private long[] _elements;
-  private Grammar _grammar;
+  private final Grammar _grammar;
 
   /*-----------------------------------------------------------*/
   /*--- Constructor(s) ----------------------------------------*/
@@ -42,8 +42,12 @@ public class terminal_set {
   public boolean empty()
     {
       for (int i = 0; i < _elements.length; i++)
-	if (_elements[i] != 0)
-	  return false;
+	{
+	    if (_elements[i] != 0)
+	      {
+	          return false;
+	        }
+	  }
       return true;
     }
 
@@ -64,8 +68,8 @@ public class terminal_set {
    */
   public boolean contains(int indx) 
     {
-      int idx  = indx >> LOG_BITS_PER_UNIT;
-      long mask = (1L << (indx & (BITS_PER_UNIT-1)));
+      final int idx  = indx >> LOG_BITS_PER_UNIT;
+      final long mask = (1L << (indx & (BITS_PER_UNIT-1)));
       return (_elements[idx] & mask) != 0;
     }
 
@@ -78,8 +82,12 @@ public class terminal_set {
     {
       assert(other._elements.length == _elements.length);
       for (int i = 0; i < _elements.length; i++)
-	if ((_elements[i] & ~other._elements[i]) != 0)
-	  return false;
+	{
+	    if ((_elements[i] & ~other._elements[i]) != 0)
+	      {
+	          return false;
+	        }
+	  }
       return true;
     }
 
@@ -91,10 +99,10 @@ public class terminal_set {
    */
   public boolean add(terminal sym) 
     {
-      int indx = sym.index();
-      int idx  = indx >> LOG_BITS_PER_UNIT;
-      long mask = (1L << (indx & (BITS_PER_UNIT-1)));
-      boolean result = (_elements[idx] & mask) == 0;
+      final int indx = sym.index();
+      final int idx  = indx >> LOG_BITS_PER_UNIT;
+      final long mask = (1L << (indx & (BITS_PER_UNIT-1)));
+      final boolean result = (_elements[idx] & mask) == 0;
       _elements[idx] |= mask;
       return result;
     }
@@ -106,9 +114,9 @@ public class terminal_set {
    */
   public void remove(terminal sym) 
     {
-      int indx = sym.index();
-      int idx  = indx >> LOG_BITS_PER_UNIT;
-      long mask = (1L << (indx & (BITS_PER_UNIT-1)));
+      final int indx = sym.index();
+      final int idx  = indx >> LOG_BITS_PER_UNIT;
+      final long mask = (1L << (indx & (BITS_PER_UNIT-1)));
       _elements[idx] &= ~mask;
     }
 
@@ -125,7 +133,9 @@ public class terminal_set {
       for (int i = 0; i < _elements.length; i++)
 	{
 	  if ((~_elements[i] & other._elements[i]) != 0)
-	    changed = true;
+	    {
+		changed = true;
+	      }
 	  _elements[i] |= other._elements[i];
 	}
       return changed;
@@ -142,7 +152,9 @@ public class terminal_set {
        for (int i = 0; i < _elements.length; i++)
  	{
  	  if ((_elements[i] & other._elements[i]) != 0)
- 	    return true;
+	    {
+		return true;
+	      }
  	}
        return false;
      }
@@ -156,7 +168,9 @@ public class terminal_set {
       for (int i = 0; i < _elements.length; i++)
 	{
 	  if (_elements[i] != other._elements[i])
-	    return false;
+	    {
+		return false;
+	      }
 	}
       return true;
     }
@@ -164,12 +178,16 @@ public class terminal_set {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Generic equality comparison. */
+  @Override
   public boolean equals(Object other)
     {
       if (!(other instanceof terminal_set))
-	return false;
-      else
-	return equals((terminal_set)other);
+	{
+	    return false;
+	  } else
+	{
+	    return equals((terminal_set)other);
+	  }
     }
   
   @Override
@@ -177,16 +195,19 @@ public class terminal_set {
     {
       int hash = 0;
       for (int i = 0; i < _elements.length; i++)
-	hash = 13*hash + 157*(int)(_elements[i] >>16) + (int)_elements[i];
+	{
+	    hash = 13*hash + 157*(int)(_elements[i] >>16) + (int)_elements[i];
+	  }
       return hash;
     }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Convert to string. */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder("{");
+      final StringBuilder result = new StringBuilder("{");
       String comma = "";
       for (int t = 0; t < _grammar.numterminals(); t++)
 	{

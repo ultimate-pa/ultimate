@@ -62,12 +62,12 @@ public class BasicEdge extends
 	/**
 	 * the underlying original edge (of type "CodeBlock")
 	 */
-	private CodeBlock originalEdge;
+	private final CodeBlock originalEdge;
 
 	/**
 	 * the rating of this edge
 	 */
-	private IRating rating;
+	private final IRating rating;
 
 	/**
 	 * 
@@ -85,19 +85,19 @@ public class BasicEdge extends
 		this.originalEdge = originalEdge;
 		if (originalEdge.getTransitionFormula() != null
 				&& !(originalEdge instanceof Summary)) {
-			this.usedVariables = new HashSet<BoogieVar>();
-			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables = new HashSet<BoogieVar>();
+			usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getAssignedVars());
-			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getInVars().keySet());
-			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getOutVars().keySet());
 		} else {
-			this.usedVariables = new HashSet<BoogieVar>();
+			usedVariables = new HashSet<BoogieVar>();
 		}
-		this.rating = RatingFactory.getInstance().createRating(this);
+		rating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfBasicEdges();
-		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(this.usedVariables
+		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(usedVariables
 				.size());
 	}
 
@@ -129,7 +129,7 @@ public class BasicEdge extends
 		if (originalEdge.getTransitionFormula() == null) {
 			return false;
 		}
-		TransFormula tFormula = originalEdge.getTransitionFormula();
+		final TransFormula tFormula = originalEdge.getTransitionFormula();
 		return checkBoogieVarSetForOldVar(tFormula.getAssignedVars())
 				|| checkBoogieVarSetForOldVar(tFormula.getInVars().keySet())
 				|| checkBoogieVarSetForOldVar(tFormula.getOutVars().keySet());
@@ -143,7 +143,7 @@ public class BasicEdge extends
 	 * @return true if there is an OldVar
 	 */
 	private boolean checkBoogieVarSetForOldVar(Set<BoogieVar> vars) {
-		for (BoogieVar boogieVar : vars) {
+		for (final BoogieVar boogieVar : vars) {
 			if (boogieVar.isOldvar()) {
 				return true;
 			}
@@ -158,7 +158,7 @@ public class BasicEdge extends
 
 	@Override
 	public Set<BoogieVar> getDifferentVariables() {
-		return this.usedVariables;
+		return usedVariables;
 	}
 
 	@Override

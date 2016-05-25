@@ -69,7 +69,7 @@ public class MinModelConversionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		RootNode rootNode = (RootNode) root;
+		final RootNode rootNode = (RootNode) root;
 		mRoot = new MinModelConverter(mServices).startConversion(rootNode);
 		return false;
 	}

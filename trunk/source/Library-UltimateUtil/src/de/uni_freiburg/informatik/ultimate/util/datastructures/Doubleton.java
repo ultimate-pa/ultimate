@@ -57,6 +57,7 @@ public class Doubleton<E> {
 	
 	public E[] toArray() {
 		@SuppressWarnings("unchecked")
+		final
 		E[] result = (E[]) new Object[] { mOneElement, mOtherElement};
 		return result;
 	}
@@ -68,19 +69,22 @@ public class Doubleton<E> {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Doubleton<E> other = (Doubleton<E>) obj;
-		boolean equalSameOrder = this.getOneElement().equals(other.getOneElement()) 
+		}
+		final Doubleton<E> other = (Doubleton<E>) obj;
+		final boolean equalSameOrder = this.getOneElement().equals(other.getOneElement()) 
 				&& this.getOtherElement().equals(other.getOtherElement());
 		if (equalSameOrder) {
 			return true;
 		}
-		boolean equalSwapedOrder = this.getOneElement().equals(other.getOtherElement()) 
+		final boolean equalSwapedOrder = this.getOneElement().equals(other.getOtherElement()) 
 				&& this.getOtherElement().equals(other.getOneElement());
 		if (equalSwapedOrder) {
 			return true;

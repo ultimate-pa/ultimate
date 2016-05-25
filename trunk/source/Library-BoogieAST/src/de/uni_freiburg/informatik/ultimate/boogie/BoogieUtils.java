@@ -39,13 +39,13 @@ public abstract class BoogieUtils {
 	}
 	
 	public static BigInteger euclideanMod(BigInteger dividend, BigInteger divisor) {
-		BigInteger result = dividend.mod(divisor.abs());
+		final BigInteger result = dividend.mod(divisor.abs());
 		return result;
 	}
 	
 	public static BigInteger euclideanDiv(BigInteger dividend, BigInteger divisor) {
-		BigInteger nonEuclideanQuotient = dividend.divide(divisor);
-		BigInteger nonEuclideanRemainder = dividend.remainder(divisor);
+		final BigInteger nonEuclideanQuotient = dividend.divide(divisor);
+		final BigInteger nonEuclideanRemainder = dividend.remainder(divisor);
 		final BigInteger result;
 		if (nonEuclideanRemainder.signum() < 0) {
 			if (nonEuclideanQuotient.signum() > 0) {

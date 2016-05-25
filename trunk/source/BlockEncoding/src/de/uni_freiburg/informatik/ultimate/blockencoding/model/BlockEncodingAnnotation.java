@@ -35,7 +35,7 @@ public class BlockEncodingAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
-	private MinimizedNode mNode;
+	private final MinimizedNode mNode;
 
 	public BlockEncodingAnnotation(MinimizedNode node) {
 		mNode = node;
@@ -61,7 +61,7 @@ public class BlockEncodingAnnotation extends AbstractAnnotations {
 
 	public static BlockEncodingAnnotation getAnnotation(IElement elem) {
 		if (elem.hasPayload()) {
-			IAnnotations rtr = elem.getPayload().getAnnotations()
+			final IAnnotations rtr = elem.getPayload().getAnnotations()
 					.get(Activator.PLUGIN_ID);
 			if (rtr != null) {
 				return (BlockEncodingAnnotation) rtr;

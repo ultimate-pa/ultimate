@@ -87,7 +87,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mOperand = input;
 		mLogger.info(startMessage());
-		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, (INestedWordAutomatonOldApi) mOperand);
+		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, mOperand);
 		mLogger.info(exitMessage());
 	}
 	
@@ -101,16 +101,16 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
+		final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
 				ResultChecker.getOldApiNwa(mServices, mOperand);
-		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
-		boolean operandEmpty = operandEmptiness.getResult();
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
+		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
-		boolean resultEmpty = resultEmptiness.getResult();
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}

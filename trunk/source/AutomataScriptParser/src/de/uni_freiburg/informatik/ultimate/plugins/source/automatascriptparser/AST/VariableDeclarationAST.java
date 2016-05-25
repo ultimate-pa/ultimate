@@ -30,11 +30,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
 /**
@@ -47,7 +47,7 @@ public class VariableDeclarationAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 6868411705150725931L;
-	private List<String> midentifiers;
+	private final List<String> midentifiers;
     
     public VariableDeclarationAST(ILocation loc, String identifier) {
     	super(loc);
@@ -64,7 +64,7 @@ public class VariableDeclarationAST extends AtsASTNode {
     }
 	
 	public void addVariables(List<String> identifiers) {
-		for (String id : identifiers) {
+		for (final String id : identifiers) {
 			midentifiers.add(id);
 		}
 	}
@@ -76,9 +76,9 @@ public class VariableDeclarationAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append(mreturnType.getSimpleName());
-		for (String id : midentifiers) {
+		for (final String id : midentifiers) {
 			builder.append(" " + id);
 		}
 		if (mchildren.size() == 1) {

@@ -68,7 +68,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			}
 			return sdResult;
 		} else {
-			Validity result = mSmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
+			final Validity result = mSmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
 			if (mReviewSmtResultsIfAssertionsEnabled) {
 				assert reviewInductiveInternal(pre, act, succ, result);
 			}
@@ -85,7 +85,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			}
 			return sdResult;
 		} else {
-			Validity result = mSmtBasedHoareTripleChecker.checkCall(pre, act, succ);
+			final Validity result = mSmtBasedHoareTripleChecker.checkCall(pre, act, succ);
 			if (mReviewSmtResultsIfAssertionsEnabled) {
 				assert reviewInductiveCall(pre, act, succ, result);
 			}
@@ -103,7 +103,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			}
 			return sdResult;
 		} else {
-			Validity result = mSmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+			final Validity result = mSmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 			if (mReviewSmtResultsIfAssertionsEnabled) {
 				assert reviewInductiveReturn(preLin, preHier, act, succ, result);
 			}
@@ -119,7 +119,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 	private boolean reviewInductiveInternal(IPredicate state, IInternalAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = mhoareTripleCheckerForReview.checkInternal(state, act, succ);
+		final Validity reviewResult = mhoareTripleCheckerForReview.checkInternal(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {
@@ -130,7 +130,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 	private boolean reviewInductiveCall(IPredicate state, ICallAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = mhoareTripleCheckerForReview.checkCall(state, act, succ);
+		final Validity reviewResult = mhoareTripleCheckerForReview.checkCall(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {
@@ -142,7 +142,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, IReturnAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = mhoareTripleCheckerForReview.checkReturn(state, hier, act, succ);
+		final Validity reviewResult = mhoareTripleCheckerForReview.checkReturn(state, hier, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {

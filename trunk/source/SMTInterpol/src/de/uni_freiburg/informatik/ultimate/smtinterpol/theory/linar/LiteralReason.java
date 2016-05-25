@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 
 public class LiteralReason extends LAReason {
-	private Literal mLiteral;
+	private final Literal mLiteral;
 	ArrayDeque<LAReason> mDependents;
 	
 	public LiteralReason(LinVar var, InfinitNumber bound, boolean isUpper,
@@ -53,8 +53,9 @@ public class LiteralReason extends LAReason {
 	}
 	
 	public Iterable<LAReason> getDependents() {
-		if (mDependents == null)
+		if (mDependents == null) {
 			return Collections.emptySet();
+		}
 		return mDependents;
 	}
 

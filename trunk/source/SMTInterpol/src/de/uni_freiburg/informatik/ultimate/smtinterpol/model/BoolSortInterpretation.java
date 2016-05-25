@@ -42,8 +42,9 @@ public class BoolSortInterpretation implements SortInterpretation {
 
 	@Override
 	public int ensureCapacity(int maxValue) {
-		if (maxValue > 2)
+		if (maxValue > 2) {
 			throw new InternalError("Three-valued Bool?");
+		}
 		return 2;
 	}
 
@@ -54,8 +55,9 @@ public class BoolSortInterpretation implements SortInterpretation {
 
 	@Override
 	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx != TRUE_INDEX && idx != FALSE_INDEX)
+		if (idx != TRUE_INDEX && idx != FALSE_INDEX) {
 			throw new IndexOutOfBoundsException();
+		}
 		return idx == TRUE_INDEX ? t.mTrue : t.mFalse;
 	}
 

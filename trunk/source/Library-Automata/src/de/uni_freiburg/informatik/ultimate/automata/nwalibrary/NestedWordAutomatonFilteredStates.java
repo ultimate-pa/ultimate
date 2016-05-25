@@ -31,10 +31,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -91,6 +91,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
+	@Override
 	public Set<STATE> getDownStates(STATE up) {
 		if (mAncestorComputation != null) {
 			return mAncestorComputation.getDownStates(up);
@@ -165,8 +166,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -174,8 +175,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -183,8 +184,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -192,8 +193,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersInternalIncoming(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (IncomingInternalTransition<LETTER, STATE> outTrans : internalPredecessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final IncomingInternalTransition<LETTER, STATE> outTrans : internalPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -201,8 +202,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersCallIncoming(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (IncomingCallTransition<LETTER, STATE> outTrans : callPredecessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final IncomingCallTransition<LETTER, STATE> outTrans : callPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -210,8 +211,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersReturnIncoming(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (IncomingReturnTransition<LETTER, STATE> outTrans : returnPredecessors(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final IncomingReturnTransition<LETTER, STATE> outTrans : returnPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -219,8 +220,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Set<LETTER> lettersReturnSummary(STATE state) {
-		Set<LETTER> letters = new HashSet<LETTER>();
-		for (SummaryReturnTransition<LETTER, STATE> outTrans : returnSummarySuccessor(state)) {
+		final Set<LETTER> letters = new HashSet<LETTER>();
+		for (final SummaryReturnTransition<LETTER, STATE> outTrans : returnSummarySuccessor(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -233,8 +234,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
-		Set<STATE> result = new HashSet<STATE>();
-		for ( OutgoingCallTransition<LETTER, STATE> outTrans  : callSuccessors(state, letter)) {
+		final Set<STATE> result = new HashSet<STATE>();
+		for ( final OutgoingCallTransition<LETTER, STATE> outTrans  : callSuccessors(state, letter)) {
 			result.add(outTrans.getSucc());
 		}
 		return result;
@@ -242,8 +243,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
-		Set<STATE> result = new HashSet<STATE>();
-		for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, letter)) {
+		final Set<STATE> result = new HashSet<STATE>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, letter)) {
 			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
 				result.add(outTrans.getHierPred());
 			}
@@ -253,8 +254,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		Set<STATE> result = new HashSet<STATE>();
-		for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSucccessors(state, hier, letter)) {
+		final Set<STATE> result = new HashSet<STATE>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSucccessors(state, hier, letter)) {
 			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
 				result.add(outTrans.getSucc());
 			}
@@ -269,8 +270,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		Set<STATE> result = new HashSet<STATE>();
-		for (IncomingCallTransition<LETTER, STATE> inTrans  : callPredecessors(letter, state)) {
+		final Set<STATE> result = new HashSet<STATE>();
+		for (final IncomingCallTransition<LETTER, STATE> inTrans  : callPredecessors(letter, state)) {
 			result.add(inTrans.getPred());
 		}
 		return result;
@@ -295,19 +296,19 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(LETTER letter, STATE succ) {
-		IPredicate<IncomingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalPredecessorsPredicate();
+		final IPredicate<IncomingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalPredecessorsPredicate();
 		return new FilteredIterable<IncomingInternalTransition<LETTER, STATE>>(mNwa.internalPredecessors(letter,succ), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ) {
-		IPredicate<IncomingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalPredecessorsPredicate();
+		final IPredicate<IncomingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalPredecessorsPredicate();
 		return new FilteredIterable<IncomingInternalTransition<LETTER, STATE>>(mNwa.internalPredecessors(succ), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(LETTER letter, final STATE succ) {
-		IPredicate<IncomingCallTransition<LETTER, STATE>> predicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
+		final IPredicate<IncomingCallTransition<LETTER, STATE>> predicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean evaluate(IncomingCallTransition<LETTER, STATE> trans) {
 				// filter out also transitions that are not contained any more 
@@ -321,7 +322,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
-		IPredicate<IncomingCallTransition<LETTER, STATE>> predicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
+		final IPredicate<IncomingCallTransition<LETTER, STATE>> predicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean evaluate(IncomingCallTransition<LETTER, STATE> trans) {
 				// filter out also transitions that are not contained any more 
@@ -335,19 +336,19 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state, LETTER letter) {
-		IPredicate<OutgoingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalSuccessorPredicate();
+		final IPredicate<OutgoingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalSuccessorPredicate();
 		return new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(mNwa.internalSuccessors(state,letter), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state) {
-		IPredicate<OutgoingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalSuccessorPredicate();
+		final IPredicate<OutgoingInternalTransition<LETTER, STATE>> predicate = mTransitionFilter.getInternalSuccessorPredicate();
 		return new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(mNwa.internalSuccessors(state), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, LETTER letter) {
-		IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
+		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean evaluate(OutgoingCallTransition<LETTER, STATE> trans) {
 				// filter out also transitions that are not contained any more 
@@ -361,7 +362,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
+		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
 			@Override
 			public boolean evaluate(OutgoingCallTransition<LETTER, STATE> trans) {
 				// filter out also transitions that are not contained any more 
@@ -375,55 +376,55 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE hier, LETTER letter, STATE succ) {
-		IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
+		final IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
 		return new FilteredIterable<IncomingReturnTransition<LETTER, STATE>>(mNwa.returnPredecessors(hier, letter, succ), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(LETTER letter, STATE succ) {
-		IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
+		final IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
 		return new FilteredIterable<IncomingReturnTransition<LETTER, STATE>>(mNwa.returnPredecessors(letter, succ), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ) {
-		IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
+		final IPredicate<IncomingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnPredecessorPredicate();
 		return new FilteredIterable<IncomingReturnTransition<LETTER, STATE>>(mNwa.returnPredecessors(succ), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(STATE state, STATE hier, LETTER letter) {
-		IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
+		final IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
 		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSucccessors(state,hier,letter), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, LETTER letter) {
-		IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
+		final IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
 		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSuccessors(state, letter), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state) {
-		IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
+		final IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
 		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSuccessors(state), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(STATE state, STATE hier) {
-		IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
+		final IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
 		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSuccessorsGivenHier(state,hier), predicate);
 	}
 	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(LETTER letter, STATE hier) {
-		IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSummaryPredicate();
+		final IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSummaryPredicate();
 		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(mNwa.returnSummarySuccessor(letter, hier), predicate);
 	}
 	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(STATE hier) {
-		IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSummaryPredicate();
+		final IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSummaryPredicate();
 		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(mNwa.returnSummarySuccessor(hier), predicate);
 	}
 	

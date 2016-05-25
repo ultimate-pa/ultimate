@@ -113,23 +113,23 @@ public class Setting {
 			String settingDescription, String[] defaultValue,
 			boolean isMultiSelectable, String[] values, boolean isUserModifiable) {
 		checkIdentifier(settingDescription);
-		for (String str : defaultValue) {
+		for (final String str : defaultValue) {
 			checkIdentifier(str);
 		}
 		if (type == SettingType.DROPDOWN) {
 			// values is null, if type != DROPDOWN!
-			for (String str : values) {
+			for (final String str : values) {
 				checkIdentifier(str);
 			}
 		}
 		this.type = type;
-		this.mSettingString = ultimateString;
+		mSettingString = ultimateString;
 		this.settingDescription = settingDescription;
 		this.defaultValue = defaultValue;
-		this.mValue = new Value();
+		mValue = new Value();
 		this.isMultiSelectable = isMultiSelectable;
 		this.values = values;
-		this.setDefaultValue(true);
+		setDefaultValue(true);
 		this.isUserModifiable = isUserModifiable;
 	}
 
@@ -232,7 +232,7 @@ public class Setting {
 	 * @return the setting identifier generated from the setting string.
 	 */
 	public String getSettingIdentifier() {
-		String s = mSettingString.replaceAll(
+		final String s = mSettingString.replaceAll(
 				"[^\\p{L}\\p{N}]", "");
 		return s.substring(0, s.length()).toLowerCase();
 	}
@@ -307,8 +307,8 @@ public class Setting {
 					"Mehtod Access not allowd if type != int! type: "
 							+ type.toString());
 		}
-		int i = Integer.parseInt(value);
-		this.mValue = new Value(null, i, false);
+		final int i = Integer.parseInt(value);
+		mValue = new Value(null, i, false);
 	}
 
 	/**
@@ -330,7 +330,7 @@ public class Setting {
 			throw new IllegalArgumentException("Empty value not allowed");
 		}
 		boolean isASCII = true;
-		for (char c : value.toCharArray()) {
+		for (final char c : value.toCharArray()) {
 			if (c < 32 || c >= 127) {
 				isASCII = false;
 				break;
@@ -339,7 +339,7 @@ public class Setting {
 		if (!isASCII) {
 			throw new IllegalArgumentException("String is not in ASCII");
 		}
-		this.mValue = new Value(new String[] { value }, 0, false);
+		mValue = new Value(new String[] { value }, 0, false);
 	}
 
 	/**
@@ -363,8 +363,8 @@ public class Setting {
 		if (!isMultiSelectable && values.length != 1) {
 			throw new IllegalArgumentException("Only one selection allowed!");
 		}
-		VALS: for (String s : values) {
-			for (String c : this.values) {
+		VALS: for (final String s : values) {
+			for (final String c : this.values) {
 				if (s.equals(c)) {
 					continue VALS;
 				}
@@ -374,7 +374,7 @@ public class Setting {
 			// contain an empty string!
 			throw new IllegalArgumentException("Not a valid enum value!");
 		}
-		this.mValue = new Value(values, 0, false);
+		mValue = new Value(values, 0, false);
 	}
 
 	/**
@@ -392,8 +392,8 @@ public class Setting {
 					"Mehtod Access not allowd if type != boolean! type: "
 							+ type.toString());
 		}
-		boolean b = Boolean.parseBoolean(value);
-		this.mValue = new Value(null, 0, b);
+		final boolean b = Boolean.parseBoolean(value);
+		mValue = new Value(null, 0, b);
 	}
 
 	/**
@@ -402,7 +402,7 @@ public class Setting {
 	 * @return the set values.
 	 */
 	public String getSetValues() {
-		return this.mValue.toString();
+		return mValue.toString();
 	}
 
 	/**
@@ -418,7 +418,7 @@ public class Setting {
 	 * @param isDefaultValue set whether the value of this setting was changed.
 	 */
 	void setDefaultValue(boolean isDefaultValue) {
-		this.mIsDefaultValue = isDefaultValue;
+		mIsDefaultValue = isDefaultValue;
 	}
 
 	/**
@@ -465,7 +465,7 @@ public class Setting {
 					throw new IllegalArgumentException(
 							"Only boolean value expected!");
 				}
-				this.valueBoolean = valBool;
+				valueBoolean = valBool;
 				break;
 			case DROPDOWN:
 				if (valInt != 0 || valBool) {
@@ -481,20 +481,20 @@ public class Setting {
 					throw new IllegalArgumentException(
 							"String[] of length >0 is expected");
 				}
-				for (String s : valStr) {
+				for (final String s : valStr) {
 					if (s == null || s.equals("")) {
 						throw new IllegalArgumentException(
 								"Strings expected to hold a value!");
 					}
 				}
-				this.valueDropdown = valStr;
+				valueDropdown = valStr;
 				break;
 			case INTEGER:
 				if (valStr != null || valBool) {
 					throw new IllegalArgumentException(
 							"Only int value expected!");
 				}
-				this.valueInt = valInt;
+				valueInt = valInt;
 				break;
 			case STRING:
 				if (valInt != 0 || valBool) {
@@ -509,7 +509,7 @@ public class Setting {
 					throw new IllegalArgumentException(
 							"String[0] expected to hold a value!");
 				}
-				this.valueString = valStr[0];
+				valueString = valStr[0];
 				break;
 			default:
 				throw new UnsupportedOperationException(
@@ -537,8 +537,8 @@ public class Setting {
 		public final String toString() {
 			if (isDefaultValue()) {
 				if (getType() == SettingType.DROPDOWN) {
-					StringBuffer sb = new StringBuffer();
-					for (String s : getDefaultValue()) {
+					final StringBuffer sb = new StringBuffer();
+					for (final String s : getDefaultValue()) {
 						sb.append(s).append(",");
 					}
 					sb.deleteCharAt(sb.length() - 1);
@@ -548,21 +548,21 @@ public class Setting {
 			}
 			switch (getType()) {
 			case BOOLEAN:
-				return "" + this.valueBoolean;
+				return "" + valueBoolean;
 			case DROPDOWN:
 				if (isMultiSelectable()) {
-					StringBuffer sb = new StringBuffer();
-					for (String s : valueDropdown) {
+					final StringBuffer sb = new StringBuffer();
+					for (final String s : valueDropdown) {
 						sb.append(s).append(",");
 					}
 					sb.deleteCharAt(sb.length() - 1);
 					return sb.toString();
 				}
-				return this.valueDropdown[0];
+				return valueDropdown[0];
 			case INTEGER:
-				return "" + this.valueInt;
+				return "" + valueInt;
 			case STRING:
-				return this.valueString;
+				return valueString;
 			}
 			throw new UnsupportedOperationException(
 					"The given type is unknown!");

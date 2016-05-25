@@ -129,10 +129,11 @@ public class CDD {
     public static CDD create(Decision decision, CDD[] childs) {
         int hashcode = decision.hashCode();
 
-        for (int i = 0; i < childs.length; i++)
-            hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
+        for (int i = 0; i < childs.length; i++) {
+			hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
+		}
 
-        Iterator<CDD> it = unifyHash.iterateHashCode(hashcode);
+        final Iterator<CDD> it = unifyHash.iterateHashCode(hashcode);
         CDD cdd;
 
 try_next: 
@@ -172,7 +173,7 @@ try_next:
             return false;
         }
 
-        int cmpTo = decision.compareTo(other.decision);
+        final int cmpTo = decision.compareTo(other.decision);
 
         if (cmpTo < 0) {
             for (int i = 0; i < childs.length; i++) {
@@ -209,7 +210,7 @@ try_next:
             }
         }
 
-        CDD[] newchilds = new CDD[childs.length];
+        final CDD[] newchilds = new CDD[childs.length];
 
         for (int i = 0; i < childs.length; i++) {
             newchilds[i] = childs[i].negate();
@@ -232,7 +233,7 @@ try_next:
             return this;
         }
         
-        HashMap<CDD, HashMap<CDD, CDD>> cache = new HashMap<CDD, HashMap<CDD,CDD>>();
+        final HashMap<CDD, HashMap<CDD, CDD>> cache = new HashMap<CDD, HashMap<CDD,CDD>>();
         return and(other, cache);
     }
 
@@ -256,25 +257,28 @@ try_next:
         	cache.put(this,cache2);
         }
         CDD result = cache2.get(other);
-        if (result != null)
-        	return result;
+        if (result != null) {
+			return result;
+		}
         CDD[] newchilds;
-        int cmpTo = decision.compareTo(other.decision);
+        final int cmpTo = decision.compareTo(other.decision);
 
         if (cmpTo == 0) {
             result = decision.and(other.decision, childs, other.childs, cache);
         } else if (cmpTo < 0) {
             newchilds = new CDD[childs.length];
 
-            for (int i = 0; i < childs.length; i++)
-                newchilds[i] = childs[i].and(other, cache);
+            for (int i = 0; i < childs.length; i++) {
+				newchilds[i] = childs[i].and(other, cache);
+			}
 
             result = decision.simplify(newchilds);
         } else {
             newchilds = new CDD[other.childs.length];
 
-            for (int i = 0; i < other.childs.length; i++)
-                newchilds[i] = this.and(other.childs[i], cache);
+            for (int i = 0; i < other.childs.length; i++) {
+				newchilds[i] = this.and(other.childs[i], cache);
+			}
 
             result = other.decision.simplify(newchilds);
         }
@@ -297,22 +301,24 @@ try_next:
         }
 
         CDD[] newchilds;
-        int cmpTo = decision.compareTo(other.decision);
+        final int cmpTo = decision.compareTo(other.decision);
 
         if (cmpTo == 0) {
             return decision.or(other.decision, childs, other.childs);
         } else if (cmpTo < 0) {
             newchilds = new CDD[childs.length];
 
-            for (int i = 0; i < childs.length; i++)
-                newchilds[i] = childs[i].or(other);
+            for (int i = 0; i < childs.length; i++) {
+				newchilds[i] = childs[i].or(other);
+			}
 
             return decision.simplify(newchilds);
         } else {
             newchilds = new CDD[other.childs.length];
 
-            for (int i = 0; i < other.childs.length; i++)
-                newchilds[i] = or(other.childs[i]);
+            for (int i = 0; i < other.childs.length; i++) {
+				newchilds[i] = or(other.childs[i]);
+			}
 
             return other.decision.simplify(newchilds);
         }
@@ -341,8 +347,9 @@ try_next:
             if (assumption.decision.compareTo(decision) < 0) {
                 CDD newass = assumption.childs[0];
 
-                for (int i = 1; i < assumption.childs.length; i++)
-                    newass = newass.or(assumption.childs[i]);
+                for (int i = 1; i < assumption.childs.length; i++) {
+					newass = newass.or(assumption.childs[i]);
+				}
 
                 assumption = newass;
             } else if (assumption.decision.compareTo(decision) == 0) {
@@ -352,7 +359,7 @@ try_next:
                 CDD[] newChilds = null;
 
                 for (int i = 0; i < childs.length; i++) {
-                    CDD newC = childs[i].assume(assumption);
+                    final CDD newC = childs[i].assume(assumption);
 
                     if ((newChilds == null) && (newC != childs[i])) {
                         newChilds = new CDD[childs.length];
@@ -387,10 +394,10 @@ try_next:
             return new CDD[] {  };
         }
 
-        ArrayList<CDD> dnf = new ArrayList<CDD>();
+        final ArrayList<CDD> dnf = new ArrayList<CDD>();
 
         for (int i = 0; i < childs.length; i++) {
-            CDD[] cdnf = childs[i].toDNF();
+            final CDD[] cdnf = childs[i].toDNF();
 
             //isDominated optimization as in toString
             if (childDominates(i)) {
@@ -409,7 +416,7 @@ try_next:
                             dnf.add(cdnf[j]);
                         }
                     } else {
-                        CDD[] newchilds = new CDD[childs.length];
+                        final CDD[] newchilds = new CDD[childs.length];
 
                         for (int k = 0; k < newchilds.length; k++) {
                             newchilds[k] = FALSE;
@@ -417,7 +424,7 @@ try_next:
 
                         newchilds[i] = cdnf[j];
 
-                        CDD newCDD = create(decision, newchilds);
+                        final CDD newCDD = create(decision, newchilds);
 
                         if (!dnf.contains(newCDD)) {
                             dnf.add(newCDD);
@@ -431,11 +438,11 @@ try_next:
     }
 
     public CDD toDNF_CDD() {
-        CDD[] dnfList = toDNF();
+        final CDD[] dnfList = toDNF();
         CDD result = CDD.FALSE;
 
         for (int i = 0; i < dnfList.length; i++) {
-            CDD literal = dnfList[i];
+            final CDD literal = dnfList[i];
             result = result.or(literal);
         }
 
@@ -456,10 +463,10 @@ try_next:
             return new CDD[] { this };
         }
 
-        ArrayList<CDD> cnf = new ArrayList<CDD>();
+        final ArrayList<CDD> cnf = new ArrayList<CDD>();
 
         for (int i = 0; i < childs.length; i++) {
-            CDD[] ccnf = childs[i].toCNF();
+            final CDD[] ccnf = childs[i].toCNF();
 
             //isDominated optimization similar to toString and toCDD
             if (childIsDominated(i)) {
@@ -480,7 +487,7 @@ try_next:
                     } else {
                         //we construct a CDD for the disjunction of this decision and the
                         //disjunction term ccnf[i].
-                        CDD[] newchilds = new CDD[childs.length];
+                        final CDD[] newchilds = new CDD[childs.length];
 
                         for (int k = 0; k < newchilds.length; k++) {
                             newchilds[k] = TRUE;
@@ -488,7 +495,7 @@ try_next:
 
                         newchilds[i] = ccnf[j];
 
-                        CDD newCDD = create(decision, newchilds);
+                        final CDD newCDD = create(decision, newchilds);
 
                         if (!cnf.contains(newCDD)) {
                             cnf.add(newCDD);
@@ -502,11 +509,11 @@ try_next:
     }
 
     public CDD toCNF_CDD() {
-        CDD[] cnfList = toCNF();
+        final CDD[] cnfList = toCNF();
         CDD result = CDD.TRUE;
 
         for (int i = 0; i < cnfList.length; i++) {
-            CDD literal = cnfList[i];
+            final CDD literal = cnfList[i];
             result = result.and(literal);
         }
 
@@ -592,7 +599,7 @@ try_next:
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
     public String toString(boolean needsParens) {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
 
@@ -633,8 +640,8 @@ try_next:
     }
 
     public String toSmtString(boolean needsParens, int index) {
-        StringBuffer sb = new StringBuffer();
-        String ordelim = "(or ";
+        final StringBuffer sb = new StringBuffer();
+        final String ordelim = "(or ";
         int clauses = 0;
 
         if (this == CDD.TRUE) {
@@ -736,7 +743,7 @@ try_next:
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
     public String toTexString(boolean needsParens) {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
 
@@ -782,7 +789,7 @@ try_next:
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
     public String toString(String format, boolean needsParens) {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
 
@@ -902,14 +909,15 @@ try_next:
         if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
             return this;
         }
-        if (primeCache != null)
-        	return primeCache;
+        if (primeCache != null) {
+			return primeCache;
+		}
         
-        Decision decision = this.decision;
+        final Decision decision = this.decision;
         Decision newDecision;
 
-        CDD[] children = childs;
-        CDD[] newChildren = new CDD[children.length];
+        final CDD[] children = childs;
+        final CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {
             newChildren[i] = children[i].prime();
@@ -945,11 +953,11 @@ try_next:
             return this;
         }
 
-        Decision decision = this.decision;
+        final Decision decision = this.decision;
         Decision newDecision;
 
-        CDD[] children = childs;
-        CDD[] newChildren = new CDD[children.length];
+        final CDD[] children = childs;
+        final CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {
             newChildren[i] = children[i].unprime();
@@ -962,10 +970,10 @@ try_next:
 
     // XXX: Testing
     public static void main(String[] args) {
-        CDD a = BooleanDecision.create("a");
-        CDD b = BooleanDecision.create("b");
-        CDD c = BooleanDecision.create("c");
-        CDD d = BooleanDecision.create("d");
+        final CDD a = BooleanDecision.create("a");
+        final CDD b = BooleanDecision.create("b");
+        final CDD c = BooleanDecision.create("c");
+        final CDD d = BooleanDecision.create("d");
 
         //CDD main = ((a.and(b)).and(c.or(d))).or(e).or(f.negate());
         //CDD main2 = ((a.and(b)).or(a.negate().and(b.negate())));
@@ -982,12 +990,12 @@ try_next:
         //        CDD links = a.negate().and(b.and(c));
         //        CDD rechts = a.and(d);
         //        CDD main = links.or(rechts);
-        CDD links = a.negate().and(b);
-        CDD rechts = a.and(b.or(c)).and(d);
-        CDD main = links.or(rechts);
+        final CDD links = a.negate().and(b);
+        final CDD rechts = a.and(b.or(c)).and(d);
+        final CDD main = links.or(rechts);
 
-        CDD test = a.negate();
-        CDD test2 = a.or(b);
+        final CDD test = a.negate();
+        final CDD test2 = a.or(b);
 
         System.out.println(
             "********************************* CDD ********************************* ");
@@ -999,7 +1007,7 @@ try_next:
         testIsAtomic(main);
         testIsAtomic(a);
 
-        CDD[] dnf = main.toDNF();
+        final CDD[] dnf = main.toDNF();
         System.out.println(
             "********************************* DNF ********************************* ");
 
@@ -1008,7 +1016,7 @@ try_next:
             System.out.println(dnf[i].toString());
         }
 
-        CDD[] cnf = main.toCNF();
+        final CDD[] cnf = main.toCNF();
         System.out.println(
             "********************************* CNF ********************************* ");
 
@@ -1036,7 +1044,7 @@ try_next:
 
         int i;
         int res = 0;
-        char[] chs = decision.getVar().toCharArray();
+        final char[] chs = decision.getVar().toCharArray();
 
         for (i = 0; i < decision.getVar().length(); i++) {
             res += (chs[i] * (((i & 1) == 0) ? 7 : 11));
@@ -1047,7 +1055,7 @@ try_next:
 
     public Vector<Integer> getElemHashes() {
         int i;
-        Vector<Integer> res = new Vector<Integer>();
+        final Vector<Integer> res = new Vector<Integer>();
 
         if (decision != null) {
             res.add(getDecHash());

@@ -4,11 +4,24 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import java.util.*;
-import java.util.zip.*;
-import java.io.*;
+import jdd.util.Array;
+import jdd.util.FileUtility;
+import jdd.util.JDDConsole;
+import jdd.util.Test;
 
 /**
  * BDDIO is used to save and load binary decision diagrams independent of the BDD managers.
@@ -52,10 +65,12 @@ public class BDDIO {
 
 		int got = 0, errors = 0;
 		while(got < size) {
-			int len = is.read(b, got, size - got);
+			final int len = is.read(b, got, size - got);
 			if(len < size - got) {
 				errors ++;
-				if(errors == 3) return got;
+				if(errors == 3) {
+					return got;
+				}
 			}
 
 			if(len > 0) {
@@ -89,12 +104,14 @@ public class BDDIO {
 	private static int load_int(InputStream is)
 		throws IOException
 	{
-		int len = safe_read(is, 4, buffer);
-		if(len != 4) throw new IOException("immature end of file while reading the header fields");
+		final int len = safe_read(is, 4, buffer);
+		if(len != 4) {
+			throw new IOException("immature end of file while reading the header fields");
+		}
 
 		int ret = 0;
 		for(int i = 0; i < 4; i++) {
-			int x = ((int)buffer[i]) & 0xFF;
+			final int x = (buffer[i]) & 0xFF;
 			ret =  (ret << 8) | x;
 		}
 
@@ -115,7 +132,7 @@ public class BDDIO {
 		throws IOException
 	{
 
-		OutputStream fos = new FileOutputStream(filename);
+		final OutputStream fos = new FileOutputStream(filename);
 		BDDIO.os = new GZIPOutputStream(fos);
 		try {
 			BDDIO.manager = manager;
@@ -129,7 +146,7 @@ public class BDDIO {
 			os.close();
 			fos.flush();
 			fos.close();
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("BDDIO.save Failed: " + exx.getMessage() );
 			throw exx;
 		} finally {
@@ -142,13 +159,16 @@ public class BDDIO {
 	private static void recursive_save(int bdd)
 		throws IOException
 	{
-		if(bdd < 2) return; // ignore 0/1
+		if(bdd < 2)
+		 {
+			return; // ignore 0/1
+		}
 
 		if(! manager.isNodeMarked(bdd)) {
 			manager.mark_node(bdd);
-			int var = manager.getVarUnmasked(bdd);
-			int low = manager.getLow(bdd);
-			int high= manager.getHigh(bdd);
+			final int var = manager.getVarUnmasked(bdd);
+			final int low = manager.getLow(bdd);
+			final int high= manager.getHigh(bdd);
 
 			recursive_save(low);
 			recursive_save(high);
@@ -178,47 +198,53 @@ public class BDDIO {
 			throws IOException
 	{
 		int ret = 0;
-		InputStream is = new GZIPInputStream( new FileInputStream(filename) );
+		final InputStream is = new GZIPInputStream( new FileInputStream(filename) );
 
 		// see if it has the magic header:
-		byte [] magic = new byte[ BDD_HEADER_MAGIC.length()  ];
+		final byte [] magic = new byte[ BDD_HEADER_MAGIC.length()  ];
 		// int len = is.read(magic, 0, magic.length );
-		int len = safe_read(is, magic.length,  magic);
-		if(len != magic.length)
+		final int len = safe_read(is, magic.length,  magic);
+		if(len != magic.length) {
 			throw new IOException("immature end of file while reading the header");
-		if(! Array.equals(magic, BDD_HEADER_MAGIC.getBytes(), magic.length) )
+		}
+		if(! Array.equals(magic, BDD_HEADER_MAGIC.getBytes(), magic.length) ) {
 			throw new IOException("this is not an BDD file in JDD format");
+		}
 
 
 
 		int curr_vars = manager.numberOfVariables();
-		int size = load_int(is);
-		int target = load_int(is);
+		final int size = load_int(is);
+		final int target = load_int(is);
 
 
 		// a map from saved to current manager names
-		Map map = new HashMap();
+		final Map map = new HashMap();
 
 		// thes are always the same
-		Integer zero = new Integer(0);
-		Integer one = new Integer(1);
+		final Integer zero = new Integer(0);
+		final Integer one = new Integer(1);
 		map.put(zero, zero);
 		map.put(one, one);
 		try {
 
 			for(int i = 0; i < size; i++) {
-				int name = load_int(is);
-				int var  = load_int(is);
+				final int name = load_int(is);
+				final int var  = load_int(is);
 				int low  = load_int(is);
 				int high = load_int(is);
 
 
 				Integer tmp = (Integer) map.get(new Integer(low));
-				if(tmp == null)  throw new IOException("Unknown child node" + low);
+				if(tmp == null) {
+					throw new IOException("Unknown child node" + low);
+				}
 				low = tmp.intValue();
 
 				tmp = (Integer) map.get( new Integer(high) );
-				if(tmp == null)  throw new IOException("Unknown child node" + high);
+				if(tmp == null) {
+					throw new IOException("Unknown child node" + high);
+				}
 				high = tmp.intValue();
 
 
@@ -235,18 +261,20 @@ public class BDDIO {
 
 			is.close(); // we are dont with it
 
-			Integer new_target = (Integer) map.get( new Integer(target) );
-			if(new_target == null) throw new IOException("Corrupt BDD file");
+			final Integer new_target = (Integer) map.get( new Integer(target) );
+			if(new_target == null) {
+				throw new IOException("Corrupt BDD file");
+			}
 			ret = new_target.intValue();
 
 
 			//  must remove the refs we just added:
-			Collection values = map.values();
-			for(Iterator it = values.iterator() ; it.hasNext(); ) {
-				Integer i = (Integer) it.next();
+			final Collection values = map.values();
+			for(final Iterator it = values.iterator() ; it.hasNext(); ) {
+				final Integer i = (Integer) it.next();
 				manager.deref( i.intValue() );
 			}
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("BDDIO.bddLoad Failed: " + exx.getMessage() );
 			throw exx;
 		} finally {
@@ -304,20 +332,22 @@ public class BDDIO {
 				if(bdd < 2) {
 					wr.write("0 0 " + bdd + "\n");
 				} else {
-					int vars = manager.numberOfVariables();
-					int size = manager.nodeCount(bdd); // XXX: include one/zero or not?
+					final int vars = manager.numberOfVariables();
+					final int size = manager.nodeCount(bdd); // XXX: include one/zero or not?
 
 					wr.write("" + size  + " " + vars + "\n");
 
 					// "our" variable ordering:
-					for(int i = 0; i < vars; i++) wr.write("" + i + " ");
+					for(int i = 0; i < vars; i++) {
+						wr.write("" + i + " ");
+					}
 					wr.write("\n");
 
 					// ... and the table
 					recursive_save(bdd);
 				}
 				wr.close();
-			} catch(IOException exx) {
+			} catch(final IOException exx) {
 				JDDConsole.out.println("BDDIO.save Failed: " + exx.getMessage() );
 				throw exx;
 			} finally {
@@ -334,26 +364,26 @@ public class BDDIO {
 
 		Test.start("BDDIO");
 		try {
-			BDD bdd = new BDD(100,10);
-			int v1 = bdd.createVar();
-			int v2 = bdd.createVar();
-			int v3 = bdd.createVar();
-			int v4 = bdd.createVar();
+			final BDD bdd = new BDD(100,10);
+			final int v1 = bdd.createVar();
+			final int v2 = bdd.createVar();
+			final int v3 = bdd.createVar();
+			final int v4 = bdd.createVar();
 
-			int test = bdd.cube("1-01");
+			final int test = bdd.cube("1-01");
 			BDDIO.save(bdd, test, "test.bdd");
-			double sat = bdd.satCount(test);
-			int nodes = bdd.nodeCount(test);
+			final double sat = bdd.satCount(test);
+			final int nodes = bdd.nodeCount(test);
 
-			BDD bdd2 = new BDD(1,10); // force GC in the middle of job
-			int x = BDDIO.load(bdd2, "test.bdd");
+			final BDD bdd2 = new BDD(1,10); // force GC in the middle of job
+			final int x = BDDIO.load(bdd2, "test.bdd");
 			Test.checkEquality(sat, bdd2.satCount(x), "sat-count (1)");
 			Test.checkEquality(nodes, bdd2.nodeCount(x), "node-count (1)");
 
 
 
 			BDDIO.save(bdd2, x, "test.bdd");
-			int x2 = BDDIO.load(bdd, "test.bdd");
+			final int x2 = BDDIO.load(bdd, "test.bdd");
 			Test.checkEquality(test, x2, "BDD consistency failed");
 
 
@@ -366,7 +396,7 @@ public class BDDIO {
 			// XXX: how do we test saveBuDDy ???
 
 
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			Test.check(false, "EXCEPTION CAUGHT: " + exx.getMessage() );
 		}
 

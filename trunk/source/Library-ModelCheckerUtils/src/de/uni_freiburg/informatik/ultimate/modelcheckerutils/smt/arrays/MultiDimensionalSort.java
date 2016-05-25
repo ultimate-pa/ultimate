@@ -53,7 +53,7 @@ public class MultiDimensionalSort {
 	
 	public MultiDimensionalSort(Sort sort) {
 		while (sort.isArraySort()) {
-			Sort[] arg = sort.getArguments();
+			final Sort[] arg = sort.getArguments();
 			assert arg.length == 2;
 			mIndexSorts.add(arg[0]);
 			sort = arg[1];
@@ -80,9 +80,9 @@ public class MultiDimensionalSort {
 	 */
 	public static boolean areDimensionsConsistent(Term outerArray, 
 			ArrayIndex index, Term innerArray) {
-		int dimensionInnerArray = (new MultiDimensionalSort(
+		final int dimensionInnerArray = (new MultiDimensionalSort(
 				innerArray.getSort())).getDimension();
-		int dimensionOuterArray = (new MultiDimensionalSort(
+		final int dimensionOuterArray = (new MultiDimensionalSort(
 				outerArray.getSort())).getDimension();
 		return (index.size() == dimensionOuterArray - dimensionInnerArray);
 	}

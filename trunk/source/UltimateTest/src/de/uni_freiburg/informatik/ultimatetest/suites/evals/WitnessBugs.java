@@ -50,7 +50,7 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] BPL = new String[] { ".bpl" };
 
 	private static Collection<UltimateRunDefinition> createDefs() {
-		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
+		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 //		rtr.addAll(produceWitnessSV("locks"));
 //		rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
 		rtr.addAll(verifyWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));

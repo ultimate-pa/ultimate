@@ -57,7 +57,7 @@ public class ReqLocation implements Serializable, ILocation {
      *            the type of check/assertion
      */
     public ReqLocation(ReqCheck checkNode) {
-        this.mCheckedSpecification = checkNode;
+        mCheckedSpecification = checkNode;
     }
 
     /*

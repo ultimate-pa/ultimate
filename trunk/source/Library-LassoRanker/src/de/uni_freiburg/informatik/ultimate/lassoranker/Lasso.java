@@ -139,7 +139,7 @@ public class Lasso implements Serializable {
 	 * @return all RankVars that occur in the lasso
 	 */
 	public Collection<RankVar> getAllRankVars() {
-		Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
+		final Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
 		rankVars.addAll(mstem.getInVars().keySet());
 		rankVars.addAll(mstem.getOutVars().keySet());
 		rankVars.addAll(mloop.getInVars().keySet());
@@ -169,20 +169,20 @@ public class Lasso implements Serializable {
 	 * @return an array of guesses for the loop's eigenvalues
 	 */
 	public Rational[] guessEigenvalues(boolean include_negative) {
-		Set<Rational> motzkin_coeffs = new HashSet<Rational>();
+		final Set<Rational> motzkin_coeffs = new HashSet<Rational>();
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
-		for (List<LinearInequality> polyhedron : mloop.getPolyhedra()) {
+		for (final List<LinearInequality> polyhedron : mloop.getPolyhedra()) {
 			// Find aliases for variables
-			Map<Term, Set<Term>> aliases = new HashMap<Term, Set<Term>>();
-			for (LinearInequality li : polyhedron) {
+			final Map<Term, Set<Term>> aliases = new HashMap<Term, Set<Term>>();
+			for (final LinearInequality li : polyhedron) {
 				// If li is 0 <= a*x + b*y with a == -b and a != 0 != b
 				// then put x -> y into aliases
 				if (!li.isStrict() && li.getConstant().isZero()
 						&& li.getVariables().size() == 2) {
-					Term[] vars = li.getVariables().toArray(new Term[2]);
-					AffineTerm at0 = li.getCoefficient(vars[0]);
-					AffineTerm at1 = li.getCoefficient(vars[1]);
+					final Term[] vars = li.getVariables().toArray(new Term[2]);
+					final AffineTerm at0 = li.getCoefficient(vars[0]);
+					final AffineTerm at1 = li.getCoefficient(vars[1]);
 					assert !at0.isZero();
 					assert !at1.isZero();
 					if (at0.isConstant() && at1.isConstant()
@@ -191,7 +191,7 @@ public class Lasso implements Serializable {
 						Term var1 = vars[1];
 						if (at0.getConstant().isNegative()) {
 							// Swap var0 and var1
-							Term var2 = var0;
+							final Term var2 = var0;
 							var0 = var1;
 							var1 = var2;
 						}
@@ -203,19 +203,19 @@ public class Lasso implements Serializable {
 				}
 			}
 			
-			for (Map.Entry<RankVar, Term> entry : mloop.getOutVars().entrySet()) {
-				RankVar rkVar = entry.getKey();
-				Term outVar = entry.getValue();
+			for (final Map.Entry<RankVar, Term> entry : mloop.getOutVars().entrySet()) {
+				final RankVar rkVar = entry.getKey();
+				final Term outVar = entry.getValue();
 				
 				// Find possible aliases
 				if (!mloop.getInVars().containsKey(rkVar)) {
 					continue;
 				}
-				List<Term> possible_inVars = new ArrayList<Term>();
-				Term inVar = mloop.getInVars().get(rkVar);
+				final List<Term> possible_inVars = new ArrayList<Term>();
+				final Term inVar = mloop.getInVars().get(rkVar);
 				possible_inVars.add(inVar);
 				if (aliases.containsKey(inVar)) {
-					for (Term aliasVar : aliases.get(inVar)) {
+					for (final Term aliasVar : aliases.get(inVar)) {
 						if (aliases.containsKey(aliasVar)
 								&& aliases.get(aliasVar).contains(inVar)) {
 							possible_inVars.add(aliasVar);
@@ -223,15 +223,15 @@ public class Lasso implements Serializable {
 					}
 				}
 				
-				for (LinearInequality li : polyhedron) {
-					for (Term aliasVar : possible_inVars) {
-						AffineTerm c_in = li.getCoefficient(aliasVar);
-						AffineTerm c_out = li.getCoefficient(outVar);
+				for (final LinearInequality li : polyhedron) {
+					for (final Term aliasVar : possible_inVars) {
+						final AffineTerm c_in = li.getCoefficient(aliasVar);
+						final AffineTerm c_out = li.getCoefficient(outVar);
 						if (!c_in.isZero() && !c_out.isZero()) {
 							// inVar and outVar occur in this linear inequality
 							assert c_in.isConstant();
 							assert c_out.isConstant();
-							Rational eigenv =
+							final Rational eigenv =
 									c_in.getConstant().div(c_out.getConstant()).negate();
 							if (!eigenv.isNegative() || include_negative) {
 								motzkin_coeffs.add(eigenv);
@@ -257,8 +257,8 @@ public class Lasso implements Serializable {
 			return stem; // nothing to do
 		}
 		// Add variables existing in the loop to the stem
-		Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
-		for (Map.Entry<RankVar, Term> entry : loop.getInVars().entrySet()) {
+		final Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
+		for (final Map.Entry<RankVar, Term> entry : loop.getInVars().entrySet()) {
 			if (!stem.getInVars().containsKey(entry.getKey()) &&
 					!stem.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
@@ -267,9 +267,9 @@ public class Lasso implements Serializable {
 		if (!addVars.isEmpty()) {
 			// Because the variable maps in LinearTransition are immutable,
 			// make a new transition and replace the old one
-			Map<RankVar, Term> inVars =
+			final Map<RankVar, Term> inVars =
 					new HashMap<RankVar, Term>(stem.getInVars());
-			Map<RankVar, Term> outVars =
+			final Map<RankVar, Term> outVars =
 					new HashMap<RankVar, Term>(stem.getOutVars());
 			inVars.putAll(addVars);
 			outVars.putAll(addVars);
@@ -293,8 +293,8 @@ public class Lasso implements Serializable {
 		}
 		
 		// Add variables existing in the stem to the loop
-		Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
-		for (Map.Entry<RankVar, Term> entry : stem.getOutVars().entrySet()) {
+		final Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
+		for (final Map.Entry<RankVar, Term> entry : stem.getOutVars().entrySet()) {
 			if (!loop.getInVars().containsKey(entry.getKey()) &&
 					!loop.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
@@ -303,9 +303,9 @@ public class Lasso implements Serializable {
 		if (!addVars.isEmpty()) {
 			// Because the variable maps in LinearTransition are immutable,
 			// make a new transition and replace the old one
-			Map<RankVar, Term> inVars =
+			final Map<RankVar, Term> inVars =
 					new HashMap<RankVar, Term>(loop.getInVars());
-			Map<RankVar, Term> outVars =
+			final Map<RankVar, Term> outVars =
 					new HashMap<RankVar, Term>(loop.getOutVars());
 			inVars.putAll(addVars);
 			outVars.putAll(addVars);
@@ -315,8 +315,9 @@ public class Lasso implements Serializable {
 		return loop;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Stem: ");
 		sb.append(mstem);
 		sb.append("\nLoop: ");

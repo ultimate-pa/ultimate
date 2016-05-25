@@ -1,9 +1,12 @@
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
+import java.util.Collection;
 
-import java.util.*;
+import jdd.bdd.BDD;
+import jdd.bdd.Permutation;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
 
 /**
  * profiling the BDD by counting each operation.
@@ -37,8 +40,9 @@ public class ProfiledBDD extends BDD {
 
 	// ---------------------------------------------------------------
 	// Debugging stuff
+	@Override
 	public Collection addDebugger(BDDDebuger d) {
-		Collection v = super.addDebugger( d );
+		final Collection v = super.addDebugger( d );
 		v.add( quant_cache );
 		v.add( ite_cache );
 		v.add( not_cache );
@@ -49,50 +53,74 @@ public class ProfiledBDD extends BDD {
 	}
 	// ---------------------------------------------------------------
 
+	@Override
 	public int and(int a, int b) { p_and++; return super.and(a,b); }
+	@Override
 	public int or(int a, int b) { p_or++; return super.or(a,b); }
+	@Override
 	public int xor(int a, int b) { p_xor++; return super.xor(a,b); }
+	@Override
 	public int biimp(int a, int b) { p_biimp++; return super.biimp(a,b); }
+	@Override
 	public int imp(int a, int b) { p_imp++; return super.imp(a,b); }
+	@Override
 	public int nor(int a, int b) { p_nor++; return super.nor(a,b); }
+	@Override
 	public int nand(int a, int b) { p_nand++; return super.nand(a,b); }
 
+	@Override
 	public int not(int a) { p_not++; return super.not(a); }
 
 
 
+	@Override
 	public int replace(int a, Permutation b) { p_replace++; return super.replace(a,b); }
+	@Override
 	public int exists(int a, int b) { p_exists++; return super.exists(a,b); }
+	@Override
 	public int forall(int a, int b) { p_forall++; return super.forall(a,b); }
+	@Override
 	public int relProd(int a, int b, int c) { p_relprod++; return super.relProd(a,b,c); }
+	@Override
 	public int ite(int a, int b, int c) { p_ite++; return super.ite(a,b,c); }
 
+	@Override
 	public double satCount(int a) { p_satcount++; return super.satCount(a); }
 
 
+	@Override
 	public int support(int a) { p_support++; return super.support(a); }
+	@Override
 	public int restrict(int a, int b) { p_restrict++; return super.restrict(a,b); }
+	@Override
 	public int simplify(int a, int b) { p_simplify++; return super.simplify(a,b); }
 
 
+	@Override
 	public void showStats() {
-		if(p_and > 0 || p_or > 0 || p_not > 0)
+		if(p_and > 0 || p_or > 0 || p_not > 0) {
 			JDDConsole.out.println("# calls to and/or/not:                    " + p_and + "/" + p_or + "/" + p_not);
+		}
 
-		if(p_biimp > 0 || p_imp > 0 ||p_xor > 0)
+		if(p_biimp > 0 || p_imp > 0 ||p_xor > 0) {
 			JDDConsole.out.println("# calls to biimp/imp/xor:                 " + p_biimp + "/" + p_imp + "/" + p_xor);
+		}
 
-		if(p_nand > 0 || p_nor > 0 || p_ite > 0)
+		if(p_nand > 0 || p_nor > 0 || p_ite > 0) {
 			JDDConsole.out.println("# calls to nand/nor/ite:                  " + p_nand + "/" + p_nor+ "/" + p_ite);
+		}
 
-		if(p_replace > 0 || p_exists > 0 || p_forall > 0 || p_relprod > 0)
+		if(p_replace > 0 || p_exists > 0 || p_forall > 0 || p_relprod > 0) {
 			JDDConsole.out.println("# calls to replace/exists/forall/relProd: " + p_replace + "/" + p_exists + "/" + p_forall + "/" + p_relprod);
+		}
 
-		if(p_support > 0 || p_restrict > 0 || p_simplify > 0)
+		if(p_support > 0 || p_restrict > 0 || p_simplify > 0) {
 			JDDConsole.out.println("# calls to support/restrict/simplify:     " + p_support + "/" + p_restrict + "/" + p_simplify);
+		}
 
-		if(p_satcount > 0)
+		if(p_satcount > 0) {
 			JDDConsole.out.println("# calls to satCount:     " + p_satcount);
+		}
 
 
 

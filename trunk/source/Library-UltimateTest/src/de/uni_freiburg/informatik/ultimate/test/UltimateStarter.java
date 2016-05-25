@@ -93,13 +93,14 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
-		mLoggingService = loggingService;
-		mLogger = loggingService.getControllerLogger();
+	public int init(final ICore<ToolchainListType> core) {
+		mLoggingService = core.getCoreLoggingService();
+		mLogger = mLoggingService.getControllerLogger();
 		mCurrentCore = core;
 		core.resetPreferences();
-		return mExternalUltimateCore.init(core, loggingService, mUltimateRunDefinition.getSettings(), mDeadline,
-				mUltimateRunDefinition.getInput()).getCode();
+		return mExternalUltimateCore
+				.init(core, mUltimateRunDefinition.getSettings(), mDeadline, mUltimateRunDefinition.getInput())
+				.getCode();
 	}
 
 	public void complete() {
@@ -113,7 +114,7 @@ public class UltimateStarter implements IController<ToolchainListType> {
 
 		try {
 			mLoggingService.addLogfile(mLogPattern, mLogFile.getAbsolutePath(), true);
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			mLogger.fatal("Failed to create logfile " + mLogFile + ". Reason: " + e1);
 		}
 	}

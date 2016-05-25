@@ -107,11 +107,11 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 	}
 
 	private String printState(Map<E, String> state) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean first = true;
-		for (Entry<E, String> entry : state.entrySet()) {
-			String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), mExprClazz);
+		for (final Entry<E, String> entry : state.entrySet()) {
+			final String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), mExprClazz);
 			if (var.contains("UnsupportedOperation")) {
 				continue;
 			}
@@ -142,20 +142,20 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 	}
 
 	public String defaultLongDescription() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination argument in form of an infinite execution\n");
 		sb.append(mStateInit);
 		assert (SCHEMATIC_EXECUTION_LENGTH > 0);
-		Rational[] geometric_sum = new Rational[mLambdas.size()]; // 1 + lambda_i + mu_(i-1) + ...
+		final Rational[] geometric_sum = new Rational[mLambdas.size()]; // 1 + lambda_i + mu_(i-1) + ...
 		for (int i = 0; i < mLambdas.size(); ++i) {
 			geometric_sum[i] = Rational.ZERO;
 		}
 		for (int j = 0; j < SCHEMATIC_EXECUTION_LENGTH; ++j) {
-			Map<E, String> state = new HashMap<E, String>();
-			for (E var : mStateHonda.keySet()) {
+			final Map<E, String> state = new HashMap<E, String>();
+			for (final E var : mStateHonda.keySet()) {
 				Rational x = mStateHonda.get(var);
 				for (int i = 0; i < mRays.size(); ++i) {
-					Rational y = mRays.get(i).get(var);
+					final Rational y = mRays.get(i).get(var);
 					if (y != null) {
 						x = x.add(y.mul(geometric_sum[i]));
 					}
@@ -175,37 +175,37 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 	}
 
 	private String alternativeLongDesciption() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination argument in form of an infinite execution\n");
 
 		// State 1 (before the honda)
 		sb.append("State at position 0 is\n");
-		Map<E, String> statePos0 = new HashMap<E, String>();
-		for (Entry<E, Rational> entry : mStateHonda.entrySet()) {
-			E var = entry.getKey();
-			Rational x0 = mStateInit.get(var);
+		final Map<E, String> statePos0 = new HashMap<E, String>();
+		for (final Entry<E, Rational> entry : mStateHonda.entrySet()) {
+			final E var = entry.getKey();
+			final Rational x0 = mStateInit.get(var);
 			statePos0.put(var, x0.toString());
 		}
 		sb.append(printState(statePos0));
 
 		// State 2 (at the honda)
 		sb.append("\nState at position 1 is\n");
-		Map<E, String> statePos1 = new HashMap<E, String>();
-		for (Entry<E, Rational> entry : mStateHonda.entrySet()) {
-			E var = entry.getKey();
-			Rational x = mStateHonda.get(var);
+		final Map<E, String> statePos1 = new HashMap<E, String>();
+		for (final Entry<E, Rational> entry : mStateHonda.entrySet()) {
+			final E var = entry.getKey();
+			final Rational x = mStateHonda.get(var);
 			statePos1.put(var, x.toString());
 		}
 		sb.append(printState(statePos1));
 
 		// Schematic execution afterwards
 		sb.append("\nFor i>1, the state at position i is\n");
-		Map<E, String> statePosI = new HashMap<E, String>();
-		for (E var : mStateHonda.keySet()) {
-			StringBuilder sb2 = new StringBuilder();
-			Rational x = mStateHonda.get(var);
+		final Map<E, String> statePosI = new HashMap<E, String>();
+		for (final E var : mStateHonda.keySet()) {
+			final StringBuilder sb2 = new StringBuilder();
+			final Rational x = mStateHonda.get(var);
 			for (int i = 0; i < mRays.size(); ++i) {
-				Rational y = mRays.get(i).get(var);
+				final Rational y = mRays.get(i).get(var);
 				if (y != null && !y.equals(Rational.ZERO)) {
 					if (sb2.length() > 0) {
 						sb2.append(" + ");
@@ -224,7 +224,7 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 						if (j > 0) {
 							sb2.append(" + ");
 						}
-						Rational lambda = mLambdas.get(i - j);
+						final Rational lambda = mLambdas.get(i - j);
 						sb2.append(y);
 
 						if (j == 1) {

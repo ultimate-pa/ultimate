@@ -130,7 +130,7 @@ public class AffineTerm implements Serializable {
 	 */
 	public void add(Term var, Rational c) {
 		if (mCoefficients.containsKey(var)) {
-			Rational r = mCoefficients.get(var).add(c);
+			final Rational r = mCoefficients.get(var).add(c);
 			if (!r.equals(Rational.ZERO)) {
 				mCoefficients.put(var, r);
 			} else {
@@ -148,7 +148,7 @@ public class AffineTerm implements Serializable {
 	 */
 	public void add(AffineTerm p) {
 		this.add(p.mConstant);
-		for (Map.Entry<Term, Rational> entry : p.mCoefficients.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : p.mCoefficients.entrySet()) {
 			this.add(entry.getKey(), entry.getValue());
 		}
 	}
@@ -158,7 +158,7 @@ public class AffineTerm implements Serializable {
 	 */
 	public void mult(Rational r) {
 		mConstant = mConstant.mul(r);
-		for (Term var : mCoefficients.keySet()) {
+		for (final Term var : mCoefficients.keySet()) {
 			mCoefficients.put(var, mCoefficients.get(var).mul(r));
 		}
 	}
@@ -168,10 +168,10 @@ public class AffineTerm implements Serializable {
 	 * @return this as a term of sort "Real"
 	 */
 	public Term asRealTerm(Script script) {
-		Term[] summands = new Term[mCoefficients.size() + 1];
+		final Term[] summands = new Term[mCoefficients.size() + 1];
 		int i = 0;
-		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
-			Term coeff = entry.getValue().toTerm(script.sort("Real")); 
+		for (final Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
+			final Term coeff = entry.getValue().toTerm(script.sort("Real")); 
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
@@ -184,11 +184,11 @@ public class AffineTerm implements Serializable {
 	 * @return the affine term as a term of sort "Int"
 	 */
 	public Term asIntTerm(Script script) {
-		Term[] summands = new Term[mCoefficients.size() + 1];
+		final Term[] summands = new Term[mCoefficients.size() + 1];
 		int i = 0;
-		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			assert entry.getValue().isIntegral();
-			Term coeff = script.numeral(entry.getValue().numerator());
+			final Term coeff = script.numeral(entry.getValue().numerator());
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
@@ -199,9 +199,9 @@ public class AffineTerm implements Serializable {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			if (entry.getValue().isNegative() || !first) {
 				if (!first) {
 					sb.append(" ");

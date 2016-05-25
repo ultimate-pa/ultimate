@@ -154,7 +154,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected Script constructScript(LassoRankerPreferences preferences, String constraintsName) {
-		Settings settings = preferences.getSolverConstructionSettings(
+		final Settings settings = preferences.getSolverConstructionSettings(
 				preferences.baseNameOfDumpedScript + "+" + constraintsName);
 		final SolverMode solverMode;
 		if (preferences.annotate_terms) {
@@ -177,7 +177,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		 * loop (i.e., do not occur as inVar of the loop) are not relevant for
 		 * supporting invariants.
 		 */
-		Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getStem().getOutVars().keySet());
+		final Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getStem().getOutVars().keySet());
 		result.retainAll(mlasso.getLoop().getInVars().keySet());
 		return result;
 	}
@@ -186,7 +186,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @return RankVar's that are relevant for ranking functions
 	 */
 	public Collection<RankVar> getRankVars() {
-		Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getLoop().getOutVars().keySet());
+		final Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getLoop().getOutVars().keySet());
 		result.retainAll(mlasso.getLoop().getInVars().keySet());
 		return result;
 	}
@@ -205,12 +205,12 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			LinearTransition loop, RankingTemplate template,
 			Collection<SupportingInvariantGenerator> si_generators) {
 		
-		List<Term> conj = new ArrayList<Term>(); // List of constraints
+		final List<Term> conj = new ArrayList<Term>(); // List of constraints
 
-		Collection<RankVar> siVars = getSIVars();
-		List<List<LinearInequality>> templateConstraints =
+		final Collection<RankVar> siVars = getSIVars();
+		final List<List<LinearInequality>> templateConstraints =
 				template.getConstraints(loop.getInVars(), loop.getOutVars());
-		List<String> annotations = template.getAnnotations();
+		final List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
 
 		mLogger.info(stem.getNumPolyhedra() + " stem disjuncts");
@@ -219,7 +219,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// Negate template inequalities
 		{
-			Set<LinearInequality> negated = new HashSet<LinearInequality>();
+			final Set<LinearInequality> negated = new HashSet<LinearInequality>();
 			/*
 			 * The same linear inequality may occur multiple times in the
 			 * constraints if we use a composed template. That's why we have
@@ -228,8 +228,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			 * 
 			 * Guess how much debugging it took me to find this error... :/
 			 */
-			for (List<LinearInequality> templateDisj : templateConstraints) {
-				for (LinearInequality li : templateDisj) {
+			for (final List<LinearInequality> templateDisj : templateConstraints) {
+				for (final LinearInequality li : templateDisj) {
 					if (!negated.contains(li)) {
 						li.negate();
 						negated.add(li);
@@ -250,10 +250,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
 		int j = 0;
-		for (List<LinearInequality> loopConj : loop.getPolyhedra()) {
+		for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
-				MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
+				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
 						mpreferences.annotate_terms);
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
@@ -262,15 +262,15 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				// Add supporting invariants
 				assert (msettings.numstrict_invariants >= 0);
 				for (int i = 0; i < msettings.numstrict_invariants; ++i) {
-					SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, true);
+					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, true);
 					si_generators.add(sig);
 					motzkin.add_inequality(sig.generate(loop.getInVars()));
 				}
 				assert (msettings.numnon_strict_invariants >= 0);
 				for (int i = 0; i < msettings.numnon_strict_invariants; ++i) {
-					SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, false);
+					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, false);
 					si_generators.add(sig);
-					LinearInequality li = sig.generate(loop.getInVars());
+					final LinearInequality li = sig.generate(loop.getInVars());
 					li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 					motzkin.add_inequality(li);
 				}
@@ -282,18 +282,18 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Add constraints for the supporting invariants
 		mLogger.debug("Adding the constraints for " + si_generators.size() + " supporting invariants.");
 		int i = 0;
-		for (SupportingInvariantGenerator sig : si_generators) {
+		for (final SupportingInvariantGenerator sig : si_generators) {
 			++i;
 
 			// stem(x0) -> si(x0)
 			j = 0;
-			for (List<LinearInequality> stemConj : stem.getPolyhedra()) {
+			for (final List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
-				MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
+				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
 						mpreferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
-				LinearInequality li = sig.generate(stem.getOutVars());
+				final LinearInequality li = sig.generate(stem.getOutVars());
 				li.negate();
 				li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
 				motzkin.add_inequality(li);
@@ -302,14 +302,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 			// si(x) /\ loop(x, x') -> si(x')
 			j = 0;
-			for (List<LinearInequality> loopConj : loop.getPolyhedra()) {
+			for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
-				MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
+				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
 						mpreferences.annotate_terms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
-				LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
+				final LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
 				li.motzkin_coefficient = msettings.nondecreasing_invariants
 						|| msettings.analysis == AnalysisType.Linear ? PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
@@ -351,14 +351,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			mLogger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
-		Collection<RankVar> rankVars = getRankVars();
-		Collection<RankVar> siVars = getSIVars();
+		final Collection<RankVar> rankVars = getRankVars();
+		final Collection<RankVar> siVars = getSIVars();
 		mLogger.info("Template has degree " + mtemplate.getDegree() + ".");
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
 		
 		LinearTransition stem = mlasso.getStem();
-		LinearTransition loop = mlasso.getLoop();
+		final LinearTransition loop = mlasso.getLoop();
 		
 		/*
 		 * // The following code makes examples like StemUnsat.bpl fail if
@@ -375,31 +375,31 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			msettings.numnon_strict_invariants = 0;
 		} else if (msettings.overapproximate_stem) {
 			mLogger.info("Overapproximating stem...");
-			StemOverapproximator so = new StemOverapproximator(mpreferences,
+			final StemOverapproximator so = new StemOverapproximator(mpreferences,
 					mservices, mstorage);
-			int stematoms = stem.getNumInequalities();
+			final int stematoms = stem.getNumInequalities();
 			stem = so.overapproximate(stem);
 			mLogger.info("Reduced " + stematoms + " stem atoms to "
 					+ stem.getNumInequalities() + ".");
 		}
 
 		// Assert all conjuncts generated from the template
-		Collection<Term> constraints = buildConstraints(stem, loop, mtemplate,
+		final Collection<Term> constraints = buildConstraints(stem, loop, mtemplate,
 				msi_generators);
 		mnum_motzkin = constraints.size();
 		mLogger.info("We have " + getNumMotzkin() + " Motzkin's Theorem applications.");
 		mLogger.info("A total of " + getNumSIs() + " supporting invariants were added.");
-		for (Term constraint : constraints) {
+		for (final Term constraint : constraints) {
 			mscript.assertTerm(constraint);
 		}
 
 		// Check for a model
-		LBool sat = mscript.checkSat();
+		final LBool sat = mscript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
-			ArrayList<Term> variables = new ArrayList<Term>();
+			final ArrayList<Term> variables = new ArrayList<Term>();
 			variables.addAll(mtemplate.getVariables());
-			for (SupportingInvariantGenerator sig : msi_generators) {
+			for (final SupportingInvariantGenerator sig : msi_generators) {
 				variables.addAll(sig.getVariables());
 			}
 
@@ -414,17 +414,17 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 			// Extract ranking function and supporting invariants
 			mranking_function = mtemplate.extractRankingFunction(val);
-			for (SupportingInvariantGenerator sig : msi_generators) {
+			for (final SupportingInvariantGenerator sig : msi_generators) {
 				msupporting_invariants.add(sig.extractSupportingInvariant(val));
 			}
 			
 			// Simplify supporting invariants
 			if (msettings.simplify_supporting_invariants) {
-				SupportingInvariantSimplifier tas =
+				final SupportingInvariantSimplifier tas =
 						new SupportingInvariantSimplifier(mpreferences,
 								mservices, mstorage);
 				mLogger.info("Simplifying supporting invariants...");
-				int before = msupporting_invariants.size();
+				final int before = msupporting_invariants.size();
 				msupporting_invariants = tas.simplify(msupporting_invariants);
 				mLogger.info("Removed " + (before - msupporting_invariants.size())
 						+ " redundant supporting invariants from a total of "

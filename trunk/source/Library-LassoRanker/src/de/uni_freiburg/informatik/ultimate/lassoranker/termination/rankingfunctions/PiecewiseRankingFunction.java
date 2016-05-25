@@ -67,8 +67,8 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : mranking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
@@ -84,12 +84,12 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mranking.length);
 		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (RankVar var : getVariables()) {
+		for (final RankVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -116,9 +116,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		Term value = script.numeral(BigInteger.ZERO);
 		for (int i = mranking.length - 1; i >= 0; --i) {
-			AffineFunction af = mranking[i];
-			AffineFunction gf = mpredicates[i];
-			Term pred = script.term(">=", gf.asTerm(script),
+			final AffineFunction af = mranking[i];
+			final AffineFunction gf = mpredicates[i];
+			final Term pred = script.term(">=", gf.asTerm(script),
 					script.numeral(BigInteger.ZERO));
 			value = script.term("ite", pred, af.asTerm(script), value);
 		}
@@ -130,7 +130,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		Rational r = Rational.ZERO;
 		for (int i = 0; i < pieces; ++i) {
 			if (!mpredicates[i].evaluate(assignment).isNegative()) {
-				Rational rnew = mranking[i].evaluate(assignment);
+				final Rational rnew = mranking[i].evaluate(assignment);
 				if (rnew.compareTo(r) > 0) {
 					r = rnew;
 				}

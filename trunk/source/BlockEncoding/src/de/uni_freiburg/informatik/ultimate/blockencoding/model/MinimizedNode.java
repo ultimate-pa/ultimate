@@ -62,7 +62,7 @@ public class MinimizedNode implements
 	/**
 	 * the reference for the underlying node in the original RCFG
 	 */
-	private ProgramPoint mOriginalNode;
+	private final ProgramPoint mOriginalNode;
 
 	/**
 	 * Because we want to store all levels of the minimization, we keep in track all created edges. We store each level
@@ -74,7 +74,7 @@ public class MinimizedNode implements
 
 	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> incomingEdges;
 
-	private Payload mPayload;
+	private final Payload mPayload;
 
 	/**
 	 * Constructor for the MinimizedNode, it takes as input an INode, which should always be an ProgramPoint
@@ -105,7 +105,7 @@ public class MinimizedNode implements
 		if (edgeToRate != null) {
 			maxRating = edgeToRate.getRating();
 		} else {
-			for (IMinimizedEdge edge : edges) {
+			for (final IMinimizedEdge edge : edges) {
 				if (maxRating == null) {
 					maxRating = edge.getRating();
 				} else {
@@ -141,7 +141,7 @@ public class MinimizedNode implements
 		// TODO: We need here the same, as for outgoing edge level?
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
-		for (IMinimizedEdge edge : edges) {
+		for (final IMinimizedEdge edge : edges) {
 			if (maxRating == null) {
 				maxRating = edge.getRating();
 			} else {

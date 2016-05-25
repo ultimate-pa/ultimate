@@ -94,6 +94,7 @@ public class Summary extends CodeBlock implements IInternalAction {
 		return mCallStatement;
 	}
 
+	@Override
 	public String getPrettyPrintedStatements() {
 		return mPrettyPrintedStatements;
 	}

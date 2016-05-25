@@ -64,12 +64,13 @@ public class CPointer extends CType {
     
     @Override
     public boolean equals(Object o) {
-    	if (super.equals(o)) //to break a mutual recursion with CStruct -- TODO: is that a general solution??
-    		return true;
+    	if (super.equals(o)) {
+			return true;
+		}
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = ((CType)o).getUnderlyingType();
         if (oType instanceof CPointer) {
             return pointsToType.equals(((CPointer) oType).pointsToType);
         }
@@ -82,12 +83,14 @@ public class CPointer extends CType {
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPointer &&
 				((CPointer) o).pointsToType instanceof CPrimitive
-				&& ((CPrimitive) ((CPointer) o).pointsToType).getType() == PRIMITIVE.VOID)
+				&& ((CPrimitive) ((CPointer) o).pointsToType).getType() == PRIMITIVE.VOID) {
 			return true;
+		}
 
-		if (super.equals(o)) //to break a mutual recursion with CStruct -- TODO: is that a general solution??
-    		return true;
-        CType oType = ((CType)o).getUnderlyingType();
+		if (super.equals(o)) {
+			return true;
+		}
+        final CType oType = o.getUnderlyingType();
         if (oType instanceof CPointer) {
             return pointsToType.isCompatibleWith(((CPointer)oType).pointsToType);
         }

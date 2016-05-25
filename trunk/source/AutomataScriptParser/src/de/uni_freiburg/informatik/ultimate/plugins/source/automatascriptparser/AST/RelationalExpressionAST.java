@@ -50,7 +50,7 @@ public class RelationalExpressionAST extends AtsASTNode {
 	}
 
 	public void setOperator(RelationalOperatorAST operator) {
-		this.moperator = operator;
+		moperator = operator;
 	}
 	
 	public RelationalExpressionAST(ILocation loc) {

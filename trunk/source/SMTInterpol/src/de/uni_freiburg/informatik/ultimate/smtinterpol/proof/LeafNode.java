@@ -88,6 +88,7 @@ public class LeafNode extends ProofNode {
 	public void setTheoryAnnotation(IAnnotation annot) {
 		mAnnotation = annot;
 	}
+	@Override
 	public String toString() {
 		return "[" + mAnnotation + "]";
 	}

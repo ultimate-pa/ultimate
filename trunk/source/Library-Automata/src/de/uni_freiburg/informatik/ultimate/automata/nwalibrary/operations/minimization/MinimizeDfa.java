@@ -41,9 +41,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -72,7 +72,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /**
      * The input automaton.
      */
-    private INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+    private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -95,9 +95,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mOperand = operand;
 		mLogger.info(startMessage());
 
-		ArrayList<STATE> states = new ArrayList<STATE>();
+		final ArrayList<STATE> states = new ArrayList<STATE>();
 		states.addAll(mOperand.getStates());
-		boolean[][] table = initializeTable(states);
+		final boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
 
 		if (mLogger.isDebugEnabled()) {
@@ -130,9 +130,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (int i = 0; i < states.size(); i++) {
 				for (int j = 0; j < i; j++) { // for each (i, j)
 					if (!table[i][j]) { // if (i, j) not marked
-						for (LETTER s : mOperand.getInternalAlphabet()) {
-							ArrayList<STATE> first = getSuccessors(states, s, i);
-							ArrayList<STATE> second = getSuccessors(states, s, j);
+						for (final LETTER s : mOperand.getInternalAlphabet()) {
+							final ArrayList<STATE> first = getSuccessors(states, s, i);
+							final ArrayList<STATE> second = getSuccessors(states, s, j);
 							// if either i or j has no successors, for k mark
 							// (i, j) as not equivalent
 							if (first.isEmpty() ^ second.isEmpty()) {
@@ -184,8 +184,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private ArrayList<STATE> getSuccessors(ArrayList<STATE> states, LETTER s, int i) {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
-		ArrayList<STATE> first = new ArrayList<STATE>();
-		for(STATE state : mOperand.succInternal(states.get(i), s)) {
+		final ArrayList<STATE> first = new ArrayList<STATE>();
+		for(final STATE state : mOperand.succInternal(states.get(i), s)) {
 			first.add(state);
 		}
 		return first;
@@ -200,7 +200,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private boolean[][] initializeTable(ArrayList<STATE> states) {
 		// table that will save the equivalent states
-		boolean[][] table = new boolean[states.size()][states.size()];
+		final boolean[][] table = new boolean[states.size()][states.size()];
 		// Initialization:
 		// we mark all the states (p,q) such that p in F and q not in F
 		for (int r = 0; r < states.size(); r++) {
@@ -227,10 +227,11 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void generateResultAutomaton(ArrayList<STATE> states, boolean[][] table) {
 		// merge states
-		boolean[] marker = new boolean[states.size()];
-		Set<STATE> temp = new HashSet<STATE>();
-		HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
+		final boolean[] marker = new boolean[states.size()];
+		final Set<STATE> temp = new HashSet<STATE>();
+		final HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
 		@SuppressWarnings("unchecked")
+		final
 		StateFactory<STATE> snf = mOperand.getStateFactory();
         mResult = new NestedWordAutomaton<LETTER,STATE>(
         		mServices, 
@@ -256,8 +257,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
                     }
 				}
 			}
-			STATE minimizedStateName = snf.minimize(temp);
-			for (STATE c : temp) {
+			final STATE minimizedStateName = snf.minimize(temp);
+			for (final STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}
 			mResult.addState(isInitial, isFinal, minimizedStateName);
@@ -265,11 +266,11 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 
 		// add edges
-		for (STATE c : mOperand.getStates()) {
-			for (LETTER s : mOperand.getInternalAlphabet()) {
-				for (STATE succ : mOperand.succInternal(c, s)) {
-					STATE newPred = oldSNames2newSNames.get(c);
-					STATE newSucc = oldSNames2newSNames.get(succ);
+		for (final STATE c : mOperand.getStates()) {
+			for (final LETTER s : mOperand.getInternalAlphabet()) {
+				for (final STATE succ : mOperand.succInternal(c, s)) {
+					final STATE newPred = oldSNames2newSNames.get(c);
+					final STATE newSucc = oldSNames2newSNames.get(succ);
 					mResult.addInternalTransition(newPred, s, newSucc);
 				}
 			}
@@ -287,14 +288,16 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private void printTable(ArrayList<STATE> st, boolean[][] t) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(" \t");
-		for (int i = 0; i < st.size(); i++)
+		for (int i = 0; i < st.size(); i++) {
 			sb.append(st.get(i) + "\t");
+		}
 		mLogger.debug(sb.toString());
 		sb = new StringBuilder();
 		for (int i = 0; i < st.size(); i++) {
 			sb.append(st.get(i) + "\t");
-			for (int j = 0; j < st.size(); j++)
+			for (int j = 0; j < st.size(); j++) {
 				sb.append(t[i][j] ? "X\t" : " \t");
+			}
 			mLogger.debug(sb.toString());
 			sb = new StringBuilder();
 		}
@@ -306,13 +309,15 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void printTransitions(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		StringBuilder msg;
-		for (STATE c : nwa.getStates())
-		    for (LETTER s : nwa.getInternalAlphabet())
-		        for (STATE succ : nwa.succInternal(c, s)) {
+		for (final STATE c : nwa.getStates()) {
+			for (final LETTER s : nwa.getInternalAlphabet()) {
+				for (final STATE succ : nwa.succInternal(c, s)) {
 		        	msg = new StringBuilder(c.toString());
 		            msg.append(" ").append(s).append(" ").append(succ);
 		            mLogger.debug(msg);
 		        }
+			}
+		}
 	}
 
 	/**
@@ -359,7 +364,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     @Override
     public String startMessage() {
     	mLogger.info("Starting DFA Minimizer");
-        StringBuilder msg = new StringBuilder("Start ");
+        final StringBuilder msg = new StringBuilder("Start ");
 		msg.append(operationName()).append(" Operand ")
 				.append(mOperand.sizeInformation());
         mLogger.info(msg.toString());
@@ -381,7 +386,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
         if (mLogger.isDebugEnabled()) {
         	printTransitions(mResult);
         }
-        StringBuilder msg = new StringBuilder();
+        final StringBuilder msg = new StringBuilder();
         msg.append("Finished ").append(operationName()).append(" Result ")
                 .append(mResult.sizeInformation());
         mLogger.info(msg.toString());

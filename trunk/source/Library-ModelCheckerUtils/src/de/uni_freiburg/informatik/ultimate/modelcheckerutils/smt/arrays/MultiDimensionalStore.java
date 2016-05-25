@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore {
-	private Term mArray;
+	private final Term mArray;
 	private final ArrayIndex mIndex;
 	private final Term mValue;
 	private final ApplicationTerm mStoreTerm;
@@ -65,13 +65,13 @@ public class MultiDimensionalStore {
 	public MultiDimensionalStore(Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		Term array = null;
-		ArrayList<Term> index = new ArrayList<Term>();
+		final ArrayList<Term> index = new ArrayList<Term>();
 		Term value = term;
 		while (true) {
 			if (!(value instanceof ApplicationTerm)) {
 				break;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) value;
+			final ApplicationTerm appTerm = (ApplicationTerm) value;
 			if (!appTerm.getFunction().getName().equals("store")) {
 				break;
 			}
@@ -101,7 +101,7 @@ public class MultiDimensionalStore {
 	}
 	
 	private boolean isCompatibleSelect(Term term, Term array, ArrayList<Term> index) {
-		MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
 
@@ -151,11 +151,11 @@ public class MultiDimensionalStore {
 	 * in the result.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
-		List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
-		Set<ApplicationTerm> storeTerms = 
+		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
+		final Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
-		for (Term storeTerm : storeTerms) {
-			MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
+		for (final Term storeTerm : storeTerms) {
+			final MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
 			if (mdStore.getIndex().size() == 0) {
 				throw new AssertionError("store must not have dimension 0");
 			}
@@ -175,17 +175,17 @@ public class MultiDimensionalStore {
 	 * in the resulting list.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresDeep(Term term) {
-		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
+		final List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
 		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
+			final List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
-			for (MultiDimensionalStore asd : foundInLastIteration) {
+			for (final MultiDimensionalStore asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getValue()));
-				ArrayIndex index = asd.getIndex();
-				for (Term entry : index) {
+				final ArrayIndex index = asd.getIndex();
+				for (final Term entry : index) {
 					foundInThisIteration.addAll(extractArrayStoresShallow(entry));
 				}
 			}

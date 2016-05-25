@@ -50,10 +50,10 @@ public class NWAContainer extends BasePayloadContainer implements IVisualizable 
 
 	@Override
 	public VisualizationNode getVisualizationGraph() {
-		Collection<String> initials = mNWA.getInitialStates();
+		final Collection<String> initials = mNWA.getInitialStates();
 
-		ArrayList<NWAVisualizationNode<String, CodeBlock>> visInitials = new ArrayList<>();
-		for (String initial : initials) {
+		final ArrayList<NWAVisualizationNode<String, CodeBlock>> visInitials = new ArrayList<>();
+		for (final String initial : initials) {
 			visInitials.add(new NWAVisualizationNode<String, CodeBlock>(mNWA, initial));
 		}
 

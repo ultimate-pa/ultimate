@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 
 public class RedirectionFinder {
 	
-	private ImpulseChecker codeChecker;
+	private final ImpulseChecker codeChecker;
 	public RedirectionFinder(ImpulseChecker codeChecker) {
 		this.codeChecker = codeChecker;
 	}
@@ -46,8 +46,8 @@ public class RedirectionFinder {
 		return depthFirstSearch(edge, edge.getTarget());
 	}
 	private AnnotatedProgramPoint depthFirstSearch(AppEdge edge, AnnotatedProgramPoint clone) {
-		ArrayList <AnnotatedProgramPoint> nextNodes = new ArrayList<AnnotatedProgramPoint> ();
-		for (AnnotatedProgramPoint nextClone : clone.getNextClones()) {
+		final ArrayList <AnnotatedProgramPoint> nextNodes = new ArrayList<AnnotatedProgramPoint> ();
+		for (final AnnotatedProgramPoint nextClone : clone.getNextClones()) {
 			if (codeChecker.isValidRedirection(edge, nextClone)) {
 				if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.FIRST) {
 					return depthFirstSearch(edge, nextClone);
@@ -60,30 +60,36 @@ public class RedirectionFinder {
 	private AnnotatedProgramPoint pickUp(AnnotatedProgramPoint def, ArrayList<AnnotatedProgramPoint> nodes) {
 		AnnotatedProgramPoint ret = def;
 		if (!nodes.isEmpty()) {
-			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM)
+			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM) {
 				ret = nodes.get((int) (Math.random() * nodes.size()));
-			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOmSTRONGEST)
+			}
+			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOmSTRONGEST) {
 				ret = strongRandomPickup(nodes);
+			}
 		}
 		return ret;
 	}
 	private AnnotatedProgramPoint strongRandomPickup(ArrayList<AnnotatedProgramPoint> nodes) {
-		HashSet<AnnotatedProgramPoint> predicates = new HashSet<AnnotatedProgramPoint>();
-		for (AnnotatedProgramPoint node : nodes)
+		final HashSet<AnnotatedProgramPoint> predicates = new HashSet<AnnotatedProgramPoint>();
+		for (final AnnotatedProgramPoint node : nodes) {
 			predicates.add(node);
+		}
 		
-		for (AnnotatedProgramPoint node : nodes) {
-			if (!predicates.contains(node))
+		for (final AnnotatedProgramPoint node : nodes) {
+			if (!predicates.contains(node)) {
 				continue;
-			AnnotatedProgramPoint[] comp = predicates.toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint subNode : comp) {
-				if (subNode == node)
+			}
+			final AnnotatedProgramPoint[] comp = predicates.toArray(new AnnotatedProgramPoint[]{});
+			for (final AnnotatedProgramPoint subNode : comp) {
+				if (subNode == node) {
 					continue;
-				if (codeChecker.isStrongerPredicate(node, subNode))
+				}
+				if (codeChecker.isStrongerPredicate(node, subNode)) {
 					predicates.remove(subNode);
+				}
 			}
 		}
-		AnnotatedProgramPoint[] best = predicates.toArray(new AnnotatedProgramPoint[]{});
+		final AnnotatedProgramPoint[] best = predicates.toArray(new AnnotatedProgramPoint[]{});
 		return best[(int) (best.length * Math.random())];
 	}
 }

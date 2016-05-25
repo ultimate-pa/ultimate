@@ -23,23 +23,23 @@ public class ParserTest {
 	static String test1 = "Globally, it is always the case that if p holds, then q.x previously held and was preceded by r.x.\n";
 	
 	public void testNewParser(String input) throws Exception {
-		StringReader sr = new StringReader(input);
-		ReqLexer lexer = new ReqLexer(sr);
-		ReqParser parser = new ReqParser(lexer);
+		final StringReader sr = new StringReader(input);
+		final ReqLexer lexer = new ReqLexer(sr);
+		final ReqParser parser = new ReqParser(lexer);
 		
-		Symbol goal = parser.parse();
-		srParsePattern[] patterns = (srParsePattern[]) goal.value;
+		final Symbol goal = parser.parse();
+		final srParsePattern[] patterns = (srParsePattern[]) goal.value;
 		
-		for (srParsePattern pat : patterns) {
+		for (final srParsePattern pat : patterns) {
 			System.out.println(pat);
 		}
 	}
 	
 	
 	public static void main(String[] param) throws Exception {
-		ParserTest test = new ParserTest();
-		for (String s: scopes) { 
-			for (String p: patterns) {
+		final ParserTest test = new ParserTest();
+		for (final String s: scopes) { 
+			for (final String p: patterns) {
 				test.testNewParser(s+", "+p+".\n");
 			}
 		}

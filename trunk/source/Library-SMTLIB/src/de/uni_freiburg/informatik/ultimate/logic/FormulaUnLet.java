@@ -114,7 +114,7 @@ public class FormulaUnLet extends TermTransformer {
 	@Override
 	public void convert(Term term) {
 		if (term instanceof TermVariable) {
-			Term value = mLetMap.get((TermVariable)term);
+			final Term value = mLetMap.get(term);
 			if (value == null) {
 				setResult(term);
 			} else if (mType.mIsLazy) {
@@ -123,19 +123,20 @@ public class FormulaUnLet extends TermTransformer {
 				setResult(value);
 			}
 		} else if (mType.mIsLazy && term instanceof LetTerm) {
-			LetTerm letTerm = (LetTerm) term;
+			final LetTerm letTerm = (LetTerm) term;
 			preConvertLet(letTerm, letTerm.getValues());
 		} else if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula qf = (QuantifiedFormula)term;
-			TermVariable[] vars = qf.getVariables();
-			Theory theory = term.getTheory();
+			final QuantifiedFormula qf = (QuantifiedFormula)term;
+			final TermVariable[] vars = qf.getVariables();
+			final Theory theory = term.getTheory();
 
 			/* check which variables are in the image of the substitution */
-			HashSet<TermVariable> used = new HashSet<TermVariable>();
-			for (Map.Entry<TermVariable,Term> substTerms : mLetMap.entrySet()) {
-				if (!Arrays.asList(vars).contains(substTerms.getKey()))
+			final HashSet<TermVariable> used = new HashSet<TermVariable>();
+			for (final Map.Entry<TermVariable,Term> substTerms : mLetMap.entrySet()) {
+				if (!Arrays.asList(vars).contains(substTerms.getKey())) {
 					used.addAll(
 							Arrays.asList(substTerms.getValue().getFreeVars()));
+				}
 			}
 			mLetMap.beginScope();
 			for (int i = 0; i < vars.length; i++) {
@@ -143,33 +144,36 @@ public class FormulaUnLet extends TermTransformer {
 					mLetMap.put(vars[i], theory
 						.createFreshTermVariable("unlet", vars[i].getSort()));
 				} else {
-					if (mLetMap.containsKey(vars[i]))
+					if (mLetMap.containsKey(vars[i])) {
 						mLetMap.remove(vars[i]);
+					}
 				}
 			}
 			super.convert(term);
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (mType.mExpandDefinitions
 					&& appTerm.getFunction().getDefinition() != null) {
-				FunctionSymbol defed = appTerm.getFunction();
-				Term fakeLet = appTerm.getTheory().let(
+				final FunctionSymbol defed = appTerm.getFunction();
+				final Term fakeLet = appTerm.getTheory().let(
 						defed.getDefinitionVars(), appTerm.getParameters(),
 						defed.getDefinition());
 				pushTerm(fakeLet);
 				return;
 			}
 			super.convert(term);
-		} else
+		} else {
 			super.convert(term);
+		}
 	}
 
 	@Override
 	public void preConvertLet(LetTerm oldLet, Term[] newValues) {
 		mLetMap.beginScope();
-		TermVariable[] vars = oldLet.getVariables();
-		for (int i = 0; i < vars.length; i++)
+		final TermVariable[] vars = oldLet.getVariables();
+		for (int i = 0; i < vars.length; i++) {
 			mLetMap.put(vars[i], newValues[i]);
+		}
 		super.preConvertLet(oldLet, newValues);
 	}
 	
@@ -188,21 +192,22 @@ public class FormulaUnLet extends TermTransformer {
 	 */
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
-		TermVariable[] vars = old.getVariables();
+		final TermVariable[] vars = old.getVariables();
 		TermVariable[] newVars = vars;
 		for (int i = 0; i < vars.length; i++) {
-			Term newVar = mLetMap.get(vars[i]);
+			final Term newVar = mLetMap.get(vars[i]);
 			if (newVar != null) {
-				if (vars == newVars)
+				if (vars == newVars) {
 					newVars = vars.clone();
+				}
 				newVars[i] = (TermVariable) newVar; 
 			}
 		}
 		mLetMap.endScope();
-		if (vars == newVars && old.getSubformula() == newBody)
+		if (vars == newVars && old.getSubformula() == newBody) {
 			setResult(old);
-		else {
-			Theory theory = old.getTheory();
+		} else {
+			final Theory theory = old.getTheory();
 			setResult(old.getQuantifier() == QuantifiedFormula.EXISTS
 					? theory.exists(newVars, newBody)
 					: theory.forall(newVars, newBody));

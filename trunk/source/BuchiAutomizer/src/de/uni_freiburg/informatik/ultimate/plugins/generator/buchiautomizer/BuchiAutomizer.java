@@ -87,7 +87,7 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -130,8 +130,8 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	private boolean programContainsErrors(IResultService service) {
-		for (Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
-			for (IResult resul : entry.getValue()) {
+		for (final Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
+			for (final IResult resul : entry.getValue()) {
 				if (resul instanceof CounterExampleResult) {
 					return true;
 				}

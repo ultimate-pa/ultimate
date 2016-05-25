@@ -70,10 +70,11 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "ProgramPoint")
+		if (field == "ProgramPoint") {
 			return mProcedures;
-		else
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 	
 	@Override
@@ -84,14 +85,17 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	/**
 	 * @return the mAssertion
 	 */
+	@Override
 	public Term getFormula() {
 		return mFormula;
 	}
 	
+	@Override
 	public Term getClosedFormula() {
 		return mClosedFormula;
 	}
 
+	@Override
 	public Set<BoogieVar> getVars() {
 		return mVars;
 	}
@@ -108,6 +112,7 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 
 
 
+	@Override
 	public boolean isUnknown() {
 		return false;
 	}

@@ -98,7 +98,7 @@ public enum Logics {
 	private final int mFeatures;
 	
 	private Logics(int features) {
-		this.mFeatures = features;
+		mFeatures = features;
 	}
 
 	/**

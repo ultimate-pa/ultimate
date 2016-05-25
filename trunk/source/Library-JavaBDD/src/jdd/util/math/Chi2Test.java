@@ -1,7 +1,7 @@
 
 package jdd.util.math;
 
-import jdd.util.*;
+import jdd.util.Array;
 
 /**
  * \chi^2 random distribution test.
@@ -24,8 +24,9 @@ import jdd.util.*;
 
 public class Chi2Test {
 
-	private int n, samples_needed, samples_have;
-	private int [] distibution;
+	private final int n, samples_needed;
+	private int samples_have;
+	private final int [] distibution;
 	private boolean has_chi2;	//have we computed the values?
 	private double the_chi2, the_stddev; // when computed, the values are stored here
 
@@ -41,8 +42,8 @@ public class Chi2Test {
 	public Chi2Test(int n) {
 		// Test.check(n > 20, "n to small");
 		this.n = n;
-		this.samples_needed = 25 * n + 3; // Knuth said something about 5*n, but what does he knows?
-		this.distibution = new int[n];
+		samples_needed = 25 * n + 3; // Knuth said something about 5*n, but what does he knows?
+		distibution = new int[n];
 
 		reset();
 	}
@@ -83,7 +84,9 @@ public class Chi2Test {
 	 * get the chi2 value. do not call before more() has returned true!
 	 */
 	public double getChi2() {
-		if(!has_chi2) computeChi2();
+		if(!has_chi2) {
+			computeChi2();
+		}
 		return the_chi2;
 	}
 
@@ -91,7 +94,10 @@ public class Chi2Test {
 	 * get the standard deviation. do not call before more() has returned true!
 	 */
 	public double getStandardDeviation() {
-			if(!has_chi2) computeChi2(); // std-dev is computed in the same function as chi^2
+			if(!has_chi2)
+			 {
+				computeChi2(); // std-dev is computed in the same function as chi^2
+			}
 			return the_stddev;
 	}
 
@@ -115,12 +121,12 @@ public class Chi2Test {
 		the_stddev = (the_chi2 - n) / Math.sqrt(n);
 		*/
 
-		double p = (double) samples_have / n;
+		final double p = (double) samples_have / n;
 
 		// compute chi2:
 		the_chi2 = 0;
 		for(int i = 0; i < n; i++)  {
-			double t = distibution[i] - p;
+			final double t = distibution[i] - p;
 			the_chi2 += t *t ;
 		}
 
@@ -140,7 +146,7 @@ public class Chi2Test {
 	 * @return true if the current chi2 value is acceptable
 	 */
 	public boolean isChi2Acceptable() {
-		double c2 = getChi2();
+		final double c2 = getChi2();
 		return Math.abs(c2 - n) < (3.5 * Math.sqrt(n)); // should really be 3.0
 	}
 	/**
@@ -155,7 +161,7 @@ public class Chi2Test {
 	 * @return true if the current standard deviation is acceptable.
 	 */
 	public boolean isStandardDeviationAcceptable() {
-		double stddev = getStandardDeviation();
+		final double stddev = getStandardDeviation();
 		return Math.abs(stddev) < 3.5; // should actually be 3.0
 	}
 
@@ -179,19 +185,23 @@ public class Chi2Test {
 		// you will soon see that they truly suck :(
 
 
-		int max = Prime.nextPrime(1000);
+		final int max = Prime.nextPrime(1000);
 
 		// check Math.random()
-		Chi2Test  c2t = new Chi2Test(max);
-		while(c2t.more()) c2t.add( (int)( Math.random() * max) );
+		final Chi2Test  c2t = new Chi2Test(max);
+		while(c2t.more()) {
+			c2t.add( (int)( Math.random() * max) );
+		}
 		System.out.println("testing Math.random() * " + max );
 		System.out.println("chi2 ==> " + c2t.getChi2());
 		System.out.println("stddev==> " + c2t.getStandardDeviation());
 
 		// check java.util.Random.nextInt()
-		java.util.Random rnd = new java.util.Random();
+		final java.util.Random rnd = new java.util.Random();
 		c2t.reset();
-		while(c2t.more()) c2t.add( rnd.nextInt(max) );
+		while(c2t.more()) {
+			c2t.add( rnd.nextInt(max) );
+		}
 		System.out.println("\nesting java.util.Random.nextInt(" + max + ")");
 		System.out.println("chi2 ==> " + c2t.getChi2());
 		System.out.println("stddev==> " + c2t.getStandardDeviation());

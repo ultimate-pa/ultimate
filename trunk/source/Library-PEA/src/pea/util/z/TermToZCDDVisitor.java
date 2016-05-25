@@ -78,7 +78,7 @@ public class TermToZCDDVisitor extends TermToCDDVisitor {
      */
     @Override
     public CDD visitTerm(Term zedObject) {
-        StringWriter sw = new StringWriter();
+        final StringWriter sw = new StringWriter();
         PrintUtils.print(zedObject, sw, (SectionManager) sectionInfo,
                 ZWrapper.getSectionName(), Markup.UNICODE);
         return ZDecision.create(sw.toString());
@@ -90,20 +90,20 @@ public class TermToZCDDVisitor extends TermToCDDVisitor {
     @Override
     public CDD visitMemPred(MemPred pred) {
         if(pred.getRightExpr() instanceof RefExpr) {
-            RefExpr refExpr = (RefExpr)pred.getRightExpr();
-            ZName name = refExpr.getZName();
+            final RefExpr refExpr = (RefExpr)pred.getRightExpr();
+            final ZName name = refExpr.getZName();
             // We replace expressions like a != b + c with NOT(a = b + c)
             if(name.getOperatorName().getWord().equals(Z_NEQ_OPERATOR)) {
-                ZName newRefName = factory.createZName(
+                final ZName newRefName = factory.createZName(
                         Z_EQUALS_OPERATOR,
                         name.getStrokeList());
-                RefExpr newRefExpr = 
+                final RefExpr newRefExpr = 
                     factory.createRefExpr(newRefName, refExpr.getZExprList(), refExpr.getMixfix());
-                Pred newMemPred = factory.createMemPred(pred.getLeftExpr(), newRefExpr, pred.getMixfix());
+                final Pred newMemPred = factory.createMemPred(pred.getLeftExpr(), newRefExpr, pred.getMixfix());
                 return newMemPred.accept(this).negate();
             }
         }
-        return this.visitTerm(pred);
+        return visitTerm(pred);
     }
 
 

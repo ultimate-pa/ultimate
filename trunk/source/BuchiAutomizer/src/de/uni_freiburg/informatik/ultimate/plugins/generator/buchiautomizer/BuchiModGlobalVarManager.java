@@ -97,17 +97,17 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	
 	
 	private TransFormula constructOldVarsAssignment(String proc) {
-		TransFormula without = super.getOldVarsAssignment(proc);
+		final TransFormula without = super.getOldVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
-		Map<BoogieVar, TermVariable> inVars = 
+		final Map<BoogieVar, TermVariable> inVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		Map<BoogieVar, TermVariable> outVars = 
+		final Map<BoogieVar, TermVariable> outVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		Set<TermVariable> auxVars = without.getAuxVars();
-		Set<TermVariable> branchEncoders = without.getBranchEncoders();
+		final Set<TermVariable> auxVars = without.getAuxVars();
+		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
-		Infeasibility infeasibility = without.isInfeasible();
+		final Infeasibility infeasibility = without.isInfeasible();
 		assert infeasibility == Infeasibility.UNPROVEABLE;
 		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		inVars.put(mUnseeded, mUnseeded.getTermVariable());
@@ -119,26 +119,26 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
 			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 		}
-		Term closedFormula = TransFormula.computeClosedFormula(
+		final Term closedFormula = TransFormula.computeClosedFormula(
 				formula, inVars, outVars, auxVars, false, mBoogie2smt);
-		TransFormula result = new TransFormula(formula, inVars, outVars, 
+		final TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;
 	}
 	
 	
 	private TransFormula constructGlobalVarsAssignment(String proc) {
-		TransFormula without = super.getGlobalVarsAssignment(proc);
+		final TransFormula without = super.getGlobalVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
-		Map<BoogieVar, TermVariable> inVars = 
+		final Map<BoogieVar, TermVariable> inVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		Map<BoogieVar, TermVariable> outVars = 
+		final Map<BoogieVar, TermVariable> outVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		Set<TermVariable> auxVars = without.getAuxVars();
-		Set<TermVariable> branchEncoders = without.getBranchEncoders();
+		final Set<TermVariable> auxVars = without.getAuxVars();
+		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
-		Infeasibility infeasibility = without.isInfeasible();
+		final Infeasibility infeasibility = without.isInfeasible();
 		assert infeasibility == Infeasibility.UNPROVEABLE;
 		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		inVars.put(mUnseededOldVar, mUnseededOldVar.getTermVariable());
@@ -150,9 +150,9 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
 		}
-		Term closedFormula = TransFormula.computeClosedFormula(
+		final Term closedFormula = TransFormula.computeClosedFormula(
 				formula, inVars, outVars, auxVars, false, mBoogie2smt);
-		TransFormula result = new TransFormula(formula, inVars, outVars, 
+		final TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;
 	}
@@ -166,7 +166,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 
 	@Override
 	public Map<String, BoogieNonOldVar> getGlobals() {
-		HashMap<String, BoogieNonOldVar> result = 
+		final HashMap<String, BoogieNonOldVar> result = 
 				new HashMap<String, BoogieNonOldVar>(super.getGlobals());
 		for (int i=0; i<mOldRank.length; i++) {
 			result.put(mOldRank[i].getIdentifier(),mOldRank[i]);

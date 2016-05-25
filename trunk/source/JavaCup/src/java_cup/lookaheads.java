@@ -15,7 +15,7 @@ import java.util.Stack;
  *
  */
 public class lookaheads extends terminal_set {
-  private ArrayList<lookaheads> _listeners;
+  private final ArrayList<lookaheads> _listeners;
   
   public lookaheads(terminal_set t)
     {
@@ -42,16 +42,19 @@ public class lookaheads extends terminal_set {
       to all objects added by add_propagation().
       @param new_lookaheads  A set of new lookahead symbols.
    */
+  @Override
   public boolean add(terminal_set new_lookaheads)
     {
       if (!super.add(new_lookaheads))
-	return false;
+	{
+	    return false;
+	  }
       
-      Stack<lookaheads> work = new Stack<lookaheads>();
+      final Stack<lookaheads> work = new Stack<lookaheads>();
       work.addAll(_listeners);
       while (!work.isEmpty())
 	{
-	  lookaheads la = work.pop();
+	  final lookaheads la = work.pop();
 	  if (la.add_without_prop(new_lookaheads))
 	    {
 	      work.addAll(la._listeners);

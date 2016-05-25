@@ -95,7 +95,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 	@Override
 	public String toString() {
-		ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
+		final ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
 				new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}

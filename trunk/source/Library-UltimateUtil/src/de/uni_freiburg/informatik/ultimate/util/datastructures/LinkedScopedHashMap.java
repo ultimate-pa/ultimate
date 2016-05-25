@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
-import java.util.LinkedHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,9 +72,10 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	
 	private void recordUndo(K key, V value) {
 		if (mcurScope != -1) {
-			Map<K, V> old = undoMap();
-			if (!old.containsKey(key))
+			final Map<K, V> old = undoMap();
+			if (!old.containsKey(key)) {
 				old.put(key, value);
+			}
 		}
 	}
 
@@ -87,23 +88,26 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public void beginScope() {
-		if (mcurScope == mhistory.length - 1)
+		if (mcurScope == mhistory.length - 1) {
 			mhistory = ScopeUtils.grow(mhistory);
+		}
 		mhistory[++mcurScope] = new LinkedHashMap<K, V>();
 	}
 	
 	public void endScope() {
-		for (Entry<K, V> old : undoMap().entrySet()) {
+		for (final Entry<K, V> old : undoMap().entrySet()) {
 			undoEntry(old);
 		}
 		mhistory[mcurScope--] = null;
-		if (ScopeUtils.shouldShrink(mhistory))
+		if (ScopeUtils.shouldShrink(mhistory)) {
 			mhistory = ScopeUtils.shrink(mhistory);
+		}
 	}
 	
 	public Iterable<Map.Entry<K, V>> currentScopeEntries() {
-		if (mcurScope == -1)
+		if (mcurScope == -1) {
 			return entrySet();
+		}
 		return new AbstractSet<Map.Entry<K, V>>() {
 			@Override
 			public Iterator<Map.Entry<K, V>> iterator() {
@@ -153,8 +157,9 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public Iterable<K> currentScopeKeys() {
-		if (mcurScope == -1)
+		if (mcurScope == -1) {
 			return keySet();
+		}
 		return new AbstractSet<K>() {
 			@Override
 			public Iterator<K> iterator() {
@@ -189,8 +194,9 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public Iterable<V> currentScopeValues() {
-		if (mcurScope == -1)
+		if (mcurScope == -1) {
 			return values();
+		}
 		return new AbstractSet<V>() {
 			@Override
 			public Iterator<V> iterator() {
@@ -293,9 +299,10 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 	@Override
 	public V put(K key, V value) {
-		if (value == null)
+		if (value == null) {
 			throw new NullPointerException();
-		V oldval = mmap.put(key, value);
+		}
+		final V oldval = mmap.put(key, value);
 		recordUndo(key, oldval);
 		return oldval;
 	}
@@ -303,7 +310,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public V remove(Object key) {
-		V oldval = mmap.remove(key);
+		final V oldval = mmap.remove(key);
 		recordUndo((K) key, oldval);
 		return oldval;
 	}

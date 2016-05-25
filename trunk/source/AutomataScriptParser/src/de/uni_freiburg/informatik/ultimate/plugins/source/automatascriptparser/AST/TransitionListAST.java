@@ -71,26 +71,35 @@ public class TransitionListAST extends AtsASTNode {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
+			}
 			@SuppressWarnings("unchecked")
+			final
 			Pair<L, R> other = (Pair<L, R>) obj;
-			if (!getOuterType().equals(other.getOuterType()))
+			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
+			}
 			if (left == null) {
-				if (other.left != null)
+				if (other.left != null) {
 					return false;
-			} else if (!left.equals(other.left))
+				}
+			} else if (!left.equals(other.left)) {
 				return false;
+			}
 			if (right == null) {
-				if (other.right != null)
+				if (other.right != null) {
 					return false;
-			} else if (!right.equals(other.right))
+				}
+			} else if (!right.equals(other.right)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -110,9 +119,9 @@ public class TransitionListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 4468320445354864058L;
-	private Map<Pair<String, String> , Set<String>> mTransitions;
-	private Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
-	private List<PetriNetTransitionAST> mnetTransitions;
+	private final Map<Pair<String, String> , Set<String>> mTransitions;
+	private final Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
+	private final List<PetriNetTransitionAST> mnetTransitions;
 	
 	
 	public TransitionListAST(ILocation loc) {
@@ -130,13 +139,13 @@ public class TransitionListAST extends AtsASTNode {
 	 * @param toState
 	 */
 	public void addTransition(String fromState, String label, String toState) {
-		Pair<String, String> stateSymbolPair = new Pair<String, String>(fromState, label);
+		final Pair<String, String> stateSymbolPair = new Pair<String, String>(fromState, label);
 		if (mTransitions.containsKey(stateSymbolPair)) {
-			Set<String> succs = mTransitions.get(stateSymbolPair);
+			final Set<String> succs = mTransitions.get(stateSymbolPair);
 			succs.add(toState);
 			mTransitions.put(stateSymbolPair, succs);
 		} else {
-			Set<String> succs = new HashSet<String>();
+			final Set<String> succs = new HashSet<String>();
 			succs.add(toState);
 			mTransitions.put(stateSymbolPair, succs);
 		}
@@ -169,7 +178,7 @@ public class TransitionListAST extends AtsASTNode {
 	}
 	
 	public void addTransition(IdentifierListAST idList) {
-		List<String> ids = idList.getIdentifierList();
+		final List<String> ids = idList.getIdentifierList();
 		if (ids.size() == 3) {
 			addTransition(ids.get(0), ids.get(1), ids.get(2));
 		} else if (ids.size() == 4) {

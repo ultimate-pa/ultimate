@@ -54,7 +54,7 @@ public class RcfgLoopDetector<ACTION extends IElement, LOCATION> implements ILoo
 	public boolean isEnteringLoop(final ACTION transition) {
 		assert transition != null;
 //		final LOCATION source = mTransitionProvider.getSource(transition);
-		LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
+		final LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
 		return leannot != null;
 //		return mLoopLocations.contains(source);
 	}

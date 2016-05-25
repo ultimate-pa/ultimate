@@ -52,8 +52,8 @@ public class ConstantTerm extends Term {
 	
 	ConstantTerm(Object value, Sort sort, int hash) {
 		super(hash);
-		this.mValue = value;
-		this.mSort = sort;
+		mValue = value;
+		mSort = sort;
 	}
 	
 	/**
@@ -71,22 +71,26 @@ public class ConstantTerm extends Term {
 		return mValue;
 	}
 
+	@Override
 	public Sort getSort() {
 		return mSort;
 	}
 	
+	@Override
 	public String toString() {
 		if (mValue instanceof BigDecimal) {
-			BigDecimal decimal = (BigDecimal)mValue; 
-			String str = decimal.toPlainString();
+			final BigDecimal decimal = (BigDecimal)mValue; 
+			final String str = decimal.toPlainString();
 			return str;
 		}
-		if (mValue instanceof Rational)
+		if (mValue instanceof Rational) {
 			return getTheory().rational((Rational) mValue, getSort()).
 				toStringDirect();
+		}
 		return mValue.toString();
 	}
 	
+	@Override
 	public String toStringDirect() {
 		return toString();
 	}

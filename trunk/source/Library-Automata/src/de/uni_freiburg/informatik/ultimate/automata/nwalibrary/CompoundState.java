@@ -37,6 +37,7 @@ public class CompoundState<STATE> {
 		this.states = states;
 	}
 	
+	@Override
 	public String toString() {
 		return states.toString();
 	}
@@ -56,7 +57,7 @@ public class CompoundState<STATE> {
 	@Override
 	public int hashCode() {
 		int hc = 0;
-		for (STATE s : states) {
+		for (final STATE s : states) {
 			hc += HashUtils.hashJenkins(31, s);
 		}
 		return hc;

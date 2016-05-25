@@ -76,13 +76,14 @@ public class Event<S, C> implements Serializable {
 		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
 		this.mTransition = transition;
-		Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
+		final Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
 
-		Set<Event<S, C>> predecessorEvents = new HashSet<Event<S, C>>();
-		for (Condition<S, C> c : predecessors) {
-			Event<S, C> e = c.getPredecessorEvent();
-			if (predecessorEvents.contains(e))
+		final Set<Event<S, C>> predecessorEvents = new HashSet<Event<S, C>>();
+		for (final Condition<S, C> c : predecessors) {
+			final Event<S, C> e = c.getPredecessorEvent();
+			if (predecessorEvents.contains(e)) {
 				continue;
+			}
 			predecessorEvents.add(e);
 			// Collections.addAll(localConfiguration, e.mLocalConfiguration);
 			mLocalConfiguration.addAll(e.mLocalConfiguration);
@@ -92,10 +93,10 @@ public class Event<S, C> implements Serializable {
 		mLocalConfiguration.add(this);
 
 		this.mSuccessors = new HashSet<Condition<S, C>>();
-		for (Place<S, C> p : transition.getSuccessors()) {
+		for (final Place<S, C> p : transition.getSuccessors()) {
 			this.mSuccessors.add(new Condition<S, C>(this, p));
 		}
-		for (Event<S, C> a : mLocalConfiguration) {
+		for (final Event<S, C> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
 		}
 		conditionMarkSet.addAll(mSuccessors);
@@ -111,8 +112,8 @@ public class Event<S, C> implements Serializable {
 	 * @return
 	 */
 	public static <S, C> Set<Condition<S, C>> getDot(Set<Event<S, C>> events) {
-		HashSet<Condition<S, C>> result = new HashSet<Condition<S, C>>();
-		for (Event<S, C> e : events) {
+		final HashSet<Condition<S, C>> result = new HashSet<Condition<S, C>>();
+		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorConditions());
 		}
 		return result;
@@ -123,8 +124,8 @@ public class Event<S, C> implements Serializable {
 	 * the event
 	 */
 	public Set<Event<S, C>> getSuccessorEvents() {
-		HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (Condition<S, C> c : this.getSuccessorConditions()) {
+		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+		for (final Condition<S, C> c : this.getSuccessorConditions()) {
 			result.addAll(c.getSuccessorEvents());
 		}
 		return result;
@@ -139,8 +140,8 @@ public class Event<S, C> implements Serializable {
 	 */
 	public static <S, C> Set<Event<S, C>> getSuccessorEvents(
 			Set<Event<S, C>> events) {
-		HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (Event<S, C> e : events) {
+		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorEvents());
 		}
 		return result;
@@ -155,8 +156,8 @@ public class Event<S, C> implements Serializable {
 	 */
 	public static <S, C> Set<Event<S, C>> getPredecessorEvents(
 			Set<Event<S, C>> events) {
-		HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (Event<S, C> e : events) {
+		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+		for (final Event<S, C> e : events) {
 			result.addAll(e.getPredecessorEvents());
 		}
 		return result;
@@ -167,8 +168,8 @@ public class Event<S, C> implements Serializable {
 	 * of the event
 	 */
 	public Set<Event<S, C>> getPredecessorEvents() {
-		HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (Condition<S, C> c : this.getPredecessorConditions()) {
+		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+		for (final Condition<S, C> c : this.getPredecessorConditions()) {
 			result.add(c.getPredecessorEvent());
 		}
 		return result;
@@ -187,9 +188,10 @@ public class Event<S, C> implements Serializable {
 			Collection<Condition<S, C>> conditions,
 			Collection<Place<S, C>> places) {
 		places = new HashSet<Place<S, C>>(places);
-		for (Condition<S, C> c : conditions) {
-			if (!places.remove(c.getPlace()))
+		for (final Condition<S, C> c : conditions) {
+			if (!places.remove(c.getPlace())) {
 				return false;
+			}
 		}
 		return places.isEmpty();
 	}
@@ -204,12 +206,12 @@ public class Event<S, C> implements Serializable {
 		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
 		this.mMark = net.getInitialMarking();
-		Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
+		final Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
 		this.mConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
 		this.mPredecessors = new HashSet<Condition<S, C>>();
 		this.mSuccessors = new HashSet<Condition<S, C>>();
-		for (Place<S, C> p : mMark) {
-			Condition<S, C> c = new Condition<S, C>(this, p);
+		for (final Place<S, C> p : mMark) {
+			final Condition<S, C> c = new Condition<S, C>(this, p);
 			this.mSuccessors.add(c);
 			conditionMarkSet.add(c);
 		}
@@ -331,6 +333,7 @@ public class Event<S, C> implements Serializable {
 		return mTransition;
 	}
 
+	@Override
 	public String toString() {
 		return mHashCode + ":" + getTransition() + ","
 				+ mLocalConfiguration.size() + "A";

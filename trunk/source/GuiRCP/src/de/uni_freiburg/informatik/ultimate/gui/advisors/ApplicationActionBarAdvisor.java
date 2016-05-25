@@ -130,14 +130,14 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		fileMenu.add(new Separator());
 		fileMenu.add(mExitAction);
 
-		MenuManager settingsMenu = new MenuManager("&Settings", "settings");
+		final MenuManager settingsMenu = new MenuManager("&Settings", "settings");
 		settingsMenu.add(mPreferenceAction);
 		settingsMenu.add(new Separator());
 		settingsMenu.add(mLoadSettings);
 		settingsMenu.add(mSaveSettings);
 		settingsMenu.add(mResetSettings);
 
-		MenuManager helpMenu = new MenuManager("&Help", "help");
+		final MenuManager helpMenu = new MenuManager("&Help", "help");
 		helpMenu.add(mAboutAction);
 
 		menuBar.add(fileMenu);

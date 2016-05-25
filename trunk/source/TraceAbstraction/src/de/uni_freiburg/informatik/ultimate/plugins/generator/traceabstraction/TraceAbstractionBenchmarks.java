@@ -52,14 +52,14 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	}
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CFG has ");
 		sb.append(mProcedures);
 		sb.append(" procedures, ");

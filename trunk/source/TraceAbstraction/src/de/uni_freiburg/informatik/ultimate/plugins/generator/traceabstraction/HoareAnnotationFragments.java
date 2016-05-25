@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Store and maintain fragments of a Hoare Annotation derived during abstraction
@@ -117,7 +117,7 @@ public class HoareAnnotationFragments {
 	public void updateOnIntersection(
 			Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
-		Update update = new IntersectionUpdate(fst2snd2res);
+		final Update update = new IntersectionUpdate(fst2snd2res);
 		update(update, abstraction);
 	}
 
@@ -127,7 +127,7 @@ public class HoareAnnotationFragments {
 	 */
 	public void updateOnMinimization(Map<IPredicate, IPredicate> old2New,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
-		Update update = new MinimizationUpdate(old2New);
+		final Update update = new MinimizationUpdate(old2New);
 		update(update, abstraction);
 	}
 
@@ -140,17 +140,17 @@ public class HoareAnnotationFragments {
 	 * deckers that have been removed by a dead end removal.
 	 */
 	private void update(Update update, INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
-		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
+		final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
 		mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
-		for (Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
+		for (final Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
 				.entrySet()) {
-			IPredicate oldContext = contextHrPair.getKey();
-			List<IPredicate> newContexts = update.getNewPredicates(oldContext);
+			final IPredicate oldContext = contextHrPair.getKey();
+			final List<IPredicate> newContexts = update.getNewPredicates(oldContext);
 			if (newContexts == null) {
 				assert !mDeadContexts2ProgPoint2Preds.containsKey(oldContext);
 				mDeadContexts2ProgPoint2Preds.put(oldContext, contextHrPair.getValue());
 			} else {
-				IPredicate oldEntry = mContext2Entry.get(oldContext);
+				final IPredicate oldEntry = mContext2Entry.get(oldContext);
 				mContext2Entry.remove(oldContext);
 				for (int i = 0; i < newContexts.size(); i++) {
 					final HashRelation<ProgramPoint, IPredicate> hr;
@@ -163,7 +163,7 @@ public class HoareAnnotationFragments {
 						hr.addAll(contextHrPair.getValue());
 					}
 					mLiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
-					IPredicate entry = getEntry(newAbstraction, newContexts.get(i));
+					final IPredicate entry = getEntry(newAbstraction, newContexts.get(i));
 					if (entry == null) {
 						mContext2Entry.put(newContexts.get(i), oldEntry);
 					} else {
@@ -179,12 +179,12 @@ public class HoareAnnotationFragments {
 	 * is no call successor. Throw exception if call successor is not unique.
 	 */
 	private IPredicate getEntry(INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, IPredicate newContext) {
-		Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> it = abstraction.callSuccessors(newContext).iterator();
+		final Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> it = abstraction.callSuccessors(newContext).iterator();
 		if (!it.hasNext()) {
 			return null;
 		} else {
-			OutgoingCallTransition<CodeBlock, IPredicate> outCall = it.next();
-			IPredicate newEntry = outCall.getSucc();
+			final OutgoingCallTransition<CodeBlock, IPredicate> outCall = it.next();
+			final IPredicate newEntry = outCall.getSucc();
 			if (it.hasNext()) {
 				throw new UnsupportedOperationException(
 						"Unable to compute Hoare annotation if state has several outgoging calls");
@@ -216,12 +216,12 @@ public class HoareAnnotationFragments {
 
 		@Override
 		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
-			Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> mapping = mFst2snd2res.get(oldPredicate);
+			final Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> mapping = mFst2snd2res.get(oldPredicate);
 			if (mapping == null) {
 				return null;
 			} else {
-				List<IPredicate> result = new ArrayList<IPredicate>();
-				for (Entry<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> entry : mapping.entrySet()) {
+				final List<IPredicate> result = new ArrayList<IPredicate>();
+				for (final Entry<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> entry : mapping.entrySet()) {
 					result.add(entry.getValue().getRes());
 				}
 				return result;
@@ -240,18 +240,18 @@ public class HoareAnnotationFragments {
 
 		@Override
 		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
-			IPredicate newPredicate = mOld2New.get(oldPredicate);
+			final IPredicate newPredicate = mOld2New.get(oldPredicate);
 			if (newPredicate == null) {
 				return null;
 			} else {
-				List<IPredicate> result = Collections.singletonList(newPredicate);
+				final List<IPredicate> result = Collections.singletonList(newPredicate);
 				return result;
 			}
 		}
 	}
 
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
-		ProgramPoint pp = getProgramPoint(up);
+		final ProgramPoint pp = getProgramPoint(up);
 		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
 				!mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
@@ -292,8 +292,8 @@ public class HoareAnnotationFragments {
 	 */
 	public void addDeadEndDoubleDeckers(IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> op)
 			throws AutomataOperationCanceledException {
-		IPredicate emtpyStack = op.getResult().getEmptyStackState();
-		for (UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {
+		final IPredicate emtpyStack = op.getResult().getEmptyStackState();
+		for (final UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {
 			addDoubleDecker(upDownEntry.getDown(), upDownEntry.getUp(), emtpyStack);
 			if (upDownEntry.getEntry() != null) {
 				addContextEntryPair(upDownEntry.getDown(), upDownEntry.getEntry());

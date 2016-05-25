@@ -1,9 +1,14 @@
 package jdd.bdd;
 
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
-import jdd.util.*;
+import jdd.util.Allocator;
+import jdd.util.Dot;
+import jdd.util.JDDConsole;
+import jdd.util.NodeName;
 
 /** Printer class for BDD trees */
 
@@ -28,8 +33,12 @@ public class BDDPrinter {
 
 
 	private static final void print_unmark(int bdd) { // cleans up the marking
-		if(bdd == 0 || bdd == 1) return;
-		if(! nt.isNodeMarked(bdd)) return;
+		if(bdd == 0 || bdd == 1) {
+			return;
+		}
+		if(! nt.isNodeMarked(bdd)) {
+			return;
+		}
 		// if( (v[bdd] & NODE_MARK) == 0)  return;
 		nt.unmark_node(bdd);
 		// v[bdd] &= NODE_MASK;
@@ -49,9 +58,13 @@ public class BDDPrinter {
 		helpGC();
 	}
 	public static void print_rec(int i) {
-		if(i < 2) return;
+		if(i < 2) {
+			return;
+		}
 		// if( (v[i] & NODE_MARK) != 0) return;
-		if( nt.isNodeMarked(i)) return;
+		if( nt.isNodeMarked(i)) {
+			return;
+		}
 		JDDConsole.out.println("" + i + "\t" + nt.getVar(i) + "\t" + nt.getLow(i) + "\t" + nt.getHigh(i) );
 		nt.mark_node(i);
 		print_rec(nt.getLow(i));
@@ -76,14 +89,18 @@ public class BDDPrinter {
 
 			printDot_rec(bdd);
 
-			if(had_0)	ps.println("0 [shape=box, label=\"" + nn.zeroShort() + "\", style=filled, shape=box, height=0.3, width=0.3];");
-			if(had_1) ps.println("1 [shape=box, label=\"" + nn.oneShort() + "\", style=filled, shape=box, height=0.3, width=0.3];\n");
+			if(had_0) {
+				ps.println("0 [shape=box, label=\"" + nn.zeroShort() + "\", style=filled, shape=box, height=0.3, width=0.3];");
+			}
+			if(had_1) {
+				ps.println("1 [shape=box, label=\"" + nn.oneShort() + "\", style=filled, shape=box, height=0.3, width=0.3];\n");
+			}
 			ps.println("}\n");
 			print_unmark(bdd);
 			ps.close();
 			Dot.showDot(filename);
 			helpGC();
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("BDDPrinter.printDOT failed: " + exx);
 		}
 	}
@@ -93,11 +110,13 @@ public class BDDPrinter {
 		if(bdd == 1)  { had_1 = true; return; }
 
 		// if( (v[bdd] & NODE_MARK) != 0) return;
-		if( nt.isNodeMarked(bdd)) return;
+		if( nt.isNodeMarked(bdd)) {
+			return;
+		}
 
-		int low = nt.getLow(bdd);
-		int high = nt.getHigh(bdd);
-		int var = nt.getVar(bdd);
+		final int low = nt.getLow(bdd);
+		final int high = nt.getHigh(bdd);
+		final int var = nt.getVar(bdd);
 
 		// v[bdd] |= NODE_MARK;
 		nt.mark_node(bdd);
@@ -113,12 +132,16 @@ public class BDDPrinter {
 	public static void printSet(int bdd, int max, NodeTable nt, NodeName nn)  {
 
 		if( bdd < 2) {
-			if(nn != null)  JDDConsole.out.println( (bdd == 0) ? nn.zero() : nn.one() );
-			else JDDConsole.out.println( (bdd == 0) ? "FALSE" : "TRUE");
+			if(nn != null) {
+				JDDConsole.out.println( (bdd == 0) ? nn.zero() : nn.one() );
+			} else {
+				JDDConsole.out.println( (bdd == 0) ? "FALSE" : "TRUE");
+			}
 		} else {
 
-			if(BDDPrinter.set_chars == null || BDDPrinter.set_chars.length < max)
+			if(BDDPrinter.set_chars == null || BDDPrinter.set_chars.length < max) {
 				BDDPrinter.set_chars = Allocator.allocateCharArray(max);
+			}
 			BDDPrinter.set_chars_len = max;
 			BDDPrinter.nt = nt;
 			BDDPrinter.nn = nn;
@@ -132,27 +155,30 @@ public class BDDPrinter {
 
 		if(level == set_chars_len) {
 			if(nn == null) {
-				for(int i = 0; i < set_chars_len; i++)
+				for(int i = 0; i < set_chars_len; i++) {
 					JDDConsole.out.print(set_chars[i]);
+				}
 			} else {
-				for(int i = 0; i < set_chars_len; i++)
-					if(set_chars[i] == '1')
+				for(int i = 0; i < set_chars_len; i++) {
+					if(set_chars[i] == '1') {
 						JDDConsole.out.print(" " + nn.variable(i));
+					}
+				}
 			}
 
 			JDDConsole.out.println();
 			return;
 		}
 
-		int var = nt.getVar(bdd);
+		final int var = nt.getVar(bdd);
 		if(var > level || bdd == 1 ) {
 			set_chars[level] = '-';
 			printSet_rec(bdd, level+1);
 			return;
 		}
 
-		int low = nt.getLow(bdd);
-		int high = nt.getHigh(bdd);
+		final int low = nt.getLow(bdd);
+		final int high = nt.getHigh(bdd);
 
 		if(low != 0) {
 			set_chars[level] = '0';

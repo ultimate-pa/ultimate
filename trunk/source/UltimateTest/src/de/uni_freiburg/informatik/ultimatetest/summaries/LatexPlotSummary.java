@@ -71,14 +71,14 @@ public class LatexPlotSummary extends LatexSummary {
 
 	private void makeTables(StringBuilder sb, PartitionedResults results) {
 
-		Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
+		final Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
 			}
 		});
 
-		String br = CoreUtil.getPlatformLineSeparator();
+		final String br = CoreUtil.getPlatformLineSeparator();
 
 		appendPreamble(sb, br);
 		// appendLatexFigureBegin(sb, br);
@@ -104,7 +104,7 @@ public class LatexPlotSummary extends LatexSummary {
 			sb.append("  \\header{Count}&").append(br);
 
 			int i = 0;
-			for (ColumnDefinition cd : mColumnDefinitions) {
+			for (final ColumnDefinition cd : mColumnDefinitions) {
 				if (cd.getLatexTableTitle() == null) {
 					continue;
 				}
@@ -124,7 +124,7 @@ public class LatexPlotSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(
+			final PartitionedResults resultsPerTool = partitionResults(
 					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {

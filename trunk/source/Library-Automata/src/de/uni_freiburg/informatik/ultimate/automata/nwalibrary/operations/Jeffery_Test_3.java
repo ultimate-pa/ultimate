@@ -78,7 +78,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			
 		case 1:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC1.addSubtrahend(b.get(i));
 			}
@@ -112,7 +112,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 2:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC2.addSubtrahend(b.get(i));
 			}
@@ -148,7 +148,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 3:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck3<LETTER,STATE> IIC3 = (new IncrementalInclusionCheck3<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck3<LETTER,STATE> IIC3 = (new IncrementalInclusionCheck3<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC3.addSubtrahend(b.get(i));
 			}
@@ -184,7 +184,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 4:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck4<LETTER,STATE> IIC4 = (new IncrementalInclusionCheck4<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC4.addSubtrahend(b.get(i));
 			}
@@ -220,7 +220,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 5:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck5<LETTER,STATE> IIC5 = (new IncrementalInclusionCheck5<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck5<LETTER,STATE> IIC5 = (new IncrementalInclusionCheck5<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC5.addSubtrahend(b.get(i));
 			}
@@ -256,7 +256,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 32:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck3_2<LETTER,STATE> IIC3_2 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck3_2<LETTER,STATE> IIC3_2 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC3_2.addSubtrahend(b.get(i));
 			}
@@ -292,7 +292,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 42:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck4_2<LETTER,STATE> IIC4_2 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck4_2<LETTER,STATE> IIC4_2 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC4_2.addSubtrahend(b.get(i));
 			}
@@ -328,7 +328,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			break;
 		case 52:
 			timeBuffer = (new Date()).getTime();
-			IncrementalInclusionCheck5_2<LETTER,STATE> IIC5_2 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			final IncrementalInclusionCheck5_2<LETTER,STATE> IIC5_2 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC5_2.addSubtrahend(b.get(i));
 			}
@@ -383,7 +383,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
 	@Override
 	public String getResult(){
-		String log = "\r\nTrue cases: avg Nodes generated:"+trueAvgNodeGenerated+" avg Nodes in the end:"+trueAvgNodeInTheEnd+" avgRuns:"+trueAvgRun+" Total test:"+trueTestNum+" avg Time:"+trueAvgTime+
+		final String log = "\r\nTrue cases: avg Nodes generated:"+trueAvgNodeGenerated+" avg Nodes in the end:"+trueAvgNodeInTheEnd+" avgRuns:"+trueAvgRun+" Total test:"+trueTestNum+" avg Time:"+trueAvgTime+
 				"\r\nFalse cases: avg Nodes generated:"+falseAvgNodeGenerated+" avg Nodes in the end:"+falseAvgNodeInTheEnd+" avgRuns:"+falseAvgRun+" Total test:"+falseTestNum+" avg Time:"+falseAvgTime;
 		return log;
 	}
@@ -391,6 +391,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		return "Jeffery_Test_3_result:"+automataCollection.size();
 	}*/
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;

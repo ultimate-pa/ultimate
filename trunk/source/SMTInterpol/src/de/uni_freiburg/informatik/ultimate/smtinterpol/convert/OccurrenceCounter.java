@@ -37,10 +37,12 @@ public class OccurrenceCounter extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, SMTAffineTerm term) {
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
-			if (++term.mTmpCtr == 1)
-				for (Term t : term.getSummands().keySet())
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
+			if (++term.mTmpCtr == 1) {
+				for (final Term t : term.getSummands().keySet()) {
 					occ.enqueueWalker(new CountWalker(t));
+				}
+			}
 		}
 
 		@Override
@@ -56,10 +58,12 @@ public class OccurrenceCounter extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
-			if (++term.mTmpCtr == 1)
-				for (Term t : term.getParameters())
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
+			if (++term.mTmpCtr == 1) {
+				for (final Term t : term.getParameters()) {
 					occ.enqueueWalker(new CountWalker(t));
+				}
+			}
 		}
 
 		@Override
@@ -70,9 +74,10 @@ public class OccurrenceCounter extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
 			// TODO Do we really want to descent into quantified formulas???
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
-			if (++term.mTmpCtr == 1)
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
+			if (++term.mTmpCtr == 1) {
 				occ.enqueueWalker(new CountWalker(term.getSubformula()));
+			}
 		}
 
 		@Override
@@ -90,10 +95,11 @@ public class OccurrenceCounter extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, SMTAffineTerm term) {
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (term.mTmpCtr != 0) {
-				for (Term t : term.getSummands().keySet())
+				for (final Term t : term.getSummands().keySet()) {
 					occ.enqueueWalker(new ResetWalker(t));
+				}
 				term.mTmpCtr = 0;
 			}
 		}
@@ -111,10 +117,11 @@ public class OccurrenceCounter extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (term.mTmpCtr != 0) {
-				for (Term t : term.getParameters())
+				for (final Term t : term.getParameters()) {
 					occ.enqueueWalker(new ResetWalker(t));
+				}
 				term.mTmpCtr = 0;
 			}
 		}
@@ -127,7 +134,7 @@ public class OccurrenceCounter extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
 			// TODO Do we really want to descent into quantified formulas???
-			OccurrenceCounter occ = (OccurrenceCounter) walker;
+			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (term.mTmpCtr != 0) {
 				occ.enqueueWalker(new ResetWalker(term.getSubformula()));
 				term.mTmpCtr = 0;

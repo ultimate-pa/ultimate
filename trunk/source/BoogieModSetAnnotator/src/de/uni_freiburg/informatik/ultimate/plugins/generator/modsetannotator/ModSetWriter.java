@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class ModSetWriter implements IUnmanagedObserver {
 	private boolean mPerformedChanges = false;
-	private ILogger mLogger;
+	private final ILogger mLogger;
 	private Map<String, Set<String>> mModifies;
-	private ModSetAnalyzer mAnalyzer;
+	private final ModSetAnalyzer mAnalyzer;
 
 	public ModSetWriter(ModSetAnalyzer analyzer,
 			IUltimateServiceProvider services) {
@@ -74,13 +74,13 @@ public class ModSetWriter implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			Declaration[] declarations = unit.getDeclarations();
+			final Unit unit = (Unit) root;
+			final Declaration[] declarations = unit.getDeclarations();
 			for (int i = 0; i < declarations.length; i++) {
-				Declaration d = declarations[i];
+				final Declaration d = declarations[i];
 				if (d instanceof Procedure) {
-					Procedure proc = (Procedure) d;
-					Procedure newProc = processProcedure(proc);
+					final Procedure proc = (Procedure) d;
+					final Procedure newProc = processProcedure(proc);
 					if (newProc != proc) {
 						// Replace the declaration if it was modified
 						declarations[i] = newProc;
@@ -99,13 +99,13 @@ public class ModSetWriter implements IUnmanagedObserver {
 	 * @return
 	 */
 	protected Procedure processProcedure(Procedure proc) {
-		Set<String> modifiesSet = mModifies.get(proc.getIdentifier());
+		final Set<String> modifiesSet = mModifies.get(proc.getIdentifier());
 		// Only process if there is work to do and it is a procedure declaration
 		if (modifiesSet != null && proc.getSpecification() != null) {
 			// Look for the modifies clause if it exists
 			int modSpecPosition = -1;
 			VariableLHS[] modifiesArray = null;
-			Specification[] specs = proc.getSpecification();
+			final Specification[] specs = proc.getSpecification();
 
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof ModifiesSpecification) {
@@ -116,10 +116,10 @@ public class ModSetWriter implements IUnmanagedObserver {
 				}
 			}
 
-			Set<VariableLHS> newModifiesSet = new HashSet<VariableLHS>();
+			final Set<VariableLHS> newModifiesSet = new HashSet<VariableLHS>();
 
 			if (modifiesArray != null) {
-				for (VariableLHS var : modifiesArray) {
+				for (final VariableLHS var : modifiesArray) {
 					newModifiesSet.add(var);
 					modifiesSet.remove(var.getIdentifier());
 				}
@@ -129,12 +129,12 @@ public class ModSetWriter implements IUnmanagedObserver {
 				// New variables will be added to the modify clause
 				mPerformedChanges = true;
 
-				for (String var : modifiesSet) {
-					VariableLHS newModVar = new VariableLHS(null, var);
+				for (final String var : modifiesSet) {
+					final VariableLHS newModVar = new VariableLHS(null, var);
 					newModifiesSet.add(newModVar);
 				}
 
-				ModifiesSpecification newModifies = new ModifiesSpecification(
+				final ModifiesSpecification newModifies = new ModifiesSpecification(
 						proc.getLocation(), false,
 						newModifiesSet.toArray(new VariableLHS[newModifiesSet
 								.size()]));
@@ -142,11 +142,11 @@ public class ModSetWriter implements IUnmanagedObserver {
 				if (modSpecPosition != -1) { // Do the modification in-place
 					specs[modSpecPosition] = newModifies;
 				} else { // We need a new declaration
-					Specification[] newSpec = Arrays.copyOf(specs,
+					final Specification[] newSpec = Arrays.copyOf(specs,
 							specs.length + 1);
 					newSpec[specs.length] = newModifies;
 
-					Procedure newDecl = new Procedure(proc.getLocation(),
+					final Procedure newDecl = new Procedure(proc.getLocation(),
 							proc.getAttributes(), proc.getIdentifier(),
 							proc.getTypeParams(), proc.getInParams(),
 							proc.getOutParams(), newSpec, proc.getBody());

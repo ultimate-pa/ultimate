@@ -1,10 +1,11 @@
 
 package jdd.util.jre;
 
-import jdd.util.*;
-import jdd.util.math.*;
+import java.util.Date;
+import java.util.Properties;
 
-import java.util.*;
+import jdd.util.JDDConsole;
+import jdd.util.math.Digits;
 
 
 /**
@@ -23,12 +24,14 @@ public class JREInfo {
 
 	/** print out some info about the system and JVM etc. */
 	public static void show() {
-		Properties prop = System.getProperties();
+		final Properties prop = System.getProperties();
             
 		JDDConsole.out.println("Using JDD build " + jdd.Version.build +" on " + (new Date()).toString() + "\n");
 		JDDConsole.out.print("Using " + prop.getProperty("java.vendor") + " JRE " + prop.getProperty("java.version"));
-		String jit = prop.getProperty("java.compiler");
-		if(jit != null)  JDDConsole.out.print(", " + jit +  " JIT in");
+		final String jit = prop.getProperty("java.compiler");
+		if(jit != null) {
+			JDDConsole.out.print(", " + jit +  " JIT in");
+		}
 		JDDConsole.out.println(" "+ prop.getProperty("java.vm.name") );
 
 		JDDConsole.out.println("OS " + prop.getProperty("os.name") + " on " + rt.availableProcessors() + " " + prop.getProperty("os.arch") + " CPU(s)");

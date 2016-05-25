@@ -103,7 +103,7 @@ public final class Quin<E1, E2, E3, E4, E5> {
 		if (!(obj instanceof Quin)) {
 			return false;
 		}
-		Quin<?, ?, ?, ?, ?> other = (Quin<?, ?, ?, ?, ?>) obj;
+		final Quin<?, ?, ?, ?, ?> other = (Quin<?, ?, ?, ?, ?>) obj;
 		if (mFifth == null) {
 			if (other.mFifth != null) {
 				return false;

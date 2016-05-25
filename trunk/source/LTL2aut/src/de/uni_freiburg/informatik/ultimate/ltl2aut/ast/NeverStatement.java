@@ -36,10 +36,12 @@ public class NeverStatement extends AstNode {
 		this.addOutgoing(child);
 	}
 
+	@Override
 	public String toString(){
 		String children = "";
-		for(AstNode node: this.getOutgoingNodes())
+		for(final AstNode node: getOutgoingNodes()) {
 			children += node.toString();
+		}
 		return "never {\n"+ children  +"}";
 	}
 	

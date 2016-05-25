@@ -73,7 +73,7 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
-		String[] directories = {
+		final String[] directories = {
 			"examples/svcomp/memsafety/",
 			"examples/svcomp/memsafety-ext/",
 			"examples/svcomp/list-ext-properties/",

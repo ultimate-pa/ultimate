@@ -66,29 +66,29 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	public Collection<IPredicate> divisibilityPredicates(Collection<IPredicate> preds) {
-		Map<BoogieVar, Integer> offsetVar2size = new HashMap<>();
-		List<IPredicate> result = new ArrayList<IPredicate>();
-		for (IPredicate pred : preds) {
-			for (BoogieVar bv : pred.getVars()) {
+		final Map<BoogieVar, Integer> offsetVar2size = new HashMap<>();
+		final List<IPredicate> result = new ArrayList<IPredicate>();
+		for (final IPredicate pred : preds) {
+			for (final BoogieVar bv : pred.getVars()) {
 				if (isOffsetVar(bv)) {
-					int size = getSize(bv);
-					Integer oldValue = offsetVar2size.put(bv, size);
+					final int size = getSize(bv);
+					final Integer oldValue = offsetVar2size.put(bv, size);
 					assert oldValue == null || oldValue == size;
 				}
 			}
-			List<MultiDimensionalSelect> mdsList = MultiDimensionalSelect.extractSelectDeep(pred.getFormula(), false);
-			for (MultiDimensionalSelect mds : mdsList) {
+			final List<MultiDimensionalSelect> mdsList = MultiDimensionalSelect.extractSelectDeep(pred.getFormula(), false);
+			for (final MultiDimensionalSelect mds : mdsList) {
 				if (isLengthArray(mds.getArray())) {
-					Term term = getDivisibilityTerm(mds.getSelectTerm(), Integer.valueOf(4));
-					IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
+					final Term term = getDivisibilityTerm(mds.getSelectTerm(), Integer.valueOf(4));
+					final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 					result.add(unified);
 				}
 			}
 			
 		}
-		for (Entry<BoogieVar, Integer> entry  : offsetVar2size.entrySet()) {
-			Term term = getDivisibilityTerm(entry.getKey().getTermVariable(), entry.getValue());
-			IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
+		for (final Entry<BoogieVar, Integer> entry  : offsetVar2size.entrySet()) {
+			final Term term = getDivisibilityTerm(entry.getKey().getTermVariable(), entry.getValue());
+			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 			result.add(unified);
 		}
 		return result;
@@ -108,7 +108,7 @@ public class DivisibilityPredicateGenerator {
 	
 	private boolean isLengthArray(Term term) {
 		if (term instanceof TermVariable) {
-			TermVariable tv = (TermVariable) term;
+			final TermVariable tv = (TermVariable) term;
 			if (tv.toString().contains("#length")) {
 				return true;
 			} else {
@@ -120,9 +120,9 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	private Term getDivisibilityTerm(Term term, Integer value) {
-		Term divisor = mScript.numeral(BigInteger.valueOf(value));
-		Term zero = mScript.numeral(BigInteger.ZERO);
-		Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero); 
+		final Term divisor = mScript.numeral(BigInteger.valueOf(value));
+		final Term zero = mScript.numeral(BigInteger.ZERO);
+		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero); 
 		return divisible;
 	}
 

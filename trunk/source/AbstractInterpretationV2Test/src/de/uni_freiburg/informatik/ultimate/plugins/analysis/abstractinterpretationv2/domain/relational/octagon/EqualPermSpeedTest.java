@@ -6,7 +6,7 @@ public class EqualPermSpeedTest {
 		final int vars = 12;
 		final int cycles = 10000000;
 		
-		int[] map = new int[vars];
+		final int[] map = new int[vars];
 		for (int i = 0; i < vars; ++i) {
 			map[i] = i;
 		}
@@ -14,8 +14,8 @@ public class EqualPermSpeedTest {
 		long t1 = 0;
 		long t2 = 0;
 		for (int i = 0; i < cycles; ++i) {
-			OctMatrix a = OctMatrix.random(vars);
-			OctMatrix b = a.copy();
+			final OctMatrix a = OctMatrix.random(vars);
+			final OctMatrix b = a.copy();
 			long t;
 
 			t = System.nanoTime();
@@ -26,7 +26,7 @@ public class EqualPermSpeedTest {
 			a.isEqualToPermutation(b, map);
 			t2 += System.nanoTime() - t;
 		}
-		String format = "%15s: %8.2fs%n";
+		final String format = "%15s: %8.2fs%n";
 		System.out.format(format + format, "direct", t1*1e-9, "permutation", t2*1e-9);
 		
 		// result: isEqualToPermutation takes approx. 4.8 times longer (without creation of mapping)!

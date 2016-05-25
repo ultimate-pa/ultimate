@@ -48,14 +48,14 @@ public class AutomataOperationBenchmark implements ICsvProviderProvider<Object> 
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
-		List<Object> firstRow = new ArrayList<>(mKeyValueMap.size());
-		for (Entry<String, Object> entry : mKeyValueMap.entrySet()) {
+		final List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
+		final List<Object> firstRow = new ArrayList<>(mKeyValueMap.size());
+		for (final Entry<String, Object> entry : mKeyValueMap.entrySet()) {
 			columnTitles.add(entry.getKey());
 			firstRow.add(entry.getValue());
 			
 		}
-		SimpleCsvProvider<Object> result = new SimpleCsvProvider<>(columnTitles);
+		final SimpleCsvProvider<Object> result = new SimpleCsvProvider<>(columnTitles);
 		result.addRow(firstRow);
 		return result;
 	}

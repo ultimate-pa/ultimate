@@ -65,7 +65,7 @@ public final class LinearPatternBase {
 	public LinearPatternBase(final Script solver,
 			final Collection<RankVar> variables, final String prefix,
 			boolean strict) {
-		this.function = new AffineFunctionGenerator(solver, variables, prefix);
+		function = new AffineFunctionGenerator(solver, variables, prefix);
 		this.strict = strict;
 	}
 

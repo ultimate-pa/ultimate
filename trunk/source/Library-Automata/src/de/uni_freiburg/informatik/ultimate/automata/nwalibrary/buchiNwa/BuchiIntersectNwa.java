@@ -115,10 +115,10 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 
 
 	private Set<STATE> constructInitialState() {
-		Set<STATE> initialStates = new HashSet<STATE>();
-		for (STATE fst : mFstOperand.getInitialStates()) {
-			for (STATE snd : mSndOperand.getInitialStates()) {
-				STATE init = getOrConstructStateOnTrack1(fst,snd);
+		final Set<STATE> initialStates = new HashSet<STATE>();
+		for (final STATE fst : mFstOperand.getInitialStates()) {
+			for (final STATE snd : mSndOperand.getInitialStates()) {
+				final STATE init = getOrConstructStateOnTrack1(fst,snd);
 				initialStates.add(init);
 			}
 		}
@@ -133,8 +133,8 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		}
 		ProductState prod = snd2res.get(snd);
 		if (prod == null) {
-			STATE res = mStateFactory.intersectBuchi(fst, snd, 1);
-			boolean isFinal = mFstOperand.isFinal(fst);
+			final STATE res = mStateFactory.intersectBuchi(fst, snd, 1);
+			final boolean isFinal = mFstOperand.isFinal(fst);
 			prod = new ProductState(fst, snd, (byte) 1, res, isFinal);
 			snd2res.put(snd, prod);
 			mres2prod.put(res, prod);
@@ -150,7 +150,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		}
 		ProductState prod = snd2res.get(snd);
 		if (prod == null) {
-			STATE res = mStateFactory.intersectBuchi(fst, snd, 2);
+			final STATE res = mStateFactory.intersectBuchi(fst, snd, 2);
 			prod = new ProductState(fst, snd, (byte) 2, res, false);
 			snd2res.put(snd, prod);
 			mres2prod.put(res, prod);
@@ -228,19 +228,19 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		STATE fst = mres2prod.get(state).getFst(); 
+		final STATE fst = mres2prod.get(state).getFst(); 
 		return mFstOperand.lettersInternal(fst);
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		STATE fst = mres2prod.get(state).getFst(); 
+		final STATE fst = mres2prod.get(state).getFst(); 
 		return mFstOperand.lettersCall(fst);
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		STATE fst = mres2prod.get(state).getFst(); 
+		final STATE fst = mres2prod.get(state).getFst(); 
 		return mFstOperand.lettersReturn(fst);
 	}
 
@@ -248,14 +248,14 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		ProductState prod = mres2prod.get(state);
+		final ProductState prod = mres2prod.get(state);
 		return internalSuccessors(mFstOperand.internalSuccessors(prod.getFst(),letter), prod);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		ProductState prod = mres2prod.get(state);
+		final ProductState prod = mres2prod.get(state);
 		return internalSuccessors(mFstOperand.internalSuccessors(prod.getFst()), prod);
 	}
 
@@ -263,15 +263,15 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			Iterable<OutgoingInternalTransition<LETTER, STATE>> fstInternalSuccs,
 			ProductState prod) {
-		Collection<OutgoingInternalTransition<LETTER, STATE>> result = 
+		final Collection<OutgoingInternalTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
-		for (OutgoingInternalTransition<LETTER, STATE> fstTrans : fstInternalSuccs) {
-			LETTER letter = fstTrans.getLetter();
-			for (OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndOperand.internalSuccessors(prod.getSnd(), letter)) {
-				STATE fstSucc = fstTrans.getSucc();
-				STATE sndSucc = sndTrans.getSucc();
+		for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : fstInternalSuccs) {
+			final LETTER letter = fstTrans.getLetter();
+			for (final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndOperand.internalSuccessors(prod.getSnd(), letter)) {
+				final STATE fstSucc = fstTrans.getSucc();
+				final STATE sndSucc = sndTrans.getSucc();
 				STATE resSucc;
-				byte succTrack = getSuccTrack(prod); 
+				final byte succTrack = getSuccTrack(prod); 
 				if (succTrack == 1) {
 					resSucc = getOrConstructStateOnTrack1(fstSucc, sndSucc);
 				} else {
@@ -290,14 +290,14 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		ProductState prod = mres2prod.get(state);
+		final ProductState prod = mres2prod.get(state);
 		return callSuccessors(mFstOperand.callSuccessors(prod.getFst(),letter), prod);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		ProductState prod = mres2prod.get(state);
+		final ProductState prod = mres2prod.get(state);
 		return callSuccessors(mFstOperand.callSuccessors(prod.getFst()), prod);
 	}
 
@@ -305,16 +305,16 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	private Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			Iterable<OutgoingCallTransition<LETTER, STATE>> fstCallSuccs,
 			ProductState prod) {
-		Collection<OutgoingCallTransition<LETTER, STATE>> result = 
+		final Collection<OutgoingCallTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
-		for (OutgoingCallTransition<LETTER, STATE> fstTrans : fstCallSuccs) {
-			LETTER letter = fstTrans.getLetter();
-			for (OutgoingCallTransition<LETTER, STATE> sndTrans : 
+		for (final OutgoingCallTransition<LETTER, STATE> fstTrans : fstCallSuccs) {
+			final LETTER letter = fstTrans.getLetter();
+			for (final OutgoingCallTransition<LETTER, STATE> sndTrans : 
 						mSndOperand.callSuccessors(prod.getSnd(), letter)) {
-				STATE fstSucc = fstTrans.getSucc();
-				STATE sndSucc = sndTrans.getSucc();
+				final STATE fstSucc = fstTrans.getSucc();
+				final STATE sndSucc = sndTrans.getSucc();
 				STATE resSucc;
-				byte succTrack = getSuccTrack(prod); 
+				final byte succTrack = getSuccTrack(prod); 
 				if (succTrack == 1) {
 					resSucc = getOrConstructStateOnTrack1(fstSucc, sndSucc);
 				} else {
@@ -333,10 +333,10 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		ProductState prodState = mres2prod.get(state);
-		ProductState prodHier = mres2prod.get(hier);
-		STATE fstHier = prodHier.getFst();
-		STATE sndHier = prodHier.getSnd();
+		final ProductState prodState = mres2prod.get(state);
+		final ProductState prodHier = mres2prod.get(hier);
+		final STATE fstHier = prodHier.getFst();
+		final STATE sndHier = prodHier.getSnd();
 		return returnSuccessors(mFstOperand.returnSucccessors(
 				prodState.getFst(), fstHier, letter), prodState, hier, sndHier);
 	}
@@ -344,10 +344,10 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		ProductState prodState = mres2prod.get(state);
-		ProductState prodHier = mres2prod.get(hier);
-		STATE fstHier = prodHier.getFst();
-		STATE sndHier = prodHier.getSnd();
+		final ProductState prodState = mres2prod.get(state);
+		final ProductState prodHier = mres2prod.get(hier);
+		final STATE fstHier = prodHier.getFst();
+		final STATE sndHier = prodHier.getSnd();
 		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(
 							prodState.getFst(), fstHier), prodState, hier, sndHier);
 	}
@@ -356,16 +356,16 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			Iterable<OutgoingReturnTransition<LETTER, STATE>> fstReturnSuccs,
 			ProductState prod, STATE hier, STATE sndHier) {
-		Collection<OutgoingReturnTransition<LETTER, STATE>> result = 
+		final Collection<OutgoingReturnTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
-		for (OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
-			LETTER letter = fstTrans.getLetter();
-			for (OutgoingReturnTransition<LETTER, STATE> sndTrans : 
+		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
+			final LETTER letter = fstTrans.getLetter();
+			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : 
 						mSndOperand.returnSucccessors(prod.getSnd(), sndHier,  letter)) {
-				STATE fstSucc = fstTrans.getSucc();
-				STATE sndSucc = sndTrans.getSucc();
+				final STATE fstSucc = fstTrans.getSucc();
+				final STATE sndSucc = sndTrans.getSucc();
 				STATE resSucc;
-				byte succTrack = getSuccTrack(prod); 
+				final byte succTrack = getSuccTrack(prod); 
 				if (succTrack == 1) {
 					resSucc = getOrConstructStateOnTrack1(fstSucc, sndSucc);
 				} else {

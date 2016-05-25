@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Game graph that realizes <b>direct simulation</b>.<br/>
@@ -125,7 +125,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, stateFactory, buechi);
-		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		final INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 
 		mServices = services;
@@ -145,30 +145,30 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
-		SimulationPerformance performance = getSimulationPerformance();
+		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
 		// Determine which states to merge
-		UnionFind<STATE> uf = new UnionFind<>();
-		for (STATE state : mBuechi.getStates()) {
+		final UnionFind<STATE> uf = new UnionFind<>();
+		for (final STATE state : mBuechi.getStates()) {
 			uf.makeEquivalenceClass(state);
 		}
-		HashRelation<STATE, STATE> similarStates = new HashRelation<>();
-		for (SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
+		final HashRelation<STATE, STATE> similarStates = new HashRelation<>();
+		for (final SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
 			// all the states we need are in V1...
 			if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
-				STATE state1 = v.getQ0();
-				STATE state2 = v.getQ1();
+				final STATE state1 = v.getQ0();
+				final STATE state2 = v.getQ1();
 				if (state1 != null && state2 != null) {
 					similarStates.addPair(state1, state2);
 				}
 			}
 		}
 		// Merge states if they simulate each other
-		for (STATE state1 : similarStates.getDomain()) {
-			for (STATE state2 : similarStates.getImage(state1)) {
+		for (final STATE state1 : similarStates.getDomain()) {
+			for (final STATE state2 : similarStates.getImage(state1)) {
 				// Only merge if simulation holds in both directions
 				if (similarStates.containsPair(state2, state1)) {
 					uf.union(state1, state2);
@@ -182,36 +182,36 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Merge states
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
+		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
 				mBuechi.getInternalAlphabet(), null, null, mStateFactory);
-		Set<STATE> representativesOfInitials = new HashSet<>();
-		for (STATE initial : mBuechi.getInitialStates()) {
+		final Set<STATE> representativesOfInitials = new HashSet<>();
+		for (final STATE initial : mBuechi.getInitialStates()) {
 			representativesOfInitials.add(uf.find(initial));
 		}
 
 		int resultAmountOfStates = 0;
 
-		Map<STATE, STATE> input2result = new HashMap<>(mBuechi.size());
-		for (STATE representative : uf.getAllRepresentatives()) {
-			boolean isInitial = representativesOfInitials.contains(representative);
-			boolean isFinal = mBuechi.isFinal(representative);
-			Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
-			STATE resultState = mStateFactory.minimize(eqClass);
+		final Map<STATE, STATE> input2result = new HashMap<>(mBuechi.size());
+		for (final STATE representative : uf.getAllRepresentatives()) {
+			final boolean isInitial = representativesOfInitials.contains(representative);
+			final boolean isFinal = mBuechi.isFinal(representative);
+			final Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
+			final STATE resultState = mStateFactory.minimize(eqClass);
 
 			result.addState(isInitial, isFinal, resultState);
 			resultAmountOfStates++;
 
-			for (STATE eqClassMember : eqClass) {
+			for (final STATE eqClassMember : eqClass) {
 				input2result.put(eqClassMember, resultState);
 			}
 		}
 
 		int resultAmountOfTransitions = 0;
 
-		for (STATE state : uf.getAllRepresentatives()) {
-			STATE pred = input2result.get(state);
-			for (OutgoingInternalTransition<LETTER, STATE> outTrans : mBuechi.internalSuccessors(state)) {
-				STATE succ = input2result.get(outTrans.getSucc());
+		for (final STATE state : uf.getAllRepresentatives()) {
+			final STATE pred = input2result.get(state);
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mBuechi.internalSuccessors(state)) {
+				final STATE succ = input2result.get(outTrans.getSucc());
 				result.addInternalTransition(pred, outTrans.getLetter(), succ);
 				resultAmountOfTransitions++;
 			}
@@ -245,14 +245,14 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	@Override
 	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
-		long graphBuildTimeStart = System.currentTimeMillis();
+		final long graphBuildTimeStart = System.currentTimeMillis();
 
 		// Calculate v1 [paper ref 10]
-		for (STATE q0 : mBuechi.getStates()) {
+		for (final STATE q0 : mBuechi.getStates()) {
 			mBuechiAmountOfStates++;
 
-			for (STATE q1 : mBuechi.getStates()) {
-				SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
+			for (final STATE q1 : mBuechi.getStates()) {
+				final SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
 				addSpoilerVertex(v1e);
 			}
 
@@ -262,18 +262,18 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			}
 		}
 		// Calculate v0 and edges [paper ref 10, 11, 12]
-		for (STATE q0 : mBuechi.getStates()) {
+		for (final STATE q0 : mBuechi.getStates()) {
 			boolean countedTransitionsForQ0 = false;
 
-			for (STATE q1 : mBuechi.getStates()) {
-				Set<LETTER> relevantLetters = new HashSet<>();
+			for (final STATE q1 : mBuechi.getStates()) {
+				final Set<LETTER> relevantLetters = new HashSet<>();
 				relevantLetters.addAll(mBuechi.lettersInternalIncoming(q0));
 				relevantLetters.addAll(mBuechi.lettersInternal(q1));
-				for (LETTER s : relevantLetters) {
-					DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
+				for (final LETTER s : relevantLetters) {
+					final DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
 					addDuplicatorVertex(v0e);
 					// V1 -> V0 edges [paper ref 11]
-					for (STATE pred0 : mBuechi.predInternal(q0, s)) {
+					for (final STATE pred0 : mBuechi.predInternal(q0, s)) {
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(pred0) || mBuechi.isFinal(q1)) {
 							addEdge(getSpoilerVertex(pred0, q1, false), v0e);
@@ -288,7 +288,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					}
 
 					// V0 -> V1 edges [paper ref 11]
-					for (STATE succ1 : mBuechi.succInternal(q1, s)) {
+					for (final STATE succ1 : mBuechi.succInternal(q1, s)) {
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(q0) || mBuechi.isFinal(succ1)) {
 							addEdge(v0e, getSpoilerVertex(q0, succ1, false));
@@ -306,7 +306,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 		// global infinity = (# of pr==1 nodes) + 1
 		increaseGlobalInfinity();
-		ILogger logger = getLogger();
+		final ILogger logger = getLogger();
 		if (logger.isDebugEnabled()) {
 			logger.debug("Infinity is " + getGlobalInfinity());
 			logger.debug("Number of vertices in game graph: "

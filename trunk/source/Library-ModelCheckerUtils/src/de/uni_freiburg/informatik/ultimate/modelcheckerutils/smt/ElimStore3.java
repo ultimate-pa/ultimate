@@ -84,9 +84,9 @@ public class ElimStore3 {
 	}
 
 	private MultiDimensionalStore getArrayStore(Term array, Term term) {
-		List<MultiDimensionalStore> all = MultiDimensionalStore.extractArrayStoresDeep(term);
+		final List<MultiDimensionalStore> all = MultiDimensionalStore.extractArrayStoresDeep(term);
 		MultiDimensionalStore result = null;
-		for (MultiDimensionalStore asd : all) {
+		for (final MultiDimensionalStore asd : all) {
 			if (asd.getArray().equals(array)) {
 				if (result != null && !result.equals(asd)) {
 					throw new UnsupportedOperationException("unsupported: several stores");
@@ -99,9 +99,9 @@ public class ElimStore3 {
 	}
 	
 	private ArrayUpdate getArrayUpdate(Term array, Term[] terms) {
-		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(mQuantifier == QuantifiedFormula.FORALL, true, terms);
+		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(mQuantifier == QuantifiedFormula.FORALL, true, terms);
 		ArrayUpdate result = null;
-		for (ArrayUpdate au : aue.getArrayUpdates()) {
+		for (final ArrayUpdate au : aue.getArrayUpdates()) {
 			if (au.getNewArray().equals(array)) {
 				if (result != null && !result.equals(au)) {
 					throw new UnsupportedOperationException("unsupported: several updates");
@@ -159,13 +159,13 @@ public class ElimStore3 {
 			}
 
 			MultiDimensionalStore store = getArrayStore(eliminatee, term);
-			ArrayUpdate update = getArrayUpdate(eliminatee, conjuncts);
+			final ArrayUpdate update = getArrayUpdate(eliminatee, conjuncts);
 
-			HashSet<Term> others = new HashSet<Term>();
+			final HashSet<Term> others = new HashSet<Term>();
 
-			for (Term conjunct : conjuncts) {
+			for (final Term conjunct : conjuncts) {
 				try {
-					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL, false);
+					final ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL, false);
 					if (au.getOldArray().equals(eliminatee)) {
 						if (writeInto != null) {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
@@ -182,7 +182,7 @@ public class ElimStore3 {
 					} else {
 						others.add(conjunct);
 					}
-				} catch (ArrayUpdateException e) {
+				} catch (final ArrayUpdateException e) {
 					others.add(conjunct);
 				}
 			}
@@ -202,22 +202,22 @@ public class ElimStore3 {
 
 
 			if ((store != null || update != null) && (writeInto == null && writtenFrom == null)) {
-				TermVariable auxArray = mFreshTermVariableConstructor.constructFreshTermVariable(s_FreshVariableString, eliminatee.getSort()); 
+				final TermVariable auxArray = mFreshTermVariableConstructor.constructFreshTermVariable(s_FreshVariableString, eliminatee.getSort()); 
 				if (store == null) {
 					store = update.getMultiDimensionalStore();
 				}
-				Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
-				SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mScript, auxMap);
+				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
+				final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mScript, auxMap);
 				Term auxTerm = subst.transform(term);
-				Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
+				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					auxTerm = Util.and(mScript, auxTerm, auxVarDef);
 				} else {
 					assert quantifier == QuantifiedFormula.FORALL;
 					auxTerm = Util.or(mScript, auxTerm, SmtUtils.not(mScript, auxVarDef));
 				}
-				Set<TermVariable> auxAuxVars = new HashSet<TermVariable>();
-				Term auxRes = elim(quantifier, eliminatee, auxTerm, newAuxVars);
+				final Set<TermVariable> auxAuxVars = new HashSet<TermVariable>();
+				final Term auxRes = elim(quantifier, eliminatee, auxTerm, newAuxVars);
 
 				term = auxRes;
 				eliminatee = auxArray;
@@ -227,25 +227,25 @@ public class ElimStore3 {
 			}
 		}
 
-		boolean write = (writeInto != null || writtenFrom != null);
+		final boolean write = (writeInto != null || writtenFrom != null);
 
-		Script script = mScript;
+		final Script script = mScript;
 		
 		Term intermediateResult = othersT;
 		if (writeInto != null) {
 			// if update is of form (store oldArr idx val) = newArr,
 			// we replace all occurrences of (store oldArr idx val) by newArr.
-			Map<Term, Term> mapping = Collections.singletonMap(
+			final Map<Term, Term> mapping = Collections.singletonMap(
 					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
-			SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(script, mapping);
+			final SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(script, mapping);
 			intermediateResult = substStoreTerm.transform(intermediateResult);
 		}
 		
 		// Indices and corresponding values of a_elim 
-		IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
-		SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(script, iav.getMapping());
+		final IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
+		final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(script, iav.getMapping());
 
-		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
+		final ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		intermediateResult = subst.transform(intermediateResult);
 		
 		if (writtenFrom == null && Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee)) {
@@ -266,8 +266,8 @@ public class ElimStore3 {
 				data = writtenFrom.getValue();
 			}
 			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, a_heir, idx_write, iav, subst, eliminatee));
-			ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(idx_write, subst));
-			Term dataRenamed = subst.transform(data);
+			final ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(idx_write, subst));
+			final Term dataRenamed = subst.transform(data);
 			if (writeInto != null) {
 				assert writeInto.getOldArray() == eliminatee : "array not eliminatee";
 				// if store is of the form
@@ -288,19 +288,19 @@ public class ElimStore3 {
 			 */
 			final SafeSubstitution writtenFromSubst;
 			if (writtenFrom != null) {
-				Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
-				Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
+				final Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
+				final Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
 				writtenFromSubst = new SafeSubstitutionWithLocalSimplification(script, mapping);
 			} else {
 				writtenFromSubst = null;
 			}
 			
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				Term additionalConjuncts = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()])); 
+				final Term additionalConjuncts = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()])); 
 				intermediateResult = Util.and(script, intermediateResult, additionalConjuncts); 
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
-				Term additionalConjuncts = Util.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs).toArray(new Term[additionalConjuncs.size()])); 
+				final Term additionalConjuncts = Util.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs).toArray(new Term[additionalConjuncs.size()])); 
 				intermediateResult = Util.or(script, intermediateResult, additionalConjuncts); 
 			}
 			
@@ -309,13 +309,13 @@ public class ElimStore3 {
 			}
 		}
 
-		ArrayList<Term> indexValueConstraintsFromEliminatee = new ArrayList<Term>();
+		final ArrayList<Term> indexValueConstraintsFromEliminatee = new ArrayList<Term>();
 		{
-			List<ArrayIndex> indices = new ArrayList<ArrayIndex>();
-			List<Term> values = new ArrayList<Term>();
+			final List<ArrayIndex> indices = new ArrayList<ArrayIndex>();
+			final List<Term> values = new ArrayList<Term>();
 			for (int i=0; i<iav.getIndices().length; i++) {
-				ArrayIndex translatedIndex = new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subst));
-				Term translatedValue = subst.transform(iav.getValues()[i]);
+				final ArrayIndex translatedIndex = new ArrayIndex(SmtUtils.substitutionElementwise(iav.getIndices()[i], subst));
+				final Term translatedValue = subst.transform(iav.getValues()[i]);
 				indices.add(translatedIndex);
 				values.add(translatedValue);
 			}
@@ -326,15 +326,15 @@ public class ElimStore3 {
 				// in the writtenFrom case there is an additional index-value
 				// connection on eliminatee, namely
 				// that the stored data is the value at index idx_write
-				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(writtenFrom.getIndex(), subst));
-				Term dataRenamed = subst.transform(writtenFrom.getValue());
+				final ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(writtenFrom.getIndex(), subst));
+				final Term dataRenamed = subst.transform(writtenFrom.getValue());
 				indices.add(idx_writeRenamed);
 				values.add(dataRenamed);
 			}
 
 			for (int i = 0; i < indices.size(); i++) {
 				for (int j = i; j < indices.size(); j++) {
-					Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(
+					final Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(
 							mScript, indices.get(i), indices.get(j), values.get(i), values.get(j));
 					assert !Arrays.asList(newConjunct.getFreeVars()).contains(eliminatee) : "var is still there";
 					indexValueConstraintsFromEliminatee.add(newConjunct);
@@ -344,11 +344,11 @@ public class ElimStore3 {
 		
 		Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			Term newConjunctsFromSelect = Util.and(mScript, indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+			final Term newConjunctsFromSelect = Util.and(mScript, indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
 			result = Util.and(script, intermediateResult, newConjunctsFromSelect);
 		} else {
 			assert quantifier == QuantifiedFormula.FORALL;
-			Term newConjunctsFromSelect = Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee).toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+			final Term newConjunctsFromSelect = Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee).toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
 			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
 		}
 
@@ -375,11 +375,11 @@ public class ElimStore3 {
 	 */
 	private ArrayList<Term> disjointIndexImpliesValueEquality(int quantifier,
 			Term a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst, TermVariable eliminatee) {
-		ArrayList<Term> result = new ArrayList<Term>();
+		final ArrayList<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < iav.getIndices().length; i++) {
 			// select term that represents the array cell a[]
-			Term selectOnHeir = SmtUtils.multiDimensionalSelect(mScript, a_heir, iav.getIndices()[i]);
-			IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()[i], idx_write,
+			final Term selectOnHeir = SmtUtils.multiDimensionalSelect(mScript, a_heir, iav.getIndices()[i]);
+			final IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()[i], idx_write,
 					iav.getValues()[i], selectOnHeir, false);
 			Term conjunct = ivc.getTerm();
 			conjunct = subst.transform(conjunct);
@@ -444,15 +444,15 @@ public class ElimStore3 {
 		private final Map<Term, Term> mSelectTerm2Value = new HashMap<Term, Term>();
 
 		public IndicesAndValues(TermVariable array, Term[] conjuncts) {
-			Set<MultiDimensionalSelect> set = new HashSet<MultiDimensionalSelect>();
-			for (Term conjunct : conjuncts) {
-				for (MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct, false)) {
+			final Set<MultiDimensionalSelect> set = new HashSet<MultiDimensionalSelect>();
+			for (final Term conjunct : conjuncts) {
+				for (final MultiDimensionalSelect mdSelect : MultiDimensionalSelect.extractSelectDeep(conjunct, false)) {
 					if (mdSelect.getArray().equals(array)) {
 						set.add(mdSelect);
 					}
 				}
 			}
-			MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[set.size()]);
+			final MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[set.size()]);
 			mSelectTerm = new Term[arrayReads.length];
 			mIndices = new ArrayIndex[arrayReads.length];
 			mValues = new Term[arrayReads.length];
@@ -460,11 +460,11 @@ public class ElimStore3 {
 			for (int i = 0; i < arrayReads.length; i++) {
 				mSelectTerm[i] = arrayReads[i].getSelectTerm();
 				mIndices[i] = arrayReads[i].getIndex();
-				EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript,
+				final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript,
 						arrayReads[i].getSelectTerm(), conjuncts, array, mQuantifier, mLogger);
 				if (eqInfo == null) {
-					Term select = arrayReads[i].getSelectTerm();
-					TermVariable auxVar = mFreshTermVariableConstructor.
+					final Term select = arrayReads[i].getSelectTerm();
+					final TermVariable auxVar = mFreshTermVariableConstructor.
 							constructFreshTermVariable(s_FreshVariableString, select.getSort());
 					mNewAuxVars.add(auxVar);
 					mValues[i] = auxVar;
@@ -572,13 +572,13 @@ public class ElimStore3 {
 			if (!(term instanceof ApplicationTerm)) {
 				return false;
 			}
-			ApplicationTerm subtermApp = (ApplicationTerm) subterm;
+			final ApplicationTerm subtermApp = (ApplicationTerm) subterm;
 			if (!subtermApp.getFunction().getName().equals("select")) {
 				return false;
 			}
 			subterm = subtermApp.getParameters()[0];
-			Term index = subtermApp.getParameters()[1];
-			Set<ApplicationTerm> selectTermsInIndex = (new ApplicationTermFinder("select", true))
+			final Term index = subtermApp.getParameters()[1];
+			final Set<ApplicationTerm> selectTermsInIndex = (new ApplicationTermFinder("select", true))
 					.findMatchingSubterms(index);
 			if (!selectTermsInIndex.isEmpty()) {
 				throw new UnsupportedOperationException("select in index not supported");
@@ -620,7 +620,7 @@ public class ElimStore3 {
 	 */
 	private static Term[] buildPairwiseEquality(ArrayIndex first, ArrayIndex second, SafeSubstitution subst, Script script) {
 		assert first.size() == second.size();
-		Term[] equivalent = new Term[first.size()];
+		final Term[] equivalent = new Term[first.size()];
 		for (int i = 0; i < first.size(); i++) {
 			Term firstTerm, secondTerm;
 			if (subst == null) {
@@ -641,15 +641,15 @@ public class ElimStore3 {
 	 * constant and add to mapping
 	 */
 	private void assertTermWithTvs(Map<TermVariable, Term> mapping, Script script, Term term) {
-		for (TermVariable tv : term.getFreeVars()) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			if (!mapping.containsKey(tv)) {
-				String name = "arrayElim_" + tv.getName();
+				final String name = "arrayElim_" + tv.getName();
 				script.declareFun(name, new Sort[0], tv.getSort());
-				Term constant = script.term(name);
+				final Term constant = script.term(name);
 				mapping.put(tv, constant);
 			}
 		}
-		Term renamed = (new Substitution(mapping, script)).transform(term);
+		final Term renamed = (new Substitution(mapping, script)).transform(term);
 		mScript.assertTerm(renamed);
 	}
 
@@ -672,23 +672,23 @@ public class ElimStore3 {
 			conjuncts = SmtUtils.getDisjuncts(term);
 		}
 //		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(quantifier == QuantifiedFormula.FORALL, false, conjuncts);
-		ArrayList<Term> resultConjuncts = new ArrayList<>();
+		final ArrayList<Term> resultConjuncts = new ArrayList<>();
 		boolean someSelfUpdate = false;
-		for (Term conjunct : conjuncts) {
+		for (final Term conjunct : conjuncts) {
 			ArrayUpdate au;
 			try {
 				au = new ArrayUpdate(conjunct, false, false);
-			} catch (ArrayUpdateException aue1) {
+			} catch (final ArrayUpdateException aue1) {
 				try {
 					au = new ArrayUpdate(conjunct, true, false);
-				} catch (ArrayUpdateException aue2) {
+				} catch (final ArrayUpdateException aue2) {
 					resultConjuncts.add(conjunct);
 					continue;
 				}
 			}
 			if (isSelfUpdate(au)) {
 				someSelfUpdate = true;
-				Term select = buildEquivalentSelect(script, au);
+				final Term select = buildEquivalentSelect(script, au);
 				resultConjuncts.add(select);
 			} else {
 				resultConjuncts.add(au.getArrayUpdateTerm());
@@ -708,7 +708,7 @@ public class ElimStore3 {
 
 	private Term buildEquivalentSelect(Script script, ArrayUpdate au) {
 		assert isSelfUpdate(au) : "no self-update";
-		Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, au.getNewArray(), au.getIndex());
+		final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, au.getNewArray(), au.getIndex());
 		final String fun;
 		if (au.isNegatedEquality()) {
 			fun = "distinct";

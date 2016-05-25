@@ -60,10 +60,10 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
 			IPredicate c2) {
 		
-		List<IPredicate> programPoints = new ArrayList<IPredicate>();
-		ProdState result = mSmtManager.getPredicateFactory().getNewProdState(programPoints);
+		final List<IPredicate> programPoints = new ArrayList<IPredicate>();
+		final ProdState result = mSmtManager.getPredicateFactory().getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
-			ProdState ps1 = (ProdState) c1;
+			final ProdState ps1 = (ProdState) c1;
 			programPoints.addAll(ps1.getPredicates());
 		}
 		else {
@@ -82,8 +82,8 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(
 			Marking<?, IPredicate> marking) {
-		LinkedList<IPredicate> programPoints = new LinkedList<IPredicate>();
-		for (Place<?, IPredicate> place : marking) {
+		final LinkedList<IPredicate> programPoints = new LinkedList<IPredicate>();
+		for (final Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
 		return mSmtManager.getPredicateFactory().getNewProdState(programPoints);
@@ -94,7 +94,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 
 	@Override
 	public IPredicate finitePrefix2net(Condition<?, IPredicate> c) {
-		ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
+		final ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
 		return super.mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
 	}
 	

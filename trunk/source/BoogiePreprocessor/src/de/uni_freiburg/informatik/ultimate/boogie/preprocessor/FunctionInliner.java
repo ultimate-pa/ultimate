@@ -85,12 +85,12 @@ public class FunctionInliner extends BoogieTransformer
 		/**
 		 * A renaming is a map from identifier name to expression.
 		 */
-		private HashMap<String, Expression> renamings;
+		private final HashMap<String, Expression> renamings;
 		/**
 		 * The variable names used in the current scope and which therefore
 		 * should not be reused in inlined functions.
 		 */
-		private HashSet<String> declaredName;
+		private final HashSet<String> declaredName;
 		/**
 		 * The parent scope.
 		 */
@@ -142,8 +142,8 @@ public class FunctionInliner extends BoogieTransformer
 	public boolean process(IElement root) {
 		// Check if node is the first node of the AST.
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			List<Declaration> newDeclarations = new ArrayList<Declaration>();
+			final Unit unit = (Unit) root;
+			final List<Declaration> newDeclarations = new ArrayList<Declaration>();
 			inlinedFunctions = new HashMap<String, FunctionDeclaration>();
 			
 			// Process all declarations, copying them and replacing function
@@ -151,18 +151,18 @@ public class FunctionInliner extends BoogieTransformer
 			// other functions and adding axioms).
 			// It also collects inlined function in the hash map 
 			// inlinedFunctions.
-			for (Declaration decl: unit.getDeclarations()) {
+			for (final Declaration decl: unit.getDeclarations()) {
 				if (decl instanceof FunctionDeclaration) {
-					FunctionDeclaration fdecl = (FunctionDeclaration) decl;
+					final FunctionDeclaration fdecl = (FunctionDeclaration) decl;
 					if (fdecl.getBody() == null) {
 						newDeclarations.add(fdecl);
 						continue;
 					}
 					boolean inlined = false;
-					for (Attribute attr : fdecl.getAttributes()) {
+					for (final Attribute attr : fdecl.getAttributes()) {
 						if (attr instanceof NamedAttribute) {
-							NamedAttribute nattr = (NamedAttribute) attr;
-							Expression[] val = nattr.getValues();
+							final NamedAttribute nattr = (NamedAttribute) attr;
+							final Expression[] val = nattr.getValues();
 							if (nattr.getName().equals("inline")
 								&& val.length == 1
 								&& (val[0] instanceof BooleanLiteral)
@@ -173,16 +173,16 @@ public class FunctionInliner extends BoogieTransformer
 						}
 					}
 					if (!inlined) {
-						List<Expression> params = new ArrayList<Expression>();
+						final List<Expression> params = new ArrayList<Expression>();
 						int anonctr = 0;
-						for (VarList vl : fdecl.getInParams()) {
+						for (final VarList vl : fdecl.getInParams()) {
 							if (vl.getIdentifiers().length == 0) {
 								params.add(new IdentifierExpression(vl.getLocation(), 
 										vl.getType().getBoogieType(), 
 										"#"+(anonctr++), 
 										new DeclarationInformation(StorageClass.QUANTIFIED,  null)));
 							} else {
-								for (String i: vl.getIdentifiers()) {
+								for (final String i: vl.getIdentifiers()) {
 									params.add(new IdentifierExpression(vl.getLocation(), 
 											vl.getType().getBoogieType(), i, 
 											new DeclarationInformation(StorageClass.QUANTIFIED,  null)
@@ -190,12 +190,12 @@ public class FunctionInliner extends BoogieTransformer
 								}
 							}
 						}
-						Expression[] funcParams = params.toArray(new Expression[params.size()]); 
-						Expression funcApp = new FunctionApplication(fdecl.getLocation(), fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
-						Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] {funcApp} );
-						Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
-						Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
-						Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),  
+						final Expression[] funcParams = params.toArray(new Expression[params.size()]); 
+						final Expression funcApp = new FunctionApplication(fdecl.getLocation(), fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
+						final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] {funcApp} );
+						final Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
+						final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
+						final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),  
 								                     new Attribute[0], funcDecl);
 						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(),  
 								fdecl.getAttributes(), fdecl.getIdentifier(), fdecl.getTypeParams(), 
@@ -230,7 +230,7 @@ public class FunctionInliner extends BoogieTransformer
 		if (d instanceof FunctionDeclaration
 			|| d instanceof Procedure) {
 			currentScope = new Scope(currentScope);
-			Declaration result = super.processDeclaration(d);
+			final Declaration result = super.processDeclaration(d);
 			currentScope = currentScope.getParent();
 			return result;
 		} else {
@@ -245,7 +245,7 @@ public class FunctionInliner extends BoogieTransformer
 	protected Body processBody(Body b)
 	{
 		currentScope = new Scope(currentScope);
-		Body result = super.processBody(b);
+		final Body result = super.processBody(b);
 		currentScope = currentScope.getParent();
 		return result;
 	}
@@ -257,8 +257,9 @@ public class FunctionInliner extends BoogieTransformer
 	 */
 	public VarList processVarList(VarList vl)
 	{
-		for (String name: vl.getIdentifiers())
+		for (final String name: vl.getIdentifiers()) {
 			currentScope.declareName(name);
+		}
 		return super.processVarList(vl);
 	}
 	
@@ -273,40 +274,41 @@ public class FunctionInliner extends BoogieTransformer
 	    Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			// rename identifiers according to the renaming map in the scope.
-			String name = ((IdentifierExpression) expr).getIdentifier();
-			Expression renamed = currentScope.lookupRenaming(name);
-			if (renamed != null)
-			    newExpr = renamed;
+			final String name = ((IdentifierExpression) expr).getIdentifier();
+			final Expression renamed = currentScope.lookupRenaming(name);
+			if (renamed != null) {
+				newExpr = renamed;
+			}
 		} else if (expr instanceof FunctionApplication) {
 			// inline function applications
-			FunctionApplication app = (FunctionApplication) expr;
-			String name = app.getIdentifier();
+			final FunctionApplication app = (FunctionApplication) expr;
+			final String name = app.getIdentifier();
 			if (inlinedFunctions.containsKey(name)) {
 				currentScope = new Scope(currentScope);
-				FunctionDeclaration fdecl = inlinedFunctions.get(name);
-				Expression[] args = app.getArguments();
+				final FunctionDeclaration fdecl = inlinedFunctions.get(name);
+				final Expression[] args = app.getArguments();
 				int pnr = 0;
-				for (VarList vl : fdecl.getInParams()) {
-					if (vl.getIdentifiers().length == 0)
+				for (final VarList vl : fdecl.getInParams()) {
+					if (vl.getIdentifiers().length == 0) {
 						pnr++;
-					else {
-						for (String i: vl.getIdentifiers()) {
+					} else {
+						for (final String i: vl.getIdentifiers()) {
 							currentScope.addRenaming(i, processExpression(args[pnr++]));
 						}
 					}
 				}
-				Expression newBody = processExpression(fdecl.getBody());
+				final Expression newBody = processExpression(fdecl.getBody());
 				currentScope = currentScope.getParent();
 				newExpr = newBody;
 			}
 		} else if (expr instanceof QuantifierExpression) {
 			// check that quantified variables are unique
-			QuantifierExpression qexpr = (QuantifierExpression) expr;
+			final QuantifierExpression qexpr = (QuantifierExpression) expr;
 			currentScope = new Scope(currentScope);
-			VarList[] vl = qexpr.getParameters();
+			final VarList[] vl = qexpr.getParameters();
 			VarList[] newVl = vl;
 			for (int vlNr = 0; vlNr < vl.length; vlNr++) {
-				String[] ids = vl[vlNr].getIdentifiers();
+				final String[] ids = vl[vlNr].getIdentifiers();
 				String[] newIds = ids;
 				for (int idNr = 0; idNr < ids.length; idNr++) {
 					if (currentScope.clashes(ids[idNr])) {
@@ -332,11 +334,12 @@ public class FunctionInliner extends BoogieTransformer
 				}
 			}
 			newVl = processVarLists(newVl);
-			Expression subform = processExpression(qexpr.getSubformula());
-			Attribute[] attrs = processAttributes(qexpr.getAttributes());
+			final Expression subform = processExpression(qexpr.getSubformula());
+			final Attribute[] attrs = processAttributes(qexpr.getAttributes());
 			currentScope = currentScope.getParent();
-			if (vl == newVl && subform == qexpr.getSubformula() && attrs == qexpr.getAttributes())
+			if (vl == newVl && subform == qexpr.getSubformula() && attrs == qexpr.getAttributes()) {
 				return expr;
+			}
 			newExpr = new QuantifierExpression(qexpr.getLocation(), qexpr.getType(), qexpr.isUniversal(), 
 					qexpr.getTypeParams(), newVl, attrs,
 					subform);

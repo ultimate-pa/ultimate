@@ -70,7 +70,7 @@ public class NestedTemplate extends ComposableTemplate {
 	private static final String s_name_function = "rank_";
 	
 	private Term mdelta;
-	private AffineFunctionGenerator[] mfgens;
+	private final AffineFunctionGenerator[] mfgens;
 	
 	/**
 	 * @param functions number of linear functions in the nested template
@@ -97,7 +97,7 @@ public class NestedTemplate extends ComposableTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mSize);
 		sb.append("-nested template:");
 		sb.append("\n");
@@ -110,14 +110,14 @@ public class NestedTemplate extends ComposableTemplate {
 			sb.append("/\\ f_" + i + "(x') < f_" + i + "(x) + f_" + (i-1) + "(x)");
 			sb.append("\n");
 		}
-		int n = mSize-1;
+		final int n = mSize-1;
 		sb.append("/\\ f_" + n + "(x) > 0");
 		return sb.toString();
 	}
 	
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
+		final Collection<Term> list = new ArrayList<Term>();
 		list.add(mdelta);
 		for (int i = 0; i < mSize; ++i) {
 			list.addAll(mfgens[i].getVariables());
@@ -134,7 +134,7 @@ public class NestedTemplate extends ComposableTemplate {
 			gcd = gcd.gcd(mfgens[i].getGcd(val));
 		}
 		
-		AffineFunction[] fs = new AffineFunction[mSize];
+		final AffineFunction[] fs = new AffineFunction[mSize];
 		for (int i = 0; i < mSize; ++i) {
 			fs[i] = mfgens[i].extractAffineFunction(val, gcd);
 		}
@@ -149,15 +149,15 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ
 		{
-			LinearInequality li = mfgens[0].generate(inVars);
-			LinearInequality li2 = mfgens[0].generate(outVars);
+			final LinearInequality li = mfgens[0].generate(inVars);
+			final LinearInequality li2 = mfgens[0].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
+			final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -168,11 +168,11 @@ public class NestedTemplate extends ComposableTemplate {
 		
 		// /\_i f_i(x') < f_i(x) - δ_i + f_{i-1}(x)
 		for (int i = 1; i < mSize; ++i) {
-			LinearInequality li = mfgens[i].generate(inVars);
-			LinearInequality li2 = mfgens[i].generate(outVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			LinearInequality li3 = mfgens[i-1].generate(inVars);
+			final LinearInequality li3 = mfgens[i-1].generate(inVars);
 			li.add(li3);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -188,12 +188,12 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// /\_i f_i(x') ≤ f_i(x)
 		for (int i = 0; i < mSize; ++i) {
-			LinearInequality li = mfgens[i].generate(inVars);
-			LinearInequality li2 = mfgens[i].generate(outVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
@@ -209,7 +209,7 @@ public class NestedTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f_n(x) > 0
-		LinearInequality li = mfgens[mSize-1].generate(inVars);
+		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
@@ -219,7 +219,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsDec() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		annotations.add("rank f_0 is decreasing");
 		for (int i = 0; i < mSize-1; ++i) {
 			annotations.add("rank f_" + i + " is decreasing by at least -f_" + (i-1));
@@ -229,7 +229,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsNonInc() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < mSize; ++i) {
 			annotations.add("rank f_" + i + " is nonincreasing");
 		}

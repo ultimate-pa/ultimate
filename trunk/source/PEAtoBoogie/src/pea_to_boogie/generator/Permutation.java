@@ -42,7 +42,7 @@ public class Permutation {
      * @return the list of all tuples.
      */
     public  List<int[]> crossProduct(int[][] input) {
-    	List<int[]> result = new ArrayList<int[]>();
+    	final List<int[]> result = new ArrayList<int[]>();
     	crossProductHelper(result, input, new int[input.length], 0);
     	return result;
     }
@@ -62,7 +62,7 @@ public class Permutation {
     	if (offset == output.length) {
     		result.add(output.clone());
     	} else {
-    		for (int v : input[offset]) {
+    		for (final int v : input[offset]) {
     			output[offset] = v;
     			crossProductHelper(result, input, output, offset+1);
     		}
@@ -83,7 +83,7 @@ public class Permutation {
      */
     public List<int[]> subArrays(int[] input, int combinationNum) {
     	assert(combinationNum <= input.length);
-    	List<int[]> result = new ArrayList<int[]>();
+    	final List<int[]> result = new ArrayList<int[]>();
     	sublistHelper(result, input, new int[combinationNum], 0, 0);
     	return result;
     }
@@ -103,10 +103,10 @@ public class Permutation {
      */
     private void sublistHelper(List<int[]> result, int[] input, int[] output, 
     		                  int offsetInput, int offsetOutput) {
-    	if (offsetOutput == output.length)
-    		result.add(output.clone());
-    	else {
-    		int todo = output.length - offsetOutput;
+    	if (offsetOutput == output.length) {
+			result.add(output.clone());
+		} else {
+    		final int todo = output.length - offsetOutput;
     		for (int i = offsetInput; i <= input.length - todo; i++) {
     			output[offsetOutput] = input[i];
     			sublistHelper(result, input, output, i+1, offsetOutput+1);

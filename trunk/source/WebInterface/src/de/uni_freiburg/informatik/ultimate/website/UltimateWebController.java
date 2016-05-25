@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -49,7 +48,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 		try {
 			mExternalUltimateCore.runUltimate();
 			UltimateResultProcessor.processUltimateResults(mCurrentServices, json);
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			e.printStackTrace();
 		} finally {
 			mExternalUltimateCore.complete();
@@ -58,14 +57,14 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
+	public int init(final ICore<ToolchainListType> core) {
 		// TODO Use own logging service to prefix each ultimate log line with
 		// the session id
 		// TODO: check what the whole settings thing means in parallel contexts
 		// clear old preferences
 		mCore = core;
 		core.resetPreferences();
-		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, mDeadline, new File[] { mInputFile })
+		return mExternalUltimateCore.init(core, mSettingsFile, mDeadline, new File[] { mInputFile })
 				.getCode();
 	}
 

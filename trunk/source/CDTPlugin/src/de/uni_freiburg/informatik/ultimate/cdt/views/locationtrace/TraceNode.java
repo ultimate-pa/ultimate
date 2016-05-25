@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class TraceNode {
 	
-	private ILocation location;
+	private final ILocation location;
 	
-	private int index;
+	private final int index;
 	
-	private int originalIndex;
+	private final int originalIndex;
 	
 	private int iteration;
 	
@@ -57,9 +57,9 @@ public class TraceNode {
 	 * @param iteration the count of iterations
 	 */
 	public TraceNode(ILocation loc, int index, int oIndex) {
-		this.location = loc;
+		location = loc;
 		this.index = index;
-		this.originalIndex = oIndex;
+		originalIndex = oIndex;
 	}
 
 	/**

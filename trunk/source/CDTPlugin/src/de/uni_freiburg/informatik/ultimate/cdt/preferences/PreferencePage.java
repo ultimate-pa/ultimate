@@ -88,28 +88,28 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 		// we want to choose the toolchains which we use!
 		// we read out the Directory "Toolchains", and create prefs
 		File toolchainDir = null;
-		URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
+		final URL url = FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID), new Path("toolchains"), null);
 		try {
-			URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
+			final URI uri = new URI(FileLocator.toFileURL(url).toString().replace(" ", "%20"));
 			toolchainDir = new File(uri);
-		} catch (IOException e2) {
+		} catch (final IOException e2) {
 			e2.printStackTrace();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			e.printStackTrace();
 		}
 
-		ArrayList<String[]> comboValues = new ArrayList<String[]>();
+		final ArrayList<String[]> comboValues = new ArrayList<String[]>();
 		// Iterate over all Files in the Directory
-		for (File f : toolchainDir.listFiles()) {
-			String[] params = f.getName().split("\\.");
-			String tName = params[0];
+		for (final File f : toolchainDir.listFiles()) {
+			final String[] params = f.getName().split("\\.");
+			final String tName = params[0];
 			if (tName.equals("") || params.length < 2 || !params[1].equals("xml")) {
 				continue;
 			}
 			comboValues.add(new String[] { tName, tName });
 		}
 
-		ComboFieldEditor toolchainSelection = new ComboFieldEditor(TOOLCHAIN_SELECTION_TEXT, TOOLCHAIN_SELECTION_LABEL,
+		final ComboFieldEditor toolchainSelection = new ComboFieldEditor(TOOLCHAIN_SELECTION_TEXT, TOOLCHAIN_SELECTION_LABEL,
 				comboValues.toArray(new String[comboValues.size()][2]), getFieldEditorParent());
 
 		addField(toolchainSelection);
@@ -124,7 +124,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 	public boolean performOk() {
 		try {
 			preferences.save();
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			System.out.println(ioe);
 		}
 		return super.performOk();

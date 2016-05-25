@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 final class UnionFind {
 	private int[] root;
-	private int[] size;
-	private int[] stack;
+	private final int[] size;
+	private final int[] stack;
 
 	UnionFind(int numNodes) {
 		root = new int[numNodes];
@@ -61,8 +61,9 @@ final class UnionFind {
 		n1 = root[n1];
 		n2 = root[n2];
 
-		if (n1 == n2)
+		if (n1 == n2) {
 			return;
+		}
 
 		if (size[n1] < size[n2]) {
 			root[n1] = n2;
@@ -74,10 +75,11 @@ final class UnionFind {
 	}
 
 	int[] extractRoots() {
-		for (int i = 0; i < root.length; i++)
+		for (int i = 0; i < root.length; i++) {
 			updateRoot(i);
+		}
 
-		int[] result = root;
+		final int[] result = root;
 
 		root = null;
 		return result;
@@ -90,7 +92,8 @@ final class UnionFind {
 			stack[ptr++] = node;
 			node = root[node];
 		}
-		while (ptr --> 0)
+		while (ptr --> 0) {
 			root[stack[ptr]] = node;
+		}
 	}
 }

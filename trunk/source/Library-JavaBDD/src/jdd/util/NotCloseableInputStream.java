@@ -1,7 +1,8 @@
 
 package jdd.util;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * <pre>
@@ -11,11 +12,15 @@ import java.io.*;
  */
 
 public class NotCloseableInputStream extends InputStream {
-	private InputStream is;
+	private final InputStream is;
 
 	public NotCloseableInputStream(InputStream is) { this.is = is; }
+	@Override
 	public int read() throws IOException { return is.read(); }
+	@Override
 	public int read(byte []b) throws IOException { return is.read(b); }
+	@Override
 	public int read(byte []b, int o, int s) throws IOException { return is.read(b, o,s); }
+	@Override
 	public int available() throws IOException { return is.available() ; }
 }

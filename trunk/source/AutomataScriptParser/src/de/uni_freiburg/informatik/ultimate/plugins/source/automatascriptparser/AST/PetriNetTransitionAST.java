@@ -46,11 +46,11 @@ public class PetriNetTransitionAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = -1676272287026669953L;
 
-	private String msymbol;
+	private final String msymbol;
 
 	
-	private IdentifierListAST mpredeccesors;
-	private IdentifierListAST msuccessors;
+	private final IdentifierListAST mpredeccesors;
+	private final IdentifierListAST msuccessors;
 	
 
 	public PetriNetTransitionAST(ILocation loc, IdentifierListAST from, String symbol, IdentifierListAST to) {
@@ -94,14 +94,14 @@ public class PetriNetTransitionAST extends AtsASTNode {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		for (String pred : mpredeccesors.getIdentifierList()) {
+		for (final String pred : mpredeccesors.getIdentifierList()) {
 			builder.append(pred + " ");
 		}
 		builder.deleteCharAt(builder.length() - 1);
 		builder.append("}" + msymbol + "{");
-		for (String succ : msuccessors.getIdentifierList()) {
+		for (final String succ : msuccessors.getIdentifierList()) {
 			builder.append(succ + " ");
 		}
 		builder.deleteCharAt(builder.length() - 1);

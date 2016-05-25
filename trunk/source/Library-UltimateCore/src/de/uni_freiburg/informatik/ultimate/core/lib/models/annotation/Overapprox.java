@@ -78,12 +78,13 @@ public class Overapprox extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field.equals(s_REASON_FOR_OVERAPPROXIMATION))
+		if (field.equals(s_REASON_FOR_OVERAPPROXIMATION)) {
 			return mReason2Loc.keySet();
-		else if (field.equals(s_LOCATION_MAPPING))
+		} else if (field.equals(s_LOCATION_MAPPING)) {
 			return mReason2Loc;
-		else
+		} else {
 			throw new UnsupportedOperationException("Unknown field "+field);
+		}
 	}
 
 }

@@ -77,7 +77,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 
 	@Override
 	public Collection<String> getKeys() {
-		ArrayList<String> keyList = new ArrayList<String>(super.getKeys());
+		final ArrayList<String> keyList = new ArrayList<String>(super.getKeys());
 		keyList.add(s_HighestRank);
 		keyList.add(s_NonLiveStateRemoval);
 		keyList.add(s_BuchiClosure);
@@ -99,9 +99,9 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	public Object aggregate(String key, Object value1, Object value2) {
 		switch (key) {
 		case s_Result:
-			Result result1 = (Result) value1;
-			Result result2 = (Result) value2;
-			Set<Result> results = new HashSet<Result>();
+			final Result result1 = (Result) value1;
+			final Result result2 = (Result) value2;
+			final Set<Result> results = new HashSet<Result>();
 			results.add(result1);
 			results.add(result2);
 			if (results.contains(Result.NONTERMINATING)) {
@@ -117,11 +117,11 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 			}
 		case s_NontrivialModuleStages:
 		{
-			int[] array1 = (int[]) value1;
-			int[] array2 = (int[]) value2;
+			final int[] array1 = (int[]) value1;
+			final int[] array2 = (int[]) value2;
 			assert array1.length == 4;
 			assert array2.length == 4;
-			int[] result = new int[4];
+			final int[] result = new int[4];
 			for (int i=0; i<4; i++) {
 				result[i] = array1[i] + array1[i];
 			}
@@ -129,8 +129,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		}
 		case s_InterpolantCoveringCapabilityFinite:
 		case s_InterpolantCoveringCapabilityBuchi:
-			BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
-			BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
+			final BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
+			final BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
 			return new BackwardCoveringInformation(bci1, bci2);
 		case s_LassoPreprocessingBenchmarks:
 		case s_LassoTerminationAnalysisBenchmarks:
@@ -147,22 +147,22 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 
 	@Override
 	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		
 		sb.append("BüchiAutomizer plugin needed ");
-		Long overallTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		final Long overallTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		sb.append(prettyprintNanoseconds(overallTime));
 		sb.append(" and ");
-		Integer overallIterations = (Integer) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString());
+		final Integer overallIterations = (Integer) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString());
 		sb.append(overallIterations);
 		sb.append(" iterations. ");
 		
-		Long laTime = (Long) benchmarkData.getValue(s_LassoAnalysisTime);
+		final Long laTime = (Long) benchmarkData.getValue(s_LassoAnalysisTime);
 		sb.append("Analysis of lassos took ");
 		sb.append(prettyprintNanoseconds(laTime));
 		sb.append(". ");
 		
-		StatisticsData ecData = 
+		final StatisticsData ecData = 
 				(StatisticsData) benchmarkData.getValue(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 		Long ecTime;
 		if (ecData.getBenchmarkType() == null) {
@@ -173,51 +173,51 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 		sb.append("Construction of modules took ");
 		sb.append(prettyprintNanoseconds(ecTime));
-		Long differenceTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		final Long differenceTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		sb.append(". ");
 		sb.append("Büchi inclusion checks took ");
 		sb.append(prettyprintNanoseconds(differenceTime - ecTime));
 		sb.append(". ");
 		
 		sb.append("Highest rank in rank-based complementation ");
-		Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
+		final Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
 		sb.append(highestRank);
 		sb.append(". ");
 		
 		sb.append("Minimization removed ");
 		sb.append(benchmarkData.getValue(CegarLoopStatisticsDefinitions.StatesRemovedByMinimization.toString()));
 		sb.append(" states and took ");
-		Long time = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+		final Long time = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		sb.append(prettyprintNanoseconds(time));
 		sb.append(". ");
 		
 		sb.append("Non-live state removal took ");
-		Long nonLiveTime = (Long) benchmarkData.getValue(s_NonLiveStateRemoval);
+		final Long nonLiveTime = (Long) benchmarkData.getValue(s_NonLiveStateRemoval);
 		sb.append(prettyprintNanoseconds(nonLiveTime));
 		sb.append(" Buchi closure took ");
-		Long buchiClosureTime = (Long) benchmarkData.getValue(s_BuchiClosure);
+		final Long buchiClosureTime = (Long) benchmarkData.getValue(s_BuchiClosure);
 		sb.append(prettyprintNanoseconds(buchiClosureTime));
 		sb.append(". ");
 		
-		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
+		final SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
 		sb.append("Biggest automaton had ");
 		sb.append(sip.getSize());
 		sb.append(" states and ocurred in iteration ");
 		sb.append(sip.getIteration());
 		sb.append(".\t");
 		
-		int[] stages = (int[]) benchmarkData.getValue(s_NontrivialModuleStages);
+		final int[] stages = (int[]) benchmarkData.getValue(s_NontrivialModuleStages);
 		sb.append("Nontrivial modules had stage ");
 		sb.append(Arrays.toString(stages));
 		sb.append(".\t");
 		
-		BackwardCoveringInformation bcif = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityFinite);
+		final BackwardCoveringInformation bcif = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityFinite);
 		sb.append(s_InterpolantCoveringCapabilityFinite);
 		sb.append(": ");
 		sb.append(bcif.toString());
 		sb.append("\t");
 		
-		BackwardCoveringInformation bcib = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityBuchi);
+		final BackwardCoveringInformation bcib = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityBuchi);
 		sb.append(s_InterpolantCoveringCapabilityBuchi);
 		sb.append(": ");
 		sb.append(bcib.toString());
@@ -230,17 +230,17 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 		sb.append(s_LassoAnalysisResults);
 		sb.append(": ");
-		LassoAnalysisResults lar = 
+		final LassoAnalysisResults lar = 
 				(LassoAnalysisResults) benchmarkData.getValue(s_LassoAnalysisResults);
 		sb.append(lar.toString());
 		
 		sb.append(s_LassoPreprocessingBenchmarks);
 		sb.append(": ");
-		List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
+		final List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
 		sb.append(PreprocessingBenchmark.prettyprint(ppbench));
 		sb.append(s_LassoTerminationAnalysisBenchmarks);
 		sb.append(": ");
-		List<TerminationAnalysisBenchmark> tabbench = (List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
+		final List<TerminationAnalysisBenchmark> tabbench = (List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
 		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
 		sb.append(s_LassoTerminationAnalysisBenchmarks);
 		sb.append(": ");
@@ -273,10 +273,10 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		if (benchmarks.size() == 0) {
 			return "not available";
 		}
-		StringBuilder sb = new StringBuilder();
-		ICsvProvider<Object> aggr =  aggregateTermBench(benchmarks);
+		final StringBuilder sb = new StringBuilder();
+		final ICsvProvider<Object> aggr =  aggregateTermBench(benchmarks);
 		int offset = 0;
-		for (String title : aggr.getColumnTitles()) {
+		for (final String title : aggr.getColumnTitles()) {
 			sb.append(title);
 			sb.append(": ");
 			if (title.equals(TerminationAnalysisBenchmark.s_Label_Time)) {
@@ -285,10 +285,10 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 				sb.append(value);
 				sb.append("ms");
 			} else if (title.equals(TerminationAnalysisBenchmark.s_Label_ConstraintsSatisfiability)) {
-				LBool value = (LBool) aggr.getRow(0).get(offset);
+				final LBool value = (LBool) aggr.getRow(0).get(offset);
 				sb.append(value);
 			} else {
-				int value = (int) aggr.getRow(0).get(offset);
+				final int value = (int) aggr.getRow(0).get(offset);
 				sb.append(value);
 			}
 			sb.append(" ");
@@ -298,13 +298,13 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	}
 	
 	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
-		List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
+		final List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
 		benchmarks = Collections.singletonList(mostMotzkinButUnknownFirst(benchmarks));
-		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
+		for (final TerminationAnalysisBenchmark benchmark : benchmarks) {
 			list.add(benchmark.createCvsProvider());
 		}
-		ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
-		ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(
+		final ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
+		final ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(
 				allRows, new String[]{
 				TerminationAnalysisBenchmark.s_Label_ConstraintsSatisfiability,
 				TerminationAnalysisBenchmark.s_Label_Degree,
@@ -322,7 +322,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		boolean foundUnknown = false;
 		int mostMotzkin = 0;
 		TerminationAnalysisBenchmark mostDifficult = null;
-		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
+		for (final TerminationAnalysisBenchmark benchmark : benchmarks) {
 			if (foundUnknown == false) {
 				if (benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN) {
 					foundUnknown = true;
@@ -412,8 +412,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			for (String key : getKeys()) {
+			final StringBuilder sb = new StringBuilder();
+			for (final String key : getKeys()) {
 				sb.append(key);
 				sb.append(getValue(key));
 				sb.append(" ");
@@ -423,7 +423,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 
 		public void increment(String key) {
-			int value = mMap.get(key);
+			final int value = mMap.get(key);
 			mMap.put(key, value + 1);
 		}
 		
@@ -463,9 +463,9 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 
 		@Override
 		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
-			LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
-			StringBuilder sb = new StringBuilder();
-			for (String key : lar.getKeys()) {
+			final LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
+			final StringBuilder sb = new StringBuilder();
+			for (final String key : lar.getKeys()) {
 				sb.append(key);
 				sb.append(lar.getValue(key));
 				sb.append(" ");

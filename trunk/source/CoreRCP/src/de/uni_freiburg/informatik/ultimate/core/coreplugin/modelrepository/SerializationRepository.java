@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class SerializationRepository implements IRepository<String, ModelContainer> {
 
-	private File mFileSystemDirectory;
-	private ILogger mLogger;
+	private final File mFileSystemDirectory;
+	private final ILogger mLogger;
 
 	/**
 	 * Constructor for {@link SerializationRepository}. Constructs a repository
@@ -80,7 +80,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	@Override
 	public void dump() {
-		this.removeAll(this.listKeys());
+		removeAll(listKeys());
 	}
 
 	/*
@@ -93,16 +93,16 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	@Override
 	public ModelContainer get(String key) throws PersistentObjectNotFoundException,
 			PersistentObjectTypeMismatchException {
-		if (this.listKeys().contains(key)) {
+		if (listKeys().contains(key)) {
 			try {
 				mLogger.debug("deserializing model");
-				Object obj = deserialize(key);
+				final Object obj = deserialize(key);
 				return (ModelContainer) obj;
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				throw new PersistentObjectNotFoundException(e);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new PersistentObjectNotFoundException(e);
-			} catch (ClassNotFoundException e) {
+			} catch (final ClassNotFoundException e) {
 				throw new PersistentObjectTypeMismatchException(
 						"A required class used"
 								+ " in the stored object graph could not be found. Maybe it has been produced by a plug-in that didn't export this package",
@@ -125,8 +125,8 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	private Object deserialize(String key) throws FileNotFoundException, IOException, ClassNotFoundException {
 
-		ObjectInputStream stream = new ObjectInputStream(new FileInputStream(keyToFile(key)));
-		Object rtr = stream.readObject();
+		final ObjectInputStream stream = new ObjectInputStream(new FileInputStream(keyToFile(key)));
+		final Object rtr = stream.readObject();
 		stream.close();
 		return rtr;
 	}
@@ -141,9 +141,9 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	@Override
 	public List<String> listKeys() {
 		// initialize return value
-		List<String> keys = new LinkedList<String>();
-		for (String fileName : this.mFileSystemDirectory.list()) {
-			File file = new File(fileName);
+		final List<String> keys = new LinkedList<String>();
+		for (final String fileName : mFileSystemDirectory.list()) {
+			final File file = new File(fileName);
 			if (file.getName().endsWith(".ser")) {
 				// only keep the name. Throw away path and extension
 				keys.add(file.getName().substring(0, file.getName().length() - 4));
@@ -161,9 +161,9 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	@Override
 	public boolean remove(String key) {
-		File toBeDeleted = new File(this.mFileSystemDirectory + "/" + key + ".ser");
-		boolean success = toBeDeleted.delete();
-		if (!success && this.listKeys().contains(key)) {
+		final File toBeDeleted = new File(mFileSystemDirectory + "/" + key + ".ser");
+		final boolean success = toBeDeleted.delete();
+		if (!success && listKeys().contains(key)) {
 			mLogger.warn("Could not delete " + toBeDeleted.getPath() + " from the file system!");
 			return false;
 		} else {
@@ -182,8 +182,8 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	@Override
 	public void removeAll(List<String> keys) {
-		for (String string : keys) {
-			this.remove(string);
+		for (final String string : keys) {
+			remove(string);
 		}
 	}
 
@@ -196,11 +196,11 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	@Override
 	public void add(String key, ModelContainer transientInstance) throws DuplicateKeyException, StoreObjectException {
-		if (this.listKeys().contains(key)) {
+		if (listKeys().contains(key)) {
 			throw new DuplicateKeyException("The key: " + key + " is already in use. If you want to "
 					+ "replace the stored object, use method addOrReplace instead!");
 		} else {
-			this.addOrReplace(key, transientInstance);
+			addOrReplace(key, transientInstance);
 		}
 	}
 
@@ -215,9 +215,9 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	public void addOrReplace(String key, ModelContainer transientInstance) throws StoreObjectException {
 		try {
 			serializie(key, transientInstance);
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			throw new InvalidKeyException("invalid key: " + key, e);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.fatal("Serialization of ModelContainer failed for key " + key + " to file " + keyToFile(key));
 			throw new StoreObjectException(e);
 		}
@@ -232,7 +232,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @throws FileNotFoundException
 	 */
 	private void serializie(String key, ModelContainer transientInstance) throws FileNotFoundException, IOException {
-		ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)));
+		final ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)));
 		stream.writeObject(transientInstance);
 		stream.close();
 		mLogger.debug("serialized model");
@@ -246,7 +246,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @return File to store model represented by key.
 	 */
 	private File keyToFile(String key) {
-		return new File(this.mFileSystemDirectory + File.separator + sanitize(key) + ".ser");
+		return new File(mFileSystemDirectory + File.separator + sanitize(key) + ".ser");
 	}
 
 	/**

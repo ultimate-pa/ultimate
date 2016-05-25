@@ -64,7 +64,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 			return rtr;
 		}
 
-		for (RCFGEdge pre : currentNode.getIncomingEdges()) {
+		for (final RCFGEdge pre : currentNode.getIncomingEdges()) {
 			visit(pre);
 		}
 
@@ -78,7 +78,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		List<CodeBlock> blck = c.getCodeBlocks();
+		final List<CodeBlock> blck = c.getCodeBlocks();
 		if (blck == null || blck.isEmpty()) {
 			return;
 		}
@@ -87,7 +87,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(StatementSequence stmtSeq) {
-		ReachDefStatementAnnotation annot = mProvider.getAnnotation(stmtSeq.getStatements().get(
+		final ReachDefStatementAnnotation annot = mProvider.getAnnotation(stmtSeq.getStatements().get(
 				stmtSeq.getStatements().size() - 1));
 		if (annot != null) {
 			rtr.add(annot);

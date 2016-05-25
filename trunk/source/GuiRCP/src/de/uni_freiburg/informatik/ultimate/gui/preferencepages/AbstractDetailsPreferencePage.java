@@ -75,13 +75,13 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	@Override
 	protected Control createContents(Composite parent) {
 
-		Composite entryTable = new Composite(parent, SWT.NULL);
+		final Composite entryTable = new Composite(parent, SWT.NULL);
 		// Create a data that takes up the extra space in the dialog .
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.grabExcessHorizontalSpace = true;
 		entryTable.setLayoutData(data);
 
-		GridLayout layout = new GridLayout();
+		final GridLayout layout = new GridLayout();
 		entryTable.setLayout(layout);
 
 		// Add in a dummy label for spacing
@@ -95,9 +95,9 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		data = new GridData(GridData.FILL_BOTH);
 		detailList.setLayoutData(data);
 
-		Composite buttonComposite = new Composite(entryTable, SWT.NULL);
+		final Composite buttonComposite = new Composite(entryTable, SWT.NULL);
 
-		GridLayout buttonLayout = new GridLayout();
+		final GridLayout buttonLayout = new GridLayout();
 		buttonLayout.numColumns = 2;
 		buttonComposite.setLayout(buttonLayout);
 
@@ -106,13 +106,13 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		data = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING);
 		buttonComposite.setLayoutData(data);
 
-		Button addButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
+		final Button addButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
 
 		addButton.setText("Add to List"); //$NON-NLS-1$
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
-				String text = newEntryText.getText();
+				final String text = newEntryText.getText();
 				if (entryIsValid(text)) {
 					detailList.add(newEntryText.getText(), detailList.getItemCount());
 					fillInfoLabel(detailList);
@@ -127,14 +127,14 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		data.grabExcessHorizontalSpace = true;
 		newEntryText.setLayoutData(data);
 		// fill combo with data
-		String[] comboContent = getComboSupply();
-		for (String s : comboContent) {
+		final String[] comboContent = getComboSupply();
+		for (final String s : comboContent) {
 			newEntryText.add(s);
 		}
 		// select first item
 		newEntryText.select(0);
 
-		Button removeButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
+		final Button removeButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
 
 		removeButton.setText("Remove Selection"); //$NON-NLS-1$
 		removeButton.addSelectionListener(new SelectionAdapter() {
@@ -145,16 +145,16 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 			}
 		});
 
-		Button editButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
+		final Button editButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
 		editButton.setText("Edit Selected"); //$NON-NLS-1$
 		editButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
-				int index = detailList.getSelectionIndex();
+				final int index = detailList.getSelectionIndex();
 				if (index == -1) {
 					return;
 				}
-				String content = detailList.getItem(index);
+				final String content = detailList.getItem(index);
 				newEntryText.setText(content);
 				detailList.remove(detailList.getSelectionIndex());
 				fillInfoLabel(detailList);
@@ -162,9 +162,9 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		});
 
 		// Create a space for additional information
-		Composite infoComposite = new Composite(entryTable, SWT.NULL);
+		final Composite infoComposite = new Composite(entryTable, SWT.NULL);
 
-		GridLayout infoLayout = new GridLayout();
+		final GridLayout infoLayout = new GridLayout();
 		infoLayout.numColumns = 1;
 		infoComposite.setLayout(infoLayout);
 		data = new GridData(GridData.FILL_HORIZONTAL);
@@ -190,19 +190,19 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * @param detailList
 	 */
 	private void fillInfoLabel(List detailList) {
-		String content = getInfoContent(detailList);
+		final String content = getInfoContent(detailList);
 		infoLabel.setText(content);
 	}
 
 	protected abstract String getInfoContent(List detailList);
 
 	private boolean entryIsValid(String text) {
-		int eqIndex = text.lastIndexOf("=");
+		final int eqIndex = text.lastIndexOf("=");
 		if (eqIndex <= 0) {
 			raiseInvalidEntryError();
 			return false;
 		}
-		String logLevel = text.substring(eqIndex + 1).toUpperCase();
+		final String logLevel = text.substring(eqIndex + 1).toUpperCase();
 
 		if (!Arrays.asList(CorePreferenceInitializer.VALUE_VALID_LOG_LEVELS).contains(logLevel)) {
 			raiseInvalidLogLevelError();

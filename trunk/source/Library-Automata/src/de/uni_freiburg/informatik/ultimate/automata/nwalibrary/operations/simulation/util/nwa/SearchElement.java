@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Element for a breadth-first search that computes the priority of a given
@@ -82,8 +82,8 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public static <LETTER, STATE> VertexDoubleDecker<STATE> extractVertexDoubleDecker(
 			final SearchElement<LETTER, STATE> searchElement) {
-		Vertex<LETTER, STATE> vertex = searchElement.getVertex();
-		VertexUpState<STATE> upState = new VertexUpState<STATE>(vertex.getQ0(), vertex.getQ1());
+		final Vertex<LETTER, STATE> vertex = searchElement.getVertex();
+		final VertexUpState<STATE> upState = new VertexUpState<STATE>(vertex.getQ0(), vertex.getQ1());
 		return new VertexDoubleDecker<>(upState, searchElement.getDownState());
 	}
 
@@ -156,7 +156,7 @@ public final class SearchElement<LETTER, STATE> {
 		if (!(obj instanceof SearchElement)) {
 			return false;
 		}
-		SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
+		final SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
 		if (mDownState == null) {
 			if (other.mDownState != null) {
 				return false;

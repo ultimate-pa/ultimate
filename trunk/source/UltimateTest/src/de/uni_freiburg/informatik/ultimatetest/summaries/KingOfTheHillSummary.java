@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * List which toolchain/setting pair combinations are the only ones that 
@@ -55,12 +55,12 @@ public class KingOfTheHillSummary extends NewTestSummary {
 	
 	@Override
 	public String getSummaryLog() {
-		PartitionedResults pr = getAllResultsPartitioned();
-		StringBuilder sb = new StringBuilder();
+		final PartitionedResults pr = getAllResultsPartitioned();
+		final StringBuilder sb = new StringBuilder();
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Success;
-			String resultCategory = "SUCCESS";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Success;
+			final String resultCategory = "SUCCESS";
 			printKingOfTheHillForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -69,8 +69,8 @@ public class KingOfTheHillSummary extends NewTestSummary {
 		}
 		
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Timeout;
-			String resultCategory = "TIMEOUT";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Timeout;
+			final String resultCategory = "TIMEOUT";
 			printKingOfTheHillForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -79,8 +79,8 @@ public class KingOfTheHillSummary extends NewTestSummary {
 		}
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Unknown;
-			String resultCategory = "UNKNOWN";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Unknown;
+			final String resultCategory = "UNKNOWN";
 			printKingOfTheHillForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -89,8 +89,8 @@ public class KingOfTheHillSummary extends NewTestSummary {
 		}
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Failure;
-			String resultCategory = "FAILURE";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Failure;
+			final String resultCategory = "FAILURE";
 			printKingOfTheHillForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -108,19 +108,19 @@ public class KingOfTheHillSummary extends NewTestSummary {
 			String resultCategory, StringBuilder sb) {
 		sb.append("======= King of the Hill for ").append(resultCategory).append(" =======").append(System.lineSeparator());
 		
-		HashRelation<String, TCS> input2tcses = new HashRelation<>();
-		for (Entry<UltimateRunDefinition, ExtendedResult> result : allOfResultCategory) {
-			UltimateRunDefinition urd = result.getKey();
-			TCS tcs = new TCS(urd.getToolchain(), urd.getSettings());
+		final HashRelation<String, TCS> input2tcses = new HashRelation<>();
+		for (final Entry<UltimateRunDefinition, ExtendedResult> result : allOfResultCategory) {
+			final UltimateRunDefinition urd = result.getKey();
+			final TCS tcs = new TCS(urd.getToolchain(), urd.getSettings());
 			input2tcses.addPair(urd.getInputFileNames(), tcs);
 		}
-		HashRelation<Set<TCS>, String> tcses2input = new HashRelation<>();
-		for (String input : input2tcses.getDomain()) {
-			Set<TCS> tcses = input2tcses.getImage(input);
+		final HashRelation<Set<TCS>, String> tcses2input = new HashRelation<>();
+		for (final String input : input2tcses.getDomain()) {
+			final Set<TCS> tcses = input2tcses.getImage(input);
 			tcses2input.addPair(tcses, input);
 		}
-		Set<TCS>[] tcsPowerset = (Set<TCS>[]) tcses2input.getDomain().toArray(new Set<?>[tcses2input.getDomain().size()]);
-		Comparator<Set<TCS>> comp = new Comparator<Set<TCS>>() {
+		final Set<TCS>[] tcsPowerset = (Set<TCS>[]) tcses2input.getDomain().toArray(new Set<?>[tcses2input.getDomain().size()]);
+		final Comparator<Set<TCS>> comp = new Comparator<Set<TCS>>() {
 
 			@Override
 			public int compare(Set<TCS> arg0, Set<TCS> arg1) {
@@ -129,18 +129,18 @@ public class KingOfTheHillSummary extends NewTestSummary {
 		};
 		
 		Arrays.sort(tcsPowerset, comp);
-		for (Set<TCS> tcses : tcsPowerset) {
+		for (final Set<TCS> tcses : tcsPowerset) {
 			sb.append("The " + tcses.size() + " toolchain/settings pairs").append(System.lineSeparator());
-			for (TCS tcs : tcses) {
+			for (final TCS tcs : tcses) {
 				sb.append("    ").append(tcs).append(System.lineSeparator());
 			}
-			Set<String> inputFiles = tcses2input.getImage(tcses);
+			final Set<String> inputFiles = tcses2input.getImage(tcses);
 			sb.append("are exactly the pairs were the result was "); 
 			sb.append(resultCategory);
 			sb.append(" on the following ");
 			sb.append(inputFiles.size());
 			sb.append(" files").append(System.lineSeparator());
-			for (String file : inputFiles) {
+			for (final String file : inputFiles) {
 				sb.append("  ").append(file).append(System.lineSeparator());
 			}
 			sb.append(System.lineSeparator());

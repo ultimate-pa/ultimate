@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Construct all array cell ReplacementVar for a lasso.
@@ -71,12 +71,12 @@ public class ArrayCellRepVarConstructor {
 
 
 	private void constructRepVars(TransFormulaLRWithArrayInformation tfwac) {
-		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwac.getArrayCellInVars().entrySet()) {
-			ArrayCellReplacementVarInformation acrvi = triple.getThird();
+		for (final Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwac.getArrayCellInVars().entrySet()) {
+			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			constructRepVarIfNecessaryAndAdd(acrvi);
 		}
-		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwac.getArrayCellOutVars().entrySet()) {
-			ArrayCellReplacementVarInformation acrvi = triple.getThird();
+		for (final Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwac.getArrayCellOutVars().entrySet()) {
+			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			constructRepVarIfNecessaryAndAdd(acrvi);
 		}
 	}
@@ -84,7 +84,7 @@ public class ArrayCellRepVarConstructor {
 
 	private void constructRepVarIfNecessaryAndAdd(
 			ArrayCellReplacementVarInformation acrvi) {
-		ReplacementVar repVar = getOrconstructReplacementVar(acrvi);
+		final ReplacementVar repVar = getOrconstructReplacementVar(acrvi);
 		acrvi.setReplacementVar(repVar);
 	}
 	
@@ -95,9 +95,9 @@ public class ArrayCellRepVarConstructor {
 	 * caller of this method.
 	 */
 	private ReplacementVar getOrconstructReplacementVar(ArrayCellReplacementVarInformation acrvi) {
-		TermVariable array = acrvi.getArrayRepresentative();
-		ArrayIndex index = acrvi.getIndexRepresentative();
-		ArrayCellReplacementVarInformation repVarInfo = mArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
+		final TermVariable array = acrvi.getArrayRepresentative();
+		final ArrayIndex index = acrvi.getIndexRepresentative();
+		final ArrayCellReplacementVarInformation repVarInfo = mArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
 		ReplacementVar repVar;
 		if (repVarInfo == null) {
 			repVar = constructReplacementVar(array, index);
@@ -114,8 +114,8 @@ public class ArrayCellRepVarConstructor {
 	 * cell array[index].
 	 */
 	private ReplacementVar constructReplacementVar(TermVariable array, ArrayIndex index) {
-			Term definition = SmtUtils.multiDimensionalSelect(mScript, array, index);
-			ReplacementVar repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
+			final Term definition = SmtUtils.multiDimensionalSelect(mScript, array, index);
+			final ReplacementVar repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
 

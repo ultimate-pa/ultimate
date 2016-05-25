@@ -33,8 +33,8 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 
 	@Override
 	public Collection<String> getKeys() {
-		List<String> result = new ArrayList<>();
-		for (Enum<?> test : mKeys.getEnumConstants()) {
+		final List<String> result = new ArrayList<>();
+		for (final Enum<?> test : mKeys.getEnumConstants()) {
 			result.add(test.toString());
 		}
 		return result;
@@ -42,23 +42,23 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 
 	@Override
 	public Object aggregate(String key, Object value1, Object value2) {
-		T keyEnum = (T) Enum.valueOf(mKeys, key);
-		Object result = keyEnum.aggregate(value1, value2);
+		final T keyEnum = Enum.valueOf(mKeys, key);
+		final Object result = keyEnum.aggregate(value1, value2);
 		return result;
 	}
 
 	@Override
 	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (String key : getKeys()) {
+		for (final String key : getKeys()) {
 			if (first) {
 				first = false;
 			} else {
 				sb.append(", ");
 			}
-			Object value = benchmarkData.getValue(key);
-			T keyE = (T) Enum.valueOf(mKeys, key);
+			final Object value = benchmarkData.getValue(key);
+			final T keyE = Enum.valueOf(mKeys, key);
 			sb.append(keyE.prettyprint(value));
 		}
 		return sb.toString();
@@ -71,8 +71,8 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	
 	
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 

@@ -63,7 +63,7 @@ public class CompoundDomainMergeOperator implements IAbstractStateBinaryOperator
 		final List<IAbstractDomain> domains = first.getDomainList();
 		assert domains.size() == firstStates.size();
 
-		List<IAbstractState<?, CodeBlock, IBoogieVar>> returnStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnStates = new ArrayList<>();
 
 		for (int i = 0; i < firstStates.size(); i++) {
 			returnStates

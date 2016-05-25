@@ -56,7 +56,7 @@ public class DFSTreeWalker extends BaseWalker {
 		IElement tobeproccessed = element;
 
 		if (element instanceof WrapperNode) {
-			WrapperNode wnode = (WrapperNode) element;
+			final WrapperNode wnode = (WrapperNode) element;
 			if (wnode.getBacking() instanceof IElement) {
 				tobeproccessed = (IElement) wnode.getBacking();
 			}
@@ -64,10 +64,10 @@ public class DFSTreeWalker extends BaseWalker {
 
 		if (v.process(tobeproccessed)) {
 			if (element instanceof IWalkable) {
-				IWalkable node = (IWalkable) element;
-				List<IWalkable> outgoings = node.getSuccessors();
+				final IWalkable node = (IWalkable) element;
+				final List<IWalkable> outgoings = node.getSuccessors();
 				if (outgoings != null) {
-					for (IWalkable i : outgoings) {
+					for (final IWalkable i : outgoings) {
 						runObserver(i, v);
 					}
 				}

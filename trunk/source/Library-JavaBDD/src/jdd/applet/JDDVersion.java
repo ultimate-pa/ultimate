@@ -1,10 +1,12 @@
 
 package jdd.applet;
 
-import java.applet.*;
-import java.awt.*;
+import java.applet.Applet;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Label;
 
-import jdd.*;
+import jdd.Version;
 
 
 /** just show the current JDD version... */
@@ -12,7 +14,7 @@ import jdd.*;
 public class JDDVersion extends Applet  {
 
 	public JDDVersion() {
-		Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
+		final Color bgcolor = new Color(0xE0, 0xE0, 0xE0) ;
 		setBackground( bgcolor );
 		setLayout( new BorderLayout() );
 

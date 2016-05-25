@@ -64,7 +64,7 @@ public class CoverageAnalysis {
 	protected final ILogger mLogger ;
 	
 	protected final NestedWord<? extends IAction> mNestedWord;
-	private List<ProgramPoint> mProgramPointSequence;
+	private final List<ProgramPoint> mProgramPointSequence;
 	private final IPredicate[] mInterpolants;
 	private final PredicateUnifier mPredicateUnifier;
 	
@@ -101,21 +101,21 @@ public class CoverageAnalysis {
 
 			processCodeBlock(i);
 
-			ProgramPoint pp = mProgramPointSequence.get(i);
+			final ProgramPoint pp = mProgramPointSequence.get(i);
 			List<Integer> previousOccurrences = mProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
 				mProgramPoint2Occurence.put(pp, previousOccurrences);
 			} else {
-				for (int previousOccurrence : previousOccurrences) {
+				for (final int previousOccurrence : previousOccurrences) {
 					assert i > previousOccurrence;
-					IPredicate currentPredicate = mIPP.getInterpolant(i);
-					IPredicate previousPredicate = mIPP.getInterpolant(previousOccurrence);
+					final IPredicate currentPredicate = mIPP.getInterpolant(i);
+					final IPredicate previousPredicate = mIPP.getInterpolant(previousOccurrence);
 					if (currentPredicate == previousPredicate) {
 						// trivially covered and backedges already contained
 						mTrivial++;
 					} else {
-						Validity lbool = mPredicateUnifier.getCoverageRelation().isCovered(
+						final Validity lbool = mPredicateUnifier.getCoverageRelation().isCovered(
 								currentPredicate, previousPredicate);
 						processCoveringResult(i, previousOccurrence, lbool);
 						switch (lbool) {
@@ -155,7 +155,7 @@ public class CoverageAnalysis {
 
 	private int sumCountedOccurrences() {
 		int occurrenceSum = 0;
-		for (Entry<ProgramPoint, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
+		for (final Entry<ProgramPoint, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
 			occurrenceSum += entry.getValue().size();
 		}
 		return occurrenceSum;
@@ -180,10 +180,10 @@ public class CoverageAnalysis {
 	
 	
 	public static List<ProgramPoint> extractProgramPoints(IRun<CodeBlock, IPredicate> irun) {
-		ArrayList<IPredicate> predicateSequence = 
+		final ArrayList<IPredicate> predicateSequence = 
 				((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
-		ArrayList<ProgramPoint> result = new ArrayList<>();
-		for (IPredicate p : predicateSequence) {
+		final ArrayList<ProgramPoint> result = new ArrayList<>();
+		for (final IPredicate p : predicateSequence) {
 			result.add(((ISLPredicate) p).getProgramPoint());
 		}
 		return result;
@@ -191,8 +191,8 @@ public class CoverageAnalysis {
 	
 	
 	public BackwardCoveringInformation getBackwardCoveringInformation() {
-		int potentialBackwardCoverings = (mUnsat+mSat+mUnknown+mTrivial+mNotchecked);
-		int successfullBackwardCoverings = mUnsat+mTrivial;
+		final int potentialBackwardCoverings = (mUnsat+mSat+mUnknown+mTrivial+mNotchecked);
+		final int successfullBackwardCoverings = mUnsat+mTrivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
 	}
 	
@@ -202,8 +202,8 @@ public class CoverageAnalysis {
 	
 	
 	public static class BackwardCoveringInformation {
-		private int mPotentialBackwardCoverings;
-		private int mSuccessfullBackwardCoverings;
+		private final int mPotentialBackwardCoverings;
+		private final int mSuccessfullBackwardCoverings;
 		
 		public BackwardCoveringInformation(int potentialBackwardCoverings,
 				int successfullBackwardCoverings) {

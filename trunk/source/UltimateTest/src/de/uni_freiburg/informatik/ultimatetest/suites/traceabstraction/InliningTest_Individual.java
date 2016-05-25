@@ -75,7 +75,7 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String file : sFiles) {
+		for (final String file : sFiles) {
 			if (file.matches(".*\\.bpl$")) {
 				if (sTraceAbstractionBoogie) {
 					addTestCase(

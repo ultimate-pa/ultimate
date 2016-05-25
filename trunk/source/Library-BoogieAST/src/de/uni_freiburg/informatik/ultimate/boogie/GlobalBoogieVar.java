@@ -53,10 +53,12 @@ public abstract class GlobalBoogieVar extends BoogieVar implements Serializable 
 		super(identifier, iType, tv, defaultConstant, primedContant);
 	}
 	
+	@Override
 	public String getProcedure() {
 		return null;
 	}
 
+	@Override
 	public boolean isGlobal() {
 		return true;
 	}

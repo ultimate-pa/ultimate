@@ -68,25 +68,33 @@ public class HeapDataArray {
 	}
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		HeapDataArray other = (HeapDataArray) obj;
+		}
+		final HeapDataArray other = (HeapDataArray) obj;
 		if (mASTType == null) {
-			if (other.mASTType != null)
+			if (other.mASTType != null) {
 				return false;
-		} else if (!mASTType.equals(other.mASTType))
+			}
+		} else if (!mASTType.equals(other.mASTType)) {
 			return false;
+		}
 		if (mName == null) {
-			if (other.mName != null)
+			if (other.mName != null) {
 				return false;
-		} else if (!mName.equals(other.mName))
+			}
+		} else if (!mName.equals(other.mName)) {
 			return false;
-		if (mSize != other.mSize)
+		}
+		if (mSize != other.mSize) {
 			return false;
+		}
 		return true;
 	}
 	@Override

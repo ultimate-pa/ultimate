@@ -101,28 +101,35 @@ public class StateWithRankInfo<STATE> {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		StateWithRankInfo other = (StateWithRankInfo) obj;
-		if (mInO != other.mInO)
+		}
+		final StateWithRankInfo other = (StateWithRankInfo) obj;
+		if (mInO != other.mInO) {
 			return false;
-		if (mRank != other.mRank)
+		}
+		if (mRank != other.mRank) {
 			return false;
+		}
 		if (mState == null) {
-			if (other.mState != null)
+			if (other.mState != null) {
 				return false;
-		} else if (!mState.equals(other.mState))
+			}
+		} else if (!mState.equals(other.mState)) {
 			return false;
+		}
 		return true;
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(");
 		sb.append(getState());
 		sb.append(",");

@@ -86,20 +86,20 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		// repeat the following until no variable was eliminated
 		do {
 			someVariableWasEliminated = false;
-			Iterator<TermVariable> it = eliminatees.iterator();
+			final Iterator<TermVariable> it = eliminatees.iterator();
 			while (it.hasNext()) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"eliminating " + eliminatees.size() + 
 							" quantified variables from " + inputAtoms.length + " xjuncts");
 				}
-				TermVariable tv = it.next();
+				final TermVariable tv = it.next();
 				if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
 					// case where var does not occur
 					it.remove();
 					continue;
 				} else {
-					Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
+					final Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
 					if (withoutTv != null) {
 						resultAtoms = withoutTv;
 						it.remove();
@@ -122,15 +122,15 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	 */
 	public Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, ILogger logger) {
 		final Term[] resultAtoms;
-		EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
+		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
 		if (eqInfo == null) {
 			logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
 			resultAtoms = null;
 		} else {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
-			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
+			final SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
 					script, mFreshVarConstructor, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
@@ -149,9 +149,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		Term result =  substitution.transform(term);
 		if (term != result) {
 			try {
-				AffineRelation afr = new AffineRelation(mScript, result);
+				final AffineRelation afr = new AffineRelation(mScript, result);
 				result = afr.positiveNormalForm(mScript);
-			} catch (NotAffineException e) {
+			} catch (final NotAffineException e) {
 				// Do nothing - we return result.
 			}
 		}

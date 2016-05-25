@@ -64,9 +64,9 @@ public abstract class Formula2NFCompiler {
      */
     public Formula2NFCompiler(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = ILogger.getLogger(Formula2NFCompiler.DEFAULT_LOGGER);
+            logger = ILogger.getLogger(Formula2NFCompiler.DEFAULT_LOGGER);
         } else {
-            this.logger = ILogger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
     }
 
@@ -89,40 +89,40 @@ public abstract class Formula2NFCompiler {
      */
     protected void buildNF(Node actNode) {
         if (!(actNode.getNodeType() == Node.ELEMENT_NODE)) {
-            this.logger.debug("No element node, returning...");
+            logger.debug("No element node, returning...");
             return;
         }
 
-        Element node = (Element) actNode;
-        if (this.isFormulaElement(node)) {
-            this.logger.debug("Formula node, normalising children...");
-            Element[] formChildren = this.getFormulaOperands(node);
+        final Element node = (Element) actNode;
+        if (isFormulaElement(node)) {
+            logger.debug("Formula node, normalising children...");
+            final Element[] formChildren = getFormulaOperands(node);
             for (int i = 0; i < formChildren.length; i++) {
-                this.buildNF(formChildren[i]);
+                buildNF(formChildren[i]);
             }
-            this.logger.debug("Formula node, normalising children finished, "
+            logger.debug("Formula node, normalising children finished, "
                     + "returning...");
             return;
         }
 
         //A single trace always has normal form
-        if (!this.isTreeElement(node)) {
-            this.logger.debug("No tree, returning...");
+        if (!isTreeElement(node)) {
+            logger.debug("No tree, returning...");
             return;
         }
 
         //Normalise children first
-        Element[] children = this.getFormulaOperands(node);
+        Element[] children = getFormulaOperands(node);
         for (int i = 0; i < children.length; i++) {
-            this.logger.debug("Recursion, building NF for child[" + i + "]");
-            this.buildNF(children[i]);
-            this.logger.debug("Recursion, building NF for child[" + i
+            logger.debug("Recursion, building NF for child[" + i + "]");
+            buildNF(children[i]);
+            logger.debug("Recursion, building NF for child[" + i
                     + "] finished");
         }
 
         //An or-node with children in normal form is in normal form as well
         if (node.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST)) {
-            this.logger
+            logger
                     .debug("\"" + XMLTags.OR_CONST + "\"-node, returning...");
             return;
         }
@@ -132,11 +132,11 @@ public abstract class Formula2NFCompiler {
 
             changed = false;
 
-            children = this.getFormulaOperands(node);
+            children = getFormulaOperands(node);
             for (int i = 0; i < children.length && !changed; i++) {
 
-                if (this.isBasicElement(children[i])) {
-                    this.logger.debug("No Tree Node, continuing...");
+                if (isBasicElement(children[i])) {
+                    logger.debug("No Tree Node, continuing...");
                     continue;
                 }
 
@@ -144,53 +144,53 @@ public abstract class Formula2NFCompiler {
                         XMLTags.SYNC_PREFIX)
                         && children[i].getAttribute(XMLTags.OPERATOR_TAG)
                                 .equals(XMLTags.OR_CONST)) {
-                    this.logger.debug("Case 1: Node sync-event, child "
+                    logger.debug("Case 1: Node sync-event, child "
                             + XMLTags.OR_CONST);
-                    this.changeNodeSyncChildOr(node, children, i);
+                    changeNodeSyncChildOr(node, children, i);
                     changed = true;
 
                 } else if (node.getAttribute(XMLTags.OPERATOR_TAG).startsWith(
                         XMLTags.SYNC_PREFIX)
                         && children[i].getAttribute(XMLTags.OPERATOR_TAG)
                                 .equals(XMLTags.AND_CONST)) {
-                    this.logger.debug("Case 2: Node sync-event, child "
+                    logger.debug("Case 2: Node sync-event, child "
                             + XMLTags.AND_CONST);
-                    this.changeNodeSyncChildAnd(node, children, i);
+                    changeNodeSyncChildAnd(node, children, i);
                     changed = true;
 
                 } else if (node.getAttribute(XMLTags.OPERATOR_TAG).equals(
                         XMLTags.AND_CONST)
                         && children[i].getAttribute(XMLTags.OPERATOR_TAG)
                                 .equals(XMLTags.OR_CONST)) {
-                    this.logger.debug("Case 3: Node " + XMLTags.AND_CONST
+                    logger.debug("Case 3: Node " + XMLTags.AND_CONST
                             + ", child " + XMLTags.OR_CONST);
-                    this.changeNodeAndChildOr(node, children, i);
+                    changeNodeAndChildOr(node, children, i);
                     changed = true;
                 } else if (node.getAttribute(XMLTags.OPERATOR_TAG).equals(
                         XMLTags.NOT_CONST)
                         && children[i].getAttribute(XMLTags.OPERATOR_TAG)
                                 .equals(XMLTags.OR_CONST)) {
-                    this.logger.debug("Case 4: Node " + XMLTags.NOT_CONST
+                    logger.debug("Case 4: Node " + XMLTags.NOT_CONST
                             + ", child " + XMLTags.OR_CONST);
-                    this.changeNodeNotChildOr(node, children[i]);
+                    changeNodeNotChildOr(node, children[i]);
                     changed = true;
                 } else if (node.getAttribute(XMLTags.OPERATOR_TAG).equals(
                         XMLTags.NOT_CONST)
                         && children[i].getAttribute(XMLTags.OPERATOR_TAG)
                                 .equals(XMLTags.AND_CONST)) {
-                    this.logger.debug("Case 5: Node " + XMLTags.NOT_CONST
+                    logger.debug("Case 5: Node " + XMLTags.NOT_CONST
                             + ", child " + XMLTags.AND_CONST);
-                    this.changeNodeNotChildAnd(node, children[i]);
+                    changeNodeNotChildAnd(node, children[i]);
                     changed = true;
                 }
 
             }
 
-            this.logger.debug("Changed = " + changed);
+            logger.debug("Changed = " + changed);
             if (changed) {
-                children = this.getFormulaOperands(node);
+                children = getFormulaOperands(node);
                 for (int j = 0; j < children.length; j++) {
-                    this.buildNF(children[j]);
+                    buildNF(children[j]);
                 }
             }
         }
@@ -206,7 +206,7 @@ public abstract class Formula2NFCompiler {
      */
     protected void changeNodeNotChildAnd(Element node, Element child) {
         node.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.OR_CONST);
-        this.appendGrandChildrenDeMorgan(node, child);
+        appendGrandChildrenDeMorgan(node, child);
     }
 
     /**
@@ -219,7 +219,7 @@ public abstract class Formula2NFCompiler {
      */
     protected void changeNodeNotChildOr(Element node, Element child) {
         node.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.AND_CONST);
-        this.appendGrandChildrenDeMorgan(node, child);
+        appendGrandChildrenDeMorgan(node, child);
     }
 
     /**
@@ -231,9 +231,9 @@ public abstract class Formula2NFCompiler {
      *            Given child
      */
     protected void appendGrandChildrenDeMorgan(Element node, Element child) {
-        Element[] grandChildren = this.getFormulaOperands(child);
+        final Element[] grandChildren = getFormulaOperands(child);
         for (int i = 0; i < grandChildren.length; i++) {
-            Element newNotNode = this.getNewTreeElement();
+            final Element newNotNode = getNewTreeElement();
             newNotNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.NOT_CONST);
             newNotNode.appendChild(grandChildren[i]);
             node.appendChild(newNotNode);
@@ -253,16 +253,16 @@ public abstract class Formula2NFCompiler {
      */
     protected void changeNodeSyncChildOr(Element node, Element[] children,
             int childIndex) {
-        Element[] orChildren = this.getFormulaOperands(children[childIndex]);
-        String syncEvent = node.getAttribute(XMLTags.OPERATOR_TAG);
+        final Element[] orChildren = getFormulaOperands(children[childIndex]);
+        final String syncEvent = node.getAttribute(XMLTags.OPERATOR_TAG);
         node.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.OR_CONST);
         children[childIndex].setAttribute(XMLTags.OPERATOR_TAG, syncEvent);
 
-        Element newSyncNode = this.getNewTreeElement();
+        final Element newSyncNode = getNewTreeElement();
         newSyncNode.setAttribute(XMLTags.OPERATOR_TAG, syncEvent);
 
-        int notI = (childIndex == 0) ? 1 : 0;
-        Node clone = children[notI].cloneNode(true);
+        final int notI = (childIndex == 0) ? 1 : 0;
+        final Node clone = children[notI].cloneNode(true);
 
         if (childIndex == 0) {
             children[0].appendChild(clone);
@@ -305,16 +305,16 @@ public abstract class Formula2NFCompiler {
      */
     protected void changeNodeAndChildOr(Element node, Element[] children,
             int childIndex) {
-        int negChildIndex = childIndex == 0 ? 1 : 0;
+        final int negChildIndex = childIndex == 0 ? 1 : 0;
 
-        Element[] orChildren = this.getFormulaOperands(children[childIndex]);
+        final Element[] orChildren = getFormulaOperands(children[childIndex]);
 
-        Element newAndNode = this.getNewTreeElement();
+        final Element newAndNode = getNewTreeElement();
         newAndNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.AND_CONST);
         newAndNode.appendChild(orChildren[1]);
         newAndNode.appendChild(children[negChildIndex]);
 
-        Node clone = children[negChildIndex].cloneNode(true);
+        final Node clone = children[negChildIndex].cloneNode(true);
 
         children[childIndex].setAttribute(XMLTags.OPERATOR_TAG,
                 XMLTags.AND_CONST);
@@ -333,16 +333,16 @@ public abstract class Formula2NFCompiler {
      * @return Element[] The operands of the given formula
      */
     protected Element[] getFormulaOperands(Element formula) {
-        ArrayList<Element> result = new ArrayList<Element>();
-        NodeList children = formula.getChildNodes();
-        int childrenCount = children.getLength();
+        final ArrayList<Element> result = new ArrayList<Element>();
+        final NodeList children = formula.getChildNodes();
+        final int childrenCount = children.getLength();
         for (int i = 0; i < childrenCount; i++) {
-            Node actChild = children.item(i);
-            if (this.isBasicElement(actChild) || this.isTreeElement(actChild)) {
+            final Node actChild = children.item(i);
+            if (isBasicElement(actChild) || isTreeElement(actChild)) {
                 result.add((Element)actChild);
             }
         }
-        if (result.size() == 0 && this.isTreeElement(formula)) {
+        if (result.size() == 0 && isTreeElement(formula)) {
             throw new RuntimeException(
                     "A formula tree with operand count = 0 is not allowed.");
         }
@@ -352,7 +352,7 @@ public abstract class Formula2NFCompiler {
             throw new RuntimeException("A formula with operator "
                     + XMLTags.NOT_CONST + " has to have exactly one operand");
         }
-        return (Element[]) result.toArray(new Element[result.size()]);
+        return result.toArray(new Element[result.size()]);
     }
 
     /**
@@ -365,18 +365,18 @@ public abstract class Formula2NFCompiler {
      *            for.
      */
     protected void makeBinary(Element element) {
-        Element[] children = this.getFormulaOperands(element);
+        final Element[] children = getFormulaOperands(element);
         for (int i = 0; i < children.length; i++) {
-            this.makeBinary(children[i]);
+            makeBinary(children[i]);
         }
 
-        if (!this.isTreeElement(element)) {
-            this.logger.debug("No formula tree, returning...");
+        if (!isTreeElement(element)) {
+            logger.debug("No formula tree, returning...");
             return;
         }
 
-        String operator = element.getAttribute(XMLTags.OPERATOR_TAG);
-        if (!this.isCorrectOperator(operator)) {
+        final String operator = element.getAttribute(XMLTags.OPERATOR_TAG);
+        if (!isCorrectOperator(operator)) {
             throw new RuntimeException("Operator " + operator
                     + " may not be used.");
         }
@@ -385,7 +385,7 @@ public abstract class Formula2NFCompiler {
         Element previousFormulaTree = null;
         for (int i = 1; i < children.length - 1; i++) {
             previousFormulaTree = actFormulaTree;
-            actFormulaTree = this.getNewTreeElement();
+            actFormulaTree = getNewTreeElement();
             actFormulaTree.setAttribute(XMLTags.OPERATOR_TAG, operator);
             actFormulaTree.appendChild(children[i]);
             previousFormulaTree.appendChild(actFormulaTree);

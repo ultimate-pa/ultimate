@@ -159,8 +159,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	/**
 	 * Holds the error paths, for debbuging.
 	 */
-	private ArrayList<String> mErrorPathHistory;
-	private ArrayList<Integer> mnofStates;
+	private final ArrayList<String> mErrorPathHistory;
+	private final ArrayList<Integer> mnofStates;
 
 	/**
 	 * Create and initialize Cegar-Loop.
@@ -237,9 +237,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mAnnotatedStates = new ArrayList<IPredicate>();
 
 		// counter example components
-		ArrayList<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
-		NestedWord<CodeBlock> ce_edges = mCounterExamplePath.getWord();
-		IPredicate[] ce_interp = mInterpolantGenerator.getInterpolants();
+		final ArrayList<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
+		final NestedWord<CodeBlock> ce_edges = mCounterExamplePath.getWord();
+		final IPredicate[] ce_interp = mInterpolantGenerator.getInterpolants();
 
 		// -- initialize interpolant automaton --
 		// Add the initial state of the error path
@@ -251,8 +251,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 
 		// Add the final state of the error path
 		mLogger.debug("Add the final state of the error path");
-		if (mAnnotatedStates.contains(ce_states.get(ce_states.size() - 1)))
+		if (mAnnotatedStates.contains(ce_states.get(ce_states.size() - 1))) {
 			throw new Error();
+		}
 		mAnnotatedStates.add(ce_states.get(ce_states.size() - 1));
 		if (!mInterpolAutomaton.getStates().contains(mAbstractionFinalState)) {
 			mInterpolAutomaton.addState(mAbstractionInitialState == mAbstractionFinalState, true,
@@ -287,16 +288,16 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			mActualPrecondition = mEpimorphism.getMapping(mActualStartingState);
 
 			// return transitions
-			for (IPredicate hier : mDoubleDeckerAbstraction.getDownStates(mActualStartingState)) {
+			for (final IPredicate hier : mDoubleDeckerAbstraction.getDownStates(mActualStartingState)) {
 				// if we did not annotate the hierarchical predecessor we cannot
 				// test
 				// the path yet
 				// so we just do not
 				if (mAnnotatedStates.contains(hier)) {
-					for (OutgoingReturnTransition<CodeBlock, IPredicate> e : mNestedAbstraction
+					for (final OutgoingReturnTransition<CodeBlock, IPredicate> e : mNestedAbstraction
 							.returnSuccessorsGivenHier(mActualStartingState, hier)) {
 						// the next state is the target state of the edge
-						IPredicate target = e.getSucc();
+						final IPredicate target = e.getSucc();
 						exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(),
 								NestedWord.MINUS_INFINITY));
 					}
@@ -304,10 +305,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			}
 
 			// calls transitions
-			for (OutgoingCallTransition<CodeBlock, IPredicate> e : mNestedAbstraction
+			for (final OutgoingCallTransition<CodeBlock, IPredicate> e : mNestedAbstraction
 					.callSuccessors(mActualStartingState)) {
 				// the next state is the target state of the edge
-				IPredicate target = e.getSucc();
+				final IPredicate target = e.getSucc();
 				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.PLUS_INFINITY));
 			}
 
@@ -317,10 +318,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			// actual starting state, ignoring if a path was find or not (i.e.
 			// the
 			// return value of exploreState)
-			for (OutgoingInternalTransition<CodeBlock, IPredicate> e : mNestedAbstraction
+			for (final OutgoingInternalTransition<CodeBlock, IPredicate> e : mNestedAbstraction
 					.internalSuccessors(mActualStartingState)) {
 				// the next state is the target state of the edge
-				IPredicate target = e.getSucc();
+				final IPredicate target = e.getSucc();
 
 				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.INTERNAL_POSITION));
 			}
@@ -337,7 +338,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;
-		for (Integer i : mnofStates) {
+		for (final Integer i : mnofStates) {
 			mLogger.debug(ii++ + ":" + i);
 		}
 	}
@@ -432,7 +433,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 						hierPreds = mDoubleDeckerAbstraction.getDownStates(s).iterator();
 					}
 					if (hierPreds.hasNext()) {
-						IPredicate hier = hierPreds.next();
+						final IPredicate hier = hierPreds.next();
 						if (mAnnotatedStates.contains(hier)) {
 							mLogger.debug("iterate through hier" + hier.toString());
 							iter = mNestedAbstraction.returnSuccessorsGivenHier(s, hier).iterator();
@@ -452,7 +453,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					continue;
 				case 3:
 					// go back
-					int index = mStackState.size() - 1;
+					final int index = mStackState.size() - 1;
 					if (index < 0) {
 						// no state to go back, we explored everything
 						return;
@@ -479,21 +480,21 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			NestedWord<CodeBlock> newWord;
 			switch (edgeType) {
 			case 0:
-				OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter
+				final OutgoingInternalTransition<CodeBlock, IPredicate> e_int = (OutgoingInternalTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_int.getSucc();
 				newWord = actualWord.concatenate(new NestedWord<CodeBlock>(e_int.getLetter(),
 						NestedWord.INTERNAL_POSITION));
 				break;
 			case 1:
-				OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter
+				final OutgoingReturnTransition<CodeBlock, IPredicate> e_out = (OutgoingReturnTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_out.getSucc();
 				newWord = actualWord
 						.concatenate(new NestedWord<CodeBlock>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
 				break;
 			case 2:
-				OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter
+				final OutgoingCallTransition<CodeBlock, IPredicate> e_ret = (OutgoingCallTransition<CodeBlock, IPredicate>) iter
 						.next();
 				target = e_ret.getSucc();
 				newWord = actualWord
@@ -513,8 +514,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					break;
 				}
 			}
-			if (ignoreEdge)
+			if (ignoreEdge) {
 				continue;
+			}
 
 			// Try to add the target state of the edge (temporarily).
 			// Do not forget to remove it, when exiting loop and not exiting
@@ -524,8 +526,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			// if the target state is already added, we completed a path ...
 			if (mAnnotatedStates.contains(target)) {
 				mLogger.debug("Found an annotated state");
-				IPredicate pre = mEpimorphism.getMapping(mActualStartingState);
-				IPredicate post = mEpimorphism.getMapping(target);
+				final IPredicate pre = mEpimorphism.getMapping(mActualStartingState);
+				final IPredicate post = mEpimorphism.getMapping(target);
 
 				if (checkAndAddPath(newWord, pre, post)) {
 					// If we found a path, we can stop the search here, we will
@@ -567,15 +569,15 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	private boolean checkAndAddPath(NestedWord<CodeBlock> word, IPredicate pre, IPredicate post) {
 		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
-		SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
-		for (Entry<Integer, CodeBlock> e : word.getPendingReturns().entrySet()) {
-			int pos = e.getKey();
-			IPredicate target = mActualPath.get(pos + 1);
-			IPredicate source = mActualPath.get(pos);
-			for (IncomingReturnTransition<CodeBlock, IPredicate> irt : mNestedAbstraction.returnPredecessors(
+		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
+		for (final Entry<Integer, CodeBlock> e : word.getPendingReturns().entrySet()) {
+			final int pos = e.getKey();
+			final IPredicate target = mActualPath.get(pos + 1);
+			final IPredicate source = mActualPath.get(pos);
+			for (final IncomingReturnTransition<CodeBlock, IPredicate> irt : mNestedAbstraction.returnPredecessors(
 					word.getSymbolAt(pos), target)) {
 				if (irt.getLinPred() == source) {
-					IPredicate interp = mEpimorphism.getMapping(irt.getHierPred());
+					final IPredicate interp = mEpimorphism.getMapping(irt.getHierPred());
 					// assert (interp != null);
 					if (interp == null) {
 						return false;
@@ -586,7 +588,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			}
 		}
 		// test if we found a new path which can be added
-		InterpolatingTraceCheckerCraig traceChecker = new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, mSmtManager, mRootNode.getRootAnnot()
+		final InterpolatingTraceCheckerCraig traceChecker = new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, mSmtManager, mRootNode.getRootAnnot()
 				.getModGlobVarManager(), /*
 										 * TODO: When Matthias introduced this
 										 * parameter he set the argument to
@@ -595,7 +597,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,mServices, false, mPredicateUnifier,
 											mPref.interpolation(), true);
 
-		this.mInterpolantGenerator = traceChecker;
+		mInterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
 			addPath(word, mActualPath, traceChecker.getInterpolants(), pre, post, pendingContexts);
@@ -638,24 +640,27 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				+ interpolants.length);
 
 		mLogger.debug("edges:");
-		for (int i = 0; i < edges.length(); i++)
+		for (int i = 0; i < edges.length(); i++) {
 			mLogger.debug("<" + edges.getSymbol(i).toString() + ">");
+		}
 		mLogger.debug("states:");
-		for (int i = 0; i < states.size(); i++)
+		for (int i = 0; i < states.size(); i++) {
 			mLogger.debug("<" + states.get(i).toString() + ">");
+		}
 		mLogger.debug("interp:");
-		for (int i = 0; i < interpolants.length; i++)
+		for (int i = 0; i < interpolants.length; i++) {
 			mLogger.debug("<" + interpolants[i].toString() + ">");
+		}
 
-		ArrayList<IPredicate> callPredecessors = new ArrayList<IPredicate>();
+		final ArrayList<IPredicate> callPredecessors = new ArrayList<IPredicate>();
 
 		// Add all edges
 		for (int i = 0; i < edges.length(); i++) {
-			CodeBlock e = edges.getSymbolAt(i);
-			IPredicate targetS = states.get(i + 1);
+			final CodeBlock e = edges.getSymbolAt(i);
+			final IPredicate targetS = states.get(i + 1);
 
-			IPredicate sourceI = (i == 0) ? pre : interpolants[i - 1];
-			IPredicate targetI = (i == edges.length() - 1) ? post : interpolants[i];
+			final IPredicate sourceI = (i == 0) ? pre : interpolants[i - 1];
+			final IPredicate targetI = (i == edges.length() - 1) ? post : interpolants[i];
 
 			// Add all states in the sequence, but the first and last.
 			if (i < edges.length() - 1) {
@@ -672,7 +677,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			// add the respective edge into the abstraction automaton
 			if (edges.isInternalPosition(i)) {
 				boolean exists = false;
-				for (OutgoingInternalTransition<CodeBlock, IPredicate> t : mInterpolAutomaton.internalSuccessors(
+				for (final OutgoingInternalTransition<CodeBlock, IPredicate> t : mInterpolAutomaton.internalSuccessors(
 						sourceI, e)) {
 					if (t.getSucc().equals(targetI)) {
 						exists = true;
@@ -693,7 +698,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					if (callPredecessors.size() <= 0) {
 						hier = pendingContexts.get(i);
 					} else {
-						int lastIndex = callPredecessors.size() - 1;
+						final int lastIndex = callPredecessors.size() - 1;
 						hier = callPredecessors.get(lastIndex);
 						callPredecessors.remove(lastIndex);
 					}
@@ -714,7 +719,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mNestedAbstraction,
+		final SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mNestedAbstraction,
 				mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();
@@ -733,7 +738,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.info("Abstraction has " + mNestedAbstraction.sizeInformation());
 		mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
 
-		Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.minimize();
 		switch (minimization) {
 		case NONE:
 			break;

@@ -53,7 +53,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private Boolean mHasRemainderModule;
 	private int mRemainderModuleLocations;
 	private boolean mRemainderModuleNonterminationKnown;
-	private IBacktranslationService mBacktranslationService;
+	private final IBacktranslationService mBacktranslationService;
 
 	public BuchiAutomizerModuleDecompositionBenchmark(IBacktranslationService service) {
 		mBacktranslationService = service;
@@ -97,7 +97,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		if (mHasRemainderModule == null) {
 			return "Decomposition not yet finished";
 		}
-		int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
 				+ mModuleSizeNondeterministic.size();
 		if (modules == 0) {
 			if (mHasRemainderModule) {
@@ -111,7 +111,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			}
 		}
 		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Your program was decomposed into ");
 		sb.append(modules);
 		sb.append(" terminating modules ");
@@ -131,21 +131,21 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		} else {
 			sb.append(". ");
 		}
-		for (Entry<Integer, Integer> entry : mModuleSizeDeterministic.entrySet()) {
+		for (final Entry<Integer, Integer> entry : mModuleSizeDeterministic.entrySet()) {
 			sb.append("One deterministic module has ");
 			sb.append(mRankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
 		}
-		for (Entry<Integer, Integer> entry : mModuleSizeNondeterministic.entrySet()) {
+		for (final Entry<Integer, Integer> entry : mModuleSizeNondeterministic.entrySet()) {
 			sb.append("One nondeterministic module has ");
 			sb.append(mRankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
 		}
-		for (Entry<Integer, Integer> entry : mModuleSizeTrivial.entrySet()) {
+		for (final Entry<Integer, Integer> entry : mModuleSizeTrivial.entrySet()) {
 			if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
 				maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
 			}
@@ -167,7 +167,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	@Override
 	public ICsvProvider<String> createCvsProvider() {
 
-		ArrayList<String> header = new ArrayList<String>();
+		final ArrayList<String> header = new ArrayList<String>();
 		header.add("Modules");
 		header.add("Trivial modules");
 		header.add("Deterministic modules");
@@ -183,10 +183,10 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		header.add("Avg Locs nondeterministic modules");
 		header.add("Max Locs nondeterministic modules");
 
-		int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
 				+ mModuleSizeNondeterministic.size();
 
-		ArrayList<String> row = new ArrayList<String>();
+		final ArrayList<String> row = new ArrayList<String>();
 		row.add(String.valueOf(modules));
 		if (modules == 0) {
 			row.add(null);
@@ -228,9 +228,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 				row.add(null);
 			}
 
-			MinAvgMax triv = getMinAvgMax(mModuleSizeTrivial);
-			MinAvgMax determinisic = getMinAvgMax(mModuleSizeDeterministic);
-			MinAvgMax nondet = getMinAvgMax(mModuleSizeNondeterministic);
+			final MinAvgMax triv = getMinAvgMax(mModuleSizeTrivial);
+			final MinAvgMax determinisic = getMinAvgMax(mModuleSizeDeterministic);
+			final MinAvgMax nondet = getMinAvgMax(mModuleSizeNondeterministic);
 			row.add(String.valueOf(triv.min));
 			row.add(String.valueOf(triv.avg));
 			row.add(String.valueOf(triv.max));
@@ -242,13 +242,13 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			row.add(String.valueOf(nondet.max));
 
 		}
-		ICsvProvider<String> rtr = new SimpleCsvProvider<>(header);
+		final ICsvProvider<String> rtr = new SimpleCsvProvider<>(header);
 		rtr.addRow(row);
 		return rtr;
 	}
 
 	private MinAvgMax getMinAvgMax(TreeMap<Integer, Integer> map) {
-		MinAvgMax rtr = new MinAvgMax();
+		final MinAvgMax rtr = new MinAvgMax();
 
 		if (map == null || map.entrySet().size() == 0) {
 			rtr.min = 0;
@@ -257,8 +257,8 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			return rtr;
 		}
 
-		for (Entry<Integer, Integer> entry : map.entrySet()) {
-			Integer current = entry.getValue();
+		for (final Entry<Integer, Integer> entry : map.entrySet()) {
+			final Integer current = entry.getValue();
 			if (current < rtr.min) {
 				rtr.min = current;
 			}
@@ -267,7 +267,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			}
 			rtr.avg += current;
 		}
-		rtr.avg = rtr.avg / (double) map.entrySet().size();
+		rtr.avg = rtr.avg / map.entrySet().size();
 
 		return rtr;
 	}

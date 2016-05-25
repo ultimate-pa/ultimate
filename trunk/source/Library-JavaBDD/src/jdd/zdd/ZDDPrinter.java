@@ -3,9 +3,15 @@ package jdd.zdd;
 
 
 
-import java.io.*;
-import jdd.util.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import jdd.bdd.NodeTable;
+import jdd.util.Allocator;
+import jdd.util.Dot;
+import jdd.util.JDDConsole;
+import jdd.util.NodeName;
 
 /**
  * Helper class for printing Z-BDD graphs, as text/sets/DOT files.
@@ -39,9 +45,11 @@ public class ZDDPrinter {
 	/* package */static void print(int dd, NodeTable nt, NodeName nn) {
 		// if(dd == 0) JDDConsole.out.println("0. empty");
 		// else if(dd == 1) JDDConsole.out.println("1. {0}");
-		if(dd == 0) JDDConsole.out.println("0. " + nn.zero());
-		else if(dd == 1) JDDConsole.out.println("1. "+ nn.one());
-		else {
+		if(dd == 0) {
+			JDDConsole.out.println("0. " + nn.zero());
+		} else if(dd == 1) {
+			JDDConsole.out.println("1. "+ nn.one());
+		} else {
 			ZDDPrinter.nt = nt;
 			ZDDPrinter.nn = nn;
 			print_rec(dd);
@@ -51,12 +59,18 @@ public class ZDDPrinter {
 		}
 	}
 	private static void print_rec(int dd) {
-		if(dd == 0 || dd == 1) return;
-		if(nt.isNodeMarked(dd)) return;
+		if(dd == 0 || dd == 1) {
+			return;
+		}
+		if(nt.isNodeMarked(dd)) {
+			return;
+		}
 		JDDConsole.out.println("" + dd + ". " + nn.variable(nt.getVar(dd) ) + ": " +  nt.getLow(dd) + ", " + nt.getHigh(dd));
 		nt.mark_node(dd);
 		print_rec(nt.getLow(dd));
-		if(nt.getLow(dd) != nt.getHigh(dd)) print_rec(nt.getHigh(dd) );
+		if(nt.getLow(dd) != nt.getHigh(dd)) {
+			print_rec(nt.getHigh(dd) );
+		}
 	}
 
 
@@ -84,15 +98,21 @@ public class ZDDPrinter {
 			ps.println("\tinit__ -> "  + zdd + ";");
 
 			printDot_rec(zdd);
-			if(had_0 && had_1)	ps.println("\t{ rank = same; 0; 1;}");
-			if(had_0)	ps.println("\t0 [shape=box, label=\"" + nn.zeroShort() + "\", style=filled, height=0.3, width=0.3];");
-			if(had_1)	ps.println("\t1 [shape=box, label=\"" + nn.oneShort() + "\", style=filled, height=0.3, width=0.3];\n");
+			if(had_0 && had_1) {
+				ps.println("\t{ rank = same; 0; 1;}");
+			}
+			if(had_0) {
+				ps.println("\t0 [shape=box, label=\"" + nn.zeroShort() + "\", style=filled, height=0.3, width=0.3];");
+			}
+			if(had_1) {
+				ps.println("\t1 [shape=box, label=\"" + nn.oneShort() + "\", style=filled, height=0.3, width=0.3];\n");
+			}
 			ps.println("}\n");
 			nt.unmark_tree(zdd);
 			ps.close();
 			Dot.showDot(filename);
 			helpGC();
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			JDDConsole.out.println("ZDDPrinter.printDOT failed: " + exx);
 		}
 	}
@@ -100,11 +120,13 @@ public class ZDDPrinter {
 		if(zdd == 0) { had_0 = true; return; }
 		if(zdd == 1) { had_1 = true; return; }
 
-		if( nt.isNodeMarked(zdd)) return;
+		if( nt.isNodeMarked(zdd)) {
+			return;
+		}
 
-		int low = nt.getLow(zdd);
-		int high= nt.getHigh(zdd);
-		int var = nt.getVar(zdd);
+		final int low = nt.getLow(zdd);
+		final int high= nt.getHigh(zdd);
+		final int var = nt.getVar(zdd);
 
 		nt.mark_node(zdd);
 
@@ -112,7 +134,10 @@ public class ZDDPrinter {
 		ps.println("\t" + zdd + "-> " + low + " [style=dotted];");
 		ps.println("\t" + zdd + "-> " + high + " [style=filled];");
 		printDot_rec(low);
-		if(low != high) printDot_rec(high); // extra check for ZDD:s
+		if(low != high)
+		 {
+			printDot_rec(high); // extra check for ZDD:s
+		}
 	}
 
 
@@ -124,13 +149,17 @@ public class ZDDPrinter {
 	/* package */ static void printSet(int zdd, NodeTable nt, NodeName nn)  {
 
 		if(zdd < 2) {
-			if(nn != null)  JDDConsole.out.println( (zdd == 0) ? nn.zero() : nn.one() );
-			else JDDConsole.out.println( (zdd == 0) ? "empty" : "base");
+			if(nn != null) {
+				JDDConsole.out.println( (zdd == 0) ? nn.zero() : nn.one() );
+			} else {
+				JDDConsole.out.println( (zdd == 0) ? "empty" : "base");
+			}
 		} else {
-			int max_ = 2 + nt.getVar(zdd);
+			final int max_ = 2 + nt.getVar(zdd);
 
-			if(ZDDPrinter.set_chars == null || ZDDPrinter.set_chars.length < max_)
+			if(ZDDPrinter.set_chars == null || ZDDPrinter.set_chars.length < max_) {
 				ZDDPrinter.set_chars = Allocator.allocateCharArray(max_);
+			}
 			ZDDPrinter.count = 0;
 			ZDDPrinter.nn = nn;
 			ZDDPrinter.nt = nt;
@@ -142,18 +171,26 @@ public class ZDDPrinter {
 	}
 
 	private static void printSet_rec(int zdd, int level, int top) {
-		if(zdd == 0) return;
+		if(zdd == 0) {
+			return;
+		}
 		if(zdd == 1 && top < 0) {
-			if(count != 0) JDDConsole.out.print(", ");
+			if(count != 0) {
+				JDDConsole.out.print(", ");
+			}
 			count++;
 			if(nn != null) {	// print as set-covers
 				int got = 0;
-				for(int i = 0; i < level; i++)
+				for(int i = 0; i < level; i++) {
 					if(set_chars[i] == '1') { JDDConsole.out.print(nn.variable(level-i-1)); got++; }
-				if(got == 0) JDDConsole.out.print(nn.one() );
+				}
+				if(got == 0) {
+					JDDConsole.out.print(nn.one() );
+				}
 			} else {	// print as minterms
-				for(int i = 0; i < level; i++)
+				for(int i = 0; i < level; i++) {
 					JDDConsole.out.print(set_chars[i]);
+				}
 			}
 			return;
 		}

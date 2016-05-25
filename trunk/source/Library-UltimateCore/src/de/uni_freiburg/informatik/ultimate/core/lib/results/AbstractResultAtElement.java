@@ -53,6 +53,7 @@ public abstract class AbstractResultAtElement<ELEM extends IElement>
 		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
 	
+	@Override
 	public final ILocation getLocation() {
 		return mElement.getPayload().getLocation();
 	}

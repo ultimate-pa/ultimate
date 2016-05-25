@@ -49,8 +49,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -243,7 +243,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						new FileWriter(new File("DEBUG-1.txt")));
 				mwriter2 = new BufferedWriter(
 						new FileWriter(new File("DEBUG-2.txt")));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -400,8 +400,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			mwholeTime -= new GregorianCalendar().getTimeInMillis();
 		}
 		
-		if (DEBUG)
+		if (DEBUG) {
 			System.err.println("---------------START---------------");
+		}
 		// initialize the partition object
 		initialize(modules);
 		
@@ -417,7 +418,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
-				EquivalenceClass a = mworkListIntCall.next();
+				final EquivalenceClass a = mworkListIntCall.next();
 				
 				// internal split
 				splitInternalOrCallPredecessors(a, internalIterator, true);
@@ -443,13 +444,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						throw new AutomataOperationCanceledException(this.getClass());
 					}
 					
-					EquivalenceClass a = mworkListIntCall.next();
+					final EquivalenceClass a = mworkListIntCall.next();
 					
 					// internal split
 					if (a.mincomingInt == EIncomingStatus.inWL) {
 						a.mincomingInt = EIncomingStatus.unknown;
-						if (DEBUG)
+						if (DEBUG) {
 							System.out.println("\n-- internal search");
+						}
 						splitInternalOrCallPredecessors(a, internalIterator,
 								true);
 					}
@@ -457,8 +459,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					// call split
 					if (a.mincomingCall == EIncomingStatus.inWL) {
 						a.mincomingCall = EIncomingStatus.unknown;
-						if (DEBUG)
+						if (DEBUG) {
 							System.out.println("\n-- call search");
+						}
 						if (! msplitAllCallPreds) {
 							splitInternalOrCallPredecessors(a, callIterator,
 									false);
@@ -493,7 +496,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					
 					if (STAT_RETURN_SIZE) {
 						try {
-							GregorianCalendar date = new GregorianCalendar();
+							final GregorianCalendar date = new GregorianCalendar();
 							mwriter1.append(
 									date.get(GregorianCalendar.MINUTE) + ":" +
 									date.get(GregorianCalendar.SECOND) + ":" +
@@ -520,7 +523,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 								}
 								mwriter2.append(sizes[i] + ", ");
 							}
-						} catch (IOException e) {
+						} catch (final IOException e) {
 							throw new RuntimeException(e);
 						}
 					}
@@ -553,7 +556,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					
 					if (STAT_RETURN_SIZE) {
 						try {
-							GregorianCalendar date = new GregorianCalendar();
+							final GregorianCalendar date = new GregorianCalendar();
 							mwriter1.append(
 									date.get(GregorianCalendar.MINUTE) + ":" +
 									date.get(GregorianCalendar.SECOND) + ":" +
@@ -562,7 +565,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 							mwriter1.append(
 									mpartition.mequivalenceClasses.size() +
 									" ECs after return split\n");
-						} catch (IOException e) {
+						} catch (final IOException e) {
 							throw new RuntimeException(e);
 						}
 					}
@@ -570,8 +573,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				else {
 					if (mfirstReturnSplitAlternative) {
 						if (mfirstReturnSplitHierAlternative) {
-							if (DEBUG4)
+							if (DEBUG4) {
 								System.err.println("hierarchical split");
+							}
 							
 							if (mworkListRetHier.hasNext()) {
 								mreturnFirstTimeHierAlternative -=
@@ -588,8 +592,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 							}
 						}
 						else {
-							if (DEBUG4)
+							if (DEBUG4) {
 								System.err.println("ALTERNATIVE FINISHED");
+							}
 							
 							mfirstReturnSplitAlternative = false;
 							mworkListRet.fillWithAll();
@@ -616,7 +621,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				try {
 					mwriter1.close();
 					mwriter2.close();
-				} catch (IOException eWriter) {
+				} catch (final IOException eWriter) {
 					eWriter.printStackTrace();
 				}
 			}
@@ -627,8 +632,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// automaton construction
 			constructAutomaton(includeMapping);
 		}
-		if (DEBUG)
+		if (DEBUG) {
 			System.err.println("----------------END----------------");
+		}
 	}
 	
 	/**
@@ -674,12 +680,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hierEc2lin.isEmpty()) {
 			a.mincomingRet = EIncomingStatus.none;
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mnoIncomingTransitions;
+			}
 		}
 		else {
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mincomingTransitions;
+			}
 			
 			// split each map value (set of predecessor states)
 			for (final HashMap<EquivalenceClass, HashSet<STATE>> hierEc2lin :
@@ -732,12 +740,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hier2lin.isEmpty()) {
 			a.mincomingRet = EIncomingStatus.none;
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mnoIncomingTransitions;
+			}
 		}
 		else {
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mincomingTransitions;
+			}
 			
 			// split each map value (set of predecessor states)
 			for (final HashMap<STATE, HashSet<STATE>> hier2lin :
@@ -782,12 +792,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
 			a.mincomingRet = EIncomingStatus.none;
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mnoIncomingTransitions;
+			}
 		}
 		else {
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mincomingTransitions;
+			}
 			
 			// split each map value (set of predecessor states)
 			for (final HashSet<STATE> predecessorSet :
@@ -807,8 +819,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param linEc the linear equivalence class
 	 */
 	private void splitReturnCorrectness(final EquivalenceClass linEc) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\nNEW CORRECTNESS RETURN SPLITTING");
+		}
 		
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				new HashMap<STATE, HashSet<STATE>>();
@@ -855,8 +868,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param linEc the linear equivalence class
 	 */
 	private void splitReturnCorrectnessNoHier(final EquivalenceClass linEc) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\nNEW CORRECTNESS RETURN SPLITTING");
+		}
 		
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				new HashMap<STATE, HashSet<STATE>>();
@@ -872,7 +886,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 		}
 		
-		HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 				linEc2hierEc = splitReturnEcTranslation(lin2hier);
 		
 		splitReturnForwardsAnalysis(linEc2hierEc, false);
@@ -893,8 +907,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param linEc the linear equivalence class
 	 */
 	private void splitReturnCorrectnessNoMatrix(final EquivalenceClass linEc) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\nNEW CORRECTNESS RETURN SPLITTING");
+		}
 		
 		// find all hierarchical predecessor equivalence classes
 		final HashSet<EquivalenceClass> hierEcs =
@@ -981,7 +996,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashSet<STATE> finals = new HashSet<STATE>();
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
 			
-			for (STATE state : mOperand.getStates()) {
+			for (final STATE state : mOperand.getStates()) {
 				if (msplitAllCallPreds && (mOperand.callSuccessors(state).
 							iterator().hasNext())) {
 					mpartition.addEcInitialization(
@@ -1013,7 +1028,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			assert assertStatesSeparation(modules) :
 				"The states in the initial modules are not separated with " +
 				"respect to their final status.";
-			for (Set<STATE> module : modules) {
+			for (final Set<STATE> module : modules) {
 				mpartition.addEcInitialization(module);
 			}
 		}
@@ -1084,12 +1099,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			else {
 				a.mincomingCall = EIncomingStatus.none;
 			}
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mnoIncomingTransitions;
+			}
 		}
 		else {
-			if (STATISTICS)
+			if (STATISTICS) {
 				++mincomingTransitions;
+			}
 			
 			// split each map value (set of predecessor states)
 			for (final HashSet<STATE> predecessorSet :
@@ -1110,8 +1127,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * and break ties on which states to split there.
 	 */
 	private void splitReturnPredecessors() {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\nNEW RETURN SPLITTING ROUND");
+		}
 		
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				splitReturnBackwardsAnalysis();
@@ -1147,15 +1165,16 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @return map linear state to hierarchical states
 	 */
 	private HashMap<STATE, HashSet<STATE>> splitReturnBackwardsAnalysis() {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("analyzing backwards");
+		}
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(
 						mpartition.mequivalenceClasses.size()));
 		
 		// find all involved linear and hierarchical states
 		while (mworkListRet.hasNext()) {
-			EquivalenceClass succEc = mworkListRet.next();
+			final EquivalenceClass succEc = mworkListRet.next();
 			boolean incomingReturns = false;
 			
 			for (final STATE succ : succEc.mstates) {
@@ -1180,13 +1199,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// no return transitions found, remember that
 			if (! incomingReturns) {
 				succEc.mincomingRet = EIncomingStatus.none;
-				if (STATISTICS)
+				if (STATISTICS) {
 					++mnoIncomingTransitions;
+				}
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println(" succEc: " + succEc.toStringShort() +
 						" has " + (incomingReturns ? "" : "no ") + "returns");
+			}
 		}
 		return lin2hier;
 	}
@@ -1201,8 +1222,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	private HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 			splitReturnEcTranslation(
 			final HashMap<STATE, HashSet<STATE>> lin2hier) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\ntranslating to ECs");
+		}
 		
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 			linEc2hierEcs = new HashMap<EquivalenceClass,
@@ -1221,8 +1243,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 		}
 		
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("resulting map: " + linEc2hierEcs);
+		}
 		
 		return linEc2hierEcs;
 	}
@@ -1243,8 +1266,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final boolean linEcSingleton = linEc.mstates.size() == 1;
 			final HashSet<EquivalenceClass> hierEcs = entry.getValue();
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("\nlinEc: " + linEc.toStringShort());
+			}
 			
 			// get matrix
 			Matrix matrix = linEc.mmatrix;
@@ -1260,23 +1284,27 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				continue;
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("matrix: " + matrix);
+			}
 			
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER,
 				HashSet<STATE>>>> hier2lin2letter2succ =
 				matrix.mhier2lin2letter2succ;
 			
 			for (final EquivalenceClass hierEc : hierEcs) {
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println(" hierEc: " + hierEc.toStringShort());
+				}
 				
 				if (linEcSingleton && hierEc.mstates.size() == 1) {
-					if (DEBUG2)
+					if (DEBUG2) {
 						System.err.println("  ignoring singletons");
+					}
 					
-					if (STATISTICS)
+					if (STATISTICS) {
 						++mignoredReturnSingletons1x1;
+					}
 					
 					continue;
 				}
@@ -1294,13 +1322,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						relevantRows.add(new MatrixRow(hier, map));
 					}
 					else {
-						if (DEBUG2)
+						if (DEBUG2) {
 							System.err.println(" ignoring hier " + hier);
+						}
 					}
 				}
 				
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println(" relevant rows: " + relevantRows);
+				}
 				
 				// linear states analysis
 				if (linearAnalysis) {
@@ -1337,19 +1367,22 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ,
 			final EquivalenceClass linEc,
 			final ArrayList<MatrixRow> rows) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("-linear analysis");
+		}
 		
 		for (final MatrixRow row : rows) {
 			final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>
 				lin2letter2succ = row.mlin2letter2succ;
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println(" hier " + row.mhier + " -> " +
 						lin2letter2succ);
+			}
 			
 			if (lin2letter2succ.size() == 1) {
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("  only one entry, ignore");
+				}
 				
 				continue;
 			}
@@ -1367,12 +1400,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				final HashMap<LETTER, HashSet<STATE>> letter2succ =
 						entry.getValue();
 				
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("   lin: " + lin);
+				}
 				
 				if (letter2succ == mdownStateMap) {
-					if (DEBUG2)
+					if (DEBUG2) {
 						System.err.println("   no transition, but DS");
+					}
 					
 					noTransitions.add(lin);
 					continue;
@@ -1391,9 +1426,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 							new HashSet<EquivalenceClass>(
 									computeHashSetCapacity(succs.size()));
 					
-					if (DEBUG2)
+					if (DEBUG2) {
 						System.err.println("   letter: " + letter +
 								", succs: " + succs);
+					}
 					
 					for (final STATE succ : succs) {
 						succEcs.add(mpartition.mstate2EquivalenceClass.
@@ -1410,28 +1446,32 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 				lins.add(lin);
 				
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("   adding: " + lin + " to " +
 							letter2succEc);
+				}
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("    receiving: " + letter2succEc2lin +
 						" and {{DS}=" + noTransitions + "}");
+			}
 			
 			if (noTransitions.size() > 0) {
 				letter2succEc2lin.put(null, noTransitions);
 			}
 			
 			if (letter2succEc2lin.size() <= 1) {
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("    no linear split");
+				}
 			}
 			else {
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("    mark linear split of " +
 							linEc.toStringShort() + ": " +
 							letter2succEc2lin.values());
+				}
 				
 				linEc.markSplit(letter2succEc2lin.values());
 			}
@@ -1453,17 +1493,20 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>
 			hier2lin2letter2succ,
 			final EquivalenceClass hierEc, final ArrayList<MatrixRow> rows) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("-hierarchical analysis");
+		}
 		
 		final int size = rows.size();
 		
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("  rows remaining: " + size);
+		}
 		
 		if (size <= 1) {
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("   ignore");
+			}
 			
 			return;
 		}
@@ -1485,8 +1528,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashMap<LETTER, HashSet<STATE>> letter2succ =
 					row.mlin2letter2succ.values().iterator().next();
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println(" hier " + hier + " -> " + letter2succ);
+			}
 			
 			if (letter2succ == mdownStateMap) {
 				noTransitions.add(hier);
@@ -1510,8 +1554,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 				letter2succEc.put(letter, succEcs);
 			}
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("  letter2succEc: " + letter2succEc);
+			}
 			
 			HashSet<STATE> hiers = letter2succEc2hier.get(letter2succEc);
 			if (hiers == null) {
@@ -1521,19 +1566,21 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			hiers.add(hier);
 		}
 		
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("    receiving: " + letter2succEc2hier +
 					" and {{DS}=" + noTransitions + "}");
+		}
 		
 		if (noTransitions.size() > 0) {
 			letter2succEc2hier.put(null, noTransitions);
 		}
 		
 		if (letter2succEc2hier.size() > 1) {
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("    mark hierarchical split of " +
 						hierEc.toStringShort() + ": " +
 						letter2succEc2hier.values());
+			}
 			
 			hierEc.markSplit(letter2succEc2hier.values());
 		}
@@ -1554,8 +1601,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	private void splitReturnExecute(
 			final Collection<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\n-- executing return splits");
+		}
 		
 		if (STATISTICS) {
 			mreturnSeparateTime -= new GregorianCalendar().getTimeInMillis();
@@ -1610,8 +1658,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			 */
 			assert (statesRemaining >= 0);
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("colorSets: " + colorSets);
+			}
 			
 			/*
 			 * If there are no states without any group preference, keep
@@ -1660,12 +1709,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						mpartition.addEcReturn(colorSets.get(i).mcontent,
 								oldEc);
 				
-				if (STATISTICS)
+				if (STATISTICS) {
 					++msplitsWithChange;
+				}
 				
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("new equivalence class: " +
 							newEc.toStringShort());
+				}
 			}
 			
 			// reset separation mapping
@@ -1683,8 +1734,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	private void splitReturnLinearAlt() {
 		final EquivalenceClass succEc = mworkListRet.next();
 		
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("L succEc " + succEc.toStringShort());
+		}
 		
 		final HashMap<EquivalenceClass,
 			HashSet<IncomingReturnTransition<LETTER, STATE>>>
@@ -1695,8 +1747,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			return;
 		}
 		
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("linEc2trans " + linEc2trans);
+		}
 		
 		for (final Entry<EquivalenceClass, HashSet<IncomingReturnTransition
 				<LETTER, STATE>>> entry : linEc2trans.entrySet()) {
@@ -1747,9 +1800,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	private void splitReturnLinearAltHelper(final EquivalenceClass linEc,
 			final Collection<IncomingReturnTransition<LETTER, STATE>>
 			transitions) {
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("linEc " + linEc + ", transitions " +
 					transitions);
+		}
 		
 		final Set<STATE> linStates = linEc.mstates;
 		final int linEcSize = linStates.size();
@@ -1806,8 +1860,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				hier2letters2lins.entrySet()) {
 			final STATE hier = outerEntry.getKey();
 			
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println("  hier " + hier);
+			}
 			
 			// compute sets of DS/no DS states
 			final int modSize = computeHashSetCapacity(
@@ -1837,12 +1892,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					outerEntry.getValue().entrySet()) {
 				final HashSet<STATE> lins = innerEntry.getValue();
 				
-				if (DEBUG4)
+				if (DEBUG4) {
 					System.err.println("  lins " + lins);
+				}
 				
 				if (lins.size() == linsVisited.size()) {
-					if (DEBUG4)
+					if (DEBUG4) {
 						System.err.println("   ignore");
+					}
 					
 					continue;
 				}
@@ -1850,8 +1907,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				for (final STATE lin : linsVisited) {
 					if ((! lins.contains(lin)) &&
 							(mdoubleDecker.isDoubleDecker(lin, hier))) {
-						if (DEBUG4)
+						if (DEBUG4) {
 							System.err.println("   later split");
+						}
 						
 						// mark different returns
 						for (final STATE linPos : lins) {
@@ -1863,16 +1921,18 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		
 		if (linEc.mstate2separatedSet.size() > 0) {
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println(" SPLIT");
+			}
 			
 			msplitEcsReturn.add(linEc);
 			splitReturnExecute(msplitEcsReturn);
 			msplitEcsReturn = new LinkedList<EquivalenceClass>();
 		}
 		else {
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println(" NO SPLIT");
+			}
 		}
 		linEc.mstate2separatedSet = null;
 	}
@@ -1894,8 +1954,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 		}
 		
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("H succEc " + succEc.toStringShort());
+		}
 		
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 			hierEc2linEcs = splitReturnFindOutgoingTransitions(succEc);
@@ -1905,8 +1966,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			return;
 		}
 		
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("linEc2hierEcs " + hierEc2linEcs);
+		}
 		
 		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry :
 				hierEc2linEcs.entrySet()) {
@@ -1953,14 +2015,16 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	private void splitReturnHierAltHelper(final EquivalenceClass hierEc,
 			final HashSet<EquivalenceClass> linEcs) {
-		if (DEBUG4)
+		if (DEBUG4) {
 			System.err.println("hierEc " + hierEc + ", linEcs " + linEcs);
+		}
 		
 		final Set<STATE> hierStates = hierEc.mstates;
 		final int hierEcSize = hierStates.size();
 		if (hierEcSize == 1) {
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println("   ignore");
+			}
 			
 			return;
 		}
@@ -2024,16 +2088,18 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		
 		if (hierEc.mstate2separatedSet.size() > 0) {
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println(" SPLIT");
+			}
 			
 			msplitEcsReturn.add(hierEc);
 			splitReturnExecute(msplitEcsReturn);
 			msplitEcsReturn = new LinkedList<EquivalenceClass>();
 		}
 		else {
-			if (DEBUG4)
+			if (DEBUG4) {
 				System.err.println(" NO SPLIT");
+			}
 		}
 		hierEc.mstate2separatedSet = null;
 	}
@@ -2048,8 +2114,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * meant as a preprocessing step.
 	 */
 	private void splitReturnPredecessorsFirstTime() {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\nNEW RETURN SPLITTING ROUND");
+		}
 		
 		if (DEBUG3) {
 			if (mpartition.mequivalenceClasses.size() ==
@@ -2084,13 +2151,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				break;
 			}
 			
-			if (DEBUG3)
+			if (DEBUG3) {
 				System.err.println("linEc size: " + linEc.mstates.size());
+			}
 			
 			// singleton equivalence classes are ignored
 			if (linEc.mstates.size() == 1) {
-				if (DEBUG3)
+				if (DEBUG3) {
 					System.err.println(" ignoring");
+				}
 				
 				continue;
 			}
@@ -2110,8 +2179,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				
 				// singleton equivalence classes are ignored
 				if (linEc.mstates.size() == 1) {
-					if (DEBUG3)
+					if (DEBUG3) {
 						System.err.println(" ignoring");
+					}
 					
 					continue;
 				}
@@ -2129,9 +2199,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			mreturnFirstTime += new GregorianCalendar().getTimeInMillis();
 		}
 		
-		if (DEBUG3)
+		if (DEBUG3) {
 			System.err.println("first return split executed, now having " +
 					mpartition.mequivalenceClasses.size() + " ECs");
+		}
 	}
 	
 	/**
@@ -2148,9 +2219,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		// if there are reasons for a split, execute it
 		if (msplitEcsReturn.size() == 1) {
-			if (DEBUG3)
+			if (DEBUG3) {
 				System.err.println("splitting EC of size " +
 						linEc.mstates.size());
+			}
 			
 			assert (msplitEcsReturn.get(0) == linEc);
 			splitReturnExecute(msplitEcsReturn);
@@ -2254,8 +2326,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	@SuppressWarnings("unchecked")
 	private void splitReturnExecuteOld(
 			final Collection<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG2)
+		if (DEBUG2) {
 			System.err.println("\n-- executing return splits");
+		}
 		
 		long time;
 		if (STATISTICS) {
@@ -2342,8 +2415,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("state2color: " + state2color);
+			}
 			
 			// finally split the equivalence class
 			for (int i = newEcs.length - 1; i > 0; --i) {
@@ -2351,12 +2425,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				final EquivalenceClass newEc =
 						mpartition.addEcReturn(newStates, oldEc);
 				
-				if (STATISTICS)
+				if (STATISTICS) {
 					++msplitsWithChange;
+				}
 				
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("new equivalence class: " +
 							newEc.toStringShort());
+				}
 			}
 			
 			// reset separation mapping
@@ -2464,8 +2540,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param includeMapping true iff mapping old to new state is needed
 	 */
 	private void constructAutomaton(final boolean includeMapping) {
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("finished splitting, constructing result");
+		}
 		
 		mresult = new ShrinkNwaResult(includeMapping, mpartition);
 		
@@ -2997,7 +3074,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		private void addEcInitialization(final Set<STATE> module) {
 			final EquivalenceClass ec = new EquivalenceClass(module);
 			mequivalenceClasses.add(ec);
-			for (STATE state : module) {
+			for (final STATE state : module) {
 				mstate2EquivalenceClass.put(state, ec);
 			}
 		}
@@ -3018,7 +3095,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final EquivalenceClass ec =
 					new EquivalenceClass(newStates, parent);
 			mequivalenceClasses.add(ec);
-			for (STATE state : ec.mstates) {
+			for (final STATE state : ec.mstates) {
 				mstate2EquivalenceClass.put(state, ec);
 			}
 			return ec;
@@ -3093,8 +3170,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			
 			// process splits
 			for (final STATE state : states) {
-				if (DEBUG)
+				if (DEBUG) {
 					System.out.println("splitting state " + state);
+				}
 				splitState(state, splitEcs);
 			}
 			
@@ -3103,14 +3181,16 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				// split removed every state, restore equivalence class
 				if (ec.mstates.isEmpty()) {
 					ec.mstates = ec.mintersection;
-					if (DEBUG)
+					if (DEBUG) {
 						System.out.println("EC was skipped " + ec);
+					}
 					++msplitsWithoutChange;
 				}
 				// do a split
 				else {
-					if (DEBUG)
+					if (DEBUG) {
 						System.out.println("EC was split " + ec);
+					}
 					++msplitsWithChange;
 					
 					splitOccurred = true;
@@ -3323,8 +3403,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			 * hierarchical equivalence class - ignore that.
 			 */
 			if (size == 0) {
-				if (DEBUG2)
+				if (DEBUG2) {
 					System.err.println("--creating 1x1 dummy matrix");
+				}
 				
 				mmatrix = msingletonMatrix;
 				
@@ -3339,8 +3420,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ =
 				mmatrix.mhier2lin2letter2succ;
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("--adding entries");
+			}
 			
 			// add entries
 			final int mapSize = computeHashSetCapacity(mstates.size());
@@ -3352,18 +3434,21 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						new HashMap<STATE, HashMap<LETTER,
 						HashSet<STATE>>>(mapSize);
 					
-					if (DEBUG2)
+					if (DEBUG2) {
 						System.err.println(" consider hier: " + hier);
+					}
 					
 					for (final STATE lin : mstates) {
-						if (DEBUG2)
+						if (DEBUG2) {
 							System.err.println("  and lin: " + lin);
+						}
 						
 						// first check whether hier is a down state
 						if (! mdoubleDecker.isDoubleDecker(lin, hier))
 								{
-							if (DEBUG2)
+							if (DEBUG2) {
 								System.err.println("  no DS");
+							}
 							
 							continue;
 						}
@@ -3395,13 +3480,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 								succs.add(edge.getSucc());
 							} while (edges.hasNext());
 							
-							if (DEBUG2)
+							if (DEBUG2) {
 								System.err.println("  transitions: " +
 										return2succ);
+							}
 						}
 						else {
-							if (DEBUG2)
+							if (DEBUG2) {
 								System.err.println("  DS");
+							}
 							
 							lin2letter2succ.put(lin, mdownStateMap);
 						}
@@ -3417,8 +3504,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				mmatrixTime += new GregorianCalendar().getTimeInMillis();
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("--finished creating matrix");
+			}
 		}
 		
 		/**
@@ -3434,10 +3522,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				return;
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("shifting matrix from " +
 						parent.toStringShort() + "(" + oldMatrix + ") to " +
 						toStringShort());
+			}
 
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER,
 				HashSet<STATE>>>> oldHier2lin2letter2succ =
@@ -3523,10 +3612,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 			}
 			
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("resulting in matrices: parent: " +
 						parent.mmatrix + ", child: " +
 						mmatrix);
+			}
 		}
 		
 		/**
@@ -3570,8 +3660,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		 * @param state2 another state
 		 */
 		private void markPair(final STATE state1, final STATE state2) {
-			if (DEBUG2)
+			if (DEBUG2) {
 				System.err.println("separate " + state1 + " " + state2);
+			}
 			
 			assert ((state1 != state2) && (mstates.contains(state1)) &&
 					 (mstates.contains(state2)));
@@ -3747,8 +3838,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = mqueue.poll();
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("\npopping from IntCall WL: " + ec);
+			}
 			return ec;
 		}
 		
@@ -3756,8 +3848,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		public void add(final EquivalenceClass ec) {
 			assert ((ec.mincomingInt == EIncomingStatus.inWL) ||
 					(ec.mincomingCall == EIncomingStatus.inWL));
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("adding of IntCall WL: " + ec);
+			}
 			super.add(ec);
 		}
 	}
@@ -3770,16 +3863,18 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = mqueue.poll();
 			ec.mincomingRet = EIncomingStatus.unknown;
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("\npopping from return WL: " + ec);
+			}
 			return ec;
 		}
 		
 		@Override
 		public void add(final EquivalenceClass ec) {
 			assert (ec.mincomingRet == EIncomingStatus.inWL);
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("adding of return WL: " + ec);
+			}
 			super.add(ec);
 		}
 		
@@ -3806,16 +3901,18 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = mqueue.poll();
 			ec.moutgoingRet = EIncomingStatus.unknown;
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("\npopping from return hier WL: " + ec);
+			}
 			return ec;
 		}
 		
 		@Override
 		public void add(final EquivalenceClass ec) {
 			assert (ec.moutgoingRet == EIncomingStatus.inWL);
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("adding of return hier WL: " + ec);
+			}
 			super.add(ec);
 		}
 	}
@@ -3851,8 +3948,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		 */
 		public ShrinkNwaResult(final boolean includeMapping,
 				final Partition partition) {
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("\n---- constructing result...");
+			}
 			moldNwa = mOperand;
 			mfinals = new HashSet<STATE>();
 			mnonfinals = includeMapping
@@ -3913,9 +4011,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			for (final EquivalenceClass ec : partition.mequivalenceClasses)
 					{
 				final STATE newState = ec2state.get(ec);
-				if (DEBUG)
+				if (DEBUG) {
 					System.out.println(" from state " + newState + 
 							" have transitions:");
+				}
 				
 				final STATE representative = ec.mstates.iterator().next();
 				
@@ -3923,7 +4022,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						new HashMap<LETTER, Set<STATE>>();
 				
 				// internal transitions
-				HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
+				final HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
 						new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
 				
 				for (final OutgoingInternalTransition<LETTER, STATE> edge :
@@ -3957,8 +4056,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						final OutgoingInternalTransition<LETTER, STATE>
 							newEdge = new OutgoingInternalTransition
 								<LETTER, STATE> (letter, succ);
-						if (DEBUG)
+						if (DEBUG) {
 							System.out.println("   internal " + newEdge);
+						}
 						outInt.add(newEdge);
 					}
 				}
@@ -3970,7 +4070,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					letter2succs = new HashMap<LETTER, Set<STATE>>();
 					
 					// call transitions
-					HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
+					final HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
 							new HashSet<OutgoingCallTransition<LETTER,STATE>>();
 					
 					for (final OutgoingCallTransition<LETTER, STATE> edge :
@@ -4004,8 +4104,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 							final OutgoingCallTransition<LETTER, STATE>
 								newEdge = new OutgoingCallTransition
 									<LETTER, STATE> (letter, succ);
-							if (DEBUG)
+							if (DEBUG) {
 								System.out.println("   call " + newEdge);
+							}
 							outCall.add(newEdge);
 						}
 					}
@@ -4020,10 +4121,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					 * NOTE: Return transitions need not be present everywhere,
 					 *       so each state must be visited.
 					 */
-					HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
+					final HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
 						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
 					
-					HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
+					final HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
 							new HashMap<LETTER,
 							HashMap<STATE, HashSet<STATE>>>();
 					for (final STATE state : ec.mstates) {
@@ -4059,8 +4160,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 										newEdge = new OutgoingReturnTransition
 										<LETTER, STATE> (entry2.getKey(),
 										entry.getKey(), succ);
-								if (DEBUG)
+								if (DEBUG) {
 									System.out.println("   return " + newEdge);
+								}
 								outRet.add(newEdge);
 							}
 						}

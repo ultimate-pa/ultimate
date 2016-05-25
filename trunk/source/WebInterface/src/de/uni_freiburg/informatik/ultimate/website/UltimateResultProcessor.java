@@ -35,14 +35,14 @@ public class UltimateResultProcessor {
 
 	public static void processUltimateResults(IUltimateServiceProvider services, JSONObject json) throws JSONException {
 		// get Result from Ultimate
-		Map<String, List<IResult>> results = services.getResultService().getResults();
+		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
-		ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
-		for (List<IResult> rList : results.values()) {
-			for (IResult r : rList) {
+		final ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
+		for (final List<IResult> rList : results.values()) {
+			for (final IResult r : rList) {
 				SimpleLogger.log("processing result " + r.getShortDescription());
 				String type = "UNDEF";
-				UltimateResult packagedResult = new UltimateResult();
+				final UltimateResult packagedResult = new UltimateResult();
 				if (r instanceof ExceptionOrErrorResult) {
 					type = "ExceptionOrError";
 					packagedResult.logLvl = "error";
@@ -89,7 +89,7 @@ public class UltimateResultProcessor {
 					type = "positive";
 					packagedResult.logLvl = "info";
 				} else if (r instanceof IResultWithSeverity) {
-					IResultWithSeverity rws = (IResultWithSeverity) r;
+					final IResultWithSeverity rws = (IResultWithSeverity) r;
 					if (rws.getSeverity().equals(Severity.ERROR)) {
 						type = "error";
 						packagedResult.logLvl = "error";
@@ -108,7 +108,7 @@ public class UltimateResultProcessor {
 				}
 				// TODO : Add new "Out of resource" result here ...
 				if (r instanceof IResultWithLocation) {
-					ILocation loc = ((IResultWithLocation) r).getLocation();
+					final ILocation loc = ((IResultWithLocation) r).getLocation();
 					if (((IResultWithLocation) r).getLocation() == null) {
 						throw new IllegalArgumentException("Location is null");
 					}

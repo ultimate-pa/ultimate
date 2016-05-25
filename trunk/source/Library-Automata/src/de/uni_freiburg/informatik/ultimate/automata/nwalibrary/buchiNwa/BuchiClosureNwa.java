@@ -78,15 +78,15 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 * @return 
 	 */
 	public Set<STATE> computeSetOfAcceptingStates() {
-		Set<STATE> newFinalStates = new HashSet<STATE>();
+		final Set<STATE> newFinalStates = new HashSet<STATE>();
 		mLogger.info("Accepting states before buchiClosure: " + mOperand.getFinalStates().size());
-		LinkedHashSet<STATE> worklist = new LinkedHashSet<STATE>();
+		final LinkedHashSet<STATE> worklist = new LinkedHashSet<STATE>();
 		newFinalStates.addAll(mOperand.getFinalStates());
-		for (STATE fin : mOperand.getFinalStates()) {
+		for (final STATE fin : mOperand.getFinalStates()) {
 			addAllNonFinalPredecessors(fin, worklist, newFinalStates);
 		}
 		while (!worklist.isEmpty()) {
-			STATE state = worklist.iterator().next();
+			final STATE state = worklist.iterator().next();
 			worklist.remove(state);
 			assert !newFinalStates.contains(state);
 			if (allSuccessorsAccepting(state, newFinalStates)) {
@@ -103,17 +103,17 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 * to worklist.
 	 */
 	private void addAllNonFinalPredecessors(STATE state, Set<STATE> worklist, Set<STATE> newFinalStates) {
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getPred())) {
 				worklist.add(inTrans.getPred());
 			}
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
+		for (final IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getPred())) {
 				worklist.add(inTrans.getPred());
 			}
 		}
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getLinPred())) {
 				worklist.add(inTrans.getLinPred());
 			}
@@ -125,23 +125,23 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 * Return true iff all successors of state state is the set newFinalStates.
 	 */
 	private boolean allSuccessorsAccepting(STATE state, Set<STATE> newFinalStates) {
-		for (LETTER symbol : mOperand.lettersInternal(state)) {
-			for (STATE succ : mOperand.succInternal(state, symbol)) {
+		for (final LETTER symbol : mOperand.lettersInternal(state)) {
+			for (final STATE succ : mOperand.succInternal(state, symbol)) {
 				if (!newFinalStates.contains(succ)) {
 					return false;
 				}
 			}
 		}
-		for (LETTER symbol : mOperand.lettersCall(state)) {
-			for (STATE succ : mOperand.succCall(state, symbol)) {
+		for (final LETTER symbol : mOperand.lettersCall(state)) {
+			for (final STATE succ : mOperand.succCall(state, symbol)) {
 				if (!newFinalStates.contains(succ)) {
 					return false;
 				}
 			}
 		}
-		for (LETTER symbol : mOperand.lettersReturn(state)) {
-			for (STATE hier : mOperand.hierPred(state, symbol)) {
-				for (STATE succ : mOperand.succReturn(state, hier, symbol)) {
+		for (final LETTER symbol : mOperand.lettersReturn(state)) {
+			for (final STATE hier : mOperand.hierPred(state, symbol)) {
+				for (final STATE succ : mOperand.succReturn(state, hier, symbol)) {
 					if (!newFinalStates.contains(succ)) {
 						return false;
 					}
@@ -262,142 +262,168 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	}
 
 
+	@Override
 	public Set<STATE> getStates() {
 		return mOperand.getStates();
 	}
 
 
+	@Override
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
 		return mOperand.hierPred(state, letter);
 	}
 
 
+	@Override
 	public Collection<STATE> getFinalStates() {
 		return mAcceptingStates;
 	}
 
 
+	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		return mOperand.returnSummarySuccessor(letter, hier);
 	}
 
 
+	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			STATE hier) {
 		return mOperand.returnSummarySuccessor(hier);
 	}
 
 
+	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			STATE succ) {
 		return mOperand.internalPredecessors(succ);
 	}
 
 
+	@Override
 	public Set<LETTER> lettersInternalIncoming(STATE state) {
 		return mOperand.lettersInternalIncoming(state);
 	}
 
 
+	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter, STATE succ) {
 		return mOperand.internalPredecessors(letter, succ);
 	}
 
 
+	@Override
 	public Set<LETTER> lettersCallIncoming(STATE state) {
 		return mOperand.lettersCallIncoming(state);
 	}
 
 
+	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			LETTER letter, STATE succ) {
 		return mOperand.callPredecessors(letter, succ);
 	}
 
 
+	@Override
 	public Set<LETTER> lettersReturnIncoming(STATE state) {
 		return mOperand.lettersReturnIncoming(state);
 	}
 
 
+	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			STATE succ) {
 		return mOperand.callPredecessors(succ);
 	}
 
 
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE hier, LETTER letter, STATE succ) {
 		return mOperand.returnPredecessors(hier, letter, succ);
 	}
 
 
+	@Override
 	public Set<LETTER> lettersReturnSummary(STATE state) {
 		return mOperand.lettersReturnSummary(state);
 	}
 
 
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			LETTER letter, STATE succ) {
 		return mOperand.returnPredecessors(letter, succ);
 	}
 
 
+	@Override
 	public Iterable<STATE> succInternal(STATE state, LETTER letter) {
 		return mOperand.succInternal(state, letter);
 	}
 
 
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE succ) {
 		return mOperand.returnPredecessors(succ);
 	}
 
 
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, LETTER letter) {
 		return mOperand.returnSuccessors(state, letter);
 	}
 
 
+	@Override
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
 		return mOperand.succCall(state, letter);
 	}
 
 
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state) {
 		return mOperand.returnSuccessors(state);
 	}
 
 
+	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
 		return mOperand.succReturn(state, hier, letter);
 	}
 
 
+	@Override
 	public Iterable<STATE> predInternal(STATE state, LETTER letter) {
 		return mOperand.predInternal(state, letter);
 	}
 
 
+	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
 		return mOperand.predCall(state, letter);
 	}
 
 
+	@Override
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException();
 	}
 
 
+	@Override
 	public boolean isDeterministic() {
 		return mOperand.isDeterministic();
 	}
 
 
+	@Override
 	public boolean isTotal() {
 		return mOperand.isTotal();
 	}

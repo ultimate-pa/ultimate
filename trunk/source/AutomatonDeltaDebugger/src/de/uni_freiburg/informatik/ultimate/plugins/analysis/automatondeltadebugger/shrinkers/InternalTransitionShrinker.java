@@ -45,7 +45,7 @@ public class InternalTransitionShrinker<LETTER, STATE>
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
-		INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
 		
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());

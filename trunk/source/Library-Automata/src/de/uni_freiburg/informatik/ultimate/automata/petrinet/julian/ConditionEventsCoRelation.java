@@ -35,8 +35,8 @@ import java.util.Set;
 public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	private int coRelationQueries = 0;
 
-	private HashMap<Condition<S, C>, Set<Event<S, C>>> coRelation = new HashMap<Condition<S, C>, Set<Event<S, C>>>();
-	private BranchingProcess<S, C> branchingProcess;
+	private final HashMap<Condition<S, C>, Set<Event<S, C>>> coRelation = new HashMap<Condition<S, C>, Set<Event<S, C>>>();
+	private final BranchingProcess<S, C> branchingProcess;
 
 	@Override
 	public int getCoRelationQueries() {
@@ -49,12 +49,12 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 
 	@Override
 	public void update(Event<S, C> e) {
-		for (Condition<S, C> c : e.getSuccessorConditions()) {
+		for (final Condition<S, C> c : e.getSuccessorConditions()) {
 			coRelation.put(c, new HashSet<Event<S, C>>());
 		}
-		for (Event<S, C> e1 : branchingProcess.getEvents()) {
+		for (final Event<S, C> e1 : branchingProcess.getEvents()) {
 			if (isInIrreflexiveCoRelation(e, e1)) {
-				for (Condition<S, C> c : e1.getSuccessorConditions()) {
+				for (final Condition<S, C> c : e1.getSuccessorConditions()) {
 					assert (!e.getPredecessorConditions().contains(c));
 					assert (!e.getSuccessorConditions().contains(c));
 					coRelation.get(c).add(e);
@@ -88,7 +88,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		//	}
 		//}
 		
-		for (Condition<S, C> c : e.getConditionMark()) {
+		for (final Condition<S, C> c : e.getConditionMark()) {
 			if (!e.getSuccessorConditions().contains(c)) {
 				assert (!e.getSuccessorConditions().contains(c));
 				assert (!branchingProcess.inCausalRelation(c, e)) : c + " , "
@@ -110,7 +110,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	@Override
 	public boolean isInCoRelation(Condition<S, C> c1, Condition<S, C> c2) {
 		coRelationQueries++;
-		boolean result = coRelation.get(c1).contains(c2.getPredecessorEvent())
+		final boolean result = coRelation.get(c1).contains(c2.getPredecessorEvent())
 				|| coRelation.get(c2).contains(c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
 		if (result) {
@@ -179,18 +179,20 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * @return
 	 */
 	private boolean isInIrreflexiveCoRelation(Event<S, C> e1, Event<S, C> e2) {
-		if (e1 == e2) // since this is irreflexive.
+		if (e1 == e2) {
 			return false;
+		}
 		if (branchingProcess.getDummyRoot() == e1 
 				|| branchingProcess.getDummyRoot() == e2 ) {
 			return false;
 		}
-		Collection<Condition<S, C>> conditions1 = e1.getPredecessorConditions();
-		Collection<Condition<S, C>> conditions2 = e2.getPredecessorConditions();
-		for (Condition<S, C> c1 : conditions1) {
+		final Collection<Condition<S, C>> conditions1 = e1.getPredecessorConditions();
+		final Collection<Condition<S, C>> conditions2 = e2.getPredecessorConditions();
+		for (final Condition<S, C> c1 : conditions1) {
 			if (conditions2.contains(c1) // e1 and e2 are in conflict
-					|| !isCoset(conditions2, c1))
+					|| !isCoset(conditions2, c1)) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -203,9 +205,10 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 
 	@Override
 	public boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> c) {
-		for (Condition<S, C> condition : coSet) {
-			if (!isInCoRelation(c, condition))
+		for (final Condition<S, C> condition : coSet) {
+			if (!isInCoRelation(c, condition)) {
 				return false;
+			}
 		}
 		return true;
 	}

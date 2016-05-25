@@ -58,18 +58,18 @@ public class DebugObserver extends BaseObserver {
 	}
 
 	private void walkTree(IWalkable root) {
-		Queue<IWalkable> queue = new LinkedList<>();
-		HashSet<IWalkable> processed = new HashSet<>();
+		final Queue<IWalkable> queue = new LinkedList<>();
+		final HashSet<IWalkable> processed = new HashSet<>();
 		queue.add(root);
 		while (!queue.isEmpty()) {
-			IWalkable node = queue.poll();
+			final IWalkable node = queue.poll();
 			if (!processed.add(node)) {
 				mLogger.debug("This is not a tree! " + node + " is on a cylce");
 				continue;
 			}
 			checkNode(node);
 
-			for (IWalkable succ : node.getSuccessors()) {
+			for (final IWalkable succ : node.getSuccessors()) {
 				if (succ == null) {
 					mLogger.debug(node + " contains null successors");
 					continue;
@@ -81,19 +81,20 @@ public class DebugObserver extends BaseObserver {
 
 	private void checkNode(IWalkable node) {
 		if (node.hasPayload()) {
-			IPayload payload = node.getPayload();
+			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				Map<String, IAnnotations> annot = payload.getAnnotations();
-				Collection<IAnnotations> annots = CoreUtil.flattenMapValuesToCollection(annot);
+				final Map<String, IAnnotations> annot = payload.getAnnotations();
+				final Collection<IAnnotations> annots = CoreUtil.flattenMapValuesToCollection(annot);
 				checkAnnotations(node, annots);
 			}
 		}
 	}
 
 	private void checkAnnotations(IWalkable node, Collection<IAnnotations> annots) {
-		for (IAnnotations annot : annots) {
-			if (annot instanceof Overapprox)
+		for (final IAnnotations annot : annots) {
+			if (annot instanceof Overapprox) {
 				mLogger.info("Overapprox found");
+			}
 		}
 	}
 

@@ -102,6 +102,7 @@ public class TermDAG {
 		public TermNode getTo() {
 			return mTo;
 		}
+		@Override
 		public String toString() {
 			return mFrom + " --> " + mTo;
 		}
@@ -127,19 +128,21 @@ public class TermDAG {
 			new Edge(this,child,pos);
 		}
 		public Edge getChild(int pos) {
-			Edge res = mOutgoing.get(pos);
+			final Edge res = mOutgoing.get(pos);
 			if (res.getNumber() != pos) {
-				for (Edge e : mOutgoing) {
-					if (e.getNumber() == pos)
+				for (final Edge e : mOutgoing) {
+					if (e.getNumber() == pos) {
 						return e;
+					}
 				}
 			}
 			return res;
 		}
+		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append('(').append(mSymbol.getName());
-			for (Edge e : mOutgoing) {
+			for (final Edge e : mOutgoing) {
 				sb.append(' ').append(e.mTo);
 			}
 			sb.append(')');
@@ -160,6 +163,7 @@ public class TermDAG {
 		public Term getConstant() {
 			return mConst;
 		}
+		@Override
 		public String toString() {
 			return mConst.toString();
 		}
@@ -176,6 +180,7 @@ public class TermDAG {
 		public TermVariable getVariable() {
 			return mVar;
 		}
+		@Override
 		public String toString() {
 			return mVar.toString();
 		}
@@ -200,14 +205,15 @@ public class TermDAG {
 		mConsts.clear();
 		mVars.clear();
 		mNodes.clear();
-		for (Term trig : triggers)
+		for (final Term trig : triggers) {
 			mRoots.add(insert(trig));
+		}
 		return mRoots.toArray(new TermNode[mRoots.size()]);
 	}
 	public CCTerm[] getConstants(Clausifier converter) {
-		CCTerm[] res = new CCTerm[mConsts.size()];
+		final CCTerm[] res = new CCTerm[mConsts.size()];
 		int i = -1;
-		for (ConstTermNode ctn : mConsts) {
+		for (final ConstTermNode ctn : mConsts) {
 			res[++i] = converter.getSharedTerm(ctn.getConstant()).getCCTerm();
 			ctn.setRegPos(i);
 		}
@@ -220,26 +226,28 @@ public class TermDAG {
 		return mVars;
 	}
 	private TermNode insert(Term trig) {
-		TermNode cached = mNodes.get(trig);
-		if (cached != null)
+		final TermNode cached = mNodes.get(trig);
+		if (cached != null) {
 			return cached;
+		}
 		if (trig.getFreeVars().length == 0) {
-			ConstTermNode ctn = new ConstTermNode(trig);
+			final ConstTermNode ctn = new ConstTermNode(trig);
 			mConsts.add(ctn);
 			mNodes.put(trig,ctn);
 			return ctn;
 		} else if (trig instanceof TermVariable) {
-			VarNode vn = new VarNode((TermVariable)trig);
+			final VarNode vn = new VarNode((TermVariable)trig);
 			mNodes.put(trig,vn);
 			mVars.add(vn);
 			return vn;
 		} else {
 			assert(trig instanceof ApplicationTerm);
-			ApplicationTerm at = (ApplicationTerm)trig;
-			AppTermNode atn = new AppTermNode(at.getFunction());
-			Term[] params = at.getParameters();
-			for (int i = 0; i < params.length; ++i)
+			final ApplicationTerm at = (ApplicationTerm)trig;
+			final AppTermNode atn = new AppTermNode(at.getFunction());
+			final Term[] params = at.getParameters();
+			for (int i = 0; i < params.length; ++i) {
 				atn.addChild(insert(params[i]), i);
+			}
 			mNodes.put(trig,atn);
 			return atn;
 		}

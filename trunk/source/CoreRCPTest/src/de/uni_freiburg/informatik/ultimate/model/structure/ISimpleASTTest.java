@@ -20,7 +20,7 @@ public abstract class ISimpleASTTest<T extends ISimpleAST<?, ?>> extends IElemen
 
 	@Test
 	public void getOutgoingNodesNotNull() {
-		List<?> ret = instance.getOutgoingNodes();
+		final List<?> ret = instance.getOutgoingNodes();
 
 		Assert.assertNotNull(ret);
 	}

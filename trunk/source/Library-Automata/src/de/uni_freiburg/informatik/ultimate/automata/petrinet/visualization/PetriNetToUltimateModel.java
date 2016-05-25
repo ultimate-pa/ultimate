@@ -41,37 +41,37 @@ public class PetriNetToUltimateModel<S, C> {
 	
 	@SuppressWarnings("unchecked")
 	public PetriNetInitialNode getUltimateModelOfPetriNet(IPetriNet<S, C> net) {
-		Collection<Collection<Place<S, C>>> acceptingMarkings = 
+		final Collection<Collection<Place<S, C>>> acceptingMarkings = 
 			net.getAcceptingMarkings();
-		PetriNetInitialNode graphroot = 
+		final PetriNetInitialNode graphroot = 
 			new PetriNetInitialNode(printAcceptingMarkings(acceptingMarkings));
 		
-		Marking<S,C> initialStates = net.getInitialMarking();
+		final Marking<S,C> initialStates = net.getInitialMarking();
 
 		
-		Map<Place<S, C>,PlaceNode> place2placeNode =
+		final Map<Place<S, C>,PlaceNode> place2placeNode =
 			new HashMap<Place<S, C>,PlaceNode>();
-		Map<ITransition<S, C>,TransitionNode> transition2transitionNode =
+		final Map<ITransition<S, C>,TransitionNode> transition2transitionNode =
 			new HashMap<ITransition<S, C>,TransitionNode>();
 
-		LinkedList<Object> queue = new LinkedList<Object>();
+		final LinkedList<Object> queue = new LinkedList<Object>();
 	
 		// add all initial states to model - all are successors of the graphroot
-		for (Place<S, C> place : initialStates) {
+		for (final Place<S, C> place : initialStates) {
 			queue.add(place);
-			PlaceNode placeNode = new PlaceNode(place,
+			final PlaceNode placeNode = new PlaceNode(place,
 					participatedAcceptingMarkings(place, acceptingMarkings));
 			place2placeNode.put(place,placeNode);
 			graphroot.connectOutgoing(placeNode);
 		}
 		
 		while (!queue.isEmpty()) {
-			Object node = queue.removeFirst();
+			final Object node = queue.removeFirst();
 			
 			if (node instanceof Place) {
-				Place<S,C> place = (Place<S,C>) node;
-				PlaceNode placeNode = place2placeNode.get(place);
-				for (ITransition<S, C> transition : place.getSuccessors()) {
+				final Place<S,C> place = (Place<S,C>) node;
+				final PlaceNode placeNode = place2placeNode.get(place);
+				for (final ITransition<S, C> transition : place.getSuccessors()) {
 					TransitionNode transNode = 
 						transition2transitionNode.get(transition);
 					if (transNode == null) {
@@ -83,10 +83,10 @@ public class PetriNetToUltimateModel<S, C> {
 				}
 			}
 			else if (node instanceof ITransition) {
-				ITransition<S,C> transition = (ITransition<S,C>) node;
-				TransitionNode transitionNode = 
+				final ITransition<S,C> transition = (ITransition<S,C>) node;
+				final TransitionNode transitionNode = 
 					transition2transitionNode.get(transition);
-				for (Place<S, C> place : transition.getSuccessors()) {
+				for (final Place<S, C> place : transition.getSuccessors()) {
 					PlaceNode placeNode = place2placeNode.get(place);
 					if (placeNode == null) {
 						
@@ -106,12 +106,12 @@ public class PetriNetToUltimateModel<S, C> {
 	
 	private Collection<String> participatedAcceptingMarkings(Place<S,C> place,
 					Collection<Collection<Place<S, C>>> acceptingMarkings) {
-		LinkedList<String> participatedAcceptingMarkings = 
+		final LinkedList<String> participatedAcceptingMarkings = 
 													new LinkedList<String>();
-		for (Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
+		for (final Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
 			if (acceptingMarking.contains(place)) {
 				String acceptingMarkingString = "{ ";
-				for (Place<S,C> placeInMarking : acceptingMarking) {
+				for (final Place<S,C> placeInMarking : acceptingMarking) {
 					acceptingMarkingString += 
 										placeInMarking.getContent().toString();
 					acceptingMarkingString += " , ";
@@ -127,14 +127,14 @@ public class PetriNetToUltimateModel<S, C> {
 	
 	private Collection<String> printAcceptingMarkings(
 			Collection<Collection<Place<S, C>>> acceptingMarkings) {
-		LinkedList<String> acceptingMarkingsList = new LinkedList<String>();
-		for (Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
+		final LinkedList<String> acceptingMarkingsList = new LinkedList<String>();
+		for (final Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
 			if (acceptingMarking.isEmpty()) {
 				acceptingMarkingsList.add("{ }");
 			}
 			else {
 				String acceptingMarkingString = "{ ";
-				for (Place<S,C> placeInMarking : acceptingMarking) {
+				for (final Place<S,C> placeInMarking : acceptingMarking) {
 					acceptingMarkingString += 
 										placeInMarking.getContent().toString();
 					acceptingMarkingString += " , ";

@@ -2,9 +2,12 @@
 
 package jdd.bdd.debug;
 
-import jdd.bdd.*;
-import jdd.util.*;
-import jdd.util.math.*;
+import jdd.bdd.CacheBase;
+import jdd.util.Allocator;
+import jdd.util.Array;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.math.Digits;
 
 /**
  * RandomCache.java:
@@ -23,7 +26,11 @@ import jdd.util.math.*;
 	private int togo, p1, p2, p3;
 
 	private int cache_bits, shift_bits, cache_size, cache_mask;
-	private int bdds, numclears, numgrows;
+	private final int bdds;
+
+	private int numclears;
+
+	private int numgrows;
 	private long  numaccess;
 	private long hit,miss, last_hit, last_access; // cache hits and misses, hit/acces-count since last grow
 
@@ -35,16 +42,16 @@ import jdd.util.math.*;
 		super(name);
 
 		this.bdds    = bdds;
-		this.cache_bits = (size < 32) ? 5 : Digits.closest_log2(size); // min size 32
-		this.shift_bits = 32 - this.cache_bits; // w-n, where w is the machine word size..
-		this.cache_size = (1 << cache_bits);
-		this.cache_mask = cache_size -1;
+		cache_bits = (size < 32) ? 5 : Digits.closest_log2(size); // min size 32
+		shift_bits = 32 - cache_bits; // w-n, where w is the machine word size..
+		cache_size = (1 << cache_bits);
+		cache_mask = cache_size -1;
 
 		numgrows = 0;
 		numaccess = 0;
 		hit = miss = last_hit = last_access = 0;
 
-		this.numclears = 0;
+		numclears = 0;
 
 		in1 = Allocator.allocateIntArray(cache_size);
 		in2 = (members >= 2) ? Allocator.allocateIntArray(cache_size) : null;
@@ -83,15 +90,17 @@ import jdd.util.math.*;
 
 	private boolean may_grow() {
 		if(numgrows < Configuration.maxSimplecacheGrows) {
-			long acs = (numaccess - last_access);
+			final long acs = (numaccess - last_access);
 
 			// only when we have "MIN_SIMPLECACHE_ACCESS_TO_GROW %" or more access', we have enough information to decide
 			// whether we can grow cache or not (beside, if acs == 0, we will get a div by 0 below :)
-			if( (acs * 100 )  < cache_size * Configuration.minSimplecacheAccessToGrow) return false;
+			if( (acs * 100 )  < cache_size * Configuration.minSimplecacheAccessToGrow) {
+				return false;
+			}
 
 
 			// compute hitrate (in procent) since the LAST grow, not the overall hitrate
-			int rate = (int)( ((hit - last_hit) * 100.0 ) / acs);
+			final int rate = (int)( ((hit - last_hit) * 100.0 ) / acs);
 
 			if(rate > Configuration.minSimplecacheHitrateToGrow) {
 				// store information needed to compute the next after-last-grow-hitrate
@@ -117,8 +126,11 @@ import jdd.util.math.*;
 
 	/** try to grow the cache. if unable, it will just wipe the cache */
 	public void free_or_grow() {
-		if(may_grow()) grow_and_invalidate_cache();
-		else		invalidate_cache();
+		if(may_grow()) {
+			grow_and_invalidate_cache();
+		} else {
+			invalidate_cache();
+		}
 	}
 
 
@@ -149,8 +161,11 @@ import jdd.util.math.*;
 	 * @see #free_or_grow
 	 */
 	public void free_or_grow(int [] valid) {
-		if(may_grow())	grow_and_invalidate_cache(); // no way to partially invalidate, as the size and thus the hashes chagnes
-		else			invalidate_cache(valid);
+		if(may_grow()) {
+			grow_and_invalidate_cache(); // no way to partially invalidate, as the size and thus the hashes chagnes
+		} else {
+			invalidate_cache(valid);
+		}
 	}
 
 	/**
@@ -215,7 +230,7 @@ import jdd.util.math.*;
 
 
 		numaccess++;
-		int hash = a & cache_mask;
+		final int hash = a & cache_mask;
 		if(in1[hash] == a){
 			hit++;
 			answer = out[hash];
@@ -239,7 +254,7 @@ import jdd.util.math.*;
 
 
 		numaccess++;
-		int hash = good_hash(a,b);
+		final int hash = good_hash(a,b);
 		if(in1[hash] == a && in2[hash] == b){
 			hit++;
 			answer = out[hash];
@@ -263,7 +278,7 @@ import jdd.util.math.*;
 
 		numaccess++;
 
-		int hash = good_hash(a,b,c);
+		final int hash = good_hash(a,b,c);
 		if(in1[hash] == a && in2[hash] == b && in3[hash] == c){
 			hit++;
 			answer = out[hash];
@@ -292,35 +307,51 @@ import jdd.util.math.*;
 
 	// -----------------------------------------------------------------------------
 
+	@Override
 	public double computeLoadFactor() { // just see howmany buckts are in use
-		if(in1 == null) return 0; // is growing...
+		if(in1 == null)
+		 {
+			return 0; // is growing...
+		}
 
 		int bins = 0;
-		for( int i = 0; i < cache_size; i++) if(in1[i] != -1 )	bins++;
-		return ((int)(bins * 10000) / cache_size) / 100.0;
+		for( int i = 0; i < cache_size; i++) {
+			if(in1[i] != -1 ) {
+				bins++;
+			}
+		}
+		return (bins * 10000 / cache_size) / 100.0;
 	}
 
+	@Override
 	public double computeHitRate() { // hit-rate since the last clear
-		if(numaccess == 0) return 0;
+		if(numaccess == 0) {
+			return 0;
+		}
 		return ((int)((hit * 10000) / ( numaccess ))) / 100.0;
 	}
 
+	@Override
 	public long getAccessCount() {
 		return numaccess;
 	}
 
+	@Override
 	public int getCacheSize() {
 		return cache_size;
 	}
 
+	@Override
 	public int getNumberOfClears() {
 		return numclears;
 	}
 
+	@Override
 	public int getNumberOfPartialClears() {
 		return 0;
 	}
 
+	@Override
 	public int getNumberOfGrows() {
 		return numgrows;
 	}
@@ -334,7 +365,9 @@ import jdd.util.math.*;
 			JDDConsole.out.print("accs="); Digits.printNumber(numaccess);
 			JDDConsole.out.print("clrs=" + numclears+ "/0 ");
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
-			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
+			if(numgrows > 0) {
+				JDDConsole.out.print("grws=" + numgrows + " ");
+			}
 
 			JDDConsole.out.println();
 		}

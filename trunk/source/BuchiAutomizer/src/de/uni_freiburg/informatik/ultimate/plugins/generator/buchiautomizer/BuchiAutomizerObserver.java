@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
@@ -66,13 +65,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -105,7 +104,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			return false;
 		}
 		mRootAnnot = ((RootNode) root).getRootAnnot();
-		TAPreferences taPrefs = new TAPreferences();
+		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
 		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(),
@@ -113,25 +112,25 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		mPref = taPrefs;
 
-		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, mPref, mServices, mStorage);
-		Result result = bcl.iterate();
-		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
+		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, mPref, mServices, mStorage);
+		final Result result = bcl.iterate();
+		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		IResult benchDecomp = new BenchmarkResult<String>(Activator.PLUGIN_ID, "Constructed decomposition of program",
+		final IResult benchDecomp = new BenchmarkResult<String>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
-		boolean constructTermcompProof = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean constructTermcompProof = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
 		if (constructTermcompProof) {
-			IResult termcompProof = new BenchmarkResult<Double>(Activator.PLUGIN_ID,
+			final IResult termcompProof = new BenchmarkResult<Double>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
 
-		BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
-		IResult benchTiming = new BenchmarkResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
+		final BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
+		final IResult benchTiming = new BenchmarkResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
 		interpretAndReportResult(bcl, result);
@@ -163,7 +162,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
-			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mGraphRoot);
+			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mGraphRoot);
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
@@ -184,13 +183,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 
 		if (result == Result.TERMINATING) {
-			String longDescr = "Buchi Automizer proved that your program is terminating";
-			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING,
+			final String longDescr = "Buchi Automizer proved that your program is terminating";
+			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING,
 					longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
-			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
-			StringBuilder longDescr = new StringBuilder();
+			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			final StringBuilder longDescr = new StringBuilder();
 			longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Stem: ");
@@ -198,38 +197,40 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
-			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN,
+			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN,
 					longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
-			String longDescr = "Timeout while trying to prove " + whatToProve + ". "
+			final ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
+			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().prettyPrint();
-			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.PLUGIN_ID,
+			final IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
-			String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING,
+			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
+			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING,
 					longDescr);
 			reportResult(reportRes);
 
-			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
-			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
-			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			NonTerminationArgument nta = bcl.getNonTerminationArgument();
+			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
+			final ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
+			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
 			reportResult(new BenchmarkResult<String>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
+			final
 			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
+			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
+			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
 					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
@@ -239,25 +240,25 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private void reportLTLPropertyHolds(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
-		IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
+		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
 		reportResult(result);
 	}
 
 	private void reportLTLPropertyIsViolated(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
-		NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
-		ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
+		final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+		final ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
-		List<CodeBlock> stem = counterexample.getStem().getWord().lettersAsList();
-		List<CodeBlock> loop = counterexample.getLoop().getWord().lettersAsList();
+		final List<CodeBlock> stem = counterexample.getStem().getWord().lettersAsList();
+		final List<CodeBlock> loop = counterexample.getLoop().getWord().lettersAsList();
 
-		boolean isFinite = isLTLCounterExampleFinite(loop);
+		final boolean isFinite = isLTLCounterExampleFinite(loop);
 
 		if (isFinite) {
 			// TODO: Make some attempt at getting the values
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
-			List<CodeBlock> combined = new ArrayList<CodeBlock>();
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final List<CodeBlock> combined = new ArrayList<CodeBlock>();
 			combined.addAll(stem);
 
 			// TODO: It seems that the loop is not necessary if the trace is
@@ -266,18 +267,21 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			// combined.addAll(loop);
 
 			@SuppressWarnings("unchecked")
+			final
 			RcfgProgramExecution cex = new RcfgProgramExecution(combined, partialProgramStateMapping,
 					new Map[combined.size()]);
 			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
 		} else {
 			// TODO: Make some attempt at getting the values
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 
 			@SuppressWarnings("unchecked")
+			final
 			RcfgProgramExecution stemPE = new RcfgProgramExecution(stem, partialProgramStateMapping,
 					new Map[stem.size()]);
 			@SuppressWarnings("unchecked")
+			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
@@ -352,7 +356,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		public NonterminationBenchmark(NonTerminationArgument nta) {
 			boolean lambdaZero = true;
 			boolean gevZero = true;
-			List<Rational> lambdas = nta.getLambdas();
+			final List<Rational> lambdas = nta.getLambdas();
 			for (int i = 0; i < nta.getNumberOfGEVs(); ++i) {
 				lambdaZero &= (nta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
 				gevZero &= isZero(nta.getGEVs().get(i));
@@ -372,7 +376,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		 * Return true iff all coefficients of generalized eigenvector are zero.
 		 */
 		private boolean isZero(Map<RankVar, Rational> gev) {
-			for (Entry<RankVar, Rational> entry : gev.entrySet()) {
+			for (final Entry<RankVar, Rational> entry : gev.entrySet()) {
 				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
 					return false;
 				}

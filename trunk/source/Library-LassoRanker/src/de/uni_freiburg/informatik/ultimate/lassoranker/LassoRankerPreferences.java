@@ -115,17 +115,17 @@ public class LassoRankerPreferences implements Serializable {
 	 * Copy constructor copies everything
 	 */
 	public LassoRankerPreferences(LassoRankerPreferences other) {
-		this.compute_integral_hull = other.compute_integral_hull;
-		this.enable_partitioneer = other.enable_partitioneer;
-		this.annotate_terms = other.annotate_terms;
-		this.externalSolver = other.externalSolver;
-		this.smt_solver_command = other.smt_solver_command;
-		this.dumpSmtSolverScript = other.dumpSmtSolverScript;
-		this.path_of_dumped_script = other.path_of_dumped_script;
-		this.baseNameOfDumpedScript = other.baseNameOfDumpedScript;
-		this.overapproximateArrayIndexConnection =
+		compute_integral_hull = other.compute_integral_hull;
+		enable_partitioneer = other.enable_partitioneer;
+		annotate_terms = other.annotate_terms;
+		externalSolver = other.externalSolver;
+		smt_solver_command = other.smt_solver_command;
+		dumpSmtSolverScript = other.dumpSmtSolverScript;
+		path_of_dumped_script = other.path_of_dumped_script;
+		baseNameOfDumpedScript = other.baseNameOfDumpedScript;
+		overapproximateArrayIndexConnection =
 				other.overapproximateArrayIndexConnection;
-		this.nlaHandling = other.nlaHandling;
+		nlaHandling = other.nlaHandling;
 	}
 	
 	/**
@@ -136,7 +136,7 @@ public class LassoRankerPreferences implements Serializable {
 		assert smt_solver_command != null;
 		assert path_of_dumped_script != null;
 		if (dumpSmtSolverScript) {
-			File f = new File(path_of_dumped_script);
+			final File f = new File(path_of_dumped_script);
 			assert f.exists();
 			assert f.isDirectory();
 			assert baseNameOfDumpedScript != null;
@@ -146,24 +146,25 @@ public class LassoRankerPreferences implements Serializable {
 	/**
 	 * Build a string description of the current preferences
 	 */
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Compute integeral hull: ");
-		sb.append(this.compute_integral_hull);
+		sb.append(compute_integral_hull);
 		sb.append("\nEnable LassoPartitioneer: ");
-		sb.append(this.enable_partitioneer);
+		sb.append(enable_partitioneer);
 		sb.append("\nTerm annotations enabled: ");
-		sb.append(this.annotate_terms);
+		sb.append(annotate_terms);
 		sb.append("\nUse exernal solver: ");
-		sb.append(this.externalSolver);
+		sb.append(externalSolver);
 		sb.append("\nSMT solver command: ");
-		sb.append(this.smt_solver_command);
+		sb.append(smt_solver_command);
 		sb.append("\nDump SMT script to file: ");
-		sb.append(this.dumpSmtSolverScript);
+		sb.append(dumpSmtSolverScript);
 		sb.append("\nPath of dumped script: ");
-		sb.append(this.path_of_dumped_script);
+		sb.append(path_of_dumped_script);
 		sb.append("\nFilename of dumped script: ");
-		sb.append(this.baseNameOfDumpedScript);
+		sb.append(baseNameOfDumpedScript);
 		return sb.toString();
 	}
 
@@ -174,7 +175,7 @@ public class LassoRankerPreferences implements Serializable {
 	 * @return a Settings object that allows us to build a new solver.
 	 */
 	public Settings getSolverConstructionSettings(String filenameDumpedScript) {
-		long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
+		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
 		return new Settings(externalSolver, smt_solver_command, 
 				timeoutSmtInterpol , null, 
 				dumpSmtSolverScript, path_of_dumped_script, filenameDumpedScript);

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Object>{
-	private StatisticsData mBenchmarkData;
+	private final StatisticsData mBenchmarkData;
 	
 	public BuchiAutomizerTimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
 		mBenchmarkData = new StatisticsData();

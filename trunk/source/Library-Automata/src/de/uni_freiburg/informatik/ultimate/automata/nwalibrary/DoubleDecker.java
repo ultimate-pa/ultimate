@@ -70,7 +70,7 @@ public class DoubleDecker<C> {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof DoubleDecker) {
-			DoubleDecker<C> summaryState = (DoubleDecker<C>) obj;
+			final DoubleDecker<C> summaryState = (DoubleDecker<C>) obj;
 			return mUp.equals(summaryState.mUp) && 
 							mDown.equals(summaryState.mDown);
 		}

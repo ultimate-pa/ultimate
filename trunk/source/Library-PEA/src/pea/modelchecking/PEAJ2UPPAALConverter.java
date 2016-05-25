@@ -37,12 +37,11 @@ import org.w3c.dom.Element;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
+import pea.Decision;
 import pea.Phase;
 import pea.PhaseEventAutomata;
-import pea.Transition;
-
-import pea.Decision;
 import pea.RangeDecision;
+import pea.Transition;
 
 /**
  * @author Roland Meyer
@@ -66,18 +65,18 @@ public class PEAJ2UPPAALConverter {
     protected ArrayList events = null;
     protected ArrayList clocks = null;
     protected ArrayList variables = null;
-    private   ArrayList<String> finalStates = new ArrayList<String>();
+    private final   ArrayList<String> finalStates = new ArrayList<String>();
 
     public PEAJ2UPPAALConverter(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = ILogger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
+            logger = ILogger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = ILogger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.clocks = new ArrayList();
-        this.events = new ArrayList();
-        this.variables = new ArrayList();
+        clocks = new ArrayList();
+        events = new ArrayList();
+        variables = new ArrayList();
     }
 
     public PEAJ2UPPAALConverter() {
@@ -90,34 +89,34 @@ public class PEAJ2UPPAALConverter {
                     "The array of peas is not allowed to be empty");
         }
 
-        this.document = new DocumentImpl();
+        document = new DocumentImpl();
 
-        Element peaNetNode = this.document.createElement("nta");
-        Element declNode = this.document.createElement("declaration");
-        declNode.appendChild(this.document.createTextNode("clock timer;"));
+        final Element peaNetNode = document.createElement("nta");
+        final Element declNode = document.createElement("declaration");
+        declNode.appendChild(document.createTextNode("clock timer;"));
         peaNetNode.appendChild(declNode);
-        this.document.appendChild(peaNetNode);
+        document.appendChild(peaNetNode);
 
         for (int i = 0; i < peas.length; i++) {
-            this.logger.info("Trying to create peaNode " + i);
-            Element actPEANode = this.createPhaseEventAutomaton(peas[i]);
-            this.logger.info("Creating peaNode " + i + " successful");
+            logger.info("Trying to create peaNode " + i);
+            final Element actPEANode = createPhaseEventAutomaton(peas[i]);
+            logger.info("Creating peaNode " + i + " successful");
             peaNetNode.appendChild(actPEANode);
         }
-	String system = peas[0].getName();
-        Element systemNode = this.document.createElement("system");
-        systemNode.appendChild(this.document.createTextNode("system "
+	final String system = peas[0].getName();
+        final Element systemNode = document.createElement("system");
+        systemNode.appendChild(document.createTextNode("system "
                 + system + ";"));
         peaNetNode.appendChild(systemNode);
-        StringBuffer anfrage = new StringBuffer("A[]!(");
+        final StringBuffer anfrage = new StringBuffer("A[]!(");
 	String delim = "";
-        for (String state : finalStates ) {
+        for (final String state : finalStates ) {
             anfrage.append(delim).append(system).append(".").append(state);
 	    delim = "||";
         }
 	anfrage.append(")");
         System.out.println(anfrage.toString());
-        return this.document;
+        return document;
     }
 
     protected Element createPhaseEventAutomaton(PhaseEventAutomata pea) {
@@ -130,44 +129,45 @@ public class PEAJ2UPPAALConverter {
                     "PEA with initial phase count = 0 is not allowed");
         }
 
-        this.clocks.clear();
-        this.events.clear();
-        this.variables.clear();
+        clocks.clear();
+        events.clear();
+        variables.clear();
 
-        Element peaNode = this.document.createElement("template");
-        Element nameNode = this.document.createElement("name");
-        nameNode.appendChild(this.document.createTextNode(pea.getName()));
+        final Element peaNode = document.createElement("template");
+        final Element nameNode = document.createElement("name");
+        nameNode.appendChild(document.createTextNode(pea.getName()));
         peaNode.appendChild(nameNode);
 
-        List<Element> allTransitionNodes = new ArrayList<Element>();
-        Phase[] phases = pea.getPhases();
-        HashMap<String,Element> phaseNodes = new HashMap<String,Element>();
+        final List<Element> allTransitionNodes = new ArrayList<Element>();
+        final Phase[] phases = pea.getPhases();
+        final HashMap<String,Element> phaseNodes = new HashMap<String,Element>();
         for (int i = 0; i < phases.length; i++) {
-            Element actPhaseNode = this.createPhaseNode(phases[i]);
+            final Element actPhaseNode = createPhaseNode(phases[i]);
             peaNode.appendChild(actPhaseNode);
             phaseNodes.put(phases[i].getName(), actPhaseNode);
 
-            List transitions = phases[i].getTransitions();
-            Iterator transitionsIterator = transitions.iterator();
+            final List transitions = phases[i].getTransitions();
+            final Iterator transitionsIterator = transitions.iterator();
             while (transitionsIterator.hasNext()) {
-                Transition actTransition = (Transition) transitionsIterator
+                final Transition actTransition = (Transition) transitionsIterator
                         .next();
-                Element[] actTransitionNode = 
+                final Element[] actTransitionNode = 
 		    createTransitionNodes(actTransition);
-		for (int j = 0; j < actTransitionNode.length; j++)
-		    allTransitionNodes.add(actTransitionNode[j]);
+		for (int j = 0; j < actTransitionNode.length; j++) {
+			allTransitionNodes.add(actTransitionNode[j]);
+		}
             }
         }
 
-        Phase[] initialPhases = pea.getInit();
+        final Phase[] initialPhases = pea.getInit();
         for (int i = 0; i < initialPhases.length; i++) {
-            Element initNode = this.document.createElement("init");
+            final Element initNode = document.createElement("init");
             initNode.setAttribute("ref", initialPhases[i].getName());
             peaNode.appendChild(initNode);
         }
-        Iterator transIter = allTransitionNodes.iterator();
+        final Iterator transIter = allTransitionNodes.iterator();
         while (transIter.hasNext()) {
-            Element transitionNode = (Element) transIter.next();
+            final Element transitionNode = (Element) transIter.next();
             peaNode.appendChild(transitionNode);
 
         }
@@ -178,42 +178,48 @@ public class PEAJ2UPPAALConverter {
      * Abstracts all information except timings from the given CDD.
      */
     private CDD abstractCDD(CDD cdd) {
-	CDD[] children = cdd.getChilds();
-	if (children == null) /* true / false node */
-	    return cdd;
-	Decision d = cdd.getDecision();
-	for (int i = 0; i < children.length; i++)
-	    children[i] = abstractCDD(children[i]);
+	final CDD[] children = cdd.getChilds();
+	if (children == null) {
+		return cdd;
+	}
+	final Decision d = cdd.getDecision();
+	for (int i = 0; i < children.length; i++) {
+		children[i] = abstractCDD(children[i]);
+	}
 	if (d instanceof RangeDecision) {
 	    return CDD.create(d, children);
 	} else {
 	    /* abstract from decision */
 	    CDD result = CDD.FALSE;
-	    for (int i = 0; i < children.length; i++)
-		result = result.or(children[i]);
+	    for (int i = 0; i < children.length; i++) {
+			result = result.or(children[i]);
+		}
 	    return result;
 	}
     }
     private String[] cdd2dnf(CDD cdd) {
 	/* first abstract node */
 	cdd = abstractCDD(cdd);
-	if (cdd == CDD.FALSE)
-	    return new String[0];
-	if (cdd == CDD.TRUE)
-	    return new String[] { "true" };
+	if (cdd == CDD.FALSE) {
+		return new String[0];
+	}
+	if (cdd == CDD.TRUE) {
+		return new String[] { "true" };
+	}
 
-	Decision d = cdd.getDecision();
-	CDD[] children = cdd.getChilds();
-	List<String> dnf = new ArrayList<String>();
+	final Decision d = cdd.getDecision();
+	final CDD[] children = cdd.getChilds();
+	final List<String> dnf = new ArrayList<String>();
 	for (int i = 0; i < children.length; i++) {
-	    if (children[i] == CDD.FALSE)
-		continue;
+	    if (children[i] == CDD.FALSE) {
+			continue;
+		}
 	    if (children[i] == CDD.TRUE) {
 		dnf.add(d.toUppaalString(i));
 	    } else {
-		String[] childDNF = cdd2dnf(children[i]);
+		final String[] childDNF = cdd2dnf(children[i]);
 		if (!children[i].implies(cdd)) {
-		    String prefix = d.toUppaalString(i)
+		    final String prefix = d.toUppaalString(i)
 			+ " &amp;&amp; ";
 		    for (int j = 0; j < childDNF.length; j++) {
 			childDNF[j] = prefix.concat(childDNF[j]);
@@ -224,44 +230,44 @@ public class PEAJ2UPPAALConverter {
 		}
 	    }
 	}
-	return (String[]) dnf.toArray(new String[0]);
+	return dnf.toArray(new String[0]);
     }
 
     protected Element[] createTransitionNodes(Transition transition) {
-        String source = transition.getSrc().getName();
-        String target = transition.getDest().getName();
+        final String source = transition.getSrc().getName();
+        final String target = transition.getDest().getName();
         if (source.equals("") || target.equals("")) {
             throw new RuntimeException(
                     "Source and target of a transition are not allowed to be empty");
         }
-	String[] guards = cdd2dnf(transition.getGuard());
-	String[] resets = transition.getResets();
-	Element[] transNodes = new Element[guards.length];
+	final String[] guards = cdd2dnf(transition.getGuard());
+	final String[] resets = transition.getResets();
+	final Element[] transNodes = new Element[guards.length];
 	for (int i = 0; i < guards.length; i++) {
-	    Element transitionNode = this.document.createElement("transition");
-	    Element sourceNode = this.document.createElement("source");
-	    Element targetNode = this.document.createElement("target");
+	    final Element transitionNode = document.createElement("transition");
+	    final Element sourceNode = document.createElement("source");
+	    final Element targetNode = document.createElement("target");
 	    transitionNode.appendChild(sourceNode);
 	    transitionNode.appendChild(targetNode);
 	    sourceNode.setAttribute("ref", source);
 	    targetNode.setAttribute("ref", target);
 	    
-	    Element guardNode = this.document.createElement("label");
+	    final Element guardNode = document.createElement("label");
 	    guardNode.setAttribute("kind", "guard");
-	    guardNode.appendChild(this.document.createTextNode
+	    guardNode.appendChild(document.createTextNode
 				  (guards[i] + " &amp;&amp; timer &gt; 0"));
 	    transitionNode.appendChild(guardNode);
 
-	    StringBuffer assignment = new StringBuffer();
+	    final StringBuffer assignment = new StringBuffer();
 	    
-	    Element actResetNode = this.document.createElement("label");
+	    final Element actResetNode = document.createElement("label");
 	    actResetNode.setAttribute("kind", "assignment");
 	    
 	    for (int j = 0; j < resets.length; j++) {
 		assignment.append(resets[j]).append(":=0, ");
 	    }
 	    assignment.append("timer:=0");
-	    actResetNode.appendChild(this.document.createTextNode(assignment
+	    actResetNode.appendChild(document.createTextNode(assignment
 								  .toString()));
 	    transitionNode.appendChild(actResetNode);
 	    transNodes[i] = transitionNode;
@@ -270,24 +276,25 @@ public class PEAJ2UPPAALConverter {
     }
 
     protected Element createPhaseNode(Phase phase) {
-        Element phaseNode = this.document.createElement("location");
+        final Element phaseNode = document.createElement("location");
         phaseNode.setAttribute("id", phase.getName());
 
-        Element nameNode = this.document.createElement("name");
-	nameNode.appendChild(this.document.createTextNode(phase.getName()));
+        final Element nameNode = document.createElement("name");
+	nameNode.appendChild(document.createTextNode(phase.getName()));
         if (phase.getName().matches(PEAJ2UPPAALConverter.FINAL_REGEX)) {
 	    finalStates.add(phase.getName());
         }
         phaseNode.appendChild(nameNode);
-        Element clockInvariantNode = this.document.createElement("label");
+        final Element clockInvariantNode = document.createElement("label");
         clockInvariantNode.setAttribute("kind", "invariant");
 
         if (phase.getClockInvariant() != CDD.TRUE) {
-	    String[] clockInv = cdd2dnf(phase.getClockInvariant());
-	    if (clockInv.length != 1) 
-		throw new IllegalArgumentException
-		    ("Non-convex clock invariant: "
-		     + phase.getClockInvariant());
+	    final String[] clockInv = cdd2dnf(phase.getClockInvariant());
+	    if (clockInv.length != 1) {
+			throw new IllegalArgumentException
+			    ("Non-convex clock invariant: "
+			     + phase.getClockInvariant());
+		}
             clockInvariantNode.appendChild
 		(document.createTextNode(clockInv[0]));
             phaseNode.appendChild(clockInvariantNode);

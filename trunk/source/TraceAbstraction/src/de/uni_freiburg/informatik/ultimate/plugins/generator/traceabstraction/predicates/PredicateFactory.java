@@ -93,8 +93,8 @@ public class PredicateFactory {
 	 * be quantified. Throws an Exception otherwise.
 	 */
 	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
-		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = mBoogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+		for (final TermVariable tv : term.getFreeVars()) {
+			final BoogieVar bv = mBoogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
 			if (bv == null) {
 				if (!quantifiedVariables.contains(tv)) {
 					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
@@ -111,7 +111,7 @@ public class PredicateFactory {
 
 	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, Term term, Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);
-		PredicateWithHistory pred = new PredicateWithHistory(pp, mSerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
+		final PredicateWithHistory pred = new PredicateWithHistory(pp, mSerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
 	}
@@ -130,14 +130,14 @@ public class PredicateFactory {
 	}
 	
 	private SPredicate newSPredicate(ProgramPoint pp, final TermVarsProc termVarsProc) {
-		SPredicate pred = new SPredicate(pp, mSerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
+		final SPredicate pred = new SPredicate(pp, mSerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 
 	public BasicPredicate newPredicate(final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		BasicPredicate predicate = new BasicPredicate(mSerialNumber++, termVarsProc.getProcedures(),
+		final BasicPredicate predicate = new BasicPredicate(mSerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
@@ -154,7 +154,7 @@ public class PredicateFactory {
 
 	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		MLPredicate predicate = new MLPredicate(programPoints, mSerialNumber++, termVarsProc.getProcedures(),
+		final MLPredicate predicate = new MLPredicate(programPoints, mSerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
@@ -171,23 +171,23 @@ public class PredicateFactory {
 	
 
 	public UnknownState newDontCarePredicate(ProgramPoint pp) {
-		UnknownState pred = new UnknownState(pp, mSerialNumber++, mDontCareTerm);
+		final UnknownState pred = new UnknownState(pp, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
 
 	public DebugPredicate newDebugPredicate(String debugMessage) {
-		DebugPredicate pred = new DebugPredicate(debugMessage, mSerialNumber++, mDontCareTerm);
+		final DebugPredicate pred = new DebugPredicate(debugMessage, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
 
 	public ISLPredicate newEmptyStackPredicate() {
-		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
+		final ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
 		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
 
 	}
 
 	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode, Integer stutteringSteps) {
-		SPredicate pred = new SPredicateWithWitnessNode(pp, mSerialNumber++, NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
+		final SPredicate pred = new SPredicateWithWitnessNode(pp, mSerialNumber++, NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
 				mScript.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
@@ -199,7 +199,7 @@ public class PredicateFactory {
 	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
 		final Term conjunction = and(inputPreds);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mBoogie2Smt);
-		BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
+		final BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;
 	}
@@ -212,7 +212,7 @@ public class PredicateFactory {
 	
 	public Term and(Collection<IPredicate> preds) {
 		Term term = mScript.term("true");
-		for (IPredicate p : preds) {
+		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
 				return mDontCareTerm;
 			}
@@ -227,7 +227,7 @@ public class PredicateFactory {
 
 	public Term or(boolean withSimplifyDDA, Collection<IPredicate> preds) {
 		Term term = mScript.term("false");
-		for (IPredicate p : preds) {
+		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
 				return mDontCareTerm;
 			}
@@ -243,7 +243,7 @@ public class PredicateFactory {
 		if (isDontCare(p)) {
 			return mDontCareTerm;
 		}
-		Term term = SmtUtils.not(mScript, p.getFormula());
+		final Term term = SmtUtils.not(mScript, p.getFormula());
 		return term;
 	}
 	

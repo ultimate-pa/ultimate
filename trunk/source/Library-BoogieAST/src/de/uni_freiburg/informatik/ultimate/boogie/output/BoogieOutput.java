@@ -108,19 +108,20 @@ public class BoogieOutput {
 	}
 
 	public void printBoogieProgram(Unit unit) {
-		for (Declaration d : unit.getDeclarations()) {
-			if (d instanceof TypeDeclaration)
+		for (final Declaration d : unit.getDeclarations()) {
+			if (d instanceof TypeDeclaration) {
 				printTypeDeclaration((TypeDeclaration) d);
-			else if (d instanceof ConstDeclaration)
+			} else if (d instanceof ConstDeclaration) {
 				printConstDeclaration((ConstDeclaration) d);
-			else if (d instanceof VariableDeclaration)
+			} else if (d instanceof VariableDeclaration) {
 				printVarDeclaration((VariableDeclaration) d, "");
-			else if (d instanceof FunctionDeclaration)
+			} else if (d instanceof FunctionDeclaration) {
 				printFunctionDeclaration((FunctionDeclaration) d);
-			else if (d instanceof Axiom)
+			} else if (d instanceof Axiom) {
 				printAxiom((Axiom) d);
-			else if (d instanceof Procedure)
+			} else if (d instanceof Procedure) {
 				printProcedure((Procedure) d);
+			}
 		}
 	}
 
@@ -139,7 +140,7 @@ public class BoogieOutput {
 	 */
 	private void appendExpression(StringBuilder sb, Expression expr, int precedence) {
 		if (expr instanceof BinaryExpression) {
-			BinaryExpression binexpr = (BinaryExpression) expr;
+			final BinaryExpression binexpr = (BinaryExpression) expr;
 			int opPrec, lPrec, rPrec;
 			String op;
 			switch (binexpr.getOperator()) {
@@ -162,8 +163,9 @@ public class BoogieOutput {
 				rPrec = 3;
 				break;
 			case LOGICAND:
-				if (precedence == 3)
+				if (precedence == 3) {
 					precedence = 5;
+				}
 				op = " && ";
 				opPrec = 4;
 				lPrec = 5;
@@ -250,15 +252,17 @@ public class BoogieOutput {
 			default:
 				throw new IllegalArgumentException(expr.toString());
 			}
-			if (precedence > opPrec)
+			if (precedence > opPrec) {
 				sb.append("(");
+			}
 			appendExpression(sb, binexpr.getLeft(), lPrec);
 			sb.append(op);
 			appendExpression(sb, binexpr.getRight(), rPrec);
-			if (precedence > opPrec)
+			if (precedence > opPrec) {
 				sb.append(")");
+			}
 		} else if (expr instanceof UnaryExpression) {
-			UnaryExpression unexpr = (UnaryExpression) expr;
+			final UnaryExpression unexpr = (UnaryExpression) expr;
 			String op;
 			int opPrec;
 			switch (unexpr.getOperator()) {
@@ -277,58 +281,68 @@ public class BoogieOutput {
 			default:
 				throw new IllegalArgumentException(expr.toString());
 			}
-			if (precedence > opPrec)
+			if (precedence > opPrec) {
 				sb.append("(");
+			}
 			sb.append(op);
 			if (op == "old") {
 				sb.append("(");
 				appendExpression(sb, unexpr.getExpr(), 0);
 				sb.append(")");
-			} else
+			} else {
 				appendExpression(sb, unexpr.getExpr(), opPrec);
-			if (precedence > opPrec)
+			}
+			if (precedence > opPrec) {
 				sb.append(")");
+			}
 		} else if (expr instanceof BitVectorAccessExpression) {
-			BitVectorAccessExpression bvexpr = (BitVectorAccessExpression) expr;
-			if (precedence > 10)
+			final BitVectorAccessExpression bvexpr = (BitVectorAccessExpression) expr;
+			if (precedence > 10) {
 				sb.append("(");
+			}
 			appendExpression(sb, bvexpr.getBitvec(), 10);
 			sb.append("[").append(bvexpr.getEnd()).append(":");
 			sb.append(bvexpr.getStart()).append("]");
-			if (precedence > 10)
+			if (precedence > 10) {
 				sb.append(")");
+			}
 		} else if (expr instanceof StructAccessExpression) {
-			StructAccessExpression strexpr = (StructAccessExpression) expr;
-			if (precedence > 10)
+			final StructAccessExpression strexpr = (StructAccessExpression) expr;
+			if (precedence > 10) {
 				sb.append("(");
+			}
 			appendExpression(sb, strexpr.getStruct(), 10);
 			sb.append("!");
 			sb.append(strexpr.getField());
-			if (precedence > 10)
+			if (precedence > 10) {
 				sb.append(")");
+			}
 		} else if (expr instanceof ArrayAccessExpression) {
-			ArrayAccessExpression arrexpr = (ArrayAccessExpression) expr;
-			if (precedence > 10)
+			final ArrayAccessExpression arrexpr = (ArrayAccessExpression) expr;
+			if (precedence > 10) {
 				sb.append("(");
+			}
 			appendExpression(sb, arrexpr.getArray(), 10);
 			sb.append("[");
 			String comma = "";
-			for (Expression indExpr : arrexpr.getIndices()) {
+			for (final Expression indExpr : arrexpr.getIndices()) {
 				sb.append(comma);
 				appendExpression(sb, indExpr, 0);
 				comma = ",";
 			}
 			sb.append("]");
-			if (precedence > 10)
+			if (precedence > 10) {
 				sb.append(")");
+			}
 		} else if (expr instanceof ArrayStoreExpression) {
-			ArrayStoreExpression arrexpr = (ArrayStoreExpression) expr;
-			if (precedence > 10)
+			final ArrayStoreExpression arrexpr = (ArrayStoreExpression) expr;
+			if (precedence > 10) {
 				sb.append("(");
+			}
 			appendExpression(sb, arrexpr.getArray(), 10);
 			sb.append("[");
 			String comma = "";
-			for (Expression indExpr : arrexpr.getIndices()) {
+			for (final Expression indExpr : arrexpr.getIndices()) {
 				sb.append(comma);
 				appendExpression(sb, indExpr, 0);
 				comma = ",";
@@ -336,10 +350,11 @@ public class BoogieOutput {
 			sb.append(" := ");
 			appendExpression(sb, arrexpr.getValue(), 0);
 			sb.append("]");
-			if (precedence > 10)
+			if (precedence > 10) {
 				sb.append(")");
+			}
 		} else if (expr instanceof BitvecLiteral) {
-			BitvecLiteral bvlit = (BitvecLiteral) expr;
+			final BitvecLiteral bvlit = (BitvecLiteral) expr;
 			sb.append(bvlit.getValue()).append("bv").append(bvlit.getLength());
 		} else if (expr instanceof IntegerLiteral) {
 			sb.append(((IntegerLiteral) expr).getValue());
@@ -350,11 +365,11 @@ public class BoogieOutput {
 		} else if (expr instanceof StringLiteral) {
 			sb.append('"').append(((StringLiteral) expr).getValue()).append('"');
 		} else if (expr instanceof StructConstructor) {
-			StructConstructor struct = (StructConstructor) expr;
+			final StructConstructor struct = (StructConstructor) expr;
 			String comma = "";
 			sb.append("{ ");
-			String[] fieldNames = struct.getFieldIdentifiers();
-			Expression[] fieldExprs = struct.getFieldValues();
+			final String[] fieldNames = struct.getFieldIdentifiers();
+			final Expression[] fieldExprs = struct.getFieldValues();
 			for (int i = 0; i < fieldNames.length; i++) {
 				sb.append(comma).append(fieldNames[i]);
 				sb.append(": ");
@@ -367,17 +382,17 @@ public class BoogieOutput {
 		} else if (expr instanceof IdentifierExpression) {
 			sb.append(((IdentifierExpression) expr).getIdentifier());
 		} else if (expr instanceof FunctionApplication) {
-			FunctionApplication app = (FunctionApplication) expr;
+			final FunctionApplication app = (FunctionApplication) expr;
 			sb.append(app.getIdentifier()).append("(");
 			String comma = "";
-			for (Expression arg : app.getArguments()) {
+			for (final Expression arg : app.getArguments()) {
 				sb.append(comma);
 				appendExpression(sb, arg, 0);
 				comma = ", ";
 			}
 			sb.append(")");
 		} else if (expr instanceof IfThenElseExpression) {
-			IfThenElseExpression ite = (IfThenElseExpression) expr;
+			final IfThenElseExpression ite = (IfThenElseExpression) expr;
 			/* we always append parentheses, just to be sure. */
 			sb.append("(if ");
 			appendExpression(sb, ite.getCondition(), 0);
@@ -387,14 +402,14 @@ public class BoogieOutput {
 			appendExpression(sb, ite.getElsePart(), 0);
 			sb.append(")");
 		} else if (expr instanceof QuantifierExpression) {
-			QuantifierExpression quant = (QuantifierExpression) expr;
+			final QuantifierExpression quant = (QuantifierExpression) expr;
 			sb.append("(");
 			sb.append(quant.isUniversal() ? "forall" : "exists");
-			String[] typeParams = quant.getTypeParams();
+			final String[] typeParams = quant.getTypeParams();
 			if (typeParams.length > 0) {
 				sb.append(" <");
 				String comma = "";
-				for (String t : typeParams) {
+				for (final String t : typeParams) {
 					sb.append(comma).append(t);
 					comma = ",";
 				}
@@ -425,49 +440,55 @@ public class BoogieOutput {
 	 */
 	private void appendType(StringBuilder sb, ASTType type, int precedence) {
 		if (type instanceof NamedType) {
-			NamedType nt = (NamedType) type;
-			ASTType[] args = nt.getTypeArgs();
+			final NamedType nt = (NamedType) type;
+			final ASTType[] args = nt.getTypeArgs();
 
-			if (precedence > 0 && args.length > 0)
+			if (precedence > 0 && args.length > 0) {
 				sb.append("(");
+			}
 			sb.append(nt.getName());
 			for (int i = 0; i < args.length; i++) {
 				sb.append(" ");
 				appendType(sb, args[i], i < args.length - 1 ? 2 : 1);
 			}
-			if (precedence > 0 && args.length > 0)
+			if (precedence > 0 && args.length > 0) {
 				sb.append(")");
+			}
 		} else if (type instanceof ArrayType) {
-			ArrayType at = (ArrayType) type;
-			if (precedence > 1)
+			final ArrayType at = (ArrayType) type;
+			if (precedence > 1) {
 				sb.append("(");
+			}
 			if (at.getTypeParams().length > 0) {
 				String comma = "<";
-				for (String id : at.getTypeParams()) {
+				for (final String id : at.getTypeParams()) {
 					sb.append(comma).append(id);
 					comma = ",";
 				}
 				sb.append(">");
 			}
 			String comma = "[";
-			for (ASTType indexType : at.getIndexTypes()) {
+			for (final ASTType indexType : at.getIndexTypes()) {
 				sb.append(comma);
 				appendType(sb, indexType, 0);
 				comma = ",";
 			}
 			sb.append("]");
 			appendType(sb, at.getValueType(), 0);
-			if (precedence > 1)
+			if (precedence > 1) {
 				sb.append(")");
+			}
 		} else if (type instanceof StructType) {
-			StructType st = (StructType) type;
-			if (precedence > 1)
+			final StructType st = (StructType) type;
+			if (precedence > 1) {
 				sb.append("(");
+			}
 			sb.append("{ ");
 			appendVarList(sb, st.getFields());
 			sb.append(" }");
-			if (precedence > 1)
+			if (precedence > 1) {
 				sb.append(")");
+			}
 		} else if (type instanceof PrimitiveType) {
 			sb.append(((PrimitiveType) type).getName());
 		}
@@ -482,12 +503,12 @@ public class BoogieOutput {
 	 *            the attributes to handle.
 	 */
 	private void appendAttributes(StringBuilder sb, Attribute[] attributes) {
-		for (Attribute a : attributes) {
+		for (final Attribute a : attributes) {
 			if (a instanceof NamedAttribute) {
-				NamedAttribute attr = (NamedAttribute) a;
+				final NamedAttribute attr = (NamedAttribute) a;
 				sb.append("{ :").append(attr.getName());
 				String comma = " ";
-				for (Expression value : attr.getValues()) {
+				for (final Expression value : attr.getValues()) {
 					sb.append(comma);
 					appendExpression(sb, value, 0);
 					comma = ",";
@@ -496,7 +517,7 @@ public class BoogieOutput {
 			} else if (a instanceof Trigger) {
 				sb.append("{ ");
 				String comma = "";
-				for (Expression value : ((Trigger) a).getTriggers()) {
+				for (final Expression value : ((Trigger) a).getTriggers()) {
 					sb.append(comma);
 					appendExpression(sb, value, 0);
 					comma = ",";
@@ -521,7 +542,7 @@ public class BoogieOutput {
 	 */
 	public void appendVarList(StringBuilder sb, VarList[] vls) {
 		String comma = "";
-		for (VarList vl : vls) {
+		for (final VarList vl : vls) {
 			sb.append(comma);
 			if (vl.getIdentifiers().length > 0) {
 				/*
@@ -529,7 +550,7 @@ public class BoogieOutput {
 				 * (unnamed parameter).
 				 */
 				String subcomma = "";
-				for (String id : vl.getIdentifiers()) {
+				for (final String id : vl.getIdentifiers()) {
 					sb.append(subcomma).append(id);
 					subcomma = ", ";
 				}
@@ -551,15 +572,17 @@ public class BoogieOutput {
 	 *            the type declaration.
 	 */
 	public void printTypeDeclaration(TypeDeclaration decl) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("type ");
 		appendAttributes(sb, decl.getAttributes());
-		if (decl.isFinite())
+		if (decl.isFinite()) {
 			sb.append("finite ");
+		}
 		sb.append(decl.getIdentifier());
-		for (String args : decl.getTypeParams())
+		for (final String args : decl.getTypeParams()) {
 			sb.append(" ").append(args);
-		ASTType synonym = decl.getSynonym();
+		}
+		final ASTType synonym = decl.getSynonym();
 		if (synonym != null) {
 			sb.append(" = ");
 			appendType(sb, synonym, 0);
@@ -575,13 +598,13 @@ public class BoogieOutput {
 	 *            the function declaration.
 	 */
 	public void printFunctionDeclaration(FunctionDeclaration decl) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("function ");
 		appendAttributes(sb, decl.getAttributes());
 		sb.append(decl.getIdentifier());
 		if (decl.getTypeParams().length > 0) {
 			String comma = "<";
-			for (String id : decl.getTypeParams()) {
+			for (final String id : decl.getTypeParams()) {
 				sb.append(comma).append(id);
 				comma = ",";
 			}
@@ -596,8 +619,9 @@ public class BoogieOutput {
 			sb.append(" { ");
 			appendExpression(sb, decl.getBody(), 0);
 			sb.append(" }");
-		} else
+		} else {
 			sb.append(";");
+		}
 		mWriter.println(sb.toString());
 	}
 
@@ -608,7 +632,7 @@ public class BoogieOutput {
 	 *            the procedure to print.
 	 */
 	public void printProcedure(Procedure decl) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendProcedure(sb, decl);
 		mWriter.print(sb.toString());
 	}
@@ -623,7 +647,7 @@ public class BoogieOutput {
 		sb.append(decl.getIdentifier());
 		if (decl.getTypeParams().length > 0) {
 			String comma = "<";
-			for (String id : decl.getTypeParams()) {
+			for (final String id : decl.getTypeParams()) {
 				sb.append(comma).append(id);
 				comma = ",";
 			}
@@ -634,11 +658,12 @@ public class BoogieOutput {
 		sb.append(") returns (");
 		appendVarList(sb, decl.getOutParams());
 		sb.append(")");
-		if (decl.getBody() == null)
+		if (decl.getBody() == null) {
 			sb.append(";");
+		}
 		if (decl.getSpecification() != null) {
 			sb.append(LINEBREAK);
-			for (Specification spec : decl.getSpecification()) {
+			for (final Specification spec : decl.getSpecification()) {
 				appendSpecification(sb, spec);
 			}
 		}
@@ -657,14 +682,15 @@ public class BoogieOutput {
 	 *            the specification to print.
 	 */
 	public void printSpecification(Specification spec) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendSpecification(sb, spec);
 		mWriter.print(sb.toString());
 	}
 
 	public void appendSpecification(StringBuilder sb, Specification spec) {
-		if (spec.isFree())
+		if (spec.isFree()) {
 			sb.append("free ");
+		}
 		if (spec instanceof RequiresSpecification) {
 			sb.append("requires ");
 			appendExpression(sb, ((RequiresSpecification) spec).getFormula(), 0);
@@ -674,7 +700,7 @@ public class BoogieOutput {
 		} else if (spec instanceof ModifiesSpecification) {
 			sb.append("modifies ");
 			String comma = "";
-			for (VariableLHS id : ((ModifiesSpecification) spec).getIdentifiers()) {
+			for (final VariableLHS id : ((ModifiesSpecification) spec).getIdentifiers()) {
 				sb.append(comma).append(id.getIdentifier());
 				comma = ", ";
 			}
@@ -694,13 +720,13 @@ public class BoogieOutput {
 	 *            the body to print.
 	 */
 	public void printBody(Body body) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendBody(sb, body);
 		mWriter.print(sb.toString());
 	}
 
 	public void appendBody(StringBuilder sb, Body body) {
-		for (VariableDeclaration decl : body.getLocalVars()) {
+		for (final VariableDeclaration decl : body.getLocalVars()) {
 			appendVariableDeclaration(sb, decl, "    ");
 		}
 		if (body.getLocalVars().length > 0) {
@@ -718,7 +744,7 @@ public class BoogieOutput {
 	 *            the current indent level.
 	 */
 	public void printBlock(Statement[] block, String indent) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendBlock(sb, block, indent);
 		mWriter.print(sb.toString());
 	}
@@ -728,8 +754,8 @@ public class BoogieOutput {
 	}
 
 	public void appendBlock(StringBuilder sb, Statement[] block, String indent) {
-		String nextIndent = indent + "    ";
-		for (Statement s : block) {
+		final String nextIndent = indent + "    ";
+		for (final Statement s : block) {
 			if (s instanceof Label) {
 				// SF: Labels aren't on the first column anymore, they are
 				// treated as pragmas if they are. Added "  "
@@ -758,49 +784,50 @@ public class BoogieOutput {
 	public void appendStatement(StringBuilder sb, Statement s, String indent) {
 		sb.append(indent);
 		if (s instanceof AssertStatement) {
-			AssertStatement assertstmt = (AssertStatement) s;
+			final AssertStatement assertstmt = (AssertStatement) s;
 			sb.append("assert ");
 			appendExpression(sb, assertstmt.getFormula(), 0);
 			sb.append(";");
 		} else if (s instanceof AssumeStatement) {
-			AssumeStatement assumestmt = (AssumeStatement) s;
+			final AssumeStatement assumestmt = (AssumeStatement) s;
 			sb.append("assume ");
 			appendExpression(sb, assumestmt.getFormula(), 0);
 			sb.append(";");
 		} else if (s instanceof HavocStatement) {
-			HavocStatement havoc = (HavocStatement) s;
+			final HavocStatement havoc = (HavocStatement) s;
 			sb.append("havoc ");
 			String comma = "";
-			for (VariableLHS id : havoc.getIdentifiers()) {
+			for (final VariableLHS id : havoc.getIdentifiers()) {
 				sb.append(comma).append(id.getIdentifier());
 				comma = ", ";
 			}
 			sb.append(";");
 		} else if (s instanceof AssignmentStatement) {
-			AssignmentStatement stmt = (AssignmentStatement) s;
+			final AssignmentStatement stmt = (AssignmentStatement) s;
 			String comma = "";
-			for (LeftHandSide lhs : stmt.getLhs()) {
+			for (final LeftHandSide lhs : stmt.getLhs()) {
 				sb.append(comma);
 				appendLHS(sb, lhs);
 				comma = ", ";
 			}
 			sb.append(" := ");
 			comma = "";
-			for (Expression rhs : stmt.getRhs()) {
+			for (final Expression rhs : stmt.getRhs()) {
 				sb.append(comma);
 				appendExpression(sb, rhs, 0);
 				comma = ", ";
 			}
 			sb.append(";");
 		} else if (s instanceof CallStatement) {
-			CallStatement call = (CallStatement) s;
+			final CallStatement call = (CallStatement) s;
 			String comma;
 			sb.append("call ");
-			if (call.isForall())
+			if (call.isForall()) {
 				sb.append("forall ");
+			}
 			if (call.getLhs().length > 0) {
 				comma = "";
-				for (VariableLHS lhs : call.getLhs()) {
+				for (final VariableLHS lhs : call.getLhs()) {
 					sb.append(comma).append(lhs.getIdentifier());
 					comma = ", ";
 				}
@@ -809,24 +836,25 @@ public class BoogieOutput {
 			sb.append(call.getMethodName());
 			sb.append("(");
 			comma = "";
-			for (Expression arg : call.getArguments()) {
+			for (final Expression arg : call.getArguments()) {
 				sb.append(comma);
 				appendExpression(sb, arg, 0);
 				comma = ", ";
 			}
 			sb.append(");");
 		} else if (s instanceof BreakStatement) {
-			String label = ((BreakStatement) s).getLabel();
+			final String label = ((BreakStatement) s).getLabel();
 			sb.append("break");
-			if (label != null)
+			if (label != null) {
 				sb.append(" ").append(label);
+			}
 			sb.append(";");
 		} else if (s instanceof ReturnStatement) {
 			sb.append("return;");
 		} else if (s instanceof GotoStatement) {
 			sb.append("goto ");
 			String comma = "";
-			for (String label : ((GotoStatement) s).getLabels()) {
+			for (final String label : ((GotoStatement) s).getLabels()) {
 				sb.append(comma).append(label);
 				comma = ", ";
 			}
@@ -841,8 +869,9 @@ public class BoogieOutput {
 				appendBlock(sb, stmt.getThenPart(), indent);
 				sb.append(indent).append("}");
 				elsePart = stmt.getElsePart();
-				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement))
+				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement)) {
 					break;
+				}
 				stmt = (IfStatement) elsePart[0];
 				sb.append(" else ");
 			}
@@ -852,11 +881,11 @@ public class BoogieOutput {
 				sb.append(indent).append("}");
 			}
 		} else if (s instanceof WhileStatement) {
-			WhileStatement stmt = (WhileStatement) s;
+			final WhileStatement stmt = (WhileStatement) s;
 			sb.append("while (");
 			appendExpression(sb, stmt.getCondition(), 0);
 			sb.append(")" + LINEBREAK);
-			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
+			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				sb.append(indent).append("    ");
 				if (spec.isFree()) {
 					sb.append("free ");
@@ -885,7 +914,7 @@ public class BoogieOutput {
 	 *            the current indent level.
 	 */
 	public void printStatement(Statement s, String indent) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendStatement(sb, s, indent);
 		mWriter.print(sb.toString());
 	}
@@ -902,18 +931,18 @@ public class BoogieOutput {
 		if (lhs instanceof VariableLHS) {
 			sb.append(((VariableLHS) lhs).getIdentifier());
 		} else if (lhs instanceof ArrayLHS) {
-			ArrayLHS arrlhs = (ArrayLHS) lhs;
+			final ArrayLHS arrlhs = (ArrayLHS) lhs;
 			appendLHS(sb, arrlhs.getArray());
 			sb.append("[");
 			String comma = "";
-			for (Expression index : arrlhs.getIndices()) {
+			for (final Expression index : arrlhs.getIndices()) {
 				sb.append(comma);
 				appendExpression(sb, index, 0);
 				comma = ",";
 			}
 			sb.append("]");
 		} else if (lhs instanceof StructLHS) {
-			StructLHS strlhs = (StructLHS) lhs;
+			final StructLHS strlhs = (StructLHS) lhs;
 			appendLHS(sb, strlhs.getStruct());
 			sb.append("!");
 			sb.append(strlhs.getField());
@@ -929,7 +958,7 @@ public class BoogieOutput {
 	 *            the axiom to print.
 	 */
 	public void printAxiom(Axiom decl) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("axiom ");
 		appendAttributes(sb, decl.getAttributes());
 		appendExpression(sb, decl.getFormula(), 0);
@@ -946,7 +975,7 @@ public class BoogieOutput {
 	 *            the current indent level.
 	 */
 	public void printVarDeclaration(VariableDeclaration decl, String indent) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		appendVariableDeclaration(sb, decl, indent);
 		mWriter.println(sb.toString());
 	}
@@ -970,25 +999,28 @@ public class BoogieOutput {
 	 *            the constant declaration to print.
 	 */
 	public void printConstDeclaration(ConstDeclaration decl) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("const ");
 		appendAttributes(sb, decl.getAttributes());
-		if (decl.isUnique())
+		if (decl.isUnique()) {
 			sb.append("unique ");
+		}
 		appendVarList(sb, new VarList[] { decl.getVarList() });
 		if (decl.getParentInfo() != null) {
 			sb.append(" <:");
 			String comma = " ";
-			for (ParentEdge edge : decl.getParentInfo()) {
+			for (final ParentEdge edge : decl.getParentInfo()) {
 				sb.append(comma);
-				if (edge.isUnique())
+				if (edge.isUnique()) {
 					sb.append("unique ");
+				}
 				sb.append(edge.getIdentifier());
 				comma = ", ";
 			}
 		}
-		if (decl.isComplete())
+		if (decl.isComplete()) {
 			sb.append(" complete");
+		}
 		sb.append(";");
 		mWriter.println(sb.toString());
 	}

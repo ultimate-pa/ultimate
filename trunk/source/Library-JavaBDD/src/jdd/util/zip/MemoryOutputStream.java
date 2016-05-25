@@ -1,8 +1,12 @@
 
 package jdd.util.zip;
 
-import jdd.util.*;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import jdd.util.Test;
 
 
 
@@ -29,6 +33,7 @@ public class MemoryOutputStream extends OutputStream {
 	 * write a single byte.
 	 * unless the memory is full, this call will never fail
 	 */
+	@Override
 	public void write(int b) {
 		if(curr_write.full()) {
 			curr_write.next = new MemoryChunk();
@@ -43,7 +48,7 @@ public class MemoryOutputStream extends OutputStream {
 	 * and cannot be used anymore!
 	 */
 	public MemoryInputStream convert() {
-		MemoryInputStream ret = new MemoryInputStream(root);
+		final MemoryInputStream ret = new MemoryInputStream(root);
 		root = curr_write = null; // we are out of work now
 		return ret;
 	}
@@ -59,14 +64,16 @@ public class MemoryOutputStream extends OutputStream {
 	 */
 	public boolean load(String name) {
 		try {
-			FileInputStream fs = new FileInputStream(name);
+			final FileInputStream fs = new FileInputStream(name);
 
-			byte[] buf = new byte[1024];
+			final byte[] buf = new byte[1024];
 			int len;
-			while ((len = fs.read(buf)) >= 0) write(buf,0,len);
+			while ((len = fs.read(buf)) >= 0) {
+				write(buf,0,len);
+			}
 			fs.close();
 			return true;
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			exx.printStackTrace();
 		}
 		return false;
@@ -80,7 +87,7 @@ public class MemoryOutputStream extends OutputStream {
 	 */
 	public boolean save(String name) {
 		try {
-			FileOutputStream fs = new FileOutputStream(name);
+			final FileOutputStream fs = new FileOutputStream(name);
 			MemoryChunk chunk = root;
 
 			do {
@@ -89,7 +96,7 @@ public class MemoryOutputStream extends OutputStream {
 			} while(chunk != null);
 			fs.close();
 			return true;
-		} catch(IOException exx) {
+		} catch(final IOException exx) {
 			exx.printStackTrace();
 		}
 		return false;
@@ -100,13 +107,15 @@ public class MemoryOutputStream extends OutputStream {
 	public static void internal_test() {
 		Test.start("MemoryOutputStream");
 
-		MemoryOutputStream mos = new MemoryOutputStream();
+		final MemoryOutputStream mos = new MemoryOutputStream();
 
-		int max = 1024 * 16;
-		for(int i = 0; i < max; i++)  mos.write(i);
+		final int max = 1024 * 16;
+		for(int i = 0; i < max; i++) {
+			mos.write(i);
+		}
 
 
-		MemoryInputStream mis = mos.convert();
+		final MemoryInputStream mis = mos.convert();
 
 		Test.checkEquality(mis.available(), max, "correct byte in buffer");
 
@@ -115,7 +124,9 @@ public class MemoryOutputStream extends OutputStream {
 		boolean fail = false;
 		do {
 			x = mis.read();
-			if(x != -1 && (x != (c & 0xFF))) fail = true;
+			if(x != -1 && (x != (c & 0xFF))) {
+				fail = true;
+			}
 			c++;
 		} while(x != -1 && !fail);
 

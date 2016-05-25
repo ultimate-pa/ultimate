@@ -87,9 +87,9 @@ final class ProgressAwareTimer implements IDeadlineProvider {
 	static IDeadlineProvider createWithPercentage(final IDeadlineProvider parent, final double percentage) {
 		assert parent != null;
 		assert percentage > 0 && percentage <= 1.0;
-		long current = System.currentTimeMillis();
-		long currenttimeout = parent.getDeadline() - current;
-		long newtimeout = (long) (currenttimeout * percentage);
+		final long current = System.currentTimeMillis();
+		final long currenttimeout = parent.getDeadline() - current;
+		final long newtimeout = (long) (currenttimeout * percentage);
 		return createWithDeadline(parent, current + newtimeout);
 	}
 }

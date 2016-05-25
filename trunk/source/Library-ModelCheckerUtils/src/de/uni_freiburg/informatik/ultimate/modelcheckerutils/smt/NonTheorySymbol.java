@@ -64,18 +64,23 @@ public abstract class NonTheorySymbol<SYMBOL> {
 
 	@Override
 	public final boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		NonTheorySymbol other = (NonTheorySymbol) obj;
+		}
+		final NonTheorySymbol other = (NonTheorySymbol) obj;
 		if (mSymbol == null) {
-			if (other.mSymbol != null)
+			if (other.mSymbol != null) {
 				return false;
-		} else if (!mSymbol.equals(other.mSymbol))
+			}
+		} else if (!mSymbol.equals(other.mSymbol)) {
 			return false;
+		}
 		return true;
 	}
 	

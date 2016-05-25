@@ -82,13 +82,13 @@ public class Dnf extends Xnf {
 
 		@Override
 		public Term innerConnective(Script script, List<Term> params) {
-			Term result = SmtUtils.and(mScript, params);
+			final Term result = SmtUtils.and(mScript, params);
 			return result;
 		}
 
 		@Override
 		public Term outerConnective(Script script, List<Term> params) {
-			Term result = SmtUtils.or(mScript, params);
+			final Term result = SmtUtils.or(mScript, params);
 			return result;
 		}
 

@@ -119,15 +119,15 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public void stopAll() {
-		long stopTime = System.nanoTime();
+		final long stopTime = System.nanoTime();
 
-		for (String key : mWatches.keySet()) {
+		for (final String key : mWatches.keySet()) {
 			stopInternal(key, stopTime);
 		}
 	}
 
 	private void stopInternal(String title, long stopTime) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
 		}
@@ -151,7 +151,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public void unpause(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
 		}
@@ -169,17 +169,17 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public void printResult(ILogger logger) {
-		for (Watch s : getSortedWatches()) {
+		for (final Watch s : getSortedWatches()) {
 			logger.info(s);
 		}
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
 		sb.append("Benchmark results are:").append(lineSeparator);
-		for (Watch s : getSortedWatches()) {
+		for (final Watch s : getSortedWatches()) {
 			sb.append(" * ").append(s).append(lineSeparator);
 		}
 		sb.delete(sb.length() - lineSeparator.length(), sb.length());
@@ -187,7 +187,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	private Collection<Watch> getSortedWatches() {
-		ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
+		final ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
 			public int compare(Watch o1, Watch o2) {
@@ -198,7 +198,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public String getReportString(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return "";
 		}
@@ -206,7 +206,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public double getElapsedTime(String title, TimeUnit unit) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -215,7 +215,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public long getStartHeapSize(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -224,7 +224,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public long getStopHeapSize(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -233,7 +233,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public long getStartMemoryFreeSize(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -242,7 +242,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public long getStopMemoryFreeSize(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -251,7 +251,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public long getPeakMemoryConsumed(String title) {
-		Watch watch = mWatches.get(title);
+		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
 		} else {
@@ -264,8 +264,8 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public List<String> getTitles() {
-		ArrayList<String> rtr = new ArrayList<String>();
-		for (Watch w : mWatches.values()) {
+		final ArrayList<String> rtr = new ArrayList<String>();
+		for (final Watch w : mWatches.values()) {
 			rtr.add(w.mTitle);
 		}
 		return rtr;
@@ -336,8 +336,8 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 
 	private class Watch {
 
-		private String mTitle;
-		private int mIndex;
+		private final String mTitle;
+		private final int mIndex;
 
 		private long mStartTime;
 		private long mElapsedTimeNs;
@@ -351,7 +351,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		private long mStartPeakMemorySizeBytes;
 		private long mPeakMemorySizeBytes;
 
-		private List<MemoryPoolMXBean> mMemoryPoolBeans;
+		private final List<MemoryPoolMXBean> mMemoryPoolBeans;
 
 		private Watch(String title, int index) {
 			mTitle = title;
@@ -364,7 +364,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			mStartMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStartMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 			long startMemoryUsageBytes = 0;
-			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
+			for (final MemoryPoolMXBean bean : mMemoryPoolBeans) {
 				bean.resetPeakUsage();
 				if (isHeap(bean.getName())) {
 					startMemoryUsageBytes = startMemoryUsageBytes + bean.getPeakUsage().getUsed();
@@ -380,7 +380,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			mStopMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 
 			long stopMemoryUsage = 0;
-			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
+			for (final MemoryPoolMXBean bean : mMemoryPoolBeans) {
 				if (isHeap(bean.getName())) {
 					stopMemoryUsage = stopMemoryUsage + bean.getPeakUsage().getUsed();
 				}
@@ -415,20 +415,20 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 
 			long memoryDelta = mStopMemorySizeBytes - mStartMemorySizeBytes;
 			long freeMemoryDelta = mStartMemoryFreeSizeBytes - mStopMemoryFreeSizeBytes;
-			String freeMemoryDeltaPrefix = freeMemoryDelta < 0 ? "-" : "";
+			final String freeMemoryDeltaPrefix = freeMemoryDelta < 0 ? "-" : "";
 			freeMemoryDelta = Math.abs(freeMemoryDelta);
 
 			long peakMemoryDelta = getPeakMemoryDelta();
-			String peakMemoryDeltaPrefix = peakMemoryDelta < 0 ? "-" : "";
+			final String peakMemoryDeltaPrefix = peakMemoryDelta < 0 ? "-" : "";
 			peakMemoryDelta = Math.abs(peakMemoryDelta);
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 
 			sb.append(String.format("%s took %." + decimals + "f %s.", mTitle,
 					getNanosecondsToUnit(mElapsedTimeNs, timeUnit), getUnitString(timeUnit)));
 
 			if (memoryDelta != 0) {
-				String heapPrefix = memoryDelta < 0 ? "-" : "";
+				final String heapPrefix = memoryDelta < 0 ? "-" : "";
 				memoryDelta = Math.abs(memoryDelta);
 				sb.append(String.format(" Allocated memory was %s in the beginning and %s in the end (delta: %s%s).",
 						Utils.humanReadableByteCount(mStartMemorySizeBytes, true),
@@ -470,7 +470,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
 
-		List<String> columHeaders = new ArrayList<>();
+		final List<String> columHeaders = new ArrayList<>();
 		columHeaders.add("Runtime (ns)");
 		columHeaders.add("Peak memory consumption (bytes)");
 		columHeaders.add("Allocated memory start (bytes)");
@@ -479,11 +479,11 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		columHeaders.add("Free memory end (bytes)");
 		columHeaders.add("Max. memory available (bytes)");
 
-		SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(columHeaders);
+		final SimpleCsvProvider<Double> rtr = new SimpleCsvProvider<>(columHeaders);
 
-		for (Watch w : getSortedWatches()) {
+		for (final Watch w : getSortedWatches()) {
 
-			List<Double> values = new ArrayList<>();
+			final List<Double> values = new ArrayList<>();
 			values.add(Double.valueOf(w.mElapsedTimeNs));
 			values.add(Double.valueOf(w.getPeakMemoryDelta()));
 			values.add(Double.valueOf(w.mStartMemorySizeBytes));

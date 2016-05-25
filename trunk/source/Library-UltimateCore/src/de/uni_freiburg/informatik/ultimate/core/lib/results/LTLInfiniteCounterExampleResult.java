@@ -57,7 +57,7 @@ public class LTLInfiniteCounterExampleResult<ELEM extends IElement, TE extends I
 
 	@Override
 	public String getLongDescription() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Found an infinite, lasso-shaped execution that violates the LTL property ");
 		sb.append(mLTLProperty);
 		sb.append(".");

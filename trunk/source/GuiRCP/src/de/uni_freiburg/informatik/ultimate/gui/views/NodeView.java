@@ -86,7 +86,7 @@ public class NodeView extends ViewPart implements ISelectionListener {
 	@Override
 	public void selectionChanged(IWorkbenchPart part, final ISelection selection) {
 		if (selection instanceof IElementSelection) {
-			UIJob job = new UIJob("Selection changed...") {
+			final UIJob job = new UIJob("Selection changed...") {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					treeViewer.setSelection(null);

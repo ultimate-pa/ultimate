@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class XnfUsr extends XjunctPartialQuantifierElimination {
 	
@@ -68,16 +68,16 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
 			Set<TermVariable> eliminatees) {
-		HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
-		HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
-		Set<TermVariable> blacklist = new HashSet<TermVariable>();
-		for (Term param : inputAtoms) {
-			Set<ApplicationTerm> storeTerms = (new ApplicationTermFinder("store", true)).findMatchingSubterms(param);
+		final HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
+		final HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
+		final Set<TermVariable> blacklist = new HashSet<TermVariable>();
+		for (final Term param : inputAtoms) {
+			final Set<ApplicationTerm> storeTerms = (new ApplicationTermFinder("store", true)).findMatchingSubterms(param);
 			if (storeTerms.isEmpty()) {
-				List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
-				for (MultiDimensionalSelect mds : slects) {
-					Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
-					for (TermVariable tv : indexFreeVars) {
+				final List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
+				for (final MultiDimensionalSelect mds : slects) {
+					final Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
+					for (final TermVariable tv : indexFreeVars) {
 						if (eliminatees.contains(tv)) {
 							var2arrays.addPair(tv, mds.getArray());
 							var2parameters.addPair(tv, param);
@@ -91,8 +91,8 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 			}
 			
 		}
-		Set<Term> superfluousParams = new HashSet<Term>();
-		for (TermVariable eliminatee : var2arrays.getDomain()) {
+		final Set<Term> superfluousParams = new HashSet<Term>();
+		for (final TermVariable eliminatee : var2arrays.getDomain()) {
 			if (!blacklist.contains(eliminatee)) {
 				if (var2arrays.getImage(eliminatee).size() == 1 &&
 						var2parameters.getImage(eliminatee).size() == 1) {
@@ -101,8 +101,8 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 				}
 			}
 		}
-		ArrayList<Term> resultAtoms = new ArrayList<Term>();
-		for (Term oldParam : inputAtoms) {
+		final ArrayList<Term> resultAtoms = new ArrayList<Term>();
+		for (final Term oldParam : inputAtoms) {
 			if (!superfluousParams.contains(oldParam)) {
 				resultAtoms.add(oldParam);
 			}

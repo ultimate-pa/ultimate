@@ -74,9 +74,9 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 		final Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to not contain TimeoutResult or ExceptionOrErrorResult");
 		boolean fail = false;
-		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
-		for (Entry<String, List<IResult>> x : resultSet) {
-			for (IResult result : x.getValue()) {
+		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
+		for (final Entry<String, List<IResult>> x : resultSet) {
+			for (final IResult result : x.getValue()) {
 				if (result instanceof ExceptionOrErrorResult) {
 					setCategoryAndMessageAndCustomMessage(result, customMessages);
 					fail = true;

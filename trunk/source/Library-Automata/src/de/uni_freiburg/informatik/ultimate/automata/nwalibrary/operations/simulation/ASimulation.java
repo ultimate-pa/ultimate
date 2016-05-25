@@ -148,7 +148,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * This is used to implement the @link {@link #mWorkingList working list}
 	 * as a priority queue that first works vertices with high measures.
 	 */
-	private VertexPmReverseComparator<LETTER, STATE> mVertexComp;
+	private final VertexPmReverseComparator<LETTER, STATE> mVertexComp;
 	/**
 	 * The internal working list of the simulation that, in general, gets
 	 * initiated with vertices that have priority 1. It contains vertices that
@@ -208,17 +208,17 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		if (mUseSCCs) { // calculate reduction with SCC
 			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
-			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
+			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
+			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
 			mSccComp = new SccComputation<>(mLogger, succProvider, sccFactory, getGameGraph().getSize(),
 					getGameGraph().getVertices());
 
-			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
+			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					mSccComp.getSCCs()).iterator();
 			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
-				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
+				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
 				amountOfSCCs++;
@@ -235,7 +235,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		final long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
@@ -280,8 +280,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
+		final StringBuilder result = new StringBuilder();
+		final String lineSeparator = System.lineSeparator();
 		// Header
 		result.append("SimulationResults sr = (");
 
@@ -294,10 +294,10 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Progress Measure
 		result.append(lineSeparator + "\tprogress measure = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
 			int localInfinity = getGameGraph().getGlobalInfinity();
 			if (isUsingSCCs()) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+				for (final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -306,10 +306,10 @@ public abstract class ASimulation<LETTER, STATE> {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), pm:"
 					+ vertex.getPM(null, getGameGraph().getGlobalInfinity()) + " of " + localInfinity + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
 			int localInfinity = getGameGraph().getGlobalInfinity();
 			if (isUsingSCCs()) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+				for (final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -322,11 +322,11 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Best Neighbor Measure
 		result.append(lineSeparator + "\tbest neighbor measure = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), bnm:"
 					+ vertex.getBEff() + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
 					+ "), bnm:" + vertex.getBEff() + ">");
 		}
@@ -334,11 +334,11 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Neighbor counter
 		result.append(lineSeparator + "\tneighbor counter = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+		for (final SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
 			result.append(
 					lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
 		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+		for (final DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
 					+ "), nc:" + vertex.getC() + ">");
 		}
@@ -386,15 +386,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected int calcBestNghbMeasure(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
-		AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
-		boolean isDuplicatorVertex = vertex.isDuplicatorVertex();
+		final AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
+		final boolean isDuplicatorVertex = vertex.isDuplicatorVertex();
 
 		// Compute of there is a push-over successor with a progress measure of
 		// infinity, we need to consider those successors.
 		boolean considerPushOverEdges = false;
 		HashSet<Vertex<LETTER, STATE>> considerablePushOverSuccessors = null;
 		if (gameGraph.hasPushOverSuccessors(vertex)) {
-			for (Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
+			for (final Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
 				if (pushOverSucc.getPM(scc, gameGraph.getGlobalInfinity()) == gameGraph.getGlobalInfinity()) {
 					if (considerablePushOverSuccessors == null) {
 						considerablePushOverSuccessors = new HashSet<>();
@@ -433,8 +433,8 @@ public abstract class ASimulation<LETTER, STATE> {
 			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
 			successorsToConsider.addAll(considerablePushOverSuccessors);
 		}
-		for (Vertex<LETTER, STATE> succ : successorsToConsider) {
-			int progressMeasure = succ.getPM(scc, gameGraph.getGlobalInfinity());
+		for (final Vertex<LETTER, STATE> succ : successorsToConsider) {
+			final int progressMeasure = succ.getPM(scc, gameGraph.getGlobalInfinity());
 			if (isDuplicatorVertex) {
 				if (progressMeasure < optimum) {
 					optimum = progressMeasure;
@@ -466,14 +466,14 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected int calcNghbCounter(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
-		AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
+		final AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
 
 		// Compute of there is a push-over successor with a progress measure of
 		// infinity, we need to consider those successors.
 		boolean considerPushOverEdges = false;
 		HashSet<Vertex<LETTER, STATE>> considerablePushOverSuccessors = null;
 		if (gameGraph.hasPushOverSuccessors(vertex)) {
-			for (Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
+			for (final Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
 				if (pushOverSucc.getPM(scc, gameGraph.getGlobalInfinity()) == gameGraph.getGlobalInfinity()) {
 					if (considerablePushOverSuccessors == null) {
 						considerablePushOverSuccessors = new HashSet<>();
@@ -501,11 +501,12 @@ public abstract class ASimulation<LETTER, STATE> {
 			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
 			successorsToConsider.addAll(considerablePushOverSuccessors);
 		}
-		for (Vertex<LETTER, STATE> succ : successorsToConsider)
+		for (final Vertex<LETTER, STATE> succ : successorsToConsider) {
 			if (decreaseVector(gameGraph.getPriority(vertex), succ.getPM(scc, gameGraph.getGlobalInfinity()),
 					localInfinity) == vertex.getBEff()) {
 				counter++;
 			}
+		}
 		return counter;
 	}
 
@@ -525,7 +526,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected int calculateInfinityOfSCC(final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
 		int localInfinity = 0;
-		for (Vertex<LETTER, STATE> vertex : scc.getNodes()) {
+		for (final Vertex<LETTER, STATE> vertex : scc.getNodes()) {
 			if (getGameGraph().getPriority(vertex) == 1) {
 				localInfinity++;
 			}
@@ -589,20 +590,20 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws AutomataOperationCanceledException {
-		AGameGraph<LETTER, STATE> game = getGameGraph();
-		int globalInfinity = game.getGlobalInfinity();
+		final AGameGraph<LETTER, STATE> game = getGameGraph();
+		final int globalInfinity = game.getGlobalInfinity();
 
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
 		if (mUseSCCs) {
-			for (Vertex<LETTER, STATE> v : scc) {
+			for (final Vertex<LETTER, STATE> v : scc) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
 		} else {
-			for (DuplicatorVertex<LETTER, STATE> v : game.getDuplicatorVertices()) {
+			for (final DuplicatorVertex<LETTER, STATE> v : game.getDuplicatorVertices()) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
-			for (SpoilerVertex<LETTER, STATE> v : game.getSpoilerVertices()) {
+			for (final SpoilerVertex<LETTER, STATE> v : game.getSpoilerVertices()) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
 		}
@@ -612,10 +613,10 @@ public abstract class ASimulation<LETTER, STATE> {
 			mPerformance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
-			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
+			final Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
 
 			// Remember old progress measure of the working vertex
-			int t = v.getPM(scc, globalInfinity);
+			final int t = v.getPM(scc, globalInfinity);
 
 			// Update values of the working vertex
 			v.setBEff(calcBestNghbMeasure(v, localInfinity, scc));
@@ -625,7 +626,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v);
+			final boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v);
 			if (!game.hasPredecessors(v) && !considerPushOverPredecessors) {
 				continue;
 			}
@@ -643,7 +644,7 @@ public abstract class ASimulation<LETTER, STATE> {
 				// considered in the SCC optimization.
 				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));
 			}
-			for (Vertex<LETTER, STATE> w : predecessorsToConsider) {
+			for (final Vertex<LETTER, STATE> w : predecessorsToConsider) {
 				if (mUseSCCs && !scc.contains(w)) {
 					continue;
 				}
@@ -759,7 +760,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			return getGameGraph().getGlobalInfinity();
 		}
 		if (index == 1) {
-			int tempVector = vector + 1;
+			final int tempVector = vector + 1;
 			// Always return global infinity if greater than local infinity
 			if (tempVector == localInfinity) {
 				return getGameGraph().getGlobalInfinity();
@@ -786,7 +787,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
-		boolean isDeadEnd = !getGameGraph().hasSuccessors(vertex);
+		final boolean isDeadEnd = !getGameGraph().hasSuccessors(vertex);
 
 		// check if an update would change progress measure
 		// this happens if
@@ -795,7 +796,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		// * this vertex is a dead end duplicator vertex, or
 		// * this vertex has priority 1.
 		//
-		boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
+		final boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
 				localInfinity, scc);
 
 		// Possibly add vertex to working list
@@ -834,7 +835,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The head of the working list, or <tt>null</tt> if it is empty.
 	 */
 	protected Vertex<LETTER, STATE> pollVertexFromWorkingList() {
-		Vertex<LETTER, STATE> polledVertex = mWorkingList.poll();
+		final Vertex<LETTER, STATE> polledVertex = mWorkingList.poll();
 		if (polledVertex != null) {
 			polledVertex.setInWL(false);
 		}

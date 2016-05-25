@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -57,7 +57,7 @@ public class NestedMap2<K1, K2, V> {
 	}
 	
 	public V get(K1 key1, K2 key2) {
-		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
+		final Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
 			return null;
 		} else {
@@ -130,9 +130,9 @@ public class NestedMap2<K1, K2, V> {
 	
 	//TODO more efficient iterable
 	public Iterable<Triple<K1,K2,V>> entrySet() {
-		ArrayList<Triple<K1,K2,V>> result = new ArrayList<Triple<K1,K2,V>>();
-		for (Entry<K1, Map<K2, V>> entryOuter  : mK1ToK2ToV.entrySet()) {
-			for (Entry<K2, V> entryInner : entryOuter.getValue().entrySet()) {
+		final ArrayList<Triple<K1,K2,V>> result = new ArrayList<Triple<K1,K2,V>>();
+		for (final Entry<K1, Map<K2, V>> entryOuter  : mK1ToK2ToV.entrySet()) {
+			for (final Entry<K2, V> entryInner : entryOuter.getValue().entrySet()) {
 				result.add(new Triple<>(entryOuter.getKey(), entryInner.getKey(), entryInner.getValue()));
 			}
 		}
@@ -140,7 +140,7 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	public void addAll(NestedMap2<K1, K2, V> nestedMap) {
-		for (Triple<K1, K2, V> triple : nestedMap.entrySet()) {
+		for (final Triple<K1, K2, V> triple : nestedMap.entrySet()) {
 			this.put(triple.getFirst(), triple.getSecond(), triple.getThird());
 		}
 	}
@@ -150,7 +150,7 @@ public class NestedMap2<K1, K2, V> {
 	}
 	
 	public V remove(K1 k1, K2 k2) {
-		Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
+		final Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
 		if (k2ToV == null) {
 			return null;
 		} else {

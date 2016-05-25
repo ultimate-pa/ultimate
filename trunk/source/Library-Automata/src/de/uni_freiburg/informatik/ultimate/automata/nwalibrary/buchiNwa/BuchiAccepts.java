@@ -34,8 +34,8 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -174,7 +174,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			newHondaStates = getTopMostStackElemets(currentConfigs);
 		 } while (!hondaStates.containsAll(newHondaStates));
 		
-		for (STATE hondaState : hondaStates) {
+		for (final STATE hondaState : hondaStates) {
 			if (repeatedLoopLeadsAgainToHondaState(hondaState)) {
 				return true;
 			}
@@ -197,11 +197,11 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		// Store in visited state which states have been visited when we
 		// returned to the honda (related problem executing loop is not
 		// sufficient to reach honda, executing loop^k is sufficient)
-		Set<STATE> visitedatHondaAccepting = new HashSet<STATE>();
-		Set<STATE> visitedatHondaNonAccepting = new HashSet<STATE>();
-		Set<STATE> singletonStateSet = new HashSet<STATE>();
+		final Set<STATE> visitedatHondaAccepting = new HashSet<STATE>();
+		final Set<STATE> visitedatHondaNonAccepting = new HashSet<STATE>();
+		final Set<STATE> singletonStateSet = new HashSet<STATE>();
 		singletonStateSet.add(hondaState);
-		Set<Stack<STATE>> singletonConfigSet = 
+		final Set<Stack<STATE>> singletonConfigSet = 
 				emptyStackConfiguration(singletonStateSet);
 		currentConfigsVisitedAccepting = 
 				removeAcceptingConfigurations(singletonConfigSet, mNwa);
@@ -212,7 +212,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 						currentConfigsVisitedAccepting, mLoop, i, mNwa, false);
 				currentConfigsNotVisitedAccepting = successorConfigurations(
 						currentConfigsNotVisitedAccepting, mLoop, i, mNwa, false);
-				Set<Stack<STATE>> justVisitedAccepting = 
+				final Set<Stack<STATE>> justVisitedAccepting = 
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mNwa);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -228,8 +228,8 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			removeAllWhoseTopmostElementIsOneOf(
 							currentConfigsNotVisitedAccepting, visitedatHondaNonAccepting);
 			
-			Set<STATE> topmostAccepting = getTopMostStackElemets(currentConfigsVisitedAccepting);
-			Set<STATE> topmostNonAccepting = getTopMostStackElemets(currentConfigsNotVisitedAccepting);
+			final Set<STATE> topmostAccepting = getTopMostStackElemets(currentConfigsVisitedAccepting);
+			final Set<STATE> topmostNonAccepting = getTopMostStackElemets(currentConfigsNotVisitedAccepting);
 			if (topmostAccepting.contains(hondaState)) {
 				return true;
 			}
@@ -244,20 +244,20 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 */
 	private void removeAllWhoseTopmostElementIsOneOf(
 						Set<Stack<STATE>> configurations, Set<STATE> states) {
-		List<Stack<STATE>> removalCandidate = new ArrayList<Stack<STATE>>();
-		for (Stack<STATE> config : configurations) {
+		final List<Stack<STATE>> removalCandidate = new ArrayList<Stack<STATE>>();
+		for (final Stack<STATE> config : configurations) {
 			if (states.contains(config.peek())) {
 				removalCandidate.add(config);
 			}
 		}
-		for (Stack<STATE> config : removalCandidate) {
+		for (final Stack<STATE> config : removalCandidate) {
 			configurations.remove(config);
 		}
 	}
 	
 	private Set<STATE> getTopMostStackElemets(Set<Stack<STATE>> configurations) {
-		Set<STATE> result = new HashSet<STATE>();
-		for (Stack<STATE> config : configurations) {
+		final Set<STATE> result = new HashSet<STATE>();
+		for (final Stack<STATE> config : configurations) {
 			result.add(config.peek());
 		}
 		return result;
@@ -270,14 +270,14 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 */
 	private Set<Stack<STATE>> removeAcceptingConfigurations(Set<Stack<STATE>> configurations,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
-		Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
-		for (Stack<STATE> config : configurations) {
-			STATE state = config.peek();
+		final Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
+		for (final Stack<STATE> config : configurations) {
+			final STATE state = config.peek();
 			if (nwa.isFinal(state)) {
 				acceptingConfigurations.add(config);
 			}
 		}
-		for (Stack<STATE> config : acceptingConfigurations) {
+		for (final Stack<STATE> config : acceptingConfigurations) {
 			configurations.remove(config);
 		}
 		return acceptingConfigurations;

@@ -60,7 +60,7 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mName != null) {
 			sb.append("[" + mName + "] ");
 		}

@@ -87,17 +87,17 @@ public class TypesResult extends Result {
         super(node);
         this.isConst = isConst;
         this.isVoid = isVoid;
-        this.typeDeclarations = new ArrayList<TypeDeclaration>();
-        this.cType = cvar;
+        typeDeclarations = new ArrayList<TypeDeclaration>();
+        cType = cvar;
     }
 
     public TypesResult(TypesResult copy) {
         super(copy.node);
-        this.isConst = copy.isConst;
-        this.isVoid = copy.isVoid;
-        this.typeDeclarations = new ArrayList<TypeDeclaration>(copy.typeDeclarations);
-        this.cType = copy.cType;
-        this.isOnHeap = copy.isOnHeap;
+        isConst = copy.isConst;
+        isVoid = copy.isVoid;
+        typeDeclarations = new ArrayList<TypeDeclaration>(copy.typeDeclarations);
+        cType = copy.cType;
+        isOnHeap = copy.isOnHeap;
     }
     /**
      * Getter for the type.
@@ -115,7 +115,7 @@ public class TypesResult extends Result {
      *            a list of type declarations.
      */
     public void addTypeDeclarations(ArrayList<TypeDeclaration> tds) {
-        this.typeDeclarations.addAll(tds);
+        typeDeclarations.addAll(tds);
     }
     
     @Override

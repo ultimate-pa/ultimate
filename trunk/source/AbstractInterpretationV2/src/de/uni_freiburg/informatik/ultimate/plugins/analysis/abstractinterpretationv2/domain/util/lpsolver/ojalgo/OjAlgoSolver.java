@@ -84,7 +84,7 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 		mVariableNameMap = new HashMap<>();
 
 		int index = 0;
-		for (String var : variables) {
+		for (final String var : variables) {
 			final Integer lastIndex = mVariableIndexMap.put(var, index);
 			final String lastName = mVariableNameMap.put(index++, var);
 			if (lastIndex != null || lastName != null) {

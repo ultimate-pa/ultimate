@@ -43,16 +43,17 @@ public class SubstituteTermTransformer extends TermTransformer{
 //		msubstitute = substitute;
 		msubstitution.clear();
 		msubstitution.put(term, substitute);
-		Term result = transform(formula);
+		final Term result = transform(formula);
 		return result;
 	}
 	
 	public Term substitute(Term formula, HashMap<Term,Term> substitution) {
 		msubstitution = substitution;
-		Term result = transform(formula);
+		final Term result = transform(formula);
 		return result;
 	}
 	
+	@Override
 	protected void convert(Term term) {
 		if (msubstitution.containsKey(term)) {
 			super.setResult(msubstitution.get(term));

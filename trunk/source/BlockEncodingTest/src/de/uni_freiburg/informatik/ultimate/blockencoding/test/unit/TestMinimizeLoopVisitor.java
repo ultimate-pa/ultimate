@@ -104,7 +104,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		// first over the RootEdges
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
 			testMinimizationOfFunction((ProgramPoint) edge.getTarget());
@@ -155,7 +155,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 			mergeableNodes.add(node);
 		}
 
-		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+		for (final IMinimizedEdge edge : node.getOutgoingEdges()) {
 			// We ignore Call- and Return-Edges
 			// They will be processed later
 			if (edge.isBasicEdge()
@@ -178,7 +178,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		// now we check if there is any mergeable node left!
 		assertFalse(mergeableNodes.contains(node));
 		assertFalse(checkForSequentialMerge(node));
-		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+		for (final IMinimizedEdge edge : node.getOutgoingEdges()) {
 			// We ignore Call- and Return-Edges
 			// They will be processed later
 			if (edge.isBasicEdge()
@@ -199,13 +199,13 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}
 			}
-			HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
-			for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
+			final HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
+			for (final IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
 					return false;
@@ -218,13 +218,13 @@ public class TestMinimizeLoopVisitor extends TestCase {
 
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
-			listToCheck.add((IMinimizedEdge) node.getIncomingEdges().get(0));
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
-			for (IMinimizedEdge edgeToCheck : listToCheck) {
+			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
-					IBasicEdge basic = (IBasicEdge) edgeToCheck;
+					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
 					if (basic.getOriginalEdge() instanceof Call
 							|| basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {

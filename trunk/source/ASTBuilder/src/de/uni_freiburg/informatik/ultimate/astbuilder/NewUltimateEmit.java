@@ -42,8 +42,9 @@ public class NewUltimateEmit extends Emit {
 
 	@Override
 	public String getConstructorParam(Node node, boolean optional) {
-		if (node == null)
+		if (node == null) {
 			return "loc";
+		}
 		return super.getConstructorParam(node, optional);
 	}
 
@@ -66,12 +67,14 @@ public class NewUltimateEmit extends Emit {
 		/* Optional constructor is only emitted if there are optional fields */
 		Node ancestor = node;
 		while (ancestor != null) {
-			for (Parameter p : ancestor.parameters) {
+			for (final Parameter p : ancestor.parameters) {
 				numTotalParams++;
-				if (!p.isWriteable())
+				if (!p.isWriteable()) {
 					numNotWriteableParams++;
-				if (!p.isOptional())
+				}
+				if (!p.isOptional()) {
 					numNotOptionalParams++;
+				}
 			}
 			ancestor = ancestor.getParent();
 		}
@@ -82,10 +85,12 @@ public class NewUltimateEmit extends Emit {
 			mWriter.println();
 		}
 
-		if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams)
+		if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams) {
 			emitConstructor(node, false);
-		if (numTotalParams > 0)
+		}
+		if (numTotalParams > 0) {
 			emitConstructor(node, true);
+		}
 	}
 
 	@Override
@@ -104,7 +109,7 @@ public class NewUltimateEmit extends Emit {
 		mWriter.println();
 		mWriter.println("    public List<BoogieASTNode> getOutgoingNodes() {");
 		mWriter.println("        List<BoogieASTNode> children = super.getOutgoingNodes();");
-		Parameter[] parameters = node.getParameters();
+		final Parameter[] parameters = node.getParameters();
 		System.out.println(node.getName() + " has " + parameters.length + " parameters");
 		for (int i = 0; i < parameters.length; i++) {
 
@@ -127,13 +132,14 @@ public class NewUltimateEmit extends Emit {
 	}
 
 	private boolean isNoRegularChild(String type) {
-		while (type.endsWith("[]"))
+		while (type.endsWith("[]")) {
 			type = type.substring(0, type.length() - 2);
+		}
 		return !(mGrammar.getNodeTable().containsKey(type));
 	}
 
 	private boolean needsArraysPackage(Node node) {
-		for (Parameter s : node.getParameters()) {
+		for (final Parameter s : node.getParameters()) {
 
 			if (isNoRegularChild(s.getType())) {
 				continue;

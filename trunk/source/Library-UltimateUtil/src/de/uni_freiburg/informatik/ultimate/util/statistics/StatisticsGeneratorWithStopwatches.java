@@ -96,13 +96,13 @@ public abstract class StatisticsGeneratorWithStopwatches {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (String name : getStopwatches()) {
+		final StringBuilder sb = new StringBuilder();
+		for (final String name : getStopwatches()) {
 			sb.append(name);
 			sb.append(": ");
 			try {
 				sb.append(prettyprintNanoseconds(getElapsedTime(name)));
-			} catch (StopwatchStillRunningException e) {
+			} catch (final StopwatchStillRunningException e) {
 				sb.append("clockStillRunning!");
 			}
 			if (mRunningStopwatches.get(name)) {
@@ -114,8 +114,8 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	}
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 

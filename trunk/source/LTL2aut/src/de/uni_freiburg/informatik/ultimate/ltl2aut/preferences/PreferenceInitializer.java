@@ -30,14 +30,14 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.preferences;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.Activator;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
-
-	public PreferenceInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
 
 	/*
 	 * labels for the different preferencess
@@ -57,6 +57,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_PROPERTYFROMFILE = false;
 	public static final String DEF_PPROPERTY = "[] a \n a: x > 42";
 
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
@@ -67,10 +71,5 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString),
 				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_REWRITEASSUME, false, PreferenceType.Boolean), };
-	}
-
-	public static boolean readPropertyFromFile() {
-		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE);
 	}
 }

@@ -75,8 +75,8 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 		}
 		ICsvProvider<Object> aggregate = new SimpleCsvProvider<Object>(new ArrayList<String>());
 		ICsvProvider<Object> current = null;
-		for (Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
-			for (ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(
+		for (final Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
+			for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(
 					resultService.getResults(), benchmark)) {
 				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider();
 				aggregate = CsvUtils.concatenateRows(aggregate, current);
@@ -93,8 +93,8 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> results,
 			List<ColumnDefinition> columnDefinitions) {
 		ICsvProvider<String> current = new SimpleCsvProvider<>(new ArrayList<String>());
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
-			ICsvProvider<?> provider = mCsvProvider.get(entry.getKey());
+		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
+			final ICsvProvider<?> provider = mCsvProvider.get(entry.getKey());
 			if (provider == null) {
 				continue;
 			}

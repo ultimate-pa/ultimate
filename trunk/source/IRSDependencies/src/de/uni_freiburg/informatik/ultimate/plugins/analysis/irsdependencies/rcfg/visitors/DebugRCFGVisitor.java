@@ -90,16 +90,19 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 		mStringBuilder.append(" --> ");
 	}
 
+	@Override
 	public void endOfTrace() {
 		++mPathCount;
 		mStringBuilder.replace(mStringBuilder.length() - 5, mStringBuilder.length(), "");
 		mStringBuilder.append("\n--\n");
 	}
 
+	@Override
 	public boolean abortCurrentBranch() {
 		return false;
 	}
 
+	@Override
 	public boolean abortAll() {
 		if ((mPathCount > mLimit || mNodeCount > mLimit || mEdgeCount > mLimit)) {
 			mLogger.debug("Aborting debug session because node, path or edge limit was reached");

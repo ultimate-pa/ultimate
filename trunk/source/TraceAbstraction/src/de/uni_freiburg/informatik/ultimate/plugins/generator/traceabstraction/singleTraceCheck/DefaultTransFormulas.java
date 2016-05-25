@@ -68,10 +68,10 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
 		if (super.getTrace().isReturnPosition(i)) {
-			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
 		} else {
-			IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
+			final IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
 			if (mWithBranchEncoders) {
 				return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
 			} else {
@@ -82,20 +82,20 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 
 	@Override
 	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
-		ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
+		final ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
 		return cb.getLocalVarsAssignment();
 	}
 
 	@Override
 	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
-		String calledProcedure = getCalledProcedure(i);
+		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
 
 	}
 
 	@Override
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {		
-		String calledProcedure = getCalledProcedure(i);
+		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}
 	
@@ -104,10 +104,10 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	 */
 	private String getCalledProcedure(int i) {
 		if (super.getTrace().isCallPosition(i)) {
-			ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
+			final ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
 			return call.getSucceedingProcedure();
 		} else if (super.getTrace().isPendingReturn(i)) {
-			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getPreceedingProcedure();
 		} else {
 			throw new UnsupportedOperationException("only available for call and pending return");

@@ -98,8 +98,8 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff
 		getLogger().debug("Simulation results:");
-		for (Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
-			int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
+		for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
 			if (progressMeasure >= getGameGraph().getGlobalInfinity() || (vertex.getQ0() == vertex.getQ1())) {
 				continue;
 			}

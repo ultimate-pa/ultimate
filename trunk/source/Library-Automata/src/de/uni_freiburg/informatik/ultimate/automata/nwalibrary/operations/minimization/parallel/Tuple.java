@@ -59,6 +59,7 @@ public final class Tuple {
 		msecond = second;
 	}
 
+	@Override
 	public int hashCode() {
 		return mfirst + 17 * msecond;
 	}
@@ -69,7 +70,7 @@ public final class Tuple {
 			return false;
 		}
 		final Tuple o = (Tuple) other;
-		return (o.mfirst == this.mfirst) && (o.msecond == this.msecond);
+		return (o.mfirst == mfirst) && (o.msecond == msecond);
 	}
 
 	@Override

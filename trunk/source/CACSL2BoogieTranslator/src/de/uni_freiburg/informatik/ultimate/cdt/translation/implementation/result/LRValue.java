@@ -75,13 +75,15 @@ public abstract class LRValue {
 		return isIntFromPointer;
 	}
 
+	@Override
 	public final String toString() {
-		if (this instanceof HeapLValue)
+		if (this instanceof HeapLValue) {
 			return "address: " + ((HeapLValue) this).getAddress();
-		else if (this instanceof LocalLValue)
+		} else if (this instanceof LocalLValue) {
 			return "lhs: " + ((LocalLValue) this).getLHS();
-		else
-			return "value: " + this.getValue();
+		} else {
+			return "value: " + getValue();
+		}
 	}
 
 }

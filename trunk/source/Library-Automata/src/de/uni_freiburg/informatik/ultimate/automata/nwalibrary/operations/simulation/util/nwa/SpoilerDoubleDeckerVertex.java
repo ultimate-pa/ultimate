@@ -213,7 +213,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		if (!(obj instanceof SpoilerDoubleDeckerVertex)) {
 			return false;
 		}
-		SpoilerDoubleDeckerVertex<?, ?> other = (SpoilerDoubleDeckerVertex<?, ?>) obj;
+		final SpoilerDoubleDeckerVertex<?, ?> other = (SpoilerDoubleDeckerVertex<?, ?>) obj;
 		if (mSink == null) {
 			if (other.mSink != null) {
 				return false;
@@ -239,7 +239,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public String getName() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1());
 		if (mSummarizeEdge != null) {
 			sb.append("[SMiddle/").append(mSummarizeEdge.hashCode() + "]");
@@ -250,7 +250,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
+		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -366,7 +366,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1());
 		if (mSummarizeEdge != null) {
@@ -378,7 +378,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
+		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

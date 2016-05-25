@@ -25,8 +25,9 @@ public class Yytoken {
 		this.value=value;
 	}
 	
+	@Override
 	public String toString(){
-		StringBuffer sb = new StringBuffer();
+		final StringBuffer sb = new StringBuffer();
 		switch(type){
 		case TYPE_VALUE:
 			sb.append("VALUE(").append(value).append(")");

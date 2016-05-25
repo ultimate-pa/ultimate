@@ -80,7 +80,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -101,7 +101,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.mObserver.getRoot();
+		return mObserver.getRoot();
 	}
 
 	@Override

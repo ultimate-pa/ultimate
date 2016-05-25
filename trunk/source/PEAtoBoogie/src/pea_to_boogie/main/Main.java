@@ -44,48 +44,48 @@ public class Main{
 			 return;
 		 }
 
- 		 Translator translator = new Translator();
+ 		 final Translator translator = new Translator();
     	 
 	     if (args[0].endsWith(".req") && args[1].endsWith(".bpl") && args.length == 3) {
-	    	 String reqFilePath = args[0];
-	         String boogieFilePath = args[1];
-	         int combinationNum = Integer.parseInt(args[2]);
-			 srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
+	    	 final String reqFilePath = args[0];
+	         final String boogieFilePath = args[1];
+	         final int combinationNum = Integer.parseInt(args[2]);
+			 final srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
 	         if (!(1 <= combinationNum & combinationNum <= patterns.length)) {
 	        	 throw new IllegalArgumentException("The valid range of combinationNum is integers in [1, pea.length].");
 	         }
 	    	 translator.setCombinationNum(combinationNum);
-	    	 Unit unit = translator.genBoogie(patterns);	
+	    	 final Unit unit = translator.genBoogie(patterns);	
 	    	 try {
-	    		 PrintWriter pWriter = new PrintWriter(new FileWriter(boogieFilePath));
-	    		 BoogieOutput boogie_out = new BoogieOutput(pWriter);
+	    		 final PrintWriter pWriter = new PrintWriter(new FileWriter(boogieFilePath));
+	    		 final BoogieOutput boogie_out = new BoogieOutput(pWriter);
 		         boogie_out.printBoogieProgram(unit);
 		    	 System.out.println("==================================================");
 		    	 System.out.println("Translation to Boogie code in "+args[1]+" is done!");
 		    	 System.out.println("==================================================");
-	    	 } catch (IOException ex) {
+	    	 } catch (final IOException ex) {
 	    		 ex.printStackTrace();
 	    	 }
 	     } else if (args[0].endsWith(".req") && args[1].endsWith(".xml")) {
-	    	 String reqFilePath = args[0];
-	    	 String xmlFilePath = args[1];
-			 srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
+	    	 final String reqFilePath = args[0];
+	    	 final String xmlFilePath = args[1];
+			 final srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
 	    	 new ReqToPEA().genPEAforUPPAAL(patterns, xmlFilePath);
 	    	 System.out.println("==================================================");
 	    	 System.out.println("Translation to Uppaal xml in "+args[1]+" is done!");
 	    	 System.out.println("==================================================");
 	     } else if (args[0].endsWith(".xml") && args[1].endsWith(".bpl") && args.length == 3) {
-	    	 String peaFilePath = args[0];
-	         int combinationNum = Integer.parseInt(args[2]);
+	    	 final String peaFilePath = args[0];
+	         final int combinationNum = Integer.parseInt(args[2]);
 	         try {
-	        	 PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);           
-	        	 PhaseEventAutomata[] pea = xml2jconverter.convert(peaFilePath);
+	        	 final PEAXML2JConverter xml2jconverter = new PEAXML2JConverter(false);           
+	        	 final PhaseEventAutomata[] pea = xml2jconverter.convert(peaFilePath);
 	        	 if (!(1 <= combinationNum & combinationNum <= pea.length)) {
 	        		 throw new IllegalArgumentException("The valid range of combinationNum is integers in [1, pea.length].");
 	        	 }
 	        	 translator.setCombinationNum(combinationNum);
 	        	 translator.genBoogie(pea);	
-	         } catch (Exception e) {
+	         } catch (final Exception e) {
 	        	 e.printStackTrace();
 	         }
 	     } else {

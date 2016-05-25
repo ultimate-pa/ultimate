@@ -65,7 +65,7 @@ public class StronglyConnectedComponent<NODE> {
 		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}
-		boolean notAlreadyContained = mNodes.add(node);
+		final boolean notAlreadyContained = mNodes.add(node);
 		assert notAlreadyContained : "nodes must not be added twice";
 	}
 	

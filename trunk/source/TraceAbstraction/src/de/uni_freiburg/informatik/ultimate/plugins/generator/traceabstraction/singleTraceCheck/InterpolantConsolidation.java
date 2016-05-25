@@ -84,12 +84,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  * @author musab@informatik.uni-freiburg.de
  */
 public class InterpolantConsolidation implements IInterpolantGenerator {
-	private InterpolatingTraceChecker mInterpolatingTraceChecker;
+	private final InterpolatingTraceChecker mInterpolatingTraceChecker;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final SortedMap<Integer, IPredicate> mPendingContexts;
 	private IPredicate[] mConsolidatedInterpolants;
-	private TAPreferences mTaPrefs;
+	private final TAPreferences mTaPrefs;
 	private final NestedWord<CodeBlock> mTrace;
 	private final IUltimateServiceProvider mServices;
 	private final SmtManager mSmtManager;
@@ -99,10 +99,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 
 	protected final InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationBenchmarkGenerator;
-	private boolean mprintDebugInformation = !false;
-	private boolean mprintAutomataOfDifference = !false;
+	private final boolean mprintDebugInformation = !false;
+	private final boolean mprintAutomataOfDifference = !false;
 	private boolean mInterpolantsConsolidationSuccessful = false;
-	private boolean useConsolidationInNonEmptyCase = false;
+	private final boolean useConsolidationInNonEmptyCase = false;
 
 	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
@@ -128,7 +128,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mTaPrefs = taPrefs;
 		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 		
-		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
+		final IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
 				mSmtManager, mModifiedGlobals, mPredicateUnifier);
 		mHoareTripleChecker = new CachingHoareTripleChecker(ehtc, mPredicateUnifier);
 
@@ -143,44 +143,44 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mInterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 
 		// 1. Build the path automaton for the given trace mTrace
-		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
-		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mTaPrefs);
+		final PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
+		final INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mTaPrefs);
 
 
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
-		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mTaPrefs, mServices, mInterpolatingTraceChecker); 
+		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mTaPrefs, mServices, mInterpolatingTraceChecker); 
 		// 3. Determinize the finite automaton from step 2.
-		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
+		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				mServices, mSmtManager, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
 				mPredicateUnifier, mLogger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
 				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default) 
 				); 
 
 
-		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs);
+		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs);
 
-		PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs);
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs);
 
-		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
 
 
 		try {
 			// 4. Compute the difference between the path automaton and the determinized
 			//    finite automaton (from step 3)
-			Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-					(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) pathprogramautomaton,
+			final Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+					pathprogramautomaton,
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
 			if (mprintAutomataOfDifference) {
 				// Needed for debug
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "PathAutomaton", Format.ATS, pathprogramautomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
-				INestedWordAutomatonOldApi<CodeBlock, IPredicate> diffAutomaton = diff.getResult();
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "DifferenceAutomaton", Format.ATS, diffAutomaton);
+				final AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "PathAutomaton", Format.ATS, pathprogramautomaton);
+				final AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
+				final AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
+				final INestedWordAutomatonOldApi<CodeBlock, IPredicate> diffAutomaton = diff.getResult();
+				final AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "DifferenceAutomaton", Format.ATS, diffAutomaton);
 				mLogger.debug(pathAutomatonPrinter.getDefinitionAsString());
 				mLogger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
 				mLogger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
@@ -188,7 +188,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			}
 			mHoareTripleChecker.releaseLock();
 			// 5. Check if difference is empty
-			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), diff.getResult());
+			final IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), diff.getResult());
 			if (!empty.getResult()) {
 				if (!useConsolidationInNonEmptyCase) {
 					mConsolidatedInterpolants = mInterpolatingTraceChecker.getInterpolants();
@@ -196,28 +196,28 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					mInterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 					return;
 				} else {
-					Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
+					final Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
 					if (pathautomatonFinalStates.size() > 1) {
 						throw new AssertionError("path automaton has more than 1 final state");
 					}
-					Collection<IPredicate> interpolantautomatonFinalStates = interpolantAutomaton.getFinalStates();
+					final Collection<IPredicate> interpolantautomatonFinalStates = interpolantAutomaton.getFinalStates();
 					if (interpolantautomatonFinalStates.size() > 1) {
 						throw new AssertionError("interpolant automaton has more than 1 final state");
 					}
-					IPredicate[] pathautomatonFinalState = pathautomatonFinalStates.toArray(new IPredicate[1]);
-					IPredicate[] interpolantautomatonFinalState = interpolantautomatonFinalStates.toArray(new IPredicate[1]);
+					final IPredicate[] pathautomatonFinalState = pathautomatonFinalStates.toArray(new IPredicate[1]);
+					final IPredicate[] interpolantautomatonFinalState = interpolantautomatonFinalStates.toArray(new IPredicate[1]);
 
-					IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
-					 Map<IPredicate, Integer> stateToLevel = new HashMap<IPredicate, Integer>();
-					Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState, stateToLevel);
+					final IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
+					 final Map<IPredicate, Integer> stateToLevel = new HashMap<IPredicate, Integer>();
+					final Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState, stateToLevel);
 					if (mprintDebugInformation) {
 						mLogger.debug("Printing good states...");
-						for (IPredicate p : goodStates) {
+						for (final IPredicate p : goodStates) {
 							mLogger.debug(p);
 						}
 
 					}
-					Set<IPredicate> badStates = diff.getResult().getStates();
+					final Set<IPredicate> badStates = diff.getResult().getStates();
 					badStates.removeAll(goodStates); // Bad states are the result of the set-difference of all states and the good states.
 					// Delete bad predicates from consolidation
 					pfconsol.removeBadPredicates(badStates);
@@ -226,7 +226,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				}
 			}
 
-		} catch (AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
 			if (e instanceof AutomataOperationCanceledException) {
 				mLogger.info("Timeout while computing interpolants");
 			}
@@ -234,11 +234,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 
 		// 6. Interpolant Consolidation step
-		List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
-		Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
+		final List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
+		final Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
 
-		Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
-		Set<IPredicate> interpolantsAfterConsolidation = new HashSet<IPredicate>();
+		final Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
+		final Set<IPredicate> interpolantsAfterConsolidation = new HashSet<IPredicate>();
 
 		mInterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
 
@@ -251,7 +251,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), 
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "CP", 
 				mModifiedGlobals, mLogger, mSmtManager.getManagedScript(), mSmtManager.getVariableManager()) : "invalid Hoare triple in consolidated interpolants";
-		int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
+		final int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
 		// InterpolantConsolidation was successful only if there was at least one consolidation with at least two predicates.
 		if (numOfDisjunctionsGreaterOne	> 0) {
 			mInterpolantsConsolidationSuccessful = true;
@@ -269,33 +269,33 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	private Set<IPredicate> getDiffAutomatonGoodStates(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton, IPredicate specialState,
 			Map<IPredicate, Integer> stateToLevel ) {
-		Set<IPredicate> visitedStates = new HashSet<IPredicate>(); // The visited states are the good states
-		LinkedList<IPredicate> statesToVisit = new LinkedList<IPredicate>();
-		LinkedList<IPredicate> predecessorsToVisit = new LinkedList<IPredicate>();
+		final Set<IPredicate> visitedStates = new HashSet<IPredicate>(); // The visited states are the good states
+		final LinkedList<IPredicate> statesToVisit = new LinkedList<IPredicate>();
+		final LinkedList<IPredicate> predecessorsToVisit = new LinkedList<IPredicate>();
 		statesToVisit.add(specialState);
 		int currentLevel = 0;
-		int levelIncrement = 1;
-		Map<Integer, Set<IPredicate>> levelToStates = new HashMap<Integer, Set<IPredicate>>();
+		final int levelIncrement = 1;
+		final Map<Integer, Set<IPredicate>> levelToStates = new HashMap<Integer, Set<IPredicate>>();
 		while (!statesToVisit.isEmpty()) {
-			IPredicate currentState = statesToVisit.removeFirst();
+			final IPredicate currentState = statesToVisit.removeFirst();
 			if (!visitedStates.contains(currentState)) {
 				visitedStates.add(currentState);
 			} else {
 				// Remove state from incorrect level
-				int incorrectLvl = stateToLevel.get(currentState);
-				Set<IPredicate> statesAtIncorrectLvl = levelToStates.get(incorrectLvl);
+				final int incorrectLvl = stateToLevel.get(currentState);
+				final Set<IPredicate> statesAtIncorrectLvl = levelToStates.get(incorrectLvl);
 				if (statesAtIncorrectLvl != null) {
 					statesAtIncorrectLvl.remove(currentState);
 				}
 			}
 			
-			Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
-			for (IPredicate p : predecessors) {
+			final Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
+			for (final IPredicate p : predecessors) {
 				if (!currentState.equals(p)) { // Avoid self-loops
 					if (!visitedStates.contains(p)){
 						predecessorsToVisit.addLast(p);
 					} else {
-						Set<IPredicate> predecessorsOfP = getPredecessorsOfState(diffAutomaton, p);
+						final Set<IPredicate> predecessorsOfP = getPredecessorsOfState(diffAutomaton, p);
 						// Add predecessor p to states to be visited only if not all of its predecessors has been already visited
 						// This is another step to avoid cycles
 						if (!visitedStates.containsAll(predecessorsOfP)) {
@@ -316,7 +316,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			stateToLevel.put(currentState, currentLevel);
 
 			if (statesToVisit.isEmpty()) {
-				for (IPredicate p : predecessorsToVisit) {
+				for (final IPredicate p : predecessorsToVisit) {
 					statesToVisit.addLast(p);
 				}
 				predecessorsToVisit.clear();
@@ -325,7 +325,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 		// Remove all states that are mapped to different levels
 		for (int lvl = 0; lvl < currentLevel; lvl++) {
-			Set<IPredicate> statesAtLvl = levelToStates.get(lvl);
+			final Set<IPredicate> statesAtLvl = levelToStates.get(lvl);
 			if (statesAtLvl != null && statesAtLvl.size() == 1) {
 				visitedStates.removeAll(statesAtLvl);
 			}
@@ -336,14 +336,14 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	private Set<IPredicate> getPredecessorsOfState(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton,
 			IPredicate currentState) {
-		Set<IPredicate> preds = new HashSet<IPredicate>();
-		for (IncomingInternalTransition<CodeBlock, IPredicate> it: diffAutomaton.internalPredecessors(currentState)) {
+		final Set<IPredicate> preds = new HashSet<IPredicate>();
+		for (final IncomingInternalTransition<CodeBlock, IPredicate> it: diffAutomaton.internalPredecessors(currentState)) {
 			preds.add(it.getPred());
 		}
-		for (IncomingCallTransition<CodeBlock, IPredicate> ict: diffAutomaton.callPredecessors(currentState)) {
+		for (final IncomingCallTransition<CodeBlock, IPredicate> ict: diffAutomaton.callPredecessors(currentState)) {
 			preds.add(ict.getPred());
 		}
-		for (IncomingReturnTransition<CodeBlock, IPredicate> irt: diffAutomaton.returnPredecessors(currentState)) {
+		for (final IncomingReturnTransition<CodeBlock, IPredicate> irt: diffAutomaton.returnPredecessors(currentState)) {
 			preds.add(irt.getLinPred());
 		}
 		return preds;
@@ -353,7 +353,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates, Set<IPredicate> interpolantsBeforeConsolidation, 
 			IPredicate[] interpolantsBeforeConsolidationAsArray,
 			Set<IPredicate> interpolantsAfterConsolidation, IHoareTripleChecker htc) {
-		Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
+		final Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
 
 		int disjunctionsGreaterOneCounter = 0;
 		int newlyCreatedInterpolants = 0;
@@ -361,14 +361,14 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// has existed before consolidation.
 		int interpolantsDropped = mTrace.length() - 1; 
 		for (int i = 0; i < mConsolidatedInterpolants.length; i++) {
-			IPredicate loc = pathPositionsToLocations.get(i+1);
+			final IPredicate loc = pathPositionsToLocations.get(i+1);
 			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
 				// Compute the disjunction of the predicates for location i
-				Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
+				final Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
 
 				assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
 
-				IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
+				final IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
 
 				if (predicatesForThisLocation.size() > 1) {
 
@@ -404,7 +404,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			}
 
 		}
-		int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
+		final int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
 		mInterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(disjunctionsGreaterOneCounter, newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
 				htc.getEdgeCheckerBenchmark());
 		// Stop the time for interpolant consolidation
@@ -420,7 +420,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	public List<IPredicate> getInterpolantsOfType_I() {
 		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
+			final TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.forwardsPredicatesComputed()) {
 				return tcspwp.getForwardPredicates();
 			} else {
@@ -433,7 +433,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	public List<IPredicate> getInterpolantsOfType_II() {
 		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
+			final TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.backwardsPredicatesComputed()) {
 				return tcspwp.getBackwardPredicates();
 			} else {
@@ -457,9 +457,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(NestedWord<CodeBlock> trace, SmtManager smtManager, TAPreferences taPrefs, 
 			IUltimateServiceProvider services, InterpolatingTraceChecker traceChecker) {
 		// Set the alphabet
-		Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (trace.isInternalPosition(i)) {
 				internalAlphabet.add(trace.getSymbol(i));
@@ -474,9 +474,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 
 
-		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
+		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
 
-		NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services), 
+		final NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services), 
 				internalAlphabet,
 				callAlphabet,
 				returnAlphabet,
@@ -487,7 +487,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		boolean nwaStatesAndTransitionsAdded = false;
 
 		if (traceChecker instanceof TraceCheckerSpWp) {
-			TraceCheckerSpWp tcSpWp = (TraceCheckerSpWp) traceChecker;
+			final TraceCheckerSpWp tcSpWp = (TraceCheckerSpWp) traceChecker;
 			if (tcSpWp.forwardsPredicatesComputed() && tcSpWp.backwardsPredicatesComputed()) {
 				nwaStatesAndTransitionsAdded = true;
 				// Add states and transitions corresponding to forwards predicates
@@ -525,8 +525,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			IPredicate precondition, IPredicate postcondition,
 			List<IPredicate> interpolants, NestedWord<CodeBlock> trace) {
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = getInterpolantAtPosition(i, precondition, postcondition, interpolants);
-			IPredicate succ = getInterpolantAtPosition(i+1, precondition, postcondition, interpolants);
+			final IPredicate pred = getInterpolantAtPosition(i, precondition, postcondition, interpolants);
+			final IPredicate succ = getInterpolantAtPosition(i+1, precondition, postcondition, interpolants);
 
 			assert nwa.getStates().contains(pred);
 			if (!nwa.getStates().contains(succ)) {
@@ -536,8 +536,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				nwa.addCallTransition(pred, trace.getSymbol(i), succ);
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
-				int callPos = trace.getCallPosition(i);
-				IPredicate hierPred = getInterpolantAtPosition(callPos, precondition, postcondition, interpolants);
+				final int callPos = trace.getCallPosition(i);
+				final IPredicate hierPred = getInterpolantAtPosition(callPos, precondition, postcondition, interpolants);
 				nwa.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
@@ -620,7 +620,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		@Override
 		public Collection<String> getKeys() {
-			ArrayList<String> result = new ArrayList<String>();
+			final ArrayList<String> result = new ArrayList<String>();
 			result.add(s_DisjunctionsGreaterOneCounter);
 			result.add(s_DifferenceBeforeAfter);
 			result.add(s_NumberOfHoareTripleChecks);
@@ -639,16 +639,16 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			case s_DifferenceBeforeAfter:
 			case s_DifferenceAutomatonEmptyCounter:
 			case s_DisjunctionsGreaterOneCounter: {
-				int result = ((int) value1) + ((int) value2);
+				final int result = ((int) value1) + ((int) value2);
 				return result;
 			}
 			case s_TimeOfConsolidation:
 			{
-				long result = ((long) value1) + ((long) value2);
+				final long result = ((long) value1) + ((long) value2);
 				return result;
 			}
 			case s_NumberOfHoareTripleChecks:
-				InCaReCounter counter1 = (InCaReCounter) value1;
+				final InCaReCounter counter1 = (InCaReCounter) value1;
 				counter1.add((InCaReCounter) value2);
 				return counter1;
 			default:
@@ -659,7 +659,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		@Override
 		public String prettyprintBenchmarkData(
 				IStatisticsDataProvider benchmarkData) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 
 			sb.append("\t").append(s_DifferenceAutomatonEmptyCounter).append(": ");
 			sb.append((int)benchmarkData.getValue(s_DifferenceAutomatonEmptyCounter));
@@ -668,7 +668,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			sb.append((int) benchmarkData.getValue(s_DisjunctionsGreaterOneCounter));
 
 			sb.append("\t").append(s_NumberOfHoareTripleChecks).append(": ");
-			sb.append((InCaReCounter)benchmarkData.getValue(s_NumberOfHoareTripleChecks));
+			sb.append(benchmarkData.getValue(s_NumberOfHoareTripleChecks));
 
 			sb.append("\t").append(s_InterpolantsDropped).append(": ");
 			sb.append((int) benchmarkData.getValue(s_InterpolantsDropped));
@@ -680,7 +680,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			sb.append((int) benchmarkData.getValue(s_DifferenceBeforeAfter));
 
 			sb.append("\t").append(s_TimeOfConsolidation).append(": ");
-			Long timeOfInterpolantConsolidation =  (Long) benchmarkData.getValue(s_TimeOfConsolidation);
+			final Long timeOfInterpolantConsolidation =  (Long) benchmarkData.getValue(s_TimeOfConsolidation);
 			sb.append(CegarStatisticsType.prettyprintNanoseconds(timeOfInterpolantConsolidation));
 			return sb.toString();
 		}
@@ -736,7 +736,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			case InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation:
 				try {
 					return getElapsedTime(key);
-				} catch (StopwatchStillRunningException e) {
+				} catch (final StopwatchStillRunningException e) {
 					throw new AssertionError("clock still running: " + key);
 				}
 			case InterpolantConsolidationBenchmarkType.s_DifferenceAutomatonEmptyCounter:

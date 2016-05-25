@@ -148,7 +148,7 @@ public class AbstractInterpretationRunner {
 			final RefineFunction refineFun) throws AutomataLibraryException {
 		mLogger.info("Refining with AI automaton anyways");
 		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = constructInterpolantAutomaton(
-				predUnifier, smtManager, (INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, cex);
+				predUnifier, smtManager, abstraction, cex);
 		refine(predUnifier, aiInterpolAutomaton, cex, refineFun);
 	}
 
@@ -172,7 +172,7 @@ public class AbstractInterpretationRunner {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Refining with AI automaton");
-			boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
+			final boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
 			assert hasAiProgress(aiResult, aiInterpolAutomaton, currentCex) : "No progress during AI refinement";
 			mLogger.info("Finished additional refinement with AI automaton. Did we make progress: " + aiResult);
 			return !mAbsIntResult.hasReachedError();

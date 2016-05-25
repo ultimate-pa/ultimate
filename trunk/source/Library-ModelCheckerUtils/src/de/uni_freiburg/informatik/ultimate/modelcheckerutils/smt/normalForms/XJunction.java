@@ -67,7 +67,7 @@ public class XJunction {
 	 */
 	public XJunction(Term[] terms) throws AtomAndNegationException {
 		mPolarityMap = new HashMap<Term, Polarity>(terms.length);
-		for (Term term : terms) {
+		for (final Term term : terms) {
 			addTermWithUnknownPolarity(term);
 		}
 	}
@@ -103,7 +103,7 @@ public class XJunction {
 	 * polarity is already contained in this xjunction.
 	 */
 	public boolean addTermWithUnknownPolarity(Term term) throws AtomAndNegationException {
-		Literal literal = new Literal(term);
+		final Literal literal = new Literal(term);
 		return add(literal.getAtom(), literal.getPolarity());
 	}
 	
@@ -114,7 +114,7 @@ public class XJunction {
 	 * @throws AtomAndNegationException
 	 */
 	boolean add(Term atom, Polarity polarity) throws AtomAndNegationException {
-		boolean containsNegation = containsNegation(atom, polarity);
+		final boolean containsNegation = containsNegation(atom, polarity);
 		if (containsNegation) {
 			// param contained φ as well as (not φ), we return null
 			throw new AtomAndNegationException();
@@ -136,7 +136,7 @@ public class XJunction {
 	 * given by the pair (atom, polarity).
 	 */
 	public boolean containsNegation(Term term, Polarity polarity) {
-		Polarity existing = mPolarityMap.get(term);
+		final Polarity existing = mPolarityMap.get(term);
 		if (existing != null) {
 			if (existing == polarity) {
 				return false;
@@ -156,8 +156,8 @@ public class XJunction {
 	 * this XJunction.
 	 */
 	public List<Term> toTermList(Script script) {
-		List<Term> result = new ArrayList<Term>(mPolarityMap.size());
-		for (Entry<Term, Polarity> entry : mPolarityMap.entrySet()) {
+		final List<Term> result = new ArrayList<Term>(mPolarityMap.size());
+		for (final Entry<Term, Polarity> entry : mPolarityMap.entrySet()) {
 			if (entry.getValue() == Polarity.POSITIVE) {
 				result.add(entry.getKey());
 			} else {
@@ -173,18 +173,23 @@ public class XJunction {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		XJunction other = (XJunction) obj;
+		}
+		final XJunction other = (XJunction) obj;
 		if (mPolarityMap == null) {
-			if (other.mPolarityMap != null)
+			if (other.mPolarityMap != null) {
 				return false;
-		} else if (!mPolarityMap.equals(other.mPolarityMap))
+			}
+		} else if (!mPolarityMap.equals(other.mPolarityMap)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -246,7 +251,7 @@ public class XJunction {
 			return false;
 		} else {
 		return xjunction.mPolarityMap.entrySet().containsAll(
-				this.mPolarityMap.entrySet());
+				mPolarityMap.entrySet());
 		}
 	}
 
@@ -270,9 +275,9 @@ public class XJunction {
 	 */
 	public static XJunction disjointUnion(XJunction xjunction1, 
 						XJunction xjunction2) throws AtomAndNegationException {
-		XJunction result = new XJunction(xjunction1);
-		for (Entry<Term, Polarity> atom : xjunction2.entrySet()) {
-			boolean modified = result.add(atom.getKey(), atom.getValue());
+		final XJunction result = new XJunction(xjunction1);
+		for (final Entry<Term, Polarity> atom : xjunction2.entrySet()) {
+			final boolean modified = result.add(atom.getKey(), atom.getValue());
 			if (modified == false) {
 				throw new IllegalArgumentException("inputs were not disjoint");
 			}

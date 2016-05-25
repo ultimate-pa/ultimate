@@ -38,7 +38,7 @@ public class AutomataTestFileAST extends AtsASTNode {
 	private AutomataDefinitionsAST mautomataDefinitions;
 	
 
-	private AtsASTNode mstatementList;
+	private final AtsASTNode mstatementList;
 
 	public AutomataTestFileAST (ILocation loc, AtsASTNode stmtList, AutomataDefinitionsAST autDefs) {
 		super(loc);

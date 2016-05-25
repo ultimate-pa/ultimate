@@ -47,10 +47,10 @@ public class WitnessModelToAutomatonTransformer {
 	public WitnessModelToAutomatonTransformer(WitnessNode witnessRoot, IUltimateServiceProvider services) {
 		super();
 		mWitnessRoot = witnessRoot;
-		Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
-		Set<WitnessEdge> callAlphabet = Collections.emptySet();
-		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
-		StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
+		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
+		final Set<WitnessEdge> callAlphabet = Collections.emptySet();
+		final Set<WitnessEdge> returnAlphabet = Collections.emptySet();
+		final StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
 		};
 		mResult = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
@@ -59,9 +59,9 @@ public class WitnessModelToAutomatonTransformer {
 	private void constructAutomaton(Set<WitnessEdge> internalAlphabet) {
 		addNewState(mWitnessRoot);
 		while (!worklist.isEmpty()) {
-			WitnessNode current = worklist.removeFirst();
-			for (WitnessEdge we : current.getOutgoingEdges()) {
-				WitnessNode successor = we.getTarget();
+			final WitnessNode current = worklist.removeFirst();
+			for (final WitnessEdge we : current.getOutgoingEdges()) {
+				final WitnessNode successor = we.getTarget();
 				if (!mResult.getStates().contains(successor)) {
 					addNewState(successor);
 				}
@@ -72,9 +72,9 @@ public class WitnessModelToAutomatonTransformer {
 	}
 
 	private void addNewState(WitnessNode successor) {
-		WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
-		boolean isInitial = (annotation != null && annotation.isInitial());
-		boolean isFinal = (annotation != null && annotation.isError());
+		final WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
+		final boolean isInitial = (annotation != null && annotation.isInitial());
+		final boolean isFinal = (annotation != null && annotation.isError());
 		mResult.addState(isInitial, isFinal, successor);
 		worklist.add(successor);
 	}

@@ -73,11 +73,11 @@ public class ResultListContentProvider implements ITreeContentProvider {
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (viewer instanceof TreeViewer) {
-			TreeViewer tViewer = (TreeViewer) viewer;
+			final TreeViewer tViewer = (TreeViewer) viewer;
 			tViewer.getTree().removeAll();
 			internalList.clear();
 
-			for (IResult res : CDTResultStore.getResults((String) newInput)) {
+			for (final IResult res : CDTResultStore.getResults((String) newInput)) {
 				if (res instanceof CounterExampleResult
 						|| res instanceof UnprovableResult) {
 					internalList.add(res);

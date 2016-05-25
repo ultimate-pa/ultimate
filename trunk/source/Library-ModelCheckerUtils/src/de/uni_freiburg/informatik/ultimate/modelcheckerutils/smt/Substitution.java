@@ -60,7 +60,7 @@ public class Substitution {
 	public Term transform(Term term) {
 		Term result = withLet(term);
 		if (USE_SAFE_SUBSTITUTION) {
-			Term resultSS = withSS(term);
+			final Term resultSS = withSS(term);
 			assert (Util.checkSat(mScript, 
 					mScript.term("distinct", result, resultSS)) != LBool.SAT) : 
 						"Bug in safe substitution.";
@@ -70,10 +70,10 @@ public class Substitution {
 	}
 	
 	private Term withLet(Term term) {
-		TermVariable[] vars = new TermVariable[mMapping.size()];
-		Term[] values = new Term[mMapping.size()];
+		final TermVariable[] vars = new TermVariable[mMapping.size()];
+		final Term[] values = new Term[mMapping.size()];
 		int i=0;
-		for (Entry<TermVariable, Term> entry : mMapping.entrySet()) {
+		for (final Entry<TermVariable, Term> entry : mMapping.entrySet()) {
 			vars[i] = entry.getKey();
 			assert vars[i] != null : "substitution of null";
 			values[i] = entry.getValue(); 
@@ -86,11 +86,11 @@ public class Substitution {
 	}
 	
 	private Term withSS(Term term) {
-		Map<Term, Term> mapping = new HashMap<Term, Term>();
-		for (Entry<TermVariable, Term> entry : mMapping.entrySet()) {
+		final Map<Term, Term> mapping = new HashMap<Term, Term>();
+		for (final Entry<TermVariable, Term> entry : mMapping.entrySet()) {
 			mapping.put(entry.getKey(), entry.getValue());
 		}
-		Term result = (new SafeSubstitution(mScript, mapping)).transform(term);
+		final Term result = (new SafeSubstitution(mScript, mapping)).transform(term);
 		return result;
 	}
 

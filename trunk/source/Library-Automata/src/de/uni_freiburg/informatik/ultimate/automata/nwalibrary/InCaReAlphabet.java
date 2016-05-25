@@ -54,7 +54,7 @@ public class InCaReAlphabet<LETTER> {
 	
 	public InCaReAlphabet(IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INestedWordAutomaton) {
-			INestedWordAutomaton<LETTER, ?> nwa = 
+			final INestedWordAutomaton<LETTER, ?> nwa = 
 					(INestedWordAutomaton<LETTER, ?>) automaton;
 			mInternalAlphabet = nwa.getInternalAlphabet();
 			mCallAlphabet = nwa.getCallAlphabet();

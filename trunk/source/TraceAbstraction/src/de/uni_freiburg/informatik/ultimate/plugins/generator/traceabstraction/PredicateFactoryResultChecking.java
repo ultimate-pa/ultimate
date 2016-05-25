@@ -52,6 +52,7 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 		mSmtManager = smtManager;
 	}
 	
+	@Override
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
@@ -61,6 +62,7 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 	
+	@Override
 	public IPredicate createSinkStateContent() {
 		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}

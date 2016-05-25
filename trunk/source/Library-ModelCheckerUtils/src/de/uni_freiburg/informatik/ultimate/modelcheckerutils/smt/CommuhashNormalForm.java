@@ -76,11 +76,11 @@ public class CommuhashNormalForm {
 	}
 	
 	public Term transform(Term term) {
-		ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		logger.debug(new DebugMessage(
 				"applying CommuhashNormalForm to formula of DAG size {0}", 
 				new DagSizePrinter(term)));
-		Term result = (new CommuhashNormalFormHelper()).transform(term);
+		final Term result = (new CommuhashNormalFormHelper()).transform(term);
 		logger.debug(new DebugMessage(
 				"DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}", 
 				new DagSizePrinter(term), new DagSizePrinter(result)));
@@ -107,9 +107,9 @@ public class CommuhashNormalForm {
 
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			String funcname = appTerm.getFunction().getApplicationString();
+			final String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
-				Term simplified = constructTermWithSortedParams(
+				final Term simplified = constructTermWithSortedParams(
 						funcname, appTerm.getSort().getIndices(), newArgs);
 				setResult(simplified);
 			} else {
@@ -120,23 +120,23 @@ public class CommuhashNormalForm {
 		@Override
 		protected void convert(Term term) {
 			try {
-				Term result = tryToTransformToPositiveNormalForm(term);
+				final Term result = tryToTransformToPositiveNormalForm(term);
 				setResult(result);
-			} catch (NotAffineException e) {
+			} catch (final NotAffineException e) {
 				// descent, input is no AffineRelation
 				super.convert(term);
 			} 
 		}
 
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
-			AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
-			Term pnf = affRel.positiveNormalForm(mScript);
+			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
+			final Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
 		}
 
 		private Term[] sortByHashCode(final Term[] params) {
-			Term[] sortedParams = params.clone();
-			Comparator<Term> hashBasedComperator = new Comparator<Term>() {
+			final Term[] sortedParams = params.clone();
+			final Comparator<Term> hashBasedComperator = new Comparator<Term>() {
 				@Override
 				public int compare(Term arg0, Term arg1) {
 					return Integer.compare(arg0.hashCode(), arg1.hashCode());
@@ -148,8 +148,8 @@ public class CommuhashNormalForm {
 		
 		private Term constructTermWithSortedParams(String funcname, 
 									BigInteger[] indices, Term[] params) {
-			Term[] sortedParams = sortByHashCode(params);
-			Term simplified = SmtUtils.termWithLocalSimplification(
+			final Term[] sortedParams = sortByHashCode(params);
+			final Term simplified = SmtUtils.termWithLocalSimplification(
 					mScript, funcname, indices, sortedParams);
 			return simplified;
 		}

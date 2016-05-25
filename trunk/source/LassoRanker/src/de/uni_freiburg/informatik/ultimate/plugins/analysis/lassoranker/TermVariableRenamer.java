@@ -64,21 +64,21 @@ public class TermVariableRenamer {
 	 */
 	public TransFormula renameVars(TransFormula transFormula, String prefix) {
 		Term formula = transFormula.getFormula();
-		Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
-		Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
+		final Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
+		final Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
 		
-		Map<BoogieVar, TermVariable> newInVars = 
+		final Map<BoogieVar, TermVariable> newInVars = 
 				new LinkedHashMap<BoogieVar, TermVariable>();
-		Map<BoogieVar, TermVariable> newOutVars = 
+		final Map<BoogieVar, TermVariable> newOutVars = 
 				new LinkedHashMap<BoogieVar, TermVariable>();
 		
-		Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
-		Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
-		Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
 		
-		for (BoogieVar var : inVars.keySet()) {
-			TermVariable inVar = inVars.get(var);
-			TermVariable outVar = outVars.get(var);
+		for (final BoogieVar var : inVars.keySet()) {
+			final TermVariable inVar = inVars.get(var);
+			final TermVariable outVar = outVars.get(var);
 			if (inVar == outVar) {
 				commonInOutVar.add(var);
 			}
@@ -86,9 +86,9 @@ public class TermVariableRenamer {
 				hasInOnlyVar.add(var);
 			}
 		}
-		for (BoogieVar var : outVars.keySet()) {
-			TermVariable outVar = outVars.get(var);
-			TermVariable inVar = inVars.get(var);
+		for (final BoogieVar var : outVars.keySet()) {
+			final TermVariable outVar = outVars.get(var);
+			final TermVariable inVar = inVars.get(var);
 			if (inVar != outVar) {
 				hasOutOnlyVar.add(var);
 			}
@@ -119,10 +119,10 @@ public class TermVariableRenamer {
 						Map<BoogieVar, TermVariable> variableMapping, 
 						Map<BoogieVar, TermVariable> newVariableMapping, 
 						String prefix) {
-		TermVariable[] vars = new TermVariable[boogieVars.size()];
-		TermVariable[] newVars= new TermVariable[boogieVars.size()];
+		final TermVariable[] vars = new TermVariable[boogieVars.size()];
+		final TermVariable[] newVars= new TermVariable[boogieVars.size()];
 		int i=0;
-		for (BoogieVar var : boogieVars) {
+		for (final BoogieVar var : boogieVars) {
 			vars[i] = variableMapping.get(var);
 			newVars[i] = getNewTermVariable(var, vars[i], prefix);
 			newVariableMapping.put(var,newVars[i]);
@@ -130,7 +130,7 @@ public class TermVariableRenamer {
 		}
 		try {
 			formula = mScript.let(vars, newVars, formula);
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -142,7 +142,7 @@ public class TermVariableRenamer {
 		TermVariable result = null;
 		try {
 			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

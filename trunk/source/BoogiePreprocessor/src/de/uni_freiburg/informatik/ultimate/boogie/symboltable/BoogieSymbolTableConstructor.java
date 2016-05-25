@@ -72,7 +72,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 
 	@Override
 	public void finish() throws Throwable {
-		PreprocessorAnnotation pa = new PreprocessorAnnotation();
+		final PreprocessorAnnotation pa = new PreprocessorAnnotation();
 		pa.setSymbolTable(mSymbolTable);
 		pa.annotate(mRootNode);
 		if (mLogger.isDebugEnabled()) {
@@ -101,7 +101,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 
 	public Boolean process(Unit node) throws Throwable {
 		mRootNode = node;
-		for (Declaration decl : mRootNode.getDeclarations()) {
+		for (final Declaration decl : mRootNode.getDeclarations()) {
 			if (decl instanceof VariableDeclaration || decl instanceof ConstDeclaration) {
 				mCurrentScope = StorageClass.GLOBAL;
 				mCurrentDeclaration = decl;
@@ -119,15 +119,15 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
-			for (VarList vl : decl.getInParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getInParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
 
 		if (decl.getOutParam() != null) {
-			for (String name : decl.getOutParam().getIdentifiers()) {
+			for (final String name : decl.getOutParam().getIdentifiers()) {
 				mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 			}
 		}
@@ -143,16 +143,16 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
-			for (VarList vl : decl.getInParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getInParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
 
 		if (decl.getOutParams() != null) {
-			for (VarList vl : decl.getOutParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getOutParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 				}
 			}
@@ -173,12 +173,12 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	protected VarList processVarList(VarList vl) {
 		switch (mCurrentScope) {
 		case LOCAL:
-			for (String name : vl.getIdentifiers()) {
+			for (final String name : vl.getIdentifiers()) {
 				mSymbolTable.addLocalVariable(mCurrentScopeName, name, mCurrentDeclaration);
 			}
 			break;
 		case GLOBAL:
-			for (String name : vl.getIdentifiers()) {
+			for (final String name : vl.getIdentifiers()) {
 				mSymbolTable.addGlobalVariable(name, mCurrentDeclaration);
 			}
 			break;

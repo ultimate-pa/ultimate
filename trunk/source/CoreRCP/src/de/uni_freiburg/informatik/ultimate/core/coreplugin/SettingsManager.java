@@ -159,11 +159,11 @@ final class SettingsManager {
 
 			fis.flush();
 			fis.close();
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		}
 	}
@@ -209,9 +209,9 @@ final class SettingsManager {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Attaching preference change listener for plugin " + pluginName);
 		}
-		LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, pluginName, "Instance");
-		LogPreferenceChangeListener configListener = retrieveListener(pluginId, pluginName, "Configuration");
-		LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, pluginName, "Default");
+		final LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, pluginName, "Instance");
+		final LogPreferenceChangeListener configListener = retrieveListener(pluginId, pluginName, "Configuration");
+		final LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, pluginName, "Default");
 
 		InstanceScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(instanceListener);
 		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(instanceListener);
@@ -224,11 +224,11 @@ final class SettingsManager {
 	}
 
 	private LogPreferenceChangeListener retrieveListener(String pluginID, String pluginName, String scope) {
-		String listenerID = pluginID + scope;
+		final String listenerID = pluginID + scope;
 		if (mActivePreferenceListener.containsKey(listenerID)) {
 			return mActivePreferenceListener.get(listenerID);
 		} else {
-			LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
+			final LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
 			mActivePreferenceListener.put(listenerID, listener);
 			return listener;
 		}

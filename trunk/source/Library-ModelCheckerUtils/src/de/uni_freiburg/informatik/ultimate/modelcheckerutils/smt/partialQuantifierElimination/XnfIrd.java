@@ -68,17 +68,17 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] oldParams,
 			Set<TermVariable> eliminatees) {
-		Iterator<TermVariable> it = eliminatees.iterator();
+		final Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] result = oldParams;
 		while (it.hasNext()) {
-			TermVariable tv = it.next();
+			final TermVariable tv = it.next();
 			if (!SmtUtils.getFreeVars(Arrays.asList(result)).contains(tv)) {
 				// case where var does not occur
 				it.remove();
 				continue;
 			} else {
 				if (tv.getSort().isNumericSort()) {
-					Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
+					final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
 					if (withoutTv != null) {
 						mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
 						result = withoutTv;
@@ -109,16 +109,16 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	public static Term[] irdSimple(Script script, int quantifier, Term[] oldParams, TermVariable tv, ILogger logger) {
 		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
-		ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();
+		final ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();
 		short inequalitiesWithTv = 0;
-		for (Term oldParam : oldParams) {
+		for (final Term oldParam : oldParams) {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);
 			} else {
 				AffineRelation affineRelation;
 				try {
 					affineRelation = new AffineRelation(script, oldParam);
-				} catch (NotAffineException e) {
+				} catch (final NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;
 				}
@@ -129,18 +129,18 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				try {
-					ApplicationTerm lhsonly = affineRelation.onLeftHandSideOnly(script, tv);
+					final ApplicationTerm lhsonly = affineRelation.onLeftHandSideOnly(script, tv);
 					if (!SmtUtils.occursAtMostAsLhs(tv, lhsonly)) {
 						// eliminatee occurs additionally in rhs e.g., inside a
 						// select or modulo term.
 						return null;
 					}
 
-				} catch (NotAffineException e) {
+				} catch (final NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;
 				}
-				String functionSymbol = affineRelation.getFunctionSymbolName();
+				final String functionSymbol = affineRelation.getFunctionSymbolName();
 				switch (functionSymbol) {
 				case "=":
 					if (quantifier == QuantifiedFormula.EXISTS) {

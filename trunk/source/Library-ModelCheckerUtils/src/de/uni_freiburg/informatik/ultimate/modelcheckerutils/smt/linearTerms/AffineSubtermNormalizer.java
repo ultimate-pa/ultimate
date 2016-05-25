@@ -52,7 +52,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		boolean result = true;
 		try {
 			new BinaryNumericRelation(term);
-		} catch (NoRelationOfThisKindException e) {
+		} catch (final NoRelationOfThisKindException e) {
 			result = false;
 		}
 		return result;
@@ -69,11 +69,11 @@ public class AffineSubtermNormalizer extends TermTransformer {
 			AffineRelation affRel = null;
 			try {
 				affRel = new AffineRelation(mScript, term);
-			} catch (NotAffineException e) {
+			} catch (final NotAffineException e) {
 				setResult(term);
 				return;
 			}
-			Term pnf = affRel.positiveNormalForm(mScript);
+			final Term pnf = affRel.positiveNormalForm(mScript);
 			setResult(pnf);
 			return;
 		}

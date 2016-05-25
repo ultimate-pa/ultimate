@@ -37,7 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.MultipleImplementationsException;
@@ -91,7 +97,7 @@ public class CallGraphBuilder {
 	 */
 	public void buildCallGraph(Unit boogieAstUnit) throws CancelToolchainException {
 		init();
-		for (Declaration declaration : boogieAstUnit.getDeclarations()) {
+		for (final Declaration declaration : boogieAstUnit.getDeclarations()) {
 			if (declaration instanceof Procedure) {
 				processProcedure((Procedure) declaration);
 			} else {
@@ -133,8 +139,8 @@ public class CallGraphBuilder {
 	}
 	
 	private void processProcedure(Procedure procedure) throws CancelToolchainException {
-		String procedureId = procedure.getIdentifier();
-		CallGraphNode node = getOrCreateNode(procedureId);
+		final String procedureId = procedure.getIdentifier();
+		final CallGraphNode node = getOrCreateNode(procedureId);
 		if (procedure.getSpecification() != null) {
 			if (node.getProcedureWithSpecification() == null) {
 				node.setProcedureWithSpecification(procedure);				
@@ -162,15 +168,15 @@ public class CallGraphBuilder {
 	}
 
 	private void registerCallStatementsInGraph(CallGraphNode callerNode, Statement[] statementBlock) {
-		for (Statement statement : statementBlock) {
+		for (final Statement statement : statementBlock) {
 			if (statement instanceof CallStatement) {
 				registerCallStatementInGraph(callerNode, (CallStatement) statement);
 			} else if (statement instanceof IfStatement) {
-				IfStatement ifStatement = (IfStatement) statement;
+				final IfStatement ifStatement = (IfStatement) statement;
 				registerCallStatementsInGraph(callerNode, ifStatement.getThenPart());
 				registerCallStatementsInGraph(callerNode, ifStatement.getElsePart());
 			} else if (statement instanceof WhileStatement) {
-				WhileStatement whileStatement = (WhileStatement) statement;
+				final WhileStatement whileStatement = (WhileStatement) statement;
 				registerCallStatementsInGraph(callerNode, whileStatement.getBody());
 			}
 			// else, assume statement contains no other statements
@@ -178,8 +184,8 @@ public class CallGraphBuilder {
 	}
 	
 	private void registerCallStatementInGraph(CallGraphNode callerNode, CallStatement callStatement) {
-		CallGraphNode calleeNode = getOrCreateNode(callStatement.getMethodName());
-		EdgeType edgeType = callStatement.isForall() ? EdgeType.CALL_FORALL : null;
+		final CallGraphNode calleeNode = getOrCreateNode(callStatement.getMethodName());
+		final EdgeType edgeType = callStatement.isForall() ? EdgeType.CALL_FORALL : null;
 		callerNode.addOutgoingNode(calleeNode, new CallGraphEdgeLabel(calleeNode.getId(), edgeType));
 		calleeNode.addIncomingNode(callerNode);
 	}
@@ -187,7 +193,7 @@ public class CallGraphBuilder {
 	private void findRecursiveComponents() {
 		mRecursiveComponents = new HashSet<Set<String>>();
 		mRecursiveProcedures = new HashSet<String>();
-		for (Set<String> stronglyConnectedComponent : new TarjanSCC().getSCCs(buildSimpleGraphRepresentation())) {
+		for (final Set<String> stronglyConnectedComponent : new TarjanSCC().getSCCs(buildSimpleGraphRepresentation())) {
 			// components aren't empty, therefore this is equal to: (size==1) --> isDirectlyRecursive
 			if (stronglyConnectedComponent.size() > 1 ||
 					isDirectlyRecursive(stronglyConnectedComponent.iterator().next())) {
@@ -200,8 +206,8 @@ public class CallGraphBuilder {
 	}
 
 	private boolean isDirectlyRecursive(String nodeId) {
-		CallGraphNode node = mCallGraphNodes.get(nodeId);
-		for(CallGraphNode outgoingNode : node.getOutgoingNodes()) {
+		final CallGraphNode node = mCallGraphNodes.get(nodeId);
+		for(final CallGraphNode outgoingNode : node.getOutgoingNodes()) {
 			if (nodeId.equals(outgoingNode.getId())) {
 				return true;
 			}
@@ -210,12 +216,12 @@ public class CallGraphBuilder {
 	}
 	
 	private LinkedHashMap<String, LinkedHashSet<String>> buildSimpleGraphRepresentation() {
-		LinkedHashMap<String, LinkedHashSet<String>> simpleGraphRepresentation = new LinkedHashMap<>();
-		for (CallGraphNode node : mCallGraphNodes.values()) {
-			String simpleNodeRepresentation = node.getId();
-			LinkedHashSet<String> simpleOutgoingNodesRepresentation = new LinkedHashSet<>();
-			List<CallGraphNode> outgoingNodes = node.getOutgoingNodes();
-			List<CallGraphEdgeLabel> outgoingEdgeLabels = node.getOutgoingEdgeLabels();
+		final LinkedHashMap<String, LinkedHashSet<String>> simpleGraphRepresentation = new LinkedHashMap<>();
+		for (final CallGraphNode node : mCallGraphNodes.values()) {
+			final String simpleNodeRepresentation = node.getId();
+			final LinkedHashSet<String> simpleOutgoingNodesRepresentation = new LinkedHashSet<>();
+			final List<CallGraphNode> outgoingNodes = node.getOutgoingNodes();
+			final List<CallGraphEdgeLabel> outgoingEdgeLabels = node.getOutgoingEdgeLabels();
 			for (int i = 0; i < outgoingNodes.size(); ++i) {
 				if (outgoingEdgeLabels.get(i).getEdgeType() != EdgeType.CALL_FORALL) {
 					simpleOutgoingNodesRepresentation.add(outgoingNodes.get(i).getId());					
@@ -227,10 +233,10 @@ public class CallGraphBuilder {
 	}
 	
 	private void setAllEdgeTypes() {
-		for (CallGraphNode callerNode : mCallGraphNodes.values()) {
-			Set<String> callerRecursiveComponent = recursiveComponentOf(callerNode.getId());
-			for (CallGraphEdgeLabel label : callerNode.getOutgoingEdgeLabels()) {
-				String calleeProcedureId = label.getCalleeProcedureId();
+		for (final CallGraphNode callerNode : mCallGraphNodes.values()) {
+			final Set<String> callerRecursiveComponent = recursiveComponentOf(callerNode.getId());
+			for (final CallGraphEdgeLabel label : callerNode.getOutgoingEdgeLabels()) {
+				final String calleeProcedureId = label.getCalleeProcedureId();
 				if (label.getEdgeType() != EdgeType.CALL_FORALL) {
 					label.setEdgeType(findEdgeTypeForNormalCall(callerRecursiveComponent, calleeProcedureId));
 				}
@@ -239,8 +245,8 @@ public class CallGraphBuilder {
 	}
 
 	private EdgeType findEdgeTypeForNormalCall(Set<String> callerRecursiveComponent, String calleeProcedureId) {
-		CallGraphNode calleeNode = mCallGraphNodes.get(calleeProcedureId);
-		Set<String> calleeRecursiveComponent = recursiveComponentOf(calleeProcedureId);
+		final CallGraphNode calleeNode = mCallGraphNodes.get(calleeProcedureId);
+		final Set<String> calleeRecursiveComponent = recursiveComponentOf(calleeProcedureId);
 		if (calleeRecursiveComponent == null) {
 			return calleeNode.getProcedureWithBody() == null ?
 					EdgeType.SIMPLE_CALL_UNIMPLEMENTED : EdgeType.SIMPLE_CALL_IMPLEMENTED;
@@ -257,7 +263,7 @@ public class CallGraphBuilder {
 	 * @return The procedures recursive component or null, if it isn't recursive.
 	 */
 	private Set<String> recursiveComponentOf(String procedureId) {
-		for (Set<String> component : mRecursiveComponents) {
+		for (final Set<String> component : mRecursiveComponents) {
 			if (component.contains(procedureId)) {
 				return component;
 			}

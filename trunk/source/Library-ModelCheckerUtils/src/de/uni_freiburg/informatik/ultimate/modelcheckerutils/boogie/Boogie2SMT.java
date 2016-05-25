@@ -58,7 +58,7 @@ public class Boogie2SMT {
 	private final boolean mBlackHoleArrays;
 
 	private final BoogieDeclarations mBoogieDeclarations;
-	private Script mScript;
+	private final Script mScript;
 
 	private final TypeSortTranslator mTypeSortTranslator;
 	private final IOperationTranslator mOperationTranslator;
@@ -73,7 +73,7 @@ public class Boogie2SMT {
 
 	private final Collection<Term> mAxioms;
 
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays,
 			boolean bitvectorInsteadOfInt, IUltimateServiceProvider services) {
@@ -103,8 +103,8 @@ public class Boogie2SMT {
 		}
 
 		mAxioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
-		for (Axiom decl : boogieDeclarations.getAxioms()) {
-			Term term = declareAxiom(decl, mExpression2Term);
+		for (final Axiom decl : boogieDeclarations.getAxioms()) {
+			final Term term = declareAxiom(decl, mExpression2Term);
 			mAxioms.add(term);
 		}
 		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
@@ -154,15 +154,15 @@ public class Boogie2SMT {
 	}
 
 	private Term declareAxiom(Axiom ax, Expression2Term expression2term) {
-		IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
-		Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
+		final IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
+		final Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
 		mScript.assertTerm(term);
 		return term;
 	}
 
 	public static void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription,
 			IUltimateServiceProvider services) {
-		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
+		final UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
 				ModelCheckerUtils.PLUGIN_ID, services.getBacktranslationService(), longDescription);
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
 		services.getProgressMonitorService().cancelToolchain();
@@ -187,7 +187,7 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			Term result = mBoogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
+			final Term result = mBoogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
 			if (result == null) {
 				throw new AssertionError();
 			}

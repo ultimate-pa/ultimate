@@ -91,7 +91,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	 * Sum of the size of all formulas that are in the unsatisfiable core.
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
-	private int mSumSizeFormulasNotInUnsatCore = 0; 
+	private final int mSumSizeFormulasNotInUnsatCore = 0; 
 	
 	public RelevantTransFormulas(NestedWord<? extends IAction> nestedTrace,
 			IPredicate precondition, IPredicate postcondition,
@@ -138,7 +138,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
 				if (super.getTrace().getSymbol(i) instanceof ICallAction) {
-					ICallAction call = (ICallAction) super.getTrace().getSymbol(i);
+					final ICallAction call = (ICallAction) super.getTrace().getSymbol(i);
 					mGlobalAssignmentTransFormulaAtCall.put(i,
 							modGlobalVarManager.getGlobalVarsAssignment(call.getSucceedingProcedure()));
 					mOldVarsAssignmentTransFormulasAtCall.put(i, 
@@ -180,7 +180,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			AnnotateAndAsserter aaa,
 			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
-		Map<Term, Term> annot2Original = aac.getAnnotated2Original();
+		final Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof Call) {
 				// 1. Local var assignment
@@ -204,8 +204,8 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 						modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
 						conjunctsInUnsatCore.toArray(new Term[0])));
 			} else {
-				Term[] conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getFormulaFromNonCallPos(i));
-				Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(
+				final Term[] conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getFormulaFromNonCallPos(i));
+				final Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(
 						unsat_core, annot2Original, conjuncts_annot, aac.getSplitEqualityMapping());
 				mTransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula(),
 						conjunctsInUnsatCore.toArray(new Term[0]));
@@ -221,27 +221,27 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private Set<Term> filterRelevantConjunctsAndRestoreEqualities(Set<Term> unsat_core,
 			Map<Term, Term> annot2Original, Term[] conjuncts_annot,
 			SplitEqualityMapping sem) {
-		Set<Term> conjunctsInUnsatCore = new HashSet<Term>(conjuncts_annot.length);
-		Set<Term> conjuncts_annotInequalitiesSuccRestored = new HashSet<Term>();
+		final Set<Term> conjunctsInUnsatCore = new HashSet<Term>(conjuncts_annot.length);
+		final Set<Term> conjuncts_annotInequalitiesSuccRestored = new HashSet<Term>();
 		
 		for (int j = 0; j < conjuncts_annot.length; j++) {
 			// Check current annotated conjunct if and only if we didn't have restored its inequality 
 			if (!conjuncts_annotInequalitiesSuccRestored.contains(conjuncts_annot[j])) {
 				if (sem.getInequality2CorrespondingInequality().containsKey(conjuncts_annot[j])) {
-					Term firstInequality = conjuncts_annot[j];
-					Term secondInequality =  sem.getInequality2CorrespondingInequality().get(firstInequality);
+					final Term firstInequality = conjuncts_annot[j];
+					final Term secondInequality =  sem.getInequality2CorrespondingInequality().get(firstInequality);
 					// Restore the equality from firstInequality and secondInequality if both are contained in the unsat core
 					if (unsat_core.contains(firstInequality) && unsat_core.contains(secondInequality)) {
 						conjuncts_annotInequalitiesSuccRestored.add(firstInequality);
 						conjuncts_annotInequalitiesSuccRestored.add(secondInequality);
-						Term original = sem.getInequality2OriginalEquality().get(firstInequality);
+						final Term original = sem.getInequality2OriginalEquality().get(firstInequality);
 						
 						if (s_ComputeSumSizeFormulasInUnsatCore) {
 							mSumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
 						}
 						conjunctsInUnsatCore.add(original);
 					} else if (unsat_core.contains(firstInequality)) {
-						Term original = annot2Original.get(firstInequality);
+						final Term original = annot2Original.get(firstInequality);
 						if (s_ComputeSumSizeFormulasInUnsatCore) {
 							mSumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
 						}
@@ -249,7 +249,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 					}
 				} else {
 					if (unsat_core.contains(conjuncts_annot[j])) {
-						Term original = annot2Original.get(conjuncts_annot[j]);
+						final Term original = annot2Original.get(conjuncts_annot[j]);
 						if (s_ComputeSumSizeFormulasInUnsatCore) {
 							mSumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
 						}
@@ -262,8 +262,8 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(TransFormula tf) {
-		Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (BoogieVar bv : tf.getAssignedVars()) {
+		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
+		for (final BoogieVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
@@ -279,30 +279,30 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 	
 	private TransFormula buildTransFormulaWithRelevantConjuncts(TransFormula tf, Term[] conjunctsInUnsatCore) {
-		Term formula = Util.and(mBoogie2Smt.getScript(), conjunctsInUnsatCore);
-		Set<TermVariable> freeVars = new HashSet<TermVariable>();
+		final Term formula = Util.and(mBoogie2Smt.getScript(), conjunctsInUnsatCore);
+		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
-		Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
-		Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (BoogieVar bv : tf.getInVars().keySet()) {
+		final Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
+		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
+		for (final BoogieVar bv : tf.getInVars().keySet()) {
 			if (freeVars.contains(tf.getInVars().get(bv))) {
 				invars.put(bv, tf.getInVars().get(bv));
 			}
 		}
-		for (BoogieVar bv : tf.getOutVars().keySet()) {
+		for (final BoogieVar bv : tf.getOutVars().keySet()) {
 			if (tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			} else if (freeVars.contains(tf.getOutVars().get(bv))) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
 		}
-		Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		for (TermVariable tv : tf.getAuxVars()) {
+		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		for (final TermVariable tv : tf.getAuxVars()) {
 			if (freeVars.contains(tv)) {
 				auxVars.add(tv);
 			}
 		}
-		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, mBoogie2Smt);
+		final Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, mBoogie2Smt);
 		
 		return new TransFormula(formula,
 				invars,

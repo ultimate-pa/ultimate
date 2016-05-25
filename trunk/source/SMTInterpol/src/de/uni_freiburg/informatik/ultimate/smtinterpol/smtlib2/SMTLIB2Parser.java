@@ -26,9 +26,10 @@ public class SMTLIB2Parser implements IParser {
 
 	@Override
 	public int run(Script solver, String filename) {
-		if (filename == null)
+		if (filename == null) {
 			filename = "<stdin>";
-        ParseEnvironment parseEnv = new ParseEnvironment(solver);
+		}
+        final ParseEnvironment parseEnv = new ParseEnvironment(solver);
         try {
         	// Have to carry this option through
         	parseEnv.setOption(":regular-output-channel",
@@ -38,7 +39,7 @@ public class SMTLIB2Parser implements IParser {
         	parseEnv.setOption(":print-terms-cse",
         			solver.getOption(":print-terms-cse"));
         	parseEnv.parseScript(filename);
-        } catch (SMTLIBException se) {
+        } catch (final SMTLIBException se) {
         	parseEnv.printError(se.getMessage());
         }
 		return 0;

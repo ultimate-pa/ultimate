@@ -70,7 +70,7 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 	}
 
 	public void setOperator(ConditionalBooleanOperatorAST operator) {
-		this.moperator = operator;
+		moperator = operator;
 	}
 
 	@Override
@@ -81,7 +81,7 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		if (mchildren.size() == 2) {
-			String operatorAsString = (moperator == ConditionalBooleanOperatorAST.AND? "&&" : "||");
+			final String operatorAsString = (moperator == ConditionalBooleanOperatorAST.AND? "&&" : "||");
 			return mchildren.get(0).getAsString() + " " +
 		           operatorAsString + " " +
 				   mchildren.get(1).getAsString();	

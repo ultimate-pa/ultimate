@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.ast;
 
 public class BinaryOperator extends AstNode {
 	
-	private BinaryType type;
+	private final BinaryType type;
 	
 	public BinaryOperator(BinaryType type)
 	{
@@ -44,30 +44,43 @@ public class BinaryOperator extends AstNode {
 		this.addOutgoing(right);
 	}
 	
+	@Override
 	public String toString()
 	{
 		String op = " ?? ";
-		if (this.type == BinaryType.and) op = " && ";
-		if (this.type == BinaryType.or) op = " || ";
-		if (this.type == BinaryType.minus) op = " - ";
-		if (this.type == BinaryType.plus) op = " + ";
-		if (this.type == BinaryType.times) op = " * ";
-		if (this.type == BinaryType.divide) op = " / ";
+		if (type == BinaryType.and) {
+			op = " && ";
+		}
+		if (type == BinaryType.or) {
+			op = " || ";
+		}
+		if (type == BinaryType.minus) {
+			op = " - ";
+		}
+		if (type == BinaryType.plus) {
+			op = " + ";
+		}
+		if (type == BinaryType.times) {
+			op = " * ";
+		}
+		if (type == BinaryType.divide) {
+			op = " / ";
+		}
 	 	
 		String result = "( ";
 		int i = 0;
-		for(; i < this.getOutgoingNodes().size()-1; i++)
+		for(; i < getOutgoingNodes().size()-1; i++)
 		{
-			result += this.getOutgoingNodes().get(i).toString() + op;
+			result += getOutgoingNodes().get(i).toString() + op;
 		}
-		result += this.getOutgoingNodes().get(i).toString();
+		result += getOutgoingNodes().get(i).toString();
 		result += " )";
 		return result;
 	}
 	
 	public BinaryType getType()
 	{
-		return this.type;
+		return type;
 	}
 
 }

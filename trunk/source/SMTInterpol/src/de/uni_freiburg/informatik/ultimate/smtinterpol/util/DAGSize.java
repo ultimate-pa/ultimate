@@ -63,8 +63,9 @@ public class DAGSize extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			for (Term t : term.getParameters())
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new TermOnceWalker(t));
+			}
 		}
 
 		@Override
@@ -116,6 +117,7 @@ public class DAGSize extends NonRecursive {
 		mSize = 0;
 	}
 	
+	@Override
 	public void reset() {
 		super.reset();
 		mSeen.clear();
@@ -128,7 +130,7 @@ public class DAGSize extends NonRecursive {
 	}
 	
 	public int treesize(Term term) {
-		Set<Term> old = mSeen;
+		final Set<Term> old = mSeen;
 		mSeen = ConstantEmptySet.EMPTY;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
 		mSeen = old;

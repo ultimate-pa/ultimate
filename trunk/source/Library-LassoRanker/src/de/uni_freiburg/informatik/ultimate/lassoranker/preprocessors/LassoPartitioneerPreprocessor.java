@@ -61,7 +61,7 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			LassoUnderConstruction lasso) throws TermException {
-		LassoPartitioneer lp = new LassoPartitioneer(mServices, mBoogie2Smt, mScript, lasso);
+		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mBoogie2Smt, mScript, lasso);
 		return lp.getNewLassos();
 	}
 

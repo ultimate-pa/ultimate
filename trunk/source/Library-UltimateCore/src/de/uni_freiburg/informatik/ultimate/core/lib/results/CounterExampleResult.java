@@ -116,10 +116,12 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	 * 
 	 * @return the failurePath
 	 */
+	@Override
 	public List<ILocation> getFailurePath() {
 		return mFailurePath;
 	}
 
+	@Override
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
 	}

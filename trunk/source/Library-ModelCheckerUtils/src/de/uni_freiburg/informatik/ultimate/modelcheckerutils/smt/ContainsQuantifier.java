@@ -58,7 +58,7 @@ public class ContainsQuantifier extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new QuantifierFinder(t));
 			}
 		}

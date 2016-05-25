@@ -40,7 +40,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //		final AlternatingAutomaton<LETTER,STATE> aa;
 //		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
 		System.out.println("Foo");
-		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
+		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
 //		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
 //		LinkedList<STATE> queue = new LinkedList<STATE>();

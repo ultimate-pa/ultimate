@@ -67,10 +67,10 @@ public class LocationFactory {
 
 	public static CACSLLocation createLocation(CACSLLocation loc) {
 		if (loc instanceof ACSLLocation) {
-			ACSLLocation realLoc = (ACSLLocation) loc;
+			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
-			CLocation realLoc = (CLocation) loc;
+			final CLocation realLoc = (CLocation) loc;
 			return new CLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation());
 		} else {
 			throw new UnsupportedOperationException();
@@ -79,10 +79,10 @@ public class LocationFactory {
 
 	public static CACSLLocation createLocation(CACSLLocation loc, Check type) {
 		if (loc instanceof ACSLLocation) {
-			ACSLLocation realLoc = (ACSLLocation) loc;
+			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
-			CLocation realLoc = (CLocation) loc;
+			final CLocation realLoc = (CLocation) loc;
 			return new CLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
 		} else {
 			throw new UnsupportedOperationException();
@@ -91,10 +91,10 @@ public class LocationFactory {
 	
 	public static CACSLLocation createIgnoreLocation(ILocation loc) {
 		if (loc instanceof ACSLLocation) {
-			ACSLLocation realLoc = (ACSLLocation) loc;
+			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), true);
 		} else if (loc instanceof CLocation) {
-			CLocation realLoc = (CLocation) loc;
+			final CLocation realLoc = (CLocation) loc;
 			return new CLocation(realLoc.getNode(), realLoc.getCheck(), true);
 		} else {
 			throw new UnsupportedOperationException();

@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -93,14 +93,14 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
+		final StateFactory<String> snf = new StringFactory();
 
-		int n = 100;
-		int k = 30;
-		int f = 20;
-		int totalityInPerc = 10;
-		int logEvery = 100;
-		int amount = 1000;
+		final int n = 100;
+		final int k = 30;
+		final int f = 20;
+		final int totalityInPerc = 10;
+		final int logEvery = 100;
+		final int amount = 1000;
 		NestedWordAutomaton<String, String> buechi;
 
 		for (int i = 1; i <= amount; i++) {
@@ -108,7 +108,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 				mLogger.info("Worked " + i + " automata");
 			}
 
-			boolean useNwaInsteadDfaMethod = false;
+			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
 				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
 			} else {
@@ -117,7 +117,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 
 			try {
 				new CompareReduceBuchiSimulation<String, String>(services, snf, buechi);
-			} catch (AutomataOperationCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}

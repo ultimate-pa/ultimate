@@ -102,7 +102,7 @@ public class InputTermDumper extends TimerTask {
 			printWriter.flush();
 			printWriter.close();
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}

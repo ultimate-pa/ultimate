@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class LpSolverTest {
 
-	private LoggerInitializer loggerInit = new LoggerInitializer();
+	private final LoggerInitializer loggerInit = new LoggerInitializer();
 	final ILogger logger = loggerInit.getLogger(this.getClass().toGenericString());
 	
 	@Test

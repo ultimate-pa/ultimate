@@ -68,6 +68,7 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
+	@Override
 	public String toString() {
 		return mName;
 	}

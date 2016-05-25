@@ -39,7 +39,7 @@ public class HashRelation3<K1, K2, K3> {
 	private final NestedMap3<K1, K2, K3, IsContained> mBackingMap = new NestedMap3<>();
 	
 	public boolean addTriple(K1 fst, K2 snd, K3 trd) {
-		IsContained isContained = mBackingMap.put(fst, snd, trd, IsContained.IsContained);
+		final IsContained isContained = mBackingMap.put(fst, snd, trd, IsContained.IsContained);
 		return isContained == IsContained.IsContained;
 	}
 	
@@ -48,7 +48,7 @@ public class HashRelation3<K1, K2, K3> {
 	}
 	
 	public Set<K2> projectToSnd(K1 k1) {
-		 NestedMap2<K2, K3, IsContained> snd2trd2ic = mBackingMap.get(k1);
+		 final NestedMap2<K2, K3, IsContained> snd2trd2ic = mBackingMap.get(k1);
 		 if (snd2trd2ic == null) {
 			 return Collections.emptySet();
 		 } else {
@@ -57,7 +57,7 @@ public class HashRelation3<K1, K2, K3> {
 	}
 	
 	public Set<K3> projectToTrd(K1 k1, K2 k2) {
-		 Map<K3, IsContained> trd2ic  = mBackingMap.get(k1, k2);
+		 final Map<K3, IsContained> trd2ic  = mBackingMap.get(k1, k2);
 		 if (trd2ic == null) {
 			 return Collections.emptySet();
 		 } else {

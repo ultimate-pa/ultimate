@@ -21,8 +21,9 @@ public class TestUppaalExport {
     
 	
 	public PhaseEventAutomata bndInvariance(CDD P, CDD S, int bound) {
-    	PhaseEventAutomata ctA, ctA2, mctA, mctA2;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	PhaseEventAutomata ctA, ctA2, mctA;
+		final PhaseEventAutomata mctA2;
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P),
     	    new CounterTrace.DCPhase(S, CounterTrace.BOUND_LESS, bound),
@@ -30,11 +31,11 @@ public class TestUppaalExport {
     	    //new CounterTrace.DCPhase(R),
     	    new CounterTrace.DCPhase()
     	});
-    	MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
+    	final MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
     	mctA = compiler.compile("TInvariance1", mct); //ctA.dump();
     	ctA = compiler.compile("TInvariance1", ct); //ctA.dump();
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P.and(S.negate())),
     	    new CounterTrace.DCPhase()
@@ -49,7 +50,7 @@ public class TestUppaalExport {
 	
 	 public PhaseEventAutomata bndResp_Glob(CDD P, CDD S, int bound) {
 	    	PhaseEventAutomata ctA;
-	    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(P.and(S.negate())),
 	    	    new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound),
@@ -62,8 +63,8 @@ public class TestUppaalExport {
 	
 	public void testUppaal(){
     	PhaseEventAutomata ctParallel, ct1A, ct2A;
-        CDD P = BooleanDecision.create("P");
-    	CDD S = BooleanDecision.create("S");
+        final CDD P = BooleanDecision.create("P");
+    	final CDD S = BooleanDecision.create("S");
     	
     	ct1A = bndInvariance(P, S.negate(),6);   
         ct2A = bndResp_Glob(P,S,10);
@@ -71,10 +72,10 @@ public class TestUppaalExport {
         ctParallel = ct1A.parallel(ct2A);
         ctParallel.dump();
         
-        DOTWriter dotwriter = new DOTWriter("C:/Deadlock.dot", ctParallel);
+        final DOTWriter dotwriter = new DOTWriter("C:/Deadlock.dot", ctParallel);
         dotwriter.write();
         
-        J2UPPAALConverter j2uppaalWriter = new J2UPPAALConverter();
+        final J2UPPAALConverter j2uppaalWriter = new J2UPPAALConverter();
         j2uppaalWriter.writePEA2UppaalFile("C:/AmiTestDeadlock.xml", ctParallel);        
         
     }

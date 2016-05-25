@@ -69,12 +69,12 @@ public class LinearRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("f");
 		if (!mranking.isConstant()) {
 			sb.append("(");
 			boolean first = true;
-			for (RankVar var : mranking.getVariables()) {
+			for (final RankVar var : mranking.getVariables()) {
 				if (!first) {
 					sb.append(", ");
 				}

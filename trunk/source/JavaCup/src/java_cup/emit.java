@@ -227,7 +227,7 @@ public class emit {
   
   public String stackelem(int index, boolean is_java15)
     {
-      String access = pre("stack") + ".get(" + pre("size") + " - " + index + ")";
+      final String access = pre("stack") + ".get(" + pre("size") + " - " + index + ")";
       return is_java15 ? access : "((java_cup.runtime.Symbol) "+access+")";
     }
 
@@ -240,9 +240,9 @@ public class emit {
   public void symbols(PrintWriter out, Grammar grammar, 
 			     boolean emit_non_terms, boolean syminterface)
     {
-      String class_or_interface = (syminterface)?"interface":"class";
+      final String class_or_interface = (syminterface)?"interface":"class";
 
-      long start_time = System.currentTimeMillis();
+      final long start_time = System.currentTimeMillis();
 
       /* top of file */
       out.println();
@@ -263,7 +263,7 @@ public class emit {
       out.println("  /* terminals */");
 
       /* walk over the terminals */              /* later might sort these */
-      for (terminal term : grammar.terminals())
+      for (final terminal term : grammar.terminals())
 	{
 
 	  /* output a constant decl for the terminal */
@@ -278,7 +278,7 @@ public class emit {
           out.println("  /* non terminals */");
 
           /* walk over the non terminals */       /* later might sort these */
-          for (non_terminal nt : grammar.non_terminals())
+          for (final non_terminal nt : grammar.non_terminals())
 	    {
           // ****
           // TUM Comment: here we could add a typesafe enumeration
@@ -300,12 +300,12 @@ public class emit {
   private void emit_action(PrintWriter out, Grammar grammar, production prod,
       boolean lr_values, boolean old_lr_values, boolean is_java15)
     {
-      boolean is_star_action = 
+      final boolean is_star_action = 
 	prod.action() != null && prod.action().code_string().startsWith("CUP$STAR");
       String result = "";
       if (prod.lhs().stack_type() != null && !is_star_action)
 	{
-	  int lastResult = prod.getIndexOfIntermediateResult();
+	  final int lastResult = prod.getIndexOfIntermediateResult();
 	  String init_result = "";
 	  if (lastResult!=-1)
 	    {
@@ -328,9 +328,12 @@ public class emit {
 
       production baseprod;
       if (prod instanceof action_production)
-	baseprod = ((action_production)prod).base_production();
-      else
-	baseprod = prod;
+	{
+	    baseprod = ((action_production)prod).base_production();
+	  } else
+	{
+	    baseprod = prod;
+	  }
       String leftsym = null, rightsym = null;
       /* Add code to propagate RESULT assignments that occur in
        * action code embedded in a production (ie, non-rightmost
@@ -338,19 +341,23 @@ public class emit {
        */
       for (int i=prod.rhs_stackdepth()-1; i>=0; i--) 
 	{
-	  symbol_part symbol = baseprod.rhs(i);
-	  String label = symbol.label;
-	  String symtype = symbol.the_symbol.stack_type(); 
-	  boolean is_wildcard = !is_star_action && symtype != null
+	  final symbol_part symbol = baseprod.rhs(i);
+	  final String label = symbol.label;
+	  final String symtype = symbol.the_symbol.stack_type(); 
+	  final boolean is_wildcard = !is_star_action && symtype != null
 	  	&& (symbol.the_symbol.name().endsWith("*")
 		    || symbol.the_symbol.name().endsWith("+"));
 
 	  if (label != null)
 	    {
 	      if (i == 0)
-		leftsym = label+"$";
+		{
+		    leftsym = label+"$";
+		  }
 	      if (i == prod.rhs_stackdepth()-1)
-		rightsym = label+"$";
+		{
+		    rightsym = label+"$";
+		  }
 
 	      out.println("              java_cup.runtime.Symbol " + 
 		  label + "$ = " +
@@ -368,17 +375,22 @@ public class emit {
 		{
 		  if (is_wildcard)
 		    {
-		      String basetype = symtype.substring(0, symtype.length()-2);
+		      final String basetype = symtype.substring(0, symtype.length()-2);
 		      int arraySuffix = basetype.length();
 		      while (basetype.charAt(arraySuffix-2) == '[')
-			arraySuffix -= 2;
+			{
+			    arraySuffix -= 2;
+			  }
 		      String listtype = "java.util.ArrayList";
 		      String cast = "";
 		      if (is_java15)
-			listtype += "<" + basetype + ">";
-		      else
-			cast = "(" + symtype + ") ";
-		      String symbollist = pre("list$" + label);
+			{
+			    listtype += "<" + basetype + ">";
+			  } else
+			{
+			    cast = "(" + symtype + ") ";
+			  }
+		      final String symbollist = pre("list$" + label);
 		      out.println("              " + listtype + " " + symbollist +
 			  " = (" + listtype + ") " + label + "$.value;");
 		      out.println("              " + symtype + " " + label + 
@@ -403,11 +415,13 @@ public class emit {
 	  if (prod.action().code_string().startsWith("CUP$STAR"))
 	    {
 	      assert(prod.lhs().stack_type() != null);
-	      String symtype = prod.lhs().stack_type();
-	      String basetype = symtype.substring(0, symtype.length()-2);
+	      final String symtype = prod.lhs().stack_type();
+	      final String basetype = symtype.substring(0, symtype.length()-2);
 	      String listtype = "java.util.ArrayList";
 	      if (is_java15)
-		listtype += "<" + basetype + ">";
+		{
+		    listtype += "<" + basetype + ">";
+		  }
 
 	      switch (prod.action().code_string().charAt(8))
 	      	{
@@ -466,9 +480,13 @@ public class emit {
 	  else
 	    {
 	      if (rightsym == null)
-		rightsym = stackelem(1, is_java15);
+		{
+		    rightsym = stackelem(1, is_java15);
+		  }
 	      if (leftsym == null)
-		leftsym = stackelem(prod.rhs_stackdepth(), is_java15);
+		{
+		    leftsym = stackelem(prod.rhs_stackdepth(), is_java15);
+		  }
 	    }
 	  leftright = ", " + leftsym + ", " + rightsym;
 	}
@@ -487,10 +505,10 @@ public class emit {
   private void emit_action_code(PrintWriter out, Grammar grammar, String action_class, 
       boolean lr_values, boolean old_lr_values, boolean is_java15)
     {
-      long start_time = System.currentTimeMillis();
+      final long start_time = System.currentTimeMillis();
 
       /* Stack generic parameter and optional casts depending on Java Version */
-      String genericArg = is_java15 ? "<java_cup.runtime.Symbol>" : "           ";
+      final String genericArg = is_java15 ? "<java_cup.runtime.Symbol>" : "           ";
 
       /* class header */
       out.println();
@@ -522,7 +540,9 @@ public class emit {
       out.println();
       out.println("  /** Method with the actual generated action code. */");
       if (is_java15)
-	out.println("  @SuppressWarnings({ \"unused\", \"unchecked\" })");
+	{
+	    out.println("  @SuppressWarnings({ \"unused\", \"unchecked\" })");
+	  }
       out.println("  public final java_cup.runtime.Symbol " + 
 		     pre("do_action") + "(");
       out.println("    int                        " + pre("act_num,"));
@@ -540,13 +560,15 @@ public class emit {
       out.println("        {");
 
       /* emit action code for each production as a separate case */
-      for (production prod : grammar.actions())
+      for (final production prod : grammar.actions())
 	{
 	  /* case label */
-	  for (production p2 : prod.lhs().productions())
+	  for (final production p2 : prod.lhs().productions())
 	    {
 	      if (p2.action_index() == prod.action_index())
-		out.println("          // " + p2.toString());
+		{
+		    out.println("          // " + p2.toString());
+		  }
 	    }
           out.println("          case " + prod.action_index() + ":");
 	  /* give them their own block to work in */
@@ -585,15 +607,15 @@ public class emit {
    */
   private String do_production_table(Grammar grammar)
     {
-      long start_time = System.currentTimeMillis();
+      final long start_time = System.currentTimeMillis();
 
-      short[] prod_table = new short[2*grammar.numactions()];
-      for (production prod : grammar.actions())
+      final short[] prod_table = new short[2*grammar.numactions()];
+      for (final production prod : grammar.actions())
 	{
 	  prod_table[2*prod.action_index()+0] = (short) prod.lhs().index();
 	  prod_table[2*prod.action_index()+1] = (short) prod.rhs_length();
 	}
-      String result = do_array_as_string(prod_table);
+      final String result = do_array_as_string(prod_table);
       production_table_time = System.currentTimeMillis() - start_time;
       return result;
     }
@@ -608,11 +630,11 @@ public class emit {
   private String do_action_table(
     Grammar            grammar)
     {
-      long start_time = System.currentTimeMillis();
-      parse_action_table act_tab = grammar.action_table();
-      int[] base_tab = new int[act_tab.table.length];
-      short[] action_tab = act_tab.compress(base_tab);
-      String result = do_array_as_string(base_tab) + do_array_as_string(action_tab);
+      final long start_time = System.currentTimeMillis();
+      final parse_action_table act_tab = grammar.action_table();
+      final int[] base_tab = new int[act_tab.table.length];
+      final short[] action_tab = act_tab.compress(base_tab);
+      final String result = do_array_as_string(base_tab) + do_array_as_string(action_tab);
       action_table_time = System.currentTimeMillis() - start_time;
       return result;
     }
@@ -624,9 +646,9 @@ public class emit {
    */
   private String do_reduce_table(Grammar grammar)
     {
-      parse_reduce_table red_tab = grammar.reduce_table();
-      long start_time = System.currentTimeMillis();
-      String result = do_array_as_string(red_tab.compress());
+      final parse_reduce_table red_tab = grammar.reduce_table();
+      final long start_time = System.currentTimeMillis();
+      final String result = do_array_as_string(red_tab.compress());
       goto_table_time = System.currentTimeMillis() - start_time;
       return result;
     }
@@ -634,27 +656,35 @@ public class emit {
   /** create a string encoding a given short[] array.*/
   private String do_array_as_string(short[] sharr) 
     {
-      StringBuilder sb = new StringBuilder();
+      final StringBuilder sb = new StringBuilder();
       if (sharr.length >= 0x8000)
-	sb.append((char) (0x8000+(sharr.length>>16)));
+	{
+	    sb.append((char) (0x8000+(sharr.length>>16)));
+	  }
       sb.append((char)(sharr.length & 0xffff));
       for (int i = 0; i < sharr.length; i++)
-	sb.append((char) sharr[i]);
+	{
+	    sb.append((char) sharr[i]);
+	  }
       return sb.toString();
     }
   
   /** create a string encoding a given short[] array.*/
   private String do_array_as_string(int[] intarr)
     {
-      StringBuilder sb = new StringBuilder();
+      final StringBuilder sb = new StringBuilder();
       if (intarr.length >= 0x8000)
-	sb.append((char) (0x8000+(intarr.length>>16)));
+	{
+	    sb.append((char) (0x8000+(intarr.length>>16)));
+	  }
       sb.append((char)(intarr.length & 0xffff));
       for (int i = 0; i < intarr.length; i++)
 	{
 	  assert(intarr[i] >= 0);
 	  if (intarr[i] >= 0x8000)
-	    sb.append((char) (0x8000+(intarr[i]>>16)));
+	    {
+		sb.append((char) (0x8000+(intarr[i]>>16)));
+	      }
 	  sb.append((char) (intarr[i]&0xffff));
 	}
       return sb.toString();
@@ -665,11 +695,11 @@ public class emit {
     int utf8len = 0;
     for (int i = 0; i < str.length(); i += 11)
       {
-	StringBuilder encoded = new StringBuilder();
+	final StringBuilder encoded = new StringBuilder();
 	encoded.append("    \"");
 	for (int j = 0; j < 11 && i+j < str.length(); j++)
 	  {
-	    char c = str.charAt(i+j);
+	    final char c = str.charAt(i+j);
 	    encoded.append('\\');
 	    if (c < 256) 
 	      {
@@ -688,7 +718,9 @@ public class emit {
 	      {
 		utf8len++;
 		if (c >= 2048)
-		  utf8len++;
+		  {
+		      utf8len++;
+		    }
 	      }
 	  }
 	encoded.append("\"");
@@ -698,9 +730,10 @@ public class emit {
 	      {
 		encoded.append(",");
 		utf8len = 0;
-	      }
-	    else
-	      encoded.append(" +");
+	      } else
+	      {
+		  encoded.append(" +");
+		}
 	  }
 	out.println(encoded.toString());
       }
@@ -725,9 +758,9 @@ public class emit {
     boolean            old_lr_values,
     boolean            is_java15)
     {
-      long start_time = System.currentTimeMillis();
+      final long start_time = System.currentTimeMillis();
       
-      String action_class = is_java15 ? "Action$" : pre(parser_class_name+"$action");
+      final String action_class = is_java15 ? "Action$" : pre(parser_class_name+"$action");
 
       /* top of file */
       out.println();
@@ -740,8 +773,10 @@ public class emit {
       emit_package(out);
 
       /* user supplied imports */
-      for (String imp : import_list)
-	out.println("import " + imp + ";");
+      for (final String imp : import_list)
+	{
+	    out.println("import " + imp + ";");
+	  }
 
       /* class header */
       out.println();
@@ -769,7 +804,7 @@ public class emit {
       }
 
       /* emit the various tables */
-      String tables = do_production_table(grammar) + 
+      final String tables = do_production_table(grammar) + 
       	do_action_table(grammar) +
       	do_reduce_table(grammar);
 
@@ -800,9 +835,12 @@ public class emit {
       out.println("  public java_cup.runtime.Symbol do_action(");
       out.println("    int                        act_num,");
       if (is_java15)
-	out.println("    java.util.ArrayList<java_cup.runtime.Symbol> stack)");
-      else
-	out.println("    java.util.ArrayList        stack)");
+	{
+	    out.println("    java.util.ArrayList<java_cup.runtime.Symbol> stack)");
+	  } else
+	{
+	    out.println("    java.util.ArrayList        stack)");
+	  }
       out.println("    throws java.lang.Exception");
       out.println("  {");
       out.println("    /* call code in generated class */");

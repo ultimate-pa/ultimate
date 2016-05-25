@@ -116,11 +116,11 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * Copy constructor copies everything
 	 */
 	public TerminationAnalysisSettings(TerminationAnalysisSettings other) {
-		this.analysis = other.analysis;
-		this.numstrict_invariants = other.numstrict_invariants;
-		this.numnon_strict_invariants = other.numnon_strict_invariants;
-		this.nondecreasing_invariants = other.nondecreasing_invariants;
-		this.simplify_termination_argument =
+		analysis = other.analysis;
+		numstrict_invariants = other.numstrict_invariants;
+		numnon_strict_invariants = other.numnon_strict_invariants;
+		nondecreasing_invariants = other.nondecreasing_invariants;
+		simplify_termination_argument =
 				other.simplify_termination_argument;
 	}
 	
@@ -129,29 +129,30 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		assert this.numstrict_invariants >= 0;
-		assert this.numnon_strict_invariants >= 0;
+		assert numstrict_invariants >= 0;
+		assert numnon_strict_invariants >= 0;
 	}
 	
 	/**
 	 * Build a string description of the current preferences
 	 */
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Termination analysis: ");
-		sb.append(this.analysis);
+		sb.append(analysis);
 		sb.append("\nNumber of strict supporting invariants: ");
-		sb.append(this.numstrict_invariants);
+		sb.append(numstrict_invariants);
 		sb.append("\nNumber of non-strict supporting invariants: ");
-		sb.append(this.numnon_strict_invariants);
+		sb.append(numnon_strict_invariants);
 		sb.append("\nConsider only non-deceasing supporting invariants: ");
-		sb.append(this.nondecreasing_invariants);
+		sb.append(nondecreasing_invariants);
 		sb.append("\nSimplify termination arguments: ");
-		sb.append(this.simplify_termination_argument);
+		sb.append(simplify_termination_argument);
 		sb.append("\nSimplify supporting invariants: ");
-		sb.append(this.simplify_supporting_invariants);
+		sb.append(simplify_supporting_invariants);
 		sb.append("Overapproximate stem: ");
-		sb.append(this.overapproximate_stem);
+		sb.append(overapproximate_stem);
 		return sb.toString();
 	}
 }

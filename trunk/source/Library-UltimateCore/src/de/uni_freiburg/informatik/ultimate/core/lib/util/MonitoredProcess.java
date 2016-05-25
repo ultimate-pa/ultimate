@@ -277,7 +277,7 @@ public final class MonitoredProcess implements IStorable {
 		MonitoredProcessState mps = null;
 		try {
 			mps = waitfor(millis);
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			// ignore interrupted exceptions; they should never occur in this
 			// context anyways.
 		}
@@ -310,7 +310,7 @@ public final class MonitoredProcess implements IStorable {
 				if (!state.isRunning()) {
 					return state;
 				}
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				break;
 			}
 		}
@@ -320,7 +320,7 @@ public final class MonitoredProcess implements IStorable {
 			if (!state.isRunning()) {
 				return state;
 			}
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			// ignore interrupted exceptions; they should never occur in this
 			// context anyways.
 		}
@@ -404,7 +404,7 @@ public final class MonitoredProcess implements IStorable {
 				try {
 					stdWriter.write(mExitCommand);
 					stdWriter.close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand
 							+ ": " + e.getMessage());
 				}
@@ -413,7 +413,7 @@ public final class MonitoredProcess implements IStorable {
 					mMonitor.join(WAIT_FOR_EXIT_COMMAND_MILLIS);
 					mLogger.debug(getLogStringPrefix() + " Successfully joined");
 
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					// not necessary to do anything here
 					mLogger.debug(getLogStringPrefix() + " Interrupted during join");
 				}
@@ -422,7 +422,7 @@ public final class MonitoredProcess implements IStorable {
 				}
 			}
 			mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
-			List<InputStream> tobeclosed = new ArrayList<>(5);
+			final List<InputStream> tobeclosed = new ArrayList<>(5);
 			try {
 				// mProcess.destroyForcibly();
 				// mStorage.removeStorable(getKey(mID, mCommand));
@@ -436,13 +436,13 @@ public final class MonitoredProcess implements IStorable {
 				tobeclosed.add(mStdInStreamPipe);
 				tobeclosed.add(mStdErrStreamPipe);
 				killProcess();
-			} catch (NullPointerException ex) {
+			} catch (final NullPointerException ex) {
 				if (mLogger.isWarnEnabled()) {
 					mLogger.warn(
 							getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
 									+ "was killed and before we wanted to kill it manually");
 				}
-			} catch (Throwable t) {
+			} catch (final Throwable t) {
 				mLogger.fatal(String.format(getLogStringPrefix() + " Something unexpected happened: %s%n%s", t,
 						ExceptionUtils.getStackTrace(t)));
 			}
@@ -459,7 +459,7 @@ public final class MonitoredProcess implements IStorable {
 	private void close(Closeable pipe) {
 		try {
 			pipe.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.warn(getLogStringPrefix() + " An error occured during closing: " + e.getMessage());
 		}
 	}
@@ -611,7 +611,7 @@ public final class MonitoredProcess implements IStorable {
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe, endOfPumps, "stdIn");
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps, "stdErr");
 
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
 					mMonitoredProcess.mLogger.error(
 							getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.", e);
@@ -637,7 +637,7 @@ public final class MonitoredProcess implements IStorable {
 						logUnreadPipeContent();
 					}
 				}
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
 					mMonitoredProcess.mLogger.error(getLogStringPrefix() + " Interrupted. Terminating abnormally.", e);
 				}
@@ -675,7 +675,7 @@ public final class MonitoredProcess implements IStorable {
 					mOutputStream.write(chunk);
 					mOutputStream.flush();
 				}
-			} catch (IOException /* | InterruptedException */ e) {
+			} catch (final IOException /* | InterruptedException */ e) {
 				if (mLogger.isWarnEnabled()) {
 					mLogger.warn(getLogStringPrefix() + " The stream was forcibly closed: " + mPumpName);
 				}
@@ -683,7 +683,7 @@ public final class MonitoredProcess implements IStorable {
 				try {
 					mOutputStream.flush();
 					mOutputStream.close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					mLogger.fatal(getLogStringPrefix() + " During closing of the streams " + mPumpName
 							+ ", an error occured");
 				}

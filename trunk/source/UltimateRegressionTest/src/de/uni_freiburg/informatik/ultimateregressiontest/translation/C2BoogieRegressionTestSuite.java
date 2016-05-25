@@ -98,7 +98,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 				} else {
 					System.out.println(String.format("Deleteing %s failed", f.getAbsolutePath()));
 				}
-			} catch (SecurityException e) {
+			} catch (final SecurityException e) {
 				System.err.println(String.format("Exception while deleting file %s", f));
 				e.printStackTrace();
 			}

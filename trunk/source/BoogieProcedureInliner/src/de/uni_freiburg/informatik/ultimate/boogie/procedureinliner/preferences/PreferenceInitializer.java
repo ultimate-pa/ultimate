@@ -47,8 +47,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		List<UltimatePreferenceItem<?>> prefItems = new ArrayList<>();
-		for (PreferenceItem item : PreferenceItem.values()) {
+		final List<UltimatePreferenceItem<?>> prefItems = new ArrayList<>();
+		for (final PreferenceItem item : PreferenceItem.values()) {
 			prefItems.add(item.newUltimatePreferenceItem());
 		}
 		return prefItems.toArray(new UltimatePreferenceItem<?>[prefItems.size()]);

@@ -29,7 +29,9 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	
 	public ArrayQueue(int size) {
 		int i;
-		for (i = 1; i < size; i += i) ;
+		for (i = 1; i < size; i += i) {
+			;
+		}
 		mContents = new Object[i];
 		mFront = size = 0;
 	}
@@ -40,7 +42,7 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	
 	private void resize() {
 		assert (mSize == mContents.length);
-		Object[] oldcontents = mContents;
+		final Object[] oldcontents = mContents;
 		mContents = new Object[2 * mSize];
 		System.arraycopy(oldcontents, mFront, mContents, 0, mSize - mFront);
 		System.arraycopy(oldcontents, 0, mContents, mSize - mFront, mFront);
@@ -49,8 +51,9 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 
 	@Override
 	public boolean add(E e) {
-		if (mSize == mContents.length)
+		if (mSize == mContents.length) {
 			resize();
+		}
 		mContents[(mFront + mSize++) & (mContents.length - 1)] = e;
 		return true;
 	}
@@ -58,8 +61,9 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public E element() {
-		if (mSize == 0)
+		if (mSize == 0) {
 			throw new NoSuchElementException();
+		}
 		return (E) mContents[mFront];
 	}
 
@@ -77,9 +81,10 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public E poll() {
-		if (mSize == 0)
+		if (mSize == 0) {
 			return null;
-		E elem = (E) mContents[mFront];
+		}
+		final E elem = (E) mContents[mFront];
 		mSize--;
 		mContents[mFront++] = null;
 		mFront &= mContents.length - 1;
@@ -95,25 +100,30 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	public void clear() {
 		if (mFront + mSize > mContents.length) {
 			mSize -= mContents.length - mFront;
-			while (mFront < mContents.length)
+			while (mFront < mContents.length) {
 				mContents[mFront++] = null;
+			}
 			mFront = 0;
 		}
-		while (mSize > 0)
+		while (mSize > 0) {
 			mContents[mFront + --mSize] = null;
+		}
 	}
 
 	@Override
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
 			int mPtr = mFront;
+			@Override
 			public boolean hasNext() {
 				return mPtr < mFront + mSize;
 			}
+			@Override
 			@SuppressWarnings("unchecked")
 			public E next() {
 				return (E) mContents[(mPtr++) & (mContents.length - 1)];
 			}
+			@Override
 			public void remove() {
 				/* remove from inside is not supported */
 				throw new UnsupportedOperationException();

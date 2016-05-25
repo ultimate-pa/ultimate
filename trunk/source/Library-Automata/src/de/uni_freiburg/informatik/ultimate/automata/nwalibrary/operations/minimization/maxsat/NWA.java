@@ -90,29 +90,61 @@ final class NWA implements Cloneable {
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
 	static boolean checkConsistency(NWA nwa) {
-		if (nwa.numStates < 0) return false;
-		if (nwa.numISyms < 0) return false;
-		if (nwa.numRSyms < 0) return false;
-		if (nwa.numCSyms < 0) return false;
-
-		if (nwa.isInitial == null || nwa.isInitial.length != nwa.numStates) return false;
-		if (nwa.isFinal == null || nwa.isFinal.length != nwa.numStates) return false;
-
-		for (ITrans x : nwa.iTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) return false;
-			if (x.sym < 0 || x.sym >= nwa.numISyms) return false;
-			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
+		if (nwa.numStates < 0) {
+			return false;
 		}
-		for (CTrans x : nwa.cTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) return false;
-			if (x.sym < 0 || x.sym >= nwa.numCSyms) return false;
-			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
+		if (nwa.numISyms < 0) {
+			return false;
 		}
-		for (RTrans x : nwa.rTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) return false;
-			if (x.sym < 0 || x.sym >= nwa.numRSyms) return false;
-			if (x.top < 0 || x.top >= nwa.numStates) return false;
-			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
+		if (nwa.numRSyms < 0) {
+			return false;
+		}
+		if (nwa.numCSyms < 0) {
+			return false;
+		}
+
+		if (nwa.isInitial == null || nwa.isInitial.length != nwa.numStates) {
+			return false;
+		}
+		if (nwa.isFinal == null || nwa.isFinal.length != nwa.numStates) {
+			return false;
+		}
+
+		for (final ITrans x : nwa.iTrans) {
+			if (x.src < 0 || x.src >= nwa.numStates) {
+				return false;
+			}
+			if (x.sym < 0 || x.sym >= nwa.numISyms) {
+				return false;
+			}
+			if (x.dst < 0 || x.dst >= nwa.numStates) {
+				return false;
+			}
+		}
+		for (final CTrans x : nwa.cTrans) {
+			if (x.src < 0 || x.src >= nwa.numStates) {
+				return false;
+			}
+			if (x.sym < 0 || x.sym >= nwa.numCSyms) {
+				return false;
+			}
+			if (x.dst < 0 || x.dst >= nwa.numStates) {
+				return false;
+			}
+		}
+		for (final RTrans x : nwa.rTrans) {
+			if (x.src < 0 || x.src >= nwa.numStates) {
+				return false;
+			}
+			if (x.sym < 0 || x.sym >= nwa.numRSyms) {
+				return false;
+			}
+			if (x.top < 0 || x.top >= nwa.numStates) {
+				return false;
+			}
+			if (x.dst < 0 || x.dst >= nwa.numStates) {
+				return false;
+			}
 		}
 
 		return true;
@@ -126,13 +158,25 @@ final class NWA implements Cloneable {
 	 *         identical transitions count as non-deterministic)
 	 */
 	static boolean checkDeterminism(NWA nwa) {
-		HashSet<ITrans> iSeen = new HashSet<ITrans>();
-		HashSet<CTrans> cSeen = new HashSet<CTrans>();
-		HashSet<RTrans> rSeen = new HashSet<RTrans>();
+		final HashSet<ITrans> iSeen = new HashSet<ITrans>();
+		final HashSet<CTrans> cSeen = new HashSet<CTrans>();
+		final HashSet<RTrans> rSeen = new HashSet<RTrans>();
 
-		for (ITrans x : nwa.iTrans)	if (!iSeen.add(new ITrans(x.src, x.sym, 0))) return false;
-		for (CTrans x : nwa.cTrans) if (!cSeen.add(new CTrans(x.src, x.sym, 0))) return false;
-		for (RTrans x : nwa.rTrans) if (!rSeen.add(new RTrans(x.src, x.sym, x.top, 0))) return false;
+		for (final ITrans x : nwa.iTrans) {
+			if (!iSeen.add(new ITrans(x.src, x.sym, 0))) {
+				return false;
+			}
+		}
+		for (final CTrans x : nwa.cTrans) {
+			if (!cSeen.add(new CTrans(x.src, x.sym, 0))) {
+				return false;
+			}
+		}
+		for (final RTrans x : nwa.rTrans) {
+			if (!rSeen.add(new RTrans(x.src, x.sym, x.top, 0))) {
+				return false;
+			}
+		}
 
 		return true;
 	}
@@ -144,11 +188,13 @@ final class NWA implements Cloneable {
 	 *         strictly ascending order.
 	 */
 	static ArrayList<Integer> computeInitialStates(NWA nwa) {
-		ArrayList<Integer> out = new ArrayList<Integer>();
+		final ArrayList<Integer> out = new ArrayList<Integer>();
 
-		for (int i = 0; i < nwa.numStates; i++)
-			if (nwa.isInitial[i])
+		for (int i = 0; i < nwa.numStates; i++) {
+			if (nwa.isInitial[i]) {
 				out.add(i);
+			}
+		}
 
 		return out;
 	}
@@ -160,11 +206,13 @@ final class NWA implements Cloneable {
 	 *         strictly ascending order.
 	 */
 	static ArrayList<Integer> computeFinalStates(NWA nwa) {
-		ArrayList<Integer> out = new ArrayList<Integer>();
+		final ArrayList<Integer> out = new ArrayList<Integer>();
 
-		for (int i = 0; i < nwa.numStates; i++)
-			if (nwa.isFinal[i])
+		for (int i = 0; i < nwa.numStates; i++) {
+			if (nwa.isFinal[i]) {
 				out.add(i);
+			}
+		}
 
 		return out;
 	}
@@ -175,7 +223,7 @@ final class NWA implements Cloneable {
 	 */
 	@Override
 	public NWA clone() {
-		NWA out = new NWA();
+		final NWA out = new NWA();
 		out.numStates = numStates;
 		out.numISyms = numISyms;
 		out.numCSyms = numCSyms;
@@ -217,10 +265,11 @@ final class ITrans {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ITrans))
+		if (obj == null || !(obj instanceof ITrans)) {
 			return false;
+		}
 
-		ITrans b = (ITrans) obj;
+		final ITrans b = (ITrans) obj;
 		return src == b.src && sym == b.sym && dst == b.dst;
 	}
 
@@ -230,8 +279,12 @@ final class ITrans {
 	}
 
 	static int compareSrcSymDst(ITrans a, ITrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.sym != b.sym) return a.sym - b.sym;
+		if (a.src != b.src) {
+			return a.src - b.src;
+		}
+		if (a.sym != b.sym) {
+			return a.sym - b.sym;
+		}
 		return a.dst - b.dst;
 	}
 }
@@ -262,10 +315,11 @@ final class CTrans {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof CTrans))
+		if (obj == null || !(obj instanceof CTrans)) {
 			return false;
+		}
 
-		CTrans b = (CTrans) obj;
+		final CTrans b = (CTrans) obj;
 
 		return src == b.src && sym == b.sym && dst == b.dst;
 	}
@@ -276,10 +330,12 @@ final class CTrans {
 	}
 
 	static int compareSrcSymDst(CTrans a, CTrans b) {
-		if (a.src != b.src)
+		if (a.src != b.src) {
 			return a.src - b.src;
-		if (a.sym != b.sym)
+		}
+		if (a.sym != b.sym) {
 			return a.sym - b.sym;
+		}
 		return a.dst - b.dst;
 	}
 }
@@ -315,10 +371,11 @@ final class RTrans {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof RTrans))
+		if (!(obj instanceof RTrans)) {
 			return false;
+		}
 
-		RTrans b = (RTrans) obj;
+		final RTrans b = (RTrans) obj;
 
 		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
 	}
@@ -329,16 +386,28 @@ final class RTrans {
 	}
 
 	static int compareSrcSymTopDst(RTrans a, RTrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.sym != b.sym) return a.sym - b.sym;
-		if (a.top != b.top) return a.top - b.top;
+		if (a.src != b.src) {
+			return a.src - b.src;
+		}
+		if (a.sym != b.sym) {
+			return a.sym - b.sym;
+		}
+		if (a.top != b.top) {
+			return a.top - b.top;
+		}
 		return a.dst - b.dst;
 	}
 
 	static int compareSrcTopSymDst(RTrans a, RTrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.top != b.top) return a.top - b.top;
-		if (a.sym != b.sym) return a.sym - b.sym;
+		if (a.src != b.src) {
+			return a.src - b.src;
+		}
+		if (a.top != b.top) {
+			return a.top - b.top;
+		}
+		if (a.sym != b.sym) {
+			return a.sym - b.sym;
+		}
 		return a.dst - b.dst;
 	}
 }

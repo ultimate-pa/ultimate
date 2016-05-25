@@ -80,7 +80,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 
 	/** @see #reversedTopologicalOrdering(Collection) */
 	public List<N> topologicalOrdering(Collection<N> graph) {
-		List<N> ordering = reversedTopologicalOrdering(graph);
+		final List<N> ordering = reversedTopologicalOrdering(graph);
 		if (ordering != null) {
 			Collections.reverse(ordering);
 		}
@@ -104,7 +104,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 		while (!mUnmarkedNodes.isEmpty()) {
 			try {
 				visit(mUnmarkedNodes.iterator().next());
-			} catch (GraphCycleException gce) {
+			} catch (final GraphCycleException gce) {
 				return null;
 			}
 		}
@@ -117,7 +117,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
 			throw new GraphCycleException();
 		} else if (mUnmarkedNodes.contains(node)) {
 			markTemporarily(node);
-			for (N outgoingNode : node.getOutgoingNodes()) {
+			for (final N outgoingNode : node.getOutgoingNodes()) {
 				// using "getOutgoingLabel" is not efficient, but the only way without using a less-generic graph type.
 				if (mOutgoingEdgesFilter.accept(node, node.getOutgoingEdgeLabel(outgoingNode), outgoingNode)) {
 					visit(outgoingNode);

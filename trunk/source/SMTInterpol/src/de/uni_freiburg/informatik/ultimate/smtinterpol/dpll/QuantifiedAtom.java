@@ -35,6 +35,7 @@ public class QuantifiedAtom extends DPLLAtom {
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		return mSmtFormula;
 	}
+	@Override
 	public String toString() {
 		return mName;
 	}

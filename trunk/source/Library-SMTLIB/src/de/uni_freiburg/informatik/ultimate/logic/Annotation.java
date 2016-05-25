@@ -44,8 +44,9 @@ public class Annotation {
 	Object mValue;
 	
 	public Annotation(String key, Object value) {
-		if (key == null)
+		if (key == null) {
 			throw new SMTLIBException("Empty annotations not allowed!");
+		}
 		mKey = key;
 		mValue = value;
 	}
@@ -58,9 +59,10 @@ public class Annotation {
 		return mValue;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Annotation) {
-			Annotation annot = (Annotation) obj;
+			final Annotation annot = (Annotation) obj;
 			return mKey.equals(annot.mKey)
 				&& (mValue == null ? annot.mValue == null
 					: mValue instanceof Object[] 
@@ -72,6 +74,7 @@ public class Annotation {
 		return false;
 	}
 	
+	@Override
 	public int hashCode() {
 		return mKey.hashCode() * 31 
 			+ (mValue == null ? 0

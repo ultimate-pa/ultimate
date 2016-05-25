@@ -56,17 +56,17 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 			Collections.<LETTER>emptySet(),
 			alternatingAutomaton.getStateFactory()
 		);
-		LinkedList<BitSet> newStates = new LinkedList<BitSet>();
+		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		resultAutomaton.addState(true, alternatingAutomaton.getAcceptingFunction().getResult(alternatingAutomaton.getFinalStatesBitVector()), getPredicate(alternatingAutomaton.getFinalStatesBitVector()));
 		while(!newStates.isEmpty()){
-			BitSet state = newStates.removeFirst();
-			IPredicate predicate = getPredicate(state);
-			for(LETTER letter : alternatingAutomaton.getAlphabet()){
-				BitSet nextState = (BitSet) state.clone();
+			final BitSet state = newStates.removeFirst();
+			final IPredicate predicate = getPredicate(state);
+			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
 				if(!nextState.isEmpty()){
-					IPredicate nextPredicate = getPredicate(nextState);
+					final IPredicate nextPredicate = getPredicate(nextState);
 					if(!resultAutomaton.getStates().contains(nextPredicate)){
 						resultAutomaton.addState(false, alternatingAutomaton.getAcceptingFunction().getResult(nextState), nextPredicate);
 						newStates.add(nextState);
@@ -76,10 +76,10 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 			}
 		}
 	}
-	private AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private SmtManager smtManager;
-	private PredicateUnifier predicateUnifier;
-	private NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
+	private final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
+	private final SmtManager smtManager;
+	private final PredicateUnifier predicateUnifier;
+	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 
 	private IPredicate getPredicate(BitSet state){
 		IPredicate predicate = predicateUnifier.getTruePredicate();

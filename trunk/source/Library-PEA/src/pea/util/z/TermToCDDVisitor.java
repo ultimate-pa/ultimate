@@ -81,9 +81,11 @@ public abstract class TermToCDDVisitor  implements
 
     protected SectionInfo sectionInfo;
 
-    public abstract CDD visitMemPred(MemPred pred);
+    @Override
+	public abstract CDD visitMemPred(MemPred pred);
 
-    public abstract CDD visitTerm(Term zedObject);
+    @Override
+	public abstract CDD visitTerm(Term zedObject);
 
     /**
      * @param term
@@ -92,17 +94,19 @@ public abstract class TermToCDDVisitor  implements
         sectionInfo = term.sectionInfo;
     }
 
-    public CDD visitAndExpr(AndExpr term) {
+    @Override
+	public CDD visitAndExpr(AndExpr term) {
         CDD result = CDD.TRUE;
-        for (Expr expr : term.getExpr()) {
+        for (final Expr expr : term.getExpr()) {
             result = result.and(expr.accept(this));
         }
         return result;
     }
 
-    public CDD visitAndPred(AndPred term) {
+    @Override
+	public CDD visitAndPred(AndPred term) {
         CDD result = CDD.TRUE;
-        for (Pred pred : term.getPred()) {
+        for (final Pred pred : term.getPred()) {
             result = result.and(pred.accept(this));
         }
         return result;
@@ -111,7 +115,7 @@ public abstract class TermToCDDVisitor  implements
     @Override
     public CDD visitOrExpr(OrExpr term) {
         CDD result = CDD.FALSE;
-        for (Expr expr : term.getExpr()) {
+        for (final Expr expr : term.getExpr()) {
             result = result.or(expr.accept(this));
         }
         return result;
@@ -120,7 +124,7 @@ public abstract class TermToCDDVisitor  implements
     @Override
     public CDD visitOrPred(OrPred term) {
         CDD result = CDD.FALSE;
-        for (Pred pred : term.getPred()) {
+        for (final Pred pred : term.getPred()) {
             result = result.or(pred.accept(this));
         }
         return result;

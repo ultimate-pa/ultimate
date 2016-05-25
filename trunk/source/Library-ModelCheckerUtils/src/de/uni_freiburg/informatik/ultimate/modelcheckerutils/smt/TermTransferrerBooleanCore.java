@@ -46,14 +46,14 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 		super(script);
 		mAuxiliaryTerm = constructAuxiliaryTerm();
 		mFreshTermCounter = 0;
-		IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
+		final IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
 			
 			@Override
 			public Term constructValue(Term key) {
-				String name = mFreshTermPrefix + mFreshTermCounter;
+				final String name = mFreshTermPrefix + mFreshTermCounter;
 				mFreshTermCounter++;
 				mScript.declareFun(name, new Sort[0], mScript.sort("Bool"));
-				Term value = mScript.term(name);
+				final Term value = mScript.term(name);
 				mBacktransferMapping.put(value, key);
 				return value;
 			}
@@ -62,7 +62,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	}
 	
 	public Term constructAuxiliaryTerm() {
-		String name = this.getClass().getCanonicalName() + "_AUX";
+		final String name = this.getClass().getCanonicalName() + "_AUX";
 		mScript.declareFun(name, new Sort[0], mScript.sort("Bool"));
 		return mScript.term(name);
 	}
@@ -80,7 +80,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		
 		if (Arrays.asList(newArgs).contains(mAuxiliaryTerm)) {
-			Term result = mConstructionCache.getOrConstuct(appTerm);
+			final Term result = mConstructionCache.getOrConstuct(appTerm);
 			setResult(result);
 		} else {
 			super.convertApplicationTerm(appTerm, newArgs);

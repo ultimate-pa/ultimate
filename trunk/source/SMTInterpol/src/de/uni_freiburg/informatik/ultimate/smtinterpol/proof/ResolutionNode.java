@@ -47,9 +47,10 @@ public class ResolutionNode extends ProofNode {
 			assert pivot != null;
 			assert antecedent != null;
 			assert antecedent.contains(pivot);
-			this.mPivot = pivot;
-			this.mAntecedent = antecedent;
+			mPivot = pivot;
+			mAntecedent = antecedent;
 		}
+		@Override
 		public String toString() {
 			return mPivot.toString() + " => " + mAntecedent;
 		}
@@ -81,6 +82,7 @@ public class ResolutionNode extends ProofNode {
 		return mAntecedents;
 	}
 	
+	@Override
 	public String toString() {
 		return mPrimary + " => " + Arrays.toString(mAntecedents);
 	}

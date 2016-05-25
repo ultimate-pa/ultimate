@@ -68,7 +68,7 @@ public class CsvConcatenator implements ITestSummary {
 		super();
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
-		List<String> emtpyList = Collections.emptyList();
+		final List<String> emtpyList = Collections.emptyList();
 		mCsvProvider = new SimpleCsvProvider<Object>(emtpyList);
 	}
 
@@ -99,11 +99,11 @@ public class CsvConcatenator implements ITestSummary {
 		if (resultService == null) {
 			return;
 		}
-		for (ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
+		for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
 				mBenchmark)) {
-			ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
-			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
-			ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
+			final ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
+			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
+			final ICsvProvider<Object> benchmarkCsvWithRunDefinition = addUltimateRunDefinition(ultimateRunDefinition,
 					benchmarkCsv, category, message);
 			add(benchmarkCsvWithRunDefinition);
 		}
@@ -115,15 +115,15 @@ public class CsvConcatenator implements ITestSummary {
 
 	private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition,
 			ICsvProvider<Object> benchmark, String category, String message) {
-		List<String> resultColumns = new ArrayList<>();
+		final List<String> resultColumns = new ArrayList<>();
 		resultColumns.add("File");
 		resultColumns.add("Settings");
 		resultColumns.add("Toolchain");
 		resultColumns.addAll(benchmark.getColumnTitles());
-		ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
-		int rows = benchmark.getRowHeaders().size();
+		final ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
+		final int rows = benchmark.getRowHeaders().size();
 		for (int i = 0; i < rows; i++) {
-			List<Object> resultRow = new ArrayList<>();
+			final List<Object> resultRow = new ArrayList<>();
 			resultRow.add(ultimateRunDefinition.getInputFileNames().replace(",", ";"));
 			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());

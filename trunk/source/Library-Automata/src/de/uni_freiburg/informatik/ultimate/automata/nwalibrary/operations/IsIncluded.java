@@ -64,7 +64,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		mOperand1 = nwa1;
 		mOperand2 = nwa2;
 		mLogger.info(startMessage());
-		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
+		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
 				services, (new Difference<LETTER, STATE>(mServices, stateFactory, nwa1, nwa2)).getResult());
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getNestedRun();

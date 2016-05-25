@@ -37,6 +37,7 @@ public abstract class PetriNetVisualizationNode extends ModifiableDirectedGraph<
 		mName = name;
 	}
 
+	@Override
 	public String toString() {
 		return mName;
 	}

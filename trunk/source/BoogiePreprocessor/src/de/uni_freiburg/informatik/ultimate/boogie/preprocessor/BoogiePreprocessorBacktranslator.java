@@ -71,11 +71,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
  * 
@@ -145,11 +145,11 @@ public class BoogiePreprocessorBacktranslator
 		if (state == null) {
 			return null;
 		} else {
-			Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
-			for (Expression var : state.getVariables()) {
-				Expression newVar = translateExpression(var);
-				Collection<Expression> newValues = new ArrayList<>();
-				for (Expression value : state.getValues(var)) {
+			final Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
+			for (final Expression var : state.getVariables()) {
+				final Expression newVar = translateExpression(var);
+				final Collection<Expression> newValues = new ArrayList<>();
+				for (final Expression value : state.getValues(var)) {
 					newValues.add(translateExpression(value));
 				}
 				newVariable2Values.put(newVar, newValues);
@@ -159,12 +159,12 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private BoogieASTNode backtranslateTraceElement(BoogieASTNode elem) {
-		BoogieASTNode newElem = mMapping.get(elem);
+		final BoogieASTNode newElem = mMapping.get(elem);
 
 		if (newElem == null) {
 			if (elem instanceof EnsuresSpecification) {
-				EnsuresSpecification spec = (EnsuresSpecification) elem;
-				Expression formula = spec.getFormula();
+				final EnsuresSpecification spec = (EnsuresSpecification) elem;
+				final Expression formula = spec.getFormula();
 				if (formula instanceof BooleanLiteral) {
 					if (((BooleanLiteral) formula).getValue()) {
 						// this
@@ -198,11 +198,11 @@ public class BoogiePreprocessorBacktranslator
 			List<ProgramState<Expression>> newProgramStates,
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
-		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
-		IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 
 		for (int i = 0; i < translatedTrace.size(); ++i) {
-			BoogieASTNode elem = translatedTrace.get(i);
+			final BoogieASTNode elem = translatedTrace.get(i);
 
 			if (elem == null) {
 				// we kept the null values so that indices match between trace
@@ -211,19 +211,19 @@ public class BoogiePreprocessorBacktranslator
 				continue;
 			}
 			
-			AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
+			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 
 			if (elem instanceof WhileStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
-				WhileStatement stmt = (WhileStatement) elem;
-				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
+				final WhileStatement stmt = (WhileStatement) elem;
+				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
 						info, stringProvider, ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
-				IfStatement stmt = (IfStatement) elem;
-				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
+				final IfStatement stmt = (IfStatement) elem;
+				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
 						info, stringProvider, ate.getRelevanceInformation()));
 
@@ -249,12 +249,12 @@ public class BoogiePreprocessorBacktranslator
 
 		// we need to clear the null values before creating the final
 		// BoogieProgramExecution
-		List<AtomicTraceElement<BoogieASTNode>> actualAtomicTrace = new ArrayList<>();
-		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = new HashMap<>();
+		final List<AtomicTraceElement<BoogieASTNode>> actualAtomicTrace = new ArrayList<>();
+		final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = new HashMap<>();
 		partialProgramStateMapping.put(-1, newInitialState);
 		int i = 0;
 		int j = 0;
-		for (AtomicTraceElement<BoogieASTNode> possibleNullElem : atomicTrace) {
+		for (final AtomicTraceElement<BoogieASTNode> possibleNullElem : atomicTrace) {
 			if (possibleNullElem != null) {
 				actualAtomicTrace.add(possibleNullElem);
 				partialProgramStateMapping.put(j, newProgramStates.get(i));
@@ -274,7 +274,7 @@ public class BoogiePreprocessorBacktranslator
 			// it is not even an unary expression, it surely evaluates to true
 			return StepInfo.CONDITION_EVAL_TRUE;
 		} else {
-			UnaryExpression inputCond = (UnaryExpression) input;
+			final UnaryExpression inputCond = (UnaryExpression) input;
 			if (inputCond.getOperator() != Operator.LOGICNEG) {
 				// it is an unaryCond, but its no negation, so it must be true
 				return StepInfo.CONDITION_EVAL_TRUE;
@@ -286,7 +286,7 @@ public class BoogiePreprocessorBacktranslator
 				// nope, so that means it is false
 				return StepInfo.CONDITION_EVAL_FALSE;
 			} else {
-				UnaryExpression outputCond = (UnaryExpression) output;
+				final UnaryExpression outputCond = (UnaryExpression) output;
 				if (inputCond.getOperator() != Operator.LOGICNEG) {
 					// it is an unaryCond, but its no negation, so it must be
 					// false
@@ -318,8 +318,8 @@ public class BoogiePreprocessorBacktranslator
 
 	@Override
 	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
-		List<String> rtr = new ArrayList<>();
-		for (BoogieASTNode node : trace) {
+		final List<String> rtr = new ArrayList<>();
+		for (final BoogieASTNode node : trace) {
 			if (node instanceof Statement) {
 				rtr.add(BoogiePrettyPrinter.print((Statement) node));
 			} else {
@@ -376,13 +376,13 @@ public class BoogiePreprocessorBacktranslator
 			return BoogiePrettyPrinter.print((VarList) node);
 		}
 
-		StringBuilder output = new StringBuilder();
+		final StringBuilder output = new StringBuilder();
 		output.append(node.getClass().getSimpleName());
-		ILocation loc = node.getLocation();
+		final ILocation loc = node.getLocation();
 
 		if (loc != null) {
-			int start = loc.getStartLine();
-			int end = loc.getEndLine();
+			final int start = loc.getStartLine();
+			final int end = loc.getEndLine();
 
 			output.append(" L");
 			output.append(start);
@@ -391,8 +391,8 @@ public class BoogiePreprocessorBacktranslator
 				output.append(end);
 			}
 
-			int startC = loc.getStartColumn();
-			int endC = loc.getEndColumn();
+			final int startC = loc.getStartColumn();
+			final int endC = loc.getEndColumn();
 			output.append(" C");
 			output.append(startC);
 
@@ -415,7 +415,7 @@ public class BoogiePreprocessorBacktranslator
 			}
 
 			if (expr instanceof IdentifierExpression) {
-				IdentifierExpression ident = (IdentifierExpression) expr;
+				final IdentifierExpression ident = (IdentifierExpression) expr;
 				if (ident.getDeclarationInformation() == null) {
 					reportUnfinishedBacktranslation("Identifier has no declaration information, "
 							+ "using identity as back-translation of " + expr);
@@ -427,14 +427,14 @@ public class BoogiePreprocessorBacktranslator
 					return expr;
 				}
 
-				Declaration decl = mSymbolTable.getDeclaration(ident);
+				final Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {
 					reportUnfinishedBacktranslation(
 							"No declaration in symboltable, using identity as " + "back-translation of " + expr);
 					return expr;
 				}
-				BoogieASTNode newDecl = getMapping(decl);
+				final BoogieASTNode newDecl = getMapping(decl);
 				if (newDecl instanceof Declaration) {
 					return extractIdentifier((Declaration) newDecl, ident);
 				} else if (newDecl instanceof VarList) {
@@ -456,8 +456,8 @@ public class BoogiePreprocessorBacktranslator
 				return newDecl;
 			} else if (decl instanceof VariableDeclaration) {
 				// it could be some kind of pointer type
-				VariableDeclaration varDecl = (VariableDeclaration) decl;
-				for (VarList vl : varDecl.getVariables()) {
+				final VariableDeclaration varDecl = (VariableDeclaration) decl;
+				for (final VarList vl : varDecl.getVariables()) {
 					newDecl = getMapping(vl);
 					if (newDecl != null) {
 						return newDecl;
@@ -470,7 +470,7 @@ public class BoogiePreprocessorBacktranslator
 		private IdentifierExpression extractIdentifier(Declaration mappedDecl, IdentifierExpression inputExp) {
 			IdentifierExpression rtr = inputExp;
 			if (mappedDecl instanceof VariableDeclaration) {
-				VariableDeclaration mappedVarDecl = (VariableDeclaration) mappedDecl;
+				final VariableDeclaration mappedVarDecl = (VariableDeclaration) mappedDecl;
 				rtr = extractIdentifier(mappedVarDecl.getLocation(), mappedVarDecl.getVariables(), inputExp);
 				if (rtr != inputExp) {
 					return rtr;
@@ -480,7 +480,7 @@ public class BoogiePreprocessorBacktranslator
 						+ BoogiePrettyPrinter.print(inputExp));
 
 			} else if (mappedDecl instanceof Procedure) {
-				Procedure proc = (Procedure) mappedDecl;
+				final Procedure proc = (Procedure) mappedDecl;
 				rtr = extractIdentifier(proc.getLocation(), proc.getInParams(), inputExp);
 				if (rtr != inputExp) {
 					return rtr;
@@ -507,7 +507,7 @@ public class BoogiePreprocessorBacktranslator
 				return inputExp;
 			}
 			IdentifierExpression rtr = inputExp;
-			for (VarList lil : list) {
+			for (final VarList lil : list) {
 				rtr = extractIdentifier(mappedLoc, lil, inputExp);
 				if (rtr != inputExp) {
 					return rtr;
@@ -521,12 +521,12 @@ public class BoogiePreprocessorBacktranslator
 			if (list == null) {
 				return inputExp;
 			}
-			IType bplType = list.getType().getBoogieType();
+			final IType bplType = list.getType().getBoogieType();
 			if (!(bplType instanceof BoogieType)) {
 				throw new UnsupportedOperationException("The BoogiePreprocessorBacktranslator cannot handle "
 						+ bplType.getClass().getSimpleName() + " as type of VarList");
 			}
-			BoogieType type = (BoogieType) bplType;
+			final BoogieType type = (BoogieType) bplType;
 			return extractIdentifier(mappedLoc, list, inputExp, type);
 
 		}
@@ -534,12 +534,12 @@ public class BoogiePreprocessorBacktranslator
 		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp,
 				BoogieType type) {
 			if (type instanceof StructType) {
-				StructType st = (StructType) type;
-				String[] inputNames = inputExp.getIdentifier().split("\\.");
+				final StructType st = (StructType) type;
+				final String[] inputNames = inputExp.getIdentifier().split("\\.");
 				if (inputNames.length == 1) {
 					// its the struct itself
-					String inputName = inputExp.getIdentifier();
-					for (String name : list.getIdentifiers()) {
+					final String inputName = inputExp.getIdentifier();
+					for (final String name : list.getIdentifiers()) {
 						if (inputName.contains(name)) {
 							return new IdentifierExpression(mappedLoc, type, name,
 									inputExp.getDeclarationInformation());
@@ -550,8 +550,8 @@ public class BoogiePreprocessorBacktranslator
 					// its a struct field access
 					// first, find the name of the struct
 					String structName = null;
-					String inputStructName = inputNames[0];
-					for (String name : list.getIdentifiers()) {
+					final String inputStructName = inputNames[0];
+					for (final String name : list.getIdentifiers()) {
 						if (inputStructName.contains(name)) {
 							structName = name;
 							break;
@@ -559,7 +559,7 @@ public class BoogiePreprocessorBacktranslator
 					}
 					if (structName != null) {
 						// if this worked, lets get the field name
-						for (String fieldName : st.getFieldIds()) {
+						for (final String fieldName : st.getFieldIds()) {
 							if (inputNames[1].contains(fieldName)) {
 								return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
 										inputExp.getDeclarationInformation());
@@ -572,11 +572,11 @@ public class BoogiePreprocessorBacktranslator
 							+ BoogiePrettyPrinter.print(list) + " not handled");
 				}
 			} else if (type instanceof ConstructedType) {
-				ConstructedType ct = (ConstructedType) type;
+				final ConstructedType ct = (ConstructedType) type;
 				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 			} else if (type instanceof PrimitiveType) {
-				String inputName = inputExp.getIdentifier();
-				for (String name : list.getIdentifiers()) {
+				final String inputName = inputExp.getIdentifier();
+				for (final String name : list.getIdentifiers()) {
 					if (inputName.contains(name)) {
 						return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
 								inputExp.getDeclarationInformation());

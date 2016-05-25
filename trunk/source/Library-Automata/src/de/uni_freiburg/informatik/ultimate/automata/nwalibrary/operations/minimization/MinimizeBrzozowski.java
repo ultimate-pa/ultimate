@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -119,7 +119,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 */
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		NestedWordAutomaton<LETTER, STATE> reversed =
+		final NestedWordAutomaton<LETTER, STATE> reversed =
 				new NestedWordAutomaton<LETTER, STATE>(mServices, 
 						automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
@@ -156,7 +156,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
 		}
 		// this case cannot occur
-		catch (AutomataLibraryException e) {
+		catch (final AutomataLibraryException e) {
 			e.printStackTrace();
 			return automaton;
 		}

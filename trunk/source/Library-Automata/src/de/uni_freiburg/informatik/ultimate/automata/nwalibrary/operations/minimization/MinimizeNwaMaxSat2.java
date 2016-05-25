@@ -90,15 +90,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		mInitialEquivalenceClasses = 
 				(new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand)).getResult();
 		mState2EquivalenceClass = new HashMap<>();
-		for (Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
-			for (STATE state : equivalenceClass) {
+		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
 		}
 		generateVariables();
 		generateTransitionConstraints();
 		generateTransitivityConstraints();
-		boolean satisfiable = mSolver.solve();
+		final boolean satisfiable = mSolver.solve();
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
@@ -119,7 +119,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private UnionFind<STATE> constructEquivalenceClasses() throws AssertionError {
 		final UnionFind<STATE> resultingEquivalenceClasses;
 		resultingEquivalenceClasses = new UnionFind<>();
-		for (Entry<Doubleton<STATE>, VariableStatus> entry : mSolver.getValues().entrySet()) {
+		for (final Entry<Doubleton<STATE>, VariableStatus> entry : mSolver.getValues().entrySet()) {
 			switch (entry.getValue()) {
 			case TRUE:
 				final STATE rep1 = resultingEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(
@@ -141,11 +141,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	}
 
 	private void processDoubleton(Doubleton<STATE> doubleton, ArrayDeque<Doubleton<STATE>> worklist) {
-		STATE one = doubleton.getOneElement();
-		STATE other = doubleton.getOtherElement();
+		final STATE one = doubleton.getOneElement();
+		final STATE other = doubleton.getOtherElement();
 		// internal
-		for (IncomingInternalTransition<LETTER, STATE> trans1 : mOperand.internalPredecessors(one)) {
-			for (IncomingInternalTransition<LETTER, STATE> trans2 : mOperand.internalPredecessors(trans1.getLetter(), other)) {
+		for (final IncomingInternalTransition<LETTER, STATE> trans1 : mOperand.internalPredecessors(one)) {
+			for (final IncomingInternalTransition<LETTER, STATE> trans2 : mOperand.internalPredecessors(trans1.getLetter(), other)) {
 				if (!trans1.getPred().equals(trans2.getPred())) {
 					final Doubleton<STATE> predDoubleton = mStatePairs.get(trans1.getPred(), trans2.getPred());
 					if (!mProcessedDoubletons.contains(predDoubleton)) {
@@ -157,8 +157,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 			}
 		}
 		// call
-		for (IncomingCallTransition<LETTER, STATE> trans1 : mOperand.callPredecessors(one)) {
-			for (IncomingCallTransition<LETTER, STATE> trans2 : mOperand.callPredecessors(trans1.getLetter(), other)) {
+		for (final IncomingCallTransition<LETTER, STATE> trans1 : mOperand.callPredecessors(one)) {
+			for (final IncomingCallTransition<LETTER, STATE> trans2 : mOperand.callPredecessors(trans1.getLetter(), other)) {
 				if (!trans1.getPred().equals(trans2.getPred())) {
 					final Doubleton<STATE> predDoubleton = mStatePairs.get(trans1.getPred(), trans2.getPred());
 					if (!mProcessedDoubletons.contains(predDoubleton)) {
@@ -171,8 +171,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 		
 		// return
-		for (IncomingReturnTransition<LETTER, STATE> trans1 : mOperand.returnPredecessors(one)) {
-			for (IncomingReturnTransition<LETTER, STATE> trans2 : mOperand.returnPredecessors(trans1.getLetter(), other)) {
+		for (final IncomingReturnTransition<LETTER, STATE> trans1 : mOperand.returnPredecessors(one)) {
+			for (final IncomingReturnTransition<LETTER, STATE> trans2 : mOperand.returnPredecessors(trans1.getLetter(), other)) {
 				final Doubleton<STATE> linPredDoubleton = mStatePairs.get(trans1.getLinPred(), trans2.getLinPred());
 				final Doubleton<STATE> hierPredDoubleton = mStatePairs.get(trans1.getHierPred(), trans2.getHierPred());
 				if (!trans1.getLinPred().equals(trans2.getLinPred())) {
@@ -202,11 +202,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	}
 
 	private void generateVariables() throws AutomataOperationCanceledException {
-		for (Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i=0; i<states.length; i++) {
 				for (int j=0; j<i; j++) {
-					Doubleton<STATE> doubleton = new Doubleton<STATE>(states[i], states[j]);
+					final Doubleton<STATE> doubleton = new Doubleton<STATE>(states[i], states[j]);
 					mStatePairs.put(states[i], states[j], doubleton);
 					mStatePairs.put(states[j], states[i], doubleton);
 					mSolver.addVariable(doubleton);
@@ -220,7 +220,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	}
 	
 	private void generateTransitionConstraints() throws AutomataOperationCanceledException {
-		for (Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i=0; i<states.length; i++) {
 				for (int j=0; j<i; j++) {
@@ -228,16 +228,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 						// all corresponding clauses are trivially true
 						continue;
 					}
-					boolean predPairKnowToBeSimilar = knownToBeSimilar(states[i], states[j]);
+					final boolean predPairKnowToBeSimilar = knownToBeSimilar(states[i], states[j]);
 
-					STATE state1 = states[i];
-					STATE state2 = states[j];
+					final STATE state1 = states[i];
+					final STATE state2 = states[j];
 
 					generateTransitionConstraint_Internal(state1, state2, predPairKnowToBeSimilar);
 					generateTransitionConstraint_Call(state1, state2, predPairKnowToBeSimilar);
 
-					for (STATE downi : mOperand.getDownStates(states[i])) {
-						for (STATE downj : mOperand.getDownStates(states[j])) {
+					for (final STATE downi : mOperand.getDownStates(states[i])) {
+						for (final STATE downj : mOperand.getDownStates(states[j])) {
 							generateTransitionConstraint_Return(state1, state2, 
 									predPairKnowToBeSimilar, downi, downj);
 						}
@@ -257,8 +257,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 
 	private void generateTransitionConstraint_Internal(STATE predState1,
 			STATE predState2, boolean predPairKnowToBeSimilar) {
-		for (OutgoingInternalTransition<LETTER, STATE> trans1 : mOperand.internalSuccessors(predState1)) {
-			for (OutgoingInternalTransition<LETTER, STATE> trans2 : mOperand.internalSuccessors(
+		for (final OutgoingInternalTransition<LETTER, STATE> trans1 : mOperand.internalSuccessors(predState1)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans2 : mOperand.internalSuccessors(
 					predState2, trans1.getLetter())) {
 				final STATE succState1 = trans1.getSucc();
 				final STATE succState2 = trans2.getSucc();
@@ -270,8 +270,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	
 	private void generateTransitionConstraint_Call(STATE predState1,
 			STATE predState2, boolean predPairKnowToBeSimilar) {
-		for (OutgoingCallTransition<LETTER, STATE> trans1 : mOperand.callSuccessors(predState1)) {
-			for (OutgoingCallTransition<LETTER, STATE> trans2 : mOperand.callSuccessors(
+		for (final OutgoingCallTransition<LETTER, STATE> trans1 : mOperand.callSuccessors(predState1)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans2 : mOperand.callSuccessors(
 					predState2, trans1.getLetter())) {
 				final STATE succState1 = trans1.getSucc();
 				final STATE succState2 = trans2.getSucc();
@@ -295,7 +295,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		} else {
 			predDoubleton= mStatePairs.get(linPredState1, linPredState2); 
 		}
-		boolean hierPredPairKnowToBeSimilar = knownToBeSimilar(hierPredState1, hierPredState2);
+		final boolean hierPredPairKnowToBeSimilar = knownToBeSimilar(hierPredState1, hierPredState2);
 		final Doubleton<STATE> hierPredDoubleton;
 		if (hierPredPairKnowToBeSimilar) {
 			// we will not need it
@@ -310,9 +310,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 			addThreeLiteralHornClause(predDoubleton, hierPredDoubleton, null);
 		} else {
 			// both DoubleDeckers have same outgoing return symbols
-			for (OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand.returnSuccessorsGivenHier(
+			for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand.returnSuccessorsGivenHier(
 					linPredState1, hierPredState1)) {
-				for (OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSucccessors(
+				for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSucccessors(
 						linPredState2, hierPredState2, trans1.getLetter())) {
 					if (knownToBeSimilar(trans1.getSucc(), trans2.getSucc())) {
 						// corresponding clauses is trivially true
@@ -377,11 +377,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	
 	private boolean haveSameOutgoingReturnSymbols(STATE up1, STATE down1, STATE up2, STATE down2) {
 		final Set<LETTER> returnLetters1 = new HashSet<>();
-		for (OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up1, down1)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up1, down1)) {
 			returnLetters1.add(trans.getLetter());
 		}
 		final Set<LETTER> returnLetters2 = new HashSet<>();
-		for (OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up2, down2)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up2, down2)) {
 			returnLetters2.add(trans.getLetter());
 		}
 		return returnLetters1.equals(returnLetters2);
@@ -441,7 +441,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	}
 	
 	private void generateTransitivityConstraints() throws AutomataOperationCanceledException {
-		for (Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i=0; i<states.length; i++) {
 				for (int j=0; j<i; j++) {

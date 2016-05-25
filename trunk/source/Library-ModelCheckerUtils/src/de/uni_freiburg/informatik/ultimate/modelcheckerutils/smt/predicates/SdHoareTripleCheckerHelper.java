@@ -77,13 +77,13 @@ public class SdHoareTripleCheckerHelper {
 	
 	private static boolean varSetDisjoint(Set<BoogieVar> set1, Set<BoogieVar> set2) {
 		if (set1.size() < set2.size()) {
-			for (BoogieVar bv : set1) {
+			for (final BoogieVar bv : set1) {
 				if (set2.contains(bv)) {
 					return false;
 				}
 			}
 		} else {
-			for (BoogieVar bv : set2) {
+			for (final BoogieVar bv : set2) {
 				if (set1.contains(bv)) {
 					return false;
 				}
@@ -108,7 +108,7 @@ public class SdHoareTripleCheckerHelper {
 	 * FIXME: Check for precondition false, not for precondition true.
 	 */
 	public Validity sdecInternalToFalse(IPredicate pre, IInternalAction act) {
-		Infeasibility infeasiblity = act.getTransformula().isInfeasible();
+		final Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (varsDisjoinedFormInVars(pre, act.getTransformula())) {
 				mHoareTripleCheckerStatistics.getSDtfsCounter().incIn();
@@ -136,7 +136,7 @@ public class SdHoareTripleCheckerHelper {
 	 * @return
 	 */
 	private boolean varsDisjoinedFormInVars(IPredicate state, TransFormula tf) {
-		for (BoogieVar bv : state.getVars()) {
+		for (final BoogieVar bv : state.getVars()) {
 			if (tf.getInVars().containsKey(bv)) {
 				return false;
 			}
@@ -165,7 +165,7 @@ public class SdHoareTripleCheckerHelper {
 	 */
 	public Validity sdecInteral(IPredicate pre, IInternalAction act, IPredicate post) {
 		if (mPredicateCoverageChecker != null) {
-			Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
+			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), act.getTransformula().getAssignedVars())) {
 					mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
@@ -173,12 +173,12 @@ public class SdHoareTripleCheckerHelper {
 				}
 			}
 		}
-		for (BoogieVar bv : pre.getVars()) {
+		for (final BoogieVar bv : pre.getVars()) {
 			if (act.getTransformula().getInVars().containsKey(bv)) {
 				return null;
 			}
 		}
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 //			if (pre.getVars().contains(bv)) {
 //				return null;
 //			} else 
@@ -191,7 +191,7 @@ public class SdHoareTripleCheckerHelper {
 		// now, we know that vars of pre and post are both disjoint from the
 		/// vars of cb. Edge is inductive iff pre implies post
 		if (mPredicateCoverageChecker != null) {
-			Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
+			final Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
 				mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 				return Validity.VALID;
@@ -200,7 +200,7 @@ public class SdHoareTripleCheckerHelper {
 			} else if (sat == Validity.NOT_CHECKED) {
 				return null;
 			} else if (sat == Validity.INVALID) {
-				String proc = act.getPreceedingProcedure();
+				final String proc = act.getPreceedingProcedure();
 				assert proc.equals(act.getSucceedingProcedure()) : "internal statement must not change procedure";
 				if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
 						mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
@@ -232,7 +232,7 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecInteral(pre, act, post);
 		}
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 			if (pre.getVars().contains(bv)) {
 				continue;
 			} else if (act.getTransformula().getInVars().containsKey(bv)) {
@@ -260,7 +260,7 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	public Validity sdecCall(IPredicate pre, ICallAction act, IPredicate post) {
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				//if oldVar occurs this edge might be inductive since 
 				// old(g)=g is true
@@ -273,7 +273,7 @@ public class SdHoareTripleCheckerHelper {
 			}
 		}
 		//workaround see preHierIndependent()
-		TransFormula locVarAssignTf = act.getLocalVarsAssignment();
+		final TransFormula locVarAssignTf = act.getLocalVarsAssignment();
 		if (!varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return null;
 		}
@@ -288,10 +288,10 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecCall(pre, cb, post);
 		}
-		TransFormula locVarAssignTf = cb.getLocalVarsAssignment();
-		boolean argumentsRestrictedByPre = 
+		final TransFormula locVarAssignTf = cb.getLocalVarsAssignment();
+		final boolean argumentsRestrictedByPre = 
 				!varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 			if (bv.isGlobal()) {
 				continue;
 			} else {
@@ -324,7 +324,7 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecReturn(pre, hier, ret, post);
 		}
-		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
 		/*
 		 * Old Version. Does not work if param set to constant.
@@ -343,17 +343,17 @@ public class SdHoareTripleCheckerHelper {
 		}
 		 * 
 		 */
-		Set<BoogieVar> parameters = ret.getLocalVarsAssignmentOfCall().getAssignedVars();
+		final Set<BoogieVar> parameters = ret.getLocalVarsAssignmentOfCall().getAssignedVars();
 		if (!varSetDisjoint(parameters, pre.getVars())) {
 			return null;
 		}
 
-		String proc = ret.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobals = 
+		final String proc = ret.getPreceedingProcedure();
+		final Set<BoogieVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
-		boolean assignedVarsRestrictedByPre = 
+		final boolean assignedVarsRestrictedByPre = 
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					if (hier.getVars().contains(bv)) {
@@ -418,11 +418,11 @@ public class SdHoareTripleCheckerHelper {
 		
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
-		Set<BoogieVar> modifiableGlobals = 
+		final Set<BoogieVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 
 		
-		for (BoogieVar bv : pre.getVars()) {
+		for (final BoogieVar bv : pre.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					if (hier.getVars().contains(((BoogieOldVar) bv).getNonOldVar())) {
@@ -441,17 +441,17 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	private boolean prePostIndependent(IPredicate pre, IReturnAction ret, IPredicate post) {
-		TransFormula returnAssignTf = ret.getAssignmentOfReturn();
+		final TransFormula returnAssignTf = ret.getAssignmentOfReturn();
 		if (!varSetDisjoint(pre.getVars(), returnAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(returnAssignTf.getAssignedVars(), post.getVars())) {
 			return false;
 		}
-		TransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
+		final TransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
 		if (!varSetDisjoint(post.getVars(), locVarAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return false;
 		}
-		for (BoogieVar bv : pre.getVars()) {
+		for (final BoogieVar bv : pre.getVars()) {
 			if (bv.isGlobal() && !bv.isOldvar()) {
 				if (pre.getVars().contains(bv)) {
 					return false;
@@ -463,13 +463,13 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	private boolean hierPostIndependent(IPredicate hier, IReturnAction ret, IPredicate post) {
-		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
-		String proc = ret.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobals = 
+		final String proc = ret.getPreceedingProcedure();
+		final Set<BoogieVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
-		for (BoogieVar bv : post.getVars()) {
+		for (final BoogieVar bv : post.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
 				//do nothing
 				continue;
@@ -495,9 +495,9 @@ public class SdHoareTripleCheckerHelper {
 	 * not able to determinie inductivity selfloop. 
 	 */
 	public Validity sdecInternalSelfloop(IPredicate p, IInternalAction act) {
-		Set<BoogieVar> assignedVars = act.getTransformula().getAssignedVars();
-		Set<BoogieVar> occVars = p.getVars();
-		for (BoogieVar occVar : occVars) {
+		final Set<BoogieVar> assignedVars = act.getTransformula().getAssignedVars();
+		final Set<BoogieVar> occVars = p.getVars();
+		for (final BoogieVar occVar : occVars) {
 			if (assignedVars.contains(occVar)) {
 				return null;
 			}
@@ -511,7 +511,7 @@ public class SdHoareTripleCheckerHelper {
 	 * Returns UNSAT if p contains only non-old globals.
 	 */
 	public Validity sdecCallSelfloop(IPredicate p, ICallAction call) {
-		for (BoogieVar bv : p.getVars()) {
+		for (final BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return null;
@@ -527,8 +527,8 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public Validity sdecReturnSelfloopPre(IPredicate p, IReturnAction ret) {
-		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
-		for (BoogieVar bv : p.getVars()) {
+		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		for (final BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return null;
@@ -547,12 +547,12 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public Validity sdecReturnSelfloopHier(IPredicate p, IReturnAction ret) {
-		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
-		String proc = ret.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobals = 
+		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final String proc = ret.getPreceedingProcedure();
+		final Set<BoogieVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
-		for (BoogieVar bv : p.getVars()) {
+		for (final BoogieVar bv : p.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
 				return null;
 			}
@@ -569,11 +569,11 @@ public class SdHoareTripleCheckerHelper {
 	 * ite-term.
 	 */
 	private boolean isOrIteFormula(IPredicate p) {
-		Term formula = p.getFormula();
+		final Term formula = p.getFormula();
 		if (formula instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) formula;
-			FunctionSymbol symbol = appTerm.getFunction();
-			boolean result = symbol.getName().equals("or") || 
+			final ApplicationTerm appTerm = (ApplicationTerm) formula;
+			final FunctionSymbol symbol = appTerm.getFunction();
+			final boolean result = symbol.getName().equals("or") || 
 					symbol.getName().equals("ite"); 
 			return result;
 		} else {

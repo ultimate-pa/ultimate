@@ -3,7 +3,6 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
-import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.StringTokenizer;
 
 /**
  * FindBestOrder
@@ -46,13 +46,13 @@ public class FindBestOrder {
     
     public FindBestOrder(int nodeTableSize, int cacheSize, int maxIncrease,
                          long bestTime, long delayTime) {
-        this.bestCalcTime = bestTime;
-        this.bestTotalTime = Long.MAX_VALUE;
+        bestCalcTime = bestTime;
+        bestTotalTime = Long.MAX_VALUE;
         //this.nodeTableSize = b1.getFactory().getAllocNum();
         this.nodeTableSize = nodeTableSize;
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
-        this.DELAY_TIME = delayTime;
+        DELAY_TIME = delayTime;
     }
     
     public void init(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op) throws IOException {
@@ -83,9 +83,15 @@ public class FindBestOrder {
         f1.delete();
         f2.delete();
         f3.delete();
-        if (b1 != null) b1.free();
-        if (b2 != null) b2.free();
-        if (b3 != null) b3.free();
+        if (b1 != null) {
+			b1.free();
+		}
+        if (b2 != null) {
+			b2.free();
+		}
+        if (b3 != null) {
+			b3.free();
+		}
     }
     
     public void writeBDDConfig(BDDFactory bdd, String fileName) throws IOException {
@@ -93,25 +99,29 @@ public class FindBestOrder {
         try {
             dos = new BufferedWriter(new FileWriter(fileName));
             for (int i = 0; i < bdd.numberOfDomains(); ++i) {
-                BDDDomain d = bdd.getDomain(i);
+                final BDDDomain d = bdd.getDomain(i);
                 dos.write(d.getName()+" "+d.size()+"\n");
             }
         } finally {
-            if (dos != null) dos.close();
+            if (dos != null) {
+				dos.close();
+			}
         }
     }
     
     public long tryOrder(boolean reverse, String varOrder) {
         System.gc();
-        TryThread t = new TryThread();
+        final TryThread t = new TryThread();
         t.reverse = reverse;
         t.varOrderToTry = varOrder;
         t.start();
         try {
             long waitTime = bestTotalTime + DELAY_TIME;
-            if (waitTime < 0L) waitTime = Long.MAX_VALUE;
+            if (waitTime < 0L) {
+				waitTime = Long.MAX_VALUE;
+			}
             t.join(waitTime);
-        } catch (InterruptedException x) {
+        } catch (final InterruptedException x) {
         }
         t.stop();
         Thread.yield(); // Help ThreadDeath exception to propagate.
@@ -129,8 +139,9 @@ public class FindBestOrder {
         if (t.time < bestCalcTime) {
             bestOrder = varOrder;
             bestCalcTime = t.time;
-            if (t.totalTime < bestTotalTime)
-                bestTotalTime = t.totalTime;
+            if (t.totalTime < bestTotalTime) {
+				bestTotalTime = t.totalTime;
+			}
         }
         return t.time;
     }
@@ -149,14 +160,15 @@ public class FindBestOrder {
         long time = Long.MAX_VALUE;
         long totalTime = Long.MAX_VALUE;
         
-        public void run() {
-            long total = System.currentTimeMillis();
+        @Override
+		public void run() {
+            final long total = System.currentTimeMillis();
             if (bdd == null) {
                 bdd = JFactory.init(nodeTableSize, cacheSize);
                 bdd.setMaxIncrease(maxIncrease);
                 readBDDConfig(bdd);
             }
-            int[] varorder = bdd.makeVarOrdering(reverse, varOrderToTry);
+            final int[] varorder = bdd.makeVarOrdering(reverse, varOrderToTry);
             bdd.setVarOrder(varorder);
             //System.out.println("\nTrying ordering "+varOrderToTry);
             try {
@@ -166,12 +178,12 @@ public class FindBestOrder {
                     b3 = bdd.load(filename3);
                     newbdd = false;
                 }
-                long t = System.currentTimeMillis();
-                BDD result = b1.applyEx(b2, op, b3);
+                final long t = System.currentTimeMillis();
+                final BDD result = b1.applyEx(b2, op, b3);
                 time = System.currentTimeMillis() - t;
                 //b1.free(); b2.free(); b3.free(); 
                 result.free();
-            } catch (IOException x) {
+            } catch (final IOException x) {
             }
             System.out.println("Ordering: "+varOrderToTry+" time: "+time);
             //bdd.done();
@@ -183,21 +195,25 @@ public class FindBestOrder {
             try {
                 in = new BufferedReader(new FileReader(filename0));
                 for (;;) {
-                    String s = in.readLine();
-                    if (s == null || s.equals("")) break;
-                    StringTokenizer st = new StringTokenizer(s);
-                    String name = st.nextToken();
-                    long size = Long.parseLong(st.nextToken())-1;
+                    final String s = in.readLine();
+                    if (s == null || s.equals("")) {
+						break;
+					}
+                    final StringTokenizer st = new StringTokenizer(s);
+                    final String name = st.nextToken();
+                    final long size = Long.parseLong(st.nextToken())-1;
                     makeDomain(bdd, name, BigInteger.valueOf(size).bitLength());
                 }
-            } catch (IOException x) {
+            } catch (final IOException x) {
             } finally {
-                if (in != null) try { in.close(); } catch (IOException _) { }
+                if (in != null) {
+					try { in.close(); } catch (final IOException _) { }
+				}
             }
         }
         
         BDDDomain makeDomain(BDDFactory bdd, String name, int bits) {
-            BDDDomain d = bdd.extDomain(new long[] { 1L << bits })[0];
+            final BDDDomain d = bdd.extDomain(new long[] { 1L << bits })[0];
             d.setName(name);
             return d;
         }

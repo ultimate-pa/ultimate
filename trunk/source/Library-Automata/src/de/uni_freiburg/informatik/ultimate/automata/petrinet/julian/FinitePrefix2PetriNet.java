@@ -52,7 +52,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	
 	BranchingProcess<L, C> mInput;
 	PetriNetJulian<L, C> mNet;
-	private UnionFind<Condition<L, C>> representatives;
+	private final UnionFind<Condition<L, C>> representatives;
 
 	@Override
 	public String operationName() {
@@ -93,18 +93,20 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		mInput = bp;
 		mLogger.info(startMessage());
 
-		Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<Condition<L, C>, Place<L, C>>();
-		Map<Event<L, C>, Transition<L, C>> transitionMap = new HashMap<Event<L, C>, Transition<L, C>>();
+		final Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<Condition<L, C>, Place<L, C>>();
+		final Map<Event<L, C>, Transition<L, C>> transitionMap = new HashMap<Event<L, C>, Transition<L, C>>();
 
 		mLogger.debug("CONDITIONS:");
-		for (Condition<L, C> c : bp.getConditions())
+		for (final Condition<L, C> c : bp.getConditions()) {
 			mLogger.debug(c);
+		}
 		mLogger.debug("EVENTS:");
-		for (Event<L, C> e : bp.getEvents())
+		for (final Event<L, C> e : bp.getEvents()) {
 			mLogger.debug(e.getPredecessorConditions() + " || " + e + " || "
 					+ e.getSuccessorConditions());
+		}
 
-		PetriNetJulian<L, C> old_net = mInput.getNet();
+		final PetriNetJulian<L, C> old_net = mInput.getNet();
 		mNet = new PetriNetJulian<L, C>(mServices, old_net.getAlphabet(),
 				old_net.getStateFactory(), false);
 		
@@ -134,15 +136,15 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //		for (Event e : bp.getEvents()) {
 //			assert e == bp.getDummyRoot() || visited.contains(e);
 //		}
-		TreeSet<Event<L,C>> events = new TreeSet<Event<L,C>>(bp.getOrder());
+		final TreeSet<Event<L,C>> events = new TreeSet<Event<L,C>>(bp.getOrder());
 		events.addAll(bp.getEvents());
 		
 		representatives = new UnionFind<Condition<L, C>>();
-		for (Condition c : bp.getDummyRoot().getSuccessorConditions()) {
+		for (final Condition c : bp.getDummyRoot().getSuccessorConditions()) {
 			representatives.makeEquivalenceClass(c);
 		}
-		Iterator<Event<L, C>> it = events.iterator();
-		Event<L, C> first = it.next();
+		final Iterator<Event<L, C>> it = events.iterator();
+		final Event<L, C> first = it.next();
 		assert first == bp.getDummyRoot();
 		Event<L,C> previous;
 		Event<L,C> current = first;
@@ -151,48 +153,48 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 			current = it.next();
 			assert bp.getOrder().compare(previous, current) < 0;
 			
-			for (Condition<L,C> c : current.getConditionMark()) {
-				Place p = c.getPlace();
-				Condition<L, C> representative = representatives.find(c);
+			for (final Condition<L,C> c : current.getConditionMark()) {
+				final Place p = c.getPlace();
+				final Condition<L, C> representative = representatives.find(c);
 				if (representative == null) {
 					representatives.makeEquivalenceClass(c);
 				}
 			}
 			
 			if (current.isCutoffEvent()) {
-				Event<L,C> companion = current.getCompanion();
-				ConditionMarking<L,C> companionCondMark = companion.getConditionMark();
-				ConditionMarking<L,C> eCondMark = current.getConditionMark();
+				final Event<L,C> companion = current.getCompanion();
+				final ConditionMarking<L,C> companionCondMark = companion.getConditionMark();
+				final ConditionMarking<L,C> eCondMark = current.getConditionMark();
 				mergeConditions(companionCondMark, eCondMark);
 				mergeConditions(companion.getPredecessorConditions(), current.getPredecessorConditions());
 			}
 
 		}
 		
-		for (Condition c : bp.getConditions()) {
+		for (final Condition c : bp.getConditions()) {
 			assert representatives.find(c) != null;
 			if (c == representatives.find(c)) {
-				Place<L, C> place = mNet.addPlace(old_net.getStateFactory()
+				final Place<L, C> place = mNet.addPlace(old_net.getStateFactory()
 						.finitePrefix2net(c), bp.initialConditions()
 						.contains(c), bp.isAccepting(c));
 				placeMap.put(c, place);
 			}
 		}
-		TransitionSet transitionSet = new TransitionSet();
-		for (Event<L,C> e : events) {
+		final TransitionSet transitionSet = new TransitionSet();
+		for (final Event<L,C> e : events) {
 			if (e == bp.getDummyRoot()) {
 				continue;
 			}
-			Set<Place<L, C>> preds = new HashSet<Place<L, C>>();
-			Set<Place<L, C>> succs = new HashSet<Place<L, C>>();
+			final Set<Place<L, C>> preds = new HashSet<Place<L, C>>();
+			final Set<Place<L, C>> succs = new HashSet<Place<L, C>>();
 			
-			for (Condition<L, C> c : e.getPredecessorConditions()) {
-				Condition<L, C> representative = representatives.find(c);
+			for (final Condition<L, C> c : e.getPredecessorConditions()) {
+				final Condition<L, C> representative = representatives.find(c);
 				preds.add(placeMap.get(representative));
 			}
 			
-			for (Condition<L, C> c : e.getSuccessorConditions()) {
-				Condition<L, C> representative = representatives.find(c);
+			for (final Condition<L, C> c : e.getSuccessorConditions()) {
+				final Condition<L, C> representative = representatives.find(c);
 				succs.add(placeMap.get(representative));
 			}
 			transitionSet.addTransition(e.getTransition().getSymbol(), preds, succs);
@@ -241,25 +243,25 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		try {
 			assert ResultChecker.petriNetLanguageEquivalence(mServices, old_net, mNet) : 
 				"The language recognized by the FinitePrefix2PetriNet is not equal to the language of the original net.";
-		} catch (AutomataLibraryException e1) {
+		} catch (final AutomataLibraryException e1) {
 			e1.printStackTrace();
 		}
 	}
 	
 	
 	private void mergeConditions(Iterable<Condition<L,C>> set1, Iterable<Condition<L,C>> set2) {
-		Map<Place<L,C>, Condition<L,C>> origPlace2Condition = new HashMap<Place<L,C>, Condition<L,C>>();
-		for (Condition<L,C> c1 : set1) {
+		final Map<Place<L,C>, Condition<L,C>> origPlace2Condition = new HashMap<Place<L,C>, Condition<L,C>>();
+		for (final Condition<L,C> c1 : set1) {
 			origPlace2Condition.put(c1.getPlace(), c1);
 		}
 		
-		for (Condition<L,C> c2 : set2) {
-			Place p2 = c2.getPlace();
-			Condition c1 = origPlace2Condition.get(p2);
-			Condition<L, C> c1representative = representatives.find(c1);
+		for (final Condition<L,C> c2 : set2) {
+			final Place p2 = c2.getPlace();
+			final Condition c1 = origPlace2Condition.get(p2);
+			final Condition<L, C> c1representative = representatives.find(c1);
 			assert c1representative != null;
 			
-			Condition<L, C> c2representative = representatives.find(c2);
+			final Condition<L, C> c2representative = representatives.find(c2);
 			assert c2representative != null;
 			
 			representatives.union(c1representative, c2representative);
@@ -290,13 +292,13 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		}
 		
 		void addAllTransitionsToNet(PetriNetJulian<L,C> net) {
-			for (L letter : mLetter2Predset2Succsets.keySet()) {
-				Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
-				for (Set<Place<L,C>> predset : predsets2succsets.keySet()) {
-					Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
-					for (Set<Place<L, C>> succset : succsets) {
-						List<Place<L,C>> predList = new ArrayList<Place<L,C>>(predset);
-						List<Place<L,C>> succList = new ArrayList<Place<L,C>>(succset);
+			for (final L letter : mLetter2Predset2Succsets.keySet()) {
+				final Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
+				for (final Set<Place<L,C>> predset : predsets2succsets.keySet()) {
+					final Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
+					for (final Set<Place<L, C>> succset : succsets) {
+						final List<Place<L,C>> predList = new ArrayList<Place<L,C>>(predset);
+						final List<Place<L,C>> succList = new ArrayList<Place<L,C>>(succset);
 						net.addTransition(letter, predList, succList);
 					}
 				}

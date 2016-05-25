@@ -61,12 +61,12 @@ public class NonTheorySymbolFinder extends NonRecursive {
 			if (SmtUtils.isConstant(term)) {
 				mResult.add(new NonTheorySymbol.Constant(term));
 			} else {
-				FunctionSymbol functionSymbol = term.getFunction();
+				final FunctionSymbol functionSymbol = term.getFunction();
 				if (!functionSymbol.isIntern()) {
 					mResult.add(new NonTheorySymbol.Function(functionSymbol));
 				}
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ConstantFindWalker(t));
 			}
 		}
@@ -98,7 +98,7 @@ public class NonTheorySymbolFinder extends NonRecursive {
 		}
 		mResult = new HashSet<NonTheorySymbol<?>>();
 		run(new ConstantFindWalker(term));
-		for (TermVariable tv : term.getFreeVars()) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			mResult.add(new NonTheorySymbol.Variable(tv));
 		}
 		return mResult;

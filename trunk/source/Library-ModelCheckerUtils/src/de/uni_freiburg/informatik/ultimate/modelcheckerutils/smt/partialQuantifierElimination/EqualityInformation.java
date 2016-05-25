@@ -77,7 +77,7 @@ public class EqualityInformation {
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
 			int quantifier, ILogger logger) {
-		BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
+		final BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the
 		// givenTerm is on one hand side of the relation.
@@ -87,7 +87,7 @@ public class EqualityInformation {
 			}
 			try {
 				binaryRelations[i] = new BinaryEqualityRelation(context[i]);
-			} catch (NoRelationOfThisKindException e2) {
+			} catch (final NoRelationOfThisKindException e2) {
 				continue;
 			}
 
@@ -100,8 +100,8 @@ public class EqualityInformation {
 				continue;
 			}
 
-			Term lhs = binaryRelations[i].getLhs();
-			Term rhs = binaryRelations[i].getRhs();
+			final Term lhs = binaryRelations[i].getLhs();
+			final Term rhs = binaryRelations[i].getRhs();
 
 			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
 				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
@@ -124,15 +124,15 @@ public class EqualityInformation {
 				AffineRelation affRel;
 				try {
 					affRel = new AffineRelation(script, context[i]);
-				} catch (NotAffineException e1) {
+				} catch (final NotAffineException e1) {
 					continue;
 				}
 				if (affRel.isVariable(givenTerm)) {
 					Term equalTerm;
 					try {
-						ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
+						final ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
 						equalTerm = equality.getParameters()[1];
-					} catch (NotAffineException e) {
+					} catch (final NotAffineException e) {
 						// no representation where var is on lhs
 						continue;
 					}

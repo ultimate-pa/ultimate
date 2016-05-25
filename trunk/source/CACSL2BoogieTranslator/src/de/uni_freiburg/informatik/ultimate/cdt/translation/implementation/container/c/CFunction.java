@@ -59,7 +59,7 @@ public class CFunction extends CType {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CFunction: ");
 		String times = "";
 		for (int i = 0; i < mParamTypes.length; i++) {
@@ -67,8 +67,9 @@ public class CFunction extends CType {
 			sb.append(mParamTypes[i].getType().toString());
 			times = " x ";
 		}
-		if (mTakesVarArgs)
+		if (mTakesVarArgs) {
 			sb.append(" x ...");
+		}
 		sb.append(" -> ");
 		sb.append(mResultType.toString());
 		return sb.toString();
@@ -80,19 +81,21 @@ public class CFunction extends CType {
 		if (!(o instanceof CFunction)) {
 			return false;
 		}
-		CFunction other = (CFunction) o;
-		if (this.mParamTypes.length != other.mParamTypes.length)
+		final CFunction other = (CFunction) o;
+		if (mParamTypes.length != other.mParamTypes.length) {
 			return false;
+		}
 		boolean result = true;
-		result &= this.mResultType.equals(other.mResultType);
-		for (int i = 0; i < mParamTypes.length; i++)
-			result &= this.mParamTypes[i].getType().equals(other.mParamTypes[i].getType());
-		result &= this.mTakesVarArgs == other.mTakesVarArgs;
+		result &= mResultType.equals(other.mResultType);
+		for (int i = 0; i < mParamTypes.length; i++) {
+			result &= mParamTypes[i].getType().equals(other.mParamTypes[i].getType());
+		}
+		result &= mTakesVarArgs == other.mTakesVarArgs;
 		return result;
 	}
 	
 	public String functionSignatureAsProcedureName() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
 		for (int i = 0; i < mParamTypes.length; i++) {
@@ -100,8 +103,9 @@ public class CFunction extends CType {
 			sb.append(mParamTypes[i].getType().getUnderlyingType().toString());
 			times = "~X~";
 		}
-		if (mTakesVarArgs)
+		if (mTakesVarArgs) {
 			sb.append("X~varArgs~");
+		}
 		sb.append("~TO~");
 		sb.append(mResultType.getUnderlyingType().toString());
 		return sb.toString();
@@ -110,29 +114,33 @@ public class CFunction extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == PRIMITIVE.VOID)
-			return true;	
+				((CPrimitive) o).getType() == PRIMITIVE.VOID) {
+			return true;
+		}	
 		
 		if (!(o instanceof CFunction)) {
 			return false;
 		}
-		CFunction other = (CFunction) o;
-		if (this.mParamTypes.length != other.mParamTypes.length)
+		final CFunction other = (CFunction) o;
+		if (mParamTypes.length != other.mParamTypes.length) {
 			return false;
+		}
 		boolean result = true;
-		result &= this.mResultType.isCompatibleWith(other.mResultType);
-		for (int i = 0; i < mParamTypes.length; i++)
-			result &= this.mParamTypes[i].getType().isCompatibleWith(other.mParamTypes[i].getType());
-		result &= this.mTakesVarArgs == other.mTakesVarArgs;
+		result &= mResultType.isCompatibleWith(other.mResultType);
+		for (int i = 0; i < mParamTypes.length; i++) {
+			result &= mParamTypes[i].getType().isCompatibleWith(other.mParamTypes[i].getType());
+		}
+		result &= mTakesVarArgs == other.mTakesVarArgs;
 		return result;
 	}
 	
 	@Override
 	public int hashCode() {
 		int result = HashUtils.hashJenkins(31, mResultType);
-		CType[] pTypes = new CType[mParamTypes.length];
-		for (int i = 0; i < pTypes.length; i++) 
+		final CType[] pTypes = new CType[mParamTypes.length];
+		for (int i = 0; i < pTypes.length; i++) {
 			result = HashUtils.hashJenkins(result, mParamTypes[i].getType());
+		}
 //			pTypes[i] = mParamTypes[i].getType();
 		result = HashUtils.hashJenkins(result, mTakesVarArgs);
 		return result;

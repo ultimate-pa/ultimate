@@ -95,14 +95,14 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		INestedWordAutomatonSimple<LETTER, STATE> determinized = 
+		final INestedWordAutomatonSimple<LETTER, STATE> determinized = 
 				new DeterminizeNwa<>(mServices, nwa, new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize);
-		INestedWordAutomatonSimple<LETTER, STATE> complemented =
+		final INestedWordAutomatonSimple<LETTER, STATE> complemented =
 				new ComplementDeterministicNwa<>(determinized);
-		INestedWordAutomatonSimple<LETTER, STATE> difference =
+		final INestedWordAutomatonSimple<LETTER, STATE> difference =
 				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {
-			INestedWordAutomatonOldApi<LETTER, STATE> removedDeadEnds = (new RemoveDeadEnds<LETTER, STATE>(mServices, difference)).getResult();
+			final INestedWordAutomatonOldApi<LETTER, STATE> removedDeadEnds = (new RemoveDeadEnds<LETTER, STATE>(mServices, difference)).getResult();
 			mDifference = removedDeadEnds;
 		} else {
 			mDifference = difference;

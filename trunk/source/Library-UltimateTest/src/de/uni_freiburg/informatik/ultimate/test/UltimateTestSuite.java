@@ -57,27 +57,29 @@ public abstract class UltimateTestSuite {
 
 	public UltimateTestSuite() {
 		mLogger = new ConsoleLogger();
-		if (sSummaries == null) {
-			final ITestSummary[] summaries = constructTestSummaries();
+		synchronized (this) {
+			if (sSummaries == null) {
+				final ITestSummary[] summaries = constructTestSummaries();
 
-			if (summaries != null) {
-				for (final ITestSummary sum : summaries) {
-					assert sum != null;
+				if (summaries != null) {
+					for (final ITestSummary sum : summaries) {
+						assert sum != null;
+					}
+					sSummaries = Arrays.asList(summaries);
+				} else {
+					sSummaries = null;
 				}
-				sSummaries = Arrays.asList(summaries);
-			} else {
-				sSummaries = null;
 			}
-		}
-		if (sLogFiles == null) {
-			final IIncrementalLog[] logs = constructIncrementalLog();
-			if (logs != null) {
-				for (final IIncrementalLog log : logs) {
-					assert log != null;
+			if (sLogFiles == null) {
+				final IIncrementalLog[] logs = constructIncrementalLog();
+				if (logs != null) {
+					for (final IIncrementalLog log : logs) {
+						assert log != null;
+					}
+					sLogFiles = Arrays.asList(logs);
+				} else {
+					sLogFiles = null;
 				}
-				sLogFiles = Arrays.asList(logs);
-			} else {
-				sLogFiles = null;
 			}
 		}
 	}
@@ -118,14 +120,14 @@ public abstract class UltimateTestSuite {
 		for (final ITestSummary summary : sSummaries) {
 			try {
 				TestUtil.writeSummary(summary, log);
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				ex.printStackTrace();
 			}
 		}
 		sSummaries = null;
 	}
-	
-	public ILogger getLogger(){
+
+	public ILogger getLogger() {
 		return mLogger;
 	}
 }

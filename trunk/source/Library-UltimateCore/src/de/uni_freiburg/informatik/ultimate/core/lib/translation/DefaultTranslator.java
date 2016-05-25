@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Translator which just passes the input along, i.e., the mapping from input to output is the identity. If types of
@@ -113,8 +113,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		try {
 			result = (List<TTE>) trace;
 			assert (consistsOfTargetTraceElements(trace));
-		} catch (ClassCastException e) {
-			String message = "Type of source trace element and type of target"
+		} catch (final ClassCastException e) {
+			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can"
 					+ " only be applied to traces of same type.";
 			throw new AssertionError(message);
@@ -124,8 +124,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@Override
 	public List<String> targetTraceToString(List<TTE> trace) {
-		List<String> rtr = new ArrayList<>();
-		for (Object elem : trace) {
+		final List<String> rtr = new ArrayList<>();
+		for (final Object elem : trace) {
 			rtr.add(elem.toString());
 		}
 		return rtr;
@@ -137,8 +137,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		TE result;
 		try {
 			result = (TE) expression;
-		} catch (ClassCastException e) {
-			String message = "Type of SourceExpression and type of"
+		} catch (final ClassCastException e) {
+			final String message = "Type of SourceExpression and type of"
 					+ " TargetExpression are different. DefaultTranslator can"
 					+ " only be applied to expression of same type.";
 			throw new AssertionError(message);
@@ -161,8 +161,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		try {
 			result = (IProgramExecution<TTE, TE>) programExecution;
 			assert (consistsOfTargetTraceElements(programExecution));
-		} catch (ClassCastException e) {
-			String message = "Type of source trace element and type of target"
+		} catch (final ClassCastException e) {
+			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can"
 					+ " only be applied to traces of same type.";
 			throw new AssertionError(message);
@@ -175,8 +175,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	public IBacktranslatedCFG<?, TTE> translateCFG(IBacktranslatedCFG<?, STE> cfg) {
 		try {
 			return (IBacktranslatedCFG<?, TTE>) cfg;
-		} catch (ClassCastException e) {
-			String message = "Type of source trace element and type of target"
+		} catch (final ClassCastException e) {
+			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can only be applied to the same type.";
 			throw new AssertionError(message);
 		}
@@ -187,7 +187,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(IProgramExecution<STE, SE> programExecution) {
-		List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
+		final List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
 		for (int i = 0; i < programExecution.getLength(); i++) {
 			auxilliaryList.add((TTE) programExecution.getTraceElement(i));
 		}
@@ -199,11 +199,11 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(List<STE> trace) {
-		List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
-		for (STE ste : trace) {
+		final List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
+		for (final STE ste : trace) {
 			try {
 				auxilliaryList.add((TTE) ste);
-			} catch (ClassCastException e) {
+			} catch (final ClassCastException e) {
 				return false;
 			}
 		}
@@ -230,9 +230,9 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		if (iTranslators.length == 0) {
 			result = (TE) expr;
 		} else {
-			ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
-			ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
-			Object expressionOfIntermediateType = last.translateExpression(expr);
+			final ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final Object expressionOfIntermediateType = last.translateExpression(expr);
 			result = (TE) translateExpressionIteratively(expressionOfIntermediateType, allButLast);
 		}
 		return result;
@@ -245,7 +245,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
 		} else {
-			ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			result = (List<TTE>) translateTraceIteratively(trace, allButLast);
 		}
 		return result;
@@ -269,7 +269,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(getClass().getSimpleName());
 		sb.append(" SE=");
 		sb.append(getSourceExpressionClass().getName());

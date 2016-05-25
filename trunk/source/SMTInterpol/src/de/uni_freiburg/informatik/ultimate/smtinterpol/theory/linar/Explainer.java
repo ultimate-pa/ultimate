@@ -82,7 +82,7 @@ public class Explainer {
 	 * @return true if the literal may appear in the clause.
 	 */
 	public boolean canExplainWith(Literal lit) {
-		DPLLAtom atom = lit.getAtom();
+		final DPLLAtom atom = lit.getAtom();
 		return atom.getStackPosition() >= 0
 			&& (mExplainedLiteral == null
 			   || mExplainedLiteral.getAtom().getStackPosition() == -1
@@ -97,35 +97,39 @@ public class Explainer {
 	 */
 	public void addAnnotation(LAReason reason, Rational coeff) {
 		assert ((coeff.signum() > 0) == reason.isUpper());
-		Rational sign = Rational.valueOf(coeff.signum(), 1);
+		final Rational sign = Rational.valueOf(coeff.signum(), 1);
 		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
 			mSubReasons.put(reason, annot);
-			if (mAnnotationStack != null)
+			if (mAnnotationStack != null) {
 				mAnnotationStack.addLast(annot);
+			}
 			reason.explain(this, reason.getVar().getEpsilon(), 
 					sign);
-			if (mAnnotationStack != null)
+			if (mAnnotationStack != null) {
 				mAnnotationStack.removeLast();
+			}
 		}
-		if (mAnnotationStack != null)
+		if (mAnnotationStack != null) {
 			mAnnotationStack.getLast().addFarkas(annot, coeff);
+		}
 	}
 
 	public void addEQAnnotation(LiteralReason reason, Rational coeff) {
 		// FIXME: make a special annotation for disequalities
 		assert ((coeff.signum() > 0) == reason.isUpper());
-		Rational sign = Rational.valueOf(coeff.signum(), 1); 
+		final Rational sign = Rational.valueOf(coeff.signum(), 1); 
 		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
 			mSubReasons.put(reason, annot);
 			mAnnotationStack.addLast(annot);
-			if (reason.getOldReason() instanceof LiteralReason) 
+			if (reason.getOldReason() instanceof LiteralReason) {
 				reason.getOldReason().explain(this, reason.getVar().getEpsilon(), sign);
-			else
+			} else {
 				addAnnotation(reason.getOldReason(), sign);
+			}
 			addLiteral(reason.getLiteral().negate(), sign);
 			mAnnotationStack.removeLast();
 		}
@@ -139,16 +143,17 @@ public class Explainer {
 	}
 	
 	private boolean validClause() {
-		if (mAnnotationStack == null)
+		if (mAnnotationStack == null) {
 			return true;
+		}
 		assert (mAnnotationStack.size() == 1);
 		MutableAffinTerm mat = mAnnotationStack.getFirst().addLiterals();
 		assert (mat.isConstant() && InfinitNumber.ZERO.less(mat.getConstant()));
-		for (Map.Entry<LAReason, LAAnnotation> reasonEntry
+		for (final Map.Entry<LAReason, LAAnnotation> reasonEntry
 			: mSubReasons.entrySet()) {
-			LAReason reason = reasonEntry.getKey();
+			final LAReason reason = reasonEntry.getKey();
 			mat = reasonEntry.getValue().addLiterals();
-			Rational coeff = reason.isUpper() ? Rational.MONE : Rational.ONE;
+			final Rational coeff = reason.isUpper() ? Rational.MONE : Rational.ONE;
 			mat.add(coeff, reason.getVar());
 			mat.add(reason.getBound().mul(coeff.negate()));
 			mat.add(reason.getVar().getEpsilon());
@@ -159,9 +164,9 @@ public class Explainer {
 	
 	public Clause createClause(DPLLEngine engine) {
 		assert (mAnnotationStack.size() == 1);
-		LAAnnotation baseAnnotation = mAnnotationStack.getLast();
-		Literal[] lits = baseAnnotation.collectLiterals();
-		Clause clause = new Clause(lits);
+		final LAAnnotation baseAnnotation = mAnnotationStack.getLast();
+		final Literal[] lits = baseAnnotation.collectLiterals();
+		final Clause clause = new Clause(lits);
 		if (engine.isProofGenerationEnabled()) {
 			clause.setProof(new LeafNode(
 					LeafNode.THEORY_LA, baseAnnotation));

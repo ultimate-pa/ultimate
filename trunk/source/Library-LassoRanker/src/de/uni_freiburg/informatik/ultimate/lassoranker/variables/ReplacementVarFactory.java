@@ -118,7 +118,7 @@ public class ReplacementVarFactory {
 		if (mBoogieVarWrappers.containsKey(boogieVar)) {
 			return mBoogieVarWrappers.get(boogieVar);
 		} else {
-			BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
+			final BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
 			mBoogieVarWrappers.put(boogieVar, wrapper);
 			return wrapper;
 		}

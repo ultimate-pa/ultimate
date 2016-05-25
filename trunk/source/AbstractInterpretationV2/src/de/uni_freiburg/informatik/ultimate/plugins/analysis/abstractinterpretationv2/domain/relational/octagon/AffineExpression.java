@@ -242,7 +242,7 @@ public class AffineExpression {
 	 * @return {@code this - summand}
 	 */
 	public AffineExpression subtract(final AffineExpression subtrahend) {
-		return this.add(subtrahend.negate()); // negate() never returns null
+		return add(subtrahend.negate()); // negate() never returns null
 	}
 
 	/**

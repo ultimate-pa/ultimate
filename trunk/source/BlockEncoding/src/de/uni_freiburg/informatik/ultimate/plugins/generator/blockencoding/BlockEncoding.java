@@ -66,7 +66,7 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public void init() {
-		ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
 		mBlockEncodingObserver = new BlockEncodingObserver(logger, mServices);
 	}
@@ -83,17 +83,18 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(mBlockEncodingObserver);
 		observers.add(mConversionObserver);
 		return observers;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		if (mConversionObserver.getRoot() == null) {
 			return new ModelType("BlockEncodedModel", mInputDefinition.getType(), mInputDefinition.getFileNames());
@@ -106,7 +107,7 @@ public class BlockEncoding implements IGenerator {
 		if (mConversionObserver.getRoot() == null) {
 			return mBlockEncodingObserver.getRoot();
 		}
-		return this.mConversionObserver.getRoot();
+		return mConversionObserver.getRoot();
 	}
 
 	@Override

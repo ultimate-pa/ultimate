@@ -1,11 +1,13 @@
 package srParse;
 
 
-import pea.*;
+import pea.BooleanDecision;
+import pea.CDD;
 
 
 public abstract class srParseScope {
 
+	@Override
 	public abstract String toString();
 	
 	protected CDD cdd1;

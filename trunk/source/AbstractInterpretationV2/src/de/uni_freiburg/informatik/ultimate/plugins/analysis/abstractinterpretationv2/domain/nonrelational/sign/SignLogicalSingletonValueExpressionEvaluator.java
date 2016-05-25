@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonValueExpressionEvaluator<Boolean>
         implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	private BooleanValue mBooleanValue;
+	private final BooleanValue mBooleanValue;
 
 	public SignLogicalSingletonValueExpressionEvaluator(String value) {
 		super(value);
@@ -75,7 +75,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	@Override
 	protected Boolean instantiate(String value) {
-		Boolean bool = Boolean.valueOf(value);
+		final Boolean bool = Boolean.valueOf(value);
 
 		return bool;
 	}

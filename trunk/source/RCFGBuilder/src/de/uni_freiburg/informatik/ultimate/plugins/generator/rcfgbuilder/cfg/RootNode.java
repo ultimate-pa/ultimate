@@ -81,8 +81,8 @@ public class RootNode extends RCFGNode {
 	 * 
 	 */
 	public String getFilename() {
-		String pathAndFilename = getPayload().getLocation().getFileName();
-		String pureFilename = (new File(pathAndFilename)).getName();
+		final String pathAndFilename = getPayload().getLocation().getFileName();
+		final String pureFilename = (new File(pathAndFilename)).getName();
 		return pureFilename;
 	}
 }

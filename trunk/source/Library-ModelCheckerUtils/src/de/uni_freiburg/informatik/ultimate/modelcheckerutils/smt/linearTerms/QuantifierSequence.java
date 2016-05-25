@@ -112,8 +112,8 @@ public class QuantifierSequence {
 			final IFreshTermVariableConstructor freshVarConstructor,
 			final String replacementName) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (QuantifiedVariables qv : mQuantifierBlocks) {
-			for (TermVariable tv : forbiddenVariables) {
+		for (final QuantifiedVariables qv : mQuantifierBlocks) {
+			for (final TermVariable tv : forbiddenVariables) {
 				if (qv.mVariables.contains(tv)) {
 					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(
 							replacementName, tv.getSort());
@@ -147,7 +147,7 @@ public class QuantifierSequence {
 		}
 		assert resultQuantifierBlocks.size() == largestSequence.getNumberOfQuantifierBlocks();
 		
-		Set<TermVariable> occurredVariables = new HashSet<>(freeVariables);
+		final Set<TermVariable> occurredVariables = new HashSet<>(freeVariables);
 		for (int i=0; i<quantifierSequences.length; i++) {
 			quantifierSequences[i].replace(occurredVariables, freshVarConstructor, "prenex");
 			innerTerms[i] = quantifierSequences[i].getInnerTerm();

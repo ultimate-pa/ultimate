@@ -56,10 +56,10 @@ public class QuotedObject {
 	}
 
 	private static String quoteString(String str) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append('\"');
 		for (int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
+			final char c = str.charAt(i);
 			switch(c) {
 			case '\\':
 				sb.append("\\\\");
@@ -80,6 +80,7 @@ public class QuotedObject {
 	 * quotes and converts escape sequences appropriately.
 	 * @return the SMTLIB 2 compatible string representation.
 	 */
+	@Override
 	public String toString() {
 		return quoteString(mValue.toString());
 	}

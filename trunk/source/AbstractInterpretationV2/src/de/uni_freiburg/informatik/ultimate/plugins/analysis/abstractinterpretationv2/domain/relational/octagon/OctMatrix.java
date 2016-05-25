@@ -188,7 +188,7 @@ public class OctMatrix {
 	 */
 	public OctMatrix copy() {
 		final OctMatrix copy = new OctMatrix(mSize);
-		System.arraycopy(this.mEntries, 0, copy.mEntries, 0, mEntries.length);
+		System.arraycopy(mEntries, 0, copy.mEntries, 0, mEntries.length);
 		copy.mStrongClosure = (mStrongClosure == this) ? copy : mStrongClosure;
 		copy.mTightClosure = (mTightClosure == this) ? copy : mTightClosure;
 		return copy;
@@ -250,7 +250,7 @@ public class OctMatrix {
 	public static OctMatrix random(final int variables, final double infProbability) {
 		final OctMatrix m = new OctMatrix(variables * 2);
 		for (int i = 0; i < m.mSize; ++i) {
-			int maxCol = i | 1;
+			final int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
 				OctValue v;
 				if (i == j) {
@@ -672,9 +672,9 @@ public class OctMatrix {
 	protected void shortestPathClosureNaiv() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
-				OctValue ik = get(i, k);
+				final OctValue ik = get(i, k);
 				for (int j = 0; j < mSize; ++j) {
-					OctValue indirectRoute = ik.add(get(k, j));
+					final OctValue indirectRoute = ik.add(get(k, j));
 					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
 					}
@@ -782,8 +782,8 @@ public class OctMatrix {
 	 * @return Index of finite entries in block column k/2 (incoming edges of k and k+1)
 	 */
 	private List<Integer> indexFiniteEntriesInBlockColumn(final int k) {
-		List<Integer> index = new ArrayList<Integer>(mSize);
-		int kk = k ^ 1;
+		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final int kk = k ^ 1;
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
 				index.add(i);
@@ -801,8 +801,8 @@ public class OctMatrix {
 	 * @return Index of finite entries in block row k/2 (outgoing edges of k and k+1)
 	 */
 	private List<Integer> indexFiniteEntriesInBlockRow(final int k) {
-		List<Integer> index = new ArrayList<Integer>(mSize);
-		int kk = k ^ 1;
+		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final int kk = k ^ 1;
 		for (int j = 0; j < mSize; ++j) {
 			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
 				index.add(j);
@@ -836,9 +836,9 @@ public class OctMatrix {
 					if (j > maxCol) {
 						break;
 					}
-					OctValue kj = get(k, j);
-					OctValue kkj = get(kk, j);
-					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
+					final OctValue kj = get(k, j);
+					final OctValue kkj = get(kk, j);
+					final OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
 					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
 					}
@@ -888,13 +888,13 @@ public class OctMatrix {
 	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
-				OctValue ik = get(i, k);
-				OctValue ikk = get(i, k ^ 1);
-				int maxCol = i | 1;
+				final OctValue ik = get(i, k);
+				final OctValue ikk = get(i, k ^ 1);
+				final int maxCol = i | 1;
 				for (int j = 0; j <= maxCol; ++j) {
-					OctValue kj = get(k, j);
-					OctValue kkj = get(k ^ 1, j);
-					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
+					final OctValue kj = get(k, j);
+					final OctValue kkj = get(k ^ 1, j);
+					final OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
 					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
 					}
@@ -913,11 +913,11 @@ public class OctMatrix {
 		// blocks on the diagonal (upper, lower bounds) won't change by strengthening
 		// => iterate only 2x2 blocks that are _strictly_ below the main diagonal
 		for (int i = 2; i < mSize; ++i) {
-			OctValue ib = get(i, i ^ 1).half();
-			int maxCol = (i - 2) | 1;
+			final OctValue ib = get(i, i ^ 1).half();
+			final int maxCol = (i - 2) | 1;
 			for (int j = 0; j <= maxCol; ++j) {
-				OctValue jb = get(j ^ 1, j).half();
-				OctValue b = ib.add(jb);
+				final OctValue jb = get(j ^ 1, j).half();
+				final OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
@@ -933,11 +933,11 @@ public class OctMatrix {
 	 */
 	private void tighteningInPlace() {
 		for (int i = 0; i < mSize; ++i) {
-			OctValue ib = get(i, i ^ 1).half().floor();
-			int maxCol = i | 1;
+			final OctValue ib = get(i, i ^ 1).half().floor();
+			final int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
-				OctValue jb = get(j ^ 1, j).half().floor();
-				OctValue b = ib.add(jb);
+				final OctValue jb = get(j ^ 1, j).half().floor();
+				final OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
@@ -1067,9 +1067,9 @@ public class OctMatrix {
 		} else if (count == 0) {
 			return this;
 		}
-		OctMatrix n = new OctMatrix(mSize + (2 * count));
+		final OctMatrix n = new OctMatrix(mSize + (2 * count));
 		System.arraycopy(mEntries, 0, n.mEntries, 0, mEntries.length);
-		Arrays.fill(n.mEntries, this.mEntries.length, n.mEntries.length, OctValue.INFINITY);
+		Arrays.fill(n.mEntries, mEntries.length, n.mEntries.length, OctValue.INFINITY);
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
 	}
@@ -1118,7 +1118,7 @@ public class OctMatrix {
 	 * @return The variables are last
 	 */
 	private boolean areVariablesLast(final Set<Integer> varIndices) {
-		List<Integer> varsDescending = new ArrayList<>(varIndices);
+		final List<Integer> varsDescending = new ArrayList<>(varIndices);
 		Collections.sort(varsDescending);
 		int vPrev = variables();
 		for (final int v : varsDescending) {
@@ -1144,7 +1144,7 @@ public class OctMatrix {
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}
-		OctMatrix n = new OctMatrix(mSize - (2 * count));
+		final OctMatrix n = new OctMatrix(mSize - (2 * count));
 		System.arraycopy(mEntries, 0, n.mEntries, 0, n.mEntries.length);
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
@@ -1161,7 +1161,7 @@ public class OctMatrix {
 	 * @return New matrix without the specified block rows/columns
 	 */
 	private OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
-		OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
+		final OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
 		int in = 0;
 		for (int i = 0; i < mSize; ++i) {
 			if (vars.contains(i / 2)) {
@@ -1169,7 +1169,7 @@ public class OctMatrix {
 				++i;
 				continue;
 			}
-			int maxCol = i | 1;
+			final int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
 				if (vars.contains(j / 2)) {
 					// 2x2 block column shall be removed => continue in next 2x2 block
@@ -1216,7 +1216,7 @@ public class OctMatrix {
 	protected void copySelection(final OctMatrix source,
 			final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
 
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
+		final BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
 
 		if (source.mEntries == mEntries) {
 			for (final Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
@@ -1227,11 +1227,11 @@ public class OctMatrix {
 			return;
 		}
 		for (final Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
-			int sourceVar = entry.getKey();
-			int targetVar = entry.getValue();
+			final int sourceVar = entry.getKey();
+			final int targetVar = entry.getValue();
 			// Copy columns. Rows are copied by coherence.
 			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
-				Integer row = mapTargetVarToSourceVar.get(targetOther);
+				final Integer row = mapTargetVarToSourceVar.get(targetOther);
 				if (row == null) {
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
 				} else {
@@ -1245,11 +1245,11 @@ public class OctMatrix {
 	// - selectedSourceVars should not contain duplicates
 	// - iteration order matters
 	public OctMatrix appendSelection(final OctMatrix source, final Collection<Integer> selectedSourceVars) {
-		OctMatrix m = this.addVariables(selectedSourceVars.size());
-		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		final OctMatrix m = addVariables(selectedSourceVars.size());
+		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
 		for (final Integer sourceVar : selectedSourceVars) {
-			int targetVar = mapTargetVarToSourceVar.size() + variables();
-			Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
+			final int targetVar = mapTargetVarToSourceVar.size() + variables();
+			final Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
 			assert prevValue == null : "Selection contained duplicate: " + sourceVar;
 		}
 		m.copySelection(source, mapTargetVarToSourceVar);
@@ -1304,7 +1304,7 @@ public class OctMatrix {
 		minimizeDiagonalEntries(s2 + 1);
 
 		// copy (block lower) block-row (including diagonal block)
-		int length = Math.min(s2, t2) + 2;
+		final int length = Math.min(s2, t2) + 2;
 		System.arraycopy(mEntries, indexOfLower(s2, 0), mEntries, indexOfLower(t2, 0), length);
 		System.arraycopy(mEntries, indexOfLower(s21, 0), mEntries, indexOfLower(t21, 0), length);
 
@@ -1351,7 +1351,7 @@ public class OctMatrix {
 		for (int row = t2; row < mSize; ++row) {
 			final int left = indexOfLower(row, t2);
 			final int right = left + 1;
-			OctValue tmpVal = mEntries[left];
+			final OctValue tmpVal = mEntries[left];
 			mEntries[left] = mEntries[right];
 			mEntries[right] = tmpVal;
 		}

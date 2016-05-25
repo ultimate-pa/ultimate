@@ -160,7 +160,7 @@ public class IterativePredicateTransformer {
 					callGlobalVarsAssignment = null;
 					callLocalVarsAssignment = nf.getLocalVarAssignment(i);
 				} else {
-					int callPos = mTrace.getCallPosition(i);
+					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
 					callerPred = ipp.getInterpolant(callPos);
 					callGlobalVarsAssignment = nf.getGlobalVarAssignment(callPos);
@@ -313,7 +313,7 @@ public class IterativePredicateTransformer {
 					// this is probably not yet supported
 					varsOccurringBetweenCallAndReturn = null;
 				} else {
-					int callPos = mTrace.getCallPosition(i);
+					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
 					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
 					globalVarsAssignments = nf.getGlobalVarAssignment(callPos);
@@ -372,7 +372,7 @@ public class IterativePredicateTransformer {
 	private IPredicate applyPostprocessors(
 			List<PredicatePostprocessor> postprocs, int i, final IPredicate pred) {
 		IPredicate postprocessed = pred;
-		for (PredicatePostprocessor postproc : postprocs) {
+		for (final PredicatePostprocessor postproc : postprocs) {
 			postprocessed = postproc.postprocess(postprocessed, i);
 		}
 		return postprocessed;
@@ -511,25 +511,25 @@ public class IterativePredicateTransformer {
 	 */
 	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<? extends IAction> trace,
 			NestedFormulas<TransFormula, IPredicate> rv, int start, int end) {
-		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
+		final LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
-				TransFormula callTf = rv.getLocalVarAssignment(i);
-				TransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
-				TransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
+				final TransFormula callTf = rv.getLocalVarAssignment(i);
+				final TransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
+				final TransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
 				if (!trace.isPendingCall(i)) {
 					// Case: non-pending call
 					// Compute a summary for Call and corresponding Return, but
 					// only if the position of the corresponding
 					// Return is smaller than the position "end"
-					int returnPosition = trace.getReturnPosition(i);
+					final int returnPosition = trace.getReturnPosition(i);
 					if (returnPosition < end) {
 						// 1. Compute a summary for the statements between this
 						// non-pending Call
 						// and the corresponding Return recursively
-						TransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
+						final TransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
 								i + 1, returnPosition);
-						TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
+						final TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
 								mBoogie2SMT, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
 								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
@@ -539,18 +539,18 @@ public class IterativePredicateTransformer {
 						// If the position of the corresponding Return is >=
 						// "end",
 						// then we handle this case as a pending-call
-						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-						String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-						Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+						final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
+						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
+						final Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, summaryAfterPendingCall,
 								mLogger, mServices, modifiableGlobalsOfEndProcedure);
 					}
 				} else {
-					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-					String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-					Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+					final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
+					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
+					final Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,

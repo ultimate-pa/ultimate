@@ -88,13 +88,13 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 	@Override
 	public Term term (Term input) {
 		if (mterm2BoogieVars.containsKey(input)) {
-			BoogieVar bv = mterm2BoogieVars.get(input);
+			final BoogieVar bv = mterm2BoogieVars.get(input);
 			assert bv != null;
 			if (bv.getProcedure() != null) {
 				mProcedures.add(bv.getProcedure());
 			}
 			mVars.add(bv);
-			Term termVariable = bv.getTermVariable();
+			final Term termVariable = bv.getTermVariable();
 			return termVariable;
 		}
 		else if (input instanceof ConstantTerm) {

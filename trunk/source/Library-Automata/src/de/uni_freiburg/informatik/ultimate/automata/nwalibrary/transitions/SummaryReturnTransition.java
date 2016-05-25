@@ -50,9 +50,11 @@ public class SummaryReturnTransition<LETTER,STATE> implements OutgoingTransition
 	public STATE getLinPred() {
 		return mLinPred;
 	}
+	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
+	@Override
 	public STATE getSucc() {
 		return mSucc;
 	}

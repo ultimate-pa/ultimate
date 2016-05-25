@@ -56,8 +56,8 @@ class LassoConstructor<LETTER, STATE> {
     private int mIteration;
     private boolean mGoalFound = false;
     private NestedRun<LETTER, STATE> mLoop;
-    private NestedRun<LETTER, STATE> mStem;
-    private NestedLassoRun<LETTER, STATE> mLasso;
+    private final NestedRun<LETTER, STATE> mStem;
+    private final NestedLassoRun<LETTER, STATE> mLasso;
     
 	public LassoConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
@@ -70,7 +70,7 @@ class LassoConstructor<LETTER, STATE> {
 		//first, find a run, while doing a backward breadth first search
 		{
 			mIteration = 0;
-			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
 			addPredecessors(mGoal, map);
@@ -92,10 +92,10 @@ class LassoConstructor<LETTER, STATE> {
 		//first, find a run, while doing a backward breadth first search
 		{
 			mIteration = 0;
-			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
-			SuccessorInfo succInfo = new SuccessorInfo(
+			final SuccessorInfo succInfo = new SuccessorInfo(
 					summary.obtainIncomingReturnTransition(mNwars), mGoal);
 			map.put(summary.getHierPred(), succInfo);
 //			addPredecessors(mGoal, map);
@@ -117,10 +117,10 @@ class LassoConstructor<LETTER, STATE> {
 			}
 			assert mSuccInfos.size() == mIteration + 1;
 			mIteration++;
-			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
-			for (StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration-1).keySet()) {
+			for (final StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration-1).keySet()) {
 				addPredecessors(sc, map);
 			}
 		}
@@ -136,23 +136,23 @@ class LassoConstructor<LETTER, STATE> {
 		StateContainer<LETTER, STATE> current = mGoal;
 		for (int i=mIteration; i>=0; i--) {
 			NestedRun<LETTER, STATE> newSuffix;
-			SuccessorInfo info = mSuccInfos.get(i).get(current);
+			final SuccessorInfo info = mSuccInfos.get(i).get(current);
 			if (info.getTransition() instanceof IncomingInternalTransition) {
-				IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition<LETTER, STATE>) info.getTransition();
+				final IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition<LETTER, STATE>) info.getTransition();
 				newSuffix = new NestedRun<LETTER, STATE>(current.getState(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION, info.getSuccessor().getState());
 			} else if (info.getTransition() instanceof IncomingCallTransition) {
-				IncomingCallTransition<LETTER, STATE> inTrans = (IncomingCallTransition<LETTER, STATE>) info.getTransition();
+				final IncomingCallTransition<LETTER, STATE> inTrans = (IncomingCallTransition<LETTER, STATE>) info.getTransition();
 				newSuffix = new NestedRun<LETTER, STATE>(current.getState(), inTrans.getLetter(), NestedWord.PLUS_INFINITY, info.getSuccessor().getState());
 			} else if (info.getTransition() instanceof IncomingReturnTransition) {
-				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition<LETTER, STATE>) info.getTransition();
-				StateContainer<LETTER, STATE> returnPredSc = mNwars.obtainSC(inTrans.getLinPred());
+				final IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition<LETTER, STATE>) info.getTransition();
+				final StateContainer<LETTER, STATE> returnPredSc = mNwars.obtainSC(inTrans.getLinPred());
 				assert current.getState().equals(inTrans.getHierPred());
-				Summary<LETTER,STATE> summary = new Summary<LETTER, STATE>(
+				final Summary<LETTER,STATE> summary = new Summary<LETTER, STATE>(
 						current,
 						returnPredSc,
 						inTrans.getLetter(),
 						info.getSuccessor());
-				boolean summaryMustContainAccepting = mFindAcceptingSummary && i == 0;
+				final boolean summaryMustContainAccepting = mFindAcceptingSummary && i == 0;
 				newSuffix = (new RunConstructor<LETTER, STATE>(mServices, mNwars, summary, summaryMustContainAccepting)).constructRun();
 				assert newSuffix != null : "no run for summary found";
 			} else {
@@ -172,16 +172,16 @@ class LassoConstructor<LETTER, STATE> {
      * successor information to map.
      */
 	private void addPredecessors(StateContainer<LETTER,STATE> sc, Map<StateContainer<LETTER,STATE>,SuccessorInfo> succInfo) {
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : mNwars.returnPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mNwars.returnPredecessors(sc.getState())) {
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : mNwars.callPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
+		for (final IncomingCallTransition<LETTER, STATE> inTrans : mNwars.callPredecessors(sc.getState())) {
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : mNwars.internalPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mNwars.internalPredecessors(sc.getState())) {
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
     }
@@ -196,7 +196,7 @@ class LassoConstructor<LETTER, STATE> {
 			StateContainer<LETTER, STATE> predSc) {
 		if (mScc.getNodes().contains(predSc) && !mVisited.contains(predSc)) {
 			mVisited.add(predSc);
-			SuccessorInfo info = new SuccessorInfo(inTrans, sc);
+			final SuccessorInfo info = new SuccessorInfo(inTrans, sc);
 			succInfo.put(predSc, info);
 			if (mGoal.equals(predSc)) {
 				mGoalFound = true;

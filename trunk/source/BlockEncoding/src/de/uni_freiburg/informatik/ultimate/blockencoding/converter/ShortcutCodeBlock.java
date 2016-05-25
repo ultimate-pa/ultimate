@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  */
 public class ShortcutCodeBlock extends CodeBlock {
 
-	private CodeBlock[] codeBlocks;
+	private final CodeBlock[] codeBlocks;
 
 	/**
 	 * @param source

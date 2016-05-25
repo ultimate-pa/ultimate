@@ -65,8 +65,8 @@ public class DependencyFinder extends BaseObserver {
 	}
 
 	private void doit(IElement root, int unrollings) {
-		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
-		RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, mLogger, unrollings);
+		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		final RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, mLogger, unrollings);
 		od.setWalker(walker);
 
 		walker.addObserver(new DebugRCFGVisitor(mLogger, 500));
@@ -74,7 +74,7 @@ public class DependencyFinder extends BaseObserver {
 		// walker.addObserver(new SequencingVisitor(walker));
 		walker.run((RCFGNode) root);
 
-		DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
+		final DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
 		dfw.run();
 	}
 

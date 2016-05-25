@@ -103,6 +103,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	protected Set<STATE> mUnpropagatedDownStates;
 	protected final boolean mCanHaveOutgoingReturn;
 
+	@Override
 	public String toString() {
 //		StringBuilder sb = new StringBuilder();
 //		sb.append(mState.toString());
@@ -179,7 +180,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	 */
 	boolean addReachableDownState(STATE down) {
 		assert !mDownStates.containsKey(down) || mDownStates.get(down) == 0;
-		Integer oldValue = mDownStates.put(down, 0);
+		final Integer oldValue = mDownStates.put(down, 0);
 		if (oldValue == null) {
 			if (mUnpropagatedDownStates == null) {
 				mUnpropagatedDownStates = new HashSet<STATE>();
@@ -196,10 +197,10 @@ public abstract class StateContainer<LETTER, STATE> {
 	 * modified (not already set).
 	 */
 	boolean setDownProp(STATE down, DownStateProp prop) {
-		int currentProps = mDownStates.get(down);
+		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			// property not yet set
-			int newProps = currentProps | prop.getBitCode();
+			final int newProps = currentProps | prop.getBitCode();
 			mDownStates.put(down,newProps);
 			if (mUnpropagatedDownStates == null) {
 				mUnpropagatedDownStates = new HashSet<STATE>();
@@ -215,7 +216,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 	boolean hasDownProp(STATE down, DownStateProp prop) {
-		int currentProps = mDownStates.get(down);
+		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			return false;
 		} else {
@@ -234,7 +235,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsInternalTransition(LETTER letter, STATE succ) {
-		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(letter)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}
@@ -243,7 +244,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsCallTransition(LETTER letter, STATE succ) {
-		for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(letter)) {
+		for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}
@@ -252,7 +253,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsReturnTransition(STATE hier, LETTER letter, STATE succ) {
-		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}

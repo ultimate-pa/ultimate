@@ -34,9 +34,10 @@ public class UnaryMinus extends AstNode {
 	}
 
 	
+	@Override
 	public String toString()
 	{
-		return "-" + this.getOutgoingNodes().get(0).toString();
+		return "-" + getOutgoingNodes().get(0).toString();
 	}
 
 }

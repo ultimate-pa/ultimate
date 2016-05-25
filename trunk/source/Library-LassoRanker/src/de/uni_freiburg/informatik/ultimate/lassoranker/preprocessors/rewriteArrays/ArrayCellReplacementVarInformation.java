@@ -121,14 +121,14 @@ public class ArrayCellReplacementVarInformation {
 	
 	
 	public Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex() {
-		Map<TermVariable, RankVar> result = new HashMap<TermVariable, RankVar>();
-		for (Term entry : mIndex) {
-			for (TermVariable tv : entry.getFreeVars()) {
-				RankVar inVar = mTransFormulaLR.getInVarsReverseMapping().get(tv);
+		final Map<TermVariable, RankVar> result = new HashMap<TermVariable, RankVar>();
+		for (final Term entry : mIndex) {
+			for (final TermVariable tv : entry.getFreeVars()) {
+				final RankVar inVar = mTransFormulaLR.getInVarsReverseMapping().get(tv);
 				if (inVar != null) {
 					result.put(tv, inVar);
 				} else {
-					RankVar outVar = mTransFormulaLR.getOutVarsReverseMapping().get(tv);
+					final RankVar outVar = mTransFormulaLR.getOutVarsReverseMapping().get(tv);
 					if (outVar != null) {
 						result.put(tv, outVar);
 					} else {

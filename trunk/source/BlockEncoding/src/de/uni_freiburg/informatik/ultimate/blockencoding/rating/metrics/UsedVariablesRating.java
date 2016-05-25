@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
  */
 public class UsedVariablesRating implements IRating {
 
-	private RatingValueContainer<Integer> countUsedVariables;
+	private final RatingValueContainer<Integer> countUsedVariables;
 
 	/**
 	 * Constructor, which is only visible in this package (default visibility)

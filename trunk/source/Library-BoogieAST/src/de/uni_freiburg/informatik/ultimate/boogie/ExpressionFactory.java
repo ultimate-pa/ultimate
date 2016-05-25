@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -51,16 +51,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class ExpressionFactory extends BoogieTransformer {
 	
 	public static Expression newUnaryExpression(ILocation loc, UnaryExpression.Operator operator, Expression expr) {
-		Expression exprLiteral = filterLiteral(expr);
+		final Expression exprLiteral = filterLiteral(expr);
 		Expression result;
 		if (exprLiteral != null) {
 			switch (operator) {
 			case ARITHNEGATIVE:
 				if (exprLiteral instanceof IntegerLiteral) {
-					BigInteger value = new BigInteger(((IntegerLiteral) exprLiteral).getValue());
+					final BigInteger value = new BigInteger(((IntegerLiteral) exprLiteral).getValue());
 					result = new IntegerLiteral(loc, (value.negate()).toString());
 				} else if (exprLiteral instanceof RealLiteral) {
-					BigDecimal value = new BigDecimal(((RealLiteral) exprLiteral).getValue());
+					final BigDecimal value = new BigDecimal(((RealLiteral) exprLiteral).getValue());
 					result = new RealLiteral(loc, (value.negate()).toString());
 				} else {
 					throw new IllegalArgumentException("type error: unable to apply " + operator);
@@ -68,7 +68,7 @@ public class ExpressionFactory extends BoogieTransformer {
 				break;
 			case LOGICNEG:
 				if (exprLiteral instanceof BooleanLiteral) {
-					boolean value = ((BooleanLiteral) exprLiteral).getValue();
+					final boolean value = ((BooleanLiteral) exprLiteral).getValue();
 					result = new BooleanLiteral(loc, !value);
 				} else {
 					throw new IllegalArgumentException("type error: unable to apply " + operator);
@@ -86,8 +86,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 
 	public static Expression newBinaryExpression(ILocation loc, Operator operator, Expression left, Expression right) {
-		Expression leftLiteral = filterLiteral(left);
-		Expression rightLiteral = filterLiteral(right);
+		final Expression leftLiteral = filterLiteral(left);
+		final Expression rightLiteral = filterLiteral(right);
 		Expression result;
 		if ((leftLiteral != null) && (rightLiteral != null)) {
 			assert leftLiteral.getClass().equals(rightLiteral.getClass()) : "incompatible literals: " + leftLiteral.getClass() + " and " + rightLiteral.getClass();
@@ -111,8 +111,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	
 	private static BooleanLiteral constructBinaryExpression_Bool(ILocation loc, Operator operator, BooleanLiteral leftLiteral,
 			BooleanLiteral rightLiteral) {
-		boolean leftValue = leftLiteral.getValue();
-		boolean rightValue = rightLiteral.getValue();
+		final boolean leftValue = leftLiteral.getValue();
+		final boolean rightValue = rightLiteral.getValue();
 		final boolean result;
 		switch (operator) {
 		case ARITHDIV:
@@ -154,51 +154,51 @@ public class ExpressionFactory extends BoogieTransformer {
 	
 	private static Expression constructBinaryExpression_Integer(ILocation loc, Operator operator, IntegerLiteral leftLiteral,
 			IntegerLiteral rightLiteral) {
-		BigInteger leftValue = new BigInteger(leftLiteral.getValue());
-		BigInteger rightValue = new BigInteger(rightLiteral.getValue());
+		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
+		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
-			BigInteger result = BoogieUtils.euclideanDiv(leftValue, rightValue);
+			final BigInteger result = BoogieUtils.euclideanDiv(leftValue, rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
-			BigInteger result = leftValue.subtract(rightValue);
+			final BigInteger result = leftValue.subtract(rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
-			BigInteger result = BoogieUtils.euclideanMod(leftValue, rightValue);
+			final BigInteger result = BoogieUtils.euclideanMod(leftValue, rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
-			BigInteger result = leftValue.multiply(rightValue);
+			final BigInteger result = leftValue.multiply(rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHPLUS: {
-			BigInteger result = leftValue.add(rightValue);
+			final BigInteger result = leftValue.add(rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case COMPEQ: {
-			boolean result = (leftValue.compareTo(rightValue) == 0);
+			final boolean result = (leftValue.compareTo(rightValue) == 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPGT: {
-			boolean result = (leftValue.compareTo(rightValue) > 0);
+			final boolean result = (leftValue.compareTo(rightValue) > 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
-			boolean result = (leftValue.compareTo(rightValue) <= 0);
+			final boolean result = (leftValue.compareTo(rightValue) <= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPLT: {
-			boolean result = (leftValue.compareTo(rightValue) < 0);
+			final boolean result = (leftValue.compareTo(rightValue) < 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
-			boolean result = (leftValue.compareTo(rightValue) != 0);
+			final boolean result = (leftValue.compareTo(rightValue) != 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT:
@@ -215,47 +215,47 @@ public class ExpressionFactory extends BoogieTransformer {
 	
 	private static Expression constructBinaryExpression_Real(ILocation loc, Operator operator, RealLiteral leftLiteral,
 			RealLiteral rightLiteral) {
-		BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
-		BigDecimal rightValue = new BigDecimal(rightLiteral.getValue());
+		final BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
+		final BigDecimal rightValue = new BigDecimal(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
-			BigDecimal result = leftValue.divide(rightValue);
+			final BigDecimal result = leftValue.divide(rightValue);
 			return new RealLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
-			BigDecimal result = leftValue.subtract(rightValue);
+			final BigDecimal result = leftValue.subtract(rightValue);
 			return new RealLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
-			BigDecimal result = leftValue.multiply(rightValue);
+			final BigDecimal result = leftValue.multiply(rightValue);
 			return new RealLiteral(loc, result.toString());
 		}
 		case ARITHPLUS: {
-			BigDecimal result = leftValue.add(rightValue);
+			final BigDecimal result = leftValue.add(rightValue);
 			return new RealLiteral(loc, result.toString());
 		}
 		case COMPEQ: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPGT: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPLT: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
-			boolean result = (leftValue.compareTo(rightValue) >= 0);
+			final boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
 		case ARITHMOD:
@@ -274,30 +274,30 @@ public class ExpressionFactory extends BoogieTransformer {
 
 	private static Expression constructBinaryExpression_Bitvector(ILocation loc, Operator operator, BitvecLiteral leftLiteral,
 			BitvecLiteral rightLiteral) {
-		BigInteger leftValue = new BigInteger(leftLiteral.getValue());
-		BigInteger rightValue = new BigInteger(rightLiteral.getValue());
+		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
+		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		if (leftValue.compareTo(BigInteger.ZERO) < 0) {
 			throw new IllegalArgumentException("assumed non-negative number here!");
 		}
 		if (rightValue.compareTo(BigInteger.ZERO) < 0) {
 			throw new IllegalArgumentException("assumed non-negativenumber here!");
 		}
-		int leftLength = leftLiteral.getLength();
-		int rightLength = rightLiteral.getLength();
+		final int leftLength = leftLiteral.getLength();
+		final int rightLength = rightLiteral.getLength();
 		
 		switch (operator) {
 		case COMPEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
-			boolean result = (leftValue.equals(rightValue));
+			final boolean result = (leftValue.equals(rightValue));
 			return new BooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
-			boolean result = !(leftValue.equals(rightValue));
+			final boolean result = !(leftValue.equals(rightValue));
 			return new BooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT: {
@@ -324,9 +324,9 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 	
 	public static Expression newIfThenElseExpression(ILocation loc, Expression condition, Expression thenPart, Expression elsePart) {
-		Expression condLiteral = filterLiteral(condition);
+		final Expression condLiteral = filterLiteral(condition);
 		if (condLiteral instanceof BooleanLiteral) {
-			boolean value = ((BooleanLiteral) condLiteral).getValue();
+			final boolean value = ((BooleanLiteral) condLiteral).getValue();
 			if (value) {
 				return thenPart;
 			} else {

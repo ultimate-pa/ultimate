@@ -97,7 +97,7 @@ public abstract class ComposableTemplate extends RankingTemplate {
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
 		// The ranking function decreases and is bounded from below
-		List<List<LinearInequality>> constraints
+		final List<List<LinearInequality>> constraints
 			= new ArrayList<List<LinearInequality>>();
 		constraints.addAll(getConstraintsDec(inVars, outVars));
 		constraints.addAll(getConstraintsBounded(inVars, outVars));
@@ -107,9 +107,9 @@ public abstract class ComposableTemplate extends RankingTemplate {
 	@Override
 	public List<String> getAnnotations() {
 		checkInitialized();
-		List<String> annotations = new ArrayList<String>();
-		annotations.addAll(this.getAnnotationsDec());
-		annotations.addAll(this.getAnnotationsBounded());
+		final List<String> annotations = new ArrayList<String>();
+		annotations.addAll(getAnnotationsDec());
+		annotations.addAll(getAnnotationsBounded());
 		return annotations;
 	}
 }

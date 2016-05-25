@@ -75,28 +75,37 @@ public class Candidate<S, C> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Candidate<?, ?> other = (Candidate<?, ?>) obj;
+		}
+		final Candidate<?, ?> other = (Candidate<?, ?>) obj;
 		if (mChosen == null) {
-			if (other.mChosen != null)
+			if (other.mChosen != null) {
 				return false;
-		} else if (!mChosen.equals(other.mChosen))
+			}
+		} else if (!mChosen.equals(other.mChosen)) {
 			return false;
+		}
 		if (mPlaces == null) {
-			if (other.mPlaces != null)
+			if (other.mPlaces != null) {
 				return false;
-		} else if (!mPlaces.equals(other.mPlaces))
+			}
+		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
+		}
 		if (mt == null) {
-			if (other.mt != null)
+			if (other.mt != null) {
 				return false;
-		} else if (!mt.equals(other.mt))
+			}
+		} else if (!mt.equals(other.mt)) {
 			return false;
+		}
 		return true;
 	}	
 	

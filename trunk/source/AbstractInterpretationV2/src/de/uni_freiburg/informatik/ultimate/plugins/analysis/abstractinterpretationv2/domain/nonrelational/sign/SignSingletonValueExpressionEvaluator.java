@@ -53,7 +53,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	protected final T mValue;
 
 	public SignSingletonValueExpressionEvaluator(String value) {
-		T number = instantiate(value);
+		final T number = instantiate(value);
 		mValue = number;
 	}
 
@@ -61,7 +61,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
 		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		int num = getSignum();
+		final int num = getSignum();
 
 		if (num > 0) {
 			returnList.add(new SignDomainValue(Values.POSITIVE));

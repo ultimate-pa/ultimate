@@ -54,7 +54,7 @@ public class TermTransferrer extends TermTransformer {
 	public enum TransferMode { ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC }
 	
 	protected final Script mScript;
-	private Set<Sort> mDeclaredSorts = new HashSet<>();
+	private final Set<Sort> mDeclaredSorts = new HashSet<>();
 
 	protected final Map<Term, Term> mBacktransferMapping = new HashMap<Term,Term>();
 	protected final Map<Term, Term> mTransferMapping;
@@ -77,17 +77,17 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	protected void convert(Term term) {
-		Term mappingResult = mTransferMapping.get(term);
+		final Term mappingResult = mTransferMapping.get(term);
 		if (mappingResult != null) {
 			setResult(mappingResult);
 			return;
 		}
 		if (term instanceof TermVariable) {
-			Term result = transferTermVariable((TermVariable) term);
+			final Term result = transferTermVariable((TermVariable) term);
 			setResult(result);
 		} else if (term instanceof ConstantTerm) {
-			Sort sort = transferSort(term.getSort());
-			ConstantTerm ct = (ConstantTerm) term;
+			final Sort sort = transferSort(term.getSort());
+			final ConstantTerm ct = (ConstantTerm) term;
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
 				result = mScript.numeral((BigInteger) ct.getValue());
@@ -96,7 +96,7 @@ public class TermTransferrer extends TermTransformer {
 			} else if (ct.getValue() instanceof Rational) {
 				result = ((Rational) ct.getValue()).toTerm(sort);
 			} else if (ct.getValue() instanceof String) {
-				String value = (String) ct.getValue();
+				final String value = (String) ct.getValue();
 				if (value.startsWith("#x")) {
 					result = mScript.hexadecimal(value);
 				} else if (value.startsWith("#b")) {
@@ -117,7 +117,7 @@ public class TermTransferrer extends TermTransformer {
 //		final Term mappingResult = mTransferMapping.get(tv);
 		final TermVariable transferResult;
 //		if (mappingResult == null) {
-			Sort sort = transferSort(tv.getSort());
+			final Sort sort = transferSort(tv.getSort());
 			transferResult = mScript.variable(tv.getName(), sort);
 //			mTransferMapping.put(tv, transferResult);
 //		} else {
@@ -140,12 +140,12 @@ public class TermTransferrer extends TermTransformer {
 	}
 	
 	private Sort transferSort(Sort sort) {
-		Sort[] arguments = transferSorts(sort.getArguments());
-		BigInteger[] indices = sort.getIndices();
+		final Sort[] arguments = transferSorts(sort.getArguments());
+		final BigInteger[] indices = sort.getIndices();
 		Sort result;
 		try {
 			result = mScript.sort(sort.getName(), indices, arguments);
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Sort " + sort.getName() + " not declared")) {
 				mScript.declareSort(sort.getName(), sort.getArguments().length);
 				result = mScript.sort(sort.getName(), arguments);
@@ -157,7 +157,7 @@ public class TermTransferrer extends TermTransformer {
 	}
 	
 	private Sort[] transferSorts(Sort[] sorts) {
-		Sort[] result = new Sort[sorts.length];
+		final Sort[] result = new Sort[sorts.length];
 		for (int i=0; i<sorts.length; i++) {
 			result[i] = transferSort(sorts[i]);
 		}
@@ -168,13 +168,13 @@ public class TermTransferrer extends TermTransformer {
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		Term result;
 		try {
-			BigInteger[] indices = appTerm.getFunction().getIndices();
+			final BigInteger[] indices = appTerm.getFunction().getIndices();
 			result = mScript.term(appTerm.getFunction().getName(), indices, null, newArgs);
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
-				FunctionSymbol fsymb = appTerm.getFunction();
-				Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
-				Sort resultSort = transferSort(fsymb.getReturnSort());
+				final FunctionSymbol fsymb = appTerm.getFunction();
+				final Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
+				final Sort resultSort = transferSort(fsymb.getReturnSort());
 				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
 				result = mScript.term(appTerm.getFunction().getName(), newArgs);
 			} else {
@@ -192,18 +192,18 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
-		TermVariable[] vars = new TermVariable[old.getVariables().length];
+		final TermVariable[] vars = new TermVariable[old.getVariables().length];
 		for (int i=0; i<old.getVariables().length; i++) {
 			vars[i] = transferTermVariable(old.getVariables()[i]);
 		}
-		Term result = mScript.quantifier(old.getQuantifier(), vars, newBody);
+		final Term result = mScript.quantifier(old.getQuantifier(), vars, newBody);
 		setResult(result);
 	}
 
 	@Override
 	public void postConvertAnnotation(AnnotatedTerm old,
 			Annotation[] newAnnots, Term newBody) {
-		Term result = mScript.annotate(newBody, newAnnots);
+		final Term result = mScript.annotate(newBody, newAnnots);
 		setResult(result);
 	}
 	

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
 public class SyntaxErrorResult extends AbstractResult 
 												implements IResultWithLocation {
 	
-	private String mLongDescription;
+	private final String mLongDescription;
 	private final ILocation mLocation;
 
 	public SyntaxErrorResult(String plugin, 

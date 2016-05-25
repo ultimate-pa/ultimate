@@ -79,37 +79,42 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 	
 	private void recordUndo(K key, V value) {
 		if (mCurScope != -1) {
-			Map<K, V> old = undoMap();
-			if (!old.containsKey(key))
+			final Map<K, V> old = undoMap();
+			if (!old.containsKey(key)) {
 				old.put(key, value);
+			}
 		}
 	}
 
 	private void undoEntry(Entry<K,V> old) {
-		if (old.getValue() == null)
+		if (old.getValue() == null) {
 			mMap.remove(old.getKey());
-		else
+		} else {
 			mMap.put(old.getKey(), old.getValue());
+		}
 	}
 	
 	public void beginScope() {
-		if (mCurScope == mHistory.length - 1)
+		if (mCurScope == mHistory.length - 1) {
 			mHistory = ScopeUtils.grow(mHistory);
+		}
 		mHistory[++mCurScope] = new HashMap<K, V>();
 	}
 	
 	public void endScope() {
-		for (Entry<K, V> old : undoMap().entrySet()) {
+		for (final Entry<K, V> old : undoMap().entrySet()) {
 			undoEntry(old);
 		}
 		mHistory[mCurScope--] = null;
-		if (mShrink && ScopeUtils.shouldShrink(mHistory))
+		if (mShrink && ScopeUtils.shouldShrink(mHistory)) {
 			mHistory = ScopeUtils.shrink(mHistory);
+		}
 	}
 	
 	public Iterable<Map.Entry<K, V>> currentScopeEntries() {
-		if (mCurScope == -1)
+		if (mCurScope == -1) {
 			return entrySet();
+		}
 		return new AbstractSet<Map.Entry<K, V>>() {
 			@Override
 			public Iterator<Map.Entry<K, V>> iterator() {
@@ -160,8 +165,9 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public Iterable<K> currentScopeKeys() {
-		if (mCurScope == -1)
+		if (mCurScope == -1) {
 			return keySet();
+		}
 		return new AbstractSet<K>() {
 			@Override
 			public Iterator<K> iterator() {
@@ -197,8 +203,9 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public Iterable<V> currentScopeValues() {
-		if (mCurScope == -1)
+		if (mCurScope == -1) {
 			return values();
+		}
 		return new AbstractSet<V>() {
 			@Override
 			public Iterator<V> iterator() {
@@ -302,9 +309,10 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 	@Override
 	public V put(K key, V value) {
-		if (value == null)
+		if (value == null) {
 			throw new NullPointerException();
-		V oldval = mMap.put(key, value);
+		}
+		final V oldval = mMap.put(key, value);
 		recordUndo(key, oldval);
 		return oldval;
 	}
@@ -312,7 +320,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public V remove(Object key) {
-		V oldval = mMap.remove(key);
+		final V oldval = mMap.remove(key);
 		recordUndo((K) key, oldval);
 		return oldval;
 	}

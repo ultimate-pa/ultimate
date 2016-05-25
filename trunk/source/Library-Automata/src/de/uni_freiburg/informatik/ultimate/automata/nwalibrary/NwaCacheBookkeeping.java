@@ -52,7 +52,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	private final Map<STATE,Map<STATE,Set<LETTER>>> mCachedReturn = new HashMap<STATE,Map<STATE,Set<LETTER>>>();
 	
 	public boolean isCachedInternal(STATE state, LETTER letter) {
-		Set<LETTER> cbs = mCachedInternal.get(state);
+		final Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			return false;
 		} else {
@@ -61,7 +61,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	}
 	
 	public boolean isCachedCall(STATE state, LETTER letter) {
-		Set<LETTER> cbs = mCachedCall.get(state);
+		final Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			return false;
 		} else {
@@ -70,11 +70,11 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	}
 	
 	public boolean isCachedReturn(STATE state, STATE hier, LETTER letter) {
-		Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
+		final Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			return false;
 		} else {
-			Set<LETTER> cbs = hier2cbs.get(hier);
+			final Set<LETTER> cbs = hier2cbs.get(hier);
 			if (cbs == null) {
 				return false;
 			} else {
@@ -89,7 +89,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 			cbs = new HashSet<LETTER>();
 			mCachedInternal.put(state, cbs);
 		}
-		boolean modified = cbs.add(letter);
+		final boolean modified = cbs.add(letter);
 		assert modified : "added to cache twice";
 	}
 	
@@ -99,7 +99,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 			cbs = new HashSet<LETTER>();
 			mCachedCall.put(state, cbs);
 		}
-		boolean modified = cbs.add(letter);
+		final boolean modified = cbs.add(letter);
 		assert modified : "added to cache twice";
 	}
 	
@@ -114,7 +114,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 			cbs = new HashSet<LETTER>();
 			hier2cbs.put(hier, cbs);
 		}
-		boolean modified = cbs.add(letter);
+		final boolean modified = cbs.add(letter);
 		assert modified : "added to cache twice";
 	}
 

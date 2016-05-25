@@ -134,7 +134,7 @@ public final class VertexValueContainer {
 	 */
 	public void setBestNeighborMeasure(final int bestNeighborMeasure) {
 		ensureValueIsValid(bestNeighborMeasure);
-		this.mBestNeighborMeasure = bestNeighborMeasure;
+		mBestNeighborMeasure = bestNeighborMeasure;
 	}
 
 	/**
@@ -143,7 +143,7 @@ public final class VertexValueContainer {
 	 */
 	public void setNeighborCounter(final int neighborCounter) {
 		ensureValueIsValid(neighborCounter);
-		this.mNeighborCounter = neighborCounter;
+		mNeighborCounter = neighborCounter;
 	}
 
 	/**
@@ -152,6 +152,6 @@ public final class VertexValueContainer {
 	 */
 	public void setProgressMeasure(final int progressMeasure) {
 		ensureValueIsValid(progressMeasure);
-		this.mProgressMeasure = progressMeasure;
+		mProgressMeasure = progressMeasure;
 	}
 }

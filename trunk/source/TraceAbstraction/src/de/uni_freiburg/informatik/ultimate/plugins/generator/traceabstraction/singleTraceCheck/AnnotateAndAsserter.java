@@ -105,8 +105,8 @@ public class AnnotateAndAsserter {
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 
-		Collection<Integer> callPositions = new ArrayList<Integer>();
-		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
+		final Collection<Integer> callPositions = new ArrayList<Integer>();
+		final Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
 		for (int i=0; i<mTrace.length(); i++) {
 			if (mTrace.isCallPosition(i)) {
 				callPositions.add(i);
@@ -128,20 +128,20 @@ public class AnnotateAndAsserter {
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-		for (Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
+		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert mTrace.isPendingReturn(positionOfPendingReturn);
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
+				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
@@ -149,7 +149,7 @@ public class AnnotateAndAsserter {
 		}
 		try {
 			mSatisfiable = mSmtManager.getScript().checkSat();
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			if (e.getMessage().contains("Received EOF on stdin. No stderr output.")
 					&& !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), 
@@ -185,9 +185,9 @@ public class AnnotateAndAsserter {
 	 */
 	public static List<CodeBlock> constructFailureTrace(
 			Word<CodeBlock> word, SmtManager smtManager) {
-		List<CodeBlock> failurePath = new ArrayList<CodeBlock>();
+		final List<CodeBlock> failurePath = new ArrayList<CodeBlock>();
 		for (int i=0; i<word.length(); i++) {
-			CodeBlock codeBlock = word.getSymbol(i);
+			final CodeBlock codeBlock = word.getSymbol(i);
 			addToFailureTrace(codeBlock, i , failurePath, smtManager);
 		}
 		return failurePath;
@@ -207,14 +207,14 @@ public class AnnotateAndAsserter {
 		} else if (codeBlock instanceof StatementSequence) {
 			failureTrace.add(codeBlock);
 		} else if (codeBlock instanceof SequentialComposition) {
-			SequentialComposition seqComp = (SequentialComposition) codeBlock;
-			for (CodeBlock elem : seqComp.getCodeBlocks()) {
+			final SequentialComposition seqComp = (SequentialComposition) codeBlock;
+			for (final CodeBlock elem : seqComp.getCodeBlocks()) {
 				addToFailureTrace(elem, pos, failureTrace, smtManager);
 			}
 		} else if (codeBlock instanceof ParallelComposition) {
-			ParallelComposition parComp = (ParallelComposition) codeBlock;
+			final ParallelComposition parComp = (ParallelComposition) codeBlock;
 
-			Set<TermVariable> branchIndicators = parComp.getBranchIndicator2CodeBlock().keySet();
+			final Set<TermVariable> branchIndicators = parComp.getBranchIndicator2CodeBlock().keySet();
 
 			TermVariable taken = null;
 
@@ -225,19 +225,19 @@ public class AnnotateAndAsserter {
 			else {
 				// take some branch for which the branch indicator evaluates to
 				// true
-				for (TermVariable tv : branchIndicators) {
-					String constantName = tv.getName()+"_"+pos;
-					Term constant = smtManager.getScript().term(constantName);
-					Term[] terms = { constant };
-					Map<Term, Term> valuation = smtManager.getScript().getValue(terms);
-					Term value = valuation.get(constant);
+				for (final TermVariable tv : branchIndicators) {
+					final String constantName = tv.getName()+"_"+pos;
+					final Term constant = smtManager.getScript().term(constantName);
+					final Term[] terms = { constant };
+					final Map<Term, Term> valuation = smtManager.getScript().getValue(terms);
+					final Term value = valuation.get(constant);
 					if (value == smtManager.getScript().term("true")) {
 						taken = tv;
 					}
 				}
 			}
 			assert (taken != null);
-			CodeBlock cb = parComp.getBranchIndicator2CodeBlock().get(taken); 
+			final CodeBlock cb = parComp.getBranchIndicator2CodeBlock().get(taken); 
 			addToFailureTrace(cb, pos, failureTrace, smtManager);
 		} else {
 			throw new IllegalArgumentException("unkown code block");

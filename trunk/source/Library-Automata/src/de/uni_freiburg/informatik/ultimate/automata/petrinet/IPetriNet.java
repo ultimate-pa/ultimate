@@ -35,7 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	
+	@Override
 	public Set<S> getAlphabet(); 
+	@Override
 	public StateFactory<C> getStateFactory();
 	
 	public Collection<Place<S,C>> getPlaces();
@@ -48,6 +50,7 @@ public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	
 	public boolean accepts(Word<S> word);
 	
+	@Override
 	public String sizeInformation();
 
 }

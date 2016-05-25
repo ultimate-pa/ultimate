@@ -48,7 +48,7 @@ public class CookiefyPlugin implements IGenerator {
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mInputType.getFileNames());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
@@ -81,7 +81,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		// Attention: Every observer here operates on the input
 		// model given to the plugin - not the resulting model
 		// of the Cookiefy algorithm, even if the observer follows the

@@ -36,11 +36,13 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.IInlineSelector;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.ILabeledEdgesFilter;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * Selector using the preferences from the BoogieProcedureInliner.
@@ -49,15 +51,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.ILa
  */
 public class PreferencesInlineSelector implements IInlineSelector {
 	
-	private boolean mInlineUnimplemented;
-	private boolean mInlineImplemented;
-	private boolean mIgnoreCallForAll;
-	private boolean mIgnoreRecursive;
-	private boolean mIgnoreWithFreeRequires;
-	private boolean mIgnorePolymorphic;
-	private boolean mIgnoreMultipleCalled;
-	private Collection<String> mUserList;
-	private UserListType mUserListType;
+	private final boolean mInlineUnimplemented;
+	private final boolean mInlineImplemented;
+	private final boolean mIgnoreCallForAll;
+	private final boolean mIgnoreRecursive;
+	private final boolean mIgnoreWithFreeRequires;
+	private final boolean mIgnorePolymorphic;
+	private final boolean mIgnoreMultipleCalled;
+	private final Collection<String> mUserList;
+	private final UserListType mUserListType;
 
 	/**
 	 * Mapping from procedure id, to the last processed edge, which's inlineFlag was set.
@@ -67,34 +69,34 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	
 	/** Creates a new InlineSelector using the currently set preferences of the BoogieProcedureInliner. */
 	public PreferencesInlineSelector() {
-		mInlineUnimplemented = PreferenceItem.INLINE_UNIMPLEMENTED.getBooleanValue();
-		mInlineImplemented = PreferenceItem.INLINE_IMPLEMENTED.getBooleanValue();
-		mIgnoreCallForAll = PreferenceItem.IGNORE_CALL_FORALL.getBooleanValue();
+		mInlineUnimplemented = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.INLINE_UNIMPLEMENTED.mName);
+		mInlineImplemented = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.INLINE_IMPLEMENTED.mName);
+		mIgnoreCallForAll = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.IGNORE_CALL_FORALL.mName);
 		mUserList = new HashSet<String>(PreferenceItem.USER_LIST.getStringValueTokens());
-		mUserListType = PreferenceItem.USER_LIST_TYPE.getUserListTypeValue();
-		mIgnoreRecursive = PreferenceItem.IGNORE_RECURSIVE.getBooleanValue();
-		mIgnoreWithFreeRequires = PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getBooleanValue();
-		mIgnorePolymorphic = PreferenceItem.IGNORE_MULTIPLE_CALLED.getBooleanValue();
-		mIgnoreMultipleCalled = PreferenceItem.IGNORE_MULTIPLE_CALLED.getBooleanValue();
+		mUserListType = new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(PreferenceItem.USER_LIST_TYPE.mName, UserListType.class);
+		mIgnoreRecursive = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.IGNORE_RECURSIVE.mName);
+		mIgnoreWithFreeRequires = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.IGNORE_WITH_FREE_REQUIRES.mName);
+		mIgnorePolymorphic = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.mName);
+		mIgnoreMultipleCalled = new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.mName);
 	}
 
 	@Override
 	public void setInlineFlags(Map<String, CallGraphNode> callGraph) {
 		mLastInlinedCall = new HashMap<String, CallGraphEdgeLabel>();
-		List<ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
+		final List<ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
 		if (!mUserListType.isOnly()) {
 			updaterQueue.add(mGeneralSettingsFilter);
 		}
 		if (mUserListType != UserListType.DISABLED) {
 			updaterQueue.add(mUserListFilter);			
 		}
-		for (ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> filter : updaterQueue) {	
-			for (CallGraphNode caller : callGraph.values()) {
-				Iterator<CallGraphEdgeLabel> outgoingEdgeLabelsIterator = caller.getOutgoingEdgeLabels().iterator();
-				Iterator<CallGraphNode> outgoingNodesIterator = caller.getOutgoingNodes().iterator();
+		for (final ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> filter : updaterQueue) {	
+			for (final CallGraphNode caller : callGraph.values()) {
+				final Iterator<CallGraphEdgeLabel> outgoingEdgeLabelsIterator = caller.getOutgoingEdgeLabels().iterator();
+				final Iterator<CallGraphNode> outgoingNodesIterator = caller.getOutgoingNodes().iterator();
 				while (outgoingEdgeLabelsIterator.hasNext() && outgoingNodesIterator.hasNext()) {
-					CallGraphEdgeLabel callLabel = outgoingEdgeLabelsIterator.next();
-					CallGraphNode callee = outgoingNodesIterator.next();
+					final CallGraphEdgeLabel callLabel = outgoingEdgeLabelsIterator.next();
+					final CallGraphNode callee = outgoingNodesIterator.next();
 					callLabel.setInlineFlag(filter.accept(caller, callLabel, callee));
 				}
 				assert outgoingEdgeLabelsIterator.hasNext() == outgoingNodesIterator.hasNext();
@@ -103,7 +105,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	}
 	
 	/** Filter determining whether to set an inline flag or not, using the general settings. */
-	private ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> mGeneralSettingsFilter =
+	private final ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> mGeneralSettingsFilter =
 			new ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>() {
 		@Override
 		public boolean accept(CallGraphNode caller, CallGraphEdgeLabel callLabel, CallGraphNode callee) {
@@ -118,10 +120,10 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				inline = false;
 			} else {
 				// Assume that all procedures are called only once.
-				boolean isImplemented = callee.isImplemented();
+				final boolean isImplemented = callee.isImplemented();
 				inline = mInlineImplemented && isImplemented || mInlineUnimplemented && !isImplemented;
 				if (inline && mIgnoreMultipleCalled) {
-					CallGraphEdgeLabel inlinedCallOfSameProcedure = mLastInlinedCall.put(callee.getId(), callLabel);
+					final CallGraphEdgeLabel inlinedCallOfSameProcedure = mLastInlinedCall.put(callee.getId(), callLabel);
 					if (inlinedCallOfSameProcedure != null) {
 						// The assumption was false. There where multiple calls => undo
 						inlinedCallOfSameProcedure.setInlineFlag(false);
@@ -134,7 +136,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	};
 	
 	private boolean hasFreeRequiresSpecification(CallGraphNode procNode) {
-		for (Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
+		for (final Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
 			if (spec instanceof RequiresSpecification && spec.isFree()) {
 				return true;
 			}
@@ -143,12 +145,12 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	}
 	
 	/** Filter determining whether to set an inline flag or not, using the previously set flag and the user list. */
-	private ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> mUserListFilter =
+	private final ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> mUserListFilter =
 			new ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel>() {
 		@Override
 		public boolean accept(CallGraphNode caller, CallGraphEdgeLabel callLabel, CallGraphNode callee) {
 			boolean inline = callLabel.getInlineFlag();
-			boolean inUserList = mUserList.contains(callee.getId());
+			final boolean inUserList = mUserList.contains(callee.getId());
 			switch(mUserListType) {
 				case BLACKLIST_ONLY:
 					inline = !inUserList;

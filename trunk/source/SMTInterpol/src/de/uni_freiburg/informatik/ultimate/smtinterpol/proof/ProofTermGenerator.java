@@ -45,20 +45,22 @@ public class ProofTermGenerator extends NonRecursive {
 			assert cls.getProof() instanceof ResolutionNode;
 			mCls = cls;
 		}
+		@Override
 		public void walk(NonRecursive nr) {
-			ProofTermGenerator engine = (ProofTermGenerator) nr;
-			Theory t = engine.getTheory();
-			Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
+			final ProofTermGenerator engine = (ProofTermGenerator) nr;
+			final Theory t = engine.getTheory();
+			final Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
 					getAntecedents();
-			Term[] args = new Term[1 + antes.length];
+			final Term[] args = new Term[1 + antes.length];
 			args[0] = engine.getConverted();
-			for (int i = 0; i < antes.length; ++i)
+			for (int i = 0; i < antes.length; ++i) {
 				args[i + 1] = t.annotatedTerm(
 						new Annotation[] {
 							new Annotation(":pivot",
 									antes[i].mPivot.getSMTFormula(t, true))},
 									engine.getConverted());
-			Term res = t.term("@res", args);
+			}
+			final Term res = t.term("@res", args);
 			engine.setResult(mCls, res);
 			engine.pushConverted(res);
 		}
@@ -69,29 +71,31 @@ public class ProofTermGenerator extends NonRecursive {
 		public Expander(Clause cls) {
 			mCls = cls;
 		}
+		@Override
 		public void walk(NonRecursive nr) {
-			ProofTermGenerator engine = (ProofTermGenerator) nr;
-			Term known = engine.getTerm(mCls);
+			final ProofTermGenerator engine = (ProofTermGenerator) nr;
+			final Term known = engine.getTerm(mCls);
 			if (known != null) {
 				engine.pushConverted(known);
 				return;
 			}
-			ProofNode pn = mCls.getProof();
+			final ProofNode pn = mCls.getProof();
 			if (pn.isLeaf()) {
-				LeafNode ln = (LeafNode) pn;
+				final LeafNode ln = (LeafNode) pn;
 				Term res;
-				Theory t = engine.getTheory();
-				IAnnotation annot = ln.getTheoryAnnotation();
+				final Theory t = engine.getTheory();
+				final IAnnotation annot = ln.getTheoryAnnotation();
 				res = annot.toTerm(mCls, t);
 				engine.setResult(mCls, res);
 				engine.pushConverted(res);
 			} else {
-				ResolutionNode rn = (ResolutionNode) pn;
+				final ResolutionNode rn = (ResolutionNode) pn;
 				engine.enqueueWalker(new GenerateTerm(mCls));
 				engine.enqueueWalker(new Expander(rn.getPrimary()));
-				Antecedent[] antes = rn.getAntecedents();
-				for (Antecedent ante : antes)
+				final Antecedent[] antes = rn.getAntecedents();
+				for (final Antecedent ante : antes) {
 					engine.enqueueWalker(new Expander(ante.mAntecedent));
+				}
 			}
 		}
 	}
@@ -139,7 +143,7 @@ public class ProofTermGenerator extends NonRecursive {
 		assert cls.getSize() == 0;
 		assert cls.getProof() != null;
 		run(new Expander(cls));
-		Term res = mConverted.pop();
+		final Term res = mConverted.pop();
 		return SMTAffineTerm.cleanup(res);
 	}
 }

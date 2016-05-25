@@ -49,7 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
@@ -211,7 +211,7 @@ public class CorrectnessWitnessExtractor {
 					+ node.getRawSignature());
 			mLogger.warn("  Witness node label is " + current);
 			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
-			Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
+			final Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
 			labels.add(current.getName());
 			rtr.put(node, new WitnessInvariant(newInvariant, labels));
 		}
@@ -285,8 +285,8 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private String toLogString(IASTNode bScope, IASTNode aScope) {
-		String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
-		String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
+		final String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
+		final String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
 		return "B=" + bScopeId + ", A=" + aScopeId;
 	}
 

@@ -45,8 +45,8 @@ public class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode
 
 	public BranchingProcessInitialNode(BranchingProcess<S, C> net) {
 		super("My sucessors are the initial conditions");
-		IAnnotations thisPluginsAnnotations = new DefaultAnnotations();
-		Map<String, IAnnotations> annotations = getPayload().getAnnotations();
+		final IAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}
 }

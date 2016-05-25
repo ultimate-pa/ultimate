@@ -88,15 +88,17 @@ public class LassoRanker implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	//@Override
+	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new LassoRankerObserver(mServices, mStorage);
 		return Collections.singletonList((IObserver) mObserver);
 	}
 	
+	@Override
 	public ModelType getOutputDefinition() {
 		/* 
 		 * TODO This generated method body only assumes a standard case.

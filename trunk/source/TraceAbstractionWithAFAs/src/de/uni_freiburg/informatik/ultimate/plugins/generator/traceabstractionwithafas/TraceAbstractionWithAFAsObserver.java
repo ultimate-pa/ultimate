@@ -49,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -73,7 +73,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	 * should be passed to the next plugin. The Successors of this node exactly
 	 * the initial nodes of procedures.
 	 */
-	private IElement mgraphroot = null;
+	private final IElement mgraphroot = null;
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
@@ -89,27 +89,27 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	@Override
 	public boolean process(IElement root) {
 
-		RootNode rootNode = (RootNode) root;
-		RootAnnot rootAnnot = rootNode.getRootAnnot();
-		SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript());
-		TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
-		TAPreferences taPrefs = new TAPreferences();
+		final RootNode rootNode = (RootNode) root;
+		final RootAnnot rootAnnot = rootNode.getRootAnnot();
+		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript());
+		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
+		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
-		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
+		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
+		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
 				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
-		Result result = cegarLoop.iterate();
+		final Result result = cegarLoop.iterate();
 		
 		cegarLoop.finish();
 
-		TraceAbstractionBenchmarks taBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
-		CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = cegarLoop.getCegarLoopBenchmark();
+		final TraceAbstractionBenchmarks taBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
+		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = cegarLoop.getCegarLoopBenchmark();
 		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(taBenchmark);
@@ -119,9 +119,9 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		} else if (result == Result.UNSAFE) {
 			reportCounterexampleResult(cegarLoop.getRcfgProgramExecution());
 		} else {
-			String shortDescription = "Unable to decide if program is safe!";
-			String longDescription = "Unable to decide if program is safe!";
-			GenericResult genResult = new GenericResult(Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+			final String shortDescription = "Unable to decide if program is safe!";
+			final String longDescription = "Unable to decide if program is safe!";
+			final GenericResult genResult = new GenericResult(Activator.s_PLUGIN_NAME, shortDescription, longDescription,
 					Severity.INFO);
 			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, genResult);
 		}
@@ -130,8 +130,8 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	
 	
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
-		String shortDescription = "Ultimate CodeCheck benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		final String shortDescription = "Ultimate CodeCheck benchmark data";
+		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -144,13 +144,13 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 					+ " specifiation because the program does not contain any specification.";
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
+			for (final ProgramPoint errorLoc : errorLocs) {
+				final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
 						errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
-		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+		final AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
@@ -166,27 +166,27 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	}
 
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
-		ProgramPoint errorPP = getErrorPP(pe);
-		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+		final ProgramPoint errorPP = getErrorPP(pe);
+		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
-		int lastPosition = rcfgProgramExecution.getLength() - 1;
-		RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		final int lastPosition = rcfgProgramExecution.getLength() - 1;
+		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}
 	
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = errorIpp;
-			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+		for (final ProgramPoint errorIpp : errorLocs) {
+			final ProgramPoint errorLoc = errorIpp;
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
 					timeOutMessage);
 			reportResult(timeOutRes);

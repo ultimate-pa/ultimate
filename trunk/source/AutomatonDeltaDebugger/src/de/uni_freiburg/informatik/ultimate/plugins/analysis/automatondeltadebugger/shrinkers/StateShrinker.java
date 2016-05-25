@@ -49,7 +49,7 @@ public class StateShrinker<LETTER, STATE>
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> states) {
 		// create fresh automaton
-		INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
 		
 		// add the complement of the passed states
 		final Set<STATE> oldStates = new HashSet<STATE>(mAutomaton.getStates());

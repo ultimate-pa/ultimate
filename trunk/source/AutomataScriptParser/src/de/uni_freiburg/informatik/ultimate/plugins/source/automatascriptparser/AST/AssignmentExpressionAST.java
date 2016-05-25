@@ -46,7 +46,7 @@ public class AssignmentExpressionAST extends AtsASTNode {
 	}
 
 	public void setOperator(AssignmentOperatorAST operator) {
-		this.moperator = operator;
+		moperator = operator;
 	}
 	
 	public AssignmentExpressionAST(ILocation loc, VariableExpressionAST var, AssignmentOperatorAST operator, AtsASTNode value) {
@@ -79,7 +79,7 @@ public class AssignmentExpressionAST extends AtsASTNode {
 	public String getAsString() {
 		AtsASTNode var = null;
 		AtsASTNode value = null;
-		for (AtsASTNode n : mchildren) {
+		for (final AtsASTNode n : mchildren) {
 			if (n instanceof VariableExpressionAST) {
 				var = n;
 			} else {

@@ -1430,7 +1430,7 @@ public class IntervalDomainValue {
 	private BigDecimal divide(final BigDecimal numerator, final BigDecimal divisor) {
 		try {
 			return numerator.divide(divisor);
-		} catch (ArithmeticException e) {
+		} catch (final ArithmeticException e) {
 			return numerator.divide(divisor, MathContext.DECIMAL128);
 		}
 	}

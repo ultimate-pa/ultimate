@@ -42,7 +42,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
  */
 public class JungSelectionProvider implements ISelectionProvider {
 
-	private ArrayList<ISelectionChangedListener> listeners = new ArrayList<ISelectionChangedListener>();;
+	private final ArrayList<ISelectionChangedListener> listeners = new ArrayList<ISelectionChangedListener>();;
 	private JungSelection jungSelection;
 	
 	@Override
@@ -52,7 +52,7 @@ public class JungSelectionProvider implements ISelectionProvider {
 
 	@Override
 	public ISelection getSelection() {
-		return (ISelection) this.jungSelection;
+		return jungSelection;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class JungSelectionProvider implements ISelectionProvider {
 	@Override
 	public void setSelection(ISelection selection) {
 		if (selection instanceof JungSelection) {
-			this.jungSelection = (JungSelection) selection;
+			jungSelection = (JungSelection) selection;
 		}
 		
 	}
@@ -72,11 +72,11 @@ public class JungSelectionProvider implements ISelectionProvider {
 	 * fires an Selection Event
 	 */
 	public void fireSelectionEvent() {
-		if (this.jungSelection != null) {
+		if (jungSelection != null) {
 
-			for (ISelectionChangedListener listener : listeners) {
+			for (final ISelectionChangedListener listener : listeners) {
 
-				listener.selectionChanged(new SelectionChangedEvent(this,(ISelection) this.jungSelection));
+				listener.selectionChanged(new SelectionChangedEvent(this,jungSelection));
 			}
 		}
 	}

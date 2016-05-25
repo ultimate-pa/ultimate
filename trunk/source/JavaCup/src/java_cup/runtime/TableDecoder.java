@@ -7,13 +7,13 @@ package java_cup.runtime;
  * @author hoenicke
  */
 final class TableDecoder {
-  private String[] coded_tables;
+  private final String[] coded_tables;
   private int array_idx;
   private int string_idx;
   
   public TableDecoder(String[] tables) 
     {
-      this.coded_tables = tables;
+      coded_tables = tables;
       array_idx = string_idx = 0;
     }
   
@@ -36,25 +36,31 @@ final class TableDecoder {
     {
       int val = advance();
       if (val >= 0x8000)
-	val = ((val & 0x7fff)<<16) + advance();
+	{
+	    val = ((val & 0x7fff)<<16) + advance();
+	  }
       return val;
     }
   
   public int[] decodeIntArray() 
     {
-      int size = decodeInt();
-      int[] arr = new int[size];
+      final int size = decodeInt();
+      final int[] arr = new int[size];
       for (int i = 0; i < size; i++)
-	arr[i] = decodeInt();
+	{
+	    arr[i] = decodeInt();
+	  }
       return arr;
     }
 
   public short[] decodeShortArray() 
     {
-      int size = decodeInt();
-      short[] arr = new short[size];
+      final int size = decodeInt();
+      final short[] arr = new short[size];
       for (int i = 0; i < size; i++)
-	arr[i] = decodeShort();
+	{
+	    arr[i] = decodeShort();
+	  }
       return arr;
     }
 }

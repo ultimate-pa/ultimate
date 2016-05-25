@@ -16,7 +16,7 @@ package java_cup.runtime;
 public class ComplexSymbolFactory implements SymbolFactory{
     public static class Location {
         private String unit=null;
-        private int line, column;
+        private final int line, column;
         public Location(String unit, int line, int column){
             this.unit=unit;
             this.line=line;
@@ -26,7 +26,8 @@ public class ComplexSymbolFactory implements SymbolFactory{
             this.line=line;
             this.column=column;
         }
-        public String toString(){
+        @Override
+	public String toString(){
             return (unit == null ? "" : unit+":")+line+"/"+column;
         }
         public int getColumn(){
@@ -53,8 +54,12 @@ public class ComplexSymbolFactory implements SymbolFactory{
             super(id,value);
             this.name=name;
         }
-        public String toString(){
-            if (xleft==null || xright==null) return "Symbol: "+name;
+        @Override
+	public String toString(){
+            if (xleft==null || xright==null)
+	      {
+		  return "Symbol: "+name;
+		}
             return "#"+sym+"["+name+"]("+xleft+" - "+xright+")";
         }
         public ComplexSymbol(String name, int id, int state) {
@@ -64,26 +69,38 @@ public class ComplexSymbolFactory implements SymbolFactory{
         public ComplexSymbol(String name, int id, Symbol left, Symbol right) {
             super(id,left,right);
             this.name=name;
-            if (left!=null)  this.xleft = ((ComplexSymbol)left).xleft;
-            if (right!=null) this.xright= ((ComplexSymbol)right).xright;
+            if (left!=null)
+	      {
+		  xleft = ((ComplexSymbol)left).xleft;
+		}
+            if (right!=null)
+	      {
+		  xright= ((ComplexSymbol)right).xright;
+		}
         }
         public ComplexSymbol(String name, int id, Location left, Location right) {
             super(id);
             this.name=name;
-            this.xleft=left;
-            this.xright=right;
+            xleft=left;
+            xright=right;
         }
         public ComplexSymbol(String name, int id, Symbol left, Symbol right, Object value) {
             super(id,value);
             this.name=name;
-            if (left!=null)  this.xleft = ((ComplexSymbol)left).xleft;
-            if (right!=null) this.xright= ((ComplexSymbol)right).xright;
+            if (left!=null)
+	      {
+		  xleft = ((ComplexSymbol)left).xleft;
+		}
+            if (right!=null)
+	      {
+		  xright= ((ComplexSymbol)right).xright;
+		}
         }
         public ComplexSymbol(String name, int id, Location left, Location right, Object value) {
             super(id,value);
             this.name=name;
-            this.xleft=left;
-            this.xright=right;
+            xleft=left;
+            xright=right;
         }
         public Location getLeft(){
             return xleft;
@@ -101,18 +118,23 @@ public class ComplexSymbolFactory implements SymbolFactory{
     public Symbol newSymbol(String name, int id, Location left, Location right){
         return new ComplexSymbol(name,id,left,right);
     }
+    @Override
     public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
         return new ComplexSymbol(name,id,left,right,value);
     }
+    @Override
     public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
         return new ComplexSymbol(name,id,left,right);
     }
+    @Override
     public Symbol newSymbol(String name, int id){
         return new ComplexSymbol(name,id);
     }
+    @Override
     public Symbol newSymbol(String name, int id, Object value){
         return new ComplexSymbol(name,id,value);
     }
+    @Override
     public Symbol startSymbol(String name, int id, int state){
         return new ComplexSymbol(name,id,state);
     }

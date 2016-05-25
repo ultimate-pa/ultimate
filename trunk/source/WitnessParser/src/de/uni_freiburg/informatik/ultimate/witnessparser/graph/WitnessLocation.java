@@ -32,10 +32,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class WitnessLocation implements ILocation {
 
 	private final String mFilename;
-	private int mStartLine;
+	private final int mStartLine;
 	private int mEndLine;
-	private int mStartColumn;
-	private int mEndColumn;
+	private final int mStartColumn;
+	private final int mEndColumn;
 
 	public WitnessLocation(String filename, int startline) {
 		this(filename, startline, startline);

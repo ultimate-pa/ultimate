@@ -46,9 +46,9 @@ public class NestedwordAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 498949013884049199L;
-	private ArrayList<String> mWord;
+	private final ArrayList<String> mWord;
 	private int msizeOfWordSymbols;
-	private ArrayList<Integer> mNestingRelation;
+	private final ArrayList<Integer> mNestingRelation;
 	// Stack for positions of call symbols
 	Deque<Integer> mCallPositions;
 	
@@ -98,12 +98,12 @@ public class NestedwordAST extends AtsASTNode {
 	}
 
 	public void addSymbol(ReturnSymbolAST c) {
-		int positionOfThisSymbol = msizeOfWordSymbols;
+		final int positionOfThisSymbol = msizeOfWordSymbols;
 		mWord.add(c.getSymbol());
 		if (mCallPositions.isEmpty()) {
 			mNestingRelation.add(MINUS_INFINITY);
 		} else {
-			int posOfMatchingCall = mCallPositions.pop();
+			final int posOfMatchingCall = mCallPositions.pop();
 			mNestingRelation.add(posOfMatchingCall);
 			mNestingRelation.set(posOfMatchingCall, positionOfThisSymbol);
 		}
@@ -119,7 +119,7 @@ public class NestedwordAST extends AtsASTNode {
 	 * @return true iff the conditions above are all true, otherwise false
 	 */
 	public boolean isNestedWordCorrect() {
-		int[] nestingRelation = new int[mNestingRelation.size()];
+		final int[] nestingRelation = new int[mNestingRelation.size()];
 		for (int i = 0; i < mNestingRelation.size(); i++) {
 			nestingRelation[i] = mNestingRelation.get(i);
 		}
@@ -128,7 +128,7 @@ public class NestedwordAST extends AtsASTNode {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("Nestedword [");
 		for (int i = 0; i < msizeOfWordSymbols; i++) {
 			if ((mNestingRelation.get(i) != INTERNAL_POSITION) && (mNestingRelation.get(i) < i)) {
@@ -223,7 +223,7 @@ public class NestedwordAST extends AtsASTNode {
 	}
 	
 	public String[] getWordSymbols() {
-		String[] symbols = new String[mWord.size()];
+		final String[] symbols = new String[mWord.size()];
 		for (int i = 0; i < mWord.size(); i++) {
 			symbols[i] = mWord.get(i);
 		}
@@ -231,7 +231,7 @@ public class NestedwordAST extends AtsASTNode {
 	}
 	
 	public int[] getNestingRelation() {
-		int[] nestingRelation = new int[mNestingRelation.size()];
+		final int[] nestingRelation = new int[mNestingRelation.size()];
 		for (int i = 0; i < mNestingRelation.size(); i++) {
 			nestingRelation[i] = mNestingRelation.get(i);
 		}

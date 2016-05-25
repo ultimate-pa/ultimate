@@ -69,15 +69,15 @@ public class BacktranslationUtil {
 	public static List<Map<Expression, Rational>> rank2Boogie(
 			Term2Expression term2expression,
 			List<Map<RankVar, Rational>> states) {
-		List<Map<Expression, Rational>> result =
+		final List<Map<Expression, Rational>> result =
 				new ArrayList<Map<Expression, Rational>>(states.size());
-		Map<Term, Expression> rankVar2Expression =
+		final Map<Term, Expression> rankVar2Expression =
 				new HashMap<Term, Expression>();
-		for (Map<RankVar, Rational> state : states) {
-			Map<Expression, Rational> expression2rational =
+		for (final Map<RankVar, Rational> state : states) {
+			final Map<Expression, Rational> expression2rational =
 					new LinkedHashMap<Expression, Rational>();
-			for (Map.Entry<RankVar, Rational> entry : state.entrySet()) {
-				RankVar rv = entry.getKey();
+			for (final Map.Entry<RankVar, Rational> entry : state.entrySet()) {
+				final RankVar rv = entry.getKey();
 				Expression e;
 				if (rankVar2Expression.containsKey(rv.getDefinition())) {
 					e = rankVar2Expression.get(rv.getDefinition());

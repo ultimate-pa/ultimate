@@ -54,7 +54,7 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 	}
 	
 	public V get(K1 key1, K2 key2, K3 key3, K4 key4) {
-		NestedMap3<K2, K3, K4, V> k2tok3tok4toV = mK1ToK2ToK3ToK4V.get(key1);
+		final NestedMap3<K2, K3, K4, V> k2tok3tok4toV = mK1ToK2ToK3ToK4V.get(key1);
 		if (k2tok3tok4toV == null) {
 			return null;
 		} else {

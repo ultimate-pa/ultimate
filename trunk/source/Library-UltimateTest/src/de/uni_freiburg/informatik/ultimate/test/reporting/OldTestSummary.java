@@ -40,12 +40,13 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
+@Deprecated
 public abstract class OldTestSummary implements ITestSummary {
 
-	private HashMap<String, Summary> mSuccess;
-	private HashMap<String, Summary> mUnknown;
-	private HashMap<String, Summary> mFailure;
-	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
+	private final HashMap<String, Summary> mSuccess;
+	private final HashMap<String, Summary> mUnknown;
+	private final HashMap<String, Summary> mFailure;
+	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
 	public OldTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mSuccess = new HashMap<String, Summary>();
@@ -78,20 +79,20 @@ public abstract class OldTestSummary implements ITestSummary {
 	}
 
 	public StringBuilder generateCanonicalSummary() {
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
-		Map<TestResult, Integer> count = new HashMap<>();
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
+		final Map<TestResult, Integer> count = new HashMap<>();
 
-		for (TestResult result : TestResult.class.getEnumConstants()) {
+		for (final TestResult result : TestResult.class.getEnumConstants()) {
 			int resultCategoryCount = 0;
 			sb.append("===== ").append(result.toString()).append(" =====").append(lineSeparator);
 
-			for (Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
+			for (final Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
 				sb.append("\t").append(entry.getKey()).append(lineSeparator);
 
-				for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
+				for (final Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
 					sb.append("\t\t").append(fileMsgPair.getKey());
-					String customMessage = fileMsgPair.getValue();
+					final String customMessage = fileMsgPair.getValue();
 					if (customMessage != null && !customMessage.isEmpty()) {
 						sb.append(": ").append(customMessage);
 					}
@@ -112,8 +113,8 @@ public abstract class OldTestSummary implements ITestSummary {
 		}
 
 		int total = 0;
-		for (TestResult result : TestResult.class.getEnumConstants()) {
-			int current = count.get(result);
+		for (final TestResult result : TestResult.class.getEnumConstants()) {
+			final int current = count.get(result);
 			sb.append(result.toString()).append(": ").append(current).append(lineSeparator);
 			total += current;
 		}
@@ -157,7 +158,7 @@ public abstract class OldTestSummary implements ITestSummary {
 	public class Summary {
 
 		private int mCount;
-		private HashMap<String, String> mFileToMessage;
+		private final HashMap<String, String> mFileToMessage;
 
 		private Summary() {
 			mFileToMessage = new HashMap<String, String>();
@@ -168,7 +169,7 @@ public abstract class OldTestSummary implements ITestSummary {
 		}
 
 		public void setCount(int count) {
-			this.mCount = count;
+			mCount = count;
 		}
 
 		public HashMap<String, String> getFileToMessage() {

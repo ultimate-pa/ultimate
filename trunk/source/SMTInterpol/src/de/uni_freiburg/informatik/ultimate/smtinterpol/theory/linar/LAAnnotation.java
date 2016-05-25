@@ -72,7 +72,7 @@ public class LAAnnotation implements IAnnotation {
 	 * the inequalities the literal must be negated first and then multiplied
 	 * with the coefficient from this map.
 	 */
-	private Map<Literal, Rational> mCoefficients;
+	private final Map<Literal, Rational> mCoefficients;
 	/**
 	 * Map from sub-annotations to a Farkas coefficient.  The sub-annotations
 	 * must all have the same parent annotation as this annotation (and must
@@ -80,7 +80,7 @@ public class LAAnnotation implements IAnnotation {
 	 * summing up the inequalities, the bound explained by the sub-annotation
 	 * must be multiplied with the coefficient from this map.
 	 */
-	private Map<LAAnnotation, Rational> mAuxAnnotations;
+	private final Map<LAAnnotation, Rational> mAuxAnnotations;
 	
 	/**
 	 * The linvar on which this sub-annotation explains a bound, or null
@@ -124,8 +124,9 @@ public class LAAnnotation implements IAnnotation {
 
 	public void addFarkas(LAAnnotation annot, Rational coeff) { 
 		Rational r = mAuxAnnotations.get(annot);
-		if (r == null)
+		if (r == null) {
 			r = Rational.ZERO;
+		}
 		assert(r.signum() * coeff.signum() >= 0);
 		r = r.add(coeff);
 		mAuxAnnotations.put(annot, r);
@@ -133,24 +134,26 @@ public class LAAnnotation implements IAnnotation {
 
 	public void addFarkas(Literal lit, Rational coeff) {
 		Rational r = mCoefficients.get(lit);
-		if (r == null)
+		if (r == null) {
 			r = Rational.ZERO;
+		}
 		assert(lit.getAtom() instanceof LAEquality
 			   || r.signum() * coeff.signum() >= 0);
 		r = r.add(coeff);
-		if (r == Rational.ZERO)
+		if (r == Rational.ZERO) {
 			mCoefficients.remove(lit);
-		else
+		} else {
 			mCoefficients.put(lit, r);
+		}
 	}
 	
 	MutableAffinTerm addLiterals() {
-		MutableAffinTerm mat = new MutableAffinTerm();
-		for (Map.Entry<Literal, Rational> entry : mCoefficients.entrySet()) {
-			Rational coeff = entry.getValue(); 
-			Literal lit = entry.getKey();
+		final MutableAffinTerm mat = new MutableAffinTerm();
+		for (final Map.Entry<Literal, Rational> entry : mCoefficients.entrySet()) {
+			final Rational coeff = entry.getValue(); 
+			final Literal lit = entry.getKey();
 			if (lit.getAtom() instanceof BoundConstraint) {
-				BoundConstraint bc = (BoundConstraint) lit.getAtom();
+				final BoundConstraint bc = (BoundConstraint) lit.getAtom();
 				InfinitNumber bound = bc.getBound();
 				assert ((coeff.signum() > 0) == (bc != lit));
 				if (bc == lit) {
@@ -159,7 +162,7 @@ public class LAAnnotation implements IAnnotation {
 				mat.add(coeff, bc.getVar());
 				mat.add(bound.mul(coeff.negate()));
 			} else {
-				LAEquality lasd = (LAEquality) lit.getAtom();
+				final LAEquality lasd = (LAEquality) lit.getAtom();
 				if (lasd == lit) {
 					assert coeff.abs().equals(Rational.ONE);
 					// TODO check that matching inequality is present.
@@ -170,9 +173,9 @@ public class LAAnnotation implements IAnnotation {
 				}
 			}
 		}
-		for (Map.Entry<LAAnnotation, Rational> entry : mAuxAnnotations.entrySet()) {
-			Rational coeff = entry.getValue(); 
-			LAAnnotation annot = entry.getKey();
+		for (final Map.Entry<LAAnnotation, Rational> entry : mAuxAnnotations.entrySet()) {
+			final Rational coeff = entry.getValue(); 
+			final LAAnnotation annot = entry.getKey();
 			assert ((coeff.signum() > 0) == annot.mIsUpper);
 			mat.add(coeff, annot.mLinvar);
 			mat.add(annot.mBound.mul(coeff.negate()));
@@ -180,6 +183,7 @@ public class LAAnnotation implements IAnnotation {
 		return mat;
 	}
 	
+	@Override
 	public String toString() {
 		return mCoefficients.toString() + mAuxAnnotations.toString();
 	}
@@ -190,6 +194,7 @@ public class LAAnnotation implements IAnnotation {
 		return new AnnotationToProofTerm().convert(this, theory);
 	}
 	
+	@Override
 	public int hashCode() {
 		return mLinvar == null ? 0 : HashUtils.hashJenkins(mBound.hashCode(), mLinvar);
 	}
@@ -209,13 +214,14 @@ public class LAAnnotation implements IAnnotation {
 	private void collect(HashSet<Literal> lits, HashSet<LAAnnotation> visited) {
 		if (visited.add(this)) {
 			lits.addAll(mCoefficients.keySet());
-			for (LAAnnotation annot : mAuxAnnotations.keySet())
+			for (final LAAnnotation annot : mAuxAnnotations.keySet()) {
 				annot.collect(lits, visited);
+			}
 		}
 	}
 
 	public Literal[] collectLiterals() {
-		HashSet<Literal> lits = new HashSet<Literal>();
+		final HashSet<Literal> lits = new HashSet<Literal>();
 		collect(lits, new HashSet<LAAnnotation>());
 		return lits.toArray(new Literal[lits.size()]);
 	}

@@ -1,8 +1,19 @@
 package pea.test;
-import pea.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.CounterTrace;
+import pea.EventDecision;
+import pea.PEATestAutomaton;
+import pea.Phase;
+import pea.PhaseEventAutomata;
+import pea.RangeDecision;
+import pea.Trace2PEACompiler;
 import pea.modelchecking.PEA2ARMCConverter;
 import pea.modelchecking.SimplifyPEAs;
-import java.util.*;
 import pea.util.SimpleSet;
 
 /**
@@ -33,7 +44,7 @@ public class GasBurner {
     }
 
     public void buildState() {
-	String[] noresets = new String[0];
+	final String[] noresets = new String[0];
 	Phase[] p = new Phase[] { 
 	    new Phase("idle", idle.and(purge.negate()).and(ignite.negate()).and(burn.negate()), CDD.TRUE),
 	    new Phase("purge", purge.and(idle.negate()).and(ignite.negate()).and(burn.negate()), CDD.TRUE),
@@ -76,7 +87,7 @@ public class GasBurner {
     }
 
     public void buildTimings() {
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
+	final Trace2PEACompiler compiler = new Trace2PEACompiler();
 	dc1 = compiler.compile("Prog1", 
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),
@@ -136,19 +147,19 @@ public class GasBurner {
     }
 
     public void buildReqLeak() {
-	String[] noresets = new String[0];
-	CDD leak = flame.negate().and(gas);
-	Set<String> stopleak = new SimpleSet<String>(1);
+	final String[] noresets = new String[0];
+	final CDD leak = flame.negate().and(gas);
+	final Set<String> stopleak = new SimpleSet<String>(1);
 	stopleak.add("cleak");
-	CDD nosync = s1.negate().and(s2.negate());
-	CDD lteq = BooleanDecision.create("20*cleak-cell<=0");
-	CDD gteq = BooleanDecision.create("20*cleak-cell<0").negate();
+	final CDD nosync = s1.negate().and(s2.negate());
+	final CDD lteq = BooleanDecision.create("20*cleak-cell<=0");
+	final CDD gteq = BooleanDecision.create("20*cleak-cell<0").negate();
 
-	List<String> clocks = new ArrayList<String>();
+	final List<String> clocks = new ArrayList<String>();
 	clocks.add("cell");
 	clocks.add("cleak");
 	    
-	Phase[] p = new Phase[] { 
+	final Phase[] p = new Phase[] { 
 	    new Phase("init", CDD.TRUE, CDD.TRUE),
 	    new Phase("wleak", leak, lteq),
 	    new Phase("wnleak", leak.negate(), CDD.TRUE, stopleak),
@@ -184,14 +195,14 @@ public class GasBurner {
     }
 
     public void buildReq60() {
-	String[] noresets = new String[0];
-	CDD nosync = s1.negate().and(s2.negate());
-	CDD lteq = RangeDecision.create("c", RangeDecision.OP_LTEQ, 6000);
-	CDD gteq = RangeDecision.create("c", RangeDecision.OP_GTEQ, 6000);
-	List<String> clocks = new ArrayList<String>();
+	final String[] noresets = new String[0];
+	final CDD nosync = s1.negate().and(s2.negate());
+	final CDD lteq = RangeDecision.create("c", RangeDecision.OP_LTEQ, 6000);
+	final CDD gteq = RangeDecision.create("c", RangeDecision.OP_GTEQ, 6000);
+	final List<String> clocks = new ArrayList<String>();
 	clocks.add("c");
 	    
-	Phase[] p = new Phase[] { 
+	final Phase[] p = new Phase[] { 
 	    new Phase("init", CDD.TRUE, CDD.TRUE),
 	    new Phase("wait", CDD.TRUE, lteq),
 	    new Phase("finished", CDD.TRUE, CDD.TRUE),
@@ -223,17 +234,17 @@ public class GasBurner {
     }
 
     public static void main(String[] param) {
-	GasBurner gb = new GasBurner();
+	final GasBurner gb = new GasBurner();
 
 	gb.build();
 	gb.lenChecker.dump();
 	gb.leakChecker.dump();
 	gb.all.dump();
 
-	PEA2ARMCConverter tcsConverter 
+	final PEA2ARMCConverter tcsConverter 
 	    = new PEA2ARMCConverter();
-	ArrayList<String> mergedVariables0 = new ArrayList<String>();
-	ArrayList<String> mergedTypes0 = new ArrayList<String>();
+	final ArrayList<String> mergedVariables0 = new ArrayList<String>();
+	final ArrayList<String> mergedTypes0 = new ArrayList<String>();
 
 	mergedVariables0.add("heat");
 	mergedVariables0.add("flame");
@@ -243,7 +254,7 @@ public class GasBurner {
 	mergedVariables0.add("ignite");
 	mergedVariables0.add("burn");
 
-	SimplifyPEAs spea = new SimplifyPEAs();
+	final SimplifyPEAs spea = new SimplifyPEAs();
 	spea.removeAllEvents(gb.all);
 	gb.all = spea.mergeFinalLocations((PEATestAutomaton) gb.all,
 				     SimplifyPEAs.BADSTATESTRING);

@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
 import java.util.Map;
 
@@ -35,10 +35,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -63,7 +63,7 @@ public class TransFormulaBuilder {
 	public TransFormulaBuilder(Boogie2SMT boogie2smt, IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
-		mSimplifyCodeBlocks = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		mSimplifyCodeBlocks = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
 
@@ -95,22 +95,22 @@ public class TransFormulaBuilder {
 		TranslationResult tlres = null;
 		try {
 			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks, procId, statements);
-		} catch (SMTLIBException e) {
+		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());
 			}
 			throw e;
 		}
 		if (!tlres.getOverapproximations().isEmpty()) {
-			Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
+			final Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
 			annots.put(Overapprox.getIdentifier(), new Overapprox(tlres.getOverapproximations()));
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}
 
 	void reportUnsupportedSyntax(CodeBlock cb, String longDescription) {
-		ILocation loc = cb.getPayload().getLocation();
-		SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, longDescription);
+		final ILocation loc = cb.getPayload().getLocation();
+		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, longDescription);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}

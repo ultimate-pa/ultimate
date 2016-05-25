@@ -37,7 +37,7 @@ public abstract class BDDFactory {
 	public static final String getProperty(String key, String def) {
 		try {
 			return System.getProperty(key, def);
-		} catch (AccessControlException _) {
+		} catch (final AccessControlException _) {
 			return def;
 		}
 	}
@@ -61,27 +61,32 @@ public abstract class BDDFactory {
 	 */
 	public static BDDFactory init(String bddpackage, int nodenum, int cachesize, boolean typed) {
 		try {
-			if(typed)
+			if(typed) {
 				return TypedBDDFactory.init(bddpackage, nodenum, cachesize);
-			if (bddpackage.equals("j") || bddpackage.equals("java"))
+			}
+			if (bddpackage.equals("j") || bddpackage.equals("java")) {
 				return JFactory.init(nodenum, cachesize);
-			if (bddpackage.equals("u") || bddpackage.equals("micro"))
+			}
+			if (bddpackage.equals("u") || bddpackage.equals("micro")) {
 				return MicroFactory.init(nodenum, cachesize);
-			if (bddpackage.equals("jdd"))
+			}
+			if (bddpackage.equals("jdd")) {
 				return JDDFactory.init(nodenum, cachesize);
-			if (bddpackage.equals("test"))
+			}
+			if (bddpackage.equals("test")) {
 				return TestBDDFactory.init(nodenum, cachesize);
-		} catch (LinkageError e) {
+			}
+		} catch (final LinkageError e) {
 			System.out.println("Could not load BDD package " + bddpackage + ": " + e.getLocalizedMessage());
 		}
 		try {
-			Class c = Class.forName(bddpackage);
-			Method m = c.getMethod("init", new Class[] { int.class, int.class });
+			final Class c = Class.forName(bddpackage);
+			final Method m = c.getMethod("init", new Class[] { int.class, int.class });
 			return (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
-		} catch (ClassNotFoundException _) {
-		} catch (NoSuchMethodException _) {
-		} catch (IllegalAccessException _) {
-		} catch (InvocationTargetException _) {
+		} catch (final ClassNotFoundException _) {
+		} catch (final NoSuchMethodException _) {
+		} catch (final IllegalAccessException _) {
+		} catch (final InvocationTargetException _) {
 		}
 		// falling back to default java implementation.
 		return JFactory.init(nodenum, cachesize);
@@ -152,6 +157,7 @@ public abstract class BDDFactory {
 			this.name = name;
 		}
 
+		@Override
 		public String toString() {
 			return name;
 		}
@@ -202,15 +208,16 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDD buildCube(int value, List/* <BDD> */ variables) {
-		BDD result = one();
-		Iterator i = variables.iterator();
+		final BDD result = one();
+		final Iterator i = variables.iterator();
 		int z = 0;
 		while (i.hasNext()) {
 			BDD var = (BDD) i.next();
-			if ((value & 0x1) != 0)
+			if ((value & 0x1) != 0) {
 				var = var.id();
-			else
+			} else {
 				var = var.not();
+			}
 			result.andWith(var);
 			++z;
 			value >>= 1;
@@ -227,13 +234,14 @@ public abstract class BDDFactory {
 	 * Compare to bdd_ibuildcube./p>
 	 */
 	public BDD buildCube(int value, int[] variables) {
-		BDD result = one();
+		final BDD result = one();
 		for (int z = 0; z < variables.length; z++, value >>= 1) {
 			BDD v;
-			if ((value & 0x1) != 0)
+			if ((value & 0x1) != 0) {
 				v = ithVar(variables[variables.length - z - 1]);
-			else
+			} else {
 				v = nithVar(variables[variables.length - z - 1]);
+			}
 			result.andWith(v);
 		}
 		return result;
@@ -250,8 +258,8 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDD makeSet(int[] varset) {
-		BDD res = one();
-		int varnum = varset.length;
+		final BDD res = one();
+		final int varnum = varset.length;
 		for (int v = varnum - 1; v >= 0; v--) {
 			res.andWith(ithVar(varset[v]));
 		}
@@ -292,8 +300,8 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public void reset() {
-		int nodes = getNodeTableSize();
-		int cache = getCacheSize();
+		final int nodes = getNodeTableSize();
+		final int cache = getCacheSize();
 		domain = null;
 		fdvarnum = 0;
 		firstbddvar = 0;
@@ -468,9 +476,10 @@ public abstract class BDDFactory {
 	 * @return old number of BDD variables
 	 */
 	public int extVarNum(int num) {
-		int start = varNum();
-		if (num < 0 || num > 0x3FFFFFFF)
+		final int start = varNum();
+		if (num < 0 || num > 0x3FFFFFFF) {
 			throw new BDDException();
+		}
 		setVarNum(start + num);
 		return start;
 	}
@@ -544,14 +553,15 @@ public abstract class BDDFactory {
 		BufferedReader r = null;
 		try {
 			r = new BufferedReader(new FileReader(filename));
-			BDD result = load(r);
+			final BDD result = load(r);
 			return result;
 		} finally {
-			if (r != null)
+			if (r != null) {
 				try {
 					r.close();
-				} catch (IOException _) {
+				} catch (final IOException _) {
 				}
+			}
 		}
 	}
 	// TODO: error code from bdd_load (?)
@@ -573,12 +583,12 @@ public abstract class BDDFactory {
 
 		tokenizer = null;
 
-		int lh_nodenum = Integer.parseInt(readNext(ifile));
-		int vnum = Integer.parseInt(readNext(ifile));
+		final int lh_nodenum = Integer.parseInt(readNext(ifile));
+		final int vnum = Integer.parseInt(readNext(ifile));
 
 		// Check for constant true / false
 		if (lh_nodenum == 0 && vnum == 0) {
-			int r = Integer.parseInt(readNext(ifile));
+			final int r = Integer.parseInt(readNext(ifile));
 			return r == 0 ? zero() : one();
 		}
 
@@ -588,8 +598,9 @@ public abstract class BDDFactory {
 			loadvar2level[n] = Integer.parseInt(readNext(ifile));
 		}
 
-		if (vnum > varNum())
+		if (vnum > varNum()) {
 			setVarNum(vnum);
+		}
 
 		LoadHash[] lh_table = new LoadHash[lh_nodenum];
 		for (int n = 0; n < lh_nodenum; n++) {
@@ -602,25 +613,26 @@ public abstract class BDDFactory {
 
 		BDD root = null;
 		for (int n = 0; n < lh_nodenum; n++) {
-			int key = Integer.parseInt(readNext(ifile));
-			int var = Integer.parseInt(readNext(ifile));
-			int lowi = Integer.parseInt(readNext(ifile));
-			int highi = Integer.parseInt(readNext(ifile));
+			final int key = Integer.parseInt(readNext(ifile));
+			final int var = Integer.parseInt(readNext(ifile));
+			final int lowi = Integer.parseInt(readNext(ifile));
+			final int highi = Integer.parseInt(readNext(ifile));
 
 			BDD low, high;
 
 			low = loadhash_get(lh_table, lh_nodenum, lowi);
 			high = loadhash_get(lh_table, lh_nodenum, highi);
 
-			if (low == null || high == null || var < 0)
+			if (low == null || high == null || var < 0) {
 				throw new BDDException("Incorrect file format");
+			}
 
-			BDD b = ithVar(var);
+			final BDD b = ithVar(var);
 			root = b.ite(high, low);
 			b.free();
 
-			int hash = key % lh_nodenum;
-			int pos = lh_freepos;
+			final int hash = key % lh_nodenum;
+			final int pos = lh_freepos;
 
 			lh_freepos = lh_table[pos].next;
 			lh_table[pos].next = lh_table[hash].first;
@@ -629,10 +641,11 @@ public abstract class BDDFactory {
 			lh_table[pos].key = key;
 			lh_table[pos].data = root;
 		}
-		BDD tmproot = root.id();
+		final BDD tmproot = root.id();
 
-		for (int n = 0; n < lh_nodenum; n++)
+		for (int n = 0; n < lh_nodenum; n++) {
 			lh_table[n].data.free();
+		}
 
 		lh_table = null;
 		loadvar2level = null;
@@ -654,9 +667,10 @@ public abstract class BDDFactory {
 	 */
 	protected String readNext(BufferedReader ifile) throws IOException {
 		while (tokenizer == null || !tokenizer.hasMoreTokens()) {
-			String s = ifile.readLine();
-			if (s == null)
+			final String s = ifile.readLine();
+			if (s == null) {
 				throw new BDDException("Incorrect file format");
+			}
 			tokenizer = new StringTokenizer(s);
 		}
 		return tokenizer.nextToken();
@@ -676,20 +690,25 @@ public abstract class BDDFactory {
 	 * Gets a BDD from the load hash table.
 	 */
 	protected BDD loadhash_get(LoadHash[] lh_table, int lh_nodenum, int key) {
-		if (key < 0)
+		if (key < 0) {
 			return null;
-		if (key == 0)
+		}
+		if (key == 0) {
 			return zero();
-		if (key == 1)
+		}
+		if (key == 1) {
 			return one();
+		}
 
 		int hash = lh_table[key % lh_nodenum].first;
 
-		while (hash != -1 && lh_table[hash].key != key)
+		while (hash != -1 && lh_table[hash].key != key) {
 			hash = lh_table[hash].next;
+		}
 
-		if (hash == -1)
+		if (hash == -1) {
 			return null;
+		}
 		return lh_table[hash].data;
 	}
 
@@ -708,11 +727,12 @@ public abstract class BDDFactory {
 			is = new BufferedWriter(new FileWriter(filename));
 			save(is, var);
 		} finally {
-			if (is != null)
+			if (is != null) {
 				try {
 					is.close();
-				} catch (IOException _) {
+				} catch (final IOException _) {
 				}
+			}
 		}
 	}
 	// TODO: error code from bdd_save (?)
@@ -734,17 +754,19 @@ public abstract class BDDFactory {
 
 		out.write(r.nodeCount() + " " + varNum() + "\n");
 
-		for (int x = 0; x < varNum(); x++)
+		for (int x = 0; x < varNum(); x++) {
 			out.write(var2Level(x) + " ");
+		}
 		out.write("\n");
 
-		Map visited = new HashMap();
+		final Map visited = new HashMap();
 		save_rec(out, visited, r);
 
-		for (Iterator it = visited.keySet().iterator(); it.hasNext();) {
-			BDD b = (BDD) it.next();
-			if (b != r)
+		for (final Iterator it = visited.keySet().iterator(); it.hasNext();) {
+			final BDD b = (BDD) it.next();
+			if (b != r) {
 				b.free();
+			}
 		}
 	}
 
@@ -760,19 +782,19 @@ public abstract class BDDFactory {
 			root.free();
 			return 1;
 		}
-		Integer i = (Integer) visited.get(root);
+		final Integer i = (Integer) visited.get(root);
 		if (i != null) {
 			root.free();
 			return i.intValue();
 		}
-		int v = visited.size() + 2;
+		final int v = visited.size() + 2;
 		visited.put(root, new Integer(v));
 
-		BDD l = root.low();
-		int lo = save_rec(out, visited, l);
+		final BDD l = root.low();
+		final int lo = save_rec(out, visited, l);
 
-		BDD h = root.high();
-		int hi = save_rec(out, visited, h);
+		final BDD h = root.high();
+		final int hi = save_rec(out, visited, h);
 
 		out.write(v + " ");
 		out.write(root.var() + " ");
@@ -868,6 +890,7 @@ public abstract class BDDFactory {
 		 * 
 		 * @see java.lang.Object#toString()
 		 */
+		@Override
 		public String toString() {
 			return name;
 		}
@@ -1005,7 +1028,7 @@ public abstract class BDDFactory {
 	 * @return BDD pairing
 	 */
 	public BDDPairing makePair(int oldvar, int newvar) {
-		BDDPairing p = makePair();
+		final BDDPairing p = makePair();
 		p.set(oldvar, newvar);
 		return p;
 	}
@@ -1020,7 +1043,7 @@ public abstract class BDDFactory {
 	 * @return BDD pairing
 	 */
 	public BDDPairing makePair(int oldvar, BDD newvar) {
-		BDDPairing p = makePair();
+		final BDDPairing p = makePair();
 		p.set(oldvar, newvar);
 		return p;
 	}
@@ -1035,7 +1058,7 @@ public abstract class BDDFactory {
 	 * @return BDD pairing
 	 */
 	public BDDPairing makePair(BDDDomain oldvar, BDDDomain newvar) {
-		BDDPairing p = makePair();
+		final BDDPairing p = makePair();
 		p.set(oldvar, newvar);
 		return p;
 	}
@@ -1239,8 +1262,9 @@ public abstract class BDDFactory {
 		 * 
 		 * @see java.lang.Object#toString()
 		 */
+		@Override
 		public String toString() {
-			StringBuffer sb = new StringBuffer();
+			final StringBuffer sb = new StringBuffer();
 			sb.append("Garbage collection #");
 			sb.append(num);
 			sb.append(": ");
@@ -1289,14 +1313,16 @@ public abstract class BDDFactory {
 		}
 
 		public int gain() {
-			if (usednumbefore == 0)
+			if (usednumbefore == 0) {
 				return 0;
+			}
 
 			return (100 * (usednumbefore - usednumafter)) / usednumbefore;
 		}
 
+		@Override
 		public String toString() {
-			StringBuffer sb = new StringBuffer();
+			final StringBuffer sb = new StringBuffer();
 			sb.append("Went from ");
 			sb.append(usednumbefore);
 			sb.append(" to ");
@@ -1304,7 +1330,7 @@ public abstract class BDDFactory {
 			sb.append(" nodes, gain = ");
 			sb.append(gain());
 			sb.append("% (");
-			sb.append((float) time / 1000f);
+			sb.append(time / 1000f);
 			sb.append(" sec)");
 			return sb.toString();
 		}
@@ -1345,13 +1371,13 @@ public abstract class BDDFactory {
 		}
 
 		void copyFrom(CacheStats that) {
-			this.uniqueAccess = that.uniqueAccess;
-			this.uniqueChain = that.uniqueChain;
-			this.uniqueHit = that.uniqueHit;
-			this.uniqueMiss = that.uniqueMiss;
-			this.opHit = that.opHit;
-			this.opMiss = that.opMiss;
-			this.swapCount = that.swapCount;
+			uniqueAccess = that.uniqueAccess;
+			uniqueChain = that.uniqueChain;
+			uniqueHit = that.uniqueHit;
+			uniqueMiss = that.uniqueMiss;
+			opHit = that.opHit;
+			opMiss = that.opMiss;
+			swapCount = that.swapCount;
 		}
 
 		/*
@@ -1359,9 +1385,10 @@ public abstract class BDDFactory {
 		 * 
 		 * @see java.lang.Object#toString()
 		 */
+		@Override
 		public String toString() {
-			StringBuffer sb = new StringBuffer();
-			String newLine = getProperty("line.separator", "\n");
+			final StringBuffer sb = new StringBuffer();
+			final String newLine = getProperty("line.separator", "\n");
 			sb.append(newLine);
 			sb.append("Cache statistics");
 			sb.append(newLine);
@@ -1381,10 +1408,11 @@ public abstract class BDDFactory {
 			sb.append(uniqueMiss);
 			sb.append(newLine);
 			sb.append("=> Hit rate =   ");
-			if (uniqueHit + uniqueMiss > 0)
-				sb.append(((float) uniqueHit) / ((float) uniqueHit + uniqueMiss));
-			else
+			if (uniqueHit + uniqueMiss > 0) {
+				sb.append((uniqueHit) / ((float) uniqueHit + uniqueMiss));
+			} else {
 				sb.append((float) 0);
+			}
 			sb.append(newLine);
 			sb.append("Operator Hits:  ");
 			sb.append(opHit);
@@ -1393,10 +1421,11 @@ public abstract class BDDFactory {
 			sb.append(opMiss);
 			sb.append(newLine);
 			sb.append("=> Hit rate =   ");
-			if (opHit + opMiss > 0)
-				sb.append(((float) opHit) / ((float) opHit + opMiss));
-			else
+			if (opHit + opMiss > 0) {
+				sb.append((opHit) / ((float) opHit + opMiss));
+			} else {
 				sb.append((float) 0);
+			}
 			sb.append(newLine);
 			sb.append("Swap count =    ");
 			sb.append(swapCount);
@@ -1466,7 +1495,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDDomain[] extDomain(int[] dom) {
-		BigInteger[] a = new BigInteger[dom.length];
+		final BigInteger[] a = new BigInteger[dom.length];
 		for (int i = 0; i < a.length; ++i) {
 			a[i] = BigInteger.valueOf(dom[i]);
 		}
@@ -1474,7 +1503,7 @@ public abstract class BDDFactory {
 	}
 
 	public BDDDomain[] extDomain(long[] dom) {
-		BigInteger[] a = new BigInteger[dom.length];
+		final BigInteger[] a = new BigInteger[dom.length];
 		for (int i = 0; i < a.length; ++i) {
 			a[i] = BigInteger.valueOf(dom[i]);
 		}
@@ -1482,20 +1511,20 @@ public abstract class BDDFactory {
 	}
 
 	public BDDDomain[] extDomain(BigInteger[] domainSizes) {
-		int offset = fdvarnum;
+		final int offset = fdvarnum;
 		int binoffset;
 		int extravars = 0;
 		int n, bn;
 		boolean more;
-		int num = domainSizes.length;
+		final int num = domainSizes.length;
 
 		/* Build domain table */
 		if (domain == null) /* First time */ {
 			domain = new BDDDomain[num];
 		} else /* Allocated before */ {
 			if (fdvarnum + num > domain.length) {
-				int fdvaralloc = domain.length + Math.max(num, domain.length);
-				BDDDomain[] d2 = new BDDDomain[fdvaralloc];
+				final int fdvaralloc = domain.length + Math.max(num, domain.length);
+				final BDDDomain[] d2 = new BDDDomain[fdvaralloc];
 				System.arraycopy(domain, 0, d2, 0, domain.length);
 				domain = d2;
 			}
@@ -1508,7 +1537,7 @@ public abstract class BDDFactory {
 		}
 
 		binoffset = firstbddvar;
-		int bddvarnum = varNum();
+		final int bddvarnum = varNum();
 		if (firstbddvar + extravars > bddvarnum) {
 			setVarNum(firstbddvar + extravars);
 		}
@@ -1532,7 +1561,7 @@ public abstract class BDDFactory {
 		fdvarnum += num;
 		firstbddvar += extravars;
 
-		BDDDomain[] r = new BDDDomain[num];
+		final BDDDomain[] r = new BDDDomain[num];
 		System.arraycopy(domain, offset, r, 0, num);
 		return r;
 	}
@@ -1554,7 +1583,7 @@ public abstract class BDDFactory {
 		int fdvaralloc = domain.length;
 		if (fdvarnum + 1 > fdvaralloc) {
 			fdvaralloc += fdvaralloc;
-			BDDDomain[] domain2 = new BDDDomain[fdvaralloc];
+			final BDDDomain[] domain2 = new BDDDomain[fdvaralloc];
 			System.arraycopy(domain, 0, domain2, 0, domain.length);
 			domain = domain2;
 		}
@@ -1563,10 +1592,12 @@ public abstract class BDDFactory {
 		d.realsize = d1.realsize.multiply(d2.realsize);
 		d.ivar = new int[d1.varNum() + d2.varNum()];
 
-		for (n = 0; n < d1.varNum(); n++)
+		for (n = 0; n < d1.varNum(); n++) {
 			d.ivar[n] = d1.ivar[n];
-		for (n = 0; n < d2.varNum(); n++)
+		}
+		for (n = 0; n < d2.varNum(); n++) {
 			d.ivar[d1.varNum() + n] = d2.ivar[n];
+		}
 
 		d.var = makeSet(d.ivar);
 		// bdd_addref(d.var);
@@ -1585,7 +1616,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDD makeSet(BDDDomain[] v) {
-		BDD res = one();
+		final BDD res = one();
 		int n;
 
 		for (n = 0; n < v.length; n++) {
@@ -1629,8 +1660,9 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDDomain getDomain(int i) {
-		if (i < 0 || i >= fdvarnum)
+		if (i < 0 || i >= fdvarnum) {
 			throw new IndexOutOfBoundsException();
+		}
 		return domain[i];
 	}
 
@@ -1656,17 +1688,17 @@ public abstract class BDDFactory {
 	 */
 	public int[] makeVarOrdering(boolean reverseLocal, String ordering) {
 
-		int varnum = varNum();
+		final int varnum = varNum();
 
-		int nDomains = numberOfDomains();
-		int[][] localOrders = new int[nDomains][];
+		final int nDomains = numberOfDomains();
+		final int[][] localOrders = new int[nDomains][];
 		for (int i = 0; i < localOrders.length; ++i) {
 			localOrders[i] = new int[getDomain(i).varNum()];
 		}
 
 		for (int i = 0; i < nDomains; ++i) {
-			BDDDomain d = getDomain(i);
-			int nVars = d.varNum();
+			final BDDDomain d = getDomain(i);
+			final int nVars = d.varNum();
 			for (int j = 0; j < nVars; ++j) {
 				if (reverseLocal) {
 					localOrders[i][j] = nVars - j - 1;
@@ -1676,26 +1708,29 @@ public abstract class BDDFactory {
 			}
 		}
 
-		BDDDomain[] doms = new BDDDomain[nDomains];
+		final BDDDomain[] doms = new BDDDomain[nDomains];
 
-		int[] varorder = new int[varnum];
+		final int[] varorder = new int[varnum];
 
 		// System.out.println("Ordering: "+ordering);
-		StringTokenizer st = new StringTokenizer(ordering, "x_", true);
+		final StringTokenizer st = new StringTokenizer(ordering, "x_", true);
 		int numberOfDomains = 0, bitIndex = 0;
-		boolean[] done = new boolean[nDomains];
+		final boolean[] done = new boolean[nDomains];
 		for (int i = 0;; ++i) {
 			String s = st.nextToken();
 			BDDDomain d;
 			for (int j = 0;; ++j) {
-				if (j == numberOfDomains())
+				if (j == numberOfDomains()) {
 					throw new BDDException("bad domain: " + s);
+				}
 				d = getDomain(j);
-				if (s.equals(d.getName()))
+				if (s.equals(d.getName())) {
 					break;
+				}
 			}
-			if (done[d.getIndex()])
+			if (done[d.getIndex()]) {
 				throw new BDDException("duplicate domain: " + s);
+			}
 			done[d.getIndex()] = true;
 			doms[i] = d;
 			if (st.hasMoreTokens()) {
@@ -1710,10 +1745,11 @@ public abstract class BDDFactory {
 			if (!st.hasMoreTokens()) {
 				break;
 			}
-			if (s.equals("_"))
+			if (s.equals("_")) {
 				numberOfDomains = 0;
-			else
+			} else {
 				throw new BDDException("bad token: " + s);
+			}
 		}
 
 		for (int i = 0; i < doms.length; ++i) {
@@ -1723,12 +1759,13 @@ public abstract class BDDFactory {
 			doms[i] = getDomain(i);
 		}
 
-		int[] test = new int[varorder.length];
+		final int[] test = new int[varorder.length];
 		System.arraycopy(varorder, 0, test, 0, varorder.length);
 		Arrays.sort(test);
 		for (int i = 0; i < test.length; ++i) {
-			if (test[i] != i)
+			if (test[i] != i) {
 				throw new BDDException(test[i] + " != " + i);
+			}
 		}
 
 		return varorder;
@@ -1742,16 +1779,16 @@ public abstract class BDDFactory {
 		// calculate size of largest domain to interleave
 		int maxBits = 0;
 		for (int i = 0; i < numDomains; ++i) {
-			BDDDomain d = doms[domainIndex + i];
+			final BDDDomain d = doms[domainIndex + i];
 			maxBits = Math.max(maxBits, d.varNum());
 		}
 		// interleave the domains
 		for (int bitNumber = 0; bitNumber < maxBits; ++bitNumber) {
 			for (int i = 0; i < numDomains; ++i) {
-				BDDDomain d = doms[domainIndex + i];
+				final BDDDomain d = doms[domainIndex + i];
 				if (bitNumber < d.varNum()) {
-					int di = d.getIndex();
-					int local = localOrders[di][bitNumber];
+					final int di = d.getIndex();
+					final int local = localOrders[di][bitNumber];
 					if (local >= d.vars().length) {
 						System.out.println("bug!");
 					}
@@ -1784,7 +1821,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDBitVector buildVector(int bitnum, boolean b) {
-		BDDBitVector v = createBitVector(bitnum);
+		final BDDBitVector v = createBitVector(bitnum);
 		v.initialize(b);
 		return v;
 	}
@@ -1799,13 +1836,13 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDBitVector constantVector(int bitnum, long val) {
-		BDDBitVector v = createBitVector(bitnum);
+		final BDDBitVector v = createBitVector(bitnum);
 		v.initialize(val);
 		return v;
 	}
 
 	public BDDBitVector constantVector(int bitnum, BigInteger val) {
-		BDDBitVector v = createBitVector(bitnum);
+		final BDDBitVector v = createBitVector(bitnum);
 		v.initialize(val);
 		return v;
 	}
@@ -1820,7 +1857,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDBitVector buildVector(int bitnum, int offset, int step) {
-		BDDBitVector v = createBitVector(bitnum);
+		final BDDBitVector v = createBitVector(bitnum);
 		v.initialize(offset, step);
 		return v;
 	}
@@ -1835,7 +1872,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDBitVector buildVector(BDDDomain d) {
-		BDDBitVector v = createBitVector(d.varNum());
+		final BDDBitVector v = createBitVector(d.varNum());
 		v.initialize(d);
 		return v;
 	}
@@ -1850,7 +1887,7 @@ public abstract class BDDFactory {
 	 * </p>
 	 */
 	public BDDBitVector buildVector(int[] var) {
-		BDDBitVector v = createBitVector(var.length);
+		final BDDBitVector v = createBitVector(var.length);
 		v.initialize(var);
 		return v;
 	}
@@ -1870,8 +1907,9 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void registerGCCallback(Object o, Method m) {
-		if (gc_callbacks == null)
+		if (gc_callbacks == null) {
 			gc_callbacks = new LinkedList();
+		}
 		registerCallback(gc_callbacks, o, m);
 	}
 
@@ -1886,10 +1924,12 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void unregisterGCCallback(Object o, Method m) {
-		if (gc_callbacks == null)
+		if (gc_callbacks == null) {
 			throw new BDDException();
-		if (!unregisterCallback(gc_callbacks, o, m))
+		}
+		if (!unregisterCallback(gc_callbacks, o, m)) {
 			throw new BDDException();
+		}
 	}
 
 	/**
@@ -1903,8 +1943,9 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void registerReorderCallback(Object o, Method m) {
-		if (reorder_callbacks == null)
+		if (reorder_callbacks == null) {
 			reorder_callbacks = new LinkedList();
+		}
 		registerCallback(reorder_callbacks, o, m);
 	}
 
@@ -1919,10 +1960,12 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void unregisterReorderCallback(Object o, Method m) {
-		if (reorder_callbacks == null)
+		if (reorder_callbacks == null) {
 			throw new BDDException();
-		if (!unregisterCallback(reorder_callbacks, o, m))
+		}
+		if (!unregisterCallback(reorder_callbacks, o, m)) {
 			throw new BDDException();
+		}
 	}
 
 	/**
@@ -1936,8 +1979,9 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void registerResizeCallback(Object o, Method m) {
-		if (resize_callbacks == null)
+		if (resize_callbacks == null) {
 			resize_callbacks = new LinkedList();
+		}
 		registerCallback(resize_callbacks, o, m);
 	}
 
@@ -1952,10 +1996,12 @@ public abstract class BDDFactory {
 	 *            method
 	 */
 	public void unregisterResizeCallback(Object o, Method m) {
-		if (resize_callbacks == null)
+		if (resize_callbacks == null) {
 			throw new BDDException();
-		if (!unregisterCallback(resize_callbacks, o, m))
+		}
+		if (!unregisterCallback(resize_callbacks, o, m)) {
 			throw new BDDException();
+		}
 	}
 
 	protected void gbc_handler(boolean pre, GCStats s) {
@@ -1988,7 +2034,7 @@ public abstract class BDDFactory {
 	}
 
 	protected void bdd_default_reohandler(boolean prestate, ReorderStats s) {
-		int verbose = 1;
+		final int verbose = 1;
 		if (verbose > 0) {
 			if (prestate) {
 				System.out.println("Start reordering");
@@ -2011,7 +2057,7 @@ public abstract class BDDFactory {
 	}
 
 	protected static void bdd_default_reshandler(int oldsize, int newsize) {
-		int verbose = 1;
+		final int verbose = 1;
 		if (verbose > 0) {
 			System.out.println("Resizing node table from " + oldsize + " to " + newsize);
 		}
@@ -2030,7 +2076,7 @@ public abstract class BDDFactory {
 			}
 		}
 		if (false) {
-			Class[] params = m.getParameterTypes();
+			final Class[] params = m.getParameterTypes();
 			if (params.length != 1 || params[0] != int.class) {
 				throw new BDDException("Wrong signature for callback");
 			}
@@ -2040,8 +2086,8 @@ public abstract class BDDFactory {
 
 	protected boolean unregisterCallback(List callbacks, Object o, Method m) {
 		if (callbacks != null) {
-			for (Iterator i = callbacks.iterator(); i.hasNext();) {
-				Object[] cb = (Object[]) i.next();
+			for (final Iterator i = callbacks.iterator(); i.hasNext();) {
+				final Object[] cb = (Object[]) i.next();
 				if (o == cb[0] && m.equals(cb[1])) {
 					i.remove();
 					return true;
@@ -2053,10 +2099,10 @@ public abstract class BDDFactory {
 
 	protected void doCallbacks(List callbacks, Object arg1, Object arg2) {
 		if (callbacks != null) {
-			for (Iterator i = callbacks.iterator(); i.hasNext();) {
-				Object[] cb = (Object[]) i.next();
-				Object o = cb[0];
-				Method m = (Method) cb[1];
+			for (final Iterator i = callbacks.iterator(); i.hasNext();) {
+				final Object[] cb = (Object[]) i.next();
+				final Object o = cb[0];
+				final Method m = (Method) cb[1];
 				try {
 					switch (m.getParameterTypes().length) {
 					case 0:
@@ -2071,15 +2117,17 @@ public abstract class BDDFactory {
 					default:
 						throw new BDDException("Wrong number of arguments for " + m);
 					}
-				} catch (IllegalArgumentException e) {
+				} catch (final IllegalArgumentException e) {
 					e.printStackTrace();
-				} catch (IllegalAccessException e) {
+				} catch (final IllegalAccessException e) {
 					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					if (e.getTargetException() instanceof RuntimeException)
+				} catch (final InvocationTargetException e) {
+					if (e.getTargetException() instanceof RuntimeException) {
 						throw (RuntimeException) e.getTargetException();
-					if (e.getTargetException() instanceof Error)
+					}
+					if (e.getTargetException() instanceof Error) {
 						throw (Error) e.getTargetException();
+					}
 					e.printStackTrace();
 				}
 			}

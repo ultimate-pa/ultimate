@@ -68,6 +68,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	}
 
 	
+	@Override
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
 //			assert mSmtManager.isDontCare(p2);
@@ -78,16 +79,16 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		
 		assert (p1 instanceof ISLPredicate);
 
-		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
+		final ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 
 		if (omitComputationOfHoareAnnotation(pp, p1, p2)) {
 			return mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
 		}
-		Term conjunction = mSmtManager.getPredicateFactory().and(p1, p2);
+		final Term conjunction = mSmtManager.getPredicateFactory().and(p1, p2);
 		IPredicate result;
 		if (s_DebugComputeHistory) {
 			assert (p1 instanceof PredicateWithHistory);
-			Map<Integer, Term> history = 
+			final Map<Integer, Term> history = 
 					((PredicateWithHistory) p1).getCopyOfHistory();
 				history.put(mIteration,p2.getFormula());
 			result = mSmtManager.getPredicateFactory().newPredicateWithHistory(
@@ -125,9 +126,9 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
 		assert sameProgramPoints(states);
-		IPredicate someElement = states.iterator().next();
+		final IPredicate someElement = states.iterator().next();
 		if (someElement instanceof ISLPredicate) {
-			ProgramPoint pp = ((ISLPredicate) someElement).getProgramPoint();
+			final ProgramPoint pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
 			return mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
@@ -139,7 +140,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				return mSmtManager.getPredicateFactory().newSPredicate(pp, disjuntion);
 			}
 		} else if (someElement instanceof IMLPredicate) {
-			ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
+			final ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
 				final Term dontcareTerm = mSmtManager.getPredicateFactory().getDontCareTerm();
@@ -154,12 +155,12 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	
 	
 	private static boolean sameProgramPoints(Collection<IPredicate> states) {
-		Iterator<IPredicate> it = states.iterator();
-		IPredicate firstPredicate = it.next();
+		final Iterator<IPredicate> it = states.iterator();
+		final IPredicate firstPredicate = it.next();
 		if (firstPredicate instanceof ISLPredicate) {
-			ProgramPoint firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
+			final ProgramPoint firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
 			while (it.hasNext()) {
-				ProgramPoint pp = ((ISLPredicate) it.next()).getProgramPoint();
+				final ProgramPoint pp = ((ISLPredicate) it.next()).getProgramPoint();
 				if (pp != firstProgramPoint) {
 					return false;
 				}

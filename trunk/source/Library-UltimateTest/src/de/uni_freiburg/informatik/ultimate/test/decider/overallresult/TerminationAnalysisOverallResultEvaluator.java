@@ -33,13 +33,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 
 /**
@@ -60,14 +60,15 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 	private TerminationAnalysisOverallResult mOverallResult;
 	private Set<IResult> mMostSignificantResults;
 	
+	@Override
 	public void evaluateOverallResult(IResultService resultService) {
-		for (Entry<String, List<IResult>> entry  : resultService.getResults().entrySet()) {
-			for (IResult result  : entry.getValue()) {
-				TerminationAnalysisOverallResult category = detectResultCategory(result);
+		for (final Entry<String, List<IResult>> entry  : resultService.getResults().entrySet()) {
+			for (final IResult result  : entry.getValue()) {
+				final TerminationAnalysisOverallResult category = detectResultCategory(result);
 				mCategory2Results.addPair(category, result);
 			}
 		}
-		TerminationAnalysisOverallResult[] categoriesOrderedBySignificance = 
+		final TerminationAnalysisOverallResult[] categoriesOrderedBySignificance = 
 				new TerminationAnalysisOverallResult[] {
 				TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR,
 				TerminationAnalysisOverallResult.SYNTAX_ERROR,
@@ -78,7 +79,7 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 				TerminationAnalysisOverallResult.TERMINATING
 		};
 		
-		for (TerminationAnalysisOverallResult category : categoriesOrderedBySignificance) {
+		for (final TerminationAnalysisOverallResult category : categoriesOrderedBySignificance) {
 			if (mCategory2Results.getDomain().contains(category)) {
 				mOverallResult = category;
 			}
@@ -152,8 +153,8 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 	
 	
 	private String concatenateShortDescriptions(Set<IResult> iresults) {
-		StringBuilder sb = new StringBuilder();
-		for (IResult iResult : iresults) {
+		final StringBuilder sb = new StringBuilder();
+		for (final IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());
 			sb.append(" ");
 		}

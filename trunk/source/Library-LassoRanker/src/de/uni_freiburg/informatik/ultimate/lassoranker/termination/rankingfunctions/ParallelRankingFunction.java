@@ -64,8 +64,8 @@ public class ParallelRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : mranking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
@@ -77,7 +77,7 @@ public class ParallelRankingFunction extends RankingFunction {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mranking.length);
 		sb.append("-parallel ranking function:\n");
 		sb.append("f = ");
@@ -95,10 +95,10 @@ public class ParallelRankingFunction extends RankingFunction {
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		final Term zero = script.numeral(BigInteger.ZERO);
-		Term[] summands = new Term[size];
+		final Term[] summands = new Term[size];
 		for (int i = 0; i < size; ++i) {
-			Term f_term = mranking[i].asTerm(script);
-			Term cond = script.term(">", f_term, zero);
+			final Term f_term = mranking[i].asTerm(script);
+			final Term cond = script.term(">", f_term, zero);
 			summands[i] = script.term("ite", cond, f_term, zero);
 		}
 		return new Term[] { script.term("+", summands) };
@@ -108,7 +108,7 @@ public class ParallelRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < size; ++i) {
-			Rational r = mranking[i].evaluate(assignment);
+			final Rational r = mranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				o = o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}

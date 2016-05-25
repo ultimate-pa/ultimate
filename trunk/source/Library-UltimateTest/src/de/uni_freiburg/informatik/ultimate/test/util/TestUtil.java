@@ -95,11 +95,11 @@ public final class TestUtil {
 	 */
 	public static String generateLogFilename(File inputFile, String description) {
 
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 
-		String dir = inputFile.getParent() + File.separator;
+		final String dir = inputFile.getParent() + File.separator;
 
-		String originalFileName = inputFile.getName();
+		final String originalFileName = inputFile.getName();
 
 		String name = "UltimateTest ";
 		if (description != null && description.length() > 0) {
@@ -121,14 +121,14 @@ public final class TestUtil {
 	 * @return A string representing the absolute path to the relative path based on the actual position of this package
 	 */
 	public static String getPathFromHere(String path) {
-		File here = new File(System.getProperty("user.dir"));
-		File relative = new File(here.getAbsolutePath() + File.separator + path);
+		final File here = new File(System.getProperty("user.dir"));
+		final File relative = new File(here.getAbsolutePath() + File.separator + path);
 		return relative.getAbsolutePath();
 	}
 
 	public static String getPathFromSurefire(String path, String canonicalClassName) {
-		File trunk = new File(System.getProperty("user.dir"));
-		File relative = new File(trunk.getAbsolutePath() + File.separator + "target" + File.separator
+		final File trunk = new File(System.getProperty("user.dir"));
+		final File relative = new File(trunk.getAbsolutePath() + File.separator + "target" + File.separator
 				+ "surefire-reports" + File.separator + canonicalClassName + File.separator + path);
 
 		return relative.getAbsolutePath();
@@ -141,8 +141,8 @@ public final class TestUtil {
 	 * @return
 	 */
 	public static String getPathFromTrunk(String path) {
-		File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
-		File relative = new File(trunk.getAbsolutePath() + File.separator + path);
+		final File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+		final File relative = new File(trunk.getAbsolutePath() + File.separator + path);
 		if (!relative.exists()) {
 			throw new IllegalArgumentException("Path " + relative.getAbsolutePath() + " does not exist.");
 		}
@@ -150,11 +150,11 @@ public final class TestUtil {
 	}
 
 	public static String removeTrunkExamplesPrefix(String path) {
-		String trunk = TestUtil.getPathFromTrunk("");
-		String examples = trunk + File.separator + "examples" + File.separator;
-		int lastIndexOf = path.lastIndexOf(examples);
+		final String trunk = TestUtil.getPathFromTrunk("");
+		final String examples = trunk + File.separator + "examples" + File.separator;
+		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
 		} else {
 			return path;
@@ -162,11 +162,11 @@ public final class TestUtil {
 	}
 
 	public static String removeTrunkSettingsPrefix(String path) {
-		String trunk = TestUtil.getPathFromTrunk("");
-		String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
-		int lastIndexOf = path.lastIndexOf(examples);
+		final String trunk = TestUtil.getPathFromTrunk("");
+		final String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
+		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
 		} else {
 			return path;
@@ -174,11 +174,11 @@ public final class TestUtil {
 	}
 
 	public static String removeTrunkToolchainPrefix(String path) {
-		String trunk = TestUtil.getPathFromTrunk("");
-		String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
-		int lastIndexOf = path.lastIndexOf(examples);
+		final String trunk = TestUtil.getPathFromTrunk("");
+		final String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
+		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
 		} else {
 			return path;
@@ -194,10 +194,10 @@ public final class TestUtil {
 	 * @return
 	 */
 	public static Collection<File> filterFiles(Collection<File> files, String regex) {
-		ArrayList<File> singleFiles = new ArrayList<File>();
+		final ArrayList<File> singleFiles = new ArrayList<File>();
 
-		for (File f : files) {
-			String path = f.getAbsolutePath();
+		for (final File f : files) {
+			final String path = f.getAbsolutePath();
 			if (path.matches(regex)) {
 				singleFiles.add(f);
 			}
@@ -210,7 +210,7 @@ public final class TestUtil {
 	 * Get absolute path for the file in which an ITestLogfile will be written. This includes also the filename.
 	 */
 	public static String generateAbsolutePathForLogfile(ITestLogfile testSummary) {
-		String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary),
+		final String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary),
 				testSummary.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
 	}
@@ -220,7 +220,7 @@ public final class TestUtil {
 	 * directories.
 	 */
 	public static String generateLogfilename(ITestLogfile testSummary) {
-		String filename = testSummary.getDescriptiveLogName() + " "
+		final String filename = testSummary.getDescriptiveLogName() + " "
 				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
@@ -235,7 +235,7 @@ public final class TestUtil {
 			description = description + " ";
 		}
 
-		File f = new File(directory);
+		final File f = new File(directory);
 
 		String dir = "";
 		if (f.isDirectory()) {
@@ -243,7 +243,7 @@ public final class TestUtil {
 		} else {
 			dir = f.getParent() + File.separator;
 		}
-		String name = "UltimateTest Summary " + description
+		final String name = "UltimateTest Summary " + description
 				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
 
 		return dir + name;
@@ -354,7 +354,7 @@ public final class TestUtil {
 		}
 
 		int i = 1;
-		for (E elem : collection) {
+		for (final E elem : collection) {
 			if (i % step == 0) {
 				rtr.add(elem);
 			}
@@ -399,9 +399,9 @@ public final class TestUtil {
 			logger.write("There is no IResultService (this indicates that Ultimate terminated abnormally");
 		} else {
 
-			for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+			for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 				int i = 0;
-				for (IResult result : entry.getValue()) {
+				for (final IResult result : entry.getValue()) {
 					logger.write(String.format("[%s] %s --> [%s] %s", i, entry.getKey(),
 							result.getClass().getSimpleName(), result.getLongDescription()));
 					++i;
@@ -410,7 +410,7 @@ public final class TestUtil {
 		}
 
 		if (customMessages != null && customMessages.size() > 0) {
-			for (String s : customMessages) {
+			for (final String s : customMessages) {
 				if (s != null) {
 					logger.write(s);
 				}
@@ -424,16 +424,16 @@ public final class TestUtil {
 		}
 
 		// Get current size of heap in bytes
-		long heapSize = Runtime.getRuntime().totalMemory();
+		final long heapSize = Runtime.getRuntime().totalMemory();
 
 		// Get amount of free memory within the heap in bytes. This size will
 		// increase // after garbage collection and decrease as new objects are
 		// created.
-		long heapFreeSize = Runtime.getRuntime().freeMemory();
+		final long heapFreeSize = Runtime.getRuntime().freeMemory();
 
 		// Get maximum size of heap in bytes. The heap cannot grow beyond this
 		// size.// Any attempt will result in an OutOfMemoryException.
-		long heapMaxSize = Runtime.getRuntime().maxMemory();
+		final long heapMaxSize = Runtime.getRuntime().maxMemory();
 
 		logger.write(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
 				Utils.humanReadableByteCount(heapSize, true), Utils.humanReadableByteCount(heapFreeSize, true),
@@ -448,7 +448,7 @@ public final class TestUtil {
 	 * verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
-		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
 		map.put(".*-safe.*", SafetyCheckerOverallResult.SAFE);
 		map.put(".*_safe.*", SafetyCheckerOverallResult.SAFE);
 		map.put(".*-Safe.*", SafetyCheckerOverallResult.SAFE);
@@ -486,7 +486,7 @@ public final class TestUtil {
 	 * the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
-		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
@@ -502,7 +502,7 @@ public final class TestUtil {
 	 * verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
-		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
 		// true-unreach-call is the SV-COMP annotation for safe
 		map.put(".*_true-termination.*", TerminationAnalysisOverallResult.TERMINATING);
 		// false-unreach-call is the SV-COMP annotation for safe
@@ -516,7 +516,7 @@ public final class TestUtil {
 	 * result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
-		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
 		// we sometimes put terminating examples in a folder with this name
 		map.put("/terminating", TerminationAnalysisOverallResult.TERMINATING);
 		// we sometimes put nonterminating examples in a folder with this name
@@ -530,7 +530,7 @@ public final class TestUtil {
 	 * the expected verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
-		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
 		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rNonTerminationDerivable", TerminationAnalysisOverallResult.NONTERMINATING);
@@ -549,7 +549,7 @@ public final class TestUtil {
 			br = new BufferedReader(new FileReader(file));
 			line = br.readLine();
 			br.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new AssertionError("unable to read file " + file);
 		}
 		return line;
@@ -580,7 +580,7 @@ public final class TestUtil {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		Collection<BenchmarkResult> benchmarks = ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
+		final Collection<BenchmarkResult> benchmarks = ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 
@@ -647,7 +647,7 @@ public final class TestUtil {
 					+ testSummary.getUltimateTestSuiteClass().getCanonicalName() + " to " + logFile.getAbsolutePath());
 			writer.write(summaryLog);
 			writer.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.fatal("Exception while writing to " + logFile.getAbsolutePath(), e);
 		}
 	}

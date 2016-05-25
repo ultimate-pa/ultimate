@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -146,16 +146,17 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	}
 
 	public static Map<String, ILocation> getOverapproximations(List<? extends RCFGEdge> trace) {
-		Map<String, ILocation> result = new HashMap<>();
-		for (RCFGEdge cb : trace) {
+		final Map<String, ILocation> result = new HashMap<>();
+		for (final RCFGEdge cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
-				Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
+				final Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
-					Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
+					final Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
 					@SuppressWarnings("unchecked")
+					final
 					Map<String, ILocation> reason2Location = (Map<String, ILocation>) overapprox.getAnnotationsAsMap()
 							.get(Overapprox.s_LOCATION_MAPPING);
-					for (Entry<String, ILocation> entry : reason2Location.entrySet()) {
+					for (final Entry<String, ILocation> entry : reason2Location.entrySet()) {
 						result.put(entry.getKey(), entry.getValue());
 					}
 				}
@@ -169,12 +170,12 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		if (pps == null) {
 			result = null;
 		} else {
-			StringBuilder sb = new StringBuilder();
-			for (Expression variable : pps.getVariables()) {
-				Expression value = pps.getValues(variable).iterator().next();
+			final StringBuilder sb = new StringBuilder();
+			for (final Expression variable : pps.getVariables()) {
+				final Expression value = pps.getValues(variable).iterator().next();
 				sb.append("  ");
-				String var = BoogiePrettyPrinter.print(variable);
-				String val = BoogiePrettyPrinter.print(value);
+				final String var = BoogiePrettyPrinter.print(variable);
+				final String val = BoogiePrettyPrinter.print(value);
 				sb.append(var).append("=").append(val);
 			}
 			result = sb.toString();
@@ -184,9 +185,9 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		String valuation = ppstoString(getInitialProgramState());
-		String lineSeparator = CoreUtil.getPlatformLineSeparator();
+		final String lineSeparator = CoreUtil.getPlatformLineSeparator();
 
 		sb.append("=== Start of program execution ===").append(lineSeparator);
 		if (valuation != null) {
@@ -220,8 +221,8 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	 */
 	@Deprecated
 	public List<ILocation> getLocationList() {
-		List<ILocation> result = new ArrayList<ILocation>();
-		for (AtomicTraceElement<RCFGEdge> cb : mTrace) {
+		final List<ILocation> result = new ArrayList<ILocation>();
+		for (final AtomicTraceElement<RCFGEdge> cb : mTrace) {
 			result.add(cb.getTraceElement().getPayload().getLocation());
 		}
 		return result;
@@ -243,16 +244,16 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	}
 
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
-		List<UnprovabilityReason> unproabilityReasons = new ArrayList<UnprovabilityReason>();
-		for (Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
+		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<UnprovabilityReason>();
+		for (final Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
 			unproabilityReasons.add(new UnprovabilityReason(entry.getKey(), entry.getValue()));
 		}
 		return unproabilityReasons;
 	}
 
 	public RcfgProgramExecution addRelevanceInformation(List<IRelevanceInformation> relevanceInformation) {
-		List<RCFGEdge> edgeSequence = new ArrayList<>();
-		for (AtomicTraceElement<RCFGEdge> ate : mTrace) {
+		final List<RCFGEdge> edgeSequence = new ArrayList<>();
+		for (final AtomicTraceElement<RCFGEdge> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());
 		}
 		return new RcfgProgramExecution(edgeSequence, 

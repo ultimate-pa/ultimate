@@ -59,13 +59,13 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 	}
 
 	void reportFiniteModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
+		final String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		mModuleFinite.put(iteration, stringRepresentation);
 	}
 
 	void reportBuchiModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
+		final String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		mModuleBuchi.put(iteration, stringRepresentation);
 	}
@@ -93,14 +93,14 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 				return "Unable to prove termination";
 			}
 		} else {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("Your program was decomposed into the following automata ");
 			sb.append(System.lineSeparator());
-			for (Entry<Integer, String> entry : mModuleFinite.entrySet()) {
+			for (final Entry<Integer, String> entry : mModuleFinite.entrySet()) {
 				sb.append(entry.getValue());
 				sb.append(System.lineSeparator());
 			}
-			for (Entry<Integer, String> entry : mModuleBuchi.entrySet()) {
+			for (final Entry<Integer, String> entry : mModuleBuchi.entrySet()) {
 				sb.append(entry.getValue());
 				sb.append(System.lineSeparator());
 			}
@@ -110,7 +110,7 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 
 	@Override
 	public ICsvProvider<Double> createCvsProvider() {
-		ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
+		final ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
 
 		return rtr;
 	}

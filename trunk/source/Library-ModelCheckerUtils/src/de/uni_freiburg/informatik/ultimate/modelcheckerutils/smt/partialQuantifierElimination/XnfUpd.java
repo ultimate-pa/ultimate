@@ -68,7 +68,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public Term[] tryToEliminate(int quantifier, Term[] parameters,
 			Set<TermVariable> eliminatees) {
 		final Set<TermVariable> occuringVars = new HashSet<TermVariable>();
-		for (Term param : parameters) {
+		for (final Term param : parameters) {
 			occuringVars.addAll(Arrays.asList(param.getFreeVars()));
 		}
 		
@@ -79,7 +79,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		final List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
 		final List<Term> removeableTerms = new ArrayList<Term>();
 		final List<Term> unremoveableTerms = new ArrayList<Term>();
-		for (Set<Term> connectedTerms : connection.getConnectedVariables()) {
+		for (final Set<Term> connectedTerms : connection.getConnectedVariables()) {
 			final Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -118,8 +118,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		final List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
 		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
 		assert parameters.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
-		for (Term termWithoutTvs : termsWithoutTvs) {
-			LBool sat = Util.checkSat(mScript, termWithoutTvs);
+		for (final Term termWithoutTvs : termsWithoutTvs) {
+			final LBool sat = Util.checkSat(mScript, termWithoutTvs);
 			if (sat == LBool.UNSAT) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					eliminatees.clear();
@@ -177,8 +177,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public static Term isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
-			LBool isSat = Util.checkSat(script, conjunction);
+			final Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
+			final LBool isSat = Util.checkSat(script, conjunction);
 			if (isSat == LBool.SAT) {
 				return script.term("true");
 			} else if (isSat == LBool.UNSAT) {
@@ -198,8 +198,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public static Term isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
-			LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
+			final Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
+			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
 			if (isSat == LBool.SAT) {
 				return script.term("false");
 			} else if (isSat == LBool.UNSAT) {

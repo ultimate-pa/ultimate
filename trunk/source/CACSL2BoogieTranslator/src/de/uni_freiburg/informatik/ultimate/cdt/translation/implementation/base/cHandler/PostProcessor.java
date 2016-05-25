@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ParentEdge;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -153,7 +152,7 @@ public class PostProcessor {
 			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
 			TypeHandler typeHandler, Set<String> undefinedTypes, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie, expressionTranslation));
@@ -167,19 +166,19 @@ public class PostProcessor {
 			Dispatcher main, FunctionHandler functionHandler, 
 			MemoryHandler memoryHandler, StructHandler structHandler) {
 
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		ArrayList<Declaration> decls = new ArrayList<>();
+		final ArrayList<Declaration> decls = new ArrayList<>();
 		
 		
 		// function to_int
-		String inReal = "inReal";
+		final String inReal = "inReal";
 //		IdentifierExpression inRealIdex = new IdentifierExpression(ignoreLoc, inReal);
-		String outInt = "outInt";
+		final String outInt = "outInt";
 //		IdentifierExpression outIntIdex = new IdentifierExpression(ignoreLoc, outInt);
-		VarList realParam = new VarList(ignoreLoc, new String[] {  }, new PrimitiveType(ignoreLoc, SFO.REAL));
-		VarList[] oneRealParam = new VarList[] { realParam };
-		VarList intParam = new VarList(ignoreLoc, new String[] { outInt }, new PrimitiveType(ignoreLoc, SFO.INT));
+		final VarList realParam = new VarList(ignoreLoc, new String[] {  }, new PrimitiveType(ignoreLoc, SFO.REAL));
+		final VarList[] oneRealParam = new VarList[] { realParam };
+		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt }, new PrimitiveType(ignoreLoc, SFO.INT));
 //		VarList[] oneIntParam = new VarList[] { intParam };
 //		Expression inRealGeq0 = new BinaryExpression(ignoreLoc, 
 //				BinaryExpression.Operator.COMPGEQ, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR0));
@@ -212,17 +211,17 @@ public class PostProcessor {
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
 			Dispatcher main, FunctionHandler functionHandler, 
 			MemoryHandler memoryHandler, StructHandler structHandler) {
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		ArrayList<Declaration> result = new ArrayList<>();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ArrayList<Declaration> result = new ArrayList<>();
 //		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-		for (ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+		for (final ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
 //			String procName = cFunc.functionSignatureAsProcedureName();
-			String procName = cFunc.toString();
+			final String procName = cFunc.toString();
 			
-			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
-			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
+			final VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
+			final VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
-			Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], 
+			final Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], 
 					procName, 
 					new String[0], 
 					inParams, 
@@ -249,8 +248,8 @@ public class PostProcessor {
 	 */
 	private static Collection<? extends Declaration> declareUndefinedTypes(
 			final ILocation loc, final Set<String> undefinedTypes) {
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		for (String s : undefinedTypes) {
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		for (final String s : undefinedTypes) {
 			decl.add(new TypeDeclaration(loc, new Attribute[0], false, s,
 					new String[0]));
 		}
@@ -280,23 +279,23 @@ public class PostProcessor {
 			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
 			AExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
-		ArrayList<Statement> initStatements = new ArrayList<Statement>();
+		final ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired() || memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
-				Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
+				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
+				final LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
 						new VariableLHS(translationUnitLoc, SFO.VALID),
 						new Expression[] { zero }) };
-				Expression[] rhs = new Expression[] { memoryHandler.getBooleanArrayHelper().constructFalse() };
+				final Expression[] rhs = new Expression[] { memoryHandler.getBooleanArrayHelper().constructFalse() };
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, lhs, rhs));
 				mInitializedGlobals.add(SFO.VALID);
 			}
 
-			VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
+			final VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
 			initStatements.add(0, new AssignmentStatement(translationUnitLoc, 
 					new LeftHandSide[] { slhs }, 
 					new Expression[] { new StructConstructor(translationUnitLoc, new String[]{"base", "offset"}, 
@@ -306,35 +305,37 @@ public class PostProcessor {
 							})}));
 			mInitializedGlobals.add(SFO.NULL);
 		}
-		for (Statement stmt : initStatements) {
+		for (final Statement stmt : initStatements) {
 			if (stmt instanceof AssignmentStatement) {
-				AssignmentStatement ass = (AssignmentStatement) stmt;
+				final AssignmentStatement ass = (AssignmentStatement) stmt;
 				assert ass.getLhs().length == 1; // by construction ...
-				LeftHandSide lhs = ass.getLhs()[0];
-				String id = BoogieASTUtil.getLHSId(lhs);
+				final LeftHandSide lhs = ass.getLhs()[0];
+				final String id = BoogieASTUtil.getLHSId(lhs);
 				mInitializedGlobals.add(id);
 			}
 		}
 
 		//initialization for statics and other globals
-		for (Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
-			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
+		for (final Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
+			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration) {
 				continue;
-			ILocation currentDeclsLoc = en.getKey().getLocation();
-			ExpressionResult initializer = en.getValue().getInitializer();
+			}
+			final ILocation currentDeclsLoc = en.getKey().getLocation();
+			final ExpressionResult initializer = en.getValue().getInitializer();
 			
 			/*
 			 * global variables with external linkage are not implicitly initialized. (They are initialized by 
 			 * the module that provides them..)
 			 */
 //			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
-			if (en.getValue().isExtern())
+			if (en.getValue().isExtern()) {
 				continue;
+			}
 
-			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
-				for (String id : vl.getIdentifiers()) {
-					if (main.cHandler.isHeapVar(id)) {
-						LocalLValue llVal = new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType());
+			for (final VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
+				for (final String id : vl.getIdentifiers()) {
+					if (main.mCHandler.isHeapVar(id)) {
+						final LocalLValue llVal = new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType());
 						initStatements.add(memoryHandler.getMallocCall(main, functionHandler, 
 								llVal, currentDeclsLoc));
 					}
@@ -342,12 +343,13 @@ public class PostProcessor {
 					//					if (initializer != null) {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-					ExpressionResult initRex = 
-							main.cHandler.getInitHandler().initVar(currentDeclsLoc, main, 
+					final ExpressionResult initRex = 
+							main.mCHandler.getInitHandler().initVar(currentDeclsLoc, main, 
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
-					for (Declaration d : initRex.decl)
+					for (final Declaration d : initRex.decl)
+					 {
 						initDecl.add((VariableDeclaration) d);
 					//					} else { //no initializer --> default initialization
 					//						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main, 
@@ -358,25 +360,27 @@ public class PostProcessor {
 					//						for (Declaration d : nullInitializer.decl)
 					//							initDecl.add((VariableDeclaration) d);
 					//					}
+					}
 				}
 			}
-			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables())
+			for (final VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 				mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
+			}
 		}
 
 		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
 
-		Specification[] specsInit = new Specification[1];
+		final Specification[] specsInit = new Specification[1];
 
-		VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
+		final VariableLHS[] modifyList = new VariableLHS[mInitializedGlobals.size()];
 		int i = 0;
-		for (String var: mInitializedGlobals) {
+		for (final String var: mInitializedGlobals) {
 			modifyList[i++] = new VariableLHS(translationUnitLoc, var);
 		}
 		specsInit[0] = new ModifiesSpecification(translationUnitLoc, false, modifyList);
-		Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
+		final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
-		Body initBody = new Body(translationUnitLoc,
+		final Body initBody = new Body(translationUnitLoc,
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
 		decl.add(new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
@@ -405,64 +409,67 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
 			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
-		LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
-		String checkedMethod = main.getCheckedMethod();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
+		final String checkedMethod = main.getCheckedMethod();
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
 		if (!checkedMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkedMethod)) {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
 
-			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
+			final LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
 			functionHandler.beginUltimateInit(main, loc, SFO.START);
 			
 			Procedure startDeclaration = null;
 			Specification[] specsStart = new Specification[0];
 
-			if (!functionHandler.getCallGraph().containsKey(SFO.START))
+			if (!functionHandler.getCallGraph().containsKey(SFO.START)) {
 				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
+			}
 			functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 
 			functionHandler.getCallGraph().get(SFO.START).add(checkedMethod);
 
-			ArrayList<Statement> startStmt = new ArrayList<Statement>();
-			ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
+			final ArrayList<Statement> startStmt = new ArrayList<Statement>();
+			final ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
 			specsStart = new Specification[1];
 			startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
 					SFO.INIT, new Expression[0]));
-			VarList[] checkedMethodOutParams = procedures.get(checkedMethod).getOutParams();
-			VarList[] checkedMethodInParams = procedures.get(checkedMethod).getInParams();
-			Specification[] checkedMethodSpec = procedures.get(checkedMethod).getSpecification();
+			final VarList[] checkedMethodOutParams = procedures.get(checkedMethod).getOutParams();
+			final VarList[] checkedMethodInParams = procedures.get(checkedMethod).getInParams();
+			final Specification[] checkedMethodSpec = procedures.get(checkedMethod).getSpecification();
 
 			//find out the requires specs of the checked method and assume it before its start
-			ArrayList<Statement> reqSpecsAssumes = new ArrayList<>();
-			for (Specification spec : checkedMethodSpec)
-				if (spec instanceof RequiresSpecification)
+			final ArrayList<Statement> reqSpecsAssumes = new ArrayList<>();
+			for (final Specification spec : checkedMethodSpec) {
+				if (spec instanceof RequiresSpecification) {
 					reqSpecsAssumes.add(
 							new AssumeStatement(loc, 
 									((RequiresSpecification) spec).getFormula()));
+				}
+			}
 			startStmt.addAll(reqSpecsAssumes);
 			
-			ArrayList<Expression> args = new ArrayList<Expression>();
+			final ArrayList<Expression> args = new ArrayList<Expression>();
 			if (checkedMethodInParams.length > 0) {
 				startDecl
 				.add(new VariableDeclaration(loc, new Attribute[0], checkedMethodInParams));
-				for (VarList arg : checkedMethodInParams) {
+				for (final VarList arg : checkedMethodInParams) {
 					assert arg.getIdentifiers().length == 1; // by construction
-					String id = arg.getIdentifiers()[0];
+					final String id = arg.getIdentifiers()[0];
 					args.add(new IdentifierExpression(loc, id));
 				}
 			}
 			if (checkedMethodOutParams.length != 0) {
 				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
-				String checkMethodRet = main.nameHandler
+				final String checkMethodRet = main.mNameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED, null);
-				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
+				main.mCHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
-				VarList tempVar = new VarList(loc,
+				final VarList tempVar = new VarList(loc,
 						new String[] { checkMethodRet }, checkedMethodOutParams[0].getType());
-				VariableDeclaration tmpVar = new VariableDeclaration(loc,
+				final VariableDeclaration tmpVar = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { tempVar });
 				startDecl.add(tmpVar);
 				startStmt.add(new CallStatement(loc, false,
@@ -473,21 +480,23 @@ public class PostProcessor {
 						checkedMethod, args.toArray(new Expression[0])));
 			}
 
-			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
-			for (String id: mInitializedGlobals)
+			final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
+			for (final String id: mInitializedGlobals) {
 				startModifiesClause.add(new VariableLHS(loc, id));
+			}
 			//			if (mSomethingOnHeapIsInitialized) {
 			//				for (String t : new String[] { SFO.INT, SFO.POINTER,
 			//						SFO.REAL/*, SFO.BOOL */}) {
 			//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
 			//				}		
 			//			}
-			for (String id: modifiedGlobals.get(checkedMethod))
+			for (final String id: modifiedGlobals.get(checkedMethod)) {
 				startModifiesClause.add(new VariableLHS(loc, id));
+			}
 			specsStart[0] = new ModifiesSpecification(loc, false,
 					startModifiesClause.toArray(new VariableLHS[0]));
 
-			Body startBody = new Body(loc,
+			final Body startBody = new Body(loc,
 					startDecl.toArray(new VariableDeclaration[0]),
 					startStmt.toArray(new Statement[0]));
 			decl.add(new Procedure(loc, new Attribute[0], SFO.START,
@@ -508,7 +517,7 @@ public class PostProcessor {
 		} else {
 			mLogger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
-				String msg = "You selected the library mode (i.e., each procedure can be starting procedure and global variables are not initialized). This program contains a \"main\" procedure. Maybe you wanted to select the \"main\" procedure as starting procedure.";
+				final String msg = "You selected the library mode (i.e., each procedure can be starting procedure and global variables are not initialized). This program contains a \"main\" procedure. Maybe you wanted to select the \"main\" procedure as starting procedure.";
 				mDispatcher.warn(loc, msg);
 			}
 		}
@@ -528,21 +537,21 @@ public class PostProcessor {
 	 */
 	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
 			TypeSizes typeSizes, TypeHandler typeHandler) {
-		ArrayList<Declaration> decls = new ArrayList<Declaration>();
-		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
-			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
+		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
 			if (cPrimitiveO.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				Attribute[] attributes = new Attribute[2];
+				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
 						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
-				int bytesize = typeSizes.getSize(cPrimitive);
-				int bitsize = bytesize * 8;
+				final int bytesize = typeSizes.getSize(cPrimitive);
+				final int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize", 
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
-				String identifier = "C_" + cPrimitive.name();
-				String[] typeParams = new String[0];
-				String name= "bv" + bitsize;
-				ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bytesize);
+				final String identifier = "C_" + cPrimitive.name();
+				final String[] typeParams = new String[0];
+				final String name= "bv" + bitsize;
+				final ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}
@@ -558,30 +567,30 @@ public class PostProcessor {
 	 */
 	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
 			TypeSizes typesizes, TypeHandler typeHandler) {
-		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
 		//Roundingmodes, for now RNE hardcoded
 		
-		Attribute[] attributesRM = new Attribute[1];
+		final Attribute[] attributesRM = new Attribute[1];
 		attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
-		String identifierRM = "RoundingMode";
-		String[] typeParamsRM = new String[0];
+		final String identifierRM = "RoundingMode";
+		final String[] typeParamsRM = new String[0];
 		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
 		
-		Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
+		final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
 		
 		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
 		
-		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
-			CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
+			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
 			
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
-				Attribute[] attributes = new Attribute[2];
+				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
-				int bytesize = typesizes.getSize(cPrimitive);
-				int[] indices = new int[2];
+				final int bytesize = typesizes.getSize(cPrimitive);
+				final int[] indices = new int[2];
 				switch (bytesize) {
 					case 4:
 						indices[0] = 8;
@@ -601,8 +610,8 @@ public class PostProcessor {
 				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
 						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
 											new IntegerLiteral(loc, String.valueOf(indices[1]))});
-				String identifier = "C_" + cPrimitive.name();
-				String[] typeParams = new String[0];
+				final String identifier = "C_" + cPrimitive.name();
+				final String[] typeParams = new String[0];
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
 				
 			}

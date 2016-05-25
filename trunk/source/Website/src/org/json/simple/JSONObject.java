@@ -34,15 +34,16 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 		}
 		
 		boolean first = true;
-		Iterator iter=map.entrySet().iterator();
+		final Iterator iter=map.entrySet().iterator();
 		
         out.write('{');
 		while(iter.hasNext()){
-            if(first)
-                first = false;
-            else
-                out.write(',');
-			Map.Entry entry=(Map.Entry)iter.next();
+            if(first) {
+				first = false;
+			} else {
+				out.write(',');
+			}
+			final Map.Entry entry=(Map.Entry)iter.next();
             out.write('\"');
             out.write(escape(String.valueOf(entry.getKey())));
             out.write('\"');
@@ -52,6 +53,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 		out.write('}');
 	}
 
+	@Override
 	public void writeJSONString(Writer out) throws IOException{
 		writeJSONString(this, out);
 	}
@@ -66,37 +68,41 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 * @return JSON text, or "null" if map is null.
 	 */
 	public static String toJSONString(Map map){
-		if(map == null)
+		if(map == null) {
 			return "null";
+		}
 		
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         boolean first = true;
-		Iterator iter=map.entrySet().iterator();
+		final Iterator iter=map.entrySet().iterator();
 		
         sb.append('{');
 		while(iter.hasNext()){
-            if(first)
-                first = false;
-            else
-                sb.append(',');
+            if(first) {
+				first = false;
+			} else {
+				sb.append(',');
+			}
             
-			Map.Entry entry=(Map.Entry)iter.next();
+			final Map.Entry entry=(Map.Entry)iter.next();
 			toJSONString(String.valueOf(entry.getKey()),entry.getValue(), sb);
 		}
         sb.append('}');
 		return sb.toString();
 	}
 	
+	@Override
 	public String toJSONString(){
 		return toJSONString(this);
 	}
 	
 	private static String toJSONString(String key,Object value, StringBuffer sb){
 		sb.append('\"');
-        if(key == null)
-            sb.append("null");
-        else
-            JSONValue.escape(key, sb);
+        if(key == null) {
+			sb.append("null");
+		} else {
+			JSONValue.escape(key, sb);
+		}
 		sb.append('\"').append(':');
 		
 		sb.append(JSONValue.toJSONString(value));
@@ -104,12 +110,13 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 		return sb.toString();
 	}
 	
+	@Override
 	public String toString(){
 		return toJSONString();
 	}
 
 	public static String toString(String key,Object value){
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
 		toJSONString(key, value, sb);
         return sb.toString();
 	}

@@ -48,7 +48,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(mServices, operand);
+		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");

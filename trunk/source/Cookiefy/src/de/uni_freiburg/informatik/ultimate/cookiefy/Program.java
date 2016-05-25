@@ -74,11 +74,11 @@ public class Program {
 	 */
 	public Program(Unit unit, ILogger logger) {
 		this(logger);
-		this.mUnit = unit;
+		mUnit = unit;
 
-		for (Declaration decl : unit.getDeclarations()) {
+		for (final Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Procedure) {
-				Procedure p = (Procedure)decl;
+				final Procedure p = (Procedure)decl;
 				Procedures.put(p.getIdentifier(), p);
 			} else 
 			if (decl instanceof VariableDeclaration) {
@@ -103,7 +103,7 @@ public class Program {
 	 * @param procedures
 	 */
 	public void addProcedures(Iterable<Procedure> procedures) {
-		for (Procedure p : procedures) {
+		for (final Procedure p : procedures) {
 			Procedures.put(p.getIdentifier(), p);
 		}
 	}
@@ -113,17 +113,17 @@ public class Program {
 	 * @return
 	 */
 	public Unit toUnit() {
-		List<Declaration> decls = new ArrayList<Declaration>();
+		final List<Declaration> decls = new ArrayList<Declaration>();
 		
-		for (TypeDeclaration var : Types) {
+		for (final TypeDeclaration var : Types) {
 			decls.add(var);
 		}
 		
-		for (VariableDeclaration var : Globals) {
+		for (final VariableDeclaration var : Globals) {
 			decls.add(var);
 		}
 		
-		for (Procedure p : Procedures.values()) {
+		for (final Procedure p : Procedures.values()) {
 			decls.add(p);
 		}
 		

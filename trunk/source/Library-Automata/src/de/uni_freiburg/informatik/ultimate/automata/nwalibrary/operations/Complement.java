@@ -108,7 +108,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return;
 		} 
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			boolean success = tryWithoutDeterminization();
+			final boolean success = tryWithoutDeterminization();
 			if (success) {
 				return;
 			}
@@ -120,9 +120,9 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private boolean tryWithoutDeterminization() throws AutomataLibraryException {
 		assert (mStateDeterminizer instanceof PowersetDeterminizer);
-		TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<LETTER, STATE>(mOperand, mStateFactory);
-		ComplementDeterministicNwa<LETTER,STATE> complemented = new ComplementDeterministicNwa<LETTER, STATE>(totalized);
-		NestedWordAutomatonReachableStates<LETTER, STATE> result = 
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<LETTER, STATE>(mOperand, mStateFactory);
+		final ComplementDeterministicNwa<LETTER,STATE> complemented = new ComplementDeterministicNwa<LETTER, STATE>(totalized);
+		final NestedWordAutomatonReachableStates<LETTER, STATE> result = 
 				new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, complemented);
 		if (!totalized.nonDeterminismInInputDetected()) {
 			mComplement = complemented;
@@ -146,17 +146,18 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// intersection of operand and result should be empty
-			INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
+			final INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 					(new IntersectDD<LETTER, STATE>(mServices, operandOldApi, mResult)).getResult();
 			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
+			final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 					(new ComplementDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state

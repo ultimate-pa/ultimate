@@ -52,7 +52,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private IElement mRootOfNewModel;
 	private WitnessNode mWitnessNode;
 	private boolean mLastModel = false;
-	private IToolchainStorage mStorage;
+	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
 
 
@@ -118,7 +118,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					mLogger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
 					witnessAutomaton = (new WitnessModelToAutomatonTransformer(mWitnessNode, mServices)).getResult();
 				}
-				TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton);
+				final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton);
 				mRootOfNewModel = tas.getRootOfNewModel();
 			}
 		}

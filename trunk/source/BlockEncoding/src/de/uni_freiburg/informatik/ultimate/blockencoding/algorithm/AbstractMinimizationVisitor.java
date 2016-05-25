@@ -67,11 +67,11 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 
 	protected final ILogger mLogger;
 
-	private HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
+	private final HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
 
-	private HashMap<CodeBlock, IMinimizedEdge> referenceEdgeMap;
+	private final HashMap<CodeBlock, IMinimizedEdge> referenceEdgeMap;
 
-	private HashMap<String, MinimizedNode> referenceToMethodEntry;
+	private final HashMap<String, MinimizedNode> referenceToMethodEntry;
 
 	private boolean containsCallReturnEdge;
 
@@ -140,20 +140,20 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 		}
 
 		// abstract method where the minimize visitor can apply there rules
-		MinimizedNode[] reVisitNodes = applyMinimizationRules(node);
+		final MinimizedNode[] reVisitNodes = applyMinimizationRules(node);
 		if (reVisitNodes.length > 0) {
-			for (MinimizedNode toVisitNode : reVisitNodes) {
+			for (final MinimizedNode toVisitNode : reVisitNodes) {
 				internalVisitNode(toVisitNode);
 			}
 
 		} else {
-			ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(node.getMinimalOutgoingEdgeLevel());
-			for (IMinimizedEdge edge : edgeList) {
+			final ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(node.getMinimalOutgoingEdgeLevel());
+			for (final IMinimizedEdge edge : edgeList) {
 				if (edge.isBasicEdge()) {
 					// We ignore Call- and Return-Edges
 					// They will be processed later
 					//TODO: The intuition behind this is unclear!  
-					CodeBlock block = ((IBasicEdge) edge).getOriginalEdge();
+					final CodeBlock block = ((IBasicEdge) edge).getOriginalEdge();
 					if (block instanceof Call) {
 						containsCallReturnEdge = true;
 						continue;
@@ -190,8 +190,8 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 */
 	protected void initializeOutgoingEdges(MinimizedNode node) {
 		// OutgoingEdges of MinimizedNode are not initialized
-		ArrayList<IMinimizedEdge> outEdges = new ArrayList<IMinimizedEdge>();
-		for (RCFGEdge edge : node.getOriginalNode().getOutgoingEdges()) {
+		final ArrayList<IMinimizedEdge> outEdges = new ArrayList<IMinimizedEdge>();
+		for (final RCFGEdge edge : node.getOriginalNode().getOutgoingEdges()) {
 			outEdges.add(getReferencedMinEdge((CodeBlock) edge, node,
 					getReferencedMinNode((ProgramPoint) edge.getTarget(), edge, false)));
 		}
@@ -203,8 +203,8 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 */
 	protected void initializeIncomingEdges(MinimizedNode node) {
 		// IncomingEdges of MinimizedNode are not initialized
-		ArrayList<IMinimizedEdge> inEdges = new ArrayList<IMinimizedEdge>();
-		for (RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+		final ArrayList<IMinimizedEdge> inEdges = new ArrayList<IMinimizedEdge>();
+		for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
 			if (edge instanceof RootEdge) {
 				continue;
 			}
@@ -233,7 +233,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 */
 	private MinimizedNode getReferencedMinNode(ProgramPoint originalNode, RCFGEdge edge, boolean incoming) {
 		if (!referenceNodeMap.containsKey(originalNode)) {
-			MinimizedNode minNode = new MinimizedNode(originalNode);
+			final MinimizedNode minNode = new MinimizedNode(originalNode);
 			referenceNodeMap.put(originalNode, minNode);
 		}
 		return referenceNodeMap.get(originalNode);

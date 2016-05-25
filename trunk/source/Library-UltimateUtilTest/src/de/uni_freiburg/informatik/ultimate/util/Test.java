@@ -39,32 +39,32 @@ public class Test {
 	public static void main(String[] args) throws InterruptedException {
 // compare HashMap with LinkedHashMap
 		
-		int count = 3000000;
+		final int count = 3000000;
 		
-		HashMap<String, String> useless = new HashMap<>(count);
+		final HashMap<String, String> useless = new HashMap<>(count);
 		
-		HashMap<String, String> hashmap = new HashMap<>();
-		LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<>();
+		final HashMap<String, String> hashmap = new HashMap<>();
+		final LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<>();
 		
-		ArrayList<String> input = new ArrayList<>();
+		final ArrayList<String> input = new ArrayList<>();
 		
 
 		for(int i=0;i<count;i++){
 			input.add("The string no "+i);
 		}
 		
-		for(String s : input){
+		for(final String s : input){
 			useless.put(s, s);
 		}
 		
-		Benchmark bench = new Benchmark();
+		final Benchmark bench = new Benchmark();
 		
 		Thread.sleep(100);
 		
 
 		
 		bench.start("HashMap.put()");
-		for(String s : input){
+		for(final String s : input){
 			hashmap.put(s, s);
 		}
 		bench.stop("HashMap.put()");
@@ -72,7 +72,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("LinkedHashMap.put()");
-		for(String s : input){
+		for(final String s : input){
 			linkedHashMap.put(s, s);
 		}
 		bench.stop("LinkedHashMap.put()");
@@ -80,14 +80,14 @@ public class Test {
 		
 		boolean x = false;
 		bench.start("HashMap.contains()");
-		for(String s : input){
+		for(final String s : input){
 			x = x && hashmap.containsKey(s);
 		}
 		bench.stop("HashMap.contains()");
 		System.gc();
 		
 		bench.start("LinkedHashMap.contains()");
-		for(String s : input){
+		for(final String s : input){
 			x = x && linkedHashMap.containsKey(s);
 		}
 		bench.stop("LinkedHashMap.contains()");
@@ -97,7 +97,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("HashMap.values()");
-		for(String s : hashmap.values()){
+		for(final String s : hashmap.values()){
 			useless.put(s, s);
 		}
 		bench.stop("HashMap.values()");
@@ -107,7 +107,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("LinkedHashMap.values()");
-		for(String s : linkedHashMap.values()){
+		for(final String s : linkedHashMap.values()){
 			useless.put(s, s);
 		}
 		bench.stop("LinkedHashMap.values()");
@@ -116,7 +116,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("HashMap.keySet()");
-		for(String s : hashmap.keySet()){
+		for(final String s : hashmap.keySet()){
 			useless.put(s, s);
 		}
 		bench.stop("HashMap.keySet()");
@@ -125,7 +125,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("LinkedHashMap.keySet()");
-		for(String s : linkedHashMap.keySet()){
+		for(final String s : linkedHashMap.keySet()){
 			useless.put(s, s);
 		}
 		bench.stop("LinkedHashMap.keySet()");
@@ -134,7 +134,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("HashMap.get()");
-		for(String s : input){
+		for(final String s : input){
 			useless.put(s, hashmap.get(s));
 		}
 		bench.stop("HashMap.get()");
@@ -143,7 +143,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("LinkedHashMap.get()");
-		for(String s : input){
+		for(final String s : input){
 			useless.put(s, linkedHashMap.get(s));
 		}
 		bench.stop("LinkedHashMap.get()");
@@ -152,7 +152,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("HashMap.remove()");
-		for(String s : input){
+		for(final String s : input){
 			hashmap.remove(s);
 		}
 		bench.stop("HashMap.remove()");
@@ -160,7 +160,7 @@ public class Test {
 		System.gc();
 		
 		bench.start("LinkedHashMap.remove()");
-		for(String s : input){
+		for(final String s : input){
 			linkedHashMap.remove(s);
 		}
 		bench.stop("LinkedHashMap.remove()");
@@ -168,10 +168,10 @@ public class Test {
 		System.gc();
 		
 		
-		List<String> titles = bench.getTitles();
+		final List<String> titles = bench.getTitles();
 		Collections.sort(titles);		
 		
-		for(String s : titles){
+		for(final String s : titles){
 			System.out.println(bench.getReportString(s));
 		}
 	}

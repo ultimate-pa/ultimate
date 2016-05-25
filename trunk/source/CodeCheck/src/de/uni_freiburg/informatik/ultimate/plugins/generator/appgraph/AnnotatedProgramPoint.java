@@ -50,10 +50,10 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 
 	private static final long serialVersionUID = -4398335480646555023L;
 
-	private IPredicate _predicate;
-	private ProgramPoint _programPoint;
+	private final IPredicate _predicate;
+	private final ProgramPoint _programPoint;
 
-	private HashSet<AppHyperEdge> _outgoingHyperEdges = new HashSet<AppHyperEdge>();
+	private final HashSet<AppHyperEdge> _outgoingHyperEdges = new HashSet<AppHyperEdge>();
 
 	/**
 	 * Constructor of a new AnnotatedProgramPoint.
@@ -114,16 +114,16 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		this(oldApp, newPred);
 		_nodeID = id;
 		if (copyOutgoingEdges) {
-			for (AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
+			for (final AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
 				if (oldOutEdge instanceof AppHyperEdge) {
-					this.connectOutgoingReturn(((AppHyperEdge) oldOutEdge).getHier(),
+					connectOutgoingReturn(((AppHyperEdge) oldOutEdge).getHier(),
 							(Return) oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				} else {
-					this.connectOutgoing(oldOutEdge.getStatement(), oldOutEdge.getTarget());
+					connectOutgoing(oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				}
 			}
 
-			for (AppHyperEdge oldOutHypEdge : oldApp.getOutgoingHyperEdges()) {
+			for (final AppHyperEdge oldOutHypEdge : oldApp.getOutgoingHyperEdges()) {
 				oldOutHypEdge.getSource().connectOutgoingReturn(this, (Return) oldOutHypEdge.getStatement(),
 						oldOutHypEdge.getTarget());
 			}
@@ -158,27 +158,27 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 
 	@Override
 	public String toString() {
-		String ref = CodeChecker.objectReference(this);
+		final String ref = CodeChecker.objectReference(this);
 		return _programPoint.toString() + ref.substring(Math.max(ref.length() - 3, 0)) + ":"
 				+ _predicate.getFormula().toString();
 	}
 
 	public void connectOutgoing(CodeBlock statement, AnnotatedProgramPoint target) {
 		assert !(statement instanceof Return);
-		AppEdge edge = new AppEdge(this, statement, target);
-		this.mOutgoingEdges.add(edge);
+		final AppEdge edge = new AppEdge(this, statement, target);
+		mOutgoingEdges.add(edge);
 		target.mIncomingEdges.add(edge);
 	}
 
 	public void connectOutgoingReturn(AnnotatedProgramPoint hier, Return returnStm, AnnotatedProgramPoint target) {
-		AppHyperEdge hyperEdge = new AppHyperEdge(this, hier, returnStm, target);
+		final AppHyperEdge hyperEdge = new AppHyperEdge(this, hier, returnStm, target);
 		hier._outgoingHyperEdges.add(hyperEdge);
-		this.mOutgoingEdges.add(hyperEdge);
+		mOutgoingEdges.add(hyperEdge);
 		target.mIncomingEdges.add(hyperEdge);
 	}
 
 	public AppEdge getEdge(AnnotatedProgramPoint target) {
-		for (AppEdge edge : mOutgoingEdges) {
+		for (final AppEdge edge : mOutgoingEdges) {
 			if (edge.getTarget() == target) {
 				return edge;
 			}
@@ -187,14 +187,16 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	}
 
 	public void isolateNode() {
-		AppEdge[] edges = getIncomingEdges().toArray(new AppEdge[] {});
-		for (AppEdge edge : edges)
+		final AppEdge[] edges = getIncomingEdges().toArray(new AppEdge[] {});
+		for (final AppEdge edge : edges) {
 			edge.disconnect();
-		if (_cloneSource != null)
+		}
+		if (_cloneSource != null) {
 			_cloneSource._copies.remove(this);
+		}
 	}
 
-	private HashSet<AnnotatedProgramPoint> _copies;
+	private final HashSet<AnnotatedProgramPoint> _copies;
 	private AnnotatedProgramPoint _cloneSource;
 	// public void disconnectOutgoing(AppEdge outEdge) {
 	// if (outEdge instanceof AppHyperEdge) {
@@ -207,8 +209,8 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 
 	// formerly removed now there again.. --> impulse-specific stuff
 
-	private ArrayList<AnnotatedProgramPoint> copies = new ArrayList<AnnotatedProgramPoint>();
-	private ArrayList<AnnotatedProgramPoint> newCopies = new ArrayList<AnnotatedProgramPoint>();
+	private final ArrayList<AnnotatedProgramPoint> copies = new ArrayList<AnnotatedProgramPoint>();
+	private final ArrayList<AnnotatedProgramPoint> newCopies = new ArrayList<AnnotatedProgramPoint>();
 	private AnnotatedProgramPoint cloneSource;
 
 	/**
@@ -246,7 +248,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @return returns a list of copies of this APP
 	 */
 	public ArrayList<AnnotatedProgramPoint> getCopies() {
-		ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
 		ret.addAll(copies);
 		ret.addAll(newCopies);
 		return ret;
@@ -258,7 +260,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @return returns a list of new copies of this APP
 	 */
 	public ArrayList<AnnotatedProgramPoint> getNewCopies() {
-		ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
 		ret.addAll(newCopies);
 		return ret;
 	}

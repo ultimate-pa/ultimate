@@ -58,7 +58,7 @@ public class ConjunctionEdge extends AbstractCompositeEdge {
 	public ConjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
 		mRating = RatingFactory.getInstance().createRating(this);
-		EncodingStatistics.setMaxDisjunctionsInOneEdge(this.mContainedDisjunctions);
+		EncodingStatistics.setMaxDisjunctionsInOneEdge(mContainedDisjunctions);
 	}
 
 	@Override

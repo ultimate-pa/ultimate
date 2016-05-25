@@ -124,7 +124,7 @@ public final class Hep<E1, E2, E3, E4, E5, E6, E7> {
 		if (!(obj instanceof Hep)) {
 			return false;
 		}
-		Hep<?, ?, ?, ?, ?, ?, ?> other = (Hep<?, ?, ?, ?, ?, ?, ?>) obj;
+		final Hep<?, ?, ?, ?, ?, ?, ?> other = (Hep<?, ?, ?, ?, ?, ?, ?>) obj;
 		if (mFifth == null) {
 			if (other.mFifth != null) {
 				return false;

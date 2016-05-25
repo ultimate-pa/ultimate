@@ -83,8 +83,9 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setCallAlphabet(List<String> mCallAlphabet) {
-		if (mCallAlphabet != null)
+		if (mCallAlphabet != null) {
 			this.mCallAlphabet = mCallAlphabet;
+		}
 	}
 
 	public List<String> getInternalAlphabet() {
@@ -92,8 +93,9 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setInternalAlphabet(List<String> mInternalAlphabet) {
-		if (mInternalAlphabet != null)
+		if (mInternalAlphabet != null) {
 			this.mInternalAlphabet = mInternalAlphabet;
+		}
 	}
 
 	public List<String> getReturnAlphabet() {
@@ -101,22 +103,26 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setReturnAlphabet(List<String> mReturnAlphabet) {
-		if (mReturnAlphabet != null)
+		if (mReturnAlphabet != null) {
 			this.mReturnAlphabet = mReturnAlphabet;
+		}
 	}
 	
 	public void setStates(List<String> states) {
-		if (states != null)
+		if (states != null) {
 			mStates = states;
+		}
 	}
 	
 	public void setInitialStates(List<String> initStates) {
-		if (initStates != null)
+		if (initStates != null) {
 			mInitialStates = initStates;
+		}
 	}
 	public void setFinalStates(List<String> finStates) {
-		if (finStates != null)
+		if (finStates != null) {
 			mFinalStates = finStates;
+		}
 	}
 
 	public List<String> getStates() {
@@ -137,8 +143,9 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setInternalTransitions(TransitionListAST internalTransitions) {
-		if (internalTransitions != null)
-			this.mInternalTransitions = internalTransitions.getTransitions();
+		if (internalTransitions != null) {
+			mInternalTransitions = internalTransitions.getTransitions();
+		}
 	}
 
 	public Map<Pair<String, String>, Set<String>> getCallTransitions() {
@@ -146,8 +153,9 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setCallTransitions(TransitionListAST callTransitions) {
-		if (callTransitions != null)
-			this.mCallTransitions = callTransitions.getTransitions();
+		if (callTransitions != null) {
+			mCallTransitions = callTransitions.getTransitions();
+		}
 	}
 
 	public Map<String, Map<String, Map<String, Set<String>>>> getReturnTransitions() {
@@ -155,13 +163,14 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	}
 
 	public void setReturnTransitions(TransitionListAST returnTransitions) {
-		if (returnTransitions != null)
-			this.mReturnTransitions = returnTransitions.getReturnTransitions();
+		if (returnTransitions != null) {
+			mReturnTransitions = returnTransitions.getReturnTransitions();
+		}
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("NestedwordAutomaton(" + mName + "): " + "[#call_alph: ");
 		builder.append(mCallAlphabet.size());
 		builder.append(" #int_alph: ");

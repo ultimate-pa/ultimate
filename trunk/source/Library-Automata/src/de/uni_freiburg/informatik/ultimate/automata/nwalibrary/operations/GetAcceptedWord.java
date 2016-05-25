@@ -48,7 +48,7 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
+		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");

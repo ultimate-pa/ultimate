@@ -49,11 +49,11 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE up = doubleDecker.getUp();
+		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedIn.contains(up)) {
-			HashSet<STATE> succs = new HashSet<STATE>();
-			for (LETTER letter : mTraversedNwa.lettersInternal(up)) {
-				for (STATE succ : mTraversedNwa.succInternal(up, letter)) {
+			final HashSet<STATE> succs = new HashSet<STATE>();
+			for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
+				for (final STATE succ : mTraversedNwa.succInternal(up, letter)) {
 					succs.add(succ);
 				}
 			}
@@ -68,11 +68,11 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE up = doubleDecker.getUp();
+		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedCa.contains(up)) {
-			HashSet<STATE> succs = new HashSet<STATE>();
-			for (LETTER letter : mTraversedNwa.lettersCall(up)) {
-				for (STATE succ : mTraversedNwa.succCall(up, letter)) {
+			final HashSet<STATE> succs = new HashSet<STATE>();
+			for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
+				for (final STATE succ : mTraversedNwa.succCall(up, letter)) {
 					succs.add(succ);
 				}
 			}
@@ -109,6 +109,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	protected abstract Collection<STATE> buildReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker);
 	
+	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}

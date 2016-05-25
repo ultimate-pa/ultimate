@@ -129,7 +129,7 @@ public class AffineTerm extends Term {
 			mVariable2Coefficient = Collections.emptyMap();
 			break;
 		case 1:
-			Term variable = terms[0];
+			final Term variable = terms[0];
 			checkIfTermIsLegalVariable(variable);
 			if (coefficients[0].equals(Rational.ZERO)) {
 				mVariable2Coefficient = Collections.emptyMap();
@@ -170,8 +170,8 @@ public class AffineTerm extends Term {
 		mSort = affineTerms[0].getSort();
 		mVariable2Coefficient = new HashMap<Term, Rational>();
 		Rational constant = Rational.ZERO;
-		for (AffineTerm affineTerm : affineTerms) {
-			for (Map.Entry<Term, Rational> summand :
+		for (final AffineTerm affineTerm : affineTerms) {
+			for (final Map.Entry<Term, Rational> summand :
 					affineTerm.mVariable2Coefficient.entrySet()) {
 				assert summand.getKey().getSort() == mSort : 
 					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + mSort;
@@ -219,7 +219,7 @@ public class AffineTerm extends Term {
 				assert mSort.isNumericSort();
 				mConstant = affineTerm.mConstant.mul(multiplier);
 			}
-			for (Map.Entry<Term, Rational> summand :
+			for (final Map.Entry<Term, Rational> summand :
 				affineTerm.mVariable2Coefficient.entrySet()) {
 				mVariable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 			}
@@ -313,14 +313,14 @@ public class AffineTerm extends Term {
 			summands = new Term[mVariable2Coefficient.size() + 1];
 		}
 		int i = 0;
-		for (Map.Entry<Term, Rational> entry :
+		for (final Map.Entry<Term, Rational> entry :
 				mVariable2Coefficient.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : 
 								"zero is no legal coefficient in AffineTerm";
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = entry.getKey();
 			} else {
-				Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
+				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
 				summands[i] = SmtUtils.mul(script, mSort, coeff, entry.getKey()); 
 			}
 			++i;
@@ -329,7 +329,7 @@ public class AffineTerm extends Term {
 			assert mConstant.isIntegral() || mSort.getName().equals("Real");
 			summands[i] = SmtUtils.rational2Term(script, mConstant, mSort);
 		}
-		Term result = SmtUtils.sum(script, mSort, summands);
+		final Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
 	}
 	
@@ -338,8 +338,8 @@ public class AffineTerm extends Term {
 		if (isErrorTerm()) {
 			return "auxilliaryErrorTerm";
 		}
-		StringBuilder sb = new StringBuilder();
-		for (Map.Entry<Term, Rational> entry :
+		final StringBuilder sb = new StringBuilder();
+		for (final Map.Entry<Term, Rational> entry :
 				mVariable2Coefficient.entrySet()) {
 			sb.append(entry.getValue().isNegative() ? " - " : " + ");
 			sb.append(entry.getValue().abs() + "*" + entry.getKey());
@@ -371,16 +371,16 @@ public class AffineTerm extends Term {
 	
 	public static AffineTerm applyModuloToAllCoefficients(Script script, AffineTerm affineTerm, BigInteger divident) {
 		assert affineTerm.getSort().getName().equals("Int");
-		Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
-		Term[] terms = new Term[map.size()];
-		Rational[] coefficients = new Rational[map.size()];
+		final Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
+		final Term[] terms = new Term[map.size()];
+		final Rational[] coefficients = new Rational[map.size()];
 		int offset = 0;
-		for (Entry<Term, Rational> entry : map.entrySet()) {
+		for (final Entry<Term, Rational> entry : map.entrySet()) {
 			terms[offset] = entry.getKey();
 			coefficients[offset] = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()),divident));
 			offset++;
 		}
-		Rational constant = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()),divident));
+		final Rational constant = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()),divident));
 		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant );
 	}
 }

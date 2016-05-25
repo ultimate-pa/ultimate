@@ -79,13 +79,13 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 
 	@Override
 	public String getLongDescription() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Found a termination argument consisting of the ");
 		sb.append(mRankingFunctionDescription);
 		sb.append(" ranking function");
 		sb.append(": [");
 		boolean needsComma = false;
-		for (E e : mRankingFunction) {
+		for (final E e : mRankingFunction) {
 			if (needsComma) {
 				sb.append(", ");
 			} else {
@@ -97,7 +97,7 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 		sb.append("]");
 		if (mSupportingInvariants.length > 0) {
 			sb.append(" and the following supporting invariants: ");
-			for (E e : mSupportingInvariants) {
+			for (final E e : mSupportingInvariants) {
 				sb.append(mTranslatorSequence.translateExpressionToString(e, mExprClazz));
 			}
 		} else {

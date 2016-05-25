@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 public class BoogieAstCopier extends BoogieTransformer {
 
 	public Unit copy(Unit unit) {
-		Declaration[] oldDeclarations = unit.getDeclarations();
-		Declaration[] newDeclarations = new Declaration[oldDeclarations.length];
+		final Declaration[] oldDeclarations = unit.getDeclarations();
+		final Declaration[] newDeclarations = new Declaration[oldDeclarations.length];
 		for (int i = 0; i < oldDeclarations.length; i++) {
 			newDeclarations[i] = processDeclaration(oldDeclarations[i]);
 			ModelUtils.copyAnnotations(oldDeclarations[i], newDeclarations[i]);
 		}
-		Unit newUnit = new Unit(unit.getLocation(), newDeclarations);
+		final Unit newUnit = new Unit(unit.getLocation(), newDeclarations);
 		ModelUtils.copyAnnotations(unit, newUnit);
 		return newUnit;
 	}
@@ -62,25 +62,25 @@ public class BoogieAstCopier extends BoogieTransformer {
 	protected Expression processExpression(Expression expr) {
 		final Expression result;
 		if (expr instanceof IdentifierExpression) {
-			IdentifierExpression idExpr = (IdentifierExpression) expr;
-			IdentifierExpression resultIdExpr = new IdentifierExpression(idExpr.getLocation(), idExpr.getIdentifier());
-			DeclarationInformation declInf = idExpr.getDeclarationInformation();
+			final IdentifierExpression idExpr = (IdentifierExpression) expr;
+			final IdentifierExpression resultIdExpr = new IdentifierExpression(idExpr.getLocation(), idExpr.getIdentifier());
+			final DeclarationInformation declInf = idExpr.getDeclarationInformation();
 			if (declInf != null) {
 				resultIdExpr.setDeclarationInformation(declInf);
 			}
 			result = resultIdExpr;
 		} else if (expr instanceof BooleanLiteral) {
-			BooleanLiteral boolLit = (BooleanLiteral) expr;
+			final BooleanLiteral boolLit = (BooleanLiteral) expr;
 			result = new BooleanLiteral(boolLit.getLocation(), boolLit.getType(), boolLit.getValue());
 		} else if (expr instanceof IntegerLiteral) {
-			IntegerLiteral intLit = (IntegerLiteral) expr;
+			final IntegerLiteral intLit = (IntegerLiteral) expr;
 			result = new IntegerLiteral(intLit.getLocation(), intLit.getType(), intLit.getValue());
 		} else if (expr instanceof BitvecLiteral) {
-			BitvecLiteral bitvecLit = (BitvecLiteral) expr;
+			final BitvecLiteral bitvecLit = (BitvecLiteral) expr;
 			result = new BitvecLiteral(bitvecLit.getLocation(), bitvecLit.getType(), bitvecLit.getValue(),
 					bitvecLit.getLength());
 		} else if (expr instanceof StringLiteral) {
-			StringLiteral stringLit = (StringLiteral) expr;
+			final StringLiteral stringLit = (StringLiteral) expr;
 			result = new StringLiteral(stringLit.getLocation(), stringLit.getType(), stringLit.getValue());
 		} else if (expr instanceof WildcardExpression) {
 			result = new WildcardExpression(expr.getLocation(), expr.getType());

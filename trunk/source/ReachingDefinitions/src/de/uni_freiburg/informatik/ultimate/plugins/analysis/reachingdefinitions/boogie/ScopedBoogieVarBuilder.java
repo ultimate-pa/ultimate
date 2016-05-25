@@ -58,13 +58,13 @@ public class ScopedBoogieVarBuilder {
 	}
 
 	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info, TransFormula tf) {
-		VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
+		final VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
 				info.getStorageClass(), info.getProcedure());
-		VariableUID uid = new VariableUID(decl, identifier);
+		final VariableUID uid = new VariableUID(decl, identifier);
 
 		ScopedBoogieVar rtr = mVarCache.get(uid);
 		if (rtr == null) {
-			BoogieVar bv = getBoogieVarFromTransformula(identifier, info, tf);
+			final BoogieVar bv = getBoogieVarFromTransformula(identifier, info, tf);
 			rtr = new ScopedBoogieVar(identifier, decl, info, bv);
 			mVarCache.put(uid, rtr);
 		}
@@ -74,7 +74,7 @@ public class ScopedBoogieVarBuilder {
 	private BoogieVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, TransFormula tf) {
 		// TODO: Check if this is the "right" way to get the correct BoogieVar
 
-		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
+		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getInVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getOutVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getAssignedVars()));
@@ -87,7 +87,7 @@ public class ScopedBoogieVarBuilder {
 	}
 
 	private BoogieVar getBoogieVarFromSet(String identifier, DeclarationInformation info, Set<BoogieVar> vars) {
-		for (BoogieVar in : vars) {
+		for (final BoogieVar in : vars) {
 			if (in.getIdentifier().equals(identifier)) {
 				if (in.isOldvar()) {
 					continue;
@@ -105,8 +105,8 @@ public class ScopedBoogieVarBuilder {
 
 	private class VariableUID {
 
-		private VariableDeclaration Declaration;
-		private String Identifier;
+		private final VariableDeclaration Declaration;
+		private final String Identifier;
 
 		public VariableUID(VariableDeclaration decl, String ident) {
 			Declaration = decl;
@@ -125,25 +125,33 @@ public class ScopedBoogieVarBuilder {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			VariableUID other = (VariableUID) obj;
-			if (!getOuterType().equals(other.getOuterType()))
+			}
+			final VariableUID other = (VariableUID) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
+			}
 			if (Declaration == null) {
-				if (other.Declaration != null)
+				if (other.Declaration != null) {
 					return false;
-			} else if (!Declaration.equals(other.Declaration))
+				}
+			} else if (!Declaration.equals(other.Declaration)) {
 				return false;
+			}
 			if (Identifier == null) {
-				if (other.Identifier != null)
+				if (other.Identifier != null) {
 					return false;
-			} else if (!Identifier.equals(other.Identifier))
+				}
+			} else if (!Identifier.equals(other.Identifier)) {
 				return false;
+			}
 			return true;
 		}
 

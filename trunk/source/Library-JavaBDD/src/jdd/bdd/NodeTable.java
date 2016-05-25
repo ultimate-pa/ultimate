@@ -1,11 +1,18 @@
 package jdd.bdd;
 
 
-import jdd.util.*;
-import jdd.util.math.*;
-import jdd.bdd.debug.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 
-import java.util.*;
+import jdd.bdd.debug.BDDDebuger;
+import jdd.util.Allocator;
+import jdd.util.Array;
+import jdd.util.Configuration;
+import jdd.util.JDDConsole;
+import jdd.util.Options;
+import jdd.util.Test;
+import jdd.util.math.HashFunctions;
 
 /**
  * implementation of a node table of elements (var,low,high,ref-count) that supports garbage collections.
@@ -40,7 +47,7 @@ public class NodeTable {
 
 
 	/** the "debuggers" connected to this NodeTable. see for example ProfibedBDD2 */
-	private Collection debugers;
+	private final Collection debugers;
 
 	protected int table_size, stat_nt_grow, dead_nodes;
 	protected int nodesminfree /* , bddmaxnodeincrease, minfreenodes */ ;
@@ -64,7 +71,9 @@ public class NodeTable {
 		debugers = new LinkedList();
 
 		// we dont like nodetables that are too small
-		if(nodesize < Configuration.MIN_NODETABLE_SIZE) nodesize = Configuration.MIN_NODETABLE_SIZE;
+		if(nodesize < Configuration.MIN_NODETABLE_SIZE) {
+			nodesize = Configuration.MIN_NODETABLE_SIZE;
+		}
 
 		// allocate the initial arraus
 		table_size = nodesize;
@@ -121,9 +130,11 @@ public class NodeTable {
 	 */
 	protected void tree_depth_changed(int n) {
 		// mark_stack is the stack used for recursive tree marking
-		int need = n * 4 + 3;
+		final int need = n * 4 + 3;
 		if(mark_stack.length < need)
+		 {
 			mark_stack = Allocator.allocateIntArray(need * 2); // twice, so we dont need to do it too often....
+		}
 	}
 	// --- [ HT stuff ] ----------------------------------------------------------------
 	// compute hash for the triple (i,l,h)
@@ -141,15 +152,22 @@ public class NodeTable {
 	 */
 	private final int compute_increase_limit(int current_size) {
 		// limit disabled?
-		if(Configuration.nodetableSmallSize <= 0 || Configuration.nodetableLargeSize <= 0) return current_size;
+		if(Configuration.nodetableSmallSize <= 0 || Configuration.nodetableLargeSize <= 0) {
+			return current_size;
+		}
 
-		if(current_size <= Configuration.nodetableSmallSize) return Configuration.nodetableGrowMax;
-		if(current_size >= Configuration.nodetableLargeSize) return Configuration.nodetableGrowMin;
+		if(current_size <= Configuration.nodetableSmallSize) {
+			return Configuration.nodetableGrowMax;
+		}
+		if(current_size >= Configuration.nodetableLargeSize) {
+			return Configuration.nodetableGrowMin;
+		}
 
 
 		// avoid division by zero, when badly configured
-		if(Configuration.nodetableLargeSize == Configuration.nodetableSmallSize)
+		if(Configuration.nodetableLargeSize == Configuration.nodetableSmallSize) {
 			return (Configuration.nodetableGrowMax + Configuration.nodetableGrowMin) / 2;
+		}
 
 		// anywhere between the two limits, we use a linear interpolation of them.
 		return Configuration.nodetableGrowMax -
@@ -168,7 +186,7 @@ public class NodeTable {
 	protected void post_removal_callbak() { /* do nothing */ }
 
 	protected final void signal_removed() {
-		long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 		post_removal_callbak();
 		stat_notify_time += System.currentTimeMillis() - time;
 
@@ -184,7 +202,7 @@ public class NodeTable {
 	 * we might to choose to call signal_removed() not here but at a later point.
 	 */
 	private int gc(boolean call_callback) {
-		long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 		stat_gc_count ++;
 
 
@@ -192,7 +210,7 @@ public class NodeTable {
 		mark_nodes_in_use();
 
 		// 1. free or re-hash and unmark
-		int old_free = free_nodes_count;
+		final int old_free = free_nodes_count;
 		first_free_node = free_nodes_count = 0;
 
 		// 1.5 go backward to get the list in correct direction. doesnt really matter :(
@@ -200,7 +218,7 @@ public class NodeTable {
 			i--;
 			if(isValid(i) && isNodeMarked(i)) {
 				unmark_node(i);
-				int pos = compute_hash( getVar(i), getLow(i), getHigh(i));
+				final int pos = compute_hash( getVar(i), getLow(i), getHigh(i));
 				connect_list(i, pos);
 			} else {
 				invalidate(i);
@@ -211,11 +229,13 @@ public class NodeTable {
 		}
 
 		// 2. ok, we have removed things, inform others [caches ?] about it
-		if(call_callback) signal_removed();
+		if(call_callback) {
+			signal_removed();
+		}
 
 		// 3. update our statistics
 		stat_gc_time += System.currentTimeMillis() - time;
-		int new_free = free_nodes_count - old_free;
+		final int new_free = free_nodes_count - old_free;
 		stat_gc_freed  += new_free ;
 
 		if(Options.verbose) {
@@ -232,13 +252,17 @@ public class NodeTable {
 	 */
 	private final void mark_nodes_in_use() {
 		// insert the stuff we are working on:
-		for(int i = 0; i < work_stack_tos; i++)	mark_tree(work_stack[i]);
+		for(int i = 0; i < work_stack_tos; i++) {
+			mark_tree(work_stack[i]);
+		}
 
 		// and referenced nodes.
 		// it looks inefficient, but you cant do it much faster than this :(
 		for(int i = table_size; i != 0; ) {
 			i--;
-			if( isValid(i)  && getRefPlain(i) > 0) mark_tree(i);
+			if( isValid(i)  && getRefPlain(i) > 0) {
+				mark_tree(i);
+			}
 			setPrev(i, 0);
 		}
 	}
@@ -253,7 +277,7 @@ public class NodeTable {
 		// but the dead-node counter is bot always accurate
 		if(dead_nodes > 0 || table_size > Configuration.nodetableSimpleDeadcountThreshold) {
 
-			int got = gc(false);
+			final int got = gc(false);
 			dead_nodes = 0;
 
 			// we might have had DEAD NODES, but that doesnt mean that we can always
@@ -274,12 +298,12 @@ public class NodeTable {
 		// 1.b) compute the new size.
 		// this snippet is not very intelligent. I just don't feel like re-writing it right now
 		// int new_size = table_size + Math.min(table_size, compute_increase_limit(table_size) );
-		int new_size = table_size + compute_increase_limit(nodesminfree) ;
+		final int new_size = table_size + compute_increase_limit(nodesminfree) ;
 
 
 
 		// 2. resize tables
-		int old_size = table_size;
+		final int old_size = table_size;
 		resize(new_size);
 		table_size = new_size;
 
@@ -314,7 +338,7 @@ public class NodeTable {
 		for(int i = old_size; i > 2; ) {
 			i--;
 			if(isValid(i)) {
-				int hash = compute_hash( getVar(i), getLow(i), getHigh(i));
+				final int hash = compute_hash( getVar(i), getLow(i), getHigh(i));
 				connect_list(i, hash);
 			} else {
 				setNext(i, first_free_node);
@@ -347,7 +371,10 @@ public class NodeTable {
 		// look it up in the cache
 		stat_lookup_count++;
 		while(curr != 0) {
-			if( match_table(curr, v,l,h))	return curr; // tuple found in the table!
+			if( match_table(curr, v,l,h))
+			 {
+				return curr; // tuple found in the table!
+			}
 			curr = getNext(curr);
 			ht_chain++;
 
@@ -379,7 +406,7 @@ public class NodeTable {
 	 */
 	public Collection addDebugger(BDDDebuger d) {
 		debugers.add(d);
-		Collection v = new LinkedList();
+		final Collection v = new LinkedList();
 
 		// at this level, we wont do anything with the returned vector.
 		// the sub-classes will do that.
@@ -392,8 +419,8 @@ public class NodeTable {
 	 * called from cleanup()
 	 */
 	private void stopDebuggers() {
-		for (Iterator e = debugers.iterator() ; e.hasNext() ;) {
-			BDDDebuger d = (BDDDebuger) e.next();
+		for (final Iterator e = debugers.iterator() ; e.hasNext() ;) {
+			final BDDDebuger d = (BDDDebuger) e.next();
 			d.stop();
 		}
 	}
@@ -417,7 +444,7 @@ public class NodeTable {
 		try {
 			t_nodes = Array.resize(t_nodes, NODE_WIDTH * table_size, NODE_WIDTH * new_size);
 			t_list = Array.resize(t_list, LIST_WIDTH * table_size, LIST_WIDTH * new_size);
-		} catch(OutOfMemoryError ignored) {
+		} catch(final OutOfMemoryError ignored) {
 			if(Options.verbose) {
 				JDDConsole.out.println("NodeTable.resize failed...");
 			}
@@ -432,11 +459,14 @@ public class NodeTable {
 	 */
 	public final int ref(int bdd) {
 		short ref = getRefPlain(bdd);
-		if(ref == -1) ref = 1;
-		else if(ref == 0) {
+		if(ref == -1) {
+			ref = 1;
+		} else if(ref == 0) {
 			ref = 1;
 			dead_nodes --;
-		} else if(ref != MAX_REFCOUNT) ref++;
+		} else if(ref != MAX_REFCOUNT) {
+			ref++;
+		}
 		setRef(bdd, ref);
 		return bdd;
 	}
@@ -478,7 +508,9 @@ public class NodeTable {
 	 * get the number of references to this BDD.
 	 */
 	public final short getRef(int bdd) {
-		if(t_ref[bdd] == -1) return 0;
+		if(t_ref[bdd] == -1) {
+			return 0;
+		}
 		return t_ref[bdd];
 	}
 
@@ -525,7 +557,7 @@ public class NodeTable {
 	protected final boolean match_table(final int bdd, final int var, final int low, final int high) {
 		// WAS: return getVar(bdd) == var && getLow(bdd) == low && getHigh(bdd) == high;
 
-		int offset = bdd * NODE_WIDTH;
+		final int offset = bdd * NODE_WIDTH;
 		return t_nodes[offset + OFFSET_VAR] == var && t_nodes[offset + OFFSET_LOW] == low &&
 			t_nodes[offset + OFFSET_HIGH] == high;
 	}
@@ -552,8 +584,8 @@ public class NodeTable {
 
 	/** put <tt>a</tt> before <tt>b</tt> in the linked list */
 	private final void connect_list(int a, int b) {
-		int o1 = a * LIST_WIDTH;
-		int o2 = b * LIST_WIDTH;
+		final int o1 = a * LIST_WIDTH;
+		final int o2 = b * LIST_WIDTH;
 
 		t_list[o1 + OFFSET_NEXT] = t_list[o2 + OFFSET_PREV];
 		t_list[o2 + OFFSET_PREV] = a;
@@ -579,14 +611,21 @@ public class NodeTable {
 	 * @see #mark_node
 	 */
 	public final void mark_tree(int bdd) {
-		if(stack_marking_enabled) mark_tree_stack(bdd);
-		else mark_tree_rec(bdd);
+		if(stack_marking_enabled) {
+			mark_tree_stack(bdd);
+		} else {
+			mark_tree_rec(bdd);
+		}
 	}
 
 	/** the recursive version f mark_tree */
 	private  final void mark_tree_rec(int bdd) {
-		if(bdd < 2) return;
-		if( isNodeMarked(bdd)) return;
+		if(bdd < 2) {
+			return;
+		}
+		if( isNodeMarked(bdd)) {
+			return;
+		}
 		mark_node(bdd);
 		mark_tree( getLow(bdd) );
 		mark_tree_rec( getHigh(bdd) );
@@ -610,7 +649,9 @@ public class NodeTable {
 
 
 		// if its terminal, then we are already done
-		if(bdd < 2 ) return;
+		if(bdd < 2 ) {
+			return;
+		}
 
 		// insert the first one
 		int tos = 0; // top of stack
@@ -619,7 +660,7 @@ public class NodeTable {
 
 		// here we go, recursively mark the nodes in this tree:
 		while(tos > 0) {
-			int next = mark_stack[--tos];
+			final int next = mark_stack[--tos];
 			int tmp = getLow(next);
 			if( tmp > 1 && !isNodeMarked(tmp)) {
 				mark_node(tmp);
@@ -638,8 +679,12 @@ public class NodeTable {
 
 	/** recursively unmark nodes, used by some internal functions */
 	public final void unmark_tree(int bdd) {
-		if(bdd < 2) return;
-		if( !isNodeMarked(bdd)) return;
+		if(bdd < 2) {
+			return;
+		}
+		if( !isNodeMarked(bdd)) {
+			return;
+		}
 		unmark_node(bdd);
 		unmark_tree( getLow(bdd) );
 		unmark_tree( getHigh(bdd) );
@@ -663,11 +708,21 @@ public class NodeTable {
 	public long getMemoryUsage() {
 		long ret = 0;
 
-		if (t_nodes!= null) ret += t_nodes.length * 4;
-		if (t_list!= null) ret += t_list.length * 4;
-		if (t_ref != null) ret += t_ref.length * 2;
-		if (work_stack != null) ret += work_stack.length * 4;
-		if (mark_stack != null) ret += mark_stack.length * 4;
+		if (t_nodes!= null) {
+			ret += t_nodes.length * 4;
+		}
+		if (t_list!= null) {
+			ret += t_list.length * 4;
+		}
+		if (t_ref != null) {
+			ret += t_ref.length * 2;
+		}
+		if (work_stack != null) {
+			ret += work_stack.length * 4;
+		}
+		if (mark_stack != null) {
+			ret += mark_stack.length * 4;
+		}
 
 		return ret;
 	}
@@ -679,8 +734,11 @@ public class NodeTable {
 	 */
 	public int countRootNodes() {
 		int c = 0;
-		for(int i = 0; i < table_size; i++)
-			if(isValid(i) && (getRef(i) > 0 && getRef(i) != MAX_REFCOUNT)) c++;
+		for(int i = 0; i < table_size; i++) {
+			if(isValid(i) && (getRef(i) > 0 && getRef(i) != MAX_REFCOUNT)) {
+				c++;
+			}
+		}
 		return c;
 	}
 
@@ -690,12 +748,17 @@ public class NodeTable {
 
 	protected void show_table() {
 		JDDConsole.out.println("Node-table:");
-		for(int i = 0; i < table_size; i++)
-			if(isValid(i) ) show_tuple(i);
+		for(int i = 0; i < table_size; i++) {
+			if(isValid(i) ) {
+				show_tuple(i);
+			}
+		}
 	}
 	protected void show_table_all() {
 		JDDConsole.out.println("Node-table (complete):");
-		for(int i = 0; i < table_size; i++)	show_tuple(i);
+		for(int i = 0; i < table_size; i++) {
+			show_tuple(i);
+		}
 	}
 
 
@@ -705,7 +768,13 @@ public class NodeTable {
 
 		// see if the number of free nodes is correct
 		int c = 2, b = 0;
-		for(int i = 2; i < table_size; i ++)	if(isValid(i) ) c++; else b++;
+		for(int i = 2; i < table_size; i ++) {
+			if(isValid(i) ) {
+				c++;
+			} else {
+				b++;
+			}
+		}
 		Test.check( c == (table_size - free_nodes_count), "Invalid # of free nodes: #live= " +c + ", table_size="+table_size + ", free_nodes_count=" +free_nodes_count);
 
 		// see if a nodes children point to invalid entries:
@@ -767,12 +836,15 @@ public class NodeTable {
 	private String check_say = null;
 	/** check if all nodes are ok. it will test validaty and ref-count of nodes in the table */
 	public void check_all_nodes() {
-		for(int i = 0; i < work_stack_tos; i++)
+		for(int i = 0; i < work_stack_tos; i++) {
 			check_node(work_stack[i]);
+		}
 
-		for(int i = 0; i < table_size; i++)
-			if( isValid(i) && getRefPlain(i) > 0 )
+		for(int i = 0; i < table_size; i++) {
+			if( isValid(i) && getRefPlain(i) > 0 ) {
 				check_node(i);
+			}
+		}
 	}
 
 	/** check if some node is ok. it actuallt check the whole tree below the node */
@@ -781,7 +853,9 @@ public class NodeTable {
 		check_node(node);
 	}
 	private void check_node(int node) {
-		if(node < 2) return;
+		if(node < 2) {
+			return;
+		}
 		if(!isValid(node)) {
 			show_tuple(node);
 			Test.check(false, "Node " + node + " invalid " + ((check_say != null) ? check_say : ""));
@@ -819,10 +893,12 @@ public class NodeTable {
 
 
 		// now, this is not a test, its just for profiling huge grows:
-		int MAX = 15;
+		final int MAX = 15;
 		nt = new NodeTable(MAX);
 		int last = 0;
-		for(int i = 2; i < MAX; i++) last = nt.add(i , last, last);
+		for(int i = 2; i < MAX; i++) {
+			last = nt.add(i , last, last);
+		}
 		nt.check();
 		nt.grow();	nt.check();
 		nt.grow();	nt.check();
@@ -832,16 +908,16 @@ public class NodeTable {
 		// test the hash-table stuff
 		nt = new NodeTable(10);
 		// save by work_stack
-		int a = nt.add(4,0,1);
+		final int a = nt.add(4,0,1);
 		nt.work_stack[0] = a;
 		nt.work_stack_tos++;
 
 		// save by ref
-		int b = nt.add(4,1,0);
+		final int b = nt.add(4,1,0);
 		nt.ref(b);
 
 		// dont save:
-		int c = nt.add(3,0,1);
+		final int c = nt.add(3,0,1);
 		Test.checkEquality( nt.count_free_nodes(), nt.free_nodes_count, "free node count correct (1)");
 
 		nt.gc();

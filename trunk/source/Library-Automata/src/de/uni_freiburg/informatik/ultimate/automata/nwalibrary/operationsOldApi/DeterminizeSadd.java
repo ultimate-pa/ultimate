@@ -48,11 +48,11 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private Map<Macrostate,STATE> macrostate2detState =
+	private final Map<Macrostate,STATE> macrostate2detState =
 		new HashMap<Macrostate, STATE>();
 	private final Map<STATE,Macrostate> detState2macrostate =
 		new HashMap<STATE, Macrostate>();
-	private Map<STATE,Set<STATE>> summary = 
+	private final Map<STATE,Set<STATE>> summary = 
 		new HashMap<STATE, Set<STATE>>();
 	private final STATE auxilliaryEmptyStackState;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
@@ -104,12 +104,13 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
+	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return result;
 	}
 	
 	public boolean wasVisited(STATE state, STATE callerState) {
-		Set<STATE> callerStates = visited.get(state);
+		final Set<STATE> callerStates = visited.get(state);
 		if (callerStates == null) {
 			return false;
 		}
@@ -141,13 +142,13 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public void enqueueAndMark(STATE state, STATE callerState) {
 		if (!wasVisited(state, callerState)) {
 			markVisited(state, callerState);
-			StatePair statePair = new StatePair(state,callerState);
+			final StatePair statePair = new StatePair(state,callerState);
 			queue.add(statePair);
 		}
 	}
 	
 	private Set<STATE> getKnownCallerStates(STATE state) {
-		Set<STATE> callerStates = visited.get(state);
+		final Set<STATE> callerStates = visited.get(state);
 		if (callerStates == null) {
 			return new HashSet<STATE>(0);
 		}
@@ -158,23 +159,23 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private void determinize() {
 		mLogger.debug("Starting determinizeSadd. Operand " + mOperand.sizeInformation());
-		Macrostate initialMacroState = new Macrostate();
+		final Macrostate initialMacroState = new Macrostate();
 
-		for (STATE state : mOperand.getInitialStates()) {
+		for (final STATE state : mOperand.getInitialStates()) {
 			initialMacroState.addPair(state, auxilliaryEmptyStackState);
 		}
-		STATE initialDetState = initialMacroState.getContent();
+		final STATE initialDetState = initialMacroState.getContent();
 		result.addState(true, initialMacroState.isFinal, initialDetState);
 		macrostate2detState.put(initialMacroState, initialDetState);
 		detState2macrostate.put(initialDetState, initialMacroState);
 		enqueueAndMark(initialDetState,auxilliaryEmptyStackState);
 		
 		while(!queue.isEmpty()) {
-			StatePair statePair = queue.remove(0);
+			final StatePair statePair = queue.remove(0);
 //			mLogger.debug("Processing: "+ statePair);
 			processStatePair(statePair);
 			if (summary.containsKey(statePair.state)) {
-				for (STATE summarySucc : summary.get(statePair.state)) {
+				for (final STATE summarySucc : summary.get(statePair.state)) {
 					enqueueAndMark(summarySucc, statePair.callerState);
 				}
 				
@@ -188,15 +189,15 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	private void processStatePair(StatePair statePair) {
-		STATE detState = statePair.state;
-		Macrostate macrostate = detState2macrostate.get(detState);
+		final STATE detState = statePair.state;
+		final Macrostate macrostate = detState2macrostate.get(detState);
 		
-		Set<LETTER> symbolsInternal = new HashSet<LETTER>();
-		for (STATE state : macrostate.getStates()) {
+		final Set<LETTER> symbolsInternal = new HashSet<LETTER>();
+		for (final STATE state : macrostate.getStates()) {
 			symbolsInternal.addAll(mOperand.lettersInternal(state));
 		}
-		for (LETTER symbol : symbolsInternal) {
-			Macrostate succMacrostate = internalSuccMacrostate(macrostate, symbol);
+		for (final LETTER symbol : symbolsInternal) {
+			final Macrostate succMacrostate = internalSuccMacrostate(macrostate, symbol);
 			STATE succDetState = macrostate2detState.get(succMacrostate);
 			if (succDetState == null) {
 				succDetState = succMacrostate.getContent();
@@ -210,12 +211,12 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		
 		
-		Set<LETTER> symbolsCall = new HashSet<LETTER>();
-		for (STATE state : macrostate.getStates()) {
+		final Set<LETTER> symbolsCall = new HashSet<LETTER>();
+		for (final STATE state : macrostate.getStates()) {
 			symbolsCall.addAll(mOperand.lettersCall(state));
 		}
-		for (LETTER symbol : symbolsCall) {
-			Macrostate succMacrostate = callSuccMacrostate(macrostate, symbol);
+		for (final LETTER symbol : symbolsCall) {
+			final Macrostate succMacrostate = callSuccMacrostate(macrostate, symbol);
 			STATE succDetState = macrostate2detState.get(succMacrostate);
 			if (succDetState == null) {
 				succDetState = succMacrostate.getContent();
@@ -228,16 +229,16 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		
 		
-		STATE detLinPred = statePair.callerState;
+		final STATE detLinPred = statePair.callerState;
 		if (detLinPred != auxilliaryEmptyStackState) {
 		
-			Set<LETTER> symbolsReturn = new HashSet<LETTER>();
-			for (STATE state : macrostate.getStates()) {
+			final Set<LETTER> symbolsReturn = new HashSet<LETTER>();
+			for (final STATE state : macrostate.getStates()) {
 				symbolsReturn.addAll(mOperand.lettersReturn(state));
 			}
-			for (LETTER symbol : symbolsReturn) {
-				Macrostate linPredMacrostate = detState2macrostate.get(detLinPred);
-				Macrostate succMacrostate = returnSuccMacrostate(macrostate, linPredMacrostate, symbol);
+			for (final LETTER symbol : symbolsReturn) {
+				final Macrostate linPredMacrostate = detState2macrostate.get(detLinPred);
+				final Macrostate succMacrostate = returnSuccMacrostate(macrostate, linPredMacrostate, symbol);
 				if (!succMacrostate.getStates().isEmpty()) {
 					STATE succDetState = macrostate2detState.get(succMacrostate);
 					if (succDetState == null) {
@@ -248,7 +249,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					}
 					result.addReturnTransition(detState, detLinPred, symbol, succDetState);
 					addSummary(detLinPred, succDetState);
-					for (STATE detLinPredCallerState : getKnownCallerStates(detLinPred)) {
+					for (final STATE detLinPredCallerState : getKnownCallerStates(detLinPred)) {
 						enqueueAndMark(succDetState, detLinPredCallerState);
 					}
 				}
@@ -266,10 +267,10 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * and symbol. 
 	 */
 	private Macrostate internalSuccMacrostate(Macrostate macrostate, LETTER symbol) {
-		Macrostate succMacrostate = new Macrostate();
-		for (STATE state : macrostate.getStates()) {
-			for (STATE succ : mOperand.succInternal(state, symbol)) {
-				Set<STATE> callerStates = macrostate.getCallerStates(state);
+		final Macrostate succMacrostate = new Macrostate();
+		for (final STATE state : macrostate.getStates()) {
+			for (final STATE succ : mOperand.succInternal(state, symbol)) {
+				final Set<STATE> callerStates = macrostate.getCallerStates(state);
 				succMacrostate.addPairs(succ,callerStates);
 			}
 		}
@@ -281,9 +282,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * and symbol. 
 	 */
 	private Macrostate callSuccMacrostate(Macrostate macrostate, LETTER symbol) {
-		Macrostate succMacrostate = new Macrostate();
-		for (STATE state : macrostate.getStates()) {
-			for (STATE succ : mOperand.succCall(state, symbol)) {
+		final Macrostate succMacrostate = new Macrostate();
+		for (final STATE state : macrostate.getStates()) {
+			for (final STATE succ : mOperand.succCall(state, symbol)) {
 				succMacrostate.addPair(succ,state);
 			}
 		}
@@ -297,11 +298,11 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private Macrostate returnSuccMacrostate(Macrostate macrostate,
 								Macrostate linPredMacrostate, LETTER symbol) {
-		Macrostate succMacrostate = new Macrostate();
-		for (STATE state : macrostate.getStates()) {
-			for (STATE linPred : macrostate.getCallerStates(state)) {
-				for (STATE succ : mOperand.succReturn(state, linPred, symbol)) {
-					Set<STATE> callerStates = 
+		final Macrostate succMacrostate = new Macrostate();
+		for (final STATE state : macrostate.getStates()) {
+			for (final STATE linPred : macrostate.getCallerStates(state)) {
+				for (final STATE succ : mOperand.succReturn(state, linPred, symbol)) {
+					final Set<STATE> callerStates = 
 						linPredMacrostate.getCallerStates(linPred);
 					if (callerStates != null) {
 						succMacrostate.addPairs(succ,callerStates);
@@ -329,26 +330,35 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
+			}
 			@SuppressWarnings("unchecked")
+			final
 			StatePair other = (StatePair) obj;
-			if (!getOuterType().equals(other.getOuterType()))
+			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
+			}
 			if (callerState == null) {
-				if (other.callerState != null)
+				if (other.callerState != null) {
 					return false;
-			} else if (!callerState.equals(other.callerState))
+				}
+			} else if (!callerState.equals(other.callerState)) {
 				return false;
+			}
 			if (state == null) {
-				if (other.state != null)
+				if (other.state != null) {
 					return false;
-			} else if (!state.equals(other.state))
+				}
+			} else if (!state.equals(other.state)) {
 				return false;
+			}
 			return true;
 		}
 		
@@ -369,6 +379,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return result;
 		}
 		
+		@Override
 		public String toString() {
 			return "CallerState: " + callerState + "  State: "+ state;
 		}
@@ -438,7 +449,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof DeterminizeSadd.Macrostate) {
-				Macrostate macrostate = (Macrostate) obj;
+				final Macrostate macrostate = (Macrostate) obj;
 				return pairList.equals(macrostate.pairList);
 			}
 			else {
@@ -451,6 +462,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return pairList.hashCode();
 		}
 		
+		@Override
 		public String toString() {
 			return pairList.toString();
 		}		
@@ -461,7 +473,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of determinization");
 		boolean correct = true;
-		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(mServices, stateFactory, mOperand)).getResult();
+		final INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(mServices, stateFactory, mOperand)).getResult();
 		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD,result, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(mServices, result,resultDD, stateFactory) == null);
 		mLogger.info("Finished testing correctness of determinization");

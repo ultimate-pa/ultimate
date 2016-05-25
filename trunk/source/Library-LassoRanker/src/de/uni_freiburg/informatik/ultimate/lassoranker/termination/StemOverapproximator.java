@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * @author Jan Leike
  */
 class StemOverapproximator {
-	private boolean mannotate_terms;
+	private final boolean mannotate_terms;
 
 	/**
 	 * This setting makes the overapproximation somewhat better but also much
@@ -110,11 +110,11 @@ class StemOverapproximator {
 			return stem; // nothing to do
 		}
 
-		Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
+		final Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
 		if (s_less_efficient_and_more_complete) {
 			// Add all linear inequalities occuring somewhere in the stem to the
 			// list of candidates
-			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
+			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				candidate_lis.addAll(polyhedron);
 			}
 		} else {
@@ -122,15 +122,15 @@ class StemOverapproximator {
 			candidate_lis.addAll(stem.getPolyhedra().get(1));
 		}
 
-		List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
-		for (LinearInequality candidate_li : candidate_lis) {
+		final List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
+		for (final LinearInequality candidate_li : candidate_lis) {
 			// Check if stem -> candidate_li
 			mscript.push(1);
-			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
-				MotzkinTransformation motzkin = new MotzkinTransformation(mscript, AnalysisType.Linear,
+			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
+				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, AnalysisType.Linear,
 						mannotate_terms);
 				motzkin.add_inequalities(polyhedron);
-				LinearInequality li = new LinearInequality(candidate_li);
+				final LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
 				motzkin.add_inequality(li);
 				motzkin.annotation = "stem implies candidate linear inequality";

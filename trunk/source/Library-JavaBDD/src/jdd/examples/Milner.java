@@ -1,9 +1,9 @@
 
 package jdd.examples;
 
-import jdd.bdd.*;
-import jdd.bdd.debug.*;
-import jdd.util.*;
+import jdd.bdd.Permutation;
+import jdd.bdd.debug.ProfiledBDD2;
+import jdd.util.JDDConsole;
 
 /**
  * BDD simulation of N milner cyclers.
@@ -14,28 +14,29 @@ import jdd.util.*;
  * I haven't figured out yet (it looks kinda incomplete to me...).
  */
 public class Milner extends ProfiledBDD2 {
-	private int N; // number of cyclers
-	private int [] normvar;
-	private int [] primvar;
-	private int []c, cp, t, tp, h, hp;
-	private int I, T;
+	private final int N; // number of cyclers
+	private final int [] normvar;
+	private final int [] primvar;
+	private final int []c, cp, t, tp, h, hp;
+	private int I;
+	private final int T;
 
 	private int normvarset;
-	private Permutation pairs;
+	private final Permutation pairs;
 
 	// -------------------------------------------
 	public Milner(int N) {
 		super(100000, 30000);
 
 		this.N = N;
-		this.normvar = new int[N * 3];
-		this.primvar = new int[N * 3];
-		this.c = new int[N];
-		this.cp= new int[N];
-		this.h = new int[N];
-		this.hp= new int[N];
-		this.t = new int[N];
-		this.tp= new int[N];
+		normvar = new int[N * 3];
+		primvar = new int[N * 3];
+		c = new int[N];
+		cp= new int[N];
+		h = new int[N];
+		hp= new int[N];
+		t = new int[N];
+		tp= new int[N];
 
 		for(int n = 0; n < N * 3; n++) {
 			normvar[n] = createVar();
@@ -45,7 +46,9 @@ public class Milner extends ProfiledBDD2 {
 		// pairs = createPermutation(normvar, primvar);
 
 		normvarset = 1;
-		for(int i = 0; i < normvar.length; i++) normvarset = andTo(normvarset, normvar[i] );
+		for(int i = 0; i < normvar.length; i++) {
+			normvarset = andTo(normvarset, normvar[i] );
+		}
 
 		for(int n = 0; n < N; n++) {
 			c[n] = normvar[n * 3];
@@ -68,7 +71,7 @@ public class Milner extends ProfiledBDD2 {
 	private int andA(int res, int []x, int []y, int z) {
 		for(int i = 0; i < N; i++) {
 			if(i != z) {
-				int tmp1 = ref( biimp(x[i], y[i]) );
+				final int tmp1 = ref( biimp(x[i], y[i]) );
 				res = andTo(res, tmp1);
 				deref(tmp1);
 			}
@@ -77,8 +80,8 @@ public class Milner extends ProfiledBDD2 {
 	}
 
 	private int diff(int bdd1, int bdd2) {
-		int tmp = ref( not(bdd2) );
-		int ret = and(tmp, bdd1) ;
+		final int tmp = ref( not(bdd2) );
+		final int ret = and(tmp, bdd1) ;
 		deref(tmp);
 		return ret;
 	}
@@ -115,7 +118,7 @@ public class Milner extends ProfiledBDD2 {
 			tmp1 = andTo(tmp1, t[i]);
 			tmp1 = andA(tmp1, t, tp, i);
 			tmp1 = andA(tmp1, h, hp, N);
-			int E = andA(tmp1, c, cp, N);
+			final int E = andA(tmp1, c, cp, N);
 
 			// T |= P | E;
 			tmp2 = ref( or(P,E) );
@@ -152,10 +155,10 @@ public class Milner extends ProfiledBDD2 {
 		int by, bx = 0;
 		do {
 			by = bx;
-			int tmp1 = ref( relProd(bx, T, normvarset) );
+			final int tmp1 = ref( relProd(bx, T, normvarset) );
 			deref(bx);
 
-			int C = ref( replace(tmp1, pairs) );
+			final int C = ref( replace(tmp1, pairs) );
 			deref(tmp1);
 
 			bx = orTo( C, I );
@@ -173,16 +176,19 @@ public class Milner extends ProfiledBDD2 {
 			int n = -1;
 			boolean verbose = false;
 			for(int i = 0; i < args.length; i++){
-				if(args[i].equals("-v")) verbose = true;
-				else n = Integer.parseInt(args[i]);
+				if(args[i].equals("-v")) {
+					verbose = true;
+				} else {
+					n = Integer.parseInt(args[i]);
+				}
 			}
 
 
 			if(n > 0) {
-				long c1 = System.currentTimeMillis();
-				Milner milner = new Milner(n);
-				int R = milner.reachable_states();
-				long c2 = System.currentTimeMillis();
+				final long c1 = System.currentTimeMillis();
+				final Milner milner = new Milner(n);
+				final int R = milner.reachable_states();
+				final long c2 = System.currentTimeMillis();
 
 				if(verbose) {
 					milner.showStats();

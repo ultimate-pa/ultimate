@@ -75,7 +75,7 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
 		} else {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("For all program executions holds that ");
 			sb.append(mCheckedSpecification.getPositiveMessage());
 			sb.append(" at this location");

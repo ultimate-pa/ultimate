@@ -112,7 +112,7 @@ public class TypeHandler implements ITypeHandler {
     /**
      * Undefined struct types.
      */
-    private LinkedHashSet<String> mIncompleteType;
+    private final LinkedHashSet<String> mIncompleteType;
     /**
      * counting levels of struct declaration.
      */
@@ -157,9 +157,9 @@ public class TypeHandler implements ITypeHandler {
 	 * @param useIntForAllIntegerTypes 
      */
     public TypeHandler(boolean useIntForAllIntegerTypes) {
-    	this.mUseIntForAllIntegerTypes = useIntForAllIntegerTypes;
-        this.mDefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
-        this.mIncompleteType = new LinkedHashSet<String>();
+    	mUseIntForAllIntegerTypes = useIntForAllIntegerTypes;
+        mDefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
+        mIncompleteType = new LinkedHashSet<String>();
     }
 
     @Override
@@ -177,15 +177,16 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
-        String msg = "TypeHandler: Not yet implemented: " + node.toString();
-        ILocation loc = LocationFactory.createCLocation(node);
+        final String msg = "TypeHandler: Not yet implemented: " + node.toString();
+        final ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     /**
      * @deprecated is not supported in this handler! Do not use!
      */
-    @Override
+    @Deprecated
+	@Override
     public Result visit(Dispatcher main, ACSLNode node) {
         throw new UnsupportedOperationException(
                 "Implementation Error: use ACSL handler for " + node.getClass());
@@ -195,17 +196,17 @@ public class TypeHandler implements ITypeHandler {
     public Result visit(Dispatcher main, IASTSimpleDeclSpecifier node) {
     	// we have model.boogie.ast.PrimitiveType, which should
     	// only contain BOOL, INT, REAL ...
-    	ILocation loc = LocationFactory.createCLocation(node);
+    	final ILocation loc = LocationFactory.createCLocation(node);
     	switch (node.getType()) {
     	case IASTSimpleDeclSpecifier.t_void: {
     		// there is no void in Boogie,
     		// so we simply have no result variable.
-    		CPrimitive cvar = new CPrimitive(node);
+    		final CPrimitive cvar = new CPrimitive(node);
     		return (new TypesResult(null, false, true, cvar));
     	}
     	case IASTSimpleDeclSpecifier.t_unspecified:
     	{
-    		String msg = "unspecified type, defaulting to int";
+    		final String msg = "unspecified type, defaulting to int";
     		main.warn(loc, msg);
     	}
     	case IASTSimpleDeclSpecifier.t_bool:
@@ -214,14 +215,14 @@ public class TypeHandler implements ITypeHandler {
     		// so int is also a primitive type
     		// NOTE: in a extended implementation we should
     		// handle here different types of int (short, long,...)
-    		CPrimitive cvar = new CPrimitive(node);
+    		final CPrimitive cvar = new CPrimitive(node);
     		return (new TypesResult(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
     	}
     	case IASTSimpleDeclSpecifier.t_double:
     	case IASTSimpleDeclSpecifier.t_float: {
     		// floating point number are not supported by Ultimate,
     		// somehow we treat it here as REALs
-    		CPrimitive cvar = new CPrimitive(node);
+    		final CPrimitive cvar = new CPrimitive(node);
     		return (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
     	}
     	case IASTSimpleDeclSpecifier.t_typeof: {
@@ -235,12 +236,12 @@ public class TypeHandler implements ITypeHandler {
     		 *     typeof (int *)
     		 * Here the type described is that of pointers to int.  
     		 */
-    		Result opRes = main.dispatch(node.getDeclTypeExpression());
+    		final Result opRes = main.dispatch(node.getDeclTypeExpression());
     		if (opRes instanceof ExpressionResult) {
-    			CType cType = ((ExpressionResult) opRes).lrVal.getCType();
+    			final CType cType = ((ExpressionResult) opRes).lrVal.getCType();
     			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
     		} else if (opRes instanceof DeclaratorResult) {
-    			CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
+    			final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
     			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
     		}
     	}
@@ -249,13 +250,13 @@ public class TypeHandler implements ITypeHandler {
     		// no restrictions / asserts in boogie
     		if (node.isLongLong() || node.isLong() || node.isShort()
     				|| node.isUnsigned()) {
-    			CPrimitive cvar = new CPrimitive(node);
+    			final CPrimitive cvar = new CPrimitive(node);
     			return (new TypesResult(new PrimitiveType(
     					loc, SFO.INT), node.isConst(),
     					false, cvar));
     		}
     		// if we do not find a type we cancel with Exception
-    		String msg = "TypeHandler: We do not support this type!"
+    		final String msg = "TypeHandler: We do not support this type!"
     				+ node.getType();
     		throw new UnsupportedSyntaxException(loc, msg);
     	}
@@ -263,35 +264,35 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTNamedTypeSpecifier node) {
-        ILocation loc = LocationFactory.createCLocation(node);
+        final ILocation loc = LocationFactory.createCLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {
-            node = (CASTTypedefNameSpecifier) node;
-            String cId = node.getName().toString();
-            String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
+            node = node;
+            final String cId = node.getName().toString();
+            final String bId = main.mCHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new TypesResult(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, mDefinedTypes.get(bId).cType));
         }
-        String msg = "Unknown or unsupported type! " + node.toString();
+        final String msg = "Unknown or unsupported type! " + node.toString();
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
     public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
-        ILocation loc = LocationFactory.createCLocation(node);
-        String cId = node.getName().toString();
+        final ILocation loc = LocationFactory.createCLocation(node);
+        final String cId = node.getName().toString();
         // values of enum have type int
-        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
-        String enumId = main.nameHandler.getUniqueIdentifier(node, node.getName().toString(),
-        		main.cHandler.getSymbolTable().getCompoundCounter(), false, intType);
-        int nrFields = node.getEnumerators().length;
-        String[] fNames = new String[nrFields];
-        Expression[] fValues = new Expression[nrFields];
+        final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+        final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
+        		main.mCHandler.getSymbolTable().getCompoundCounter(), false, intType);
+        final int nrFields = node.getEnumerators().length;
+        final String[] fNames = new String[nrFields];
+        final Expression[] fValues = new Expression[nrFields];
         for (int i = 0; i < nrFields; i++) {
-            IASTEnumerator e = node.getEnumerators()[i];
+            final IASTEnumerator e = node.getEnumerators()[i];
             fNames[i] = e.getName().toString();
             if (e.getValue() != null) {
-            	ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
-            	fValues[i] = (Expression) rex.lrVal.getValue();
+            	final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
+            	fValues[i] = rex.lrVal.getValue();
 //            	assert (fValues[i] instanceof IntegerLiteral) || 
 //            		(fValues[i] instanceof BitvecLiteral) : 
 //            			"assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
@@ -299,18 +300,18 @@ public class TypeHandler implements ITypeHandler {
             	fValues[i] = null;
             }
         }
-        CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        ASTType at = cPrimitive2asttype(loc, intType); 
-        TypesResult result = new TypesResult(at, false, false, cEnum);
+        final CEnum cEnum = new CEnum(enumId, fNames, fValues);
+        final ASTType at = cPrimitive2asttype(loc, intType); 
+        final TypesResult result = new TypesResult(at, false, false, cEnum);
        
-        String incompleteTypeName = "ENUM~" + cId;
+        final String incompleteTypeName = "ENUM~" + cId;
         if (mIncompleteType.contains(incompleteTypeName)) {
             mIncompleteType.remove(incompleteTypeName);
-            TypesResult incompleteType = mDefinedTypes.get(cId);
-            CEnum incompleteEnum = (CEnum) incompleteType.cType;
+            final TypesResult incompleteType = mDefinedTypes.get(cId);
+            final CEnum incompleteEnum = (CEnum) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
-            ((CHandler) main.cHandler).completeTypeDeclaration(incompleteEnum, cEnum);
+            ((CHandler) main.mCHandler).completeTypeDeclaration(incompleteEnum, cEnum);
 
             incompleteEnum.complete(cEnum);
         }
@@ -324,22 +325,22 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
-    	ILocation loc = LocationFactory.createCLocation(node);
+    	final ILocation loc = LocationFactory.createCLocation(node);
     	if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
     			|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
     			|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-    		String type = node.getName().toString();
+    		final String type = node.getName().toString();
     		
 
     		//            if (mDefinedTypes.containsKey(type)) {
-    		TypesResult originalType = mDefinedTypes.get(type);
+    		final TypesResult originalType = mDefinedTypes.get(type);
 //    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
 //    			// --> we have an incomplete enum --> do nothing 
 //    			//(i cannot think of an effect of an incomplete enum declaration right now..)
 //    			return new ResultSkip();
     		if (originalType != null) {
     			// --> we have a normal struct, union or enum declaration
-    			TypesResult withoutBoogieTypedef = new TypesResult(
+    			final TypesResult withoutBoogieTypedef = new TypesResult(
     					originalType.getType(), originalType.isConst, 
     					originalType.isVoid, originalType.cType);
     			return withoutBoogieTypedef;
@@ -366,7 +367,7 @@ public class TypeHandler implements ITypeHandler {
     			} else {
     				ctype = new CEnum(type);
     			}
-    			TypesResult r = new TypesResult(new NamedType(loc, incompleteTypeName,
+    			final TypesResult r = new TypesResult(new NamedType(loc, incompleteTypeName,
     					new ASTType[0]), false, false, ctype);
 
 
@@ -375,7 +376,7 @@ public class TypeHandler implements ITypeHandler {
     			return r;
     		}
     	}
-    	String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
+    	final String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
     			+ node.getClass();
     	throw new UnsupportedSyntaxException(loc, msg);
     }
@@ -384,31 +385,31 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node) {
-        ILocation loc = LocationFactory.createCLocation(node);
-        ArrayList<VarList> fields = new ArrayList<VarList>();
+        final ILocation loc = LocationFactory.createCLocation(node);
+        final ArrayList<VarList> fields = new ArrayList<VarList>();
         // TODO : include inactives? what are inactives?
-        ArrayList<String> fNames = new ArrayList<String>();
-        ArrayList<CType> fTypes = new ArrayList<CType>();
+        final ArrayList<String> fNames = new ArrayList<String>();
+        final ArrayList<CType> fTypes = new ArrayList<CType>();
         structCounter++;
-        for (IASTDeclaration dec : node.getDeclarations(false)) {
-            Result r = main.dispatch(dec);
+        for (final IASTDeclaration dec : node.getDeclarations(false)) {
+            final Result r = main.dispatch(dec);
             if (r instanceof DeclarationResult) {
-            	DeclarationResult rdec = (DeclarationResult) r;
-            	for (CDeclaration declaration : rdec.getDeclarations()) {
+            	final DeclarationResult rdec = (DeclarationResult) r;
+            	for (final CDeclaration declaration : rdec.getDeclarations()) {
             		fNames.add(declaration.getName());
             		fTypes.add(declaration.getType());
             		fields.add(new VarList(loc, new String[] {declaration.getName()},
-            				this.ctype2asttype(loc, declaration.getType())));
+            				ctype2asttype(loc, declaration.getType())));
             	}
             } else if (r instanceof SkipResult) { // skip ;)
             } else {
-                String msg = "Unexpected syntax in struct declaration!";
+                final String msg = "Unexpected syntax in struct declaration!";
                 throw new UnsupportedSyntaxException(loc, msg);
             }
         }
         structCounter--;
 
-        String cId = node.getName().toString();
+        final String cId = node.getName().toString();
 
         CStruct cvar;
         String name = null;
@@ -424,18 +425,18 @@ public class TypeHandler implements ITypeHandler {
         	throw new UnsupportedOperationException();
         }
         
-        NamedType namedType = new NamedType(loc, name,
+        final NamedType namedType = new NamedType(loc, name,
                 new ASTType[0]);
-        ASTType type = namedType;
-        TypesResult result = new TypesResult(type, false, false, cvar);
+        final ASTType type = namedType;
+        final TypesResult result = new TypesResult(type, false, false, cvar);
        
         if (mIncompleteType.contains(name)) {
             mIncompleteType.remove(name);
-            TypesResult incompleteType = mDefinedTypes.get(cId);
-            CStruct incompleteStruct = (CStruct) incompleteType.cType;
+            final TypesResult incompleteType = mDefinedTypes.get(cId);
+            final CStruct incompleteStruct = (CStruct) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
-            ((CHandler) main.cHandler).completeTypeDeclaration(incompleteStruct, cvar);
+            ((CHandler) main.mCHandler).completeTypeDeclaration(incompleteStruct, cvar);
 
             incompleteStruct.complete(cvar);
         }
@@ -454,7 +455,7 @@ public class TypeHandler implements ITypeHandler {
     	} else {
     		// Handle the generic case of IType, if the specific case is not yet
     		// implemented
-    		String msg = "TypeHandler: Not yet implemented: "
+    		final String msg = "TypeHandler: Not yet implemented: "
     				+ type.getClass().toString();
     		// TODO : no idea what location should be set to ...
     		main.unsupportedSyntax(null, msg);
@@ -466,7 +467,7 @@ public class TypeHandler implements ITypeHandler {
     public InferredType visit(Dispatcher main, ITypedef type) {
     	assert false : "I don't think this should still be used";
         if (!mDefinedTypes.containsKey(type.getName())) {
-            String msg = "Unknown C typedef: " + type.getName();
+            final String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
             throw new IncorrectSyntaxException(null, msg);
         }
@@ -499,13 +500,13 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public ASTType getTypeOfStructLHS(final SymbolTable sT,
             final ILocation loc, final StructLHS lhs) {
-        String[] flat = BoogieASTUtil.getLHSList(lhs);
-        String leftMostId = flat[0];
+        final String[] flat = BoogieASTUtil.getLHSList(lhs);
+        final String leftMostId = flat[0];
         assert leftMostId.equals(BoogieASTUtil.getLHSId(lhs));
         assert sT.containsBoogieSymbol(leftMostId);
-        String cId = sT.getCID4BoogieID(leftMostId, loc);
+        final String cId = sT.getCID4BoogieID(leftMostId, loc);
         assert sT.containsKey(cId);
-        ASTType t = this.ctype2asttype(loc, sT.get(cId, loc).getCVariable());
+        final ASTType t = ctype2asttype(loc, sT.get(cId, loc).getCVariable());
         return traverseForType(loc, t, flat, 1);
     }
 
@@ -525,12 +526,14 @@ public class TypeHandler implements ITypeHandler {
     private static ASTType traverseForType(final ILocation loc,
             final ASTType t, final String[] flat, final int i) {
         assert i > 0 && i <= flat.length;
-        if (i >= flat.length)
-            return t;
-        if (t instanceof ArrayType)
-            return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
+        if (i >= flat.length) {
+			return t;
+		}
+        if (t instanceof ArrayType) {
+			return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
+		}
         if (t instanceof StructType) {
-            for (VarList vl : ((StructType) t).getFields()) {
+            for (final VarList vl : ((StructType) t).getFields()) {
                 assert vl.getIdentifiers().length == 1;
                 // should hold by construction!
                 if (vl.getIdentifiers()[0].equals(flat[i])) {
@@ -538,10 +541,10 @@ public class TypeHandler implements ITypeHandler {
                     return traverseForType(loc, vl.getType(), flat, i + 1);
                 }
             }
-            String msg = "Field '" + flat[i] + "' not found in " + t;
+            final String msg = "Field '" + flat[i] + "' not found in " + t;
             throw new IncorrectSyntaxException(loc, msg);
         }
-        String msg = "Something went wrong while determining types!";
+        final String msg = "Something went wrong while determining types!";
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
@@ -567,22 +570,23 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CPointer) {
 			return constructPointerType(loc);
 		} else if (cType instanceof CArray) {
-			CArray cart = (CArray) cType;
-			ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
-			String[] typeParams = new String[0]; //new String[cart.getDimensions().length];
+			final CArray cart = (CArray) cType;
+			final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
+			final String[] typeParams = new String[0]; //new String[cart.getDimensions().length];
 			for (int i = 0; i < cart.getDimensions().length; i++) {
 				indexTypes[i] = ctype2asttype(loc, cart.getDimensions()[i].getCType());
 			}
-			return new ArrayType(loc, typeParams, indexTypes, this.ctype2asttype(loc, cart.getValueType()));
+			return new ArrayType(loc, typeParams, indexTypes, ctype2asttype(loc, cart.getValueType()));
 		} else if (cType instanceof CStruct) {
-			CStruct cstruct = (CStruct) cType;
-			if (cstruct.isIncomplete())
+			final CStruct cstruct = (CStruct) cType;
+			if (cstruct.isIncomplete()) {
 				return null;
-			VarList[] fields = new VarList[cstruct.getFieldCount()];
+			}
+			final VarList[] fields = new VarList[cstruct.getFieldCount()];
 			for (int i = 0; i < cstruct.getFieldCount(); i++) {
 				fields[i] = new VarList(loc, 
 						new String[] {cstruct.getFieldIds()[i]}, 
-						this.ctype2asttype(loc, cstruct.getFieldTypes()[i])); 
+						ctype2asttype(loc, cstruct.getFieldTypes()[i])); 
 			}
 			return new StructType(loc, fields);
 		} else if (cType instanceof CNamed) {
@@ -641,11 +645,13 @@ public class TypeHandler implements ITypeHandler {
 		}
     }
     
-    public void beginScope() {
+    @Override
+	public void beginScope() {
     	mDefinedTypes.beginScope();
     }
     
-    public void endScope() {
+    @Override
+	public void endScope() {
     	mDefinedTypes.endScope();
     }
     
@@ -666,14 +672,14 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	public ArrayList<Declaration> constructTranslationDefiniedDelarations(ILocation tuLoc, 
 			AExpressionTranslation expressionTranslation) {
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		if (mPointerTypeNeeded) {
-			VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, 
+			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, 
 					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, 
+			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, 
 					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			VarList[] fields = new VarList[] { fBase, fOffset };
-			ASTType pointerType = new StructType(tuLoc, fields);
+			final VarList[] fields = new VarList[] { fBase, fOffset };
+			final ASTType pointerType = new StructType(tuLoc, fields);
 			// Pointer is non-finite, right? (ZxZ)..
 			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
 					SFO.POINTER, new String[0], pointerType));

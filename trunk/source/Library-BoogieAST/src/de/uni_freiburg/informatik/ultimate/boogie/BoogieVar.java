@@ -73,6 +73,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 		mPrimedConstant = primedContant;
 	}
 
+	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
@@ -82,6 +83,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	 */
 	public abstract String getProcedure();
 
+	@Override
 	public IType getIType() {
 		return mIType;
 	}
@@ -95,6 +97,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 		return mTermVariable;
 	}
 
+	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mDefaultConstant;
 	}
@@ -126,25 +129,33 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BoogieVar other = (BoogieVar) obj;
+		}
+		final BoogieVar other = (BoogieVar) obj;
 		if (getIdentifier() == null) {
-			if (other.getIdentifier() != null)
+			if (other.getIdentifier() != null) {
 				return false;
-		} else if (!getIdentifier().equals(other.getIdentifier()))
+			}
+		} else if (!getIdentifier().equals(other.getIdentifier())) {
 			return false;
-		if (isOldvar() != other.isOldvar())
+		}
+		if (isOldvar() != other.isOldvar()) {
 			return false;
+		}
 		if (getProcedure() == null) {
-			if (other.getProcedure() != null)
+			if (other.getProcedure() != null) {
 				return false;
-		} else if (!getProcedure().equals(other.getProcedure()))
+			}
+		} else if (!getProcedure().equals(other.getProcedure())) {
 			return false;
+		}
 		return true;
 	}
 

@@ -1,7 +1,5 @@
 package java_cup;
 
-import java_cup.assoc;
-
 /** This class represents a terminal symbol in the grammar.  Each terminal 
  *  has a textual name, an index, and a string which indicates the type of 
  *  object it will be implemented with at runtime (i.e. the class of object 
@@ -75,6 +73,7 @@ public class terminal extends symbol {
   /*-----------------------------------------------------------*/
 
   /** Report this symbol as not being a non-terminal. */
+  @Override
   public boolean is_non_term() 
     {
       return false;
@@ -83,6 +82,7 @@ public class terminal extends symbol {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
       return super.toString() + "[" + index() + "]";

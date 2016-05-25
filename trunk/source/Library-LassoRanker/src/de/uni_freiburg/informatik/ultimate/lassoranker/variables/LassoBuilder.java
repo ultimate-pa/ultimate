@@ -170,11 +170,11 @@ public class LassoBuilder {
 	
 	
 	public void applyPreprocessor(LassoPreprocessor preprocessor) throws TermException {
-		ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
-		for (LassoUnderConstruction lasso : mLassosUC) {
+		final ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
+		for (final LassoUnderConstruction lasso : mLassosUC) {
 			try {
 				newLassos.addAll(preprocessor.process(lasso));
-			} catch (ToolchainCanceledException tce) {
+			} catch (final ToolchainCanceledException tce) {
 				String taskMessage = "applying " + preprocessor.getName() + " to lasso for termination ";
 				if (tce.getRunningTaskInfo() != null) {
 					taskMessage += tce.getRunningTaskInfo();
@@ -192,7 +192,7 @@ public class LassoBuilder {
 	 */
 	public boolean isSane() {
 		boolean sane = true;
-		for (LassoUnderConstruction luc : mLassosUC) {
+		for (final LassoUnderConstruction luc : mLassosUC) {
 			sane &= luc.getStem().auxVarsDisjointFromInOutVars();
 			sane &= luc.getStem().allAreInOutAux(luc.getStem().getFormula().getFreeVars()) == null;
 
@@ -212,13 +212,13 @@ public class LassoBuilder {
 	 *                       form
 	 */
 	public void constructPolyhedra() throws TermException {
-		int n = mLassosUC.size();
-		List<Lasso> lassos = new ArrayList<Lasso>(n);
+		final int n = mLassosUC.size();
+		final List<Lasso> lassos = new ArrayList<Lasso>(n);
 		for (int i = 0; i < n; ++i) {
-			TransFormulaLR stemTF = mLassosUC.get(i).getStem();
-			TransFormulaLR loopTF = mLassosUC.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, mNlaHandling);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, mNlaHandling);
+			final TransFormulaLR stemTF = mLassosUC.get(i).getStem();
+			final TransFormulaLR loopTF = mLassosUC.get(i).getLoop();
+			final LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, mNlaHandling);
+			final LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, mNlaHandling);
 			lassos.add(new Lasso(stem, loop));
 		}
 		mLassos = lassos;
@@ -234,19 +234,20 @@ public class LassoBuilder {
 	}
 	
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mLassos == null) {
 			sb.append("Preprocessing has not been completed.\n");
 			
 			sb.append("Current lassos:\n");
-			for (LassoUnderConstruction luc : mLassosUC) {
+			for (final LassoUnderConstruction luc : mLassosUC) {
 				sb.append(luc);
 				sb.append(System.lineSeparator());
 			}
 		} else {
 			sb.append("Lassos:\n");
-			for (Lasso lasso : mLassos) {
+			for (final Lasso lasso : mLassos) {
 				sb.append(lasso);
 				sb.append("\n");
 			}
@@ -258,7 +259,7 @@ public class LassoBuilder {
 		if (lassos.isEmpty()) {
 			return 0;
 		} else {
-			int[] sizes = new int[lassos.size()];
+			final int[] sizes = new int[lassos.size()];
 			for (int i = 0; i < lassos.size(); ++i) {
 				sizes[i] = lassos.get(i).getFormulaSize(); 
 			}
@@ -275,7 +276,7 @@ public class LassoBuilder {
 		mPreprocessingBenchmark = new PreprocessingBenchmark(
 				computeMaxDagSize());
 		// Apply preprocessors
-		for (LassoPreprocessor preprocessor : preProcessorsTermination) {
+		for (final LassoPreprocessor preprocessor : preProcessorsTermination) {
 			if (preprocessor == null) {
 				continue;
 			}

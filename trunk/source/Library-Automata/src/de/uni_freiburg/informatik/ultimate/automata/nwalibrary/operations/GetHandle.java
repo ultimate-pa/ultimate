@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -74,19 +74,19 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		if (mOperand.getInitialStates().size() != 1) {
 			mNoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
-			STATE singleInitial = mOperand.getInitialStates().iterator().next();
+			final STATE singleInitial = mOperand.getInitialStates().iterator().next();
 			mHandle = getSingleSuccessor(singleInitial);
 			if (mHandle == null) {
 				mNoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
 			} else {
 				while (true) {
-					STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength()-2);
-					STATE current = mHandle.getStateAtPosition(mHandle.getLength()-1);
-					boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
+					final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength()-2);
+					final STATE current = mHandle.getStateAtPosition(mHandle.getLength()-1);
+					final boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
 					if (!singlePred) {
 						break;
 					}
-					NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
+					final NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
 					if (newSuffix == null) {
 						break;
 					} else {
@@ -107,7 +107,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	public NestedRun<LETTER,STATE> getSingleSuccessor(STATE state) {
 		NestedRun<LETTER,STATE> result = null;
-		for (OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.INTERNAL_POSITION,
@@ -117,7 +117,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return null;
 			}
 		}
-		for (OutgoingCallTransition<LETTER, STATE> outTrans : mOperand.callSuccessors(state)) {
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : mOperand.callSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.PLUS_INFINITY,
@@ -127,7 +127,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return null;
 			}
 		}
-		for (OutgoingReturnTransition<LETTER, STATE> outTrans : mOperand.returnSuccessors(state)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mOperand.returnSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.MINUS_INFINITY,
@@ -142,7 +142,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	public boolean hasSinglePredecessor(STATE state, STATE knownPredecessor) {
 		STATE predecessor = null;
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getPred();
 			} else {
@@ -150,7 +150,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
+		for (final IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getPred();
 			} else {
@@ -158,7 +158,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 		}
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getLinPred();
 			} else {

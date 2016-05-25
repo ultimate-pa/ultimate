@@ -121,7 +121,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		assert mPredicateUnifier != null;
 		assert mPredicateUnifier.isRepresentative(mPrecondition);
 		assert mPredicateUnifier.isRepresentative(mPostcondition);
-		for (IPredicate pred : mPendingContexts.values()) {
+		for (final IPredicate pred : mPendingContexts.values()) {
 			assert mPredicateUnifier.isRepresentative(pred);
 		}
 		switch (interpolation) {
@@ -144,12 +144,12 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
 		for (int i = 0; i < mInterpolants.length; i++) {
-			IPredicate itp = mInterpolants[i];
-			Set<BoogieVar> vars = itp.getVars();
-			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
-			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
+			final IPredicate itp = mInterpolants[i];
+			final Set<BoogieVar> vars = itp.getVars();
+			final Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
+			final Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
 				mLogger.warn("forward relevant variables wrong");
 				result = false;
@@ -162,6 +162,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		return result;
 	}
 
+	@Override
 	public IPredicate[] getInterpolants() {
 		if (isCorrect() == LBool.UNSAT) {
 			if (mInterpolants == null) {
@@ -185,7 +186,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
 				mNsb.getConstants2BoogieVar(), mPredicateUnifier, interpolatedPositions, true, mServices, this, mSmtManager, mInstantiateArrayExt);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(
@@ -213,15 +214,15 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 
-		List<Integer> nonPendingCallPositions = new ArrayList<Integer>();
-		Set<Integer> newInterpolatedPositions = interpolatedPositionsForSubtraces(interpolatedPositions,
+		final List<Integer> nonPendingCallPositions = new ArrayList<Integer>();
+		final Set<Integer> newInterpolatedPositions = interpolatedPositionsForSubtraces(interpolatedPositions,
 				nonPendingCallPositions);
 
-		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
 				mNsb.getConstants2BoogieVar(), mPredicateUnifier, newInterpolatedPositions, false, mServices, this, mSmtManager, mInstantiateArrayExt);
 		mInterpolants = nib.getNestedInterpolants();
-		IPredicate oldPrecondition = mPrecondition;
-		IPredicate oldPostcondition = mPostcondition;
+		final IPredicate oldPrecondition = mPrecondition;
+		final IPredicate oldPostcondition = mPostcondition;
 
 		// forget trace - endTraceCheck already called
 		if (mInterpolants != null) {
@@ -232,22 +233,22 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 						"invalid Hoare triple in nested interpolants";
 		}
 
-		for (Integer nonPendingCall : nonPendingCallPositions) {
+		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
-			int returnPosition = mTrace.getReturnPosition(nonPendingCall);
-			NestedWord<? extends IAction> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
+			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
+			final NestedWord<? extends IAction> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
 
-			Call call = (Call) mTrace.getSymbol(nonPendingCall);
-			String calledMethod = call.getCallStatement().getMethodName();
-			TermVarsProc oldVarsEquality = mSmtManager.getOldVarsEquality(calledMethod, mModifiedGlobals);
+			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
+			final String calledMethod = call.getCallStatement().getMethodName();
+			final TermVarsProc oldVarsEquality = mSmtManager.getOldVarsEquality(calledMethod, mModifiedGlobals);
 
-			IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
+			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 
 			// Use a pendingContext the interpolant at the position before the
 			// call, if this is -1 (because call is first codeBlock) use the
 			// precondition used in this recursive interpolant computation one
 			// level above
-			SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
+			final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
 			IPredicate beforeCall;
 			if (nonPendingCall == 0) {
 				beforeCall = oldPrecondition;
@@ -274,10 +275,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
-			InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
+			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
 					mSmtManager, mModifiedGlobals, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier, 
 					INTERPOLATION.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt);
-			LBool isSafe = tc.isCorrect();
+			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");
 			} else if (isSafe == LBool.UNKNOWN) {
@@ -289,7 +290,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				}
 			}
 			// tc.computeInterpolants_Recursive(interpolatedPositions, mPredicateUnifier);
-			IPredicate[] interpolantSubsequence = tc.getInterpolants();
+			final IPredicate[] interpolantSubsequence = tc.getInterpolants();
 
 			assert mSmtManager.getPredicateFactory().isDontCare(mInterpolants[nonPendingCall]);
 			mInterpolants[nonPendingCall] = precondition;
@@ -306,10 +307,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	private Set<Integer> interpolatedPositionsForSubtraces(Set<Integer> interpolatedPositions,
 			List<Integer> nonPendingCallPositions) {
 
-		Set<Integer> newInterpolatedPositions = new HashSet<Integer>();
+		final Set<Integer> newInterpolatedPositions = new HashSet<Integer>();
 
 		int currentContextStackDepth = 0;
-		NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) mTrace;
+		final NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) mTrace;
 		for (int i = 0; i < nestedTrace.length() - 1; i++) {
 
 			if (nestedTrace.isInternalPosition(i)) {

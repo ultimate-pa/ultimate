@@ -145,22 +145,22 @@ public class LocalizeZVisitor implements
      */
     protected LocalizeWriter localizeWriter;
 
-    private Map<String, Integer> freeTypes;
+    private final Map<String, Integer> freeTypes;
 
-    private Map<String, String> nullPointers;
+    private final Map<String, String> nullPointers;
 
-    private boolean useClausesForm;
+    private final boolean useClausesForm;
     
     public LocalizeZVisitor(ZTerm term, Set<String> constants,Map<String,String> declarations,
             Map<String, Integer> freeTypes,
             Map<String, String> nullPointers, LocalizeWriter writer, boolean useClausesForm) {
-        this.sectionInfo = term.getSectionInfo();
+        sectionInfo = term.getSectionInfo();
         toCDDVisitor = new TermToZCDDVisitor(term);
         this.constants = constants;
         this.declarations = declarations;
         this.freeTypes = freeTypes;
         this.nullPointers = nullPointers;
-        this.localizeWriter = writer;
+        localizeWriter = writer;
         this.useClausesForm = useClausesForm;
         quantificationLevel = 0;
     }
@@ -177,15 +177,16 @@ public class LocalizeZVisitor implements
     @Override
     public StringBuffer visitTerm(Term zedObject) {
         removePrimesFromConstants(zedObject);
-        StringWriter sw = new StringWriter();
+        final StringWriter sw = new StringWriter();
         PrintUtils.print(zedObject, sw, (SectionManager) sectionInfo, ZWrapper.getSectionName(), Markup.UNICODE);
         String result = sw.toString().trim();
         //if(result.contains("snil"))
         //    System.out.println(result);
         //if(nullPointers.containsKey(result))
-        for(String np : nullPointers.keySet()){
-            if(result.contains(np))
-                result = result.replace(np, nullPointers.get(np));
+        for(final String np : nullPointers.keySet()){
+            if(result.contains(np)) {
+				result = result.replace(np, nullPointers.get(np));
+			}
         }
 //        if(result.startsWith(LocalizeString.NUMPREFIX))
 //            result = result.substring(1);
@@ -207,19 +208,19 @@ public class LocalizeZVisitor implements
      */
     private void removePrimesFromConstants(Term zedObject) {
         if(zedObject instanceof RefExpr) {
-            ZName name = ((RefExpr)zedObject).getZName();
+            final ZName name = ((RefExpr)zedObject).getZName();
             if(name.getWord().startsWith(LocalizeString.NUMPREFIX)){
                 name.setWord(name.getWord().substring(1));
             }
         }
         if(zedObject instanceof ZName) {
-            ZName name = (ZName)zedObject;
+            final ZName name = (ZName)zedObject;
             if(constants.contains(name.getWord())){
                 name.setStrokeList(new ZFactoryImpl().createZStrokeList());
             }
         } else {
-            Object[] children = zedObject.getChildren();
-            for (Object child : children) {
+            final Object[] children = zedObject.getChildren();
+            for (final Object child : children) {
                 if (child instanceof Term) {
                     removePrimesFromConstants((Term) child);
                 }
@@ -241,33 +242,35 @@ public class LocalizeZVisitor implements
            ForallPred forallPred = (ForallPred) pred.accept(transformNEQs); */
         
         
-        StringBuffer prefix = new StringBuffer();
-        StringBuffer sw = new StringBuffer();
+        final StringBuffer prefix = new StringBuffer();
+        final StringBuffer sw = new StringBuffer();
         if(++quantificationLevel > 1) {
             quantificationLevel--;
             throw new LocalizeException(LocalizeException.NESTED_QUANTIFICATION);
         }
         prefix.append(LocalizeString.LPAREN + LocalizeString.FORALL + " ");
-        ZSchText schema = forallPred.getZSchText();
+        final ZSchText schema = forallPred.getZSchText();
         int i = schema.getZDeclList().size();
-        for (Decl decl : schema.getZDeclList()) {
+        for (final Decl decl : schema.getZDeclList()) {
             --i;
             if(decl instanceof VarDecl){
                 int j = ((VarDecl)decl).getZNameList().size();
-                Expr typeExpr = ((VarDecl)decl).getExpr();
-                String type = typeExpr.accept(this).toString().trim();
+                final Expr typeExpr = ((VarDecl)decl).getExpr();
+                final String type = typeExpr.accept(this).toString().trim();
                 if(!declarations.containsValue(type) &&
                         !type.equals(LocalizeWriter.Z_REAL_TYPE) &&
                         !type.equals(ZString.NUM) &&
-                        !freeTypes.containsKey(type))
-                    throw new LocalizeException(LocalizeException.UNSUPPORTED_QUANTIFICATION + 
+                        !freeTypes.containsKey(type)) {
+					throw new LocalizeException(LocalizeException.UNSUPPORTED_QUANTIFICATION + 
                             "(use " + LocalizeWriter.Z_REAL_TYPE + 
                             ", " + ZString.NUM + " or a free type): " + type);
-                for (Name name : ((VarDecl)decl).getZNameList()) {
+				}
+                for (final Name name : ((VarDecl)decl).getZNameList()) {
                     --j;
                     prefix.append(name);
-                    if(i > 0 || j > 0)
-                        prefix.append(",");
+                    if(i > 0 || j > 0) {
+						prefix.append(",");
+					}
                 }
             }
         }
@@ -278,31 +281,35 @@ public class LocalizeZVisitor implements
         //1. tranform schema predicates to CDDs
         CDD antecedent = CDD.TRUE,
             implication;
-        if(schema.getPred() != null)
-            antecedent = schema.getPred().accept(toCDDVisitor);
+        if(schema.getPred() != null) {
+			antecedent = schema.getPred().accept(toCDDVisitor);
+		}
         implication = antecedent.negate().or(forallPred.getPred().accept(toCDDVisitor));
         
         //2. CDDs to conjunctive normal form
-        CDD[] cnf = implication.toCNF();
+        final CDD[] cnf = implication.toCNF();
         
         //3. new forall line for every disjunction term in the CNF
         for (int j = 0; j < cnf.length; j++) {
 
-            if(j!=0)
-                sw.append(LocalizeString.INDENT); 
+            if(j!=0) {
+				sw.append(LocalizeString.INDENT);
+			} 
             //4. build FORALL expression: prefix negatives --> positives
             sw.append(prefix);
 
             //5. split CDD in disjunction in negated and non-negated CDDs,
             //which is done in writeClauseToStringBuffer
-            StringWriter writer = new StringWriter();
-            if(useClausesForm)
-                localizeWriter.writeClauseToWriter(cnf[j],writer);
-            else
-                localizeWriter.writeClauseAsDisjunction(cnf[j],writer);
+            final StringWriter writer = new StringWriter();
+            if(useClausesForm) {
+				localizeWriter.writeClauseToWriter(cnf[j],writer);
+			} else {
+				localizeWriter.writeClauseAsDisjunction(cnf[j],writer);
+			}
             sw.append(writer);
-            if(j+1 < cnf.length)
-                sw.append(";\n");
+            if(j+1 < cnf.length) {
+				sw.append(";\n");
+			}
         }
 
             
@@ -322,7 +329,7 @@ public class LocalizeZVisitor implements
      */
     @Override
     public StringBuffer visitNegPred(NegPred pred) {
-        StringBuffer sw = new StringBuffer(LocalizeString.NOT).append("(");
+        final StringBuffer sw = new StringBuffer(LocalizeString.NOT).append("(");
         sw.append(pred.getPred().accept(this)).append(")");
         return sw;
     }
@@ -374,7 +381,7 @@ public class LocalizeZVisitor implements
      */
     @Override
     public StringBuffer visitExprPred(ExprPred pred) {
-      StringWriter sw = new StringWriter();
+      final StringWriter sw = new StringWriter();
       PrintUtils.print(pred, sw, (SectionManager) sectionInfo, ZWrapper.getSectionName(), Markup.UNICODE);
       throw new LocalizeException(LocalizeException.UNEXPECTED_EXPRESSION
               + "\n" + sw.toString());
@@ -442,36 +449,37 @@ public class LocalizeZVisitor implements
     @Override
     public StringBuffer visitMemPred(MemPred pred) {
         // 1. case: the pred is a membership predicate 
-        if(!pred.getMixfix())
-            throw new LocalizeException(LocalizeException.PREDICATE_TYPE_NOT_SUPPORTED
+        if(!pred.getMixfix()) {
+			throw new LocalizeException(LocalizeException.PREDICATE_TYPE_NOT_SUPPORTED
                 + MEMBERSHIP_PREDICATE
                 + "\n" + pred.toString());
+		}
         
-        StringBuffer result = new StringBuffer();
+        final StringBuffer result = new StringBuffer();
         
         // 2. case: the pred is an equality predicate 
         if(pred.getRightExpr() instanceof SetExpr){
             result.append(pred.getLeftExpr().accept(this));
             result.append(LocalizeWriter.LocalizeString.EQUALS);
-            SetExpr singleton = (SetExpr) pred.getRightExpr();
-            for (Expr expr : singleton.getZExprList()) {
+            final SetExpr singleton = (SetExpr) pred.getRightExpr();
+            for (final Expr expr : singleton.getZExprList()) {
                 result.append(expr.accept(this));
             }
         }else{
             // 3. case: the pred is a other relation
             if(pred.getRightExpr() instanceof RefExpr) {
-                OperatorName op = ((RefExpr)pred.getRightExpr()).getZName().getOperatorName();
+                final OperatorName op = ((RefExpr)pred.getRightExpr()).getZName().getOperatorName();
                 try {
                     // opShape reflects the shape of the operator, e.g., ["_","<","_"]
-                    StringBuilder operatorResult = new StringBuilder();
-                    StringBuilder operatorSuffix = new StringBuilder();
-                    String[] opShape = op.getWords();
+                    final StringBuilder operatorResult = new StringBuilder();
+                    final StringBuilder operatorSuffix = new StringBuilder();
+                    final String[] opShape = op.getWords();
                     if(!op.isUnary() && pred.getLeftExpr() instanceof TupleExpr){
-                        Iterator<Expr> tuple = ((TupleExpr)pred.getLeftExpr()).getZExprList().iterator();
+                        final Iterator<Expr> tuple = ((TupleExpr)pred.getLeftExpr()).getZExprList().iterator();
                         for (int i = 0; i < opShape.length; i++) {
-                            if(opShape[i].equals(ZString.ARG))
-                                operatorResult.append(tuple.next().accept(this));
-                            else {
+                            if(opShape[i].equals(ZString.ARG)) {
+								operatorResult.append(tuple.next().accept(this));
+							} else {
                                 if(opShape[i].equals(ZString.NEQ)){
                                     result.append(LocalizeString.NOT + "(");
                                     operatorSuffix.append(")");
@@ -483,9 +491,9 @@ public class LocalizeZVisitor implements
                         }
                     }else{
                         for (int i = 0; i < opShape.length; i++) {
-                            if(opShape[i].equals(ZString.ARG))
-                                operatorResult.append(pred.getLeftExpr().accept(this));
-                            else {
+                            if(opShape[i].equals(ZString.ARG)) {
+								operatorResult.append(pred.getLeftExpr().accept(this));
+							} else {
                                 if(opShape[i].equals(ZString.NEQ)){
                                     result.append(LocalizeString.NOT + "(");
                                     operatorSuffix.append(")");
@@ -497,7 +505,7 @@ public class LocalizeZVisitor implements
                         }
                     }
                     result.append(operatorResult).append(operatorSuffix);
-                } catch (NoSuchElementException e) {
+                } catch (final NoSuchElementException e) {
                     e.printStackTrace();
                     throw new LocalizeException(LocalizeException.MALFORMED_OPERATOR_APPLICATION
                             + "\n" + op);
@@ -524,14 +532,14 @@ public class LocalizeZVisitor implements
      */
     @Override
     public StringBuffer visitApplExpr(ApplExpr appl) {
-        StringBuffer result = new StringBuffer();
+        final StringBuffer result = new StringBuffer();
         if(appl.getMixfix() && appl.getRightExpr() instanceof TupleExpr) { // Infix application of operators
-            OperatorName op = ((RefExpr)appl.getLeftExpr()).getZName().getOperatorName();
-            String[] opShape = op.getWords();
-            Iterator<Expr> tuple = ((TupleExpr)appl.getRightExpr()).getZExprList().iterator();
+            final OperatorName op = ((RefExpr)appl.getLeftExpr()).getZName().getOperatorName();
+            final String[] opShape = op.getWords();
+            final Iterator<Expr> tuple = ((TupleExpr)appl.getRightExpr()).getZExprList().iterator();
             for (int i = 0; i < opShape.length; i++) {
                 if(opShape[i].equals(ZString.ARG)) {
-                    Expr nextExpr = tuple.next();
+                    final Expr nextExpr = tuple.next();
                     if(nextExpr instanceof ApplExpr &&
                             ((ApplExpr)nextExpr).getMixfix()) {// parantheses necessary
                         result.append(LocalizeString.LPAREN);
@@ -541,19 +549,21 @@ public class LocalizeZVisitor implements
                         result.append(nextExpr.accept(this));
                     }
                 } else {
-                    if(opShape[i].equals(LocalizeWriter.Z_DIV))
-                        result.append(LocalizeString.DIV);
-                    else
-                        result.append(opShape[i].trim());
+                    if(opShape[i].equals(LocalizeWriter.Z_DIV)) {
+						result.append(LocalizeString.DIV);
+					} else {
+						result.append(opShape[i].trim());
+					}
                 }
             }
         }else{ // Prefix application of operators
             result.append(appl.getLeftExpr().accept(this));
             if(appl.getRightExpr().getAnn(ParenAnn.class) != null &&
-                    appl.getRightExpr() instanceof RefExpr)
-                result.append(appl.getRightExpr().accept(this));
-            else
-                result.append(LocalizeString.LPAREN + appl.getRightExpr().accept(this) + LocalizeString.RPAREN);
+                    appl.getRightExpr() instanceof RefExpr) {
+				result.append(appl.getRightExpr().accept(this));
+			} else {
+				result.append(LocalizeString.LPAREN + appl.getRightExpr().accept(this) + LocalizeString.RPAREN);
+			}
         }
         return result;
     }
@@ -563,7 +573,7 @@ public class LocalizeZVisitor implements
      */
     @Override
     public StringBuffer visitNumExpr(NumExpr num) {
-        StringBuffer result = new StringBuffer();
+        final StringBuffer result = new StringBuffer();
         //result.append(LocalizeString.LPAREN);
         result.append(LocalizeString.NUMPREFIX).append(num.getValue());
         //result.append(LocalizeString.RPAREN);

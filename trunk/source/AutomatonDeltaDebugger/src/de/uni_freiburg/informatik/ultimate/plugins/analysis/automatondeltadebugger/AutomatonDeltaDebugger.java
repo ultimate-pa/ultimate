@@ -83,7 +83,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
-		String creator = graphType.getCreator();
+		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser":
 			mLogger.info("Preparing to process Automata...");

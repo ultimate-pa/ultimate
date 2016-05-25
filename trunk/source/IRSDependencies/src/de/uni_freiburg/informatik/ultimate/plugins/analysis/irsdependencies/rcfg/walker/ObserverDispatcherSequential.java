@@ -40,13 +40,14 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 
 	private SimpleRCFGVisitor mCurrentVisitor;
 
+	@Override
 	public void run(RCFGNode node)
 	{
 		if (!(node instanceof RootNode)) {
 			mLogger.error("RCFGWalker can only process models created by RCFGBuilder");
 			return;
 		}
-		for (SimpleRCFGVisitor visitor : mObservers) {
+		for (final SimpleRCFGVisitor visitor : mObservers) {
 			mCurrentVisitor = visitor;
 			mCurrentVisitor.init(null, 0, 1);
 			mWalker.startFrom((RootNode) node);
@@ -55,6 +56,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 
 	}
 
+	@Override
 	protected void callObservers(IRCFGVisitorDispatcher dispatcher)
 	{
 		dispatcher.dispatch(mCurrentVisitor);
@@ -66,6 +68,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 		return mCurrentVisitor.abortCurrentBranch();
 	}
 	
+	@Override
 	public boolean abortAll()
 	{
 		return mCurrentVisitor.abortAll();
