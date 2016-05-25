@@ -153,6 +153,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	public enum BComplementationConstruction { Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven };
 	
-	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
+	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, 
+		FairSimulation_WithoutSCC, FairDirectSimulation, MinimizeNwaMaxSat2, MinimizeNwaMaxSat };
 	
 }
