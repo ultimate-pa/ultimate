@@ -648,10 +648,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private final IUltimateServiceProvider mServices;
 
 	public TestFileInterpreter(IUltimateServiceProvider services) {
-		readPreferences();
 		assert services != null;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		readPreferences();
 		mVariables = new HashMap<String, Object>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
@@ -1591,7 +1591,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * NOTE: The following directories are scanned recursively. Hence, do not add directories where one directory is
 		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
-		final String[] packages = { "de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
+		final String[] packages = {
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
