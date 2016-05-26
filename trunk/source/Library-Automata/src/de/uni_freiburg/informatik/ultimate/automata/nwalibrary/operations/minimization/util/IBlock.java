@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util;
 
+import java.util.Iterator;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -50,4 +52,17 @@ public interface IBlock<STATE> {
 	 * @return state constructed by state factory
 	 */
 	public STATE minimize(final StateFactory<STATE> stateFactory);
+	
+	/**
+	 * @return iterator over all states
+	 */
+	public Iterator<STATE> statesIterator();
+	
+	/**
+	 * If a block is independent of the representative, then one must only look
+	 * at one state in the block when interested in the successor blocks.
+	 * 
+	 * @return true iff all states have the same outgoing transitions
+	 */
+	public boolean isRepresentativeIndependent();
 }

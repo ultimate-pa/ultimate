@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -91,7 +92,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
-		constructResult(resStateConstructor);
+		constructResultPartition(resStateConstructor, partition);
 	}
 	
 	/**
@@ -111,24 +112,66 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
-		constructResult(resStateConstructor);
+		constructResultUnionFind(resStateConstructor);
 	}
 	
 	/**
-	 * constructs the result automaton
+	 * constructs the result automaton from a union-find data structure
 	 * 
 	 * @param resStateConstructor state constructor
 	 */
-	private void constructResult(
+	@Deprecated
+	private void constructResultUnionFind(
 			final IResultStateConstructor<STATE> resStateConstructor) {
 		for (final STATE inputState : mOperand.getStates()) {
-			// new state
-			final STATE resultState =
-					resStateConstructor.getOrConstructResultState(inputState);
-			
-			// new outgoing transitions
-			addOutgoingTransitions(resStateConstructor, inputState, resultState);
+			constructStateAndSuccessors(resStateConstructor, inputState);
 		}
+	}
+	
+	/**
+	 * constructs the result automaton from a partition data structure
+	 * 
+	 * @param resStateConstructor state constructor
+	 */
+	private void constructResultPartition(
+			final IResultStateConstructor<STATE> resStateConstructor,
+			final IPartition<STATE> partition) {
+		final Iterator<IBlock<STATE>> blocksIt = partition.blocksIterator();
+		assert (blocksIt.hasNext()) : "There must be at least one statblock.";
+		do {
+			IBlock<STATE> block = blocksIt.next();
+			final Iterator<STATE> statesIt = block.statesIterator();
+			
+			assert (statesIt.hasNext()) : "There must be at least one state.";
+			if (! block.isRepresentativeIndependent()) {
+				// iterate over all states
+				do {
+					STATE inputState = statesIt.next();
+					constructStateAndSuccessors(resStateConstructor, inputState);
+				} while (statesIt.hasNext());
+			} else {
+				// only consider the first state
+				STATE inputState = statesIt.next();
+				constructStateAndSuccessors(resStateConstructor, inputState);
+			}
+		} while (blocksIt.hasNext());
+	}
+	
+	/**
+	 * adds a state and all outgoing transitions for an input state
+	 * 
+	 * @param resStateConstructor state constructor
+	 * @param inputState input state
+	 */
+	private void constructStateAndSuccessors(
+			final IResultStateConstructor<STATE> resStateConstructor,
+			final STATE inputState) {
+		// new state
+		final STATE resultState =
+				resStateConstructor.getOrConstructResultState(inputState);
+		
+		// new outgoing transitions
+		addOutgoingTransitions(resStateConstructor, inputState, resultState);
 	}
 	
 	/**

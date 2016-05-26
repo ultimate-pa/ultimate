@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util;
 
+import java.util.Iterator;
+
 /**
  * Interface for a general partition data structure.
  * 
@@ -43,4 +45,9 @@ public interface IPartition<STATE> {
 	 * @return number of blocks
 	 */
 	public int size();
+
+	/**
+	 * @return iterator over all blocks
+	 */
+	public Iterator<IBlock<STATE>> blocksIterator();
 }

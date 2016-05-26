@@ -1607,6 +1607,16 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		public STATE minimize(final StateFactory<STATE> stateFactory) {
 			return stateFactory.minimize(mcollection);
 		}
+		
+		@Override
+		public Iterator<STATE> statesIterator() {
+			return mcollection.iterator();
+		}
+		
+		@Override
+		public boolean isRepresentativeIndependent() {
+			return true;
+		}
 	}
 	
 	/**
@@ -1977,9 +1987,6 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			}
 		}
 		
-		/**
-		 * @return string representation
-		 */
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
@@ -1995,6 +2002,23 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			builder.append(" }");
 			
 			return builder.toString();
+		}
+		
+		@Override
+		public Iterator<IBlock<STATE>> blocksIterator() {
+			return new Iterator<IBlock<STATE>>() {
+				Iterator<EquivalenceClass> mIt = mequivalenceClasses.iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+				
+				@Override
+				public IBlock<STATE> next() {
+					return mIt.next();
+				}
+			};
 		}
 	}
 	
