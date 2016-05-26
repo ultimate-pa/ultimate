@@ -559,7 +559,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareFloatingPointFunction(loc, funcname, funcname, true, false, type, null, type);
+		declareFloatingPointFunction(loc, funcname, funcname, false, false, type, null, type);
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp});
 		return result;
 	}
