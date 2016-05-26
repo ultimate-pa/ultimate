@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -55,16 +55,16 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		// create alphabets
 		final ListIterator<TypedLetter<LETTER>> it = list.listIterator();
 		final Set<LETTER> internalAlphabet = unwrapLetters(it,
-				mAutomaton.getAlphabet(), ELetterType.Internal);
+				mAutomaton.getAlphabet(), ELetterType.INTERNAL);
 		final Set<LETTER> callAlphabet = unwrapLetters(it,
-				mAutomaton.getCallAlphabet(), ELetterType.Call);
+				mAutomaton.getCallAlphabet(), ELetterType.CALL);
 		final Set<LETTER> returnAlphabet = unwrapLetters(it,
-				mAutomaton.getReturnAlphabet(), ELetterType.Return);
-				
+				mAutomaton.getReturnAlphabet(), ELetterType.RETURN);
+		
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton =
 				mFactory.create(internalAlphabet, callAlphabet, returnAlphabet);
-				
+		
 		// add original states
 		mFactory.addStates(automaton, mAutomaton.getStates());
 		
@@ -102,17 +102,17 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		for (final LETTER letter : mAutomaton.getAlphabet()) {
 			if (!internalsUsed.contains(letter)) {
 				unused.add(
-						new TypedLetter<LETTER>(letter, ELetterType.Internal));
+						new TypedLetter<LETTER>(letter, ELetterType.INTERNAL));
 			}
 		}
 		for (final LETTER letter : mAutomaton.getCallAlphabet()) {
 			if (!callsUsed.contains(letter)) {
-				unused.add(new TypedLetter<LETTER>(letter, ELetterType.Call));
+				unused.add(new TypedLetter<LETTER>(letter, ELetterType.CALL));
 			}
 		}
 		for (final LETTER letter : mAutomaton.getReturnAlphabet()) {
 			if (!returnsUsed.contains(letter)) {
-				unused.add(new TypedLetter<LETTER>(letter, ELetterType.Return));
+				unused.add(new TypedLetter<LETTER>(letter, ELetterType.RETURN));
 			}
 		}
 		
@@ -137,7 +137,7 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		while (true) {
 			if (it.hasNext()) {
 				nextLetter = it.next();
-				if (nextLetter.mType != letterType) {
+				if (nextLetter.getType() != letterType) {
 					// revert iterator
 					it.previous();
 					break;
@@ -146,7 +146,7 @@ public class UnusedLetterShrinker<LETTER, STATE>
 				break;
 			}
 			
-			final LETTER letter = nextLetter.mLetter;
+			final LETTER letter = nextLetter.getLetter();
 			if (originalAlphabet.contains(letter)) {
 				alphabetFilter.add(letter);
 			}

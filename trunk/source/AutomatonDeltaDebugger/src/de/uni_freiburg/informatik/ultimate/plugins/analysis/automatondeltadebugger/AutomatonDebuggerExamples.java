@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,10 +45,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class AutomatonDebuggerExamples<LETTER, STATE> {
-	final private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 	
-	public AutomatonDebuggerExamples(IUltimateServiceProvider mServices) {
-		this.mServices = mServices;
+	/**
+	 * @param services Ultimate services
+	 */
+	public AutomatonDebuggerExamples(final IUltimateServiceProvider services) {
+		this.mServices = services;
 	}
 	
 	/**
@@ -56,7 +60,8 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 * @return new <code>MinimizeNwaMaxSAT()</code> instance
 	 * @throws Throwable when error occurs
 	 */
-	public IOperation<LETTER, STATE> MinimizeNwaMaxSAT(
+	@SuppressWarnings("squid:S00112")
+	public IOperation<LETTER, STATE> minimizeNwaMaxSAT(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		return new MinimizeNwaMaxSAT<LETTER, STATE>(
@@ -69,16 +74,35 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	/**
 	 * @param automaton automaton
 	 * @param factory state factory
+	 * @return new <code>MinimizeNwaMaxSAT2()</code> instance
+	 * @throws Throwable when error occurs
+	 */
+	@SuppressWarnings("squid:S00112")
+	public IOperation<LETTER, STATE> minimizeNwaMaxSAT2(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final StateFactory<STATE> factory) throws Throwable {
+		return new MinimizeNwaMaxSat2<LETTER, STATE>(
+				new AutomataLibraryServices(mServices), factory,
+				new RemoveUnreachable<LETTER, STATE>(
+						new AutomataLibraryServices(mServices), automaton)
+								.getResult());
+	}
+	
+	/**
+	 * @param automaton automaton
+	 * @param factory state factory
 	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
 	 * @throws Throwable when error occurs
 	 */
-	public IOperation<LETTER, STATE> ReduceNwaDirectSimulation(
+	@SuppressWarnings("squid:S00112")
+	public IOperation<LETTER, STATE> reduceNwaDirectSimulation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		return new ReduceNwaDirectSimulation<LETTER, STATE>(
 				new AutomataLibraryServices(mServices), factory,
 				new RemoveUnreachable<LETTER, STATE>(
 						new AutomataLibraryServices(mServices), automaton)
-								.getResult(), false);
+								.getResult(),
+				false);
 	}
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -103,7 +103,10 @@ public class SingleExitShrinker<LETTER, STATE>
 			left2right.put(lhs, rhs);
 			right2left.put(rhs, lhs);
 		}
-		right2left = null; // not needed anymore
+		
+		// not needed anymore
+		right2left = null;
+		
 		mFactory.addStates(automaton, states);
 		
 		// add transitions which are still unconcerned by removing the states
@@ -150,10 +153,10 @@ public class SingleExitShrinker<LETTER, STATE>
 	}
 	
 	@Override
+	@SuppressWarnings("squid:LabelsShouldNotBeUsedCheck")
 	public List<Pair<STATE, STATE>> extractList() {
 		final ArrayList<Pair<STATE, STATE>> list =
 				new ArrayList<Pair<STATE, STATE>>();
-				
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop

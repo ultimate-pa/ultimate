@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <T> type of objects to be removed, e.g., states
  */
 public abstract class AShrinker<T, LETTER, STATE> {
-	INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	AAutomatonFactory<LETTER, STATE> mFactory;
+	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
+	protected AAutomatonFactory<LETTER, STATE> mFactory;
 	
 	/**
 	 * Creates an automaton.
@@ -76,6 +76,8 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	
 	/**
 	 * Called when the error still occurs for a shrunk automaton (-> success).
+	 * 
+	 *  @param newAutomaton new automaton
 	 */
 	public void error(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// use shrunk automaton henceforth
@@ -84,6 +86,8 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	
 	/**
 	 * Called when no error occurs for a shrunk automaton (-> failure).
+	 * 
+	 * @param newAutomaton new automaton
 	 */
 	public void
 			noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {

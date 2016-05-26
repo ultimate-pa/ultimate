@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -43,6 +43,10 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 		extends AAutomatonFactory<LETTER, STATE> {
 	private final IUltimateServiceProvider mServices;
 	
+	/**
+	 * @param automaton nested word automaton
+	 * @param services Ultimate services
+	 */
 	public NestedWordAutomatonFactory(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IUltimateServiceProvider services) {
@@ -56,7 +60,7 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 	 */
 	private NestedWordAutomaton<LETTER, STATE>
 			getNWA(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		return ((NestedWordAutomaton<LETTER, STATE>) automaton);
+		return (NestedWordAutomaton<LETTER, STATE>) automaton;
 	}
 	
 	@Override

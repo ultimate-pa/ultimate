@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -32,12 +32,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class TypedTransition<LETTER, STATE> {
-	public final STATE mPred;
-	public final STATE mSucc;
-	public final STATE mHier;
-	public final TypedLetter<LETTER> mLetter;
+public final class TypedTransition<LETTER, STATE> {
+	private final STATE mPred;
+	private final STATE mSucc;
+	private final STATE mHier;
+	private final TypedLetter<LETTER> mLetter;
 	
+	/**
+	 * @param pred predecessor state
+	 * @param succ successor state
+	 * @param hier hierarchical predecessor state
+	 * @param letter letter
+	 */
 	public TypedTransition(final STATE pred, final STATE succ, final STATE hier,
 			final TypedLetter<LETTER> letter) {
 		this.mPred = pred;
@@ -46,9 +52,26 @@ public class TypedTransition<LETTER, STATE> {
 		this.mLetter = letter;
 	}
 	
+	public STATE getPred() {
+		return mPred;
+	}
+	
+	public STATE getSucc() {
+		return mSucc;
+	}
+	
+	public STATE getHier() {
+		return mHier;
+	}
+	
+	public TypedLetter<LETTER> getLetter() {
+		return mLetter;
+	}
+	
 	@Override
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public int hashCode() {
-		final int hashCode = (mHier == null ? 0 : mHier.hashCode());
+		final int hashCode = ((mHier == null) ? 0 : mHier.hashCode());
 		return hashCode + mPred.hashCode() + mSucc.hashCode() +
 				mLetter.hashCode();
 	}
@@ -56,7 +79,7 @@ public class TypedTransition<LETTER, STATE> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof TypedTransition)) {
+		if ((o == null) || (this.getClass() != o.getClass())) {
 			return false;
 		}
 		final TypedTransition<LETTER, STATE> other =

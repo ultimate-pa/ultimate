@@ -61,10 +61,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * Ultimate interface to the automaton delta debugger.
  * 
  * NOTE: A user may change the code at three places: <br>
- * - the tester (which specifies which operation is run, mandatory change) {@link #getGeneralTester()} or
+ * - the tester (which specifies which operation is run, mandatory change)
+ * {@link #getGeneralTester()} or
  * {@link #getIOperation(INestedWordAutomaton, StateFactory)} <br>
- * - the list of rules to be applied iteratively (optional change) {@link #getShrinkersLoop()} <br>
- * - the list of rules to be applied only once in the end (optional change) {@link #getShrinkersEnd()} <br>
+ * - the list of rules to be applied iteratively (optional change)
+ * {@link #getShrinkersLoop()} <br>
+ * - the list of rules to be applied only once in the end (optional change)
+ * {@link #getShrinkersEnd()} <br>
  * The class provides some default values here.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -74,24 +77,25 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 
+	/**
+	 * standard automaton delta debugger
+	 */
 	public AutomatonDeltaDebugger() {
 		mObservers = new LinkedList<IObserver>();
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
 		final String creator = graphType.getCreator();
-		switch (creator) {
-		case "de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser":
-			mLogger.info("Preparing to process Automata...");
-			mObservers
-					.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(mServices, getCheckResultTester(),
-							getShrinkersLoop(), getShrinkersEnd()));
-			break;
-		default:
+		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
+			mLogger.info("Preparing to process automaton...");
+			mObservers.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
+					mServices, getCheckResultTester(), getShrinkersLoop(),
+					getShrinkersEnd()));
+		} else {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
 	}
@@ -101,11 +105,12 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	/**
 	 * example tester for debugging general problems
 	 * 
-	 * NOTE: Insert an instance of a throwable and one of the automaton library methods here.
+	 * NOTE: Insert an instance of a throwable and one of the automaton library
+	 * methods here.
 	 * 
 	 * @return tester which listens for the specified throwable
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({"unused", "squid:UnusedPrivateMethod"})
 	private ATester<LETTER, STATE> getGeneralTester() {
 		// example, use your own throwable here
 		final Throwable throwable = new Exception();
@@ -123,7 +128,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 
 	/**
-	 * example tester for debugging problems with the <code>checkResult()</code> method of <code>IOperation</code>
+	 * example tester for debugging problems with the <code>checkResult()</code>
+	 * method of <code>IOperation</code>
 	 * 
 	 * @return tester which debugs the checkResult method
 	 */
@@ -141,7 +147,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 				final StateFactory<STATE> factory = automaton.getStateFactory();
 
 				// change the following method for a different IOperation
-				final IOperation<LETTER, STATE> op = getIOperation(automaton, factory);
+				final IOperation<LETTER, STATE> op =
+						getIOperation(automaton, factory);
 
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
@@ -162,14 +169,15 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
+	@SuppressWarnings("squid:S00112")
 	private IOperation<LETTER, STATE> getIOperation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
-		final AutomatonDebuggerExamples<LETTER, STATE> examples = new AutomatonDebuggerExamples<LETTER, STATE>(
-				mServices);
+		final AutomatonDebuggerExamples<LETTER, STATE> examples =
+				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
 
 		// example code, use your own method here
-		return examples.ReduceNwaDirectSimulation(automaton, factory);
+		return examples.reduceNwaDirectSimulation(automaton, factory);
 	}
 
 	/**
@@ -178,7 +186,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * @return list of shrinkers (i.e., rules to apply) to be applied iteratively
 	 */
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersLoop() {
-		final List<AShrinker<?, LETTER, STATE>> shrinkersLoop = new ArrayList<AShrinker<?, LETTER, STATE>>();
+		final List<AShrinker<?, LETTER, STATE>> shrinkersLoop =
+				new ArrayList<AShrinker<?, LETTER, STATE>>();
 
 		// examples, use your own shrinkers here
 		shrinkersLoop.add(new StateShrinker<LETTER, STATE>());
@@ -196,7 +205,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * @return list of shrinkers (i.e., rules to apply) to be applied only once
 	 */
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersEnd() {
-		final List<AShrinker<?, LETTER, STATE>> shrinkersEnd = new ArrayList<AShrinker<?, LETTER, STATE>>();
+		final List<AShrinker<?, LETTER, STATE>> shrinkersEnd =
+				new ArrayList<AShrinker<?, LETTER, STATE>>();
 
 		// examples, use your own shrinkers here
 		shrinkersEnd.add(new UnusedLetterShrinker<LETTER, STATE>());
@@ -251,18 +261,18 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
+	public void setToolchainStorage(final IToolchainStorage services) {
 		//no storage needed 
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public void finish() {
-		//no finish needed 
+		//no finish needed
 	}
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -31,12 +31,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 
 /**
  * Executes the respective method which should be debugged and compares to the
- * designated error.
+ * designated error.<br>
  * 
  * Usage: Initially, the error which is to be expected is stored in order to be
  * able to compare to its concrete type during the search later on. The
  * {@link #execute(INestedWordAutomaton)} method must be overwritten to run the
- * designated method accordingly.
+ * designated method accordingly.<br>
  * 
  * The architecture allows for very general testing features such as additional
  * pre- and post-processing, but comes with the price that this class must be
@@ -79,10 +79,11 @@ public abstract class ATester<LETTER, STATE> {
 	 * @param automaton input automaton
 	 * @throws any type of throwable
 	 */
+	@SuppressWarnings("squid:S00112")
 	public abstract void
 			execute(final INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable;
-					
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
