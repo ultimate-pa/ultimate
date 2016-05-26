@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -57,6 +59,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private final StateFactory<STATE> mStateFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final Map<STATE, STATE> mOldState2newState;
 	
 	/**
 	 * private constructor for common parts
@@ -67,13 +70,18 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 */
 	private QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean addMapOldState2newState) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
 		mResult = new NestedWordAutomaton<>(mServices, 
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
 				mOperand.getReturnAlphabet(), mStateFactory);
+		
+		mOldState2newState = (addMapOldState2newState
+				? new HashMap<STATE, STATE>(mOperand.size())
+				: null);
 	}
 	
 	/**
@@ -87,8 +95,9 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final IPartition<STATE> partition) {
-		this(services, stateFactory, operand);
+			final IPartition<STATE> partition,
+			final boolean addMapOldState2newState) {
+		this(services, stateFactory, operand, addMapOldState2newState);
 		
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
@@ -107,8 +116,9 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final UnionFind<STATE> unionFind) {
-		this(services, stateFactory, operand);
+			final UnionFind<STATE> unionFind,
+			final boolean addMapOldState2newState) {
+		this(services, stateFactory, operand, addMapOldState2newState);
 		
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
@@ -146,13 +156,24 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			if (! block.isRepresentativeIndependent()) {
 				// iterate over all states
 				do {
-					STATE inputState = statesIt.next();
+					final STATE inputState = statesIt.next();
 					constructStateAndSuccessors(resStateConstructor, inputState);
 				} while (statesIt.hasNext());
 			} else {
 				// only consider the first state
 				STATE inputState = statesIt.next();
 				constructStateAndSuccessors(resStateConstructor, inputState);
+				
+				// add the remaining states if a map should be constructed
+				if (mOldState2newState != null) {
+					final STATE resultState =
+							resStateConstructor.getOrConstructResultState(
+									inputState);
+					while (statesIt.hasNext()) {
+						inputState = statesIt.next();
+						mOldState2newState.put(inputState, resultState);
+					}
+				}
 			}
 		} while (blocksIt.hasNext());
 	}
@@ -169,6 +190,11 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		// new state
 		final STATE resultState =
 				resStateConstructor.getOrConstructResultState(inputState);
+		
+		// add to map
+		if (mOldState2newState != null) {
+			mOldState2newState.put(inputState, resultState);
+		}
 		
 		// new outgoing transitions
 		addOutgoingTransitions(resStateConstructor, inputState, resultState);
@@ -212,6 +238,13 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 */
 	public NestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
+	}
+	
+	/**
+	 * @return map from input automaton states to output automaton states
+	 */
+	public Map<STATE, STATE> getOldState2newState() {
+		return mOldState2newState;
 	}
 	
 	/**

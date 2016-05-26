@@ -72,15 +72,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  */
 public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	// old automaton
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mdoubleDecker;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// new (minimized) automaton
-	private NestedWordAutomaton<LETTER,STATE> mnwa;
-	// ID for equivalence classes (inner class, so no static field possible)
-	private static int equivalenceClassId = 0;
+	private NestedWordAutomaton<LETTER,STATE> mNwa;
+	// ID for equivalence classes
+	private int mEquivalenceClassId = 0;
 	// Partition of states into equivalence classes
 	private Partition mPartition = null;
 	// Only true after the result was constructed.
 	private boolean mMinimizationFinished = false;
+	// map old state -> new state
+	private final Map<STATE, STATE> mOldState2newState;
 	
 	/*
 	 * EXPERIMENTAL
@@ -121,7 +123,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	public MinimizeSevpa(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> operand)
 			throws AutomataLibraryException {
-		this(services, operand, null, operand.getStateFactory());
+		this(services, operand, null, operand.getStateFactory(), false);
 	}
 	
 	/**
@@ -131,17 +133,19 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * @param equivalenceClasses represent initial equivalence classes
 	 * @param removeUnreachables true iff removal of unreachable states is used
 	 * @param removeDeadEnds true iff removal of dead-end states is used
+	 * @param addMapOldState2newState add map old state 2 new state?
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	public MinimizeSevpa(
-			AutomataLibraryServices services,
+			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand,
-			Collection<Set<STATE>> equivalenceClasses,
-			StateFactory<STATE> stateFactoryConstruction)
+			final Collection<Set<STATE>> equivalenceClasses,
+			final StateFactory<STATE> stateFactoryConstruction,
+			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactoryConstruction, "minimizeSevpa", operand);
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
-			mdoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
+			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
 		}
 		else {
 			throw new IllegalArgumentException(
@@ -150,7 +154,12 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		mStateFactoryConstruction = stateFactoryConstruction;
 		
 		// must be the last part of the constructor
-		minimize(equivalenceClasses);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				minimize(equivalenceClasses, addMapOldState2newState);
+		mNwa = quotientNwaConstructor.getResult();
+		mOldState2newState = (addMapOldState2newState
+				? quotientNwaConstructor.getOldState2newState()
+				: null);
 		mMinimizationFinished = true;
 		mLogger.info(exitMessage());
 
@@ -167,10 +176,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * (http://en.wikipedia.org/wiki/DFA_minimization)
 	 * 
 	 * @param equivalenceClasses initial partition of the states
+	 * @param addMapOldState2newState add map old state 2 new state?
+	 * @return quotient automaton
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
-	private void minimize(
-			Collection<Set<STATE>> equivalenceClasses)
+	private QuotientNwaConstructor<LETTER, STATE> minimize(
+			final Collection<Set<STATE>> equivalenceClasses,
+			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
 		
 		// intermediate container for the states
@@ -181,10 +193,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		
-	
 		// merge non-distinguishable states
-		mnwa = mergeStates(states, equivalenceClasses);
-		mLogger.debug("Size after merging identical states: " + mnwa.size());
+		final QuotientNwaConstructor<LETTER, STATE> result =
+				mergeStates(states, equivalenceClasses, addMapOldState2newState);
+		return result;
 	}
 	
 	/**
@@ -193,12 +205,14 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * 
 	 * @param states container with reachable states (gets deleted)
 	 * @param equivalenceClasses initial partition of the states
-	 * @return equivalent automaton with states merged
+	 * @param addMapOldState2newState add map old state 2 new state?
+	 * @return quotient automaton
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
-	private NestedWordAutomaton<LETTER, STATE> mergeStates(
+	private QuotientNwaConstructor<LETTER, STATE> mergeStates(
 			StatesContainer states,
-			Collection<Set<STATE>> equivalenceClasses)
+			final Collection<Set<STATE>> equivalenceClasses,
+			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
 		
 		// creation of the initial partition (if not passed in the constructor)
@@ -217,8 +231,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				mPartition.addEquivalenceClass( 
 						new EquivalenceClass(ecSet, 
 								mOperand.isFinal(ecSet.iterator().next()))); 
-			} 
-
+			}
 		}
 		
 		/*
@@ -232,7 +245,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		refinePartition();
 		
 		// merge states from partition
-		return merge();
+		return merge(addMapOldState2newState);
 	}
 	
 	/**
@@ -934,9 +947,11 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	/**
 	 * merges states from computed equivalence classes
 	 * 
-	 * @param partition partition of the states
+	 * @param addMapOldState2newState add map old state 2 new state?
+	 * @return quotient automaton
 	 */
-	private NestedWordAutomaton<LETTER, STATE> merge() {
+	private QuotientNwaConstructor<LETTER, STATE> merge(
+			final boolean addMapOldState2newState) {
 		// make sure initial equivalence classes are marked
 		mPartition.markInitials();
 		
@@ -954,9 +969,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		// construct result with library method
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices,
-						mStateFactoryConstruction, mdoubleDecker, mPartition);
+						mStateFactoryConstruction, mDoubleDecker, mPartition,
+						addMapOldState2newState);
 		
-		return quotientNwaConstructor.getResult();
+		return quotientNwaConstructor;
 	}
 	
 	/**
@@ -1048,7 +1064,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		private boolean isSimilarHelper(Partition partition, LETTER letter,
 				STATE lin, STATE hier, EquivalenceClass equivalenceClass) {
-			if (mdoubleDecker.isDoubleDecker(lin, hier)) {
+			if (mDoubleDecker.isDoubleDecker(lin, hier)) {
 				if (!checkExistenceOfSimilarTransition(
 						partition,
 						partition.succReturn(lin, hier, letter),
@@ -1362,7 +1378,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			this.mwasSplit = true;
 			// initially intersection is null
 			this.mintersection = null;
-			this.mid = MinimizeSevpa.equivalenceClassId++;
+			this.mid = mEquivalenceClassId++;
 		}
 		
 		/**
@@ -1671,7 +1687,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		/**
 		 * marks all respective equivalence classes as initial
 		 */
-		void markInitials() {
+		public void markInitials() {
 			/*
 			 * if an equivalence class contains an initial state,
 			 * the whole equivalence class should be initial
@@ -2703,89 +2719,14 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	}
 	
 	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The image of a state oldState is the representative of 
-	 * oldStates equivalence class.
-	 * This method can only be used if the minimization is finished.
+	 * @return map from input automaton states to output automaton states
 	 */
-	public Map<STATE,STATE> getOldState2newState() {
-		if (!mMinimizationFinished) {
-			throw new IllegalStateException();
-		}
-		
-		final Map<STATE,STATE> oldState2newState = new Map<STATE,STATE>() {
-
-			@Override
-			public int size() {
-				return mPartition.mmapState2EquivalenceClass.size();
-			}
-
-			@Override
-			public boolean isEmpty() {
-				return mPartition.mmapState2EquivalenceClass.isEmpty();
-			}
-
-			@Override
-			public boolean containsKey(Object key) {
-				return mPartition.mmapState2EquivalenceClass.containsKey(key);
-			}
-
-			@Override
-			public boolean containsValue(Object value) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public STATE get(Object key) {
-				final EquivalenceClass eqClass =
-						mPartition.mmapState2EquivalenceClass.get(key);
-				if (eqClass == null) {
-					return null;
-				} else {
-					return eqClass.getRepresentative();
-				}
-			}
-
-			@Override
-			public STATE put(STATE key, STATE value) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public STATE remove(Object key) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public void putAll(Map<? extends STATE, ? extends STATE> m) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public void clear() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public Set<STATE> keySet() {
-				return mPartition.mmapState2EquivalenceClass.keySet();
-			}
-
-			@Override
-			public Collection<STATE> values() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public Set<java.util.Map.Entry<STATE, STATE>> entrySet() {
-				throw new UnsupportedOperationException();
-			}
-		};
-		return oldState2newState;
+	public Map<STATE, STATE> getOldState2newState() {
+		return mOldState2newState;
 	}
 	
 	@Override
 	public NestedWordAutomaton<LETTER,STATE> getResult() {
-		return mnwa;
+		return mNwa;
 	}
 }

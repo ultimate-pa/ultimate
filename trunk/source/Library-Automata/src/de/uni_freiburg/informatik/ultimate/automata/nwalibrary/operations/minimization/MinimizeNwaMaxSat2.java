@@ -78,10 +78,10 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-
-
+	
 	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+			IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState)
+					throws AutomataLibraryException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
 //		if (!new IsDeterministic<>(mServices, operand).getResult()) {
@@ -104,8 +104,14 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 		final UnionFind<STATE> resultingEquivalenceClasses = constructEquivalenceClasses();
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = 
-				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand, resultingEquivalenceClasses);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand,
+						resultingEquivalenceClasses, addMapOldState2newState);
 		mResult = quotientNwaConstructor.getResult();
+	}
+	
+	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
+			IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+		this(services, stateFactory, operand, false);
 	}
 	
 	private boolean haveSimilarEquivalenceClass(STATE inputState1, STATE inputState2) {

@@ -864,7 +864,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
 				final MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), newAbstraction, partition, predicateFactoryRefinement);
+						new AutomataLibraryServices(mServices), newAbstraction,
+						partition, predicateFactoryRefinement, mComputeHoareAnnotation);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = minimizeOp.getResult();
 				if (mComputeHoareAnnotation) {
@@ -876,7 +877,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case SHRINK_NWA: {
 				final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
 						new AutomataLibraryServices(mServices), predicateFactoryRefinement, newAbstraction, partition,
-						true, false, false, 200, false, 0, false, false);
+						mComputeHoareAnnotation, false, false, 200, false, 0, false, false);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 						minimizeOp.getResult())).getResult();
@@ -889,7 +890,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case NWA_COMBINATOR: {
 				final MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
 						new AutomataLibraryServices(mServices), predicateFactoryRefinement, newAbstraction, partition,
-						mIteration);
+						mComputeHoareAnnotation, mIteration);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 						minimizeOp.getResult())).getResult();

@@ -54,7 +54,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
@@ -98,8 +101,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	private final boolean msplitOutgoing;
 	private final OutgoingHelperInternal moutInternal;
 	private final OutgoingHelperCall moutCall;
-	// simulates the output automaton
-	private ShrinkNwaResult mresult;
+	// output automaton
+	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	// map old state -> new state
+	private final Map<STATE, STATE> mOldState2newState;
 	
 	/* optional random splits before the return split to keep matrices small */
 	// true iff before the first return split some random splits are executed
@@ -321,6 +326,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		// must be the last part of the constructor
 		mLogger.info(startMessage());
 		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				constructAutomaton(includeMapping);
+		mResult = quotientNwaConstructor.getResult();
+		mOldState2newState = (includeMapping
+				? quotientNwaConstructor.getOldState2newState()
+				: null);
+		
 		mLogger.info(exitMessage());
 		
 		if (STATISTICS) {
@@ -625,12 +637,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					eWriter.printStackTrace();
 				}
 			}
-			
-			mLogger.info("Finished analysis, constructing result of size " +
-					mpartition.mequivalenceClasses.size());
-			
-			// automaton construction
-			constructAutomaton(includeMapping);
 		}
 		if (DEBUG) {
 			System.err.println("----------------END----------------");
@@ -2538,23 +2544,31 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * Also remove all other objects references.
 	 * 
 	 * @param includeMapping true iff mapping old to new state is needed
+	 * @return quotient automaton
 	 */
-	private void constructAutomaton(final boolean includeMapping) {
+	private QuotientNwaConstructor<LETTER, STATE> constructAutomaton(
+			final boolean includeMapping) {
 		if (DEBUG) {
 			System.out.println("finished splitting, constructing result");
 		}
 		
-		mresult = new ShrinkNwaResult(includeMapping, mpartition);
+		mpartition.markInitials();
+		
+		// construct result with library method
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory,
+						mdoubleDecker, mpartition, includeMapping);
 		
 		// clean up
 		if (DEBUG) {
 			System.out.println("finished construction");
 			System.out.println(mpartition);
-			System.out.println(mresult);
 		}
 		mpartition = null;
 		mworkListIntCall = null;
 		mworkListRet = null;
+		
+		return quotientNwaConstructor;
 	}
 	
 	// --- [end] main methods --- //
@@ -2730,16 +2744,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				computeHashSetCapacity(list.size()));
 		set.addAll(list);
 		return (set.size() == list.size());
-	}
-	
-	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The image of a state oldState is the representative of 
-	 * oldStates equivalence class.
-	 * This method can only be used if the minimization is finished.
-	 */
-	public Map<STATE,STATE> getOldState2newState() {
-		return mresult.moldState2newState;
 	}
 	
 	/**
@@ -3053,7 +3057,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * It contains and handles the equivalence classes and works as the
 	 * resulting automaton.
 	 */
-	public class Partition {
+	public class Partition implements IPartition<STATE> {
 		// equivalence classes
 		private final Collection<EquivalenceClass> mequivalenceClasses;
 		// mapping 'state -> equivalence class'
@@ -3065,6 +3069,20 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					computeHashSetCapacity(mOperand.size()));
 		}
 		
+		/**
+		 * marks all respective equivalence classes as initial
+		 */
+		public void markInitials() {
+			/*
+			 * if an equivalence class contains an initial state,
+			 * the whole equivalence class should be initial
+			 */
+			for (final STATE state : mOperand.getInitialStates()) {
+				final EquivalenceClass ec = mstate2EquivalenceClass.get(state);
+				ec.markAsInitial();
+			}
+		}
+
 		/**
 		 * This method adds an equivalence class (also to the work list)
 		 * during the initialization phase.
@@ -3217,6 +3235,34 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			builder.append("}");
 			return builder.toString();
 		}
+
+		@Override
+		public IBlock<STATE> getBlock(final STATE state) {
+			return mstate2EquivalenceClass.get(state);
+		}
+
+		@Override
+		public int size() {
+			return mequivalenceClasses.size();
+		}
+
+		@Override
+		public Iterator<IBlock<STATE>> blocksIterator() {
+			return new Iterator<IBlock<STATE>>() {
+				final Iterator<EquivalenceClass> mIt =
+						mequivalenceClasses.iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+				
+				@Override
+				public IBlock<STATE> next() {
+					return mIt.next();
+				}
+			};
+		}
 	}
 	
 	/**
@@ -3225,7 +3271,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * 
 	 * Two equivalence class objects are equal iff they share the same pointer.
 	 */
-	private class EquivalenceClass {
+	private class EquivalenceClass implements IBlock<STATE> {
 		// unique ID (useful for hashCode and so for deterministic runs)
 		private final int mid;
 		// the states
@@ -3240,6 +3286,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		private Matrix mmatrix;
 		// status regarding outgoing return transitions
 		private EIncomingStatus moutgoingRet;
+		// does the equivalence class contain an initial state?
+		private boolean misInitial;
 		
 		/**
 		 * This is a partial constructor which is used for both initialization
@@ -3254,6 +3302,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			mid = ++mids;
 			mstates = states;
 			reset();
+		}
+		
+		/**
+		 * sets the equivalence class as initial
+		 */
+		void markAsInitial() {
+			misInitial = true;
 		}
 		
 		/**
@@ -3756,6 +3811,31 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			
 			return builder.toString();
 		}
+		
+		@Override
+		public boolean isInitial() {
+			return misInitial;
+		}
+		
+		@Override
+		public boolean isFinal() {
+			return mOperand.isFinal(mstates.iterator().next());
+		}
+		
+		@Override
+		public STATE minimize(final StateFactory<STATE> stateFactory) {
+			return stateFactory.minimize(mstates);
+		}
+		
+		@Override
+		public Iterator<STATE> statesIterator() {
+			return mstates.iterator();
+		}
+		
+		@Override
+		public boolean isRepresentativeIndependent() {
+			return true;
+		}
 	}
 	
 	/**
@@ -3917,506 +3997,21 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 	}
 	
-	/**
-	 * This class temporarily works as the output automaton.
-	 * The future idea is not to generate a real object but to simulate states
-	 * and transitions with the equivalence class objects.
-	 */
-	public class ShrinkNwaResult implements
-			INestedWordAutomatonSimple<LETTER, STATE> {
-		private final Map<STATE, STATE> moldState2newState;
-		// old automaton
-		private final INestedWordAutomaton<LETTER, STATE> moldNwa;
-		// states
-		private final HashSet<STATE> mfinals;
-		private final HashSet<STATE> mnonfinals;
-		// initial states
-		private final HashSet<STATE> minitialStates;
-		// transitions
-		private final HashMap<STATE,
-			HashSet<OutgoingInternalTransition<LETTER, STATE>>> moutInt;
-		private final HashMap<STATE,
-			HashSet<OutgoingCallTransition<LETTER, STATE>>> moutCall;
-		private final HashMap<STATE,
-			HashSet<OutgoingReturnTransition<LETTER, STATE>>> moutRet;
-		// size
-		private final int mSize;
-		
-		/**
-		 * @param includeMapping true iff mapping old to new state is needed
-		 * @param partition partition
-		 */
-		public ShrinkNwaResult(final boolean includeMapping,
-				final Partition partition) {
-			if (DEBUG) {
-				System.out.println("\n---- constructing result...");
-			}
-			moldNwa = mOperand;
-			mfinals = new HashSet<STATE>();
-			mnonfinals = includeMapping
-					? null
-					: new HashSet<STATE>();
-			mSize = partition.mequivalenceClasses.size();
-			minitialStates = new HashSet<STATE>();
-			moldState2newState = includeMapping
-					? new HashMap<STATE, STATE>(computeHashSetCapacity(
-							moldNwa.size()))
-					: null;
-			
-			assert (mstateFactory != null);
-			final HashMap<EquivalenceClass, STATE> ec2state =
-					new HashMap<EquivalenceClass, STATE>(
-							computeHashSetCapacity(
-									partition.mequivalenceClasses.size()));
-			
-			moutInt = new HashMap<STATE,
-					HashSet<OutgoingInternalTransition<LETTER, STATE>>>();
-			moutCall = new HashMap<STATE,
-					HashSet<OutgoingCallTransition<LETTER, STATE>>>();
-			moutRet = new HashMap<STATE,
-					HashSet<OutgoingReturnTransition<LETTER, STATE>>>();
-			
-			// states
-			for (final EquivalenceClass ec : partition.mequivalenceClasses) {
-				final Set<STATE> ecStates = ec.mstates;
-				
-				// new state
-				final STATE newState = mstateFactory.minimize(ecStates);
-				ec2state.put(ec, newState);
-				if (includeMapping) {
-					for (final STATE oldState : ecStates) {
-						moldState2newState.put(oldState, newState);
-					}
-				} else if (! moldNwa.isFinal(ecStates.iterator().next())) {
-					mnonfinals.add(newState);
-				}
-				
-				// states
-				if (moldNwa.isFinal(ecStates.iterator().next())) {
-					mfinals.add(newState);
-				}
-			}
-			
-			// initial states (efficiency assumption: there are only a few)
-			for (final STATE init : moldNwa.getInitialStates()) {
-				minitialStates.add(
-					ec2state.get(
-						partition.mstate2EquivalenceClass.get(init)));
-			}
-			
-			// preprocessing: ignore call and return loops for finite automata
-			final boolean isNwa = (mOperand.getCallAlphabet().size() > 0);
-			
-			// transitions
-			for (final EquivalenceClass ec : partition.mequivalenceClasses)
-					{
-				final STATE newState = ec2state.get(ec);
-				if (DEBUG) {
-					System.out.println(" from state " + newState + 
-							" have transitions:");
-				}
-				
-				final STATE representative = ec.mstates.iterator().next();
-				
-				HashMap<LETTER, Set<STATE>> letter2succs =
-						new HashMap<LETTER, Set<STATE>>();
-				
-				// internal transitions
-				final HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
-						new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
-				
-				for (final OutgoingInternalTransition<LETTER, STATE> edge :
-						moldNwa.internalSuccessors(representative)) {
-					final LETTER letter = edge.getLetter();
-					final STATE succ = ec2state.get(partition.
-							mstate2EquivalenceClass.get(edge.getSucc()));
-					Set<STATE> succs = letter2succs.get(letter);
-					boolean isNew;
-					if (succs == null) {
-						/*
-						 * efficiency assumption: there is only one transition
-						 * with the same letter (determinism)
-						 */
-						succs = Collections.singleton(succ);
-						letter2succs.put(letter, succs);
-						isNew = true;
-					} else {
-						/*
-						 * If there is nondeterminism, replace the (immutable)
-						 * singleton set by a usual HashSet.
-						 */
-						if (succs.size() == 1) {
-							final STATE oldSucc = succs.iterator().next();
-							succs = new HashSet<STATE>();
-							succs.add(oldSucc);
-						}
-						isNew = succs.add(succ);
-					}
-					if (isNew) {
-						final OutgoingInternalTransition<LETTER, STATE>
-							newEdge = new OutgoingInternalTransition
-								<LETTER, STATE> (letter, succ);
-						if (DEBUG) {
-							System.out.println("   internal " + newEdge);
-						}
-						outInt.add(newEdge);
-					}
-				}
-				if (! outInt.isEmpty()) {
-					moutInt.put(newState, outInt);
-				}
-				
-				if (isNwa) {
-					letter2succs = new HashMap<LETTER, Set<STATE>>();
-					
-					// call transitions
-					final HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
-							new HashSet<OutgoingCallTransition<LETTER,STATE>>();
-					
-					for (final OutgoingCallTransition<LETTER, STATE> edge :
-							moldNwa.callSuccessors(representative)) {
-						final LETTER letter = edge.getLetter();
-						final STATE succ = ec2state.get(partition.
-								mstate2EquivalenceClass.get(edge.getSucc()));
-						Set<STATE> succs = letter2succs.get(letter);
-						boolean isNew;
-						if (succs == null) {
-							/*
-							 * efficiency assumption: there is only one
-							 * transition with the same letter (determinism)
-							 */
-							succs = Collections.singleton(succ);
-							letter2succs.put(letter, succs);
-							isNew = true;
-						} else {
-							/*
-							 * If there is nondeterminism, replace the
-							 * (immutable) singleton set by a usual HashSet.
-							 */
-							if (succs.size() == 1) {
-								final STATE oldSucc = succs.iterator().next();
-								succs = new HashSet<STATE>();
-								succs.add(oldSucc);
-							}
-							isNew = succs.add(succ);
-						}
-						if (isNew) {
-							final OutgoingCallTransition<LETTER, STATE>
-								newEdge = new OutgoingCallTransition
-									<LETTER, STATE> (letter, succ);
-							if (DEBUG) {
-								System.out.println("   call " + newEdge);
-							}
-							outCall.add(newEdge);
-						}
-					}
-					if (! outCall.isEmpty()) {
-						moutCall.put(newState, outCall);
-					}
-					
-					letter2succs = null;
-					
-					/*
-					 * return transitions
-					 * NOTE: Return transitions need not be present everywhere,
-					 *       so each state must be visited.
-					 */
-					final HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
-						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-					
-					final HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
-							new HashMap<LETTER,
-							HashMap<STATE, HashSet<STATE>>>();
-					for (final STATE state : ec.mstates) {
-						for (final OutgoingReturnTransition<LETTER, STATE> edge :
-								moldNwa.returnSuccessors(state)) {
-							final LETTER letter = edge.getLetter();
-							HashMap<STATE, HashSet<STATE>> hier2succs =
-									returns.get(letter);
-							if (hier2succs == null) {
-								hier2succs =
-										new HashMap<STATE, HashSet<STATE>>();
-								returns.put(letter, hier2succs);
-							}
-							final STATE hier = ec2state.get(
-									partition.mstate2EquivalenceClass.get(
-											edge.getHierPred()));
-							HashSet<STATE> succs = hier2succs.get(hier);
-							if (succs == null) {
-								succs = new HashSet<STATE>();
-								hier2succs.put(hier, succs);
-							}
-							succs.add(ec2state.get(partition.
-									mstate2EquivalenceClass.get(
-											edge.getSucc())));
-						}
-					}
-					for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
-							entry : returns.entrySet()) {
-						for (final Entry<STATE, HashSet<STATE>>
-								entry2 : entry.getValue().entrySet()) {
-							for (final STATE succ : entry2.getValue()) {
-								final OutgoingReturnTransition<LETTER, STATE>
-										newEdge = new OutgoingReturnTransition
-										<LETTER, STATE> (entry2.getKey(),
-										entry.getKey(), succ);
-								if (DEBUG) {
-									System.out.println("   return " + newEdge);
-								}
-								outRet.add(newEdge);
-							}
-						}
-					}
-					
-					if (! outRet.isEmpty()) {
-						moutRet.put(newState, outRet);
-					}
-				}
-				
-				if (DEBUG) {
-					System.out.println("---------------\n resulting in: " +
-							newState);
-					System.out.println("   internal:");
-					System.out.println(moutInt);
-					System.out.println("   call:");
-					System.out.println(moutCall);
-					System.out.println("   return:");
-					System.out.println(moutRet);
-					System.out.println("---------------");
-				}
-			}
-		}
-		
-		@Override
-		public Set<LETTER> getAlphabet() {
-			return moldNwa.getAlphabet();
-		}
-		@Override
-		public Set<LETTER> getInternalAlphabet() {
-			return moldNwa.getInternalAlphabet();
-		}
-		@Override
-		public Set<LETTER> getCallAlphabet() {
-			return moldNwa.getCallAlphabet();
-		}
-		@Override
-		public Set<LETTER> getReturnAlphabet() {
-			return moldNwa.getReturnAlphabet();
-		}
-		@Override
-		public STATE getEmptyStackState() {
-			return moldNwa.getEmptyStackState();
-		}
-		@Override
-		public StateFactory<STATE> getStateFactory() {
-			return moldNwa.getStateFactory();
-		}
-		@Override
-		public String sizeInformation() {
-			return size() + " states.";
-		}
-		@Override
-		public int size() {
-			return mSize;
-		}
-		@Override
-		public Collection<STATE> getInitialStates() {
-			return minitialStates;
-		}
-		@Override
-		public boolean isInitial(final STATE state) {
-			return minitialStates.contains(state);
-		}
-		@Override
-		public boolean isFinal(final STATE state) {
-			return mfinals.contains(state);
-		}
-		
-		@Override
-		public Set<LETTER> lettersInternal(STATE state) {
-			final HashSet<OutgoingInternalTransition<LETTER, STATE>> set =
-					moutInt.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-
-			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : set) {
-				result.add(edge.getLetter());
-			}
-			return result;
-		}
-		@Override
-		public Set<LETTER> lettersCall(STATE state) {
-			final HashSet<OutgoingCallTransition<LETTER, STATE>> set =
-					moutCall.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			
-			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingCallTransition<LETTER, STATE> edge : set) {
-				result.add(edge.getLetter());
-			}
-			return result;
-		}
-		@Override
-		public Set<LETTER> lettersReturn(STATE state) {
-			final HashSet<OutgoingReturnTransition<LETTER, STATE>> set =
-					moutRet.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			
-			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
-				result.add(edge.getLetter());
-			}
-			return result;
-		}
-		@Override
-		public Iterable<OutgoingInternalTransition<LETTER, STATE>>
-				internalSuccessors(STATE state, LETTER letter) {
-			final HashSet<OutgoingInternalTransition<LETTER, STATE>> set =
-					moutInt.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-
-			final HashSet<OutgoingInternalTransition<LETTER, STATE>> result =
-					new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : set) {
-				if (edge.getLetter().equals(letter)) {
-					result.add(edge);
-				}
-			}
-			return result;
-		}
-		@Override
-		public Iterable<OutgoingInternalTransition<LETTER, STATE>>
-				internalSuccessors(STATE state) {
-			final HashSet<OutgoingInternalTransition<LETTER,STATE>> set =
-					moutInt.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			return set;
-		}
-		@Override
-		public Iterable<OutgoingCallTransition<LETTER, STATE>>
-				callSuccessors(STATE state, LETTER letter) {
-			final HashSet<OutgoingCallTransition<LETTER, STATE>> set =
-					moutCall.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			
-			final HashSet<OutgoingCallTransition<LETTER, STATE>> result =
-					new HashSet<OutgoingCallTransition<LETTER,STATE>>();
-			for (final OutgoingCallTransition<LETTER, STATE> edge : set) {
-				if (edge.getLetter().equals(letter)) {
-					result.add(edge);
-				}
-			}
-			return result;
-		}
-		@Override
-		public Iterable<OutgoingCallTransition<LETTER, STATE>>
-				callSuccessors(STATE state) {
-			final HashSet<OutgoingCallTransition<LETTER,STATE>> set =
-					moutCall.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			return set;
-		}
-		@Override
-		public Iterable<OutgoingReturnTransition<LETTER, STATE>>
-				returnSucccessors(STATE state, STATE hier, LETTER letter) {
-			final HashSet<OutgoingReturnTransition<LETTER,STATE>> set =
-					moutRet.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			
-			final HashSet<OutgoingReturnTransition<LETTER, STATE>> result =
-					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
-				if (edge.getLetter().equals(letter) &&
-						edge.getHierPred().equals(hier)) {
-					result.add(edge);
-				}
-			}
-			return result;
-		}
-		@Override
-		public Iterable<OutgoingReturnTransition<LETTER, STATE>>
-				returnSuccessorsGivenHier(STATE state, STATE hier) {
-			final HashSet<OutgoingReturnTransition<LETTER,STATE>> set =
-					moutRet.get(state);
-			if (set == null) {
-				return Collections.emptySet();
-			}
-			
-			final HashSet<OutgoingReturnTransition<LETTER, STATE>> result =
-					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
-				if (edge.getHierPred().equals(hier)) {
-					result.add(edge);
-				}
-			}
-			return result;
-		}
-		
-		public Set<STATE> getStates() {
-			final HashSet<STATE> result = new HashSet<STATE>(mfinals);
-			if (moldState2newState != null) {
-				result.addAll(moldState2newState.values());
-			} else {
-				assert (mnonfinals != null) :
-					"One of the sets should be non-null.";
-				result.addAll(mnonfinals);
-			}
-			return result;
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder builder = new StringBuilder();
-			
-			builder.append("{[");
-			String append = "";
-			for (final STATE state : getStates()) {
-				builder.append(append);
-				append = ", ";
-				builder.append(state);
-				if (minitialStates.contains(state)) {
-					builder.append(" (I)");
-				}
-				if (mfinals.contains(state)) {
-					builder.append(" (F)");
-				}
-			}
-			builder.append("], ");
-			builder.append(moutInt.isEmpty() ? "-" : moutInt);
-			builder.append(", ");
-			builder.append(moutCall.isEmpty() ? "-" : moutCall);
-			builder.append(", ");
-			builder.append(moutRet.isEmpty() ? "-" : moutRet);
-			builder.append("}");
-			
-			return builder.toString();
-		}
-	}
-	
 	// --- [end] important inner classes --- //
 	
 	// --- [start] framework methods --- //
 	
 	@Override
 	public INestedWordAutomatonSimple<LETTER,STATE> getResult() {
-		assert mresult != null;
-		return mresult;
+		assert mResult != null;
+		return mResult;
+	}
+	
+	/**
+	 * @return map from input automaton states to output automaton states
+	 */
+	public Map<STATE, STATE> getOldState2newState() {
+		return mOldState2newState;
 	}
 	
 	// --- [end] framework methods --- //

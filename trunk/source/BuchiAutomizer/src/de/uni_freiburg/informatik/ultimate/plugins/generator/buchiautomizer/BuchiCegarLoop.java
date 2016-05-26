@@ -630,7 +630,8 @@ public class BuchiCegarLoop {
 		}
 		case MinimizeSevpa: {
 			final MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(mServices), mAbstraction, partition, mStateFactoryForRefinement);
+					new AutomataLibraryServices(mServices), mAbstraction, partition, mStateFactoryForRefinement,
+					false);
 			assert (minimizeOp.checkResult(mPredicateFactoryResultChecking));
 			result = minimizeOp.getResult();
 			break;
@@ -641,8 +642,8 @@ public class BuchiCegarLoop {
 		}
 		case ShrinkNwa: {
 			final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition, true,
-					false, false, 200, false, 0, false, false);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition,
+					false, false, false, 200, false, 0, false, false);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 					minimizeOp.getResult())).getResult();
