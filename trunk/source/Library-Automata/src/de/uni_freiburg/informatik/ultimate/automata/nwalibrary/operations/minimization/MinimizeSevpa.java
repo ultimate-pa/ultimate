@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
@@ -1341,7 +1343,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * = equivalence class and information if the equivalence class is
 	 * also contained in work list
 	 */
-	public class EquivalenceClass {
+	public class EquivalenceClass implements IBlock<STATE> {
 		// collection with equivalence class's elements
 		private Set<STATE> mcollection;
 		// equivalence class is contained in work list
@@ -1473,10 +1475,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			this.minA = inA;
 		}
 		
-		/**
-		 * @return true iff states are final
-		 */
-		boolean isFinal() {
+		@Override
+		public boolean isFinal() {
 			return misFinal;
 		}
 		
@@ -1657,13 +1657,23 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			
 			return builder.toString();
 		}
+		
+		@Override
+		public boolean isInitial() {
+			return misInitial;
+		}
+		
+		@Override
+		public STATE minimize(final StateFactory<STATE> stateFactory) {
+			return stateFactory.minimize(mcollection);
+		}
 	}
 	
 	/**
 	 * collection of equivalence classes and a mapping
 	 * 'state -> equivalence class' for fast access
 	 */
-	public class Partition {
+	public class Partition implements IPartition<STATE> {
 		// original nested word automaton
 		private final INestedWordAutomaton<LETTER, STATE> mparentOperand;
 		// equivalence classes
@@ -1720,6 +1730,16 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		LinkedList<EquivalenceClass> getEquivalenceClasses() {
 			return mequivalenceClasses;
+		}
+		
+		@Override
+		public IBlock<STATE> getBlock(final STATE state) {
+			return mmapState2EquivalenceClass.get(state);
+		}
+		
+		@Override
+		public int size() {
+			return mequivalenceClasses.size();
 		}
 		
 		/**
