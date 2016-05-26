@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
@@ -94,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
@@ -292,8 +290,7 @@ public class BuchiCegarLoop {
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
 
-		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation,
-				baPref.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class));
+		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation, mServices);
 		mConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
 		if (mConstructTermcompProof) {
 			mTermcompProofBenchmark = new TermcompProofBenchmark(mServices);
@@ -608,8 +605,8 @@ public class BuchiCegarLoop {
 		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> result;
 		switch (mAutomataMinimization) {
 		case DelayedSimulation: {
-			final BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, mAbstraction);
+			final BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction);
 			result = minimizeOp.getResult();
 			break;
 		}
@@ -653,7 +650,8 @@ public class BuchiCegarLoop {
 		}
 		case MinimizeNwaMaxSat2: {
 			final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) minimizeOp.getResult();
 			break;
@@ -687,7 +685,8 @@ public class BuchiCegarLoop {
 						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				final String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage " + stage;
+				final String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage "
+						+ stage;
 				throw new ToolchainCanceledException(getClass(), runningTaskInfo);
 			} catch (final ToolchainCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -792,7 +791,8 @@ public class BuchiCegarLoop {
 			traceChecker = lassoChecker.getConcatCheck();
 			run = lassoChecker.getConcatenatedCounterexample();
 		}
-		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
+		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker,
+				mLogger);
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
 
@@ -802,11 +802,11 @@ public class BuchiCegarLoop {
 		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager,
 				traceChecker.getPredicateUnifier(), mSmtManager);
 
-		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices, mSmtManager,
-				modGlobVarManager, htc, mAbstraction, mInterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger,
-				false, false);
-		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
-				true, mDefaultStateFactory);
+		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
+				mSmtManager, modGlobVarManager, htc, mAbstraction, mInterpolAutomaton,
+				traceChecker.getPredicateUnifier(), mLogger, false, false);
+		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
+				determinized, true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;
 		try {
 			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
@@ -844,9 +844,9 @@ public class BuchiCegarLoop {
 
 	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker,
 			NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
-		final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices, traceChecker,
-				CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction), mSmtManager,
-				mAbstraction.getStateFactory(), mLogger);
+		final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
+				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction),
+				mSmtManager, mAbstraction.getStateFactory(), mLogger);
 		iab.analyze();
 		mInterpolAutomaton = iab.getInterpolantAutomaton();
 

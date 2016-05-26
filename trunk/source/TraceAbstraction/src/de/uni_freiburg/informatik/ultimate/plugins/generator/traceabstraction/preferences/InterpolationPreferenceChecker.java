@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -42,15 +43,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class InterpolationPreferenceChecker {
 
-	public static void check(String pluginName, INTERPOLATION interpolation, SolverMode currentSolverMode) {
+	public static void check(final String pluginName, final INTERPOLATION interpolation,
+			final IUltimateServiceProvider services) {
+		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		final Set<SolverMode> legalSolverSettings = new HashSet<SolverMode>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
-			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
-			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
-			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
-			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
-			break;
 		case Craig_NestedInterpolation:
 			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
 			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
@@ -68,11 +67,10 @@ public class InterpolationPreferenceChecker {
 			throw new AssertionError("unknown option " + interpolation);
 		}
 		if (!legalSolverSettings.contains(currentSolverMode)) {
-			final String errorMessage = "Incompatible preferences. You want to use " + interpolation + " in the " + pluginName
-					+ " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_Solver + " in the "
+			final String errorMessage = "Incompatible preferences. You want to use " + interpolation + " in the "
+					+ pluginName + " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_Solver + " in the "
 					+ Activator.PLUGIN_ID + " has one of the following values. " + legalSolverSettings.toString();
 			throw new UnsupportedOperationException(errorMessage);
 		}
 	}
-
 }
