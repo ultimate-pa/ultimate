@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -53,46 +55,144 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private final AutomataLibraryServices mServices;
 	private final StateFactory<STATE> mStateFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final UnionFind<STATE> mUnionFind;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
-
-	public QuotientNwaConstructor(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomaton<LETTER, STATE> operand, UnionFind<STATE> unionFind) {
+	
+	/**
+	 * private constructor for common parts
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand automaton
+	 */
+	private QuotientNwaConstructor(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
-		mUnionFind = unionFind;
 		mResult = new NestedWordAutomaton<>(mServices, 
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
 				mOperand.getReturnAlphabet(), mStateFactory);
-		
-		final ResultStateConstructor resStateConstructor = new ResultStateConstructor();
-		for (final STATE inputState : mOperand.getStates()) {
-			final STATE resultState = resStateConstructor.getOrConstructResultState(inputState); 
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(inputState)) {
-				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
-				mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
-			}
-			
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(inputState)) {
-				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
-				mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
-			}
-			
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(inputState)) {
-				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
-				final STATE resultHierPred = resStateConstructor.getOrConstructResultState(trans.getHierPred());
-				mResult.addReturnTransition(resultState, resultHierPred, trans.getLetter(), resultSucc);
-			}
-		}
-
 	}
 	
-	private class ResultStateConstructor {
-		private final ConstructionCache<STATE, STATE> mConstructionCache;
+	/**
+	 * constructor with partition data structure
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand automaton
+	 * @param partition partition data structure
+	 */
+	public QuotientNwaConstructor(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IPartition<STATE> partition) {
+		this(services, stateFactory, operand);
 		
-		public ResultStateConstructor() {
-			final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
+		final ResultStateConstructorFromPartition resStateConstructor =
+				new ResultStateConstructorFromPartition(partition);
+		constructResult(resStateConstructor);
+	}
+	
+	/**
+	 * constructor with union-find data structure
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand automaton
+	 * @param unionFind union-find data structure
+	 */
+	@Deprecated
+	public QuotientNwaConstructor(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final UnionFind<STATE> unionFind) {
+		this(services, stateFactory, operand);
+		
+		final ResultStateConstructorFromUnionFind resStateConstructor =
+				new ResultStateConstructorFromUnionFind(unionFind);
+		constructResult(resStateConstructor);
+	}
+	
+	/**
+	 * constructs the result automaton
+	 * 
+	 * @param resStateConstructor state constructor
+	 */
+	private void constructResult(
+			final IResultStateConstructor<STATE> resStateConstructor) {
+		for (final STATE inputState : mOperand.getStates()) {
+			// new state
+			final STATE resultState =
+					resStateConstructor.getOrConstructResultState(inputState);
+			
+			// new outgoing transitions
+			addOutgoingTransitions(resStateConstructor, inputState, resultState);
+		}
+	}
+	
+	/**
+	 * @param resStateConstructor state constructor
+	 * @param inputState state in input automaton
+	 * @param resultState state in output automaton
+	 */
+	private void addOutgoingTransitions(
+			final IResultStateConstructor<STATE> resStateConstructor,
+			final STATE inputState, final STATE resultState) {
+		for (final OutgoingInternalTransition<LETTER, STATE> trans :
+				mOperand.internalSuccessors(inputState)) {
+			final STATE resultSucc =
+					resStateConstructor.getOrConstructResultState(trans.getSucc());
+			mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
+		}
+		
+		for (final OutgoingCallTransition<LETTER, STATE> trans :
+				mOperand.callSuccessors(inputState)) {
+			final STATE resultSucc =
+					resStateConstructor.getOrConstructResultState(trans.getSucc());
+			mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
+		}
+		
+		for (final OutgoingReturnTransition<LETTER, STATE> trans :
+				mOperand.returnSuccessors(inputState)) {
+			final STATE resultSucc =
+					resStateConstructor.getOrConstructResultState(trans.getSucc());
+			final STATE resultHierPred =
+					resStateConstructor.getOrConstructResultState(trans.getHierPred());
+			mResult.addReturnTransition(
+					resultState, resultHierPred, trans.getLetter(), resultSucc);
+		}
+	}
+	
+	/**
+	 * @return quotient automaton
+	 */
+	public NestedWordAutomaton<LETTER, STATE> getResult() {
+		return mResult;
+	}
+	
+	/**
+	 * constructs the states of the resulting automaton (parametric in the data
+	 * structure)
+	 */
+	private interface IResultStateConstructor<STATE> {
+		/**
+		 * @param inputState input state
+		 * @return new state in quotient automaton
+		 */
+		public STATE getOrConstructResultState(final STATE inputState);
+	}
+	
+	@Deprecated
+	private class ResultStateConstructorFromUnionFind
+			implements IResultStateConstructor<STATE> {
+		private final ConstructionCache<STATE, STATE> mConstructionCache;
+		private final UnionFind<STATE> mUnionFind;
+		
+		public ResultStateConstructorFromUnionFind(UnionFind<STATE> unionFind) {
+			mUnionFind = unionFind;
+			final IValueConstruction<STATE, STATE> valueConstruction =
+					new IValueConstruction<STATE, STATE>() {
 				@Override
 				public STATE constructValue(STATE inputState) {
 					final STATE representative = mUnionFind.find(inputState);
@@ -107,7 +207,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 						 isInitial = mOperand.isInitial(inputState);
 						 isFinal = mOperand.isFinal(inputState);
 					} else {
-						final Collection<STATE> equivalenceClass = mUnionFind.getEquivalenceClassMembers(representative);
+						final Collection<STATE> equivalenceClass =
+								mUnionFind.getEquivalenceClassMembers(representative);
 						resultState = mStateFactory.minimize(equivalenceClass);
 						final Predicate<STATE> pInitial = (s -> mOperand.isInitial(s));
 						isInitial = equivalenceClass.stream().anyMatch(pInitial);
@@ -121,8 +222,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
 		
-		public STATE getOrConstructResultState(STATE inputState) {
-			assert mOperand.getStates().contains(inputState) : "no input state";
+		@Override
+		public STATE getOrConstructResultState(final STATE inputState) {
 			STATE inputRepresentative = mUnionFind.find(inputState);
 			if (inputRepresentative == null) {
 				inputRepresentative = inputState;
@@ -131,9 +232,36 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		}
 	}
 	
-
-	public NestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
+	/**
+	 * state constructor from partition data structure
+	 */
+	private class ResultStateConstructorFromPartition
+			implements IResultStateConstructor<STATE> {
+		private final ConstructionCache<IBlock<STATE>, STATE> mConstructionCache;
+		private final IPartition<STATE> mPartition;
+		
+		public ResultStateConstructorFromPartition(
+				final IPartition<STATE> partition) {
+			mPartition = partition;
+			
+			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction =
+					new IValueConstruction<IBlock<STATE>, STATE>() {
+				@Override
+				public STATE constructValue(final IBlock<STATE> block) {
+					final STATE resultState = block.minimize(mStateFactory);
+					final boolean isInitial = block.isInitial();
+					final boolean isFinal = block.isFinal();
+					mResult.addState(isInitial, isFinal, resultState);
+					return resultState;
+				}
+			};
+			mConstructionCache = new ConstructionCache<>(valueConstruction);
+		}
+		
+		@Override
+		public STATE getOrConstructResultState(final STATE inputState) {
+			final IBlock<STATE> block = mPartition.getBlock(inputState);
+			return mConstructionCache.getOrConstuct(block);
+		}
 	}
-
 }

@@ -33,6 +33,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa,

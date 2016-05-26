@@ -937,79 +937,26 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * @param partition partition of the states
 	 */
 	private NestedWordAutomaton<LETTER, STATE> merge() {
-		// initialize result automaton
-		final NestedWordAutomaton<LETTER, STATE> result =
-			new NestedWordAutomaton<LETTER, STATE>(mServices, 
-				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
-				mOperand.getReturnAlphabet(), mOperand.getStateFactory());
+		// make sure initial equivalence classes are marked
+		mPartition.markInitials();
 		
 		/*
-		 * make sure every equivalence class has its representative
-		 * if an initial state is in the class, then it is chosen
+		 * TODO 2016-05-26 Christian:
+		 * temporary test that no equivalence class is empty in the end;
+		 * can be removed after a while
 		 */
-		mPartition.setUpRepresentatives();
-		
-		// use representatives as states
-		for (final EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
-			if (ec.size() > 0) {
-				result.addState(ec.misInitial, ec.misFinal,
-								ec.getRepresentative());
-			}
+		final boolean assertion = mPartition.removeEmptyEquivalenceClasses();
+		if (assertion) {
+			throw new AssertionError(
+					"Please report this error to <schillic@informatik.uni-freiburg.de>.");
 		}
 		
-		// for all states add all outgoing transitions,
-		// but now from representative to representative
-		for (final EquivalenceClass ec : mPartition.getEquivalenceClasses()) {
-			final STATE stateFirst = ec.getCollection().iterator().next();
-			final STATE representative = mPartition.getRepresentative(stateFirst);
-			
-			// internal successors
-			for (final LETTER l : mOperand.lettersInternal(stateFirst)) {
-				for (final OutgoingInternalTransition<LETTER, STATE> trans :
-						mPartition.succInternal(stateFirst, l)) {
-					final STATE next = trans.getSucc();
-					result.addInternalTransition(
-						representative,
-						l,
-						mPartition.getRepresentative(next));
-				}
-			}
-			
-			// call successors
-			for (final LETTER l : mOperand.lettersCall(stateFirst)) {
-				for (final OutgoingCallTransition<LETTER, STATE> trans :
-						mPartition.succCall(stateFirst, l)) {
-					final STATE next = trans.getSucc();
-					result.addCallTransition(
-						representative,
-						l,
-						mPartition.getRepresentative(next));
-				}
-			}
-			
-			/*
-			 * return successors
-			 * NOTE: Here we need to iterate over all states as return
-			 * transitions need not be possible from all states.
-			 */
-			for (final STATE stateRet : ec.getCollection()) {
-				for (final LETTER l : mOperand.lettersReturn(stateRet)) {
-					for (final STATE hier : mPartition.hierPred(stateRet, l)) {
-						for (final OutgoingReturnTransition<LETTER, STATE> trans :
-								mPartition.succReturn(stateRet, hier, l)) {
-							final STATE next = trans.getSucc();
-							result.addReturnTransition(
-								representative,
-								mPartition.getRepresentative(hier),
-								l,
-								mPartition.getRepresentative(next));
-						}
-					}
-				}
-			}
-		}
+		// construct result with library method
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices,
+						mStateFactoryConstruction, mdoubleDecker, mPartition);
 		
-		return result;
+		return quotientNwaConstructor.getResult();
 	}
 	
 	/**
@@ -1534,7 +1481,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 * @return true iff collection is empty
 		 */
 		boolean isEmpty() {
-			return mcollection.size() == 0;
+			return mcollection.isEmpty();
 		}
 		
 		/**
@@ -1564,13 +1511,6 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		 */
 		void markAsInitial() {
 			misInitial = true;
-		}
-		
-		/**
-		 * creates new state as merge of all states in this equivalence class
-		 */
-		void setUpRepresentative() {
-			mrepresentative = mStateFactoryConstruction.minimize(mcollection);
 		}
 		
 		/**
@@ -1696,16 +1636,32 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 									computeHashSetCapacity(states));
 		}
 		
+		/**
+		 * removes empty equivalence classes
+		 */
+		public boolean removeEmptyEquivalenceClasses() {
+			final ListIterator<EquivalenceClass> it =
+					mequivalenceClasses.listIterator();
+			boolean hadEmptyEc = false;
+			while (it.hasNext()) {
+				final EquivalenceClass ec = it.next();
+				if (ec.isEmpty()) {
+					it.remove();
+					hadEmptyEc = true;
+				}
+			}
+			return hadEmptyEc;
+		}
+		
 		public void splitOccurred(EquivalenceClass ec, EquivalenceClass cap) {
 			ec.setWasSplit();
 			cap.setWasSplit();
 		}
 		
 		/**
-		 * for each equivalence class merges the states and sets the resulting
-		 * state as the representative of the equivalence class
+		 * marks all respective equivalence classes as initial
 		 */
-		void setUpRepresentatives() {
+		void markInitials() {
 			/*
 			 * if an equivalence class contains an initial state,
 			 * the whole equivalence class should be initial
@@ -1714,14 +1670,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				final EquivalenceClass ec = mmapState2EquivalenceClass.get(state);
 				// null check needed in case state was removed beforehand
 				if (ec != null) {
-					assert (ec.size() > 0);
+					assert (! ec.isEmpty());
 					ec.markAsInitial();
 				}
-			}
-			
-			// inserts a new state with sensible naming
-			for (final EquivalenceClass ec : mequivalenceClasses) {
-				ec.setUpRepresentative();
 			}
 		}
 		
