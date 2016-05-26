@@ -646,7 +646,7 @@ public class BuchiCegarLoop {
 			final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition, true,
 					false, false, 200, false, 0, false, false);
-			assert minimizeOp.checkResult(mStateFactoryForRefinement);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 					minimizeOp.getResult())).getResult();
 			break;
@@ -654,14 +654,14 @@ public class BuchiCegarLoop {
 		case MinimizeNwaMaxSat2: {
 			final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
-			assert minimizeOp.checkResult(mStateFactoryForRefinement);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) minimizeOp.getResult();
 			break;
 		}
 		case MinimizeNwaMaxSat: {
 			final MinimizeNwaMaxSAT<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction);
-			assert minimizeOp.checkResult(mStateFactoryForRefinement);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = minimizeOp.getResult();
 			break;
 		}
