@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -141,7 +143,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	public Set<R> getImage(D domainElem) {
 		final Set<R> set = mMap.get(domainElem);
 		if (set == null) {
-			return null;
+			return Collections.emptySet();
 		} else {
 			return Collections.unmodifiableSet(mMap.get(domainElem));
 		}
@@ -152,8 +154,8 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 */
 	public int size() {
 		int result = 0;
-		for (final Set<R> rangeSet : mMap.values()) {
-			result += rangeSet.size();
+		for (final Entry<D, Set<R>> entry : mMap.entrySet()) {
+			result += entry.getValue().size();
 		}
 		return result;
 	}
@@ -174,5 +176,160 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	@Override
 	public String toString() {
 		return mMap.toString();
+	}
+	
+	/**
+	 * Returns a Set view of the pairs contained in this relation. The set is 
+	 * backed by the relation, so changes to the map are reflected in the set, 
+	 * and vice-versa.
+	 * TODO 2016-05-26 Matthias: This method was implemented accidentally and is not
+	 * yet used and was not testet. Remove this warning once this method was
+	 * tested.
+	 * @return a set view of the pairs contained in this relation
+	 */
+	public Set<Map.Entry<D,R>> entrySet() {
+		return new Set<Map.Entry<D,R>>() {
+
+			@Override
+			public boolean add(Entry<D, R> arg0) {
+				return addPair(arg0.getKey(), arg0.getValue());
+			}
+
+			@Override
+			public boolean addAll(Collection<? extends Entry<D, R>> arg0) {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public void clear() {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public boolean contains(Object arg0) {
+				if (arg0 instanceof Map.Entry) {
+					final Map.Entry<D, R> entry = (Entry<D, R>) arg0;
+					return containsPair(entry.getKey(), entry.getValue());
+				} else {
+					return false;
+				}
+			}
+
+			@Override
+			public boolean containsAll(Collection<?> arg0) {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return mMap.isEmpty();
+			}
+
+			@Override
+			public Iterator<Entry<D, R>> iterator() {
+				return new Iterator<Map.Entry<D,R>>() {
+					private Entry<D, R> mNextEntry;
+					private Iterator<Entry<D, Set<R>>> mOuterIterator;
+					private Iterator<R> mInnerIterator;
+					private Entry<D, Set<R>> mNextOuter;
+
+					{
+						mOuterIterator = mMap.entrySet().iterator();
+						mNextEntry = constructNext();
+					}
+					
+					
+					private Entry<D, R> constructNext() {
+						if (mInnerIterator == null || !mInnerIterator.hasNext()) {
+							if (mOuterIterator.hasNext()) {
+								mNextOuter = mOuterIterator.next();
+								mInnerIterator = mNextOuter.getValue().iterator();
+							} else {
+								mInnerIterator = null;
+							}
+						}
+						if (mInnerIterator != null) {
+							assert mInnerIterator.hasNext();
+							final R next = mInnerIterator.next();
+							return new Entry<D, R>() {
+								final D mKey;
+								final R mValue;
+								{
+									mKey = mNextOuter.getKey();
+									mValue = next;
+								}
+
+								@Override
+								public D getKey() {
+									return mKey;
+								}
+
+								@Override
+								public R getValue() {
+									return mValue;
+								}
+
+								@Override
+								public R setValue(R arg0) {
+									throw new UnsupportedOperationException("not yet implemented");
+								}
+							};
+						} else {
+							return null;
+						}
+						
+					}
+
+					@Override
+					public boolean hasNext() {
+						return mNextEntry != null;
+					}
+
+					@Override
+					public Entry<D, R> next() {
+						Entry<D, R> result = mNextEntry;
+						constructNext();
+						return result;
+					}
+				};
+			}
+
+			@Override
+			public boolean remove(Object arg0) {
+				if (arg0 instanceof Map.Entry) {
+					final Map.Entry<D, R> entry = (Entry<D, R>) arg0;
+					return removePair(entry.getKey(), entry.getValue());
+				} else {
+					return false;
+				}
+			}
+
+			@Override
+			public boolean removeAll(Collection<?> arg0) {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public boolean retainAll(Collection<?> arg0) {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public int size() {
+				return AbstractRelation.this.size();
+			}
+
+			@Override
+			public Object[] toArray() {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+
+			@Override
+			public <T> T[] toArray(T[] a) {
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+			
+		};
+		
 	}
 }
