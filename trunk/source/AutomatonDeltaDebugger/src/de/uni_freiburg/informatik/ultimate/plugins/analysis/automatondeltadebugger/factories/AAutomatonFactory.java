@@ -168,6 +168,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions internal transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addInternalTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
@@ -183,6 +184,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions internal transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addCallTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
@@ -198,6 +200,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions return transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addReturnTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
