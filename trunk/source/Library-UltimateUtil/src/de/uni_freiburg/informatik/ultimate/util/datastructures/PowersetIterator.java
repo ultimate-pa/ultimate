@@ -37,31 +37,31 @@ import java.util.Set;
  */
 public class PowersetIterator<E> implements Iterator<Set<E>> {
 	
-	private final E[] array;
-	private final int powersetSize;
-	private int currentElement;
+	private final E[] mArray;
+	private final int mPowersetSize;
+	private int mCurrentElement;
 	
 	public PowersetIterator(Set<E> set) {
-		array = set.toArray((E[]) new Object[set.size()]);
-		powersetSize = (int) Math.pow(2, set.size());
-		currentElement = 0;
+		mArray = set.toArray((E[]) new Object[set.size()]);
+		mPowersetSize = (int) Math.pow(2, set.size());
+		mCurrentElement = 0;
 	}
 		
 	@Override
 	public boolean hasNext() {
-		return currentElement < powersetSize;
+		return mCurrentElement < mPowersetSize;
 	}
 
 	@Override
 	public Set<E> next() {
 		final Set<E> result = new HashSet<E>();
-		for (int i=0; i<array.length; i++) {
-			final boolean bitSet = BigInteger.valueOf(currentElement).testBit(i); 
+		for (int i=0; i<mArray.length; i++) {
+			final boolean bitSet = BigInteger.valueOf(mCurrentElement).testBit(i); 
 			if (bitSet) {
-				result.add(array[i]);
+				result.add(mArray[i]);
 			}
 		}
-		currentElement++;
+		mCurrentElement++;
 		return result;
 	}
 
