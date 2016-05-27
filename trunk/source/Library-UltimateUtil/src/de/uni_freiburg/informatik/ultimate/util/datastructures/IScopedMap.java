@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
  * 
@@ -26,9 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-public class LinkedScopedHashSet<E> extends BaseScopedSet<E> {
+import java.util.Map;
 
-	public LinkedScopedHashSet() {
-		super(new LinkedScopedHashMap<E, Object>());
-	}
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public interface IScopedMap<K, V> extends Map<K, V> {
+
+	void beginScope();
+
+	void endScope();
+
+	boolean isEmptyScope();
+
+	Iterable<K> currentScopeKeys();
+
 }

@@ -54,24 +54,24 @@ import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
  * @param <K> Key type
  * @param <V> Value type
  */
-public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
+public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap<K, V> {
 
-	LinkedHashMap<K, V> mmap;
-	LinkedHashMap<K, V>[] mhistory;
-	int mcurScope = -1;
+	LinkedHashMap<K, V> mMap;
+	LinkedHashMap<K, V>[] mHistory;
+	int mCurScope = -1;
 	
 	@SuppressWarnings("unchecked")
 	public LinkedScopedHashMap() {
-		mmap = new LinkedHashMap<K, V>();
-		mhistory = new LinkedHashMap[ScopeUtils.NUM_INITIAL_SCOPES];
+		mMap = new LinkedHashMap<K, V>();
+		mHistory = new LinkedHashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 	}
 	
 	private LinkedHashMap<K, V> undoMap() {
-		return mhistory[mcurScope];
+		return mHistory[mCurScope];
 	}
 	
 	private void recordUndo(K key, V value) {
-		if (mcurScope != -1) {
+		if (mCurScope != -1) {
 			final Map<K, V> old = undoMap();
 			if (!old.containsKey(key)) {
 				old.put(key, value);
@@ -81,31 +81,33 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 	private void undoEntry(Entry<K,V> old) {
 		if (old.getValue() != null) {
-			mmap.put(old.getKey(), old.getValue());
+			mMap.put(old.getKey(), old.getValue());
 		} else {
-			mmap.remove(old.getKey());
+			mMap.remove(old.getKey());
 		}
 	}
 	
+	@Override
 	public void beginScope() {
-		if (mcurScope == mhistory.length - 1) {
-			mhistory = ScopeUtils.grow(mhistory);
+		if (mCurScope == mHistory.length - 1) {
+			mHistory = ScopeUtils.grow(mHistory);
 		}
-		mhistory[++mcurScope] = new LinkedHashMap<K, V>();
+		mHistory[++mCurScope] = new LinkedHashMap<K, V>();
 	}
 	
+	@Override
 	public void endScope() {
 		for (final Entry<K, V> old : undoMap().entrySet()) {
 			undoEntry(old);
 		}
-		mhistory[mcurScope--] = null;
-		if (ScopeUtils.shouldShrink(mhistory)) {
-			mhistory = ScopeUtils.shrink(mhistory);
+		mHistory[mCurScope--] = null;
+		if (ScopeUtils.shouldShrink(mHistory)) {
+			mHistory = ScopeUtils.shrink(mHistory);
 		}
 	}
 	
 	public Iterable<Map.Entry<K, V>> currentScopeEntries() {
-		if (mcurScope == -1) {
+		if (mCurScope == -1) {
 			return entrySet();
 		}
 		return new AbstractSet<Map.Entry<K, V>>() {
@@ -131,12 +133,12 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 							@Override
 							public V getValue() {
-								return mmap.get(key);
+								return mMap.get(key);
 							}
 
 							@Override
 							public V setValue(V value) {
-								return mmap.put(key, value);
+								return mMap.put(key, value);
 							}
 						};
 					}
@@ -156,8 +158,9 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 		};
 	}
 	
+	@Override
 	public Iterable<K> currentScopeKeys() {
-		if (mcurScope == -1) {
+		if (mCurScope == -1) {
 			return keySet();
 		}
 		return new AbstractSet<K>() {
@@ -194,7 +197,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 	
 	public Iterable<V> currentScopeValues() {
-		if (mcurScope == -1) {
+		if (mCurScope == -1) {
 			return values();
 		}
 		return new AbstractSet<V>() {
@@ -212,7 +215,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 					@Override
 					public V next() {
-						return mmap.get((mlast = mbacking.next()).getKey());
+						return mMap.get((mlast = mbacking.next()).getKey());
 					}
 
 					@Override
@@ -233,32 +236,33 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
-		mmap.clear();
-		mhistory = new LinkedHashMap[ScopeUtils.NUM_INITIAL_SCOPES];
+		mMap.clear();
+		mHistory = new LinkedHashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 	}
 
 	@Override
 	public boolean containsKey(Object key) {
-		return mmap.containsKey(key);
+		return mMap.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
-		return mmap.containsValue(value);
+		return mMap.containsValue(value);
 	}
 
 	@Override
 	public V get(Object key) {
-		return mmap.get(key);
+		return mMap.get(key);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return mmap.isEmpty();
+		return mMap.isEmpty();
 	}
 	
+	@Override
 	public boolean isEmptyScope() {
-		return mcurScope == -1;
+		return mCurScope == -1;
 	}
 
 	@Override
@@ -269,7 +273,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 			public Iterator<Entry<K,V>> iterator() {
 				return new Iterator<Entry<K,V>>() {
 
-					Iterator<Entry<K,V>> mbacking = mmap.entrySet().iterator();
+					Iterator<Entry<K,V>> mbacking = mMap.entrySet().iterator();
 					Entry<K,V> mlast;
 					
 					@Override
@@ -292,7 +296,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 
 			@Override
 			public int size() {
-				return mmap.size();
+				return mMap.size();
 			}
 		};
 	}
@@ -302,7 +306,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 		if (value == null) {
 			throw new NullPointerException();
 		}
-		final V oldval = mmap.put(key, value);
+		final V oldval = mMap.put(key, value);
 		recordUndo(key, oldval);
 		return oldval;
 	}
@@ -310,18 +314,18 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public V remove(Object key) {
-		final V oldval = mmap.remove(key);
+		final V oldval = mMap.remove(key);
 		recordUndo((K) key, oldval);
 		return oldval;
 	}
 
 	@Override
 	public int size() {
-		return mmap.size();
+		return mMap.size();
 	}
 	
 	public int getActiveScopeNum() {
-		return mcurScope + 1;
+		return mCurScope + 1;
 	}
 
 	/**
@@ -332,7 +336,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> {
 	 */
 	public boolean overwritesKeyInScope(Object key, int scope) {
 		assert(scope != 0);
-		return mhistory[scope-1].containsKey(key);
+		return mHistory[scope-1].containsKey(key);
 	}
 
 }
