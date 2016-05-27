@@ -147,8 +147,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IResultStateConstructor<STATE> resStateConstructor,
 			final IPartition<STATE> partition) {
 		final Iterator<IBlock<STATE>> blocksIt = partition.blocksIterator();
-		assert (blocksIt.hasNext()) : "There must be at least one statblock.";
-		do {
+		// there needs not be any state for an empty automaton
+		while (blocksIt.hasNext()) {
 			IBlock<STATE> block = blocksIt.next();
 			final Iterator<STATE> statesIt = block.statesIterator();
 			
@@ -175,7 +175,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 					}
 				}
 			}
-		} while (blocksIt.hasNext());
+		}
 	}
 	
 	/**
