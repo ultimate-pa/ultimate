@@ -79,7 +79,8 @@ public abstract class ATester<LETTER, STATE> {
 	 * @throws any
 	 *             type of throwable
 	 */
-	public abstract void execute(final INestedWordAutomaton<LETTER, STATE> automaton);
+	@SuppressWarnings("squid:S00112")
+	public abstract void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable;
 
 	@Override
 	public String toString() {
