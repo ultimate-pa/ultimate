@@ -343,8 +343,8 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
-					rhs = initializer.lrVal.getValue();
 					main.mCHandler.convert(loc, initializer, lCType);
+					rhs = initializer.lrVal.getValue();
 				}
 				break;
 			case VOID:
