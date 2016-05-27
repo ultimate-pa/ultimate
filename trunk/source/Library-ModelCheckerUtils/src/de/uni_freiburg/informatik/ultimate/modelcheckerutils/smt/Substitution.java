@@ -41,10 +41,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 /**
  * Substitutes TermVariables by Terms. Takes care that no quantified 
  * TermVariable is substituted. 
+ * 2016-05-27 Matthias: This class is superseded by {@link SafeSubstitution}
+ * and hence marked as deprecated.
  * 
  * @author Matthias Heizmann
  *
  */
+@Deprecated
 public class Substitution {
 	private final Map<TermVariable,Term> mMapping;
 	private final Script mScript;
