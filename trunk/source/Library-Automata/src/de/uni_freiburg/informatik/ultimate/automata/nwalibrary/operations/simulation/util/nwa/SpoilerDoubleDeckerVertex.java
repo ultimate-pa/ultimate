@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 
 /**
@@ -43,10 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * whereas <i>Duplicator</i> now is at q1 and later must respond to
  * <i>Spoiler</i>s decision. The bit encodes extra information if needed.
  * 
- * This object extends regular SpoilerVertices by giving it a set of down
- * states. Both, the left and right, states are interpreted as up states and can
- * have multiple down states. Thus a vertex represents a combination of double
- * decker states.
+ * This object extends regular SpoilerVertices by giving it a down state. Both,
+ * the left and right, states are interpreted as up states and can have one down
+ * state each. Thus a vertex represents a combination of double decker states.
  * 
  * @author Daniel Tischner
  * 
@@ -59,6 +54,10 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		implements IHasVertexDownStates<STATE> {
 
 	/**
+	 * If the down state configuration is marked as safe.
+	 */
+	private boolean mIsVertexDownStateSafe;
+	/**
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
@@ -69,10 +68,9 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
-	 * Internal map of all down state configurations of the vertex and if they
-	 * are marked as safe.
+	 * Down state configuration of the vertex.
 	 */
-	private final HashMap<VertexDownState<STATE>, Boolean> mVertexDownStates;
+	private final VertexDownState<STATE> mVertexDownState;
 
 	/**
 	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
@@ -91,9 +89,12 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            The state spoiler is at, interpreted as up state
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
+	 * @param vertexDownState
+	 *            The vertexDownState of the vertex
 	 */
-	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
-		this(priority, b, q0, q1, null, null);
+	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
+			final VertexDownState<STATE> vertexDownState) {
+		this(priority, b, q0, q1, vertexDownState, null, null);
 	}
 
 	/**
@@ -113,13 +114,15 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            The state spoiler is at, interpreted as up state
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
+	 * @param vertexDownState
+	 *            The vertexDownState of the vertex
 	 * @param sink
 	 *            The sink this vertex belongs to if it is generated as a shadow
 	 *            vertex for such.
 	 */
 	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final DuplicatorWinningSink<LETTER, STATE> sink) {
-		this(priority, b, q0, q1, null, sink);
+			final VertexDownState<STATE> vertexDownState, final DuplicatorWinningSink<LETTER, STATE> sink) {
+		this(priority, b, q0, q1, vertexDownState, null, sink);
 	}
 
 	/**
@@ -139,13 +142,15 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            The state spoiler is at, interpreted as up state
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
+	 * @param vertexDownState
+	 *            The vertexDownState of the vertex
 	 * @param summarizeEdge
 	 *            The summarize edge this vertex belongs to if it is generated
 	 *            as a shadow vertex.
 	 */
 	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		this(priority, b, q0, q1, summarizeEdge, null);
+			final VertexDownState<STATE> vertexDownState, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+		this(priority, b, q0, q1, vertexDownState, summarizeEdge, null);
 	}
 
 	/**
@@ -165,6 +170,8 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            The state spoiler is at, interpreted as up state
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
+	 * @param vertexDownState
+	 *            The vertexDownState of the vertex
 	 * @param summarizeEdge
 	 *            The summarize edge this vertex belongs to if it is generated
 	 *            as a shadow vertex.
@@ -173,28 +180,13 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            vertex for such.
 	 */
 	private SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge, final DuplicatorWinningSink<LETTER, STATE> sink) {
+			final VertexDownState<STATE> vertexDownState, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1);
-		mVertexDownStates = new HashMap<>();
+		mVertexDownState = vertexDownState;
+		mIsVertexDownStateSafe = false;
 		mSummarizeEdge = summarizeEdge;
 		mSink = sink;
-	}
-
-	/**
-	 * Adds a given vertex down state to the vertex if not already present. It
-	 * gets initially marked as not safe.
-	 * 
-	 * @param vertexDownState
-	 *            Configuration to add
-	 * @return If the given configuration was added to the vertex, i.e. if it
-	 *         was not already present.
-	 */
-	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		if (!mVertexDownStates.containsKey(vertexDownState)) {
-			mVertexDownStates.put(vertexDownState, false);
-			return true;
-		}
-		return false;
 	}
 
 	/*
@@ -214,6 +206,13 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 			return false;
 		}
 		final SpoilerDoubleDeckerVertex<?, ?> other = (SpoilerDoubleDeckerVertex<?, ?>) obj;
+		if (mVertexDownState == null) {
+			if (other.mVertexDownState != null) {
+				return false;
+			}
+		} else if (!mVertexDownState.equals(other.mVertexDownState)) {
+			return false;
+		}
 		if (mSink == null) {
 			if (other.mSink != null) {
 				return false;
@@ -249,14 +248,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
-		boolean isFirstVertexDownState = true;
-		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
-			if (!isFirstVertexDownState) {
-				sb.append(",");
-			}
-			sb.append(vertexDownState.toString());
-			isFirstVertexDownState = false;
-		}
+		sb.append(mVertexDownState.toString());
 		sb.append("}");
 		return sb.toString();
 	}
@@ -285,11 +277,11 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#getVertexDownStates()
+	 * simulation.util.nwa.IHasVertexDownStates#getVertexDownState()
 	 */
 	@Override
-	public Set<VertexDownState<STATE>> getVertexDownStates() {
-		return Collections.unmodifiableSet(mVertexDownStates.keySet());
+	public VertexDownState<STATE> getVertexDownState() {
+		return mVertexDownState;
 	}
 
 	/*
@@ -301,6 +293,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + ((mVertexDownState == null) ? 0 : mVertexDownState.hashCode());
 		result = prime * result + ((mSink == null) ? 0 : mSink.hashCode());
 		result = prime * result + ((mSummarizeEdge == null) ? 0 : mSummarizeEdge.hashCode());
 		return result;
@@ -328,35 +321,29 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return mVertexDownStates.containsKey(vertexDownState);
+		return mVertexDownState.equals(vertexDownState);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#isVertexDownStateSafe(de.
-	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.VertexDownState)
+	 * simulation.util.nwa.IHasVertexDownStates#isVertexDownStateSafe()
 	 */
 	@Override
-	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState) {
-		return mVertexDownStates.get(vertexDownState);
+	public Boolean isVertexDownStateSafe() {
+		return mIsVertexDownStateSafe;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#setVertexDownStateSafe(de.
-	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.VertexDownState, boolean)
+	 * simulation.util.nwa.IHasVertexDownStates#setVertexDownStateSafe(boolean)
 	 */
 	@Override
-	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe) {
-		if (mVertexDownStates.containsKey(vertexDownState)) {
-			mVertexDownStates.put(vertexDownState, isSafe);
-		}
+	public void setVertexDownStateSafe(final boolean isSafe) {
+		mIsVertexDownStateSafe = isSafe;
 	}
 
 	/*
@@ -377,14 +364,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
-		boolean isFirstVertexDownState = true;
-		for (final VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
-			if (!isFirstVertexDownState) {
-				sb.append(",");
-			}
-			sb.append(vertexDownState.toString());
-			isFirstVertexDownState = false;
-		}
+		sb.append(mVertexDownState.toString());
 		sb.append("}");
 
 		sb.append("),p:").append(getPriority()).append(",pm:").append(pm);

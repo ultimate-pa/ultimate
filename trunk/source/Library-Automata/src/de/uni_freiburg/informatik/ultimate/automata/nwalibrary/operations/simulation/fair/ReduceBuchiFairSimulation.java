@@ -400,7 +400,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	private static void logMessage(final String message, final ILogger logger) {
 		if (logger != null) {
-			logger.debug(message);
+			if (logger.isDebugEnabled()) {
+				logger.debug(message);
+			}
 		} else {
 			System.out.println(message);
 		}

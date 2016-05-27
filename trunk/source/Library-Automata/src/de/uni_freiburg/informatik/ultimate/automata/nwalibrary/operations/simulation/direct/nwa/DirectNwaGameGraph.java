@@ -194,7 +194,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 */
 	@Override
 	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
-		// Do noting to accept nwa automata
+		// Do nothing to accept nwa automata
 	}
 
 }

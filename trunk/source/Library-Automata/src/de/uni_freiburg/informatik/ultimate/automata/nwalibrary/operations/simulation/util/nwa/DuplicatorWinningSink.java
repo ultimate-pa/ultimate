@@ -64,8 +64,9 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	public DuplicatorWinningSink(final SpoilerDoubleDeckerVertex<LETTER, STATE> sinkEntry) {
 		mSinkEntry = sinkEntry;
 		mDuplicatorSink = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				ETransitionType.SINK, this);
-		mSpoilerSink = new SpoilerDoubleDeckerVertex<LETTER, STATE>(0, false, null, null, this);
+				new VertexDownState<STATE>(null, null), ETransitionType.SINK, this);
+		mSpoilerSink = new SpoilerDoubleDeckerVertex<LETTER, STATE>(0, false, null, null,
+				new VertexDownState<STATE>(null, null), this);
 	}
 
 	/**

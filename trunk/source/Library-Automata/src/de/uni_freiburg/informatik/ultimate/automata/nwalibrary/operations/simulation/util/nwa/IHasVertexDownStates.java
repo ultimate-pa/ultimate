@@ -26,10 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
-import java.util.Set;
-
 /**
- * Interface for objects that have {@link VertexDownState}s.
+ * Interface for objects that have a {@link VertexDownState}.
  * 
  * @author Daniel Tischner
  *
@@ -38,12 +36,11 @@ import java.util.Set;
  */
 public interface IHasVertexDownStates<STATE> {
 	/**
-	 * Gets an unmodifiable set of all vertex down states of this object.
+	 * Gets the vertex down states of this object.
 	 * 
-	 * @return Returns an unmodifiable set of all vertex down states of this
-	 *         object.
+	 * @return The vertex down states of this object.
 	 */
-	public Set<VertexDownState<STATE>> getVertexDownStates();
+	public VertexDownState<STATE> getVertexDownState();
 
 	/**
 	 * Returns if the object has a given vertex down state.
@@ -66,22 +63,18 @@ public interface IHasVertexDownStates<STATE> {
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState);
 
 	/**
-	 * Returns whether a given vertex down state is marked as safe or not.
+	 * Returns whether the given vertex down state is marked as safe or not.
 	 * 
-	 * @param vertexDownState
-	 *            Down state configuration in ask
-	 * @return Whether the given vertex down state is marked as safe or not. Returns <tt>null</tt> if the element is not contained.
+	 * @return Whether the given vertex down state is marked as safe or not.
 	 */
-	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState);
+	public Boolean isVertexDownStateSafe();
 
 	/**
-	 * Sets whether a given vertex down state is marked as safe or not. The vertex must already be contained.
+	 * Sets whether the given vertex down state is marked as safe or not.
 	 * 
-	 * @param vertexDownState
-	 *            Down state configuration to mark which needs to be contained already
 	 * @param isSafe
 	 *            Whether the given vertex down state should be marked as safe
 	 *            or not
 	 */
-	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe);
+	public void setVertexDownStateSafe(final boolean isSafe);
 }

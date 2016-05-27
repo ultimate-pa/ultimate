@@ -296,7 +296,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	@Override
 	public void doSimulation() throws AutomataOperationCanceledException {
-		mLogger.debug("Fair Game Graph has " + mGame.getSize() + " vertices.");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Fair Game Graph has " + mGame.getSize() + " vertices.");
+		}
 		mGlobalInfinity = mGame.getGlobalInfinity();
 
 		final SimulationPerformance performance = super.getSimulationPerformance();

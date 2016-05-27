@@ -95,10 +95,11 @@ public final class SummarizeEdge<LETTER, STATE> {
 		mDest = dest;
 		mSpoilerInvoker = spoilerInvoker;
 		mDuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				ETransitionType.SUMMARIZE_ENTRY, this);
-		mSpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
+				new VertexDownState<STATE>(null, null), ETransitionType.SUMMARIZE_ENTRY, this);
+		mSpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null,
+				new VertexDownState<STATE>(null, null), this);
 		mDuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				ETransitionType.SUMMARIZE_EXIT, this);
+				new VertexDownState<STATE>(null, null), ETransitionType.SUMMARIZE_EXIT, this);
 	}
 
 	/**
