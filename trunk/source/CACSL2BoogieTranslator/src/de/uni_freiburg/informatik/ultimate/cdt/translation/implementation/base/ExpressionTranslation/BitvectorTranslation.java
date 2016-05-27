@@ -111,7 +111,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		declareFloatingPointConstructers(loc);
+		declareFloatingPointConstructors(loc);
 		final RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
 		return rVal;
 	}
@@ -345,7 +345,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 	}
 	
-	private void declareFloatingPointConstructers(ILocation loc) {
+	private void declareFloatingPointConstructors(ILocation loc) {
 		final ASTType[] paramASTTypes = new ASTType[2];
 		
 		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
