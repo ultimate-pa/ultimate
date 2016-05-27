@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
  * @param <K> Key type
  * @param <V> Value type
  */
-public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
+public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap<K, V> {
 
 	private final HashMap<K, V> mMap;
 	private HashMap<K, V>[] mHistory;
@@ -94,6 +94,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 	
+	@Override
 	public void beginScope() {
 		if (mCurScope == mHistory.length - 1) {
 			mHistory = ScopeUtils.grow(mHistory);
@@ -101,6 +102,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 		mHistory[++mCurScope] = new HashMap<K, V>();
 	}
 	
+	@Override
 	public void endScope() {
 		for (final Entry<K, V> old : undoMap().entrySet()) {
 			undoEntry(old);
@@ -164,6 +166,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 		};
 	}
 	
+	@Override
 	public Iterable<K> currentScopeKeys() {
 		if (mCurScope == -1) {
 			return keySet();
@@ -267,6 +270,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> {
 		return mMap.isEmpty();
 	}
 	
+	@Override
 	public boolean isEmptyScope() {
 		return mCurScope == -1;
 	}

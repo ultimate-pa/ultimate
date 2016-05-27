@@ -111,7 +111,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		declareFloatingPointConstructers(loc);
+		declareFloatingPointConstructors(loc);
 		final RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
 		return rVal;
 	}
@@ -345,7 +345,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 	}
 	
-	private void declareFloatingPointConstructers(ILocation loc) {
+	private void declareFloatingPointConstructors(ILocation loc) {
 		final ASTType[] paramASTTypes = new ASTType[2];
 		
 		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
@@ -509,6 +509,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
+		
 		Expression result;
 		boolean isNegated = false;
 		final String funcname;
@@ -536,9 +537,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
 		
-		declareFloatingPointFunction(loc, funcname, funcname, true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
+		declareFloatingPointFunction(loc, funcname, funcname + type1.toString(), true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
 		//TODO: evaluate possiblities for boogiefunctionnames
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{exp1, exp2});
 		
 		if (isNegated) {
 			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -559,8 +560,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareFloatingPointFunction(loc, funcname, funcname, false, false, type, null, type);
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp});
+		declareFloatingPointFunction(loc, funcname, funcname + type.toString(), false, false, type, null, type);
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type.toString(), new Expression[]{exp});
 		return result;
 	}
 
@@ -600,8 +601,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		if (isRounded) {
-			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, type1, type2);
-			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{getRoundingMode(), exp1, exp2});
+			declareFloatingPointFunction(loc, funcname, funcname + type1.toString(), false, isRounded, type1, null, type1, type2);
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{getRoundingMode(), exp1, exp2});
 		} else {
 			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, type1, type2);
 			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
