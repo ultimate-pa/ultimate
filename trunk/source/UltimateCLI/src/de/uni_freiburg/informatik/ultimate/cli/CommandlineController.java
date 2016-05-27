@@ -94,7 +94,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 		mLogger.info("Initializing CommandlineController...");
 
 		// parse command line parameters and select ultimate mode
-		final CommandLineParser cmdParser = new CommandLineParser();
+		final OldCommandLineParser cmdParser = new OldCommandLineParser();
 		cmdParser.parse(Platform.getCommandLineArgs());
 
 		// determine Ultimate's mode

@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * @author Christian Simon
  * 
  */
-public class CommandLineParser {
+public class OldCommandLineParser {
 
 	private boolean mInteractiveMode = false;
 	private boolean mConsoleMode = false;
@@ -48,7 +48,7 @@ public class CommandLineParser {
 	private static final String s_PLUGIN_NAME = "Command Line Parser";
 	private static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.core.model.coreplugin.CommandLineParser";
 
-	public CommandLineParser() {
+	public OldCommandLineParser() {
 
 	}
 
