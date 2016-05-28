@@ -78,6 +78,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
+	private int mNumberClauses_Acceptance = 0;
+	private int mNumberClauses_Transitions = 0;
+	private int mNumberClauses_Transitivity = 0;
 	
 	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
 			IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState)
@@ -98,6 +101,10 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		generateVariables();
 		generateTransitionConstraints();
 		generateTransitivityConstraints();
+		mLogger.info("Number of clauses for acceptance: " + mNumberClauses_Acceptance
+				+ " Number of clauses for transitions: " + mNumberClauses_Transitions
+				+ " Number of clauses for transitivity: " + mNumberClauses_Transitivity
+				);
 		final boolean satisfiable = mSolver.solve();
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
@@ -125,86 +132,21 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private UnionFind<STATE> constructEquivalenceClasses() throws AssertionError {
 		final UnionFind<STATE> resultingEquivalenceClasses;
 		resultingEquivalenceClasses = new UnionFind<>();
-		for (final Entry<Doubleton<STATE>, VariableStatus> entry : mSolver.getValues().entrySet()) {
-			switch (entry.getValue()) {
-			case TRUE:
+		for (final Entry<Doubleton<STATE>, Boolean> entry : mSolver.getValues().entrySet()) {
+			if (entry.getValue() == null) {
+				throw new AssertionError("value not determined " + entry.getKey());
+			}
+			if (entry.getValue()) {
 				final STATE rep1 = resultingEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(
 						entry.getKey().getOneElement());
 				final STATE rep2 = resultingEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(
 						entry.getKey().getOtherElement());
 				resultingEquivalenceClasses.union(rep1, rep2);
-				break;
-			case FALSE:
+			} else {
 				// do nothing
-				break;
-			case UNSET:
-				throw new AssertionError("value not determined " + entry.getKey());
-			default:
-				throw new AssertionError("unknown value " + entry.getKey());
 			}
 		}
 		return resultingEquivalenceClasses;
-	}
-
-	private void processDoubleton(Doubleton<STATE> doubleton, ArrayDeque<Doubleton<STATE>> worklist) {
-		final STATE one = doubleton.getOneElement();
-		final STATE other = doubleton.getOtherElement();
-		// internal
-		for (final IncomingInternalTransition<LETTER, STATE> trans1 : mOperand.internalPredecessors(one)) {
-			for (final IncomingInternalTransition<LETTER, STATE> trans2 : mOperand.internalPredecessors(trans1.getLetter(), other)) {
-				if (!trans1.getPred().equals(trans2.getPred())) {
-					final Doubleton<STATE> predDoubleton = mStatePairs.get(trans1.getPred(), trans2.getPred());
-					if (!mProcessedDoubletons.contains(predDoubleton)) {
-						worklist.add(predDoubleton);
-						mProcessedDoubletons.add(predDoubleton);
-					}
-					mSolver.addHornClause(consArr(predDoubleton), doubleton);
-				}
-			}
-		}
-		// call
-		for (final IncomingCallTransition<LETTER, STATE> trans1 : mOperand.callPredecessors(one)) {
-			for (final IncomingCallTransition<LETTER, STATE> trans2 : mOperand.callPredecessors(trans1.getLetter(), other)) {
-				if (!trans1.getPred().equals(trans2.getPred())) {
-					final Doubleton<STATE> predDoubleton = mStatePairs.get(trans1.getPred(), trans2.getPred());
-					if (!mProcessedDoubletons.contains(predDoubleton)) {
-						worklist.add(predDoubleton);
-						mProcessedDoubletons.add(predDoubleton);
-					}
-					mSolver.addHornClause(consArr(predDoubleton), doubleton);
-				}
-			}
-		}
-		
-		// return
-		for (final IncomingReturnTransition<LETTER, STATE> trans1 : mOperand.returnPredecessors(one)) {
-			for (final IncomingReturnTransition<LETTER, STATE> trans2 : mOperand.returnPredecessors(trans1.getLetter(), other)) {
-				final Doubleton<STATE> linPredDoubleton = mStatePairs.get(trans1.getLinPred(), trans2.getLinPred());
-				final Doubleton<STATE> hierPredDoubleton = mStatePairs.get(trans1.getHierPred(), trans2.getHierPred());
-				if (!trans1.getLinPred().equals(trans2.getLinPred())) {
-					assert linPredDoubleton != null;
-					if (!mProcessedDoubletons.contains(linPredDoubleton)) {
-						worklist.add(linPredDoubleton);
-						mProcessedDoubletons.add(linPredDoubleton);
-					}
-					if (!trans1.getHierPred().equals(trans2.getHierPred())) {
-						assert hierPredDoubleton != null;
-						mSolver.addHornClause(consArr(linPredDoubleton, hierPredDoubleton), doubleton);
-					} else {
-						assert hierPredDoubleton == null;
-						mSolver.addHornClause(consArr(linPredDoubleton), doubleton);
-					}
-				} else {
-					if (!trans1.getHierPred().equals(trans2.getHierPred())) {
-						assert hierPredDoubleton != null;
-						mSolver.addHornClause(consArr(hierPredDoubleton), doubleton);
-					} else {
-						assert hierPredDoubleton == null;
-						// add nothing
-					}
-				}
-			}
-		}
 	}
 
 	private void generateVariables() throws AutomataOperationCanceledException {
@@ -218,6 +160,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 					mSolver.addVariable(doubleton);
 					if (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j])) {
 						mSolver.addHornClause(consArr(doubleton), null);
+						mNumberClauses_Acceptance++;
 					}
 				}
 			}
@@ -363,9 +306,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 				throw new AssertionError("clause must not be empty");
 			} else {
 				mSolver.addHornClause(new Doubleton[0], positiveAtom);
+				mNumberClauses_Transitions++;
 			}
 		} else {
 			mSolver.addHornClause(consArr(negativeAtom), positiveAtom);
+			mNumberClauses_Transitions++;
 		}
 	}
 	
@@ -377,6 +322,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 			addTwoLiteralHornClause(negativeAtom1, positiveAtom);
 		} else {
 			mSolver.addHornClause(consArr(negativeAtom1, negativeAtom2), positiveAtom);
+			mNumberClauses_Transitions++;
 		}
 	}
 
@@ -410,23 +356,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private boolean solverSaysDifferent(STATE inputState1, STATE inputState2) {
 		assert haveSimilarEquivalenceClass(inputState1, inputState2) : "check not available";
 		final Doubleton<STATE> doubleton = mStatePairs.get(inputState1, inputState2);
-		if (mSolver.getValues().get(doubleton) == VariableStatus.FALSE) {
-			return true;
-		} else {
-			// solver does not know the answer yet
-			return false;
-		}
+		final Boolean value = mSolver.getValues().get(doubleton);
+		return (value != null) && !value;
 	}
 	
 	private boolean solverSaysSimilar(STATE inputState1, STATE inputState2) {
 		assert haveSimilarEquivalenceClass(inputState1, inputState2) : "check not available";
 		final Doubleton<STATE> doubleton = mStatePairs.get(inputState1, inputState2);
-		if (mSolver.getValues().get(doubleton) == VariableStatus.TRUE) {
-			return true;
-		} else {
-			// solver does not know the answer yet
-			return false;
-		}
+		final Boolean value = mSolver.getValues().get(doubleton);
+		return (value != null) && !value;
 	}
 	
 	private boolean knownToBeSimilar(STATE inputState1, STATE inputState2) {
@@ -460,6 +398,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 						mSolver.addHornClause(consArr(doubleton_ij, doubleton_jk), doubleton_ik);
 						mSolver.addHornClause(consArr(doubleton_jk, doubleton_ik), doubleton_ij);
 						mSolver.addHornClause(consArr(doubleton_ik, doubleton_ij), doubleton_jk);
+						mNumberClauses_Transitivity = mNumberClauses_Transitivity + 3;
 					}
 					checkTimeout();
 				}
