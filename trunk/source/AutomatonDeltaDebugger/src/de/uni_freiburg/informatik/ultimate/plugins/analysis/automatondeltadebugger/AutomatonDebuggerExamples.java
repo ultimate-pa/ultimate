@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -104,5 +105,22 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 						new AutomataLibraryServices(mServices), automaton)
 								.getResult(),
 				false);
+	}
+	
+	/**
+	 * @param automaton automaton
+	 * @param factory state factory
+	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
+	 * @throws Throwable when error occurs
+	 */
+	@SuppressWarnings("squid:S00112")
+	public IOperation<LETTER, STATE> shrinkNwa(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final StateFactory<STATE> factory) throws Throwable {
+		return new ShrinkNwa<LETTER, STATE>(
+				new AutomataLibraryServices(mServices), factory,
+				new RemoveUnreachable<LETTER, STATE>(
+						new AutomataLibraryServices(mServices), automaton)
+								.getResult());
 	}
 }
