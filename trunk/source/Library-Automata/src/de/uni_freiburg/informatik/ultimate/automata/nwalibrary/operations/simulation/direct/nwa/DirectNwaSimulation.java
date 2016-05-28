@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -39,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
- * For more information on the type of simulation see
- * {@link DirectNwaGameGraph}.
+ * For more information on the type of simulation see {@link DirectNwaGameGraph}
+ * .
  * 
  * @author Daniel Tischner
  *
@@ -97,13 +98,24 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff
-		getLogger().debug("Simulation results:");
-		for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
-			final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
-			if (progressMeasure >= getGameGraph().getGlobalInfinity() || (vertex.getQ0() == vertex.getQ1())) {
-				continue;
+		if (getLogger().isDebugEnabled()) {
+			getLogger().debug("Simulation results (filtered):");
+			for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+				final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
+				if (!(vertex instanceof SpoilerDoubleDeckerVertex<?, ?>)
+						|| (progressMeasure >= getGameGraph().getGlobalInfinity() && (vertex.getQ0() != vertex.getQ1()))
+						|| (progressMeasure < getGameGraph().getGlobalInfinity() && (vertex.getQ0() == vertex.getQ1()))) {
+					continue;
+				}
+				SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
+				String progressMeasureText = progressMeasure + "";
+				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
+					progressMeasureText = "inf";
+				}
+				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + "; ["
+						+ vertexAsDD.getVertexDownState().getLeftDownState() + ", "
+						+ vertexAsDD.getVertexDownState().getRightDownState() + "]) = " + progressMeasureText);
 			}
-			getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + ") = " + progressMeasure);
 		}
 	}
 }

@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -97,15 +98,24 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff
-		getLogger().debug("Simulation results:");
-		for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
-			final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
-			String progressMeasureText = progressMeasure + "";
-			if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
-				progressMeasureText = "inf";
+		if (getLogger().isDebugEnabled()) {
+			getLogger().debug("Simulation results (filtered):");
+			for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+				final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
+				if (!(vertex instanceof SpoilerDoubleDeckerVertex<?, ?>)
+						|| (progressMeasure >= getGameGraph().getGlobalInfinity() && (vertex.getQ0() != vertex.getQ1()))
+						|| (progressMeasure < getGameGraph().getGlobalInfinity() && (vertex.getQ0() == vertex.getQ1()))) {
+					continue;
+				}
+				SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
+				String progressMeasureText = progressMeasure + "";
+				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
+					progressMeasureText = "inf";
+				}
+				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + "; ["
+						+ vertexAsDD.getVertexDownState().getLeftDownState() + ", "
+						+ vertexAsDD.getVertexDownState().getRightDownState() + "]) = " + progressMeasureText);
 			}
-			getLogger().debug(
-					"\t(" + vertex.getQ0() + "," + vertex.getQ1() + ", " + vertex.isB() + ") = " + progressMeasureText);
 		}
 	}
 }

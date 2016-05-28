@@ -126,7 +126,10 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+//		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+		// TODO Enable the correct simulation again when DD problems are resolved
+		@SuppressWarnings("unchecked")
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = (INestedWordAutomatonOldApi<LETTER, STATE>) mNwa;
 
 		// Log performance
 		if (performance != null) {

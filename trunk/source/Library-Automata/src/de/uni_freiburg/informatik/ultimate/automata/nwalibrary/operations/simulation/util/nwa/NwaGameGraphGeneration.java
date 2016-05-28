@@ -115,6 +115,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final HashSet<DuplicatorDoubleDeckerVertex<LETTER, STATE>> mDuplicatorReturningVertices;
 	/**
+	 * Data structure of all spoiler vertices that may end up being a dead end,
+	 * because they can not take a return-transition due to their down state.
+	 */
+	private final HashSet<SpoilerDoubleDeckerVertex<LETTER, STATE>> mPossibleSpoilerDeadEnd;
+	/**
 	 * Map of all duplicator winning sinks of the graph. Provides a fast access
 	 * via the sink entry.
 	 */
@@ -211,6 +216,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
 		mAutomatonStatesToGraphSpoilerVertex = new HashMap<>();
 		mDuplicatorReturningVertices = new HashSet<>();
+		mPossibleSpoilerDeadEnd = new HashSet<>();
 		mSrcDestToSummarizeEdges = new NestedMap2<>();
 		mReturnInvokerOmittedSuccessors = new HashMap<>();
 		mReturnInvokerOmittedPredecessors = new HashMap<>();
@@ -232,6 +238,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public void clear() {
 		mBottomVertices.clear();
+		mPossibleSpoilerDeadEnd.clear();
 		mDuplicatorReturningVertices.clear();
 		mEntryToSink.clear();
 		mSrcDestToSummarizeEdges.clear();
@@ -1100,6 +1107,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		generateVertices();
 		generateRegularEdges();
+		patchSpoilerDeadEnds();
 
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.COMPUTE_SAFE_VERTEX_DOWN_STATES);
 		computeSafeVertexDownStates();
@@ -1116,6 +1124,44 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		clear();
 
 		mSimulationPerformance.stopTimeMeasure(ETimeMeasure.BUILD_GRAPH);
+	}
+
+	/**
+	 * Transforms dead ending spoiler vertices into instant wins for Duplicator
+	 * by adding a Duplicator-Winning-Sink. Such vertices may occur if they can
+	 * not use a return-transition due to their down state and if no other
+	 * transitions are available.<br/>
+	 * <br/>
+	 * In direct simulation it correctly takes care of spoiler vertices that are
+	 * directly loosing for Duplicator. Such vertices need to form a legal win
+	 * for Spoiler though they are dead-ends.
+	 */
+	public void patchSpoilerDeadEnds() {
+		for (SpoilerDoubleDeckerVertex<LETTER, STATE> possibleDeadEnd : mPossibleSpoilerDeadEnd) {
+			// Do not take a look at the vertex if we are in direct simulation
+			// and the vertex is directly loosing. It then needs to stay a
+			// dead-end.
+			if (mSimulationType == ESimulationType.DIRECT
+					&& doesLooseInDirectSim(possibleDeadEnd.getQ0(), possibleDeadEnd.getQ1())) {
+				continue;
+			}
+			// Do not take a look at the vertex if it is no dead end. This is
+			// possible if the vertex has other alternatives than the
+			// return-transition, which it can not use.
+			if (mGameGraph.hasSuccessors(possibleDeadEnd)) {
+				continue;
+			}
+
+			// Patch the dead end into an instant win for Duplicator
+			addDuplicatorWinningSink(possibleDeadEnd);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("\tPatched spoiler dead-end: " + possibleDeadEnd);
+			}
+		}
+
+		// We do not need this data structure anymore
+		mPossibleSpoilerDeadEnd.clear();
 	}
 
 	/**
@@ -1387,6 +1433,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								}
 								omittedSuccessors.add(dest);
 								mReturnInvokerOmittedSuccessors.put(src, omittedSuccessors);
+								if (mLogger.isDebugEnabled()) {
+									mLogger.debug("\tAdded to omittedSuccessors: " + dest);
+								}
 							}
 
 							// Remember vertex since we need it later for
@@ -1394,6 +1443,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							// edge generation
 							if (src instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 								mDuplicatorReturningVertices.add((DuplicatorDoubleDeckerVertex<LETTER, STATE>) src);
+								if (mLogger.isDebugEnabled()) {
+									mLogger.debug("\tAdded to duplicatorReturningVertices: " + src);
+								}
 							}
 						}
 
@@ -1417,6 +1469,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								// summarize edge generation
 								if (src instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 									mDuplicatorReturningVertices.add((DuplicatorDoubleDeckerVertex<LETTER, STATE>) src);
+									if (mLogger.isDebugEnabled()) {
+										mLogger.debug("\tAdded to duplicatorReturningVertices: " + src);
+									}
 								}
 							}
 						}
@@ -1455,6 +1510,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								}
 								omittedPredecessors.add(dest);
 								mReturnInvokerOmittedPredecessors.put(src, omittedPredecessors);
+								if (mLogger.isDebugEnabled()) {
+									mLogger.debug("\tAdded to omittedPredecessors: " + src);
+								}
 							}
 						}
 						// For delayed simulation we also need to account for
@@ -1665,6 +1723,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Remove not reachable vertex
 			removeDuplicatorVertex(returnInvoker);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("\tRemoved duplicatorReturn: " + returnInvoker);
+			}
 
 			// Add push-over edges that are generated by the return invoker
 			if (mSimulationType == ESimulationType.DIRECT) {
@@ -1693,6 +1754,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
 					for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 						mGameGraph.addPushOverEdge(pred, succ);
+
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("\tAdded pushOver: " + pred + " -> " + succ);
+						}
 					}
 				}
 			}
@@ -1957,6 +2022,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mGameGraph.addEdge(sinkEntry, duplicatorSink);
 			mGameGraph.addEdge(duplicatorSink, spoilerSink);
 			mGameGraph.addEdge(spoilerSink, duplicatorSink);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("\tAdded duplicatorWinningSink: " + sinkEntry);
+			}
 		}
 	}
 
@@ -1998,6 +2067,29 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// since duplicator vertices with no predecessors do not
 				// exist in our game graphs.
 				mBottomVertices.add(spoilerVertex);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("\tAdded to bottomVertices: " + spoilerVertex);
+				}
+			}
+
+			// Memorize vertices that possible end up as dead-ends because they
+			// can not take a return-transition due to their down state.
+			// Such vertices need to form a instant win for Duplicator.
+			boolean hasInternalSuccessors = mNwa.internalSuccessors(leftState).iterator().hasNext();
+			// Do this in the order of the most unlikely events,
+			// reduces computation time
+			if (!hasInternalSuccessors) {
+				boolean hasReturnSuccessors = mNwa
+						.returnSuccessorsGivenHier(leftState, vertexDownState.getLeftDownState()).iterator().hasNext();
+				if (!hasReturnSuccessors) {
+					boolean hasCallSuccessors = mNwa.callSuccessors(leftState).iterator().hasNext();
+					if (!hasCallSuccessors) {
+						mPossibleSpoilerDeadEnd.add(spoilerVertex);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("\tAdded to possibleSpoilerDeadEnd: " + spoilerVertex);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -2043,6 +2135,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mGameGraph.addEdge(exitShadowVertex, summarizeEdge.getDestination());
 
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("\tAdded summarizeEdge: " + src + " -> " + dest + " ; " + spoilerInvoker);
+			}
 		}
 	}
 
@@ -2261,18 +2357,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// states of the source itself can be possible, since after a call
 			// every configuration changes to the down state configuration of
 			// the summarize edge.
-			Iterator<VertexDownState<STATE>> sourceDownStates = constructAllVertexDownStates(historyDownState.getLeftDownState(), historyDownState.getRightDownState());
+			Iterator<VertexDownState<STATE>> sourceDownStates = constructAllVertexDownStates(
+					historyDownState.getLeftDownState(), historyDownState.getRightDownState());
 			while (sourceDownStates.hasNext()) {
 				VertexDownState<STATE> sourceDownState = sourceDownStates.next();
-				
-				final Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(historyDownState.getLeftDownState(),
-						historyDownState.getRightDownState(), sourceDownState.getLeftDownState(), sourceDownState.getRightDownState(), bitToUse, null, null);
-				if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+
+				final Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(
+						historyDownState.getLeftDownState(), historyDownState.getRightDownState(),
+						sourceDownState.getLeftDownState(), sourceDownState.getRightDownState(), bitToUse, null, null);
+				if (sourceOfSummarizeEdges != null
+						&& sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 					final SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
-					// First we need to validate if the invoking down state forms a
+					// First we need to validate if the invoking down state
+					// forms a
 					// safe down state.
-					// If the down state is unsafe we do not update summarize edges.
-					// We do so by first assuming that the down state is reversely
+					// If the down state is unsafe we do not update summarize
+					// edges.
+					// We do so by first assuming that the down state is
+					// reversely
 					// safe, that is when following outgoing edges to the search
 					// root. The down state then is safe if the computed
 					// source of the summarize edges is a predecessor
@@ -2285,9 +2387,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						return;
 					}
 					// Additionally the down state of the current vertex must be
-					// receivable by using the call transition with any down state
+					// receivable by using the call transition with any down
+					// state
 					// of the summarize edge source vertex.
-					// Search for a corresponding down state to validate safeness of
+					// Search for a corresponding down state to validate
+					// safeness of
 					// the invoking down state.
 					// The right down states must be equal, also the left down
 					// state must change to the called state.

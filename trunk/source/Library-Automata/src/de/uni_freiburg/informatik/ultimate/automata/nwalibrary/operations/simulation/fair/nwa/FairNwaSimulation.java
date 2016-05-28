@@ -132,7 +132,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	@Override
 	public void doSimulation() throws AutomataOperationCanceledException {
 		// super.doSimulation();
-		getLogger().debug(getGameGraph().toAtsFormat());
+		//getLogger().debug(getGameGraph().toAtsFormat());
 		setResult(getGameGraph().generateAutomatonFromGraph());
 		// TODO Implement some different stuff
 	}
