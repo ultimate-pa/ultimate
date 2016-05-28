@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -63,7 +62,6 @@ public class MaxHornSatSolver<V> {
 	private final ILogger mLogger;
 	
 	
-//	private final ScopedHashMap<V,VariableStatus> mVariables = new ScopedHashMap<V,VariableStatus>();
 	private final Set<V> mVariables = new HashSet<V>();
 	private final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<V, Boolean>();
 	private Map<V, Boolean> mVariablesTemporarilySet = new HashMap<V, Boolean>();
@@ -92,7 +90,7 @@ public class MaxHornSatSolver<V> {
 	
 	
 	
-	public MaxHornSatSolver(AutomataLibraryServices services) {
+	public MaxHornSatSolver(final AutomataLibraryServices services) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -102,7 +100,7 @@ public class MaxHornSatSolver<V> {
 	 * Add a new variable. Variables have to be added before they can be
 	 * used in Horn clauses.
 	 */
-	public void addVariable(V var) {
+	public void addVariable(final V var) {
 		final boolean modified = mVariables.add(var);
 		if (!modified) {
 			throw new IllegalArgumentException("variable already added " + var);
@@ -119,7 +117,7 @@ public class MaxHornSatSolver<V> {
 	 * it considered as true. If you want to assert only a negative atom, you
 	 * have to use null as positive Atom
 	 */
-	public void addHornClause(V[] negativeAtoms, V positiveAtom) {
+	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
 			positiveAtoms = (V[]) new Object[0];
@@ -217,20 +215,20 @@ public class MaxHornSatSolver<V> {
 	private void makeModificationsPersistent() {
 		removeClauses(mClausesMarkedForRemoval);
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
-		for (Entry<V, Boolean> entry : mVariablesTemporarilySet.entrySet()) {
+		for (final Entry<V, Boolean> entry : mVariablesTemporarilySet.entrySet()) {
 			mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
 			mUnsetVariables.remove(entry.getKey());
 		}
 		mVariablesTemporarilySet = new HashMap<>();
 	}
 
-	private void backtrack(V var) {
+	private void backtrack(final V var) {
 		mWrongDecisions ++;
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
-		for (V tmpVar : variablesIncorrectlySet) {
+		for (final V tmpVar : variablesIncorrectlySet) {
 			reEvaluateStatusOfAllClauses(tmpVar);
 		}
 		setVariable(var, false);
@@ -274,7 +272,7 @@ public class MaxHornSatSolver<V> {
 	}
 
 	private void reEvaluateClauseStatus(final Clause clause) {
-		boolean wasPropagatee = clause.isPropagatee();
+		final boolean wasPropagatee = clause.isPropagatee();
 		clause.updateClauseCondition();
 		if (clause.isEquivalentToFalse()) {
 			mConjunctionEquivalentToFalse = true;
@@ -290,7 +288,7 @@ public class MaxHornSatSolver<V> {
 			}
 		}
 		if (wasPropagatee && !clause.isPropagatee()) {
-			boolean removed = mPropagatees.remove(clause);
+			final boolean removed = mPropagatees.remove(clause);
 			assert removed : "clause was not there";
 		} else {
 			assert clause.getUnsetAtoms() == 1 || !mPropagatees.contains(clause) : " clause illegal";
@@ -298,7 +296,7 @@ public class MaxHornSatSolver<V> {
 
 	}
 	
-	public void removeClauses(Collection<Clause> clauses) {
+	public void removeClauses(final Collection<Clause> clauses) {
 		for (final Clause clause : clauses) {
 			removeClause(clause);
 		}
@@ -306,7 +304,7 @@ public class MaxHornSatSolver<V> {
 	}
 	
 
-	public void removeClause(Clause clause) {
+	public void removeClause(final Clause clause) {
 		mPropagatees.remove(clause);
 		for (final V var : clause.mPositiveAtoms) {
 			mOccursPositive.removePair(var, clause);
@@ -319,7 +317,7 @@ public class MaxHornSatSolver<V> {
 	private boolean checkClausesConsistent() {
 		boolean consistent = true;
 		final Set<Clause> allClauses = new HashSet<>();
-		for (Entry<V, MaxHornSatSolver<V>.Clause> entry : mOccursPositive.entrySet()) {
+		for (final Entry<V, MaxHornSatSolver<V>.Clause> entry : mOccursPositive.entrySet()) {
 			final Clause clause = entry.getValue();
 			allClauses.add(clause);
 			final ClauseCondition condition = clause.computeClauseCondition();
@@ -328,7 +326,7 @@ public class MaxHornSatSolver<V> {
 				assert consistent;
 			}
 		}
-		for (Entry<V, MaxHornSatSolver<V>.Clause> entry : mOccursNegative.entrySet()) {
+		for (final Entry<V, MaxHornSatSolver<V>.Clause> entry : mOccursNegative.entrySet()) {
 			final Clause clause = entry.getValue();
 			allClauses.add(clause);
 			final ClauseCondition condition = clause.computeClauseCondition();
@@ -338,7 +336,7 @@ public class MaxHornSatSolver<V> {
 			}
 			
 		}
-		for (Clause clause : allClauses) {
+		for (final Clause clause : allClauses) {
 			if (clause.isPropagatee() && !mPropagatees.contains(clause)) {
 				consistent = false;
 				assert consistent;
@@ -350,7 +348,7 @@ public class MaxHornSatSolver<V> {
 			}
 
 		}
-		for (Clause clause : mClausesMarkedForRemoval) {
+		for (final Clause clause : mClausesMarkedForRemoval) {
 			if (clause.getClauseCondition().getClauseStatus() != ClauseStatus.TRUE) {
 				consistent = false;
 				assert consistent;
@@ -360,7 +358,7 @@ public class MaxHornSatSolver<V> {
 				assert consistent;
 			}
 		}
-		for (Clause clause : mPropagatees) {
+		for (final Clause clause : mPropagatees) {
 			if (!clause.isPropagatee()) {
 				consistent = false;
 				assert consistent;
@@ -391,7 +389,7 @@ public class MaxHornSatSolver<V> {
 		private final V[] mNegativeAtoms;
 		private ClauseCondition mClauseCondition;
 		
-		public Clause(V[] positiveAtoms, V[] negativeAtoms) {
+		public Clause(final V[] positiveAtoms, final V[] negativeAtoms) {
 			super();
 			mPositiveAtoms = positiveAtoms;
 			mNegativeAtoms = negativeAtoms;
@@ -559,11 +557,11 @@ public class MaxHornSatSolver<V> {
 	}
 	
 	private class ClauseCondition {
-		private ClauseStatus mClauseStatus;
-		private int mUnsetAtoms;
+		private final ClauseStatus mClauseStatus;
+		private final int mUnsetAtoms;
 		
 		
-		public ClauseCondition(ClauseStatus clauseStatus, int unsetAtoms) {
+		public ClauseCondition(final ClauseStatus clauseStatus, final int unsetAtoms) {
 			super();
 			mClauseStatus = clauseStatus;
 			mUnsetAtoms = unsetAtoms;
@@ -584,14 +582,14 @@ public class MaxHornSatSolver<V> {
 			return result;
 		}
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj)
 				return true;
 			if (obj == null)
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			ClauseCondition other = (ClauseCondition) obj;
+			final ClauseCondition other = (ClauseCondition) obj;
 			if (!getOuterType().equals(other.getOuterType()))
 				return false;
 			if (mClauseStatus != other.mClauseStatus)
