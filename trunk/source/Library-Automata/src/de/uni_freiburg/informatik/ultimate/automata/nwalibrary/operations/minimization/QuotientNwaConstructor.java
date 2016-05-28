@@ -134,7 +134,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private void constructResultUnionFind(
 			final IResultStateConstructor<STATE> resStateConstructor) {
 		for (final STATE inputState : mOperand.getStates()) {
-			constructStateAndSuccessors(resStateConstructor, inputState);
+			constructStateAndSuccessors(resStateConstructor, inputState, false);
 		}
 	}
 	
@@ -147,34 +147,28 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IResultStateConstructor<STATE> resStateConstructor,
 			final IPartition<STATE> partition) {
 		final Iterator<IBlock<STATE>> blocksIt = partition.blocksIterator();
-		// there needs not be any state for an empty automaton
+		/*
+		 * iterate over all blocks
+		 * 
+		 * NOTE: there needs not be any block for an empty automaton
+		 */
 		while (blocksIt.hasNext()) {
 			IBlock<STATE> block = blocksIt.next();
-			final Iterator<STATE> statesIt = block.statesIterator();
+			final boolean isRepresentativeIndependent =
+					block.isRepresentativeIndependentInternalsCalls();
 			
+			final Iterator<STATE> statesIt = block.statesIterator();
 			assert (statesIt.hasNext()) : "There must be at least one state.";
-			if (! block.isRepresentativeIndependent()) {
-				// iterate over all states
-				do {
-					final STATE inputState = statesIt.next();
-					constructStateAndSuccessors(resStateConstructor, inputState);
-				} while (statesIt.hasNext());
-			} else {
-				// only consider the first state
-				STATE inputState = statesIt.next();
-				constructStateAndSuccessors(resStateConstructor, inputState);
-				
-				// add the remaining states if a map should be constructed
-				if (mOldState2newState != null) {
-					final STATE resultState =
-							resStateConstructor.getOrConstructResultState(
-									inputState);
-					while (statesIt.hasNext()) {
-						inputState = statesIt.next();
-						mOldState2newState.put(inputState, resultState);
-					}
-				}
-			}
+			boolean pastFirst = false;
+			// iterate over all states
+			do {
+				final STATE inputState = statesIt.next();
+				final boolean skipInternalsCalls =
+						isRepresentativeIndependent && pastFirst;
+				constructStateAndSuccessors(resStateConstructor, inputState,
+						skipInternalsCalls);
+				pastFirst = true;
+			} while (statesIt.hasNext());
 		}
 	}
 	
@@ -183,10 +177,12 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * 
 	 * @param resStateConstructor state constructor
 	 * @param inputState input state
+	 * @param skipInternalsCalls true iff internal and call transitions can be
+	 *     skipped
 	 */
 	private void constructStateAndSuccessors(
 			final IResultStateConstructor<STATE> resStateConstructor,
-			final STATE inputState) {
+			final STATE inputState, final boolean skipInternalsCalls) {
 		// new state
 		final STATE resultState =
 				resStateConstructor.getOrConstructResultState(inputState);
@@ -197,7 +193,15 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		}
 		
 		// new outgoing transitions
-		addOutgoingTransitions(resStateConstructor, inputState, resultState);
+		if (! skipInternalsCalls) {
+			// add internal and call transitions for 
+			addOutgoingTransitionsInternal(
+					resStateConstructor, inputState, resultState);
+			addOutgoingTransitionsCall(
+					resStateConstructor, inputState, resultState);
+		}
+		addOutgoingTransitionsReturn(
+				resStateConstructor, inputState, resultState);
 	}
 	
 	/**
@@ -205,29 +209,54 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param inputState state in input automaton
 	 * @param resultState state in output automaton
 	 */
-	private void addOutgoingTransitions(
+	private void addOutgoingTransitionsInternal(
 			final IResultStateConstructor<STATE> resStateConstructor,
 			final STATE inputState, final STATE resultState) {
 		for (final OutgoingInternalTransition<LETTER, STATE> trans :
 				mOperand.internalSuccessors(inputState)) {
 			final STATE resultSucc =
-					resStateConstructor.getOrConstructResultState(trans.getSucc());
-			mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
+					resStateConstructor.getOrConstructResultState(
+							trans.getSucc());
+			mResult.addInternalTransition(
+					resultState, trans.getLetter(), resultSucc);
 		}
 		
+	}
+	
+	/**
+	 * @param resStateConstructor state constructor
+	 * @param inputState state in input automaton
+	 * @param resultState state in output automaton
+	 */
+	private void addOutgoingTransitionsCall(
+			final IResultStateConstructor<STATE> resStateConstructor,
+			final STATE inputState, final STATE resultState) {
 		for (final OutgoingCallTransition<LETTER, STATE> trans :
 				mOperand.callSuccessors(inputState)) {
 			final STATE resultSucc =
-					resStateConstructor.getOrConstructResultState(trans.getSucc());
-			mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
+					resStateConstructor.getOrConstructResultState(
+							trans.getSucc());
+			mResult.addCallTransition(
+					resultState, trans.getLetter(), resultSucc);
 		}
-		
+	}
+	
+	/**
+	 * @param resStateConstructor state constructor
+	 * @param inputState state in input automaton
+	 * @param resultState state in output automaton
+	 */
+	private void addOutgoingTransitionsReturn(
+			final IResultStateConstructor<STATE> resStateConstructor,
+			final STATE inputState, final STATE resultState) {
 		for (final OutgoingReturnTransition<LETTER, STATE> trans :
 				mOperand.returnSuccessors(inputState)) {
 			final STATE resultSucc =
-					resStateConstructor.getOrConstructResultState(trans.getSucc());
+					resStateConstructor.getOrConstructResultState(
+							trans.getSucc());
 			final STATE resultHierPred =
-					resStateConstructor.getOrConstructResultState(trans.getHierPred());
+					resStateConstructor.getOrConstructResultState(
+							trans.getHierPred());
 			mResult.addReturnTransition(
 					resultState, resultHierPred, trans.getLetter(), resultSucc);
 		}

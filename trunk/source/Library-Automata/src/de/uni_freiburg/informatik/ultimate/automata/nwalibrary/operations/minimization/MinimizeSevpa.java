@@ -1630,7 +1630,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		}
 		
 		@Override
-		public boolean isRepresentativeIndependent() {
+		public boolean isRepresentativeIndependentInternalsCalls() {
 			return true;
 		}
 	}
