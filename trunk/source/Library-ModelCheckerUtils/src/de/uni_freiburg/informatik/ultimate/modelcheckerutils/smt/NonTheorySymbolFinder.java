@@ -62,6 +62,7 @@ public class NonTheorySymbolFinder extends NonRecursive {
 				// subterm already visited, we will not find anything new
 				return;
 			} else {
+				mVisitedSubterms.add(term);
 				if (SmtUtils.isConstant(term)) {
 					mResult.add(new NonTheorySymbol.Constant(term));
 				} else {
