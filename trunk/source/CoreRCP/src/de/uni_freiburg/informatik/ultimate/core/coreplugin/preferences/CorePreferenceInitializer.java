@@ -73,7 +73,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final boolean VALUE_LONG_RESULT_DEFAULT = true;
 
 	// Log4j pattern
-	public static final String LABEL_LOG4J_PATTERN = "ILogger pattern: ";
+	public static final String LABEL_LOG4J_PATTERN = "Logger pattern";
 	/**
 	 * Note that this log pattern consumes quite some cycles. Replacing it with "%-5p: %m%n" is advised for more
 	 * performance.
@@ -137,7 +137,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String LABEL_PLUGIN_DETAIL_PREF = "Log levels for specific plugins";
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
-	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
+	public static final String DEFAULT_VALUE_TOOLS_PREF = "INFO";
 	public static final String DEFAULT_VALUE_CORE_PREF = "INFO";
 	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "INFO";
 	public static final String DEFAULT_VALUE_PLUGINS_PREF = "INFO";
@@ -233,9 +233,12 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		@Override
 		public boolean isValid(String value) {
 			final String upper = value.toUpperCase();
-			return upper.equals(VALUE_TRACE_LOGGING_PREF) || upper.equals(VALUE_DEBUG_LOGGING_PREF)
-					|| upper.equals(VALUE_INFO_LOGGING_PREF) || upper.equals(VALUE_WARN_LOGGING_PREF)
-					|| upper.equals(VALUE_ERROR_LOGGING_PREF) || upper.equals(VALUE_FATAL_LOGGING_PREF);
+			for(final String validValue : VALUE_VALID_LOG_LEVELS){
+				if(validValue.equals(upper)){
+					return true;
+				}
+			}
+			return false;
 		}
 
 		@Override
