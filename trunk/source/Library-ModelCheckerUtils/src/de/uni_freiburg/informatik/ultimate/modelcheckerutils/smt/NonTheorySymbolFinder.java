@@ -58,16 +58,21 @@ public class NonTheorySymbolFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (SmtUtils.isConstant(term)) {
-				mResult.add(new NonTheorySymbol.Constant(term));
+			if (mVisitedSubterms.contains(term)) {
+				// subterm already visited, we will not find anything new
+				return;
 			} else {
-				final FunctionSymbol functionSymbol = term.getFunction();
-				if (!functionSymbol.isIntern()) {
-					mResult.add(new NonTheorySymbol.Function(functionSymbol));
+				if (SmtUtils.isConstant(term)) {
+					mResult.add(new NonTheorySymbol.Constant(term));
+				} else {
+					final FunctionSymbol functionSymbol = term.getFunction();
+					if (!functionSymbol.isIntern()) {
+						mResult.add(new NonTheorySymbol.Function(functionSymbol));
+					}
 				}
-			}
-			for (final Term t : term.getParameters()) {
-				walker.enqueueWalker(new ConstantFindWalker(t));
+				for (final Term t : term.getParameters()) {
+					walker.enqueueWalker(new ConstantFindWalker(t));
+				}
 			}
 		}
 		@Override
@@ -91,12 +96,14 @@ public class NonTheorySymbolFinder extends NonRecursive {
 	}
 
 	private Set<NonTheorySymbol<?>> mResult;
+	private Set<Term> mVisitedSubterms;
 	
 	public Set<NonTheorySymbol<?>> findNonTheorySymbols(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
 		mResult = new HashSet<NonTheorySymbol<?>>();
+		mVisitedSubterms = new HashSet<>();
 		run(new ConstantFindWalker(term));
 		for (final TermVariable tv : term.getFreeVars()) {
 			mResult.add(new NonTheorySymbol.Variable(tv));

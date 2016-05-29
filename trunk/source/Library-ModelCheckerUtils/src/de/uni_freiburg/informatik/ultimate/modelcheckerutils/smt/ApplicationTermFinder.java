@@ -61,14 +61,20 @@ public class ApplicationTermFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (term.getFunction().getName().equals(mFunctionSymbolName)) {
-				mResult.add(term);
-				if (mOnlyOutermost) {
-					return;
+			if (mVisitedSubterms.contains(term)) {
+				// subterm already visited, we will not find anything new
+				return;
+			} else {
+				mVisitedSubterms.add(term);
+				if (term.getFunction().getName().equals(mFunctionSymbolName)) {
+					mResult.add(term);
+					if (mOnlyOutermost) {
+						return;
+					}
 				}
-			}
-			for (final Term t : term.getParameters()) {
-				walker.enqueueWalker(new FindWalker(t));
+				for (final Term t : term.getParameters()) {
+					walker.enqueueWalker(new FindWalker(t));
+				}
 			}
 		}
 		@Override
@@ -96,12 +102,14 @@ public class ApplicationTermFinder extends NonRecursive {
 	private final String mFunctionSymbolName;
 	private Set<ApplicationTerm> mResult;
 	private final boolean mOnlyOutermost;
+	private Set<Term> mVisitedSubterms;
 	
 	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
 		mResult = new HashSet<ApplicationTerm>();
+		mVisitedSubterms = new HashSet<Term>();
 		run(new FindWalker(term));
 		return mResult;
 	}
