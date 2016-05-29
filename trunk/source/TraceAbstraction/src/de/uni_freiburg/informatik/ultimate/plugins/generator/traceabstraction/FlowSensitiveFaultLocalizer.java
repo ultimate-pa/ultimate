@@ -465,11 +465,11 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private Integer computeCorrespondingBranchOutLocation(
 			final List<Integer> branchInList, final int startLocation) {
-		assert (branchInList != null && branchInList.isEmpty());
-		final ListIterator<Integer> it = branchInList.listIterator();
-		while (it.hasPrevious()) {
-			final Integer branchIn = it.previous();
+		assert (branchInList != null && !branchInList.isEmpty());
+		for(int i=branchInList.size()-1; i>=0; i--) {
+			final Integer branchIn = branchInList.get(i);
 			if (branchIn > startLocation) {
+				branchInList.remove(i);
 				return branchIn;
 			}
 		}
@@ -491,10 +491,10 @@ public class FlowSensitiveFaultLocalizer {
 
 			final List<Integer> branchIn = informationFromCFG.get(position);
 			final Integer branchOutPosition;
-			if (branchIn != null && branchIn.isEmpty()) {
+			if (branchIn != null && !branchIn.isEmpty()) {
 				// Branch IN Statement
 				 branchOutPosition = computeCorrespondingBranchOutLocation(
-					branchIn, position);
+					branchIn, startLocation);
 			} else {
 				branchOutPosition = null;
 			}
