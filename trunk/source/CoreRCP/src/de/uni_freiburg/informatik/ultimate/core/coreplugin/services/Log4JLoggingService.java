@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
  */
 public final class Log4JLoggingService implements IStorable, ILoggingService {
 
+	private static final String CONSOLE_APPENDER_NAME = "ConsoleAppender";
 	private static final String LOGGER_NAME_CONTROLLER = "controller";
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
 	private static final String LOGGER_NAME_TOOLS = "tools";
@@ -95,7 +96,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		// we remove the initial log4j console appender because we want to
 		// replace it with our own
-		Logger.getRootLogger().removeAppender("ConsoleAppender");
+		Logger.getRootLogger().removeAppender(CONSOLE_APPENDER_NAME);
 
 		final Enumeration<?> forgeinAppenders = Logger.getRootLogger().getAllAppenders();
 		while (forgeinAppenders.hasMoreElements()) {
@@ -138,7 +139,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			Logger.getRootLogger().removeAppender(mConsoleAppender);
 			// we remove the initial log4j console appender because we want to
 			// replace it with our own
-			Logger.getRootLogger().removeAppender("ConsoleAppender");
+			Logger.getRootLogger().removeAppender(CONSOLE_APPENDER_NAME);
 
 			for (final Appender appender : mAdditionalAppenders) {
 				Logger.getRootLogger().removeAppender(appender);
@@ -151,7 +152,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 			// attaching output to console (stout)
 			mConsoleAppender = new ConsoleAppender(layout);
-			mConsoleAppender.setName("ConsoleAppender");
+			mConsoleAppender.setName(CONSOLE_APPENDER_NAME);
 			Logger.getRootLogger().addAppender(mConsoleAppender);
 
 			for (final Appender appender : mAdditionalAppenders) {
@@ -208,7 +209,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	 * @return Logger for this id.
 	 */
 	public Logger getLoggerById(String id) {
-		return lookupLoggerInHierarchie(id);
+		return lookupLoggerInHierarchy(id);
 	}
 
 	/**
@@ -229,7 +230,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	 *            Internal logger id.
 	 * @return Logger for this internal id.
 	 */
-	private Logger lookupLoggerInHierarchie(String id) {
+	private Logger lookupLoggerInHierarchy(String id) {
 		// it is core
 		if (id.equals(Activator.PLUGIN_ID)) {
 			return Logger.getLogger(Activator.PLUGIN_ID);
@@ -465,7 +466,6 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
 			// do things if it concerns the loggers
-			final String ek = event.getKey();
 			final Object newValue = event.getNewValue();
 			final Object oldValue = event.getOldValue();
 
@@ -476,6 +476,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			if (newValue != null && newValue.equals(oldValue)) {
 				return;
 			}
+			final String ek = event.getKey();
 			if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
 					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE)
 					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_NAME)
@@ -508,7 +509,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 	}
 
-	private final static class Log4JAppenderWrapper extends WriterAppender {
+	private static final class Log4JAppenderWrapper extends WriterAppender {
 
 		private final Writer mWriter;
 
