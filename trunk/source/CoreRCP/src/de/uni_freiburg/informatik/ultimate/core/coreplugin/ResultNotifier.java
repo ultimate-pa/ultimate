@@ -135,17 +135,14 @@ public class ResultNotifier {
 	}
 
 	private void programCorrect() {
-		mLogger.info("RESULT: Ultimate proved your program to be correct!");
 		mController.displayToolchainResultProgramCorrect();
 	}
 
 	private void programIncorrect() {
-		mLogger.info("RESULT: Ultimate proved your program to be incorrect!");
 		mController.displayToolchainResultProgramIncorrect();
 	}
 
 	private void programUnknown(final String text) {
-		mLogger.info("RESULT: Ultimate could not prove your program: " + text);
 		mController.displayToolchainResultProgramUnknown(text);
 	}
 }
