@@ -78,7 +78,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 			}
 
 			mToolchain = pparams.createToolchainData();
-			
+
 			pparams.applyCliSettings(mToolchain.getServices());
 
 			final File[] inputFiles = pparams.getInputFiles();
@@ -88,8 +88,8 @@ public class CommandlineController implements IController<ToolchainListType> {
 			tcj.join();
 
 		} catch (ParseException e) {
-			mLogger.error("Could not parse command-line options from arguments " + String.join(",", args) + ": "
-					+ e.getMessage());
+			mLogger.error("Could not parse command-line options from arguments " + String.join(",", args) + ":");
+			mLogger.error(e.getMessage());
 			newCmdParser.printHelp();
 			return -1;
 		} catch (InvalidFileException e) {

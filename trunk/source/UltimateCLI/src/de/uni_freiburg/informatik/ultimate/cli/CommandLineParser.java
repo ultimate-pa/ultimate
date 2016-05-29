@@ -62,6 +62,8 @@ public class CommandLineParser {
 	public static final String OPTION_NAME_INPUTFILES = "i";
 	public static final String OPTION_NAME_TOOLCHAIN = "tc";
 
+	private static final int MAX_NAME_LENGTH = 160;
+
 	private final ICore<ToolchainListType> mCore;
 	private final ILogger mLogger;
 	private final Options mOptions;
@@ -80,14 +82,14 @@ public class CommandLineParser {
 		mCliName2Validator = new HashMap<>();
 
 		mOptions = createOptions();
+		mLogger.debug("Max width of options was " + mMaxWidth);
 	}
 
 	public void printHelp() {
 		final HelpFormatter formatter = new HelpFormatter();
 		@SuppressWarnings("squid:S1943")
 		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(a -> mLogger.info(a)));
-
-		formatter.setWidth(mMaxWidth + 1);
+		formatter.setWidth(mMaxWidth * 2);
 		// keep the options in the order they were declared
 		formatter.setOptionComparator(null);
 		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptions);
@@ -187,6 +189,14 @@ public class CommandLineParser {
 	}
 
 	private Option createOption(final UltimatePreferenceItem<?> item, final String pluginId) {
+		switch (item.getType()) {
+		case Label:
+		case SubItemContainer:
+			return null;
+		default:
+			break;
+		}
+
 		final Builder builder = createBuilder(item, pluginId);
 
 		switch (item.getType()) {
@@ -203,9 +213,6 @@ public class CommandLineParser {
 		case Radio:
 		case String:
 			return builder.hasArg(true).numberOfArgs(1).type(String.class).build();
-		case Label:
-		case SubItemContainer:
-			return null;
 		default:
 			throw new IllegalArgumentException("PreferenceItem type " + item.getType() + " is not supported yet");
 		}
@@ -231,15 +238,47 @@ public class CommandLineParser {
 			sb.append(item.getToolTip());
 			sb.append(" ");
 		}
+
+		switch (item.getType()) {
+		case Boolean:
+			sb.append("This option is a flag.");
+			break;
+		case Color:
+			sb.append("<arg> is a string representing a color. ");
+			sb.append("The string has to be of the form \"red,green,blue\", where 0 <= red,green,blue <= 255.");
+			break;
+		case Directory:
+			sb.append("<arg> is a string representing an absolute path ");
+			sb.append("to a single directory on the local file system.");
+			break;
+		case File:
+			sb.append("<arg> is a string representing an absolute path on the local file system to a single file.");
+			break;
+		case Path:
+			sb.append("<arg> is a string representing one or multiple paths to a file or directory on the system. ");
+			sb.append("If multiple paths are specified by the user, they are separated by a semicolon.");
+			break;
+		case Integer:
+			sb.append("<arg> is a string representing an integer.");
+			break;
+		case MultilineString:
+		case String:
+			sb.append("<arg> is a single line of text.");
+			break;
+		default:
+			break;
+		}
+
 		final Object[] choices = item.getChoices();
 		if (choices != null && choices.length > 0) {
-			sb.append("Valid choices are ");
+			sb.append("Valid choices for <arg> are ");
 			for (final Object choice : choices) {
 				sb.append("\"");
 				sb.append(choice.toString());
 				sb.append("\", ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
+			sb.append(".");
 		}
 		return sb.toString();
 	}
@@ -249,10 +288,15 @@ public class CommandLineParser {
 		final String prefix = lastIdx > 0 ? pluginId.substring(lastIdx + 1) : pluginId;
 		final String unprocessedName = prefix + " " + label;
 		final String processedName = unprocessedName.replace(' ', '.').replace('(', '.').replace(')', '.')
-				.replaceAll(":", "").replaceAll("\\.+", ".").toLowerCase();
-		if (mMaxWidth < processedName.length()) {
-			mMaxWidth = processedName.length();
+				.replaceAll(":", "").replace('"', '.').replaceAll("\\.+", ".").toLowerCase();
+		final int newLength = processedName.length();
+		if (mMaxWidth < newLength) {
+			mMaxWidth = newLength;
 		}
+		if (newLength > MAX_NAME_LENGTH) {
+			mLogger.warn("Option " + processedName + " longer than allowed maximum of " + MAX_NAME_LENGTH);
+		}
+
 		mCliName2PreferenceName.put(processedName, new Pair<>(pluginId, label));
 		return processedName;
 	}
