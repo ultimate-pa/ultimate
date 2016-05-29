@@ -6,4 +6,5 @@ Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- org.apache.commons.cli
+ org.apache.commons.cli,
+ Library-UltimateUtil
