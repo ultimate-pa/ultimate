@@ -159,6 +159,16 @@ public class PostProcessor {
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
+		
+		if (!(typeHandler).useIntForAllIntegerTypes()) {
+			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(),
+					typeHandler));
+
+			if ((typeHandler).areFloatingTypesNeeded()) {
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler));
+			}
+
+		}
 		return decl;
 	}
 	

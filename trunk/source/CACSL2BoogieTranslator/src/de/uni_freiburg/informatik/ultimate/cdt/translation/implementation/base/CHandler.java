@@ -424,15 +424,7 @@ public class CHandler implements ICHandler {
 		}
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
-		if (!((TypeHandler) mTypeHandler).useIntForAllIntegerTypes()) {
-			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(),
-					(TypeHandler) mTypeHandler));
 
-			if (((TypeHandler) mTypeHandler).areFloatingTypesNeeded()) {
-				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
-			}
-
-		}
 
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
