@@ -215,7 +215,47 @@ public final class ISOIEC9899TC3 {
 				}
 			}
 			
-			if (value.contains("e")) {
+
+			
+			// convert literal in hex form to decimal form
+			if (value.startsWith("0x") || value.startsWith("0X")) {
+				value = value.substring(2);
+				int suffixLength = -1;
+				String hexExponentValue = null;
+				
+				// extract exponent value of the hex literal
+				if (value.contains("p")) {
+					hexExponentValue = value.substring(value.indexOf("p") + 1);
+					value = value.substring(0, value.indexOf("p"));
+				}
+				
+				if (value.contains(".")) {
+					final int dotPosition = value.indexOf(".");
+					suffixLength = value.substring(dotPosition + 1).length();
+					value = value.substring(0, dotPosition) + value.substring(dotPosition + 1);
+				}
+				BigInteger hexValueToDecimalValue = new BigInteger(value, 16);
+				BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
+				
+				if (hexExponentValue != null) {
+					int hexExponent = Integer.valueOf(hexExponentValue);
+					if (hexExponent > 0) {
+						for (int i = 0; i < hexExponent; i++) {
+							hexValueBigDecimal = hexValueBigDecimal.multiply(new BigDecimal("2"));
+						}
+					} else if (hexExponent < 0) {
+						for (int i = 0; i > hexExponent; i--) {
+							hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal("2"));
+						}
+					}
+				}
+				
+				if (suffixLength != -1) {
+					hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal(Math.pow(16, suffixLength)));
+				}
+				value = hexValueBigDecimal.toString();
+			} else if (value.contains("e")) {				
+				// if value contains e calculate the number according to it
 				final int eLocatation = value.indexOf("e");
 				final String floatString = value.substring(0, eLocatation);
 				String exponentString = value.substring(eLocatation + 1, value.length());
