@@ -1,48 +1,38 @@
 /*
- * Copyright (C) 2015 Christian Ortolf
- * Copyright (C) 2015 Christian Simon
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
- * This file is part of the ULTIMATE command line interface.
+ * This file is part of the ULTIMATE CLI plug-in.
  * 
- * The ULTIMATE command line interface is free software: you can redistribute it and/or modify
+ * The ULTIMATE CLI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE command line interface is distributed in the hope that it will be useful,
+ * The ULTIMATE CLI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE command line interface. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE CLI plug-in. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE command line interface, or any covered work, by linking
+ * If you modify the ULTIMATE CLI plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE command line interface grant you additional permission 
+ * licensors of the ULTIMATE CLI plug-in grant you additional permission 
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cli;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.xml.bind.JAXBException;
-
+import org.apache.commons.cli.ParseException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
-import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -56,12 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Implements standard fallback controller for the command-line.
+ * The current command line controller for Ultimate provides a user interface for the command line.
  * 
- * See OldCommandLineParser for valid command-line arguments.
- * 
- * @author Christian Ortolf
- * @author Christian Simon
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class CommandlineController implements IController<ToolchainListType> {
@@ -78,122 +64,47 @@ public class CommandlineController implements IController<ToolchainListType> {
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 		mLogger.debug("Initializing CommandlineController...");
 
-		// parse command line parameters and select ultimate mode
-		final OldCommandLineParser cmdParser = new OldCommandLineParser();
-		cmdParser.parse(Platform.getCommandLineArgs());
-		
 		final CommandLineParser newCmdParser = new CommandLineParser(core);
-		newCmdParser.printHelp();
-		newCmdParser.parse(Platform.getCommandLineArgs());
-
-		// determine Ultimate's mode
-		if (cmdParser.getExitSwitch()) {
-			cmdParser.printUsage();
-			return IApplication.EXIT_OK;
-		}
-
-		loadSettings(core, cmdParser);
-		if (!loadToolchain(core, cmdParser)) {
-			return -1;
-		}
-
-		final List<File> inputFiles;
+		final String[] args = Platform.getCommandLineArgs();
 		try {
-			inputFiles = getInputFiles(cmdParser);
-		} catch (final IllegalArgumentException e1) {
-			mLogger.fatal("Input file not found. Paths were: " + String.join(",", cmdParser.getInputFile()), e1);
-			return -1;
-		}
-
-		if (!startToolchain(core, inputFiles)) {
-			return -1;
-		}
-
-		return IApplication.EXIT_OK;
-	}
-
-	private boolean startToolchain(final ICore<ToolchainListType> core, final List<File> inputFiles) {
-		try {
-			final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
-					inputFiles.toArray(new File[0]));
-			tcj.schedule();
-			// in non-GUI mode, we must wait until job has finished!
-			tcj.join();
-			return true;
-
-		} catch (final InterruptedException e) {
-			mLogger.error("Exception in Toolchain", e);
-			return false;
-		}
-	}
-
-	private boolean loadToolchain(final ICore<ToolchainListType> core, final OldCommandLineParser cmdParser) {
-		try {
-			mToolchain = parseToolFile(cmdParser.getToolFile(), core);
-			return true;
-		} catch (final FileNotFoundException e1) {
-			mLogger.fatal("Toolchain file not found. Path was: " + cmdParser.getToolFile(), e1);
-			return false;
-		} catch (final JAXBException e1) {
-			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile(), e1);
-			return false;
-		} catch (final SAXException e1) {
-			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile(), e1);
-			return false;
-		}
-	}
-
-	private void loadSettings(final ICore<ToolchainListType> core, final OldCommandLineParser cmdParser) {
-		final String settingsfile = cmdParser.getSettings();
-		if (settingsfile != null) {
-			core.loadPreferences(settingsfile);
-		} else {
-			mLogger.info("No settings file supplied");
-		}
-	}
-
-	private List<File> getInputFiles(final OldCommandLineParser cmdParser) {
-		final List<File> inputFiles = new ArrayList<>();
-		for (final String inputfilePath : cmdParser.getInputFile()) {
-			final File inputFile = new File(inputfilePath);
-			if (!inputFile.exists() || !inputFile.canRead()) {
-				throw new IllegalArgumentException();
+			final ParsedParameter pparams = newCmdParser.parse(args);
+			if (pparams.isHelpRequested()) {
+				newCmdParser.printHelp();
+				return IApplication.EXIT_OK;
 			}
-			inputFiles.add(inputFile);
+
+			if (pparams.hasSettings()) {
+				core.loadPreferences(pparams.getSettingsFile());
+			}
+
+			mToolchain = pparams.createToolchainData();
+			
+			pparams.applyCliSettings(mToolchain.getServices());
+
+			final File[] inputFiles = pparams.getInputFiles();
+			final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
+					inputFiles);
+			tcj.schedule();
+			tcj.join();
+
+		} catch (ParseException e) {
+			mLogger.error("Could not parse command-line options from arguments " + String.join(",", args) + ": "
+					+ e.getMessage());
+			newCmdParser.printHelp();
+			return -1;
+		} catch (InvalidFileException e) {
+			mLogger.error("File in arguments violated specification: " + e.getMessage());
+			return -1;
+		} catch (InterruptedException e) {
+			mLogger.fatal("Exception during execution of toolchain", e);
+			return -1;
 		}
-		return inputFiles;
+		return IApplication.EXIT_OK;
 	}
 
 	@Override
 	public ISource selectParser(Collection<ISource> parser) {
-		final Object[] parsers = parser.toArray();
-
-		mLogger.info("Index\tParser ID");
-
-		for (int i = 0; i < parsers.length; i++) {
-			mLogger.info(String.valueOf(i) + "\t" + ((ISource) parsers[i]).getPluginID());
-		}
-
-		mLogger.info("Please choose a parser manually:");
-
-		final InputStreamReader inp = new InputStreamReader(System.in, Charset.defaultCharset());
-		final BufferedReader br = new BufferedReader(inp);
-
-		while (true) {
-			try {
-				final String str = br.readLine();
-				final int selection = Integer.parseInt(str);
-				if (selection < parsers.length) {
-					return (ISource) parsers[selection];
-				} else {
-					mLogger.error("Please make a valid selection.");
-				}
-			} catch (final NumberFormatException e) {
-				mLogger.error("Please make a valid selection.");
-			} catch (final IOException e) {
-				mLogger.error("There was problem opening your console.");
-			}
-		}
+		throw new UnsupportedOperationException("Interactively selecting parsers is not supported in CLI mode");
 	}
 
 	@Override
@@ -213,7 +124,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 
 	@Override
 	public List<String> selectModel(List<String> modelNames) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Interactively selecting models is not supported in CLI mode");
 	}
 
 	@Override
@@ -239,13 +150,5 @@ public class CommandlineController implements IController<ToolchainListType> {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
-	}
-
-	private IToolchainData<ToolchainListType> parseToolFile(String toolFile, ICore<ToolchainListType> core)
-			throws JAXBException, SAXException, FileNotFoundException {
-		if (toolFile == null || "".equals(toolFile)) {
-			throw new FileNotFoundException();
-		}
-		return core.createToolchainData(toolFile);
 	}
 }

@@ -24,18 +24,38 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission 
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.cli;
 
 /**
- * The activator class controls the plug-in life cycle.
+ * An {@link InvalidFileException} exception is thrown if a file or a path to a file is not as expected: maybe the file does not
+ * exist or the file is malformed.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class Activator {
+public class InvalidFileException extends Exception {
 
-	public static final String PLUGIN_ID = CommandlineController.class.getPackage().getName();
+	private static final long serialVersionUID = 1L;
 
-	public static final String PLUGIN_NAME = "Ultimate Commandline Interface";
+	/**
+	 * Create an {@link InvalidFileException} exception.
+	 * 
+	 * @param message
+	 *            a message detailing why this exception was thrown.
+	 */
+	public InvalidFileException(final String message) {
+		super(message);
+	}
 
+	/**
+	 * Create an {@link InvalidFileException} exception.
+	 * 
+	 * @param message
+	 *            a message detailing why this exception was thrown.
+	 * @param cause
+	 *            an earlier exception that lead to this exception.
+	 */
+	public InvalidFileException(final String message, final Exception cause) {
+		super(message, cause);
+	}
 }
