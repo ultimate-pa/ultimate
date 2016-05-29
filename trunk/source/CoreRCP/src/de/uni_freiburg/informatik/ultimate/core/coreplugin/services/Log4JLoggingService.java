@@ -239,24 +239,30 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		if (id.equals(mCurrentControllerName)) {
 			return Logger.getLogger(LOGGER_NAME_CONTROLLER);
 		}
-		// it is something that wants the contoller logger
+		// it is something that wants the controller logger
 		if (id.equals(LOGGER_NAME_CONTROLLER)) {
 			return Logger.getLogger(LOGGER_NAME_CONTROLLER);
 		}
-		// it is a declared one for no tool
-		if (mLiveLoggerIds.contains(LOGGER_NAME_PLUGINS + "." + id) && !isExternalTool(id)) {
-			return Logger.getLogger(LOGGER_NAME_PLUGINS + "." + id);
-		}
-		// it is a declared one for a tool
-		if (mLiveLoggerIds.contains(LOGGER_NAME_TOOLS + "." + id) && isExternalTool(id)) {
-			return Logger.getLogger(LOGGER_NAME_TOOLS + "." + id);
-		}
-		// it is an external tool with no logger specified
+
+		final String defaultId;
 		if (isExternalTool(id)) {
-			return Logger.getLogger(LOGGER_NAME_TOOLS);
+			// we want a logger for an external tool
+			defaultId = LOGGER_NAME_TOOLS;
+		} else {
+			defaultId = LOGGER_NAME_PLUGINS;
 		}
-		// otherwise it has to be some plug-in with no logger specified
-		return Logger.getLogger(LOGGER_NAME_PLUGINS);
+		final String existingId = defaultId + "." + id;
+		return getDeclaredOrDefaultLogger(existingId, defaultId);
+	}
+
+	private Logger getDeclaredOrDefaultLogger(final String existingId, final String defaultId) {
+		if (mLiveLoggerIds.contains(existingId)) {
+			// the logger was declared and has custom options
+			return Logger.getLogger(existingId);
+		} else {
+			// the logger was not declared; we just use the generic one
+			return Logger.getLogger(defaultId);
+		}
 	}
 
 	private void refreshPropertiesLoggerHierarchie() {
