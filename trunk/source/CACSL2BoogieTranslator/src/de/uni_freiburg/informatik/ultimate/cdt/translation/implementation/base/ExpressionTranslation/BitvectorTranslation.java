@@ -663,7 +663,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
 				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.LONG) || newType.getType().equals(CPrimitive.PRIMITIVE.LONGLONG)) {
 					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 64 });
-				} 
+				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.UINT)) {
+					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 32 });
+				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || newType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
+					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 64 });
+				}
 			}
 			params = new ASTType[]{roundingMode, paramASTType};
 			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
