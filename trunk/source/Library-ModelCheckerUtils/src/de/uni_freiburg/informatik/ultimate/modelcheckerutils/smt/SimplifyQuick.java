@@ -51,53 +51,54 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
 /**
- * SimplifyDDA extended by support for timeouts.
+ * Variant of {@link SimplifyDDA} that uses SMTInterpol's "quick check". The
+ * "quick check" is much faster but returns UNKNOWN much more often. Here, we
+ * always start a new instance of SMTInterpol. The input is transferred to this
+ * new instance such that each non-boolean subterm is replaced by a fresh
+ * boolean constant. This ensures that SMTInterpol is able to handle the term.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class SimplifyQuick {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private IToolchainStorage mStorage;
-	
+	private static final int TIMOUT_IN_SECONDS = 10;
 
 	public SimplifyQuick(Script script, IUltimateServiceProvider services) {
 		mScript = script;
 		mServices = services;
 	}
-	
 
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
-		
-//		Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
-//		Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
-//		simplificationScript.setLogic(Logics.CORE);
-//		TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
-//		Term foreign = towards.transform(inputTerm);
-//		
-////		simplificationScript.setOption(":check-type", "QUICK");
-//		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
-//		Term foreignsimplified = dda.getSimplifiedTerm(foreign);
-////		simplificationScript.setOption(":check-type", "FULL");
-//		
-//		
-//		TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
-//		Term simplified = back.transform(foreignsimplified);
-//		simplificationScript.exit();
-		
-//		mScript.setOption(":check-type", "QUICK");
-		final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(mScript, false, mServices);
-		final Term simplified = dda.getSimplifiedTerm(inputTerm);
-//		mScript.setOption(":check-type", "FULL");
+
+		Settings settings = new SolverBuilder.Settings(false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
+		Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
+		simplificationScript.setLogic(Logics.CORE);
+		TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
+		Term foreign = towards.transform(inputTerm);
+
+		simplificationScript.setOption(":check-type", "QUICK");
+		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
+		Term foreignsimplified = dda.getSimplifiedTerm(foreign);
+		// simplificationScript.setOption(":check-type", "FULL");
+
+		TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
+		Term simplified = back.transform(foreignsimplified);
+		simplificationScript.exit();
+
 		return simplified;
 	}
 }
