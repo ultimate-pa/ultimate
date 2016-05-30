@@ -71,6 +71,7 @@
 			src/de/uni_freiburg/informatik/ultimate/acsl/parser/Scanner.java,
 			src/de/uni_freiburg/informatik/ultimate/acsl/parser/sym.java,
 			src/de/uni_freiburg/informatik/ultimate/astbuilder/parser.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/Lexer.java,
 			src/de/uni_freiburg/informatik/ultimate/astbuilder/sym.java,
 			src/de/uni_freiburg/informatik/ultimate/astbuilder/Node.java,
 			src/de/uni_freiburg/informatik/ultimate/astbuilder/Parameter.java,
