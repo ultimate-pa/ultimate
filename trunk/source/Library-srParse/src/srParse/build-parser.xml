@@ -6,6 +6,8 @@
     </description>
 
     <target name="generate_parser">
+    	<echo>cupDir is ${cupDir}</echo>
+    	<echo>flexJar is ${flexJar}</echo>
         <java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
             <arg value="Requirements.cup" />
         </java>
