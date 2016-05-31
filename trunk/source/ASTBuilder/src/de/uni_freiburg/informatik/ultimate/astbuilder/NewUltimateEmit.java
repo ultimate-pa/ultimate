@@ -29,13 +29,19 @@ package de.uni_freiburg.informatik.ultimate.astbuilder;
 
 import java.io.IOException;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+@SuppressWarnings("squid:S106")
 public class NewUltimateEmit extends Emit {
-	
+
 	@Override
 	public void emitClassDeclaration(Node node) throws IOException {
 		mWriter.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
-				+ (node.getParent() != null ? " extends " + node.getParent().getName() : " extends BoogieASTNode")
-				+ (node.getInterfaces() != null ? " implements " + node.getInterfaces() : "") + " {");
+				+ (node.getParent() != null ? (" extends " + node.getParent().getName()) : " extends BoogieASTNode")
+				+ (node.getInterfaces() != null ? (" implements " + node.getInterfaces()) : "") + " {");
 		formatComment(mWriter, "    ", "The serial version UID.");
 		mWriter.println("    private static final long serialVersionUID = 1L;");
 	}
@@ -59,7 +65,6 @@ public class NewUltimateEmit extends Emit {
 
 	@Override
 	public void emitConstructors(Node node) throws IOException {
-		int numNotWriteableParams = 1;
 		int numNotOptionalParams = 1;
 		int numTotalParams = 1;
 
@@ -69,28 +74,17 @@ public class NewUltimateEmit extends Emit {
 		while (ancestor != null) {
 			for (final Parameter p : ancestor.parameters) {
 				numTotalParams++;
-				if (!p.isWriteable()) {
-					numNotWriteableParams++;
-				}
 				if (!p.isOptional()) {
 					numNotOptionalParams++;
 				}
 			}
 			ancestor = ancestor.getParent();
 		}
-		if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
-			formatComment(mWriter, "    ", "The default constructor.");
-			mWriter.println("    public " + node.getName() + "() {");
-			mWriter.println("    }");
-			mWriter.println();
-		}
 
-		if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams) {
+		if (numNotOptionalParams < numTotalParams) {
 			emitConstructor(node, false);
 		}
-		if (numTotalParams > 0) {
-			emitConstructor(node, true);
-		}
+		emitConstructor(node, true);
 	}
 
 	@Override
@@ -131,11 +125,12 @@ public class NewUltimateEmit extends Emit {
 		mWriter.println("    }");
 	}
 
-	private boolean isNoRegularChild(String type) {
-		while (type.endsWith("[]")) {
-			type = type.substring(0, type.length() - 2);
+	private boolean isNoRegularChild(final String type) {
+		String acc = type;
+		while (acc.endsWith("[]")) {
+			acc = acc.substring(0, acc.length() - 2);
 		}
-		return !(mGrammar.getNodeTable().containsKey(type));
+		return !(mGrammar.getNodeTable().containsKey(acc));
 	}
 
 	private boolean needsArraysPackage(Node node) {
