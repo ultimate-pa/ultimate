@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbui
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses.
  * This class is the node class for the Horn clause graph.
- * @author nutz
+ * @author nutz, mostafa-mahmoud
  *
  */
 public class HornClausePredicateSymbol {
@@ -12,8 +12,19 @@ public class HornClausePredicateSymbol {
 
 	String name;
 	
+	public HornClausePredicateSymbol(String name, int arity) {
+		this.name = name;
+		this.arity = arity;
+	}
 	
-	public class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
-		
+	public String toString() {
+		return name;
+	}
+	
+	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
+
+		public HornClauseFalsePredicateSymbol() {
+			super("false", 0);
+		}
 	}
 }

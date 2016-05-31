@@ -49,4 +49,28 @@ public class HornClause {
 	HornClausePredicateSymbol mHeadPredicate;
 	
 	Term mTransitionFormula;
+	
+	public HornClause(Term transitionFormula, ArrayList<TermVariable> bodyVars, HornClausePredicateSymbol body, Map<HornClausePredicateSymbol, ArrayList<TermVariable>> cobody) {
+		mTransitionFormula = transitionFormula;
+		mHeadPredTermVariables = bodyVars;
+		mHeadPredicate = body;	
+		mBodyPredToTermVariables = cobody;
+	}
+	
+	public String toString() {
+		String cobody = "";
+		
+		for (HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
+			cobody += " " + symbol.toString() + mBodyPredToTermVariables.get(symbol);
+		}
+		if (cobody.length() > 0)
+			cobody = "and" + cobody;
+		else
+			cobody = "true";
+		
+		String body = mHeadPredicate.toString() + mHeadPredTermVariables;
+		
+		return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mTransitionFormula, body);
+	}
 }
+ 
