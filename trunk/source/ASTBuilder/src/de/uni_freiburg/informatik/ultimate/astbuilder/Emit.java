@@ -371,7 +371,7 @@ public class Emit {
 				final String pname = parameters[i].getName();
 				final String ptype = parameters[i].getType();
 				if (ptype.endsWith("[]")) {
-					if (comma.equals("")) {
+					if (!"".equals(comma)) {
 						mWriter.println("        sb" + comma + ";");
 					}
 					emitArrayToStringCode(pname, ptype, "        ", 1);
