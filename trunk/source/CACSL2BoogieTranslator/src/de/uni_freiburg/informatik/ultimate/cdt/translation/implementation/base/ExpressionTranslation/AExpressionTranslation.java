@@ -36,7 +36,9 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -500,7 +502,9 @@ public abstract class AExpressionTranslation {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
 		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		final Expression oldExpression = rexp.lrVal.getValue();
-		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, "RTZ");
+		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 	}

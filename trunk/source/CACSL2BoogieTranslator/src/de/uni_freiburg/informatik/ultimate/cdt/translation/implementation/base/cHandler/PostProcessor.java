@@ -588,8 +588,10 @@ public class PostProcessor {
 		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
 		
 		final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
+		final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
 		
 		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRTZ}, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
 		
 		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
