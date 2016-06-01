@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class Emit {
-	private static List<String> sBoolPrefixes = Arrays.asList("is", "has");
+	private static final List<String> BOOL_PREFIXES = Arrays.asList("is", "has");
 
 	protected PrintWriter mWriter;
 	protected Grammar mGrammar;
@@ -228,6 +228,9 @@ public class Emit {
 	}
 
 	public void emitConstructors(Node node) throws IOException {
+		if (node == null) {
+			throw new IllegalArgumentException();
+		}
 		int numNotWriteableParams = 0;
 		int numNotOptionalParams = 0;
 		int numTotalParams = 0;
@@ -284,6 +287,7 @@ public class Emit {
 	}
 
 	public void emitNodeHook(Node node) throws IOException {
+		// can be overriden by subclasses that want to implement a node hook
 	}
 
 	public void emitNode(Node node) throws IOException {
@@ -367,7 +371,7 @@ public class Emit {
 				final String pname = parameters[i].getName();
 				final String ptype = parameters[i].getType();
 				if (ptype.endsWith("[]")) {
-					if (comma != "") {
+					if (comma.equals("")) {
 						mWriter.println("        sb" + comma + ";");
 					}
 					emitArrayToStringCode(pname, ptype, "        ", 1);
@@ -396,7 +400,7 @@ public class Emit {
 				String setComment;
 				if (ptype.equals("boolean")) {
 					int j = 0;
-					for (final String prefix : sBoolPrefixes) {
+					for (final String prefix : BOOL_PREFIXES) {
 						if (pname.startsWith(prefix)) {
 							j = prefix.length();
 							break;
@@ -431,8 +435,8 @@ public class Emit {
 					mWriter.println("    public void " + setName + "(" + ptype + " " + pname + ") {");
 					if (parameters[i].isWriteableOnce) {
 						mWriter.println("        //Writeable only once");
-						mWriter.println("        if(this." + pname + " != null && " + pname + " != this." + pname
-								+ "){");
+						mWriter.println(
+								"        if(this." + pname + " != null && " + pname + " != this." + pname + "){");
 						mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
 						mWriter.println("        }");
 					}
