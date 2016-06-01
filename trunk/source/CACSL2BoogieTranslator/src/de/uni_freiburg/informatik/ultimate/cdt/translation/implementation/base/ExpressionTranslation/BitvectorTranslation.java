@@ -725,4 +725,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public Expression getRoundingMode() {
 		return mRoundingMode;
 	}
+
+	@Override
+	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -787,4 +787,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression getRoundingMode(){
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
+		throw new UnsupportedOperationException();
+	}
 }

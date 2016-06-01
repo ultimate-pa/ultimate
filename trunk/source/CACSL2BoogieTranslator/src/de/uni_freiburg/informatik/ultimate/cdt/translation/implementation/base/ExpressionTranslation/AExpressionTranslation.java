@@ -607,4 +607,6 @@ public abstract class AExpressionTranslation {
 	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
 
 	public abstract Expression getRoundingMode();
+	
+	public abstract Expression createFloatingPointClassificationFunction(ILocation loc, String name);
 }
