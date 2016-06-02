@@ -29,11 +29,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.DefaultEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
  * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
@@ -42,12 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar> {
+public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar, Expression> {
 
 	private final IUltimateServiceProvider mServices;
+	private final RootAnnot mRootAnnotation;
+	
+	private IEqualityProvider<SignDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
+	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
-	public SignDomain(IUltimateServiceProvider services) {
+	public SignDomain(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		mServices = services;
+		mRootAnnotation = rootAnnotation;
 	}
 
 	@Override
@@ -67,11 +76,22 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 
 	@Override
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new SignPostOperator(mServices);
+		if (mPostOperator == null) {
+			mPostOperator = new SignPostOperator(mServices);
+		}
+		return mPostOperator;
 	}
 
 	@Override
 	public int getDomainPrecision() {
 		return 50;
+	}
+
+	@Override
+	public IEqualityProvider<SignDomainState, CodeBlock, IBoogieVar, Expression> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new DefaultEqualityProvider<>(mPostOperator, mRootAnnotation);
+		}
+		return mEqualityProvider;
 	}
 }

@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
 
 	/**
 	 * @return A new state of the current abstract domain.
@@ -60,4 +60,10 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VAR
 	 * @return The perceived precision of the domain.
 	 */
 	public int getDomainPrecision();
+
+	/**
+	 * @return The domain's equality provider that allows to check whether two variables are equal or not equal in an
+	 *         abstract state.
+	 */
+	public IEqualityProvider<STATE, ACTION, VARDECL, EXPRESSION> getEqualityProvider();
 }
