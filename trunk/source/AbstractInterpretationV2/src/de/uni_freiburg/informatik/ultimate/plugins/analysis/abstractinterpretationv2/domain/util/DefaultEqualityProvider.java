@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -41,7 +41,7 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlo
 	public boolean isDefinitelyEqual(STATE state, Expression first, Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPNEQ);
 	}
-	
+
 	@Override
 	public boolean isDefinitelyNotEqual(STATE state, Expression first, Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPEQ);
@@ -56,7 +56,7 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlo
 		final AssumeStatement assumeStatement = new AssumeStatement(null, formula);
 
 		final CodeBlock assumeCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null,
-		        Stream.of(assumeStatement).collect(Collectors.toList()), Origin.IMPLEMENTATION);
+		        new ArrayList<>(Arrays.asList(assumeStatement)), Origin.IMPLEMENTATION);
 
 		final List<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
 		assert postReturn.size() == 1;
