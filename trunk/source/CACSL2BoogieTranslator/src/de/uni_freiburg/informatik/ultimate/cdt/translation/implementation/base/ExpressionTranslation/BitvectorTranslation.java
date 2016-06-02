@@ -728,7 +728,46 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
-		// TODO Auto-generated method stub
-		return null;
+	
+		String smtlibFunctionName;
+		CPrimitive param;
+		
+		if (name.equals("__isnan") || name.equals("__isnand") || name.equals("__isnanf") || name.equals("__isnanl")) {
+			smtlibFunctionName = "fp.isNaN";
+			if (name.equals("__isnanf")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isnanl")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else if (name.equals("__isinf") || name.equals("__isinfd") || name.equals("__isinff") || name.equals("__isinfl")) {
+			smtlibFunctionName = "fp.isInfinite";
+			if (name.equals("__isinff")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isinfl")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else if (name.equals("__isnormal") || name.equals("__isnormald") || name.equals("__isnormalf") || name.equals("__isnormall")) {
+			smtlibFunctionName = "fp.isNormal";
+			if (name.equals("__isnormalf")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isnormall")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else {
+			throw new UnsupportedOperationException("Operation not supported");
+		}
+		//declareFloatingPointFunction(loc, smtlibFunctionName, SFO.AUXILIARY_FUNCTION_PREFIX + name, true, false, new CPrimitive(PRIMITIVE.BOOL), null, param);
+		
+		
+		ASTType ASTparam = new NamedType(loc, param.toString(), new ASTType[0]);
+		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, null); 
+		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, attributes, new PrimitiveType(loc, SFO.BOOL), ASTparam);
+		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, null);
 	}
 }
