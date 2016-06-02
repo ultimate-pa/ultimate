@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @author hoenicke
@@ -50,12 +50,13 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public BoogiePrinterObserver(ILogger logger){
-		mLogger = logger;
+	public BoogiePrinterObserver(final IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
-	
+
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
@@ -75,46 +76,43 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 		String path;
 		String filename;
-		File f;
+		File file;
 
-		if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
-		.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			path = new File(root.getPayload().getLocation().getFileName())
-					.getParent();
-			if(path == null){
+		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
+			path = new File(root.getPayload().getLocation().getFileName()).getParent();
+			if (path == null) {
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferenceInitializer.DUMP_PATH_LABEL);
+				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 			}
 		} else {
-			path = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-			.getString(PreferenceInitializer.DUMP_PATH_LABEL);
+			path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 		}
 
 		try {
-			if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
-			.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
-				f = File.createTempFile("BoogiePrinter_"
-						+ new File(root.getPayload().getLocation()
-								.getFileName()).getName() + "_UID", ".bpl",
-						new File(path));
+			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
+				file = File.createTempFile(
+						"BoogiePrinter_" + new File(root.getPayload().getLocation().getFileName()).getName() + "_UID",
+						".bpl", new File(path));
 			} else {
-				filename = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferenceInitializer.FILE_NAME_LABEL);
-				f = new File(path + File.separatorChar + filename);
-				if (f.isFile() && f.canWrite() || !f.exists()) {
-					if (f.exists()) {
-						mLogger.info("File already exists and will be overwritten: "
-								+ f.getAbsolutePath());
-					}
-					f.createNewFile();
-				} else {
-					mLogger.warn("Cannot write to: " + f.getAbsolutePath());
+				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getString(PreferenceInitializer.FILE_NAME_LABEL);
+				file = new File(path + File.separatorChar + filename);
+				if ((!file.isFile() || !file.canWrite()) && file.exists()) {
+					mLogger.warn("Cannot write to: " + file.getAbsolutePath());
 					return null;
 				}
+
+				if (file.exists()) {
+					mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
+				}
+				file.createNewFile();
 			}
-			mLogger.info("Writing to file " + f.getAbsolutePath());
-			return new PrintWriter(new FileWriter(f));
+			mLogger.info("Writing to file " + file.getAbsolutePath());
+			return new PrintWriter(new FileWriter(file));
 
 		} catch (final IOException e) {
 			mLogger.fatal("Cannot open file", e);

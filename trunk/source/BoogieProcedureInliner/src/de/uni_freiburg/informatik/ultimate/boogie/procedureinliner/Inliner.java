@@ -80,11 +80,11 @@ public class Inliner implements IUnmanagedObserver {
 	 * @param services
 	 *            Service provider.
 	 */
-	public Inliner(IUltimateServiceProvider services) {
+	public Inliner(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mProgressMonitorService = services.getProgressMonitorService();
-		mInlineSelector = new PreferencesInlineSelector();
+		mInlineSelector = new PreferencesInlineSelector(services);
 		mBacktranslator = new InlinerBacktranslator(services);
 	}
 
@@ -158,7 +158,7 @@ public class Inliner implements IUnmanagedObserver {
 				.getBoolean(PreferenceItem.PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES.getName())) {
 			return mCallGraph.values();
 		}
-		final Collection<String> entryProcedures = PreferenceItem.ENTRY_PROCEDURES.getStringValueTokens();
+		final Collection<String> entryProcedures = PreferenceItem.ENTRY_PROCEDURES.getStringValueTokens(mServices);
 		final Collection<String> missingEntryProcedures = missingEntryProcedures(entryProcedures);
 		if (missingEntryProcedures.size() == entryProcedures.size()) {
 			mLogger.warn("Program contained no entry procedure!");

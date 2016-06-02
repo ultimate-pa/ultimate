@@ -32,8 +32,6 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -49,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceEvaluatorFactory
-        implements IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+		implements IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
@@ -57,16 +55,17 @@ public class CongruenceEvaluatorFactory
 
 	private final ILogger mLogger;
 	private final String mSettingsEvaluatorType;
+	private final int mMaxParallelStates;
 
-	public CongruenceEvaluatorFactory(final ILogger logger) {
+	public CongruenceEvaluatorFactory(final ILogger logger, final String evaluatorType, final int maxParallelStates) {
 		mLogger = logger;
-		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		mSettingsEvaluatorType = ups.getString(CongruenceDomainPreferences.LABEL_EVALUATOR_TYPE);
+		mSettingsEvaluatorType = evaluatorType;
+		mMaxParallelStates = maxParallelStates;
 	}
 
 	@Override
 	public INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-	        final int arity, final EvaluatorType type) {
+			final int arity, final EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -75,12 +74,12 @@ public class CongruenceEvaluatorFactory
 			return new CongruenceUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
 			if (mSettingsEvaluatorType.equals(CongruenceDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
-				return new CongruenceBinaryExpressionEvaluator(mLogger);
+				return new CongruenceBinaryExpressionEvaluator(mLogger, mMaxParallelStates);
 			} else if (mSettingsEvaluatorType.equals(CongruenceDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
 				throw new UnsupportedOperationException("Optimization evaluator is not implemented, yet.");
 			} else {
 				throw new UnsupportedOperationException(
-				        "The evaluator type " + mSettingsEvaluatorType + " is not supported.");
+						"The evaluator type " + mSettingsEvaluatorType + " is not supported.");
 			}
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
@@ -91,29 +90,29 @@ public class CongruenceEvaluatorFactory
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        final String value, final Class<?> valueType) {
+			final String value, final Class<?> valueType) {
 		assert value != null;
-		
+
 		return new CongruenceSingletonValueExpressionEvaluator(
 				CongruenceDomainValue.createConstant(new BigInteger(value)));
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        final String variableName) {
+			final String variableName) {
 		assert variableName != null;
 		return new CongruenceSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        final BooleanValue value) {
+			final BooleanValue value) {
 		return new CongruenceSingletonBooleanExpressionEvaluator(value);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(
-	        final String functionName, final int inputParamCount) {
+			final String functionName, final int inputParamCount) {
 		return new CongruenceFunctionEvaluator(functionName, inputParamCount);
 	}
 

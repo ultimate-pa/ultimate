@@ -68,10 +68,11 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 	private final CongruenceDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 
-	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable) {
+	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
+			final CongruenceDomainStatementProcessor statementProcessor) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new CongruenceDomainStatementProcessor(mLogger, symbolTable);
+		mStatementProcessor = statementProcessor;
 		mSymbolTable = symbolTable;
 	}
 
@@ -112,7 +113,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 	@Override
 	public List<CongruenceDomainState> apply(final CongruenceDomainState stateBeforeLeaving,
-	        final CongruenceDomainState stateAfterLeaving, final CodeBlock transition) {
+			final CongruenceDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
@@ -143,7 +144,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			}
 
 			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-			        idents.toArray(new LeftHandSide[idents.size()]), args);
+					idents.toArray(new LeftHandSide[idents.size()]), args);
 
 			final CongruenceDomainState interimState = stateBeforeLeaving.addVariables(paramVariables);
 
@@ -166,7 +167,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 			if (args.length != paramIdentifiers.size()) {
 				throw new UnsupportedOperationException(
-				        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+						"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
 			}
 
 			for (final CongruenceDomainState resultState : result) {
@@ -191,7 +192,8 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					} else {
 						if (mLogger.isDebugEnabled()) {
-							mLogger.warn("The IBoogieVar type " + type.getIType() + " cannot be handled. Assuming normal variable type.");
+							mLogger.warn("The IBoogieVar type " + type.getIType()
+									+ " cannot be handled. Assuming normal variable type.");
 						}
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					}
@@ -206,12 +208,12 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			final CallStatement correspondingCall = ret.getCallStatement();
 
 			final List<CongruenceDomainValue> vals = getOutParamValues(correspondingCall.getMethodName(),
-			        stateBeforeLeaving);
+					stateBeforeLeaving);
 			final VariableLHS[] lhs = correspondingCall.getLhs();
 
 			if (vals.size() != lhs.length) {
 				throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
-				        + ") is different from the function's number of return variables (" + vals.size() + ").");
+						+ ") is different from the function's number of return variables (" + vals.size() + ").");
 			}
 
 			final List<String> updateVarNames = new ArrayList<>();
@@ -220,14 +222,14 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			}
 
 			final CongruenceDomainState returnState = stateAfterLeaving.setValues(
-			        updateVarNames.toArray(new String[updateVarNames.size()]),
-			        vals.toArray(new CongruenceDomainValue[vals.size()]));
+					updateVarNames.toArray(new String[updateVarNames.size()]),
+					vals.toArray(new CongruenceDomainValue[vals.size()]));
 
 			returnList.add(returnState);
 			return returnList;
 		} else {
 			throw new UnsupportedOperationException(
-			        "CongruenceDomain does not support context switches other than Call and Return (yet)");
+					"CongruenceDomain does not support context switches other than Call and Return (yet)");
 		}
 	}
 
@@ -275,12 +277,12 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 	private Procedure getProcedure(final String procedureName) {
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
-		        .filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
-		        .filter(proc -> proc.getBody() != null).findFirst().get();
+				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
+				.filter(proc -> proc.getBody() != null).findFirst().get();
 	}
 
 	private List<CongruenceDomainValue> getOutParamValues(final String procedureName,
-	        final CongruenceDomainState stateBeforeLeaving) {
+			final CongruenceDomainState stateBeforeLeaving) {
 		// functions are already inlined and if there are procedure and implementation declaration for a proc, we know
 		// that we only get the implementation from the FXPE
 		final Procedure procedure = getProcedure(procedureName);

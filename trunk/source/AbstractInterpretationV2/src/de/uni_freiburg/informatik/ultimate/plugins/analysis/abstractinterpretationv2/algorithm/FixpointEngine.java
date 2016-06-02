@@ -122,7 +122,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final IAbstractStateBinaryOperator<STATE> mergeOp = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		worklist.add(createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider)));
+		worklist.add(
+				createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider, mMaxParallelStates)));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();

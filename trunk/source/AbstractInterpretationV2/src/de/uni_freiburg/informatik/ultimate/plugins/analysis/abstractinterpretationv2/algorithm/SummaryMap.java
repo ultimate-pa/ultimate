@@ -7,12 +7,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -27,12 +24,12 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final int mMaxParallelStates;
 
-	SummaryMap(final IAbstractStateBinaryOperator<STATE> mergeOp, final ITransitionProvider<ACTION, LOCATION> trans) {
+	SummaryMap(final IAbstractStateBinaryOperator<STATE> mergeOp, final ITransitionProvider<ACTION, LOCATION> trans,
+			final int maxParallelStates) {
 		mTransProvider = trans;
 		mMergeOp = mergeOp;
 		mSummaries = new HashMap<>();
-		mMaxParallelStates = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		mMaxParallelStates = maxParallelStates;
 	}
 
 	/**

@@ -79,22 +79,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
+	private final ILogger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
+	private final IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
 
 	private CongruenceDomainState mOldState;
 	private List<CongruenceDomainState> mReturnState;
 
-	private IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
 	private ExpressionEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
 
 	private String mLhsVariable;
 
-	private final ILogger mLogger;
-
-	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable) {
+	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
+			final String evaluatorType, final int maxParallelStates) {
 		mSymbolTable = symbolTable;
 		mLogger = logger;
 		mLhsVariable = null;
+		mEvaluatorFactory = new CongruenceEvaluatorFactory(mLogger, evaluatorType, maxParallelStates);
 	}
 
 	public List<CongruenceDomainState> process(final CongruenceDomainState oldState, final Statement statement) {
@@ -107,7 +108,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		mOldState = oldState;
 
 		mLhsVariable = null;
-		
+
 		processStatement(statement);
 
 		assert mReturnState.size() != 0;
@@ -130,28 +131,29 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		return super.processStatement(statement);
 	}
-	
+
 	@Override
-	protected Expression processExpression(final Expression expr) {	
+	protected Expression processExpression(final Expression expr) {
 		if (expr instanceof ArrayStoreExpression) {
-			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
+			mExpressionEvaluator
+					.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 			return expr;
 		} else if (expr instanceof ArrayAccessExpression) {
-			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
+			mExpressionEvaluator
+					.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 			return expr;
 		}
 		final ExpressionTransformer t = new ExpressionTransformer();
 		final Expression newExpr = t.transform(expr);
 		if (mLogger.isDebugEnabled() && !newExpr.toString().equals(expr.toString())) {
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-			        .append(BoogiePrettyPrinter.print(newExpr)));
+					.append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+					.append(BoogiePrettyPrinter.print(newExpr)));
 		}
 		return super.processExpression(newExpr);
 	}
 
 	private void handleAssignment(final AssignmentStatement statement) {
-		mEvaluatorFactory = new CongruenceEvaluatorFactory(mLogger);
 
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
@@ -177,20 +179,20 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 			for (final CongruenceDomainState currentState : currentStateList) {
 				final List<IEvaluationResult<CongruenceDomainValue>> result = mExpressionEvaluator.getRootEvaluator()
-				        .evaluate(currentState);
+						.evaluate(currentState);
 
 				if (result.size() == 0) {
 					throw new UnsupportedOperationException(
-					        "There is supposed to be at least on evaluation result for the assingment expression.");
+							"There is supposed to be at least on evaluation result for the assingment expression.");
 				}
 
 				for (final IEvaluationResult<CongruenceDomainValue> res : result) {
 					CongruenceDomainState newState = currentState.copy();
 
 					final IBoogieVar type = newState.getVariableDeclarationType(varname);
-					
+
 					final CongruenceDomainValue newValue = res.getValue();
-					
+
 					if (type.getIType() instanceof PrimitiveType) {
 						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 						if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
@@ -224,18 +226,19 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(final IntegerLiteral expr) {
 		assert mEvaluatorFactory != null;
-		
+
 		final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 				.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
-	
+
 	@Override
 	protected void visit(final RealLiteral expr) {
 		assert mEvaluatorFactory != null;
 
-		mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
+		mExpressionEvaluator
+				.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 	}
 
 	@Override
@@ -244,7 +247,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		assert mEvaluatorFactory != null;
 
 		final INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
-		        .createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
+				.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
 
 		evaluator.setOperator(expr.getOperator());
 
@@ -252,7 +255,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	private void handleAssumeStatement(final AssumeStatement statement) {
-		mEvaluatorFactory = new CongruenceEvaluatorFactory(mLogger);
 		mExpressionEvaluator = new ExpressionEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar>();
 
 		final Expression formula = statement.getFormula();
@@ -273,15 +275,15 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		assert mExpressionEvaluator.isFinished();
 
 		final List<IEvaluationResult<CongruenceDomainValue>> result = mExpressionEvaluator.getRootEvaluator()
-		        .evaluate(mOldState);
+				.evaluate(mOldState);
 
 		for (final IEvaluationResult<CongruenceDomainValue> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == Value.BOTTOM
-			        || res.getBooleanValue().getValue() == Value.FALSE) {
+					|| res.getBooleanValue().getValue() == Value.FALSE) {
 				mReturnState.add(mOldState.bottomState());
 			} else {
 				final List<CongruenceDomainState> resultStates = mExpressionEvaluator.getRootEvaluator()
-				        .inverseEvaluate(res, mOldState);
+						.inverseEvaluate(res, mOldState);
 				mReturnState.addAll(resultStates);
 			}
 		}
@@ -312,7 +314,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 
 				throw new UnsupportedOperationException(
-				        "The function application for not inlined functions is not yet supported.");
+						"The function application for not inlined functions is not yet supported.");
 			}
 		}
 
@@ -320,8 +322,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	protected void handleHavocStatement(final HavocStatement statement) {
-		mEvaluatorFactory = new CongruenceEvaluatorFactory(mLogger);
-
 		CongruenceDomainState currentNewState = mOldState.copy();
 
 		for (final VariableLHS var : statement.getIdentifiers()) {
@@ -392,13 +392,13 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(final ArrayAccessExpression expr) {
 		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
-	
+
 	@Override
 	protected void visit(final IfThenElseExpression expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
-		        .createConditionalEvaluator();
+				.createConditionalEvaluator();
 
 		mExpressionEvaluator.addEvaluator(evaluator);
 
@@ -408,5 +408,5 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		// This expression should be added first to the evaluator inside the handling of processExpression.
 		processExpression(newUnary);
-	}	
+	}
 }
