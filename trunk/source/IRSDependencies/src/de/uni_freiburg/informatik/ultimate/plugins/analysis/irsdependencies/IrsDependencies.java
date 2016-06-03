@@ -36,15 +36,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetectorObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer.Mode;
 
 public class IrsDependencies implements IAnalysis {
 
-	protected ILogger mLogger;
-	protected final List<IObserver> mObservers;
+	private ILogger mLogger;
+	private final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 
 	public IrsDependencies() {
@@ -76,7 +75,8 @@ public class IrsDependencies implements IAnalysis {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
-		final IRSDependenciesPreferenceInitializer.Mode mode = new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(IRSDependenciesPreferenceInitializer.MODE, Mode.class);
+		final IRSDependenciesPreferenceInitializer.Mode mode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IRSDependenciesPreferenceInitializer.MODE, Mode.class);
 
 		switch (mode) {
 		case Default:
@@ -115,6 +115,7 @@ public class IrsDependencies implements IAnalysis {
 
 	@Override
 	public void init() {
+		// no init needed
 	}
 
 	@Override
@@ -134,8 +135,7 @@ public class IrsDependencies implements IAnalysis {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+		// no storage needed
 	}
 
 	@Override
@@ -146,8 +146,7 @@ public class IrsDependencies implements IAnalysis {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		// no finish needed
 	}
 
 }
