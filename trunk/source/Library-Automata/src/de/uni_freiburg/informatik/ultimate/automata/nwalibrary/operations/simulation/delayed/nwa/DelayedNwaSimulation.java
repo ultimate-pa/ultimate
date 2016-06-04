@@ -94,7 +94,6 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	public void doSimulation() throws AutomataOperationCanceledException {
 		super.doSimulation();
 		// getLogger().debug(getGameGraph().toAtsFormat());
-		// setResult(getGameGraph().generateAutomatonFromGraph());
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff

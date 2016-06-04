@@ -118,16 +118,14 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 * simulation.direct.DirectGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-//		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
-		// TODO Enable the correct simulation again when DD problems are resolved
-		@SuppressWarnings("unchecked")
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = (INestedWordAutomatonOldApi<LETTER, STATE>) mNwa;
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
 
 		// Log performance
 		if (performance != null) {

@@ -15,7 +15,7 @@ print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
 // Some example automaton
 
 // Small nwa example from whiteboard
-/*
+
 NestedWordAutomaton nwa = (
   callAlphabet = {c},
   internalAlphabet = {a},
@@ -33,7 +33,7 @@ NestedWordAutomaton nwa = (
 	  (q1 q0 r q1)
   }
 );
-*/
+
 // Another small nwa example from whiteboard
 /*
 NestedWordAutomaton nwa = (
@@ -78,7 +78,7 @@ NestedWordAutomaton nwa = (
 );
 */
 // Small circle example with two direct simulations in both directions
-
+/*
 NestedWordAutomaton nwa = (
   callAlphabet = {c},
   internalAlphabet = {a},
@@ -98,7 +98,7 @@ NestedWordAutomaton nwa = (
 	  (q3 q2 r q0)
   }
 );
-
+*/
 // Small circle example with direct simulation in one direction and one in both directions
 /*
 NestedWordAutomaton nwa = (
