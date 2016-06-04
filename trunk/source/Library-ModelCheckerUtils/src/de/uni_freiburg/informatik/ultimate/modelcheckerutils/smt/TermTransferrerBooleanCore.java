@@ -29,14 +29,30 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
+/**
+ * Variant of TermTransferrer that transfers only the boolean structure of
+ * a term. Each relation of non-boolean arguments (i.e., literals in the 
+ * boolean structure) is transferred to a fresh TermVariable.
+ * QuantifiedFormulas are always considered as a literal even if they only 
+ * quantify boolean Variables (we might change this in the future).
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class TermTransferrerBooleanCore extends TermTransferrer {
 	
+	/**
+	 * Auxiliary term that is used in the "recurse phase" to mark
+	 * non-boolean subterms. Later, in the "construction phase" we identify
+	 * literals as the {@link ApplicationTerm}s that have an argument that
+	 * was replaced by the auxiliary term.
+	 */
 	private final Term mAuxiliaryTerm;
 	private final String mFreshTermPrefix = "FBV_";
 	private int mFreshTermCounter;
@@ -58,7 +74,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 				return value;
 			}
 		};
-		mConstructionCache = new ConstructionCache<Term, Term>(valueComputation );
+		mConstructionCache = new ConstructionCache<Term, Term>(valueComputation);
 	}
 	
 	public Term constructAuxiliaryTerm() {
@@ -69,16 +85,18 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 
 	@Override
 	protected void convert(Term term) {
-		if (term.getSort().getName().equals("Bool")) {
-			super.convert(term);
-		} else {
+		if (!term.getSort().getName().equals("Bool")) {
 			setResult(mAuxiliaryTerm);
+		} else if (term instanceof QuantifiedFormula) {
+			final Term result = mConstructionCache.getOrConstuct(term);
+			setResult(result);
+		} else {
+			super.convert(term);
 		}
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		
 		if (Arrays.asList(newArgs).contains(mAuxiliaryTerm)) {
 			final Term result = mConstructionCache.getOrConstuct(appTerm);
 			setResult(result);
