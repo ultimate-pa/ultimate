@@ -11,7 +11,7 @@
  * 
  * The ULTIMATE CLI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
@@ -24,18 +24,37 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission 
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.cli;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.cli.Option;
+
 /**
- * The activator class controls the plug-in life cycle.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class Activator {
+public final class CommandLineOptions {
 
-	public static final String PLUGIN_ID = CommandLineController.class.getPackage().getName();
+	public static final String OPTION_NAME_TOOLCHAIN = "tc";
+	public static final String OPTION_NAME_INPUTFILES = "i";
+	public static final String OPTION_NAME_SETTINGS = "s";
+	public static final String OPTION_NAME_HELP = "h";
 
-	public static final String PLUGIN_NAME = "Ultimate Commandline Interface";
+	static List<Option> createCommandLineOptions() {
+		// add CLI options
+		final List<Option> rtr = new ArrayList<>();
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_TOOLCHAIN).longOpt("toolchain").type(File.class).hasArg()
+				.required().argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt("input").hasArgs().required()
+				.argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_SETTINGS).longOpt("settings").type(File.class).hasArg()
+				.argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_HELP).longOpt("help").type(Boolean.class).build());
+		return rtr;
+	}
 
 }

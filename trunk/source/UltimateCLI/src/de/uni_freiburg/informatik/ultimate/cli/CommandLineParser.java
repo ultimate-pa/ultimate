@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cli;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,11 +55,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class CommandLineParser {
-
-	public static final String OPTION_NAME_HELP = "h";
-	public static final String OPTION_NAME_SETTINGS = "s";
-	public static final String OPTION_NAME_INPUTFILES = "i";
-	public static final String OPTION_NAME_TOOLCHAIN = "tc";
 
 	private static final int MAX_NAME_LENGTH = 160;
 
@@ -144,14 +138,9 @@ public class CommandLineParser {
 		final Options op = new Options();
 
 		// add CLI options
-		op.addOption(Option.builder(OPTION_NAME_TOOLCHAIN).longOpt("toolchain").type(File.class).hasArg().required()
-				.argName("FILE").build());
-		op.addOption(
-				Option.builder(OPTION_NAME_INPUTFILES).longOpt("input").hasArgs().required().argName("FILE").build());
-		op.addOption(Option.builder(OPTION_NAME_SETTINGS).longOpt("settings").type(File.class).hasArg().argName("FILE")
-				.build());
-		op.addOption(Option.builder(OPTION_NAME_HELP).longOpt("help").type(Boolean.class).build());
-
+		for (final Option option : CommandLineOptions.createCommandLineOptions()) {
+			op.addOption(option);
+		}
 		// create preferences from loaded Ultimate plugins
 		for (final IUltimatePlugin plugin : mCore.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();
@@ -160,7 +149,7 @@ public class CommandLineParser {
 			}
 			addPreferences(op, preferences);
 		}
-		// add platform options
+		// add platform options (they appear because of the way RCP launches and are never used by this controller)
 		op.addOption(Option.builder("product").hasArg().type(String.class).build());
 		op.addOption(Option.builder().longOpt("console").type(Boolean.class).build());
 

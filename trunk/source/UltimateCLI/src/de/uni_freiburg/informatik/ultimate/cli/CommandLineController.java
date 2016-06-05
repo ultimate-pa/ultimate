@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CommandlineController implements IController<ToolchainListType> {
+public class CommandLineController implements IController<ToolchainListType> {
 
 	private ILogger mLogger;
 	private IToolchainData<ToolchainListType> mToolchain;

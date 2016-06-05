@@ -85,21 +85,21 @@ public class ParsedParameter {
 	}
 
 	public boolean isHelpRequested() {
-		return mCli.hasOption(CommandLineParser.OPTION_NAME_HELP);
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_HELP);
 	}
 
 	public String getSettingsFile() throws ParseException, InvalidFileException {
-		final File file = getParsedOption(CommandLineParser.OPTION_NAME_SETTINGS);
+		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 		checkFileExists(file);
 		return file.getAbsolutePath();
 	}
 
 	public boolean hasSettings() {
-		return mCli.hasOption(CommandLineParser.OPTION_NAME_SETTINGS);
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 	}
 
 	public IToolchainData<ToolchainListType> createToolchainData() throws InvalidFileException, ParseException {
-		final File toolchainFile = getParsedOption(CommandLineParser.OPTION_NAME_TOOLCHAIN);
+		final File toolchainFile = getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
 		try {
 			return mCore.createToolchainData(toolchainFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -127,7 +127,7 @@ public class ParsedParameter {
 	}
 
 	private File[] getInputFileArgument() {
-		final String[] values = mCli.getOptionValues(CommandLineParser.OPTION_NAME_INPUTFILES);
+		final String[] values = mCli.getOptionValues(CommandLineOptions.OPTION_NAME_INPUTFILES);
 		final File[] files = new File[values.length];
 
 		for (int i = 0; i < values.length; ++i) {

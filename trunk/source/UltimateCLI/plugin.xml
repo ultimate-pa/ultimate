@@ -4,7 +4,7 @@
      <extension
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
-            class="de.uni_freiburg.informatik.ultimate.cli.CommandlineController"
+            class="de.uni_freiburg.informatik.ultimate.cli.CommandLineController"
             isGraphical="false"/>
    </extension>  
 </plugin>
