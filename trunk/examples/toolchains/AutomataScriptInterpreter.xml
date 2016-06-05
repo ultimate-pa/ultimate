@@ -1,3 +1,8 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
-</toolchain>
+
+	</toolchain>
+</rundefinition>

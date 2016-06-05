@@ -1,4 +1,9 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
-</toolchain>
+
+	</toolchain>
+</rundefinition>

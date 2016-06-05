@@ -1,5 +1,8 @@
-<toolchain>
-	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
-</toolchain>
+<rundefinition>
+	<name>Buchi Automizer for Boogie</name>
+	<toolchain>
+		<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
+	</toolchain>
+</rundefinition>

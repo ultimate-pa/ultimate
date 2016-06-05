@@ -1,4 +1,7 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="CFGBuilder"/>
 	<plugin id="CFG2SMT"/>
@@ -11,4 +14,6 @@
 		</subchain>
 	</subchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
-</toolchain>
+
+	</toolchain>
+</rundefinition>
