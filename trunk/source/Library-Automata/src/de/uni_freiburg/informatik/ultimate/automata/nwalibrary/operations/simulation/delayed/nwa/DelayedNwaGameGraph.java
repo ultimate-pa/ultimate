@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -66,7 +67,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<LETTER, STATE> {
+public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<LETTER, STATE>
+		implements INwaGameGraph<LETTER, STATE> {
 	/**
 	 * Utility object for generating game graphs based on nwa automata.
 	 */
@@ -192,6 +194,17 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.INwaGameGraph#undoRemovedReturnBridgesChanges()
+	 */
+	@Override
+	public void undoRemovedReturnBridgesChanges() {
+		undoChanges(mGeneration.getRemovedReturnBridgesChanges());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.AGameGraph#verifyAutomatonValidity(de.uni_freiburg.informatik.
 	 * ultimate.automata.nwalibrary.INestedWordAutomatonOldApi)
 	 */
@@ -199,5 +212,4 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
 	}
-
 }

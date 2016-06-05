@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -64,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE> {
+public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE>
+		implements INwaGameGraph<LETTER, STATE> {
 	/**
 	 * Utility object for generating game graphs based on nwa automata.
 	 */
@@ -118,7 +120,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * simulation.fair.FairGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -183,6 +186,17 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
 		// TODO Can later be removed but for now
 		// it should throw an Exception for problem detection.
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.INwaGameGraph#undoRemovedReturnBridgesChanges()
+	 */
+	@Override
+	public void undoRemovedReturnBridgesChanges() {
+		undoChanges(mGeneration.getRemovedReturnBridgesChanges());
 	}
 
 	/*

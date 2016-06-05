@@ -784,6 +784,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 			}
 		}
 
+		// Undo push-over edge changes
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges = changes
+				.getChangedPushOverEdges();
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdge : changedPushOverEdges
+				.entrySet()) {
+			final Vertex<LETTER, STATE> src = changedPushOverEdge.getFirst();
+			final Vertex<LETTER, STATE> dest = changedPushOverEdge.getSecond();
+			final EGameGraphChangeType type = changedPushOverEdge.getThird();
+			// If added before, remove and vice versa
+			if (type.equals(EGameGraphChangeType.ADDITION)) {
+				removePushOverEdge(src, dest);
+			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
+				addPushOverEdge(src, dest);
+			}
+		}
+
 		// Undo vertex changes
 		final HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
 		for (final Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
@@ -806,7 +822,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo vertex value changes
-		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes.getRememberedVertexValues();
+		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes
+				.getRememberedVertexValues();
 		for (final Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues : changedVertexValues.entrySet()) {
 			final Vertex<LETTER, STATE> vertex = changedValues.getKey();
 			final VertexValueContainer values = changedValues.getValue();

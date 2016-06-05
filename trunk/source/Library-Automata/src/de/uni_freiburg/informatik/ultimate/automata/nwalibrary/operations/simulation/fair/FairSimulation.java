@@ -420,6 +420,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			setUseSCCs(true);
 		}
 
+		simulationHook();
 		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		// Generate the resulting automata

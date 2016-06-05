@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -92,6 +93,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * type of transition, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Non<STATE, STATE, STATE, STATE, LETTER, Boolean, ETransitionType, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> mAutomatonStatesToGraphDuplicatorVertex;
+
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
@@ -99,6 +101,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * of spoiler, down state of duplicator, bit, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Hep<STATE, STATE, STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> mAutomatonStatesToGraphSpoilerVertex;
+
 	/**
 	 * State symbol that stands for an empty stack.
 	 */
@@ -141,6 +144,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
 	private final IProgressAwareTimer mProgressTimer;
+	/**
+	 * Object that stores all changes made for removing return vertices and
+	 * their edges. It includes the removed returning vertex, its out- and
+	 * in-going edges and generated push-over edges.
+	 */
+	private final GameGraphChanges<LETTER, STATE> mRemovedReturnBridges;
 	/**
 	 * Amount of states the result automaton has.
 	 */
@@ -227,6 +236,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mReturnInvokerOmittedPredecessors = new HashMap<>();
 		mEntryToSink = new HashMap<>();
 		mBottomVertices = new HashSet<>();
+		mRemovedReturnBridges = new GameGraphChanges<>();
 		mBottom = mNwa.getEmptyStackState();
 		mLogger = logger;
 		mProgressTimer = progressTimer;
@@ -1671,6 +1681,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				successorsToProcess = new LinkedList<>(successors);
 				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
 					mGameGraph.removeEdge(returnInvoker, succ);
+					mRemovedReturnBridges.removedEdge(returnInvoker, succ);
 				}
 			}
 			final Set<Vertex<LETTER, STATE>> predecessors = mGameGraph.getPredecessors(returnInvoker);
@@ -1680,6 +1691,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				predecessorsToProcess = new LinkedList<>(predecessors);
 				for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 					mGameGraph.removeEdge(pred, returnInvoker);
+					mRemovedReturnBridges.removedEdge(pred, returnInvoker);
 					// Care for dead end spoiler vertices because they are not
 					// allowed in a legal game graph.
 					// They need to form a legal instant win for Duplicator.
@@ -1691,6 +1703,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Remove not reachable vertex
 			removeDuplicatorVertex(returnInvoker);
+			mRemovedReturnBridges.removedVertex(returnInvoker);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("\tRemoved duplicatorReturn: " + returnInvoker);
 			}
@@ -1722,6 +1735,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
 					for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 						mGameGraph.addPushOverEdge(pred, succ);
+						mRemovedReturnBridges.addedPushOverEdge(pred, succ);
 
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("\tAdded pushOver: " + pred + " -> " + succ);
@@ -1866,6 +1880,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the changes that where made for removing return vertices and their
+	 * edges. It includes the removed returning vertex, its out- and in-going
+	 * edges and generated push-over edges.
+	 * 
+	 * @return The changes that where made for removing return vertices and
+	 *         their edges.
+	 */
+	public GameGraphChanges<LETTER, STATE> getRemovedReturnBridgesChanges() {
+		return mRemovedReturnBridges;
+	}
+
+	/**
 	 * Gets the performance log of this object.
 	 * 
 	 * @return Performance log of this object
@@ -1917,8 +1943,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * In direct simulation it correctly takes care of spoiler vertices that are
 	 * directly loosing for Duplicator. Such vertices need to form a legal win
 	 * for Spoiler though they are dead-ends.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	public void patchSpoilerDeadEnds() {
+	public void patchSpoilerDeadEnds() throws AutomataOperationCanceledException {
 		for (SpoilerDoubleDeckerVertex<LETTER, STATE> possibleDeadEnd : mPossibleSpoilerDeadEnd) {
 			// Do not take a look at the vertex if we are in direct simulation
 			// and the vertex is directly loosing. It then needs to stay a
@@ -1939,6 +1969,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("\tPatched spoiler dead-end: " + possibleDeadEnd);
+			}
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
