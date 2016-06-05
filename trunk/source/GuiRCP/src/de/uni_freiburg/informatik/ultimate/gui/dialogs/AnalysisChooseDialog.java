@@ -127,7 +127,8 @@ public class AnalysisChooseDialog extends Dialog {
 			// save this toolchain in a tempfile for redo actions
 			final String tDir = System.getProperty("java.io.tmpdir");
 			final File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
-			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
+			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), "Last Ultimate Toolchain",
+					resultChain.getToolchain());
 			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());

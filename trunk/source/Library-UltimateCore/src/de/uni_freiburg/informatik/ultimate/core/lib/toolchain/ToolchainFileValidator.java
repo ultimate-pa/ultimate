@@ -86,19 +86,28 @@ public class ToolchainFileValidator {
 	}
 
 	/**
-	 * This method marshals a toolchain into an xml file.
+	 * This method saves a toolchain to a validated xml file.
 	 * 
 	 * @param xmlfile
+	 *            The path to which the toolchain should be saved.
+	 * @param toolchainName
+	 *            The name of the toolchain (may not be null).
+	 * @param toolchainInstance
+	 *            The actual toolchain.
+	 * 
 	 * @throws JAXBException
 	 * @throws FileNotFoundException
 	 */
-	public void saveToolchain(String xmlfile, ToolchainListType toolchainInstance)
+	public void saveToolchain(String xmlfile, String toolchainName, ToolchainListType toolchainInstance)
 			throws JAXBException, FileNotFoundException {
+		if (toolchainName == null) {
+			throw new IllegalArgumentException();
+		}
 		final ObjectFactory mObjectFactory = new ObjectFactory();
 		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE);
 		final RunDefinition rundef = mObjectFactory.createRunDefinition();
 		rundef.setToolchain(toolchainInstance);
-		rundef.setName("New Toolchain");
+		rundef.setName(toolchainName);
 		final JAXBElement<RunDefinition> newdoc = mObjectFactory.createRundefinition(rundef);
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.marshal(newdoc, new FileOutputStream(xmlfile));
