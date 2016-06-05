@@ -79,10 +79,10 @@ public class ToolchainFileValidator {
 		final URL fullPathString = getClass().getResource(TOOLCHAIN_URI);
 		unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));
 
-		final JAXBElement<ToolchainListType> doc = (JAXBElement<ToolchainListType>) unmarshaller
-				.unmarshal(new FileInputStream(xmlfile));
+		final JAXBElement<RunDefinition> doc =
+				(JAXBElement<RunDefinition>) unmarshaller.unmarshal(new FileInputStream(xmlfile));
 
-		return doc.getValue();
+		return doc.getValue().getToolchain();
 	}
 
 	/**
@@ -96,7 +96,10 @@ public class ToolchainFileValidator {
 			throws JAXBException, FileNotFoundException {
 		final ObjectFactory mObjectFactory = new ObjectFactory();
 		final JAXBContext jc = JAXBContext.newInstance(TOOLCHAIN_PACKAGE);
-		final JAXBElement<ToolchainListType> newdoc = mObjectFactory.createToolchain(toolchainInstance);
+		final RunDefinition rundef = mObjectFactory.createRunDefinition();
+		rundef.setToolchain(toolchainInstance);
+		rundef.setName("New Toolchain");
+		final JAXBElement<RunDefinition> newdoc = mObjectFactory.createRundefinition(rundef);
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.marshal(newdoc, new FileOutputStream(xmlfile));
 	}
