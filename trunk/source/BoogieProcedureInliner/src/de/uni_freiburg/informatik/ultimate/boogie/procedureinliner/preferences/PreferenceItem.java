@@ -35,7 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * All items from the plug-in's preferences. The current set preferences can be queried on each item. Each item contains
@@ -87,7 +87,8 @@ public enum PreferenceItem {
 
 	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", null, true, Boolean),
 
-	ENTRY_PROCEDURES("Entry procedures", "Give names separated by whitespace.", "ULTIMATE.start", PreferenceType.String),
+	ENTRY_PROCEDURES("Entry procedures", "Give names separated by whitespace.", "ULTIMATE.start",
+			PreferenceType.String),
 
 	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",
 			"If no entry procedure can be found, just treat every procedure as potential entry procedure.", true,
@@ -137,8 +138,8 @@ public enum PreferenceItem {
 	}
 
 	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
-	public List<String> getStringValueTokens() {
-		final String trimmedStringValue = new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(mName).trim();
+	public List<String> getStringValueTokens(IUltimateServiceProvider services) {
+		final String trimmedStringValue = services.getPreferenceProvider(Activator.PLUGIN_ID).getString(mName).trim();
 		if (trimmedStringValue.isEmpty()) {
 			return Collections.emptyList();
 		} else {

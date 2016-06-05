@@ -81,22 +81,22 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	 */
 	public PreferencesInlineSelector(final IUltimateServiceProvider services) {
 		mInlineUnimplemented = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.INLINE_UNIMPLEMENTED.mName);
+				.getBoolean(PreferenceItem.INLINE_UNIMPLEMENTED.getName());
 		mInlineImplemented = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.INLINE_IMPLEMENTED.mName);
+				.getBoolean(PreferenceItem.INLINE_IMPLEMENTED.getName());
 		mIgnoreCallForAll = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.mName);
+				.getBoolean(PreferenceItem.IGNORE_CALL_FORALL.getName());
 		mUserList = new HashSet<String>(PreferenceItem.USER_LIST.getStringValueTokens(services));
-		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(PreferenceItem.USER_LIST_TYPE.mName,
+		mUserListType = services.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(PreferenceItem.USER_LIST_TYPE.getName(),
 				UserListType.class);
 		mIgnoreRecursive = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_RECURSIVE.mName);
+				.getBoolean(PreferenceItem.IGNORE_RECURSIVE.getName());
 		mIgnoreWithFreeRequires = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_WITH_FREE_REQUIRES.mName);
+				.getBoolean(PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getName());
 		mIgnorePolymorphic = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.mName);
+				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName());
 		mIgnoreMultipleCalled = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.mName);
+				.getBoolean(PreferenceItem.IGNORE_MULTIPLE_CALLED.getName());
 		mGeneralSettingsFilter = new GeneralSettingsFilter();
 		mUserListFilter = new UserListFilter();
 	}
