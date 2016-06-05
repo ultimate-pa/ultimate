@@ -1,7 +1,8 @@
 <project name="proj1" default="generate_toolchain" basedir=".">
-	<property name="targetDir" location="${workspacedir}/Library-UltimateCore/src"/>
-	
-    <description>
+	<property name="targetDir" location="${workspacedir}/Library-UltimateCore/src" />
+	<property name="packageDir" location="${targetDir}/de/uni_freiburg/informatik/ultimate/core/lib/toolchain" />
+
+	<description>
         Build File for Ultimate toolchain model
     </description>
 
@@ -13,10 +14,22 @@
 		<property environment="env" />
 		<echo>Building toolchain model with xjc</echo>
 		<echo>targetDir is ${targetDir}</echo>
+		<echo>packageDir is ${packageDir}</echo>
+
+		<delete>
+			<fileset dir="${packageDir}">
+				<exclude name="**/*.xml" />
+				<exclude name="**/README.TXT" />
+				<exclude name="**/ToolchainFileValidator.java" />
+				<exclude name="**/ToolchainData.java" />
+				<exclude name="**/*.xsd" />
+			</fileset>
+		</delete>
+
 		<exec executable="xjc" failonerror="true">
 			<arg value="-d" />
 			<arg value="${targetDir}" />
-			<arg value="-p" /> 
+			<arg value="-p" />
 			<arg value="de.uni_freiburg.informatik.ultimate.core.lib.toolchain" />
 			<arg value="toolchain.xsd" />
 		</exec>
