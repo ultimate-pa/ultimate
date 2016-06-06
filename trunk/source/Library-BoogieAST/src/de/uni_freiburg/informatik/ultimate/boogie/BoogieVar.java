@@ -64,8 +64,8 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	 */
 	private final ApplicationTerm mPrimedConstant;
 
-	public BoogieVar(String identifier, IType iType, TermVariable tv, ApplicationTerm defaultConstant,
-			ApplicationTerm primedContant) {
+	public BoogieVar(final String identifier, final IType iType, final TermVariable tv,
+			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		mIdentifier = identifier;
 		mIType = iType;
 		mTermVariable = tv;
@@ -125,6 +125,16 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	@Override
 	public String toString() {
 		return getGloballyUniqueId();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (isOldvar() ? 1231 : 1237);
+		result = prime * result + ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
+		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
+		return result;
 	}
 
 	@Override
