@@ -202,7 +202,14 @@ public class InitializationHandler {
 			case FLOATTYPE:
 				if (mExpressionTranslation instanceof BitvectorTranslation) {
 					if (initializer == null) {
-						rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
+						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+						}
+						
 					} else {
 						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 						main.mCHandler.convert(loc, initializer, lCType);
@@ -353,7 +360,13 @@ public class InitializationHandler {
 			case FLOATTYPE:
 				if (mExpressionTranslation instanceof BitvectorTranslation) {
 					if (initializer == null) {
-						rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
+						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
+							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+						}
 					} else {
 						main.mCHandler.convert(loc, initializer, lCType);
 						rhs = initializer.lrVal.getValue();
