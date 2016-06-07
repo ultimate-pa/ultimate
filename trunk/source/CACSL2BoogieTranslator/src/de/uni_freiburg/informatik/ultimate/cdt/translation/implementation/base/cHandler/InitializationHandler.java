@@ -200,12 +200,22 @@ public class InitializationHandler {
 				}
 				break;
 			case FLOATTYPE:
-				if (initializer == null) {
-					rhs = new RealLiteral(loc, SFO.NR0F);
+				if (mExpressionTranslation instanceof BitvectorTranslation) {
+					if (initializer == null) {
+						rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+					} else {
+						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+						main.mCHandler.convert(loc, initializer, lCType);
+						rhs = initializer.lrVal.getValue();
+					}
 				} else {
-					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.mCHandler.convert(loc, initializer, lCType);
-					rhs = initializer.lrVal.getValue();
+					if (initializer == null) {
+						rhs = new RealLiteral(loc, SFO.NR0F);
+					} else {
+						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+						main.mCHandler.convert(loc, initializer, lCType);
+						rhs = initializer.lrVal.getValue();
+					}
 				}
 				break;
 			case VOID:
