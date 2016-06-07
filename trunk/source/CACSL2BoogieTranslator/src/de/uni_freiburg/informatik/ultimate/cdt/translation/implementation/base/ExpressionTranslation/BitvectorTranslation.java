@@ -643,7 +643,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			ASTType[] params;
 			final ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
-			if (newType.isFloatingType()) {
+			if (newType.isFloatingType() && !newType.getType().equals(SFO.REAL)) {
 				final int[] indices = new int[2];
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.FLOAT)) {
 					indices[0] = 8;
@@ -657,7 +657,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					indices[0] = 15;
 					indices[1] = 113;
 				}
-				attributes = generateAttributes(loc, "to_fp", indices);
+				if (oldType.getType().equals(CPrimitive.PRIMITIVE.UINT) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
+					attributes = generateAttributes(loc, "to_fp_unsigned", indices);
+				} else {
+					attributes = generateAttributes(loc, "to_fp", indices);
+				}
 			} else {
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.INT)) {
 					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
@@ -667,6 +671,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 32 });
 				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || newType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 64 });
+				} else if (newType.getType().equals(SFO.REAL)) {
+					attributes = generateAttributes(loc, "fp.to_real", null);
 				}
 			}
 			params = new ASTType[]{roundingMode, paramASTType};
