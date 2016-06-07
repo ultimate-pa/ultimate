@@ -21,8 +21,8 @@ public class SpaceExModelBuilder {
 	private final SpaceExRootNode mModel;
 	
 	public SpaceExModelBuilder(Sspaceex root) {
-		mComponents = new HashMap<String, ComponentType>();
-		mSystems = new HashMap<String, ComponentType>();
+		mComponents = new HashMap<>();
+		mSystems = new HashMap<>();
 	
 		mModel = new SpaceExRootNode(root.getMath(), root.getVersion());
 		
@@ -35,7 +35,7 @@ public class SpaceExModelBuilder {
 
 	private void parseComponents(List<ComponentType> components) {
 		for (final ComponentType c : components) {
-			if (c.getBind().size() == 0) {
+			if (c.getBind().isEmpty()) {
 				addComponent(c);
 			}
 			else {
