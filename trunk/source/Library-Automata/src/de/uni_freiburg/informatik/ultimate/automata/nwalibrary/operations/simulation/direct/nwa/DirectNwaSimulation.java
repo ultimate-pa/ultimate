@@ -129,6 +129,6 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	 */
 	@Override
 	protected void simulationHook() throws AutomataOperationCanceledException {
-		NwaSimulationUtil.doOtherNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
+		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
 	}
 }

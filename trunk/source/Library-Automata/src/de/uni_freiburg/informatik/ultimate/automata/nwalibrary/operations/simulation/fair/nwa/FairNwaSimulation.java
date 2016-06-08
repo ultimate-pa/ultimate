@@ -150,6 +150,6 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 */
 	@Override
 	protected void simulationHook() throws AutomataOperationCanceledException {
-		NwaSimulationUtil.doOtherNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
+		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
 	}
 }

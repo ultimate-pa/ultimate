@@ -129,6 +129,6 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	 */
 	@Override
 	protected void simulationHook() throws AutomataOperationCanceledException {
-		NwaSimulationUtil.doOtherNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
+		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
 	}
 }

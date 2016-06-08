@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 public final class NwaSimulationUtil {
 
 	/**
-	 * Computes the <i>other simulation</i> on a given nwa game graph. The
+	 * Computes the <i>inner simulation</i> on a given nwa game graph. The
 	 * simulation makes predecessors of non-simulating vertices also to
 	 * non-simulating vertices. In the case of Duplicator vertices this only
 	 * happens if they have no other simulating successors. The simulation
-	 * allows propagation over return edges but disallows it over call and
-	 * summarize edges.
+	 * allows propagation over return, summarize and internal edges, but
+	 * disallows it over call edges.
 	 * 
 	 * @param <LETTER>
 	 *            Letter class of nwa automaton
@@ -70,11 +70,10 @@ public final class NwaSimulationUtil {
 	 *             framework.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <LETTER, STATE> void doOtherNwaSimulation(final AGameGraph<LETTER, STATE> gameGraph,
+	public static <LETTER, STATE> void doInnerNwaSimulation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ILogger logger, final IProgressAwareTimer progressTimer) throws AutomataOperationCanceledException {
-		// TODO Rename the method once a name was found
 		if (logger.isDebugEnabled()) {
-			logger.debug("Starting otherSimulation.");
+			logger.debug("Starting innerSimulation.");
 		}
 
 		// Undo removing of return bridges
@@ -97,7 +96,7 @@ public final class NwaSimulationUtil {
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
-					logger.debug("Stopped in doOtherNwaSimulation/collecting non simulating vertices");
+					logger.debug("Stopped in doInnerNwaSimulation/collecting non simulating vertices");
 					throw new AutomataOperationCanceledException(NwaSimulationUtil.class);
 				}
 			}
@@ -119,12 +118,10 @@ public final class NwaSimulationUtil {
 				if (pred.getPM(null, globalInfinity) >= globalInfinity) {
 					continue;
 				}
-				// Ignore call and summarize predecessors
+				// Ignore call predecessors
 				if (pred instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
-					if (predAsDD.getTransitionType() == ETransitionType.CALL
-							|| predAsDD.getTransitionType() == ETransitionType.SUMMARIZE_ENTRY
-							|| predAsDD.getTransitionType() == ETransitionType.SUMMARIZE_EXIT) {
+					if (predAsDD.getTransitionType() == ETransitionType.CALL) {
 						continue;
 					}
 				}
@@ -136,19 +133,9 @@ public final class NwaSimulationUtil {
 					boolean hasAlternative = false;
 					if (gameGraph.hasSuccessors(pred)) {
 						for (Vertex<LETTER, STATE> succ : gameGraph.getSuccessors(pred)) {
-							// Ignore call and summarize successors
-							if (succ instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
-								DuplicatorDoubleDeckerVertex<LETTER, STATE> succAsDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) succ;
-								// TODO Double check if that behavior is
-								// intended. Maybe we want to allow such
-								// alternatives and only disallow propagation
-								// over it.
-								if (succAsDD.getTransitionType() == ETransitionType.CALL
-										|| succAsDD.getTransitionType() == ETransitionType.SUMMARIZE_ENTRY
-										|| succAsDD.getTransitionType() == ETransitionType.SUMMARIZE_EXIT) {
-									continue;
-								}
-							}
+							// We not need to explicitly ignore call and
+							// summarize successors since successors of
+							// Duplicator vertices are always Spoiler vertices.
 							if (succ.getPM(null, globalInfinity) < globalInfinity) {
 								hasAlternative = true;
 								break;
@@ -160,7 +147,6 @@ public final class NwaSimulationUtil {
 					considerVertex = !hasAlternative;
 				}
 
-				// TODO Somehow get return edges going again
 				// Impose a progress measure of infinity and add the element
 				if (considerVertex) {
 					pred.setPM(globalInfinity);
@@ -174,7 +160,7 @@ public final class NwaSimulationUtil {
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
-					logger.debug("Stopped in doOtherNwaSimulation/processing predecessors");
+					logger.debug("Stopped in doInnerNwaSimulation/processing predecessors");
 					throw new AutomataOperationCanceledException(NwaSimulationUtil.class);
 				}
 			}
