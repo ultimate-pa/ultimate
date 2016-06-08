@@ -502,7 +502,7 @@ public class PredicateUnifier {
 	 * @return
 	 */
 	private class PredicateComparison {
-		private final Term mclosedTerm;
+		private final Term mClosedTerm;
 		private final boolean mTermContainsQuantifiers;
 		private final HashMap<IPredicate, Validity> mImpliedPredicates;
 		private final HashMap<IPredicate, Validity> mExpliedPredicates;
@@ -514,7 +514,7 @@ public class PredicateUnifier {
 			if (mEquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-			return mclosedTerm;
+			return mClosedTerm;
 		}
 
 		public HashMap<IPredicate, Validity> getImpliedPredicates() {
@@ -582,7 +582,7 @@ public class PredicateUnifier {
 				mExpliedPredicates = expliedPredicates;
 			}
 			
-			mclosedTerm = PredicateUtils.computeClosedFormula(term, vars, mSmtManager.getScript());
+			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mSmtManager.getScript());
 			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
 			if (mSmtManager.isLocked()) {
 				mSmtManager.requestLockRelease();
@@ -599,7 +599,7 @@ public class PredicateUnifier {
 		
 		private IPredicate compare() {
 			// check if false
-			final Validity impliesFalse = mSmtManager.isCovered(this, mclosedTerm, mFalsePredicate.getFormula());
+			final Validity impliesFalse = mSmtManager.isCovered(this, mClosedTerm, mFalsePredicate.getFormula());
 			switch (impliesFalse) {
 			case VALID:
 				return mFalsePredicate;
@@ -607,7 +607,7 @@ public class PredicateUnifier {
 				mImpliedPredicates.put(mFalsePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", mclosedTerm));
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", mClosedTerm));
 				mImpliedPredicates.put(mFalsePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;
@@ -620,7 +620,7 @@ public class PredicateUnifier {
 			mExpliedPredicates.put(mFalsePredicate, Validity.VALID);
 			
 			// check if true
-			final Validity impliedByTrue = mSmtManager.isCovered(this, mTruePredicate.getClosedFormula(), mclosedTerm);
+			final Validity impliedByTrue = mSmtManager.isCovered(this, mTruePredicate.getClosedFormula(), mClosedTerm);
 			switch (impliedByTrue) {
 			case VALID:
 				return mTruePredicate;
@@ -628,7 +628,7 @@ public class PredicateUnifier {
 				mExpliedPredicates.put(mTruePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", mclosedTerm));
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", mClosedTerm));
 				mExpliedPredicates.put(mTruePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;
@@ -664,13 +664,13 @@ public class PredicateUnifier {
 					mExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
-				checkTimeout(mclosedTerm);
+				checkTimeout(mClosedTerm);
 				final Term otherClosedTerm = other.getClosedFormula();
 				Validity implies = mImpliedPredicates.get(other);
 				if (implies == null) {
-					implies = mSmtManager.isCovered(this, mclosedTerm, otherClosedTerm);
+					implies = mSmtManager.isCovered(this, mClosedTerm, otherClosedTerm);
 					if (implies == Validity.VALID) {
-						// if (this ==> other) and (other ==> impliedByOther)
+						// if (this ==> other) and (other ==> impliedByOther) then
 						// we conclude (this ==> impliedByOther)
 						for (final IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
@@ -704,7 +704,7 @@ public class PredicateUnifier {
 				}
 				Validity explies = mExpliedPredicates.get(other);
 				if (explies == null) {
-					explies = mSmtManager.isCovered(this, otherClosedTerm, mclosedTerm);
+					explies = mSmtManager.isCovered(this, otherClosedTerm, mClosedTerm);
 					if (explies == Validity.VALID) {
 						// if (other ==> this) and (expliedByOther ==> other)
 						// we conclude (expliedByOther ==> this)
@@ -745,7 +745,7 @@ public class PredicateUnifier {
 					final boolean otherContainsQuantifiers = 
 							(new ContainsQuantifier()).containsQuantifier(other.getFormula());
 					if (!otherContainsQuantifiers || 
-							(mTermContainsQuantifiers && !thisIsLessQuantifiedThanOther(mclosedTerm, otherClosedTerm))) {
+							(mTermContainsQuantifiers && !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm))) {
 						return other;
 					} else {
 						if (mEquivalentGtQuantifiedPredicate == null) {
