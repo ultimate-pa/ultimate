@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.testing;
 
 import java.io.ByteArrayInputStream;
@@ -41,6 +42,7 @@ import javax.xml.bind.Unmarshaller;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.SpaceExModelBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
+import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
  * Parser test and construction test class.
@@ -79,7 +81,7 @@ public class Tester {
 
 		final Sspaceex sx = (Sspaceex) unmarshaller.unmarshal(is);
 
-		SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(sx);
+		SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(sx, new ConsoleLogger());
 		
 		final Marshaller marshaller = jc.createMarshaller();
 

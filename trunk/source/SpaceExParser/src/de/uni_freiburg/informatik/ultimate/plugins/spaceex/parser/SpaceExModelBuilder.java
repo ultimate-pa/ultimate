@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
@@ -17,12 +20,14 @@ public class SpaceExModelBuilder {
 
 	private final Map<String, ComponentType> mComponents;
 	private final Map<String, ComponentType> mSystems;
+	private final ILogger mLogger;
 	
 	private final SpaceExRootNode mModel;
 	
-	public SpaceExModelBuilder(Sspaceex root) {
+	public SpaceExModelBuilder(Sspaceex root, ILogger logger) {
 		mComponents = new HashMap<>();
 		mSystems = new HashMap<>();
+		mLogger = logger;
 	
 		mModel = new SpaceExRootNode(root.getMath(), root.getVersion());
 		
