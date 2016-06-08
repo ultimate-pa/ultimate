@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +132,27 @@ public class SpaceExParser implements ISource {
 			return false;
 		}
 
-		// TODO Check for SpaceEx extension
+		try {
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr);
+			try {
+				if (!br.readLine().contains("<?xml")) {
+					mLogger.debug("The input file does not contain an opening xml tag.");
+					return false;
+				}
+
+				if (!br.readLine().contains("<sspaceex")) {
+					mLogger.debug("The input file does not contain a spaceex tag.");
+					return false;
+				}
+			} finally {
+				br.close();
+				fr.close();
+			}
+		} catch (Exception e) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -160,7 +182,7 @@ public class SpaceExParser implements ISource {
 
 		marshaller.marshal(spaceEx, streamWriter);
 
-		mLogger.info(streamWriter.toString());
+		mLogger.debug(streamWriter.toString());
 
 		fis.close();
 
