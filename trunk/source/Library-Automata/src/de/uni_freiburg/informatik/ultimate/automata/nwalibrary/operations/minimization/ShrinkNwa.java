@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
+
 	// TODO<debug>
 	private static final boolean DEBUG = false; // general output
 	private static final boolean DEBUG2 = false; // general return split
@@ -90,13 +90,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 	// size information before return splits
 	private static final boolean STAT_RETURN_SIZE = false;
-	
+
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// partition object
 	private Partition mPartition;
 	// IDs for equivalence classes
-	private int mIds;
+	private int mEquivalenceClassIds;
 	// work lists
 	private WorkListIntCall mWorkListIntCall;
 	private WorkListRet mWorkListRet;
@@ -152,7 +152,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private long mReturnFirstTime = 0;
 	private long mReturnFirstTimeAlternative = 0;
 	private long mReturnFirstTimeHierAlternative = 0;
-
 
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
@@ -258,7 +257,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 		mStateFactory = (stateFactory == null) ? mOperand.getStateFactory() : stateFactory;
 		mPartition = new Partition();
-		mIds = 0;
+		mEquivalenceClassIds = 0;
 		mWorkListIntCall = new WorkListIntCall();
 		mWorkListRet = new WorkListRet();
 		mSplitEcsReturn = new LinkedList<EquivalenceClass>();
@@ -326,35 +325,35 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			System.out.println("positive splits: " + mSplitsWithChange);
 			System.out.println("negative splits: " + mSplitsWithoutChange);
 			System.out.println("quota (p/n): " + (mSplitsWithoutChange == 0 ? "--"
-					: (((float) mSplitsWithChange) / ((float) mSplitsWithoutChange))));
+					: (((double) mSplitsWithChange) / ((double) mSplitsWithoutChange))));
 			System.out.println("incoming transition checks : " + mIncomingTransitions);
 			System.out.println("no incoming transitions found : " + mNoIncomingTransitions);
 			System.out.println("quota (p/n): " + (mNoIncomingTransitions == 0 ? "--"
-					: (((float) mIncomingTransitions) / ((float) mNoIncomingTransitions))));
+					: (((double) mIncomingTransitions) / ((double) mNoIncomingTransitions))));
 			System.out.println("ignored return splits due to singletons: " + mIgnoredReturnSingletons1x1);
 			System.out.println("time consumption (ms): return separation: " + mReturnSeparateTime + ", matrix time: "
 					+ mMatrixTime + ", first return split: " + mReturnFirstTime + ", alternative lin "
 					+ mReturnFirstTimeAlternative + ", alternative hier " + mReturnFirstTimeHierAlternative
 					+ ", returns: " + mReturnTime + ", all: " + mWholeTime);
 			System.out.println(
-					"quota (ret/all): " + (mWholeTime == 0 ? "--" : (((float) mReturnTime) / ((float) mWholeTime)))
+					"quota (ret/all): " + (mWholeTime == 0 ? "--" : (((double) mReturnTime) / ((double) mWholeTime)))
 							+ ", without: " + (mWholeTime - mReturnTime) + " ms");
 			System.out.println(
-					"quota (mat/ret): " + (mReturnTime == 0 ? "--" : (((float) mMatrixTime) / ((float) mReturnTime)))
+					"quota (mat/ret): " + (mReturnTime == 0 ? "--" : (((double) mMatrixTime) / ((double) mReturnTime)))
 							+ ", without: " + (mReturnTime - mMatrixTime) + " ms");
 			System.out.println(
-					"quota (mat/all): " + (mWholeTime == 0 ? "--" : (((float) mMatrixTime) / ((float) mWholeTime)))
+					"quota (mat/all): " + (mWholeTime == 0 ? "--" : (((double) mMatrixTime) / ((double) mWholeTime)))
 							+ ", without: " + (mWholeTime - mMatrixTime) + " ms");
 			System.out.println("quota (first/all): "
-					+ (mWholeTime == 0 ? "--" : (((float) mReturnFirstTime) / ((float) mWholeTime))) + ", without: "
+					+ (mWholeTime == 0 ? "--" : (((double) mReturnFirstTime) / ((double) mWholeTime))) + ", without: "
 					+ (mWholeTime - mReturnFirstTime) + " ms");
 			System.out.println("quota (altLin/all): "
-					+ (mWholeTime == 0 ? "--" : (((float) mReturnFirstTimeAlternative) / ((float) mWholeTime)))
+					+ (mWholeTime == 0 ? "--" : (((double) mReturnFirstTimeAlternative) / ((double) mWholeTime)))
 					+ ", without: " + (mWholeTime - mReturnFirstTimeAlternative) + " ms");
 			System.out
 					.println("quota (altHier/all): "
 							+ (mWholeTime == 0 ? "--"
-									: (((float) mReturnFirstTimeHierAlternative) / ((float) mWholeTime)))
+									: (((double) mReturnFirstTimeHierAlternative) / ((double) mWholeTime)))
 							+ ", without: " + (mWholeTime - mReturnFirstTimeHierAlternative) + " ms");
 		}
 	}
@@ -564,7 +563,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					mWriter1.close();
 					mWriter2.close();
 				} catch (final IOException eWriter) {
-					eWriter.printStackTrace();
+					mLogger.fatal(eWriter);
 				}
 			}
 		}
@@ -2343,7 +2342,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private int computeHashSetCapacity(final int size) {
 		return (int) (size * 1.5 + 1);
 	}
-	
+
 	// --- [start] framework methods --- //
 
 	@Override
@@ -2397,7 +2396,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		set.addAll(list);
 		return (set.size() == list.size());
 	}
-	
+
 	/**
 	 * This method does an extra split with outgoing transitions for internal and call symbols at the beginning. This is
 	 * totally fine, since these splits would occur later anyway. The reason for this split overhead is that the regular
@@ -2459,7 +2458,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 		return letterSet2stateSet;
 	}
-	
+
 	/**
 	 * This enum is used to tell for an equivalence class whether it contains incoming transitions. Since it is
 	 * expensive to compute this each time, only the answer "no" is correct. This status is inherited by the two
@@ -2577,8 +2576,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			return miterator.hasNext();
 		}
 	}
-
-	
 
 	/**
 	 * This interface is used for the outgoing split at the beginning to abstract from whether internal or call symbols
@@ -2707,8 +2704,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			return true;
 		}
 	}
-
-	
 
 	/**
 	 * This class represents a return split matrix. The columns are the linear and the rows are the hierarchical
@@ -3049,16 +3044,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 */
 		private EquivalenceClass(final Set<STATE> states, final boolean fromSplit) {
 			assert !states.isEmpty();
-			mId = ++mIds;
+			++mEquivalenceClassIds;
+			mId = mEquivalenceClassIds;
 			mStates = states;
 			reset();
-		}
-
-		/**
-		 * sets the equivalence class as initial
-		 */
-		void markAsInitial() {
-			mIsInitial = true;
 		}
 
 		/**
@@ -3100,7 +3089,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 */
 		public EquivalenceClass(final Set<STATE> states, final EquivalenceClass parent) {
 			this(states, true);
-			
+
 			switch (parent.mIncomingInt) {
 			case UNKNOWN:
 			case IN_WORKLIST:
@@ -3110,7 +3099,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			case NONE:
 				mIncomingInt = EIncomingStatus.NONE;
 			}
-			
+
 			switch (parent.mIncomingCall) {
 			case UNKNOWN:
 			case IN_WORKLIST:
@@ -3122,7 +3111,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			case NONE:
 				mIncomingCall = EIncomingStatus.NONE;
 			}
-			
+
 			switch (parent.mIncomingRet) {
 			case UNKNOWN:
 			case IN_WORKLIST:
@@ -3133,7 +3122,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 				mIncomingRet = EIncomingStatus.NONE;
 				break;
 			}
-			
+
 			if (mFirstReturnSplitAlternative) {
 				switch (parent.mOutgoingRet) {
 				case UNKNOWN:
@@ -3146,7 +3135,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					break;
 				}
 			}
-			
+
 			if (mReturnSplitCorrectnessEcs != null) {
 				// own predecessors
 				for (final STATE state : mStates) {
@@ -3170,9 +3159,41 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			resetMatrix(parent);
 		}
 
+		/**
+		 * sets the equivalence class as initial
+		 */
+		void markAsInitial() {
+			mIsInitial = true;
+		}
+
 		@Override
 		public int hashCode() {
-			return mId;
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + mId;
+			return result;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final EquivalenceClass other = (EquivalenceClass) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
+				return false;
+			}
+			if (mId != other.mId) {
+				return false;
+			}
+			return true;
 		}
 
 		/**
@@ -3554,6 +3575,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		public boolean isRepresentativeIndependentInternalsCalls() {
 			return true;
 		}
+
+		private ShrinkNwa getOuterType() {
+			return ShrinkNwa.this;
+		}
 	}
 
 	/**
@@ -3641,7 +3666,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert ((ec.mIncomingInt == EIncomingStatus.IN_WORKLIST) || (ec.mIncomingCall == EIncomingStatus.IN_WORKLIST));
+			assert ((ec.mIncomingInt == EIncomingStatus.IN_WORKLIST)
+					|| (ec.mIncomingCall == EIncomingStatus.IN_WORKLIST));
 			if (DEBUG) {
 				System.out.println("adding of IntCall WL: " + ec);
 			}
