@@ -30,8 +30,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import net.sf.javabdd.BDDFactory;
 
 /**
@@ -74,6 +76,19 @@ public class SimplifyBdd {
 	 */
 	private class BddBuilder extends NonRecursive {
 		
+	}
+	
+	
+	/**
+	 * @return true iff the SMT solver was able to prove that t1 implies t2.
+	 */
+	private boolean implies(Term t1, Term t2) {
+		mScript.push(1);
+		mScript.assertTerm(t1);
+		mScript.assertTerm(SmtUtils.not(mScript, t2));
+		final LBool result = mScript.checkSat();
+		mScript.pop(1);
+		return (result == LBool.UNSAT);
 	}
 	
 
