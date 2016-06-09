@@ -25,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.terms.Body;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.terms.Cobody;
 
 public class HornClauseParserScript extends NoopScript {
 
@@ -185,6 +187,81 @@ public class HornClauseParserScript extends NoopScript {
 		return getTheory().mTrue;
 	}
 
+	private Cobody parseCobody(Term term) throws SMTLIBException {
+		ApplicationTerm t = (ApplicationTerm) term;
+
+		if (t.getFunction().getName().equals("and")) {
+			Cobody tail = new Cobody();
+			for (Term literal : t.getParameters()) {
+				ApplicationTerm par = (ApplicationTerm) literal;
+				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+					tail.addPredicate(par);
+				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
+						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
+					throw new SMTLIBException("The cobody has a negative predicate.");
+				} else {
+					tail.addTransitionFormula(par);
+				}
+			}
+			return tail;
+		}
+		Cobody tail = new Cobody();
+		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+			tail.addPredicate(t);
+		} else if (t.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
+				.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+			throw new SMTLIBException("The cobody has a negative predicate.");
+		} else {
+			tail.addTransitionFormula(t);
+		}
+
+		return tail;
+	}
+
+	private Body parseBody(Term term) throws SMTLIBException {
+		ApplicationTerm t = (ApplicationTerm) term;
+		if (t.getFunction().getName().equals("=>")) {
+			// implication
+			Body head = parseBody(t.getParameters()[1]);
+			Cobody tail = parseCobody(t.getParameters()[0]);
+
+			head.mergeCobody(tail);
+			return head;
+		}
+		if (t.getFunction().getName().equals("or")) {
+			Body head = new Body();
+			for (Term literal : t.getParameters()) {
+				ApplicationTerm par = (ApplicationTerm) literal;
+				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+					if (!head.setHead(par)) {
+						throw new SMTLIBException("The head has more than a positive predicate symbol.");
+					}
+				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
+						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
+					head.addPredicateToCobody((ApplicationTerm) par.getParameters()[0]);
+				} else {
+					if (!par.equals(getTheory().mFalse))
+						head.addTransitionFormula((ApplicationTerm) getTheory().not(par));
+				}
+			}
+			return head;
+		}
+		Body head = new Body();
+		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+			if (!head.setHead(t)) {
+				throw new SMTLIBException("The head has more than a positive predicate symbol.");
+			}
+		} else if (t.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
+				.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+			head.addPredicateToCobody((ApplicationTerm) t.getParameters()[0]);
+		} else {
+			if (!t.equals(getTheory().mFalse))
+				head.addTransitionFormula((ApplicationTerm) getTheory().not(t));
+		}
+
+		return head;
+	}
+
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
 		// TODO Go over the asserted formula
@@ -198,20 +275,41 @@ public class HornClauseParserScript extends NoopScript {
 
 			QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
-				ApplicationTerm implication = (ApplicationTerm) thisTerm.getSubformula();
-				Term cobody = implication.getParameters()[0], body = implication.getParameters()[1];
-				Map<HornClausePredicateSymbol, ArrayList<TermVariable>> bodyPredicates = getPredicateSymbols(
-						(ApplicationTerm) body);
-				assert bodyPredicates.size() <= 1;
-				HornClausePredicateSymbol body_ = bodyPredicates.keySet().iterator().hasNext()
-						? bodyPredicates.keySet().iterator().next()
+				Body newBody = parseBody(thisTerm.getSubformula());
+				Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = newBody.getBodyPredicateToVars(predicates);
+				assert tt.size() <= 1;
+				HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 						: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-				Map<HornClausePredicateSymbol, ArrayList<TermVariable>> cobody_ = getPredicateSymbols(
-						(ApplicationTerm) cobody);
-				mCurrentHornClause.add(new HornClause(getTransitionFormula((ApplicationTerm) cobody),
-						bodyPredicates.containsKey(body_) ? bodyPredicates.get(body_) : new ArrayList<>(), body_,
-						cobody_));
-				System.out.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+				mCurrentHornClause.add(new HornClause(newBody.getTransitionFormula(getTheory()),
+						tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
+						newBody.getCobodyPredicateToVars(predicates)));
+
+				/*
+				 * ApplicationTerm implication = (ApplicationTerm)
+				 * thisTerm.getSubformula();
+				 * System.out.println(implication.toString()); Term cobody =
+				 * implication.getParameters()[0], body =
+				 * implication.getParameters()[1];
+				 * Map<HornClausePredicateSymbol, ArrayList<TermVariable>>
+				 * bodyPredicates = getPredicateSymbols( (ApplicationTerm)
+				 * body); assert bodyPredicates.size() <= 1;
+				 * HornClausePredicateSymbol body_ =
+				 * bodyPredicates.keySet().iterator().hasNext() ?
+				 * bodyPredicates.keySet().iterator().next() : new
+				 * HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
+				 * Map<HornClausePredicateSymbol, ArrayList<TermVariable>>
+				 * cobody_ = getPredicateSymbols( (ApplicationTerm) cobody);
+				 * mCurrentHornClause.add(new
+				 * HornClause(getTransitionFormula((ApplicationTerm) cobody),
+				 * bodyPredicates.containsKey(body_) ? bodyPredicates.get(body_)
+				 * : new ArrayList<>(), body_, cobody_));
+				 
+				System.err.println(thisTerm.getSubformula());
+				System.err.println(newBody);
+				System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+				System.err.println();
+				*/
+
 			}
 		}
 
@@ -258,7 +356,8 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
-		// System.err.println("(" + funcname + " " + termsToString(params) + ")");
+		// System.err.println("(" + funcname + " " + termsToString(params) +
+		// ")");
 
 		final Term result = super.term(funcname, indices, returnSort, params);
 
