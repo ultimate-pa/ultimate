@@ -784,16 +784,16 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("createNanOrInfinity is unsupported");
 	}
 
 	@Override
 	public Expression getRoundingMode() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("getRoundingMode is unsupported");
 	}
 
 	@Override
 	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("createFloatingPointClassificationFunction is unsupported");
 	}
 }
