@@ -1274,8 +1274,13 @@ public class CHandler implements ICHandler {
 			addOffsetInBoundsCheck(main, loc, valueIncremented, result);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
-			final Expression one =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+					
+			final Expression one;
+			if (ctype.isFloatingType()) {
+				one = mExpressionTranslation.translateFloatingLiteral(loc, "1.0").value;
+			} else {			
+				one = mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
+			}
 			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, value, one);
 			valueIncremented =
 					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
