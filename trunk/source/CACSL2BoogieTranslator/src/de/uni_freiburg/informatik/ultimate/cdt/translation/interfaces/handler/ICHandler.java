@@ -92,7 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 
 /**
  * @author Markus Lindenmann
@@ -624,7 +624,7 @@ public interface ICHandler extends IHandler {
 
 	public InitializationHandler getInitHandler();
 
-	UNSIGNED_TREATMENT getUnsignedTreatment();
+	UnsignedTreatment getUnsignedTreatment();
 
 	FunctionHandler getFunctionHandler();
 

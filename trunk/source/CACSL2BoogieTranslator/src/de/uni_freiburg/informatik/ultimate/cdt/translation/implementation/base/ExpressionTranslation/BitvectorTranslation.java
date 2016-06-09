@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 public class BitvectorTranslation extends AExpressionTranslation {
 	
@@ -78,7 +78,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	private final Expression mRoundingMode;
 
 	public BitvectorTranslation(TypeSizes mTypeSizeConstants, ITypeHandler typeHandler, 
-			POINTER_INTEGER_CONVERSION pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
+			PointerIntegerConversion pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion);
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		final IdentifierExpression roundingMode = new IdentifierExpression(null, "RNE");

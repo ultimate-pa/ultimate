@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 public abstract class AExpressionTranslation {
 	
@@ -81,19 +81,19 @@ public abstract class AExpressionTranslation {
 
 
 	public AExpressionTranslation(TypeSizes typeSizes, ITypeHandler typeHandler, 
-			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
+			PointerIntegerConversion pointerIntegerConversion) {
 		super();
 		mTypeSizes = typeSizes;
 		mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
 		mTypeHandler = typeHandler;
 		switch (pointerIntegerConversion) {
 		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.IdentityAxiom);
+			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
 		case NonBijectiveMapping:
 			mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeHandler);
 			break;
 		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.NutzBijection);
+			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
 			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler);
 			break;

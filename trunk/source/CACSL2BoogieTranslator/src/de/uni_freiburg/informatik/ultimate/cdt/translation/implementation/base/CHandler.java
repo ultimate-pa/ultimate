@@ -213,9 +213,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -310,7 +310,7 @@ public class CHandler implements ICHandler {
 	private final Stack<String> mInnerMostLoopLabel;
 	private final ILogger mLogger;
 
-	private final CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
+	private final CACSLPreferenceInitializer.UnsignedTreatment mUnsignedTreatment;
 
 	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
 
@@ -337,7 +337,7 @@ public class CHandler implements ICHandler {
 		mNameHandler = nameHandler;
 
 		mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT,
-				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
+				CACSLPreferenceInitializer.UnsignedTreatment.class);
 
 		mArrayHandler = new ArrayHandler(prefs);
 		final boolean checkPointerValidity =
@@ -357,9 +357,9 @@ public class CHandler implements ICHandler {
 
 		mGlobAcslExtractors = new ArrayList<>();
 
-		final POINTER_INTEGER_CONVERSION pointerIntegerConversion =
+		final PointerIntegerConversion pointerIntegerConversion =
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-						CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION.class);
+						CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
 			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
@@ -1839,7 +1839,7 @@ public class CHandler implements ICHandler {
 	private void addDivisionByZeroCheck(Dispatcher main, ILocation loc, ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.lrVal.getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
-		if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.IGNORE) {
+		if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.IGNORE) {
 			return;
 		} else if (divisorType.isRealFloatingType()) {
 			// division by zero is defined for real floating types
@@ -1856,9 +1856,9 @@ public class CHandler implements ICHandler {
 			final Expression divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 			final Statement additionalStatement;
-			if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
+			if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSUME) {
 				additionalStatement = new AssumeStatement(loc, divisorNotZero);
-			} else if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSERTandASSUME) {
+			} else if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSERTandASSUME) {
 				additionalStatement = new AssertStatement(loc, divisorNotZero);
 				final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
 				check.addToNodeAnnot(additionalStatement);
@@ -1984,7 +1984,7 @@ public class CHandler implements ICHandler {
 	 */
 	private void addBaseEqualityCheck(Dispatcher main, ILocation loc, Expression leftPtr, Expression rightPtr,
 			ExpressionResult result) {
-		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.IGNORE) {
+		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == PointerCheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}
@@ -3948,7 +3948,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public UNSIGNED_TREATMENT getUnsignedTreatment() {
+	public UnsignedTreatment getUnsignedTreatment() {
 		return mUnsignedTreatment;
 	}
 
