@@ -112,7 +112,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param operand operand automaton
 	 * @param unionFind union-find data structure
 	 */
-	@Deprecated
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
@@ -130,7 +129,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * 
 	 * @param resStateConstructor state constructor
 	 */
-	@Deprecated
 	private void constructResultUnionFind(
 			final IResultStateConstructor<STATE> resStateConstructor) {
 		for (final STATE inputState : mOperand.getStates()) {
@@ -288,7 +286,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		public STATE getOrConstructResultState(final STATE inputState);
 	}
 	
-	@Deprecated
 	private class ResultStateConstructorFromUnionFind
 			implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<STATE, STATE> mConstructionCache;
