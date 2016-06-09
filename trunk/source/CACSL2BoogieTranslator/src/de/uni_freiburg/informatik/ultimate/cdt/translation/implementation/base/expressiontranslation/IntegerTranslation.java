@@ -130,15 +130,17 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(final ILocation loc, final int nodeOperator,
+			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
+		Expression leftExpr = exp1;
+		Expression rightExpr = exp2;
 		if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && type1.isUnsigned()) {
 			assert type2.isUnsigned();
-			exp1 = applyWraparound(loc, mTypeSizes, type1, exp1);
-			exp2 = applyWraparound(loc, mTypeSizes, type2, exp2);
+			leftExpr = applyWraparound(loc, mTypeSizes, type1, leftExpr);
+			rightExpr = applyWraparound(loc, mTypeSizes, type2, rightExpr);
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -161,10 +163,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 			op = BinaryExpression.Operator.COMPNEQ;
 			break;
 		default:
-			throw new AssertionError("???");
+			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
 		}
 
-		return ExpressionFactory.newBinaryExpression(loc, op, exp1, exp2);
+		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
 	public static Expression applyWraparound(ILocation loc, TypeSizes typeSizes, CPrimitive cPrimitive,
@@ -219,29 +221,33 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression constructUnaryIntegerExpression(ILocation loc, int op, Expression expr, CPrimitive type) {
-		final Expression result;
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
-			final String funcname = "bitwiseComplement";
-			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
-			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[] { expr });
-			break;
+			return constructUnaryIntExprTilde(loc, expr, type);
 		case IASTUnaryExpression.op_minus:
-			if (type.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
-			} else if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-				// TODO: having boogie deal with negative real literals would be the nice solution..
-				result = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"),
-						expr);
-			} else {
-				throw new IllegalArgumentException("unsupported " + type);
-			}
-			break;
+			return constructUnaryIntExprMinus(loc, expr, type);
 		default:
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		return result;
+	}
+
+	private Expression constructUnaryIntExprTilde(ILocation loc, Expression expr, CPrimitive type) {
+		final String funcname = "bitwiseComplement";
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
+		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[] { expr });
+	}
+
+	private Expression constructUnaryIntExprMinus(ILocation loc, Expression expr, CPrimitive type) {
+		if (type.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			return ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+		} else if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			// TODO: having boogie deal with negative real literals would be the nice solution..
+			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"),
+					expr);
+		} else {
+			throw new IllegalArgumentException("unsupported " + type);
+		}
 	}
 
 	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, boolean boogieResultTypeBool,
@@ -366,15 +372,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
-	private Expression getLeftSmallerZeroAndThereIsRemainder(ILocation loc, Expression exp1, Expression exp2) {
-		final Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
-		final Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftModRight,
-				new IntegerLiteral(loc, SFO.NR0));
-		final Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp1, new IntegerLiteral(loc, SFO.NR0));
-		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
-	}
-
 	private Expression constructArIntExprMinus(ILocation loc, Expression exp1, Expression exp2,
 			final boolean bothAreIntegerLiterals, BigInteger leftValue, BigInteger rightValue) {
 		final BinaryExpression.Operator operator;
@@ -487,6 +484,15 @@ public class IntegerTranslation extends AExpressionTranslation {
 			}
 		}
 	}
+	
+	private Expression getLeftSmallerZeroAndThereIsRemainder(ILocation loc, Expression exp1, Expression exp2) {
+		final Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
+		final Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftModRight,
+				new IntegerLiteral(loc, SFO.NR0));
+		final Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+				exp1, new IntegerLiteral(loc, SFO.NR0));
+		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
+	}
 
 	@Override
 	public void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
@@ -539,7 +545,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 					oldWrappedIfUnsigned = operand.lrVal.getValue();
 				}
 				if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
-						|| (mTypeSizes.getSize(resultType.getType()) == mTypeSizes.getSize(oldType.getType())
+						|| (mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
 								&& !oldType.isUnsigned())) {
 					newExpression = oldWrappedIfUnsigned;
 				} else {
@@ -748,22 +754,24 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Integer(ILocation loc, int nodeOperator, Expression exp1,
-			CType type1, Expression exp2, CType type2) {
+	public Expression constructBinaryEqualityExpression_Integer(final ILocation loc, final int nodeOperator,
+			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+		Expression leftExpr = exp1;
+		Expression rightExpr = exp2;
 		if ((type1 instanceof CPrimitive) && (type2 instanceof CPrimitive)) {
 			final CPrimitive primitive1 = (CPrimitive) type1;
 			final CPrimitive primitive2 = (CPrimitive) type2;
 			if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && primitive1.isUnsigned()) {
 				assert primitive2.isUnsigned();
-				exp1 = applyWraparound(loc, mTypeSizes, primitive1, exp1);
-				exp2 = applyWraparound(loc, mTypeSizes, primitive2, exp2);
+				leftExpr = applyWraparound(loc, mTypeSizes, primitive1, leftExpr);
+				rightExpr = applyWraparound(loc, mTypeSizes, primitive2, rightExpr);
 			}
 		}
 
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, leftExpr, rightExpr);
 		} else if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, leftExpr, rightExpr);
 		} else {
 			throw new IllegalArgumentException("operator is neither equals nor not equals");
 		}
