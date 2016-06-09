@@ -50,7 +50,7 @@ public class Transition extends SpaceExElement {
 		mGuard = "";
 		mUpdate = "";
 		mLabel = "";
-		
+
 		source.addOutgoingTransition(this);
 		target.addIncomingTransition(this);
 	}
@@ -58,15 +58,15 @@ public class Transition extends SpaceExElement {
 	public int getSourceId() {
 		return mSource.getId();
 	}
-	
+
 	public int getTargetId() {
 		return mTarget.getId();
 	}
-	
+
 	public void setLabel(String label) {
 		mLabel = label;
 	}
-	
+
 	public String getLabel() {
 		return mLabel;
 	}
@@ -74,7 +74,7 @@ public class Transition extends SpaceExElement {
 	public void setUpdate(final String update) {
 		mUpdate = update;
 	}
-	
+
 	public String getUpdate() {
 		return mUpdate;
 	}
@@ -82,7 +82,7 @@ public class Transition extends SpaceExElement {
 	public void setGuard(final String guard) {
 		mGuard = guard;
 	}
-	
+
 	public String getGuard() {
 		return mGuard;
 	}
@@ -93,5 +93,19 @@ public class Transition extends SpaceExElement {
 
 	public void setTarget(final Location location) {
 		mTarget = location;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mSource.getName()).append("(").append(mSource.getId()).append(")").append(" === (").append(mGuard)
+		        .append("); {").append(mUpdate).append("}");
+		if (!mLabel.isEmpty()) {
+			sb.append("; Label: ").append(mLabel);
+		}
+		sb.append(" ===> ").append(mTarget.getName()).append("(").append(mTarget.getId()).append(")");
+
+		return sb.toString();
 	}
 }

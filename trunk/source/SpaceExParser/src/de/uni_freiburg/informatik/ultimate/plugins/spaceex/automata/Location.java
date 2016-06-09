@@ -103,4 +103,14 @@ public class Location extends SpaceExElement {
 	public double getYPos() {
 		return mYPos;
 	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		
+		sb.append(mName).append("(").append(mId).append(")").append(", Invariant: ").append(mInvariant);
+		sb.append(", Flow: ").append(mFlow);
+		
+		return sb.toString();
+	}
 }
