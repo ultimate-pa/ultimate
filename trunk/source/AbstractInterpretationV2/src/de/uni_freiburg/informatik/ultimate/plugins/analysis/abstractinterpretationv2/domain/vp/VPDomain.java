@@ -33,13 +33,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.DefaultEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
  * This abstract domain keeps track of the variable separation during abstract
@@ -48,25 +52,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
-public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
+public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar, Expression> {
 
 	private Map<BoogieVar, Set<PointerExpression>> pointerMap;
 	private Map<BoogieVar, Set<BoogieVar>> indexToArraysMap;
 	
+	private IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private IEqualityProvider<VPDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final RootAnnot mRootAnnotation;
 
-	public VPDomain(IUltimateServiceProvider services) {
+	public VPDomain(IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mRootAnnotation = rootAnnotation;
 	}
 
 	public VPDomain(IUltimateServiceProvider services, Map<BoogieVar, Set<PointerExpression>> pointerMap,
-			Map<BoogieVar, Set<BoogieVar>> indexToArraysMap) {
+			Map<BoogieVar, Set<BoogieVar>> indexToArraysMap, final RootAnnot rootAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		this.pointerMap = pointerMap;
 		this.indexToArraysMap = indexToArraysMap;
+		mRootAnnotation = rootAnnotation;
 	}
 
 	@Override
@@ -86,7 +96,10 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 
 	@Override
 	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new VPPostOperator(mServices);
+		if (mPostOperator == null) {
+			mPostOperator = new VPPostOperator(mServices);
+		}
+		return mPostOperator;
 	}
 
 	@Override
@@ -109,5 +122,13 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 
 	public void setIndexToArraysMap(Map<BoogieVar, Set<BoogieVar>> indexToArraysMap) {
 		this.indexToArraysMap = indexToArraysMap;
+	}
+
+	@Override
+	public IEqualityProvider<VPDomainState, CodeBlock, IBoogieVar, Expression> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new DefaultEqualityProvider<>(mPostOperator, mRootAnnotation);
+		}
+		return mEqualityProvider;
 	}
 }

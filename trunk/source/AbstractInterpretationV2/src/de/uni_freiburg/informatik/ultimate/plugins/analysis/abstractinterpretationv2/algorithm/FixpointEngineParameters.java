@@ -8,20 +8,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION, EXPRESSION> {
 
 	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStorage;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
+	private final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> mDomain;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
-			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper) {
+	        final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
+	        final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
+	        final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> domain,
+	        final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper) {
 		mTransitionProvider = transitionProvider;
 		mStorage = storage;
 		mVarProvider = varProvider;
@@ -34,46 +34,46 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 		this(null, null, null, null, null, null);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addTransitionProvider(
-			final ITransitionProvider<ACTION, LOCATION> transitionProvider) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addTransitionProvider(
+	        final ITransitionProvider<ACTION, LOCATION> transitionProvider) {
 		assert transitionProvider != null;
 		return new FixpointEngineParameters<>(transitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper);
+		        mDebugHelper);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addStorage(
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addStorage(
+	        final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage) {
 		assert storage != null;
 		return new FixpointEngineParameters<>(mTransitionProvider, storage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper);
+		        mDebugHelper);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addVariableProvider(
-			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addVariableProvider(
+	        final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider) {
 		assert varProvider != null;
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, varProvider, mLoopDetector, mDomain,
-				mDebugHelper);
+		        mDebugHelper);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addLoopDetector(
-			final ILoopDetector<ACTION> loopDetector) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addLoopDetector(
+	        final ILoopDetector<ACTION> loopDetector) {
 		assert loopDetector != null;
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, loopDetector, mDomain,
-				mDebugHelper);
+		        mDebugHelper);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addDomain(
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addDomain(
+	        final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> domain) {
 		assert domain != null;
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, domain,
-				mDebugHelper);
+		        mDebugHelper);
 	}
 
-	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> addDebugHelper(
-			final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper) {
+	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> addDebugHelper(
+	        final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper) {
 		assert debugHelper != null;
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				debugHelper);
+		        debugHelper);
 	}
 
 	public ITransitionProvider<ACTION, LOCATION> getTransitionProvider() {
@@ -92,7 +92,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 		return mLoopDetector;
 	}
 
-	public IAbstractDomain<STATE, ACTION, VARDECL> getAbstractDomain() {
+	public IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> getAbstractDomain() {
 		return mDomain;
 	}
 

@@ -224,7 +224,7 @@ public class PostProcessor {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
 //		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-		for (final ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+		for (final ProcedureSignature cFunc : functionHandler.mFunctionSignaturesThatHaveAFunctionPointer) {
 //			String procName = cFunc.functionSignatureAsProcedureName();
 			final String procName = cFunc.toString();
 			

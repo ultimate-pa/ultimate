@@ -643,7 +643,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			ASTType[] params;
 			final ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
-			if (newType.isFloatingType()) {
+			if (newType.isFloatingType() && !newType.getType().equals(SFO.REAL)) {
 				final int[] indices = new int[2];
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.FLOAT)) {
 					indices[0] = 8;
@@ -657,7 +657,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					indices[0] = 15;
 					indices[1] = 113;
 				}
-				attributes = generateAttributes(loc, "to_fp", indices);
+				if (oldType.getType().equals(CPrimitive.PRIMITIVE.UINT) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
+					attributes = generateAttributes(loc, "to_fp_unsigned", indices);
+				} else {
+					attributes = generateAttributes(loc, "to_fp", indices);
+				}
 			} else {
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.INT)) {
 					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
@@ -667,6 +671,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 32 });
 				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || newType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 64 });
+				} else if (newType.getType().equals(SFO.REAL)) {
+					attributes = generateAttributes(loc, "fp.to_real", null);
 				}
 			}
 			params = new ASTType[]{roundingMode, paramASTType};
@@ -728,7 +734,46 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
-		// TODO Auto-generated method stub
-		return null;
+	
+		String smtlibFunctionName;
+		CPrimitive param;
+		
+		if (name.equals("__isnan") || name.equals("__isnand") || name.equals("__isnanf") || name.equals("__isnanl")) {
+			smtlibFunctionName = "fp.isNaN";
+			if (name.equals("__isnanf")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isnanl")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else if (name.equals("__isinf") || name.equals("__isinfd") || name.equals("__isinff") || name.equals("__isinfl")) {
+			smtlibFunctionName = "fp.isInfinite";
+			if (name.equals("__isinff")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isinfl")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else if (name.equals("__isnormal") || name.equals("__isnormald") || name.equals("__isnormalf") || name.equals("__isnormall")) {
+			smtlibFunctionName = "fp.isNormal";
+			if (name.equals("__isnormalf")) {
+				param = new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (name.equals("__isnormall")) {
+				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else {
+				param = new CPrimitive(PRIMITIVE.DOUBLE);
+			}
+		} else {
+			throw new UnsupportedOperationException("Operation not supported");
+		}
+		//declareFloatingPointFunction(loc, smtlibFunctionName, SFO.AUXILIARY_FUNCTION_PREFIX + name, true, false, new CPrimitive(PRIMITIVE.BOOL), null, param);
+		
+		
+		ASTType ASTparam = new NamedType(loc, param.toString(), new ASTType[0]);
+		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, null); 
+		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, attributes, new PrimitiveType(loc, SFO.BOOL), ASTparam);
+		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, null);
 	}
 }

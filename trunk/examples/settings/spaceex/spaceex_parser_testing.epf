@@ -1,0 +1,5 @@
+#Wed Jun 08 11:54:48 CEST 2016
+file_export_version=3.0
+\!/instance/UltimateCore=
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser\=DEBUG;

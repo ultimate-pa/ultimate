@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -93,8 +94,8 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	@Override
 	public void doSimulation() throws AutomataOperationCanceledException {
 		super.doSimulation();
+
 		// getLogger().debug(getGameGraph().toAtsFormat());
-		// setResult(getGameGraph().generateAutomatonFromGraph());
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff
@@ -104,7 +105,8 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 				final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
 				if (!(vertex instanceof SpoilerDoubleDeckerVertex<?, ?>)
 						|| (progressMeasure >= getGameGraph().getGlobalInfinity() && (vertex.getQ0() != vertex.getQ1()))
-						|| (progressMeasure < getGameGraph().getGlobalInfinity() && (vertex.getQ0() == vertex.getQ1()))) {
+						|| (progressMeasure < getGameGraph().getGlobalInfinity()
+								&& (vertex.getQ0() == vertex.getQ1()))) {
 					continue;
 				}
 				SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
@@ -117,5 +119,16 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 						+ vertexAsDD.getVertexDownState().getRightDownState() + "]) = " + progressMeasureText);
 			}
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.ASimulation#simulationHook()
+	 */
+	@Override
+	protected void simulationHook() throws AutomataOperationCanceledException {
+		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
 	}
 }

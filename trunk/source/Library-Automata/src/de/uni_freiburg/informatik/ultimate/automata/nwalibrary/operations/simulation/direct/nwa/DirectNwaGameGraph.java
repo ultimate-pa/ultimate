@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -64,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LETTER, STATE> {
+public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LETTER, STATE>
+		implements INwaGameGraph<LETTER, STATE> {
 	/**
 	 * Utility object for generating game graphs based on nwa automata.
 	 */
@@ -118,16 +120,14 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 * simulation.direct.DirectGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-//		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
-		// TODO Enable the correct simulation again when DD problems are resolved
-		@SuppressWarnings("unchecked")
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = (INestedWordAutomatonOldApi<LETTER, STATE>) mNwa;
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
 
 		// Log performance
 		if (performance != null) {
@@ -186,6 +186,17 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
 		// TODO Can later be removed but for now
 		// it should throw an Exception for problem detection.
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.INwaGameGraph#undoRemovedReturnBridgesChanges()
+	 */
+	@Override
+	public void undoRemovedReturnBridgesChanges() {
+		undoChanges(mGeneration.getRemovedReturnBridgesChanges());
 	}
 
 	/*

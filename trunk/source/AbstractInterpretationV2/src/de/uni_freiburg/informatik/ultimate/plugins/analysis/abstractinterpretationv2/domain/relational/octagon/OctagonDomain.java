@@ -33,6 +33,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -41,34 +42,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.LogMessageFormatting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.WideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.DefaultEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter.LiteralCollectorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
- * Octagon abstract domain,
- * based on A. Miné's "The octagon abstract domain" (https://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
+ * Octagon abstract domain, based on A. Miné's "The octagon abstract domain"
+ * (https://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
  * 
- * Octagons are a weakly relational abstract domain and store constraints of the form "±x ± y ≤ c"
- * for numerical (ints and reals) variables x, y and a constant c.
- * Boolean variables are stored separately, using the non-relation powerset domain.
- * Other types (bit-vectors for instance) are not supported.
+ * Octagons are a weakly relational abstract domain and store constraints of the form "±x ± y ≤ c" for numerical (ints
+ * and reals) variables x, y and a constant c. Boolean variables are stored separately, using the non-relation powerset
+ * domain. Other types (bit-vectors for instance) are not supported.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar> {
+public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar, Expression> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
-	private final Supplier<OctDomainState> mOctDomainStateFactory; 
-	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory; 
-	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory; 
+	private final Supplier<OctDomainState> mOctDomainStateFactory;
+	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
+	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory;
+	private final RootAnnot mRootAnnotation;
 	
+	private IEqualityProvider<OctDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
+
 	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollectorFactory literalCollectorFactory,IUltimateServiceProvider services) {
+	        final LiteralCollectorFactory literalCollectorFactory, IUltimateServiceProvider services,
+	        final RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
@@ -77,17 +84,20 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
 		mPostOperatorFactory = makePostOperatorFactory(ups);
+		
+		mRootAnnotation = rootAnnotation;
 	}
 
 	/**
-	 * Creates a factory for generating empty octagon abstract states (that is, states without any variables).
-	 * The factory method caches and passes the abstract domain preferences to each new octagon
-	 * to prevent the preferences to be read each time (which would be slow).
+	 * Creates a factory for generating empty octagon abstract states (that is, states without any variables). The
+	 * factory method caches and passes the abstract domain preferences to each new octagon to prevent the preferences
+	 * to be read each time (which would be slow).
 	 * 
-	 * @param ups Preferences
+	 * @param ups
+	 *            Preferences
 	 * @return Factory for creating empty octagons
 	 */
-	private Supplier<OctDomainState> makeDomainStateFactory(final  IPreferenceProvider ups) {
+	private Supplier<OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 
@@ -105,20 +115,21 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		default:
 			throw makeIllegalSettingException(settingLabel, settingValue);
 		}
-		
+
 		return () -> OctDomainState.createFreshState(logStringFunction);
 	}
 
 	/**
-	 * Creates a factory for generating octagon widening operators.
-	 * The factory method caches and passes the abstract domain settings to each new widening operator
-	 * to prevent the preferences to be read each time (which would be slow).
+	 * Creates a factory for generating octagon widening operators. The factory method caches and passes the abstract
+	 * domain settings to each new widening operator to prevent the preferences to be read each time (which would be
+	 * slow).
 	 * 
-	 * @param ups Preferences
+	 * @param ups
+	 *            Preferences
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractStateBinaryOperator<OctDomainState>> makeWideningOperatorFactory(
-			final IPreferenceProvider ups) {
+	        final IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.WIDENING_OPERATOR;
 		final WideningOperator settingValue = ups.getEnum(settingLabel, WideningOperator.class);
 
@@ -132,7 +143,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 				return () -> new OctExponentialWideningOperator(threshold);
 			} catch (final NumberFormatException nfe) {
 				throw makeIllegalSettingException(settingLabel, settingValue);
-			} 
+			}
 		case LITERAL:
 			final Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
 			return () -> new OctLiteralWideningOperator(literals);
@@ -140,28 +151,30 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 			throw makeIllegalSettingException(OctPreferences.WIDENING_OPERATOR, settingValue);
 		}
 	}
-	
+
 	/**
-	 * Creates a factory for generating octagon post operators.
-	 * The factory method caches and passes the abstract domain settings to each new post operator
-	 * to prevent the preferences to be read each time (which would be slow).
+	 * Creates a factory for generating octagon post operators. The factory method caches and passes the abstract domain
+	 * settings to each new post operator to prevent the preferences to be read each time (which would be slow).
 	 * 
-	 * @param ups Preferences
+	 * @param ups
+	 *            Preferences
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> makePostOperatorFactory(
-			final IPreferenceProvider ups) {
-		final int maxParallelStates =
-				ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-		final boolean fallbackAssignIntervalProjection =
-				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
+	        final IPreferenceProvider ups) {
+		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		final boolean fallbackAssignIntervalProjection = ups
+		        .getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
 		return () -> new OctPostOperator(mLogger, mSymbolTable, maxParallelStates, fallbackAssignIntervalProjection);
 	}
-	
+
 	/**
 	 * Creates an exception for illegal settings.
-	 * @param settingLabel Label of the setting.
-	 * @param settingValue (Illegal) value of the setting.
+	 * 
+	 * @param settingLabel
+	 *            Label of the setting.
+	 * @param settingValue
+	 *            (Illegal) value of the setting.
 	 * @return Excpetion to be thrown
 	 */
 	private IllegalArgumentException makeIllegalSettingException(final String settingLabel, final Object settingValue) {
@@ -197,6 +210,14 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	@Override
 	public int getDomainPrecision() {
 		return 2000;
+	}
+
+	@Override
+	public IEqualityProvider<OctDomainState, CodeBlock, IBoogieVar, Expression> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new DefaultEqualityProvider<>(mPostOperatorFactory.get(), mRootAnnotation);
+		}
+		return null;
 	}
 
 }

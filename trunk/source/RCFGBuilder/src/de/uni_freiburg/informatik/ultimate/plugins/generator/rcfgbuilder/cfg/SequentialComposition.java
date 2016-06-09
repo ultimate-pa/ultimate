@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -45,41 +44,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
- * Edge in a recursive control flow graph that represents a sequence of
- * CodeBlocks which are executed one after the other if this edge is executed.
+ * Edge in a recursive control flow graph that represents a sequence of CodeBlocks which are executed one after the
+ * other if this edge is executed.
+ * 
+ * @author Matthias Heizmann
  */
 public class SequentialComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = 9192152338120598669L;
-	private final List<CodeBlock> mCodeBlocks;
-	private final String mPrettyPrinted;
 
 	/**
-	 * The published attributes. Update this and getFieldValue() if you add new
-	 * attributes.
+	 * The published attributes. Update this and getFieldValue() if you add new attributes.
 	 */
-	private final static String[] s_AttribFields = { "CodeBlocks (Sequentially Composed)", "PrettyPrintedStatements",
+	private static final String[] ATTRIBUTE_FIELDS = { "CodeBlocks (Sequentially Composed)", "PrettyPrintedStatements",
 			"TransitionFormula", "OccurenceInCounterexamples" };
 
-	@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
-	}
-
-	@Override
-	protected Object getFieldValue(String field) {
-		if (field == "CodeBlocks (Sequentially Composed)") {
-			return mCodeBlocks;
-		} else if (field == "PrettyPrintedStatements") {
-			return mPrettyPrinted;
-		} else if (field == "TransitionFormula") {
-			return mTransitionFormula;
-		} else if (field == "OccurenceInCounterexamples") {
-			return mOccurenceInCounterexamples;
-		} else {
-			throw new UnsupportedOperationException("Unknown field " + field);
-		}
-	}
+	private final List<CodeBlock> mCodeBlocks;
+	private final String mPrettyPrinted;
 
 	SequentialComposition(int serialNumber, ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe,
@@ -93,13 +74,14 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		int numberReturns = 0;
 		for (int i = 0; i < codeBlocks.size(); i++) {
 			if (codeBlocks.get(i) instanceof InterproceduralSequentialComposition) {
-				throw new IllegalArgumentException("InterproceduralSequentialComposition "
-						+ "must not participate in sequential compositions");
+				throw new IllegalArgumentException(
+						"InterproceduralSequentialComposition " + "must not participate in sequential compositions");
 			} else if (codeBlocks.get(i) instanceof Call) {
 				numberCalls++;
 			} else if (codeBlocks.get(i) instanceof Return) {
 				numberReturns++;
-			} else if (codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition
+			} else if (codeBlocks.get(i) instanceof StatementSequence
+					|| codeBlocks.get(i) instanceof SequentialComposition
 					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary
 					|| codeBlocks.get(i) instanceof GotoEdge) {
 				// do nothing
@@ -116,17 +98,37 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
-		final boolean s_TransformToCNF = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
-				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
+		final boolean transformToCNF =
+				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
-				s_TransformToCNF, false, mLogger, services, codeBlocks);
+				transformToCNF, false, mLogger, services, codeBlocks);
 		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify,
-				extPqe, s_TransformToCNF, true, mLogger, services, codeBlocks);
+				extPqe, transformToCNF, true, mLogger, services, codeBlocks);
 
 		mPrettyPrinted = prettyPrinted.toString();
 	}
 
+	@Override
+	protected String[] getFieldNames() {
+		return ATTRIBUTE_FIELDS;
+	}
+
+	@Override
+	protected Object getFieldValue(String field) {
+		if ("CodeBlocks (Sequentially Composed)".equals(field)) {
+			return mCodeBlocks;
+		} else if ("PrettyPrintedStatements".equals(field)) {
+			return mPrettyPrinted;
+		} else if ("TransitionFormula".equals(field)) {
+			return mTransitionFormula;
+		} else if ("OccurenceInCounterexamples".equals(field)) {
+			return mOccurenceInCounterexamples;
+		} else {
+			throw new UnsupportedOperationException("Unknown field " + field);
+		}
+	}
+	
 	protected void checkNumberOfCallsAndReturns(int numberCalls, int numberReturns) {
 		if (numberCalls != numberReturns) {
 			throw new IllegalArgumentException("same number of calls and returns required");
@@ -148,8 +150,8 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	}
 
 	/**
-	 * Returns Transformula for a sequence of CodeBlocks that may (opposed to
-	 * the method sequentialComposition) contain also Call and Return.
+	 * Returns Transformula for a sequence of CodeBlocks that may (opposed to the method sequentialComposition) contain
+	 * also Call and Return.
 	 * 
 	 * @param logger
 	 * @param services
@@ -187,9 +189,9 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 					if (callsSinceLastUnmatchedCall == returnsSinceLastUnmatchedCall) {
 						final Return correspondingReturn = (Return) codeBlocks.get(i);
 						final List<CodeBlock> codeBlocksBetween = new ArrayList<CodeBlock>(afterLastUnmatchedCall);
-						final TransFormula localTransFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager,
-								simplify, extPqe, tranformToCNF, withBranchEncoders, null, lastUnmatchedCall,
-								correspondingReturn, logger, services, codeBlocksBetween);
+						final TransFormula localTransFormula = getInterproceduralTransFormula(boogie2smt,
+								modGlobVarManager, simplify, extPqe, tranformToCNF, withBranchEncoders, null,
+								lastUnmatchedCall, correspondingReturn, logger, services, codeBlocksBetween);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
 						callsSinceLastUnmatchedCall = 0;
@@ -199,7 +201,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 						returnsSinceLastUnmatchedCall++;
 						afterLastUnmatchedCall.add(codeBlocks.get(i));
 					}
-					assert (callsSinceLastUnmatchedCall >= returnsSinceLastUnmatchedCall);
+					assert callsSinceLastUnmatchedCall >= returnsSinceLastUnmatchedCall;
 				} else if (codeBlocks.get(i) instanceof Call) {
 					callsSinceLastUnmatchedCall++;
 					afterLastUnmatchedCall.add(codeBlocks.get(i));
@@ -214,20 +216,21 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormula.sequentialComposition(logger, services, boogie2smt, simplify, extPqe,
-					tranformToCNF, beforeFirstPendingCall.toArray(new TransFormula[0]));
+					tranformToCNF, beforeFirstPendingCall.toArray(new TransFormula[beforeFirstPendingCall.size()]));
 		} else {
 			// there is a pending call in codeBlocks
-			assert (ret == null) : "no pending call between call and return possible!";
+			assert ret == null : "no pending call between call and return possible!";
 			final List<CodeBlock> codeBlocksBetween = afterLastUnmatchedCall;
 			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
-					tranformToCNF, withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]),
-					lastUnmatchedCall, null, logger, services, codeBlocksBetween);
+					tranformToCNF, withBranchEncoders,
+					beforeFirstPendingCall.toArray(new TransFormula[beforeFirstPendingCall.size()]), lastUnmatchedCall,
+					null, logger, services, codeBlocksBetween);
 		}
 
 		TransFormula result;
 		if (call == null) {
-			assert (ret == null);
-			assert (beforeCall == null);
+			assert ret == null;
+			assert beforeCall == null;
 			result = tfForCodeBlocks;
 		} else {
 			if (ret == null) {
@@ -236,14 +239,16 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				final String nameEndProcedure;
 				if (lastUnmatchedCall == null) {
 					nameEndProcedure = proc;
-				} else {				
+				} else {
 					nameEndProcedure = lastUnmatchedCall.getCallStatement().getMethodName();
 				}
-				final Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
+				final Set<BoogieVar> modifiableGlobalsOfEndProcedure =
+						modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
-						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure);
+						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,
+						logger, services, modifiableGlobalsOfEndProcedure);
 			} else {
-				assert (beforeCall == null);
+				assert beforeCall == null;
 				final String proc = call.getCallStatement().getMethodName();
 				final TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				final TransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);

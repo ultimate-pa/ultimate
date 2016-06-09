@@ -30,10 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.DefaultEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
@@ -44,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  *
  */
 @SuppressWarnings("rawtypes")
-public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar, Expression> {
 
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
@@ -53,6 +56,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private IEqualityProvider<CompoundDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
 
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
 			final RootAnnot rootAnnotation) {
@@ -94,6 +98,14 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	public int getDomainPrecision() {
 		// This domain is the most-expressive domain there is.
 		return Integer.MAX_VALUE;
+	}
+
+	@Override
+	public IEqualityProvider<CompoundDomainState, CodeBlock, IBoogieVar, Expression> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new DefaultEqualityProvider<>(mPostOperator, mRootAnnotation);
+		}
+		return mEqualityProvider;
 	}
 
 }

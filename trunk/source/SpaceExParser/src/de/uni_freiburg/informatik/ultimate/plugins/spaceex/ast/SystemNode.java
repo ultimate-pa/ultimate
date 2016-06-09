@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 
 public class SystemNode extends SpaceExNode {
 
+	private static final long serialVersionUID = 1L;
+	
 	private final List<String> mBinds;
 	
 	public SystemNode(ComponentType component) {

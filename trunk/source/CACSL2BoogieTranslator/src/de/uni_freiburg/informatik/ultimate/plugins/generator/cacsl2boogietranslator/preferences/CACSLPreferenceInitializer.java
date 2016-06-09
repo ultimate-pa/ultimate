@@ -44,16 +44,19 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_MODE = "Translation Mode:";
 	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
-	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION = "Check unreachability of error function in SV-COMP mode";
+	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION =
+			"Check unreachability of error function in SV-COMP mode";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
-	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
+	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
+			"Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_MEMORY_MODEL = "Memory model";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
-	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
+	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY =
+			"If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
 	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
@@ -63,7 +66,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
 
 	// typesize stuff
-	public static final String LABEL_USE_EXPLICIT_TYPESIZES = "Use the constants given below as storage sizes for the correponding types";
+	public static final String LABEL_USE_EXPLICIT_TYPESIZES =
+			"Use the constants given below as storage sizes for the correponding types";
 	public static final String LABEL_EXPLICIT_TYPESIZE_BOOL = "sizeof _Bool";
 	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR = "sizeof char";
 	public static final String LABEL_EXPLICIT_TYPESIZE_SHORT = "sizeof short";
@@ -107,107 +111,54 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<TranslationMode>(LABEL_MODE,
-						TranslationMode.SV_COMP14, PreferenceType.Radio,
+				new UltimatePreferenceItem<TranslationMode>(LABEL_MODE, TranslationMode.SV_COMP14, PreferenceType.Radio,
 						TranslationMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "main",
-						PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SVCOMP_ERRORFUNCTION,
-						true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(
-						LABEL_CHECK_POINTER_VALIDITY,
-						POINTER_CHECKMODE.ASSERTandASSUME,
-						PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(
-						LABEL_CHECK_POINTER_ALLOC,
-						POINTER_CHECKMODE.ASSERTandASSUME,
-						PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(
-						LABEL_CHECK_ARRAYACCESSOFFHEAP,
-						POINTER_CHECKMODE.ASSERTandASSUME,
-						PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_FREE_VALID,
-						true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_CHECK_MemoryLeakInMain, false,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<MEMORY_MODEL>(
-						LABEL_MEMORY_MODEL,
-						MEMORY_MODEL.HoenickeLindenmann_Original,
+				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "main", PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SVCOMP_ERRORFUNCTION, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_VALIDITY,
+						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_ALLOC,
+						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_ARRAYACCESSOFFHEAP,
+						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<MEMORY_MODEL>(LABEL_MEMORY_MODEL, MEMORY_MODEL.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MEMORY_MODEL.values()),
-				new UltimatePreferenceItem<POINTER_INTEGER_CONVERSION>(
-						LABEL_POINTER_INTEGER_CONVERSION,
-						POINTER_INTEGER_CONVERSION.NonBijectiveMapping,
-						PreferenceType.Combo, POINTER_INTEGER_CONVERSION.values()),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_REPORT_UNSOUNDNESS_WARNING, false,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(
-						LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						POINTER_CHECKMODE.ASSERTandASSUME,
-						PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<UNSIGNED_TREATMENT>(
-						LABEL_UNSIGNED_TREATMENT,
-						UNSIGNED_TREATMENT.WRAPAROUND,
+				new UltimatePreferenceItem<POINTER_INTEGER_CONVERSION>(LABEL_POINTER_INTEGER_CONVERSION,
+						POINTER_INTEGER_CONVERSION.NonBijectiveMapping, PreferenceType.Combo,
+						POINTER_INTEGER_CONVERSION.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_REPORT_UNSOUNDNESS_WARNING, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
+						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<UNSIGNED_TREATMENT>(LABEL_UNSIGNED_TREATMENT, UNSIGNED_TREATMENT.WRAPAROUND,
 						PreferenceType.Combo, UNSIGNED_TREATMENT.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(
-						LABEL_CHECK_DIVISION_BY_ZERO,
-						POINTER_CHECKMODE.ASSERTandASSUME,
-						PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_CHECK_SIGNED_INTEGER_BOUNDS,
-						false,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_ASSUME_NONDET_VALUES_IN_RANGE,
-						true,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_BITVECTOR_TRANSLATION,
-						false,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_OVERAPPROXIMATE_FLOATS,
-						false,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_SMT_BOOL_ARRAYS_WORKAROUND,
-						true,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_DIVISION_BY_ZERO,
+						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_OVERAPPROXIMATE_FLOATS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 
 				// typesize stuff
-				new UltimatePreferenceItem<Boolean>(
-						LABEL_USE_EXPLICIT_TYPESIZES, true,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_BOOL, 1, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_CHAR, 1, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_SHORT, 2, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_INT, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_LONG, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_FLOAT, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_DOUBLE, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
-				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_POINTER, 8, PreferenceType.Integer),
+				new UltimatePreferenceItem<Boolean>(LABEL_USE_EXPLICIT_TYPESIZES, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_BOOL, 1, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_CHAR, 1, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_SHORT, 2, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_INT, 4, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_LONG, 8, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_FLOAT, 4, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_DOUBLE, 8, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
+				new UltimatePreferenceItem<Integer>(LABEL_EXPLICIT_TYPESIZE_POINTER, 8, PreferenceType.Integer),
 				// more exotic types
 				// new UltimatePreferenceItem<Integer>(
 				// LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
 				// new UltimatePreferenceItem<Integer>(
 				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<SIGNEDNESS>(
-						LABEL_SIGNEDNESS_CHAR,
-						SIGNEDNESS.SIGNED,
-						PreferenceType.Combo, SIGNEDNESS.values()),
-		};
+				new UltimatePreferenceItem<SIGNEDNESS>(LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.SIGNED, PreferenceType.Combo,
+						SIGNEDNESS.values()), };
 	}
 }

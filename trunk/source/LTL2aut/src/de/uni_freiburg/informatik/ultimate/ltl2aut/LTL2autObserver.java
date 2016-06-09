@@ -32,6 +32,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
@@ -66,8 +66,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class LTL2autObserver implements IUnmanagedObserver {
 
-	private static final String sLTLMarker = "#LTLProperty:";
-	private static final String sIRSMarker = "#IRS:";
+	private static final String LTL_MARKER = "#LTLProperty:";
+	private static final String IRS_MARKER = "#IRS:";
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
@@ -120,8 +120,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		final AstNode node = getNeverClaim(ltl2baProperty);
-		final CodeBlockFactory cbf = (CodeBlockFactory) mStorage
-				.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		final CodeBlockFactory cbf =
+				(CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		final NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
@@ -129,73 +129,84 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private String getLTL2BAProperty(String ltlProperty) {
-		ltlProperty = ltlProperty.toLowerCase();
-		ltlProperty = ltlProperty.replaceAll("f", "<>");
-		ltlProperty = ltlProperty.replaceAll("g", "[]");
-		ltlProperty = ltlProperty.replaceAll("x", "X");
-		ltlProperty = ltlProperty.replaceAll("u", "U");
-		ltlProperty = ltlProperty.replaceAll("r", "\\/");
-		ltlProperty = ltlProperty.replaceAll("<==>", "<->");
-		ltlProperty = ltlProperty.replaceAll("==>", "->");
-		return ltlProperty;
+	private String getLTL2BAProperty(final String ltlProperty) {
+		String rtr = ltlProperty.toLowerCase();
+		rtr = rtr.replaceAll("f", "<>");
+		rtr = rtr.replaceAll("g", "[]");
+		rtr = rtr.replaceAll("x", "X");
+		rtr = rtr.replaceAll("u", "U");
+		rtr = rtr.replaceAll("r", "\\/");
+		rtr = rtr.replaceAll("<==>", "<->");
+		rtr = rtr.replaceAll("==>", "->");
+		return rtr;
 	}
 
-	private String prettyPrintProperty(Map<String, CheckableExpression> irs, String property) {
+	private String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
+		String rtr = property;
 		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
-			property = property.replaceAll(entry.getKey(),
+			rtr = rtr.replaceAll(entry.getKey(),
 					"(" + BoogiePrettyPrinter.print(entry.getValue().getExpression()) + ")");
 		}
-		return property;
+		return rtr;
 	}
 
 	private String[] getSpecification() throws IOException {
-		if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
-		.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE)) {
-			if (mInputFile != null) {
-				BufferedReader br;
-				String line = null;
-				final ArrayList<String> properties = new ArrayList<>();
-				final ArrayList<String> irs = new ArrayList<>();
-				try {
-					br = new BufferedReader(new FileReader(mInputFile));
-					while ((line = br.readLine()) != null) {
-						if (line.contains(sLTLMarker)) {
-							properties.add(line.replaceFirst("//", "").replaceAll(sLTLMarker, "").trim());
-						}
-						if (line.contains(sIRSMarker)) {
-							irs.add(line.replaceFirst("//", "").replaceAll(sIRSMarker, "").trim());
-						}
-					}
-					br.close();
-				} catch (final IOException e) {
-					mLogger.error("Error while reading " + mInputFile + ": " + e);
-					line = null;
-					throw e;
-				}
-
-				if (properties.isEmpty()) {
-					mLogger.info("No LTL specification in input file.");
-				} else {
-					if (properties.size() > 1) {
-						throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
-					}
-					final String[] rtr = new String[1 + irs.size()];
-					rtr[0] = properties.get(0);
-					int i = 1;
-					for (final String entry : irs) {
-						rtr[i] = entry;
-						i++;
-					}
-					return rtr;
-				}
+		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
+			final String[] property = extractPropertyFromFile();
+			if (property.length > 0) {
+				return property;
 			}
 		}
 
 		mLogger.info("Using LTL specification from settings.");
-		final String property = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferenceInitializer.LABEL_PPROPERTY);
+		final String property =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_PPROPERTY);
 		return property.split("\n");
+	}
+
+	private String[] extractPropertyFromFile() throws IOException {
+		final List<String> properties = new ArrayList<>();
+		final List<String> irs = new ArrayList<>();
+		readInputFile(properties, irs);
+
+		if (properties.isEmpty()) {
+			mLogger.info("No LTL specification in input file.");
+			return new String[0];
+		} else {
+			if (properties.size() > 1) {
+				throw new UnsupportedOperationException("We currently support only 1 LTL property at a time.");
+			}
+			final String[] rtr = new String[1 + irs.size()];
+			rtr[0] = properties.get(0);
+			int i = 1;
+			for (final String entry : irs) {
+				rtr[i] = entry;
+				i++;
+			}
+			return rtr;
+		}
+	}
+
+	private void readInputFile(final List<String> properties, final List<String> irs) throws IOException {
+		BufferedReader br;
+		String line = null;
+		try {
+			br = new BufferedReader(new FileReader(mInputFile));
+			while ((line = br.readLine()) != null) {
+				if (line.contains(LTL_MARKER)) {
+					properties.add(line.replaceFirst("//", "").replaceAll(LTL_MARKER, "").trim());
+				}
+				if (line.contains(IRS_MARKER)) {
+					irs.add(line.replaceFirst("//", "").replaceAll(IRS_MARKER, "").trim());
+				}
+			}
+			br.close();
+		} catch (final IOException e) {
+			mLogger.error("Error while reading " + mInputFile + ": " + e);
+			line = null;
+			throw e;
+		}
 	}
 
 	private AstNode getNeverClaim(String property) throws Throwable {
@@ -240,7 +251,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
 			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable, CodeBlockFactory cbf)
-					throws Exception {
+			throws Exception {
 		if (neverclaim == null) {
 			throw new IllegalArgumentException("There is no never claim");
 		}
@@ -261,7 +272,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			// Build NWA from LTL formula in NeverClaim representation
 			nwa = new Never2Automaton(neverclaim, symbolTable, irs, mLogger, mServices, cbf).getAutomaton();
 			if (nwa == null) {
-				throw new NullPointerException("nwa is null");
+				throw new IllegalArgumentException("nwa is null");
 			}
 		} catch (final Exception e) {
 			mLogger.fatal("LTL2Aut encountered an error while transforming the NeverClaim to a NestedWordAutomaton");

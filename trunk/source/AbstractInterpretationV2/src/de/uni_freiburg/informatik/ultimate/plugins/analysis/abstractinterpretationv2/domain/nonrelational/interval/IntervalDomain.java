@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -40,7 +41,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.DefaultEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
  * This abstract domain stores intervals for all variable valuations. Intervals can be of the form [num; num], where num
@@ -50,23 +54,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
+public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar, Expression> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
+	private final RootAnnot mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private IEqualityProvider<IntervalDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollection literalCollector, final IUltimateServiceProvider services) {
+	        final LiteralCollection literalCollector, final IUltimateServiceProvider services,
+	        final RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollection = literalCollector;
 		mServices = services;
+		mRootAnnotation = rootAnnotation;
 	}
 
 	@Override
@@ -84,14 +92,14 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 				mWideningOperator = new IntervalSimpleWideningOperator();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
 				final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
-						mLiteralCollection);
+				        mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
 				mWideningOperator = rtr;
 			} else {
 				throw new UnsupportedOperationException(
-						"The widening operator " + wideningOperator + " is not implemented.");
+				        "The widening operator " + wideningOperator + " is not implemented.");
 			}
 		}
 
@@ -117,5 +125,13 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	@Override
 	public int getDomainPrecision() {
 		return 1000;
+	}
+
+	@Override
+	public IEqualityProvider<IntervalDomainState, CodeBlock, IBoogieVar, Expression> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new DefaultEqualityProvider<>(mPostOperator, mRootAnnotation);
+		}
+		return mEqualityProvider;
 	}
 }

@@ -44,14 +44,15 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
@@ -824,6 +825,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
+	@SuppressWarnings("unchecked")
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
@@ -875,7 +877,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSAT<>(mServices, stateFactory, operand);
+				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
+				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
+					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
+				} else {
+					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
+				}
+				method = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (final AutomataOperationCanceledException e) {

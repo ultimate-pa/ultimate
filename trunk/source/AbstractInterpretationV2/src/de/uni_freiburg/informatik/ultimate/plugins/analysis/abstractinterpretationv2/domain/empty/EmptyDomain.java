@@ -24,11 +24,13 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
 
 /**
  * This domain does exactly nothing. It can be used to test various aspects of the framework.
@@ -40,8 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL>
-        implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+public class EmptyDomain<ACTION, VARDECL, EXPRESSION>
+        implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+
+	private IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> mEqualityProvider;
 
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
@@ -67,5 +71,26 @@ public class EmptyDomain<ACTION, VARDECL>
 	public int getDomainPrecision() {
 		// This domain is the least-expressive domain there is.
 		return 0;
+	}
+
+	@Override
+	public IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> getEqualityProvider() {
+		if (mEqualityProvider == null) {
+			mEqualityProvider = new IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION>() {
+
+				@Override
+				public boolean isDefinitelyEqual(EmptyDomainState<ACTION, VARDECL> state, EXPRESSION first,
+			            EXPRESSION second) {
+					return false;
+				}
+
+				@Override
+				public boolean isDefinitelyNotEqual(EmptyDomainState<ACTION, VARDECL> state, EXPRESSION first,
+			            EXPRESSION second) {
+					return false;
+				}
+			};
+		}
+		return mEqualityProvider;
 	}
 }

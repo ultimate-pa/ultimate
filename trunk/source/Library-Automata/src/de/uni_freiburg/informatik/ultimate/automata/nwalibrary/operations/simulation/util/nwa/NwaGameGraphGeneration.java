@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -92,6 +93,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * type of transition, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Non<STATE, STATE, STATE, STATE, LETTER, Boolean, ETransitionType, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> mAutomatonStatesToGraphDuplicatorVertex;
+
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
@@ -99,6 +101,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * of spoiler, down state of duplicator, bit, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Hep<STATE, STATE, STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> mAutomatonStatesToGraphSpoilerVertex;
+
 	/**
 	 * State symbol that stands for an empty stack.
 	 */
@@ -114,11 +117,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * transition. They are used for summarize edge generation.
 	 */
 	private final HashSet<DuplicatorDoubleDeckerVertex<LETTER, STATE>> mDuplicatorReturningVertices;
-	/**
-	 * Data structure of all spoiler vertices that may end up being a dead end,
-	 * because they can not take a return-transition due to their down state.
-	 */
-	private final HashSet<SpoilerDoubleDeckerVertex<LETTER, STATE>> mPossibleSpoilerDeadEnd;
 	/**
 	 * Map of all duplicator winning sinks of the graph. Provides a fast access
 	 * via the sink entry.
@@ -138,9 +136,20 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	/**
+	 * Data structure of all spoiler vertices that may end up being a dead end,
+	 * because they can not take a return-transition due to their down state.
+	 */
+	private final HashSet<SpoilerDoubleDeckerVertex<LETTER, STATE>> mPossibleSpoilerDeadEnd;
+	/**
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
 	private final IProgressAwareTimer mProgressTimer;
+	/**
+	 * Object that stores all changes made for removing return vertices and
+	 * their edges. It includes the removed returning vertex, its out- and
+	 * in-going edges and generated push-over edges.
+	 */
+	private final GameGraphChanges<LETTER, STATE> mRemovedReturnBridges;
 	/**
 	 * Amount of states the result automaton has.
 	 */
@@ -182,6 +191,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * source and destination of the edge.
 	 */
 	private final NestedMap2<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> mSrcDestToSummarizeEdges;
+	/**
+	 * If the game graph should use push-over edges between successors and
+	 * predecessors of return-invoking Duplicator vertices.
+	 */
+	private final boolean mUsePushOverEdges;
 
 	/**
 	 * Creates a new generation object that modifies a given graph using a given
@@ -222,11 +236,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mReturnInvokerOmittedPredecessors = new HashMap<>();
 		mEntryToSink = new HashMap<>();
 		mBottomVertices = new HashSet<>();
+		mRemovedReturnBridges = new GameGraphChanges<>();
 		mBottom = mNwa.getEmptyStackState();
 		mLogger = logger;
 		mProgressTimer = progressTimer;
 		mGameGraph = gameGraph;
 		mSimulationType = simulationType;
+		mUsePushOverEdges = false;
 
 		mResultAmountOfStates = 0;
 		mResultAmountOfTransitions = 0;
@@ -845,8 +861,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException {
-		// TODO We need to account for double decker vertices. There are
-		// vertices with the same up states.
 		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
 
 		// By default, we assume that there are merge-able states.
@@ -888,34 +902,46 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (final STATE state : mNwa.getStates()) {
 					equivalenceClasses.makeEquivalenceClass(state);
 				}
-				final HashRelation<STATE, STATE> similarStates = new HashRelation<>();
+				// A pair q0, q1 is similar if it q1 simulates q0 for all down
+				// states.
+				final HashRelation<STATE, STATE> possibleSimilarStates = new HashRelation<>();
+				// A pair q0, q1 is not similar if there is at least one down
+				// state configuration such that q1 does not simulate q0.
+				final HashRelation<STATE, STATE> notSimilarStates = new HashRelation<>();
 				for (final SpoilerVertex<LETTER, STATE> v : mGameGraph.getSpoilerVertices()) {
 					// All the states we need are from Spoiler
-					if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
-						boolean considerVertex = true;
-						// For delayed simulation we need to choose between the
-						// vertex with bit set to true or false
-						if (mSimulationType == ESimulationType.DELAYED) {
-							if (v.isB()) {
-								considerVertex = mNwa.isFinal(v.getQ0()) && !mNwa.isFinal(v.getQ0());
-							} else {
-								considerVertex = !mNwa.isFinal(v.getQ0()) || mNwa.isFinal(v.getQ0());
-							}
+					boolean considerVertex = true;
+					final STATE state1 = v.getQ0();
+					final STATE state2 = v.getQ1();
+					// For delayed simulation we need to choose between the
+					// vertex with bit set to true or false
+					if (mSimulationType == ESimulationType.DELAYED) {
+						if (v.isB()) {
+							considerVertex = mNwa.isFinal(state1) && !mNwa.isFinal(state2);
+						} else {
+							considerVertex = !mNwa.isFinal(state1) || mNwa.isFinal(state2);
 						}
-						if (considerVertex) {
-							final STATE state1 = v.getQ0();
-							final STATE state2 = v.getQ1();
-							if (state1 != null && state2 != null) {
-								similarStates.addPair(state1, state2);
-							}
+					}
+					if (considerVertex && state1 != null && state2 != null) {
+						if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
+							possibleSimilarStates.addPair(state1, state2);
+						} else {
+							notSimilarStates.addPair(state1, state2);
 						}
 					}
 				}
+				// Transform possibleSimilarStates into similarStates
+				for (final STATE state1 : notSimilarStates.getDomain()) {
+					for (final STATE state2 : notSimilarStates.getImage(state1)) {
+						possibleSimilarStates.removePair(state1, state2);
+					}
+				}
 				// Mark states for merge if they simulate each other
-				for (final STATE state1 : similarStates.getDomain()) {
-					for (final STATE state2 : similarStates.getImage(state1)) {
-						// Only merge if simulation holds in both directions
-						if (similarStates.containsPair(state2, state1)) {
+				for (final STATE state1 : possibleSimilarStates.getDomain()) {
+					for (final STATE state2 : possibleSimilarStates.getImage(state1)) {
+						// Only merge if simulation holds in both directions and
+						// we did not exclude the pair from merge
+						if (possibleSimilarStates.containsPair(state2, state1)) {
 							equivalenceClasses.union(state1, state2);
 						}
 					}
@@ -1124,44 +1150,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		clear();
 
 		mSimulationPerformance.stopTimeMeasure(ETimeMeasure.BUILD_GRAPH);
-	}
-
-	/**
-	 * Transforms dead ending spoiler vertices into instant wins for Duplicator
-	 * by adding a Duplicator-Winning-Sink. Such vertices may occur if they can
-	 * not use a return-transition due to their down state and if no other
-	 * transitions are available.<br/>
-	 * <br/>
-	 * In direct simulation it correctly takes care of spoiler vertices that are
-	 * directly loosing for Duplicator. Such vertices need to form a legal win
-	 * for Spoiler though they are dead-ends.
-	 */
-	public void patchSpoilerDeadEnds() {
-		for (SpoilerDoubleDeckerVertex<LETTER, STATE> possibleDeadEnd : mPossibleSpoilerDeadEnd) {
-			// Do not take a look at the vertex if we are in direct simulation
-			// and the vertex is directly loosing. It then needs to stay a
-			// dead-end.
-			if (mSimulationType == ESimulationType.DIRECT
-					&& doesLooseInDirectSim(possibleDeadEnd.getQ0(), possibleDeadEnd.getQ1())) {
-				continue;
-			}
-			// Do not take a look at the vertex if it is no dead end. This is
-			// possible if the vertex has other alternatives than the
-			// return-transition, which it can not use.
-			if (mGameGraph.hasSuccessors(possibleDeadEnd)) {
-				continue;
-			}
-
-			// Patch the dead end into an instant win for Duplicator
-			addDuplicatorWinningSink(possibleDeadEnd);
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("\tPatched spoiler dead-end: " + possibleDeadEnd);
-			}
-		}
-
-		// We do not need this data structure anymore
-		mPossibleSpoilerDeadEnd.clear();
 	}
 
 	/**
@@ -1423,8 +1411,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							} else {
 								// Instead remember it as omitted edge because
-								// we
-								// may need it for correct push-over edge
+								// we may need it for correct push-over edge
 								// generation
 								List<Vertex<LETTER, STATE>> omittedSuccessors = mReturnInvokerOmittedSuccessors
 										.get(src);
@@ -1500,8 +1487,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							} else {
 								// Instead remember it as omitted edge because
-								// we
-								// may need it for correct push-over edge
+								// we may need it for correct push-over edge
 								// generation
 								List<Vertex<LETTER, STATE>> omittedPredecessors = mReturnInvokerOmittedPredecessors
 										.get(src);
@@ -1608,41 +1594,63 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 
 					// The source vertex is (leftDownState, rightDownState),
-					// every of his own down states forms a legal source.
-					// Because, after a call all previous down states get
-					// changed to the summarize edge down state configuration.
-					Iterator<VertexDownState<STATE>> sourceDownStates = constructAllVertexDownStates(leftDownState,
-							rightDownState);
-					while (sourceDownStates.hasNext()) {
-						VertexDownState<STATE> sourceDownState = sourceDownStates.next();
+					// the down state is [leftDownStateOfDestination,
+					// rightDownStateOfDestination].
+					VertexDownState<STATE> destDownState = summarizeDestAsDD.getVertexDownState();
+					// In the standard case we use the false bit.
+					final SpoilerVertex<LETTER, STATE> summarizeSrcFalseBit = getSpoilerVertex(leftDownState,
+							rightDownState, destDownState.getLeftDownState(), destDownState.getRightDownState(), false,
+							null, null);
+					// In the standard case this vertex must be able to
+					// reach the destination.
+					boolean canFalseBitReachDestination = true;
+					// In delayed simulation there may be up to two sources,
+					// differentiating in the bit, depending on if they can
+					// reach the destination.
+					if (mSimulationType == ESimulationType.DELAYED) {
+						// TODO This check is expensive, there may be better
+						// ways to solve the problem
+						canFalseBitReachDestination = loopDetector.canVertexReachDestination(summarizeSrcFalseBit,
+								summarizeDestAsDD);
+					}
 
-						// In the standard case we use the false bit.
-						final SpoilerVertex<LETTER, STATE> summarizeSrcFalseBit = getSpoilerVertex(leftDownState,
-								rightDownState, sourceDownState.getLeftDownState(), sourceDownState.getRightDownState(),
-								false, null, null);
-						// In the standard case this vertex must be able to
-						// reach the destination.
-						boolean canFalseBitReachDestination = true;
-						// In delayed simulation there may be up to two sources,
-						// differentiating in the bit, depending on if they can
-						// reach the destination.
-						if (mSimulationType == ESimulationType.DELAYED) {
-							// TODO This check is expensive, there may be better
-							// ways to solve the problem
-							canFalseBitReachDestination = loopDetector.canVertexReachDestination(summarizeSrcFalseBit,
-									summarizeDestAsDD);
+					// False bit summarize edge
+					if (mSimulationType != ESimulationType.DELAYED || canFalseBitReachDestination) {
+						final SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcFalseBit;
+						if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+							continue;
 						}
-
-						// False bit summarize edge
-						if (mSimulationType != ESimulationType.DELAYED || canFalseBitReachDestination) {
-							final SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcFalseBit;
+						final SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
+						// Do not add the edge if the source or destination
+						// is a Spoiler vertex where Duplicator directly
+						// looses in direct simulation, if he uses the edge.
+						if (mSimulationType == ESimulationType.DIRECT && (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(),
+								summarizeSrcAsDD.getQ1())
+								|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(), summarizeDestAsDD.getQ1()))) {
+							continue;
+						}
+						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
+					}
+					// True bit summarize edge
+					if (mSimulationType == ESimulationType.DELAYED) {
+						final SpoilerVertex<LETTER, STATE> summarizeSrcTrueBit = getSpoilerVertex(leftDownState,
+								rightDownState, destDownState.getLeftDownState(), destDownState.getRightDownState(),
+								true, null, null);
+						// TODO This check is expensive, there may be better
+						// ways to solve the problem
+						final boolean canTrueBitReachDestination = loopDetector
+								.canVertexReachDestination(summarizeSrcTrueBit, summarizeDestAsDD);
+						if (canTrueBitReachDestination) {
+							final SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcTrueBit;
 							if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
 								continue;
 							}
 							final SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-							// Do not add the edge if the source or destination
+							// Do not add the edge if the source or
+							// destination
 							// is a Spoiler vertex where Duplicator directly
-							// looses in direct simulation, if he uses the edge.
+							// looses in direct simulation,
+							// if he uses the edge.
 							if (mSimulationType == ESimulationType.DIRECT
 									&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
 											|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
@@ -1650,36 +1658,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								continue;
 							}
 							addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
-						}
-						// True bit summarize edge
-						if (mSimulationType == ESimulationType.DELAYED) {
-							final SpoilerVertex<LETTER, STATE> summarizeSrcTrueBit = getSpoilerVertex(leftDownState,
-									rightDownState, sourceDownState.getLeftDownState(),
-									sourceDownState.getRightDownState(), true, null, null);
-							// TODO This check is expensive, there may be better
-							// ways to solve the problem
-							final boolean canTrueBitReachDestination = loopDetector
-									.canVertexReachDestination(summarizeSrcTrueBit, summarizeDestAsDD);
-							if (canTrueBitReachDestination) {
-								final SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcTrueBit;
-								if (summarizeSrc == null
-										|| !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
-									continue;
-								}
-								final SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-								// Do not add the edge if the source or
-								// destination
-								// is a Spoiler vertex where Duplicator directly
-								// looses in direct simulation,
-								// if he uses the edge.
-								if (mSimulationType == ESimulationType.DIRECT
-										&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
-												|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
-														summarizeDestAsDD.getQ1()))) {
-									continue;
-								}
-								addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
-							}
 						}
 					}
 				}
@@ -1703,6 +1681,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				successorsToProcess = new LinkedList<>(successors);
 				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
 					mGameGraph.removeEdge(returnInvoker, succ);
+					mRemovedReturnBridges.removedEdge(returnInvoker, succ);
 				}
 			}
 			final Set<Vertex<LETTER, STATE>> predecessors = mGameGraph.getPredecessors(returnInvoker);
@@ -1712,6 +1691,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				predecessorsToProcess = new LinkedList<>(predecessors);
 				for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 					mGameGraph.removeEdge(pred, returnInvoker);
+					mRemovedReturnBridges.removedEdge(pred, returnInvoker);
 					// Care for dead end spoiler vertices because they are not
 					// allowed in a legal game graph.
 					// They need to form a legal instant win for Duplicator.
@@ -1723,12 +1703,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Remove not reachable vertex
 			removeDuplicatorVertex(returnInvoker);
+			mRemovedReturnBridges.removedVertex(returnInvoker);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("\tRemoved duplicatorReturn: " + returnInvoker);
 			}
 
 			// Add push-over edges that are generated by the return invoker
-			if (mSimulationType == ESimulationType.DIRECT) {
+			if (mUsePushOverEdges && mSimulationType == ESimulationType.DIRECT) {
 				// Care for omitted edges that may occur in direct simulation if
 				// a vertex is directly loosing.
 				if (successorsToProcess == null) {
@@ -1750,10 +1731,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Create push-over edges for every pair of successors and
 			// predecessors
-			if (successorsToProcess != null && predecessorsToProcess != null) {
+			if (mUsePushOverEdges && successorsToProcess != null && predecessorsToProcess != null) {
 				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
 					for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 						mGameGraph.addPushOverEdge(pred, succ);
+						mRemovedReturnBridges.addedPushOverEdge(pred, succ);
 
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("\tAdded pushOver: " + pred + " -> " + succ);
@@ -1898,6 +1880,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the changes that where made for removing return vertices and their
+	 * edges. It includes the removed returning vertex, its out- and in-going
+	 * edges and generated push-over edges.
+	 * 
+	 * @return The changes that where made for removing return vertices and
+	 *         their edges.
+	 */
+	public GameGraphChanges<LETTER, STATE> getRemovedReturnBridgesChanges() {
+		return mRemovedReturnBridges;
+	}
+
+	/**
 	 * Gets the performance log of this object.
 	 * 
 	 * @return Performance log of this object
@@ -1938,6 +1932,52 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final STATE downQ1, final boolean bit, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		return mAutomatonStatesToGraphSpoilerVertex.get(new Hep<>(q0, q1, downQ0, downQ1, bit, summarizeEdge, sink));
+	}
+
+	/**
+	 * Transforms dead ending spoiler vertices into instant wins for Duplicator
+	 * by adding a Duplicator-Winning-Sink. Such vertices may occur if they can
+	 * not use a return-transition due to their down state and if no other
+	 * transitions are available.<br/>
+	 * <br/>
+	 * In direct simulation it correctly takes care of spoiler vertices that are
+	 * directly loosing for Duplicator. Such vertices need to form a legal win
+	 * for Spoiler though they are dead-ends.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public void patchSpoilerDeadEnds() throws AutomataOperationCanceledException {
+		for (SpoilerDoubleDeckerVertex<LETTER, STATE> possibleDeadEnd : mPossibleSpoilerDeadEnd) {
+			// Do not take a look at the vertex if we are in direct simulation
+			// and the vertex is directly loosing. It then needs to stay a
+			// dead-end.
+			if (mSimulationType == ESimulationType.DIRECT
+					&& doesLooseInDirectSim(possibleDeadEnd.getQ0(), possibleDeadEnd.getQ1())) {
+				continue;
+			}
+			// Do not take a look at the vertex if it is no dead end. This is
+			// possible if the vertex has other alternatives than the
+			// return-transition, which it can not use.
+			if (mGameGraph.hasSuccessors(possibleDeadEnd)) {
+				continue;
+			}
+
+			// Patch the dead end into an instant win for Duplicator
+			addDuplicatorWinningSink(possibleDeadEnd);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("\tPatched spoiler dead-end: " + possibleDeadEnd);
+			}
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+
+		// We do not need this data structure anymore
+		mPossibleSpoilerDeadEnd.clear();
 	}
 
 	/**
