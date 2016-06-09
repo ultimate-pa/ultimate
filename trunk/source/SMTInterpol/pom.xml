@@ -34,23 +34,23 @@
 								<echo>SmtInterpol: dimacsDir is ${dimacsDir}</echo>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${smtlibDir}">
+									dir="${smtlibDir}" failonerror="true">
 									<arg value="smtlib.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${smtlibDir}">
+								<java jar="${flexBinary}" fork="true" dir="${smtlibDir}" failonerror="true">
 									<arg value="smtlib.flex" />
 								</java>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${smtlib2Dir}">
+									dir="${smtlib2Dir}" failonerror="true">
 									<arg value="smtlib.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${smtlib2Dir}">
+								<java jar="${flexBinary}" fork="true" dir="${smtlib2Dir}" failonerror="true">
 									<arg value="smtlib.flex" />
 								</java>
 								
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${dimacsDir}">
+									dir="${dimacsDir}" failonerror="true">
 									<arg value="dimacs.cup" />
 								</java>
 								<java jar="${flexBinary}" fork="true" dir="${dimacsDir}">

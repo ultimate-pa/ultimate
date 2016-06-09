@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class LocationProvider {
 	

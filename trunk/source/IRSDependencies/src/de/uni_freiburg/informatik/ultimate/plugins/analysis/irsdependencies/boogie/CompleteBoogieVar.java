@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 /**
  * Class is used by Daniel for debugging symbol table. Orignially this was
@@ -38,27 +38,27 @@ public class CompleteBoogieVar
 {
 	private static final long serialVersionUID = -7848336493120723097L;
 
-	private final String m_Identifier;
-	private final String m_Procedure;
-	private final IType m_IType;
+	private final String mIdentifier;
+	private final String mProcedure;
+	private final IType mIType;
 	
-	private final boolean m_Oldvar;
+	private final boolean mOldvar;
 	
-	private final int m_HashCode;
+	private final int mHashCode;
 	
 	
 	public CompleteBoogieVar(String identifier, String procedure, IType iType) {
-		m_Identifier = identifier;
-		m_Procedure = procedure;
-		m_IType = iType;
-		m_Oldvar = false;
-		m_HashCode = computeHashCode();
+		mIdentifier = identifier;
+		mProcedure = procedure;
+		mIType = iType;
+		mOldvar = false;
+		mHashCode = computeHashCode();
 	}
 	
 
 	
 	public String getIdentifier() {
-		return m_Identifier;
+		return mIdentifier;
 	}
 	
 	/**
@@ -66,16 +66,16 @@ public class CompleteBoogieVar
 	 * global variable, then null is returned.
 	 */
 	public String getProcedure() {
-		return m_Procedure;
+		return mProcedure;
 	}
 	public IType getIType() {
-		return m_IType;
+		return mIType;
 	}
 	public boolean isGlobal() {
-		return m_Procedure == null;
+		return mProcedure == null;
 	}
 	public boolean isOldvar() {
-		return m_Oldvar;
+		return mOldvar;
 	}
 	
 
@@ -88,12 +88,12 @@ public class CompleteBoogieVar
 	public String getGloballyUniqueId() {
 		if (isGlobal()) {
 			if (isOldvar()) {
-				return "old(" + m_Identifier+")";
+				return "old(" + mIdentifier+")";
 			} else {
-				return m_Identifier;
+				return mIdentifier;
 			}
 		} else {
-			return m_Procedure + "_" + m_Identifier;
+			return mProcedure + "_" + mIdentifier;
 		}
 	}
 	
@@ -106,40 +106,48 @@ public class CompleteBoogieVar
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_Identifier == null) ? 0 : m_Identifier.hashCode());
-		result = prime * result + (m_Oldvar ? 1231 : 1237);
+				+ ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
+		result = prime * result + (mOldvar ? 1231 : 1237);
 		result = prime * result
-				+ ((m_Procedure == null) ? 0 : m_Procedure.hashCode());
+				+ ((mProcedure == null) ? 0 : mProcedure.hashCode());
 		return result;
 	}
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		CompleteBoogieVar other = (CompleteBoogieVar) obj;
-		if (m_Identifier == null) {
-			if (other.m_Identifier != null)
+		}
+		final CompleteBoogieVar other = (CompleteBoogieVar) obj;
+		if (mIdentifier == null) {
+			if (other.mIdentifier != null) {
 				return false;
-		} else if (!m_Identifier.equals(other.m_Identifier))
+			}
+		} else if (!mIdentifier.equals(other.mIdentifier)) {
 			return false;
-		if (m_Oldvar != other.m_Oldvar)
+		}
+		if (mOldvar != other.mOldvar) {
 			return false;
-		if (m_Procedure == null) {
-			if (other.m_Procedure != null)
+		}
+		if (mProcedure == null) {
+			if (other.mProcedure != null) {
 				return false;
-		} else if (!m_Procedure.equals(other.m_Procedure))
+			}
+		} else if (!mProcedure.equals(other.mProcedure)) {
 			return false;
+		}
 		return true;
 	}
 	

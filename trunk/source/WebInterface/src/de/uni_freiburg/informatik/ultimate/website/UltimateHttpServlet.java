@@ -61,10 +61,10 @@ public class UltimateHttpServlet extends HttpServlet {
 	}
 
 	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		ServletLogger sessionLogger = new ServletLogger(this, request.getSession().getId(), DEBUG);
-		Request internalRequest = new Request(request, sessionLogger);
+		final ServletLogger sessionLogger = new ServletLogger(this, request.getSession().getId(), DEBUG);
+		final Request internalRequest = new Request(request, sessionLogger);
 		response.setContentType("application/json");
-		PrintWriter out = response.getWriter();
+		final PrintWriter out = response.getWriter();
 
 		if (internalRequest.containsKey("callback")) {
 			out.write(internalRequest.get("callback")[0] + "(");
@@ -82,7 +82,7 @@ public class UltimateHttpServlet extends HttpServlet {
 			JSONObject json = new JSONObject();
 
 			if (request.containsKey("example")) {
-				Example ex = Example.get(request.get("example")[0]);
+				final Example ex = Example.get(request.get("example")[0]);
 				if (ex != null) {
 					json.put("exampleContent", ex.getFileContent());
 				}
@@ -95,8 +95,8 @@ public class UltimateHttpServlet extends HttpServlet {
 				request.getLogger().logDebug("This was an invalid request!");
 			}
 			json.write(out);
-		} catch (JSONException e) {
-			String message = "{\"error\" : \"Invalid Request! error code UI02\"}";
+		} catch (final JSONException e) {
+			final String message = "{\"error\" : \"Invalid Request! error code UI02\"}";
 			out.print(message);
 			request.getLogger().logDebug(message);
 
@@ -117,18 +117,18 @@ public class UltimateHttpServlet extends HttpServlet {
 	 *             happens when JSONObject is not used correctly
 	 */
 	private JSONObject handleAction(Request request) throws JSONException {
-		String[] actions = request.get("action");
+		final String[] actions = request.get("action");
 		if (actions.length != 1) {
-			JSONObject json = new JSONObject();
+			final JSONObject json = new JSONObject();
 			json.put("error", "Invalid request! error code UI03");
 			return json;
 		}
-		String action = actions[0];
+		final String action = actions[0];
 		if (action.equals("execute")) {
-			UltimateExecutor executor = new UltimateExecutor(request.getLogger());
+			final UltimateExecutor executor = new UltimateExecutor(request.getLogger());
 			return executor.executeUltimate(request);
 		} else {
-			JSONObject json = new JSONObject();
+			final JSONObject json = new JSONObject();
 			json.put("error", "Invalid request! error code UI05");
 			request.getLogger().logDebug("Don't know how to handle action: " + action);
 			return json;

@@ -24,12 +24,16 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import javax.xml.bind.JAXBException;
+
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -37,35 +41,39 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 /**
  * This class controls all aspects of the application's execution.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
+public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUltimatePlugin {
 
-	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from
+	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.model.coreplugin from
 	// exported packages
 
-	private Logger mLogger;
+	private static String[] sPluginNames;
 
-	private IController mCurrentController;
+	private ILogger mLogger;
 
-	/**
-	 * What arguments were passed to the Ultimate RCP product before start-up?
-	 */
-	private CommandLineParser mCmdLineArgs;
+	private IController<ToolchainListType> mCurrentController;
 
 	private ToolchainWalker mToolchainWalker;
 
@@ -77,20 +85,69 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	private ToolchainManager mToolchainManager;
 
-	private LoggingService mLoggingService;
+	private Log4JLoggingService mLoggingService;
 
 	private JobChangeAdapter mJobChangeAdapter;
 
-	/**
-	 * This Default-Constructor is needed to start up the application
-	 */
 	public UltimateCore() {
-
+		// This Default-Constructor is needed to start up the application
 	}
 
-	public final Object start(IController controller, boolean isGraphical) throws Exception {
+	public final Object startManually(final IController<ToolchainListType> controller) throws Exception {
 		setCurrentController(controller);
 		return start(null);
+	}
+
+	/**
+	 * Method which is called by Eclipse framework. Compare to "main"-method.
+	 * 
+	 * @param context
+	 *            Eclipse application context.
+	 * @return Should return IPlatformRunnable.EXIT_OK or s.th. similar.
+	 * @see org.eclipse.core.runtime.IPlatformRunnable#run(java.lang.Object)
+	 * @throws Exception
+	 *             May throw any exception
+	 */
+	@Override
+	public final Object start(IApplicationContext context) throws Exception {
+		// initializing variables, loggers,...
+		mCoreStorage = new ToolchainStorage();
+		mLoggingService = mCoreStorage.getLoggingService();
+		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
+		mLogger.info("Initializing application");
+
+		final ILogger tmpLogger = mLogger;
+		mJobChangeAdapter = new UltimateJobChangeAdapter(tmpLogger);
+		Job.getJobManager().addJobChangeListener(mJobChangeAdapter);
+		mLogger.info("--------------------------------------------------------------------------------");
+
+		// loading default settings
+		mSettingsManager = new SettingsManager(mLogger);
+		mSettingsManager.registerPlugin(this);
+
+		// loading classes exported by plugins
+		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
+		setCurrentController(mPluginFactory.getController());
+
+		mToolchainManager = new ToolchainManager(mLoggingService, mPluginFactory, getCurrentController());
+
+		try {
+			// at this point a controller is already selected. We delegate
+			// control
+			// to this controller.
+			final Object rtrCode = activateController();
+
+			// Ultimate is closing here
+			mToolchainManager.close();
+			return rtrCode;
+		} finally {
+			// we have to ensure that the JobChangeAdapter is properly removed,
+			// because he implicitly holds references to UltimateCore and may
+			// produce memory leaks
+			Job.getJobManager().removeJobChangeListener(mJobChangeAdapter);
+			mJobChangeAdapter = null;
+			mCoreStorage.clear();
+		}
 	}
 
 	/**
@@ -102,11 +159,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.info("Initializing controller ...");
 		if (getCurrentController() == null) {
 			mLogger.fatal("No controller present! Ultimate will exit.");
-			throw new NullPointerException("No controller present!");
+			throw new IllegalArgumentException("No controller present!");
 		}
 		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
-		int returnCode = getCurrentController().init(this, mLoggingService);
+		final int returnCode = getCurrentController().init(this);
 		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 		return returnCode;
 	}
@@ -128,13 +185,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	@Override
 	public String[] getRegisteredUltimatePluginIDs() {
-		List<String> rtr = mPluginFactory.getPluginIds();
+		final List<String> rtr = mPluginFactory.getPluginIds();
 		return rtr.toArray(new String[rtr.size()]);
-	}
-
-	@Override
-	public CommandLineParser getCommandLineArguments() {
-		return mCmdLineArgs;
 	}
 
 	@Override
@@ -154,118 +206,14 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	@Override
-	public IToolchain requestToolchain() {
+	public IToolchain<ToolchainListType> requestToolchain() {
 		return mToolchainManager.requestToolchain();
 	}
 
 	@Override
-	public void releaseToolchain(IToolchain toolchain) {
+	public void releaseToolchain(IToolchain<ToolchainListType> toolchain) {
 		mToolchainManager.releaseToolchain(toolchain);
 
-	}
-
-	/*****************************
-	 * IUltimatePlugin Implementation
-	 *********************/
-	@Override
-	public String getPluginName() {
-		return Activator.PLUGIN_NAME;
-	}
-
-	@Override
-	public String getPluginID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public UltimatePreferenceInitializer getPreferences() {
-		return new CorePreferenceInitializer();
-	}
-
-	/*****************************
-	 * IApplication Implementation
-	 *********************/
-
-	/**
-	 * Method which is called by Eclipse framework. Compare to "main"-method.
-	 * 
-	 * @param context
-	 *            Eclipse application context.
-	 * @return Should return IPlatformRunnable.EXIT_OK or s.th. similar.
-	 * @see org.eclipse.core.runtime.IPlatformRunnable#run(java.lang.Object)
-	 * @throws Exception
-	 *             May throw any exception
-	 */
-	@Override
-	public final Object start(IApplicationContext context) throws Exception {
-		// parse command line parameters and select ultimate mode
-		mCmdLineArgs = new CommandLineParser();
-		mCmdLineArgs.parse(Platform.getCommandLineArgs());
-
-		// determine Ultimate's mode
-		if (mCmdLineArgs.getExitSwitch()) {
-			mCmdLineArgs.printUsage();
-			return IApplication.EXIT_OK;
-		}
-
-		// initializing variables, loggers,...
-		mCoreStorage = new ToolchainStorage();
-		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
-		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
-		mLogger.info("Initializing application");
-
-		final Logger tmpLogger = mLogger;
-		mJobChangeAdapter = new JobChangeAdapter() {
-
-			@Override
-			public void done(IJobChangeEvent event) {
-				if (event.getResult().getException() != null) {
-					tmpLogger.error("Error during toolchain job processing:", event.getResult().getException());
-					if (Platform.inDebugMode() || Platform.inDevelopmentMode()) {
-						event.getResult().getException().printStackTrace();
-					}
-				}
-			}
-
-		};
-		Job.getJobManager().addJobChangeListener(mJobChangeAdapter);
-		mLogger.info("--------------------------------------------------------------------------------");
-
-		// loading classes exported by plugins
-		mSettingsManager = new SettingsManager(mLogger);
-
-		mSettingsManager.checkPreferencesForActivePlugins(getPluginID(), getPluginName());
-
-		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
-		setCurrentController(mPluginFactory.getController());
-
-		mToolchainManager = new ToolchainManager(mLoggingService, mPluginFactory, getCurrentController());
-
-		String settingsfile = mCmdLineArgs.getSettings();
-		if (settingsfile != null) {
-			mSettingsManager.loadPreferencesFromFile(this, settingsfile);
-			mLoggingService.refreshLoggingService();
-		} else {
-			mLogger.info("No settings file supplied");
-		}
-
-		try {
-			// at this point a controller is already selected. We delegate
-			// control
-			// to this controller.
-			Object rtrCode = activateController();
-
-			// Ultimate is closing here
-			mToolchainManager.close();
-			return rtrCode;
-		} finally {
-			// we have to ensure that the JobChangeAdapter is properly removed,
-			// because he implicitly holds references to UltimateCore and may
-			// produce memory leaks
-			Job.getJobManager().removeJobChangeListener(mJobChangeAdapter);
-			mJobChangeAdapter = null;
-			mCoreStorage.clear();
-		}
 	}
 
 	@Override
@@ -273,9 +221,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.warn("Received 'Stop'-Command, ignoring...");
 	}
 
-	/***************************** Getters & Setters *********************/
-
-	private void setCurrentController(IController controller) {
+	private void setCurrentController(IController<ToolchainListType> controller) {
 		if (mCurrentController != null) {
 			if (controller == null) {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
@@ -290,7 +236,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mCurrentController = controller;
 	}
 
-	private IController getCurrentController() {
+	private IController<ToolchainListType> getCurrentController() {
 		return mCurrentController;
 	}
 
@@ -301,14 +247,12 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return getCurrentController().getPluginID();
 	}
 
-	private static String[] sPluginNames;
-
-	public static String[] getPluginNames() {
+	public static synchronized String[] getPluginNames() {
 		if (sPluginNames == null) {
-			List<String> lil = new ArrayList<>();
-			for (String ep : ExtensionPoints.PLUGIN_EPS) {
-				for (IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
-					String classname = elem.getAttribute("class");
+			final List<String> lil = new ArrayList<>();
+			for (final String ep : ExtensionPoints.PLUGIN_EPS) {
+				for (final IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
+					final String classname = elem.getAttribute("class");
 					lil.add(classname.substring(0, classname.lastIndexOf(".")));
 				}
 			}
@@ -317,4 +261,67 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return sPluginNames;
 	}
 
+	@Override
+	public IToolchainData<ToolchainListType> createToolchainData(String filename)
+			throws FileNotFoundException, JAXBException, SAXException {
+		if (!new File(filename).exists()) {
+			throw new FileNotFoundException("The specified toolchain file " + filename + " was not found");
+		}
+
+		final ToolchainStorage tcStorage = new ToolchainStorage();
+		return new ToolchainData(filename, tcStorage, tcStorage);
+	}
+
+	@Override
+	public IToolchainData<ToolchainListType> createToolchainData() {
+		final ToolchainStorage tcStorage = new ToolchainStorage();
+		return new ToolchainData(tcStorage, tcStorage);
+	}
+
+	@Override
+	public String getPluginName() {
+		return Activator.PLUGIN_NAME;
+	}
+
+	@Override
+	public String getPluginID() {
+		return Activator.PLUGIN_ID;
+	}
+
+	@Override
+	public IPreferenceInitializer getPreferences() {
+		return new CorePreferenceInitializer();
+	}
+
+	@Override
+	public ILoggingService getCoreLoggingService() {
+		return mCoreStorage.getLoggingService();
+	}
+
+	@Override
+	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+		return mCoreStorage.getPreferenceProvider(pluginId);
+	}
+
+	private static final class UltimateJobChangeAdapter extends JobChangeAdapter {
+		private final ILogger mLogger;
+
+		private UltimateJobChangeAdapter(final ILogger logger) {
+			mLogger = logger;
+		}
+
+		@Override
+		public void done(IJobChangeEvent event) {
+			if (event == null) {
+				return;
+			}
+			if (event.getResult() == null) {
+				return;
+			}
+			if (event.getResult().getException() == null) {
+				return;
+			}
+			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
+		}
+	}
 }

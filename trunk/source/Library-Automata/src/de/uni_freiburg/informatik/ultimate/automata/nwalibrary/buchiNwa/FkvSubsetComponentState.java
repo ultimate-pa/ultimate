@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * 
@@ -39,59 +39,64 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER, STATE> {
 	
-	private final DeterminizedState<LETTER, STATE> m_DeterminizedState;
-	private final HashRelation<StateWithRankInfo<STATE>, StateWithRankInfo<STATE>> m_Down2Up;
+	private final DeterminizedState<LETTER, STATE> mDeterminizedState;
+	private final HashRelation<StateWithRankInfo<STATE>, StateWithRankInfo<STATE>> mDown2Up;
 	
 
 	FkvSubsetComponentState(DeterminizedState<LETTER, STATE> detState) {
-		m_DeterminizedState = detState;
-		m_Down2Up = new HashRelation<>();
-		for (STATE down : detState.getDownStates()) {
-			for (STATE up : detState.getUpStates(down)) {
-				m_Down2Up.addPair(new StateWithRankInfo<STATE>(down), new StateWithRankInfo<STATE>(up));
+		mDeterminizedState = detState;
+		mDown2Up = new HashRelation<>();
+		for (final STATE down : detState.getDownStates()) {
+			for (final STATE up : detState.getUpStates(down)) {
+				mDown2Up.addPair(new StateWithRankInfo<STATE>(down), new StateWithRankInfo<STATE>(up));
 			}
 		}
 	}
 	
 	public DeterminizedState<LETTER, STATE> getDeterminizedState() {
-		return m_DeterminizedState;
+		return mDeterminizedState;
 	}
 
 	@Override
 	public Set<StateWithRankInfo<STATE>> getDownStates() {
-		return m_Down2Up.getDomain();
+		return mDown2Up.getDomain();
 	}
 
 	@Override
 	public Iterable<StateWithRankInfo<STATE>> getUpStates(
 			StateWithRankInfo<STATE> downState) {
-		return m_Down2Up.getImage(downState);
+		return mDown2Up.getImage(downState);
 	}
 
 	@Override
 	public String toString() {
-		return m_DeterminizedState.toString();
+		return mDeterminizedState.toString();
 	}
 	
 	@Override
 	public int hashCode() {
-		return m_DeterminizedState.hashCode();
+		return mDeterminizedState.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		FkvSubsetComponentState other = (FkvSubsetComponentState) obj;
-		if (m_DeterminizedState == null) {
-			if (other.m_DeterminizedState != null)
+		}
+		final FkvSubsetComponentState other = (FkvSubsetComponentState) obj;
+		if (mDeterminizedState == null) {
+			if (other.mDeterminizedState != null) {
 				return false;
-		} else if (!m_DeterminizedState.equals(other.m_DeterminizedState))
+			}
+		} else if (!mDeterminizedState.equals(other.mDeterminizedState)) {
 			return false;
+		}
 		return true;
 	}
 	

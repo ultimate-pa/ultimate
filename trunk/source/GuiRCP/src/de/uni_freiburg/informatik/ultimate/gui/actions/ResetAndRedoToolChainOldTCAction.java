@@ -25,23 +25,23 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
-import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -54,8 +54,8 @@ public class ResetAndRedoToolChainOldTCAction extends RunToolchainAction impleme
 
 	private static final String LABEL = "Execute current Toolchain on new file(s)";
 
-	public ResetAndRedoToolChainOldTCAction(final IWorkbenchWindow window, final ICore icore,
-			final GuiController controller, final Logger logger) {
+	public ResetAndRedoToolChainOldTCAction(final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
+			final GuiController controller, final ILogger logger) {
 		super(logger, window, icore, controller, ResetAndRedoToolChainOldTCAction.class.getName(), LABEL,
 				IImageKeys.REEXECOLDTC);
 	}
@@ -66,25 +66,23 @@ public class ResetAndRedoToolChainOldTCAction extends RunToolchainAction impleme
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
+	@Override
 	public final void run() {
-
 		// Execute old toolchain on new input file(s)
-
-		File prelude = PreludeContribution.getPreludeFile();
-		ToolchainData toolchain = getLastToolchainData();
+		final IToolchainData<ToolchainListType> toolchain = getLastToolchainData();
 
 		if (toolchain == null) {
 			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred", "There is no old toolchain");
 			return;
 		}
 
-		File[] inputFiles = getInputFilesFromUser("Select input file...");
+		final File[] inputFiles = getInputFilesFromUser("Select input file...");
 		if (inputFiles == null || inputFiles.length == 0) {
 			return;
 		}
 
-		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, toolchain,
-				inputFiles, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
+		final BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, toolchain,
+				inputFiles);
 		tcj.schedule();
 
 	}

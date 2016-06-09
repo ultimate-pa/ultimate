@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -46,33 +46,33 @@ public class PetriNetTransitionAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = -1676272287026669953L;
 
-	private String m_symbol;
+	private final String msymbol;
 
 	
-	private IdentifierListAST m_predeccesors;
-	private IdentifierListAST m_successors;
+	private final IdentifierListAST mpredeccesors;
+	private final IdentifierListAST msuccessors;
 	
 
 	public PetriNetTransitionAST(ILocation loc, IdentifierListAST from, String symbol, IdentifierListAST to) {
 		super(loc);
-		m_predeccesors = from;
-		m_symbol = symbol;
-		m_successors = to;
+		mpredeccesors = from;
+		msymbol = symbol;
+		msuccessors = to;
 	}
 	
 
 	public IdentifierListAST getPreviousMarking() {
-		return m_predeccesors;
+		return mpredeccesors;
 	}
 
 
 	public IdentifierListAST getNextMarking() {
-		return m_successors;
+		return msuccessors;
 	}
 
 
 	public String getSymbol() {
-		return m_symbol;
+		return msymbol;
 	}
 	
 	/**
@@ -80,7 +80,7 @@ public class PetriNetTransitionAST extends AtsASTNode {
 	 * @return
 	 */
 	public List<String> getPreds() {
-		return m_predeccesors.getIdentifierList();
+		return mpredeccesors.getIdentifierList();
 	}
 	
 	/**
@@ -88,20 +88,20 @@ public class PetriNetTransitionAST extends AtsASTNode {
 	 * @return
 	 */
 	public List<String> getSuccs() {
-		return m_successors.getIdentifierList();
+		return msuccessors.getIdentifierList();
 	}
 
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		for (String pred : m_predeccesors.getIdentifierList()) {
+		for (final String pred : mpredeccesors.getIdentifierList()) {
 			builder.append(pred + " ");
 		}
 		builder.deleteCharAt(builder.length() - 1);
-		builder.append("}" + m_symbol + "{");
-		for (String succ : m_successors.getIdentifierList()) {
+		builder.append("}" + msymbol + "{");
+		for (final String succ : msuccessors.getIdentifierList()) {
 			builder.append(succ + " ");
 		}
 		builder.deleteCharAt(builder.length() - 1);

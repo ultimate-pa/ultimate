@@ -47,19 +47,19 @@ public class JVContextMenu extends JPopupMenu {
 
 	private static final long serialVersionUID = 1L;
 
-	private ButtonGroup group = new ButtonGroup();
-	private JRadioButtonMenuItem jmi_mode_p = new JRadioButtonMenuItem("Picking");
-	private JRadioButtonMenuItem jmi_mode_t = new JRadioButtonMenuItem("Transforming");
+	private final ButtonGroup group = new ButtonGroup();
+	private final JRadioButtonMenuItem jmi_mode_p = new JRadioButtonMenuItem("Picking");
+	private final JRadioButtonMenuItem jmi_mode_t = new JRadioButtonMenuItem("Transforming");
 
 	// private JMenuItem jmi_collapse = new JMenuItem("Collapse");
 	// private JMenuItem jmi_extend = new JMenuItem("Extend");
 
 	public JVContextMenu(JungEditorInput editorInput) {
-		ContextMenuActions actions = new ContextMenuActions(editorInput);
+		final ContextMenuActions actions = new ContextMenuActions(editorInput);
 		
 		
-		JMenuItem jmi_export = new JMenuItem("Export as SVG");
-		JMenuItem jmi_help = new JMenuItem("Key Help");
+		final JMenuItem jmi_export = new JMenuItem("Export as SVG");
+		final JMenuItem jmi_help = new JMenuItem("Key Help");
 		
 		if (editorInput.getMode().equals(Mode.PICKING)) {
 			jmi_mode_p.setSelected(true);
@@ -81,10 +81,10 @@ public class JVContextMenu extends JPopupMenu {
 		jmi_help.setActionCommand(ContextMenuActions.ACTION_KEYHELP);
 
 		this.add(jmi_export);
-		this.addSeparator();
+		addSeparator();
 		this.add(jmi_mode_p);
 		this.add(jmi_mode_t);
-		this.addSeparator();
+		addSeparator();
 		this.add(jmi_help);
 		// jpm.addSeparator();
 		// jpm.add(jmi_collapse);

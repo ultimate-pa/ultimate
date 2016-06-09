@@ -104,32 +104,36 @@ public class SharingSet<E> extends AbstractSet<E> {
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		SharingSetData<E> data = mData.detach();
-		boolean res = data.mRep.removeAll(c);
-		if (res)
+		final SharingSetData<E> data = mData.detach();
+		final boolean res = data.mRep.removeAll(c);
+		if (res) {
 			mData = data;
+		}
 		return res;
 	}
 
 	@Override
 	public boolean add(E e) {
-		if (mData.mRep.contains(e))
+		if (mData.mRep.contains(e)) {
 			return false;
+		}
 		mData = mData.detach();
 		return mData.mRep.add(e);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		if (mData.mRep.containsAll(c))
+		if (mData.mRep.containsAll(c)) {
 			return false;
+		}
 		mData = mData.detach();
 		return mData.mRep.addAll(c);
 	}
 	// Optimization for sharing sets...
 	public boolean addShared(SharingSet<E> other) {
-		if (other == null)
+		if (other == null) {
 			return false;
+		}
 		if (mData.mRep.isEmpty() && mData.mSharing == 0) {
 			mData = other.mData.share();
 			return true;

@@ -32,10 +32,9 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * To determine a good boundary, which is later used to estimate a good edge
@@ -51,13 +50,13 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 * TODO: Strategies for which we can use these statistics, should be entered
 	 * in this list!
 	 */
-	private ArrayList<RatingStrategy> mSupportedStrategies;
-	private Logger mLogger;
+	private final ArrayList<RatingStrategy> mSupportedStrategies;
+	private final ILogger mLogger;
 
 	/**
 	 * @param strategy
 	 */
-	public StatisticBasedHeuristic(RatingStrategy strategy, Logger logger) {
+	public StatisticBasedHeuristic(RatingStrategy strategy, ILogger logger) {
 		super(strategy);
 		mLogger = logger;
 		mSupportedStrategies = new ArrayList<RatingStrategy>();
@@ -68,7 +67,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 
 	@Override
 	public void init(String givenPref) {
-		switch (this.strategy) {
+		switch (strategy) {
 		case DISJUNCTIVE_STMTCOUNT:
 			givenPref = computeDisStmtBoundary();
 			break;
@@ -94,15 +93,15 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 * @return
 	 */
 	private String computeDisStmtBoundary() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		// TODO: validate that
 		// we take half of the maximum disjunctions in the graph
-		int disjunctions = (int) (2 * (EncodingStatistics.maxDisjunctionsInOneEdge / 3));
+		final int disjunctions = 2 * (EncodingStatistics.maxDisjunctionsInOneEdge / 3);
 		sb.append(disjunctions);
 		sb.append("-");
 		// as a upper bound we take 80% of the value
 		// maxElementesInOneDisjunction
-		double onePercent = EncodingStatistics.maxElementsInOneDisjunction / 100;
+		final double onePercent = EncodingStatistics.maxElementsInOneDisjunction / 100;
 		sb.append((int) (onePercent * 80));
 		sb.append("-");
 		// as lower bound we take 10% but at least 5 elements
@@ -119,16 +118,16 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 */
 	private String computeUsedVarBoundary() {
 		// Basically we take here the arithmetic mean of min and max
-		int meanValue = (int) (1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge + EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
+		final int meanValue = (int) (1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge + EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
 		return Integer.toString(meanValue);
 	}
 
 	private String computeMultiplicativeBoundary(String pref) {
 		int value;
 		if (!pref.equals("")) {
-			int preference = Integer.parseInt(pref);
-			double onePercent = (double)EncodingStatistics.maxRatingInOneEdge / 100.00;
-			double calc = onePercent * (double)preference;
+			final int preference = Integer.parseInt(pref);
+			final double onePercent = EncodingStatistics.maxRatingInOneEdge / 100.00;
+			final double calc = onePercent * preference;
 			value = (int) calc;
 		} else {
 			value = EncodingStatistics.totalRCFGRating / EncodingStatistics.countOfBasicEdges;

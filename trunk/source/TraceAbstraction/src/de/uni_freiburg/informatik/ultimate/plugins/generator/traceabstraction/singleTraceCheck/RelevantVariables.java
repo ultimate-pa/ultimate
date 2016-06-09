@@ -35,17 +35,16 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
 
 
 /**
@@ -56,27 +55,27 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  */
 public class RelevantVariables {
 
-	private final NestedFormulas<TransFormula, IPredicate> m_TraceWithFormulas;
-	private final Set<BoogieVar>[] m_ForwardRelevantVariables;
-	private final Set<BoogieVar>[] m_BackwardRelevantVariables;
-	private final Set<BoogieVar>[] m_RelevantVariables;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
-	private final NestedConstraintAnalysis m_NestedConstraintAnalysis;
-	private VariableOccurrence m_Occurrence;
+	private final NestedFormulas<TransFormula, IPredicate> mTraceWithFormulas;
+	private final Set<BoogieVar>[] mForwardRelevantVariables;
+	private final Set<BoogieVar>[] mBackwardRelevantVariables;
+	private final Set<BoogieVar>[] mRelevantVariables;
+	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final NestedConstraintAnalysis mNestedConstraintAnalysis;
+	private final VariableOccurrence mOccurrence;
 	
 
 	public RelevantVariables(NestedFormulas<TransFormula, IPredicate> traceWithFormulas, 
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		super();
-		m_ModifiableGlobals = modifiedGlobals;
-		m_TraceWithFormulas = traceWithFormulas;
-		m_NestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getTrace(), new TreeMap<Integer, IPredicate>(), traceWithFormulas);
-		m_Occurrence = new VariableOccurrence();
-		m_ForwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
+		mModifiableGlobals = modifiedGlobals;
+		mTraceWithFormulas = traceWithFormulas;
+		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getTrace(), new TreeMap<Integer, IPredicate>(), traceWithFormulas);
+		mOccurrence = new VariableOccurrence();
+		mForwardRelevantVariables = new Set[mTraceWithFormulas.getTrace().length()+1];
 		computeForwardRelevantVariables();
-		m_BackwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
+		mBackwardRelevantVariables = new Set[mTraceWithFormulas.getTrace().length()+1];
 		computeBackwardRelevantVariables();
-		m_RelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
+		mRelevantVariables = new Set[mTraceWithFormulas.getTrace().length()+1];
 		computeRelevantVariables();
 //		assert checkRelevantVariables();
 	}
@@ -87,12 +86,12 @@ public class RelevantVariables {
 	 */
 	private boolean checkRelevantVariables() {
 		boolean result = true;
-		for (int i=0; i<m_TraceWithFormulas.getTrace().length(); i++) {
-			Set<BoogieVar> relevantVars = m_RelevantVariables[i+1];
-			for (BoogieVar bv : relevantVars) {
-				result &= m_Occurrence.occursBefore(bv, i);
+		for (int i=0; i<mTraceWithFormulas.getTrace().length(); i++) {
+			final Set<BoogieVar> relevantVars = mRelevantVariables[i+1];
+			for (final BoogieVar bv : relevantVars) {
+				result &= mOccurrence.occursBefore(bv, i);
 				assert result : "superfluous variable";
-				result &= m_Occurrence.occursAfter(bv, i);
+				result &= mOccurrence.occursAfter(bv, i);
 				assert result : "superfluous variable";
 			}
 		}
@@ -119,7 +118,7 @@ public class RelevantVariables {
 		 * (inclusive lower, inclusive upper).
 		 */
 		public boolean containsNumberBetween(int lower, int upper, TreeSet<Integer> set) {
-			Integer ceiling = set.ceiling(lower);
+			final Integer ceiling = set.ceiling(lower);
 			if (ceiling == null) {
 				return false;
 			} else {
@@ -129,14 +128,14 @@ public class RelevantVariables {
 		
 		public boolean occurs(BoogieVar bv, int start, int end) {
 			boolean result = false;
-			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || containsNumberBetween(start+1, end, inSet);
 				if (result == true) {
 					return result;
 				}
 			}
-			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result || containsNumberBetween(start, end-1, outSet);
 			}
@@ -145,14 +144,14 @@ public class RelevantVariables {
 
 		public boolean occursAfter(BoogieVar bv, int start) {
 			boolean result = false;
-			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || inSet.ceiling(start+1) != null;
 				if (result == true) {
 					return result;
 				}
 			}
-			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result ||  outSet.ceiling(start) != null;
 			}
@@ -161,14 +160,14 @@ public class RelevantVariables {
 
 		public boolean occursBefore(BoogieVar bv, int end) {
 			boolean result = false;
-			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || inSet.floor(end) != null;
 				if (result == true) {
 					return result;
 				}
 			}
-			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			final TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
 			if (outSet != null) {
 				result = result ||  outSet.ceiling(end-1) != null;
 			}
@@ -177,32 +176,32 @@ public class RelevantVariables {
 
 	
 		private void computeOccurrenceRelations() {
-			addVars(outRelation, -1, m_TraceWithFormulas.getPrecondition());
-			addVars(inRelation, m_TraceWithFormulas.getTrace().length(), m_TraceWithFormulas.getPostcondition());
-			for (int i=0; i<m_TraceWithFormulas.getTrace().length(); i++) {
-				if (m_TraceWithFormulas.getTrace().isInternalPosition(i)) {
-					ConstraintAnalysis ca = m_NestedConstraintAnalysis.getFormulaFromNonCallPos(i);
+			addVars(outRelation, -1, mTraceWithFormulas.getPrecondition());
+			addVars(inRelation, mTraceWithFormulas.getTrace().length(), mTraceWithFormulas.getPostcondition());
+			for (int i=0; i<mTraceWithFormulas.getTrace().length(); i++) {
+				if (mTraceWithFormulas.getTrace().isInternalPosition(i)) {
+					final ConstraintAnalysis ca = mNestedConstraintAnalysis.getFormulaFromNonCallPos(i);
 					addVars(inRelation, i, ca.getConstraintIn());
 					addVars(outRelation, i, ca.getConstraintOut());
-				} else if (m_TraceWithFormulas.getTrace().isCallPosition(i)) {
-					ConstraintAnalysis localVarAssignment = m_NestedConstraintAnalysis.getLocalVarAssignment(i);
-					ConstraintAnalysis oldVarAssignment = m_NestedConstraintAnalysis.getOldVarAssignment(i);
-					ConstraintAnalysis globalVarAssignment = m_NestedConstraintAnalysis.getGlobalVarAssignment(i);
+				} else if (mTraceWithFormulas.getTrace().isCallPosition(i)) {
+					final ConstraintAnalysis localVarAssignment = mNestedConstraintAnalysis.getLocalVarAssignment(i);
+					final ConstraintAnalysis oldVarAssignment = mNestedConstraintAnalysis.getOldVarAssignment(i);
+					final ConstraintAnalysis globalVarAssignment = mNestedConstraintAnalysis.getGlobalVarAssignment(i);
 					addVars(inRelation, i, localVarAssignment.getConstraintIn());
 					addVars(inRelation, i, oldVarAssignment.getConstraintIn());
 					addVars(outRelation, i, globalVarAssignment.getConstraintOut());
 
-					if (m_TraceWithFormulas.getTrace().isPendingCall(i)) {
+					if (mTraceWithFormulas.getTrace().isPendingCall(i)) {
 						addVars(inRelation, i, oldVarAssignment.getConstraintIn());
 						addVars(outRelation, i, localVarAssignment.getConstraintOut());
 					} else {
 						// nothing more. The return has to take care of it
 					}
-				} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
-					int correspondingCallPosition = m_NestedConstraintAnalysis.getTrace().getCallPosition(i);
-					ConstraintAnalysis oldVarAssignment = m_NestedConstraintAnalysis.getOldVarAssignment(correspondingCallPosition);
-					ConstraintAnalysis localVarAssignment = m_NestedConstraintAnalysis.getLocalVarAssignment(correspondingCallPosition);
-					ConstraintAnalysis tfReturn = m_NestedConstraintAnalysis.getFormulaFromNonCallPos(i);
+				} else if (mTraceWithFormulas.getTrace().isReturnPosition(i)) {
+					final int correspondingCallPosition = mNestedConstraintAnalysis.getTrace().getCallPosition(i);
+					final ConstraintAnalysis oldVarAssignment = mNestedConstraintAnalysis.getOldVarAssignment(correspondingCallPosition);
+					final ConstraintAnalysis localVarAssignment = mNestedConstraintAnalysis.getLocalVarAssignment(correspondingCallPosition);
+					final ConstraintAnalysis tfReturn = mNestedConstraintAnalysis.getFormulaFromNonCallPos(i);
 
 					//outVars from call become members of inRelation here
 					addVars(inRelation, i, localVarAssignment.getConstraintOut());
@@ -219,7 +218,7 @@ public class RelevantVariables {
 		private void addVars(
 				RelationWithTreeSet<BoogieVar, Integer> relation, int i,
 				IPredicate precondition) {
-			for (BoogieVar bv : precondition.getVars()) {
+			for (final BoogieVar bv : precondition.getVars()) {
 				relation.addPair(bv, i);
 			}
 
@@ -228,7 +227,7 @@ public class RelevantVariables {
 		private void addVars(
 				RelationWithTreeSet<BoogieVar, Integer> relation, int i,
 				Set<BoogieVar> set) {
-			for (BoogieVar bv : set) {
+			for (final BoogieVar bv : set) {
 				relation.addPair(bv, i);
 			}
 		}
@@ -238,58 +237,58 @@ public class RelevantVariables {
 
 
 	public Set<BoogieVar>[] getForwardRelevantVariables() {
-		return m_ForwardRelevantVariables;
+		return mForwardRelevantVariables;
 	}
 
 	public Set<BoogieVar>[] getBackwardRelevantVariables() {
-		return m_BackwardRelevantVariables;
+		return mBackwardRelevantVariables;
 	}
 
 	public Set<BoogieVar>[] getRelevantVariables() {
-		return m_RelevantVariables;
+		return mRelevantVariables;
 	}
 
 	private void computeRelevantVariables() {
-		for (int i=0; i<=m_TraceWithFormulas.getTrace().length(); i++) {
-			m_RelevantVariables[i] = new HashSet<BoogieVar>(m_ForwardRelevantVariables[i]);
-			m_RelevantVariables[i].retainAll(m_BackwardRelevantVariables[i]);
+		for (int i=0; i<=mTraceWithFormulas.getTrace().length(); i++) {
+			mRelevantVariables[i] = new HashSet<BoogieVar>(mForwardRelevantVariables[i]);
+			mRelevantVariables[i].retainAll(mBackwardRelevantVariables[i]);
 		}
 	}
 	
 
 	private void computeForwardRelevantVariables() {
-		assert m_ForwardRelevantVariables[0] == null : "already computed";
-		m_ForwardRelevantVariables[0] = 
-				new HashSet<BoogieVar>(m_TraceWithFormulas.getPrecondition().getVars());
-		for (int i=1; i<=m_TraceWithFormulas.getTrace().length(); i++) {
-			assert m_ForwardRelevantVariables[i] == null : "already computed";
-			m_ForwardRelevantVariables[i] = computeForwardRelevantVariables(i);
+		assert mForwardRelevantVariables[0] == null : "already computed";
+		mForwardRelevantVariables[0] = 
+				new HashSet<BoogieVar>(mTraceWithFormulas.getPrecondition().getVars());
+		for (int i=1; i<=mTraceWithFormulas.getTrace().length(); i++) {
+			assert mForwardRelevantVariables[i] == null : "already computed";
+			mForwardRelevantVariables[i] = computeForwardRelevantVariables(i);
 		}
 	}
 	
 	private Set<BoogieVar> computeForwardRelevantVariables(int i) {
 		Set<BoogieVar> result;
-		Set<BoogieVar> currentRelevantVariables = m_ForwardRelevantVariables[i-1];
-		if (m_TraceWithFormulas.getTrace().isInternalPosition(i-1)) {
-			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
+		final Set<BoogieVar> currentRelevantVariables = mForwardRelevantVariables[i-1];
+		if (mTraceWithFormulas.getTrace().isInternalPosition(i-1)) {
+			final TransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
 			result = computeSuccessorRvInternal(currentRelevantVariables, tf, i-1);
-		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i-1)) {
-			TransFormula oldVarAssignment = m_TraceWithFormulas.getOldVarAssignment(i-1);
-			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i-1);
-			TransFormula globalVarAssignment = m_TraceWithFormulas.getGlobalVarAssignment(i-1);
-			String callee = m_TraceWithFormulas.getTrace().getSymbol(i-1).getSucceedingProcedure();
-			boolean isPendingCall = m_TraceWithFormulas.getTrace().isPendingCall(i-1);
-			int posOfCorrespondingReturn = m_TraceWithFormulas.getTrace().getReturnPosition(i-1);
+		} else if (mTraceWithFormulas.getTrace().isCallPosition(i-1)) {
+			final TransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i-1);
+			final TransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i-1);
+			final TransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i-1);
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getSucceedingProcedure();
+			final boolean isPendingCall = mTraceWithFormulas.getTrace().isPendingCall(i-1);
+			final int posOfCorrespondingReturn = mTraceWithFormulas.getTrace().getReturnPosition(i-1);
 			result = computeSuccessorRvCall(currentRelevantVariables, 
 					localVarAssignment, oldVarAssignment, globalVarAssignment, isPendingCall, callee, i-1, posOfCorrespondingReturn);
-		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i-1)) {
-			int correspondingCallPosition = m_TraceWithFormulas.getTrace().getCallPosition(i-1);
-			Set<BoogieVar> relevantVariablesBeforeCall = 
-					m_ForwardRelevantVariables[correspondingCallPosition];
-			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
-			TransFormula localVarAssignmentAtCall = 
-					m_TraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
-			String callee = m_TraceWithFormulas.getTrace().getSymbol(i-1).getPreceedingProcedure();
+		} else if (mTraceWithFormulas.getTrace().isReturnPosition(i-1)) {
+			final int correspondingCallPosition = mTraceWithFormulas.getTrace().getCallPosition(i-1);
+			final Set<BoogieVar> relevantVariablesBeforeCall = 
+					mForwardRelevantVariables[correspondingCallPosition];
+			final TransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
+			final TransFormula localVarAssignmentAtCall = 
+					mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getPreceedingProcedure();
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
 					relevantVariablesBeforeCall, tfReturn, localVarAssignmentAtCall, callee, correspondingCallPosition, i-1);
 		} else {
@@ -299,19 +298,19 @@ public class RelevantVariables {
 	}
 	
 	private Set<BoogieVar> computeSuccessorRvInternal(Set<BoogieVar> predRv, TransFormula tf, int i) {
-		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(predRv);
-		ConstraintAnalysis tfConstraints = 
-				m_NestedConstraintAnalysis.getFormulaFromNonCallPos(i);
+		final Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(predRv);
+		final ConstraintAnalysis tfConstraints = 
+				mNestedConstraintAnalysis.getFormulaFromNonCallPos(i);
 		alternativeResult.removeAll(tfConstraints.getUnconstraintOut());
 		alternativeResult.addAll(tfConstraints.getConstraintOut());
 		
-		for (BoogieVar bv : predRv) {
+		for (final BoogieVar bv : predRv) {
 			if (!tf.isHavocedOut(bv)) {
 				result.add(bv);
 			}
 		}
-		for (BoogieVar bv : tf.getOutVars().keySet()) {
+		for (final BoogieVar bv : tf.getOutVars().keySet()) {
 			if (!tf.isHavocedOut(bv)) {
 				result.add(bv);
 			}
@@ -326,19 +325,19 @@ public class RelevantVariables {
 			TransFormula globalVarAssignment, boolean isPendingCall,
 			String callee, int posOfCall, int posOfCorrespondingReturn) {
 		assert !isPendingCall || posOfCorrespondingReturn == Integer.MAX_VALUE;
-		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
+		final Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
 		addAllNonModifiableGlobals(predRv, callee, posOfCall,
 				posOfCorrespondingReturn, result);
 
-		ConstraintAnalysis globalVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
+		final ConstraintAnalysis globalVarAssignmentCa = 
+				mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 		result.addAll(globalVarAssignmentCa.getConstraintOut());
 		if (isPendingCall) {
-			ConstraintAnalysis localVarAssignmentCa = 
-					m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
+			final ConstraintAnalysis localVarAssignmentCa = 
+					mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 			result.addAll(localVarAssignmentCa.getConstraintOut());
-			ConstraintAnalysis oldVarAssignmentCa = 
-					m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+			final ConstraintAnalysis oldVarAssignmentCa = 
+					mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
 			result.addAll(oldVarAssignmentCa.getConstraintOut());
 			
 //			for (BoogieVar bv : oldVarAssignment.getInVars().keySet()) {
@@ -356,7 +355,7 @@ public class RelevantVariables {
 
 	private void addAllNonModifiableGlobals(Set<BoogieVar> bvSet, String proc,
 			int startPos, int endPos, Set<BoogieVar> modifiedSet) {
-		for (BoogieVar bv : bvSet) {
+		for (final BoogieVar bv : bvSet) {
 			if (bv.isGlobal()) {
 				BoogieNonOldVar bnov;
 				if (bv instanceof BoogieOldVar) {
@@ -364,7 +363,7 @@ public class RelevantVariables {
 				} else {
 					bnov = (BoogieNonOldVar) bv;
 				}
-				if (!m_ModifiableGlobals.isModifiable(bnov, proc)) {
+				if (!mModifiableGlobals.isModifiable(bnov, proc)) {
 					if (occursBetween(bnov, startPos, endPos)) {
 						modifiedSet.add(bnov);
 					}
@@ -375,7 +374,7 @@ public class RelevantVariables {
 	
 	private void addAllNonModifiableGlobals(Set<BoogieVar> bvSet, String proc, 
 			Set<BoogieVar> modifiedSet) {
-		for (BoogieVar bv : bvSet) {
+		for (final BoogieVar bv : bvSet) {
 			if (bv.isGlobal()) {
 				BoogieNonOldVar bnov;
 				if (bv instanceof BoogieOldVar) {
@@ -383,7 +382,7 @@ public class RelevantVariables {
 				} else {
 					bnov = (BoogieNonOldVar) bv;
 				}
-				if (!m_ModifiableGlobals.isModifiable(bnov, proc)) {
+				if (!mModifiableGlobals.isModifiable(bnov, proc)) {
 					modifiedSet.add(bv);
 				}
 			}
@@ -393,28 +392,28 @@ public class RelevantVariables {
 	
 	private boolean occursBetween(BoogieVar bv, int lower, int upper) {
 //		return true;
-		return m_Occurrence.occurs(bv, lower, upper);
+		return mOccurrence.occurs(bv, lower, upper);
 	}
 
 	private Set<BoogieVar> computeSuccessorRvReturn(Set<BoogieVar> returnPredRv,
 			Set<BoogieVar> callPredRv,
 			TransFormula returnTF, TransFormula localVarAssignment,
 			String callee, int posOfCall, int posOfCorrespondingReturn) {
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(callPredRv);
-		ConstraintAnalysis localVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
-		ConstraintAnalysis returnTfCa = 
-				m_NestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
-		ConstraintAnalysis oldVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(callPredRv);
+		final ConstraintAnalysis localVarAssignmentCa = 
+				mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
+		final ConstraintAnalysis returnTfCa = 
+				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
+		final ConstraintAnalysis oldVarAssignmentCa = 
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
 		
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
 		// remove all globals that can be modified
-		Iterator<BoogieVar> it = alternativeResult.iterator();
+		final Iterator<BoogieVar> it = alternativeResult.iterator();
 		while(it.hasNext()) {
-			BoogieVar bv = it.next();
+			final BoogieVar bv = it.next();
 			if (bv instanceof BoogieNonOldVar) {
-				if (m_ModifiableGlobals.isModifiable((BoogieNonOldVar) bv, callee)) {
+				if (mModifiableGlobals.isModifiable((BoogieNonOldVar) bv, callee)) {
 					it.remove();
 				}
 			}
@@ -422,7 +421,7 @@ public class RelevantVariables {
 		alternativeResult.removeAll(returnTfCa.getUnconstraintOut());
 //		alternativeResult.addAll(oldVarAssignmentCa.getConstraintOut());
 		// add all global vars cannot be modified by the callee -- NO! add all global nonOld vars!
-		for (BoogieVar bv : returnPredRv) {
+		for (final BoogieVar bv : returnPredRv) {
 			if (bv instanceof BoogieNonOldVar) {
 				alternativeResult.add(bv);
 			}
@@ -433,7 +432,7 @@ public class RelevantVariables {
 //				} else {
 //					bnov = (BoogieNonOldVar) bv;
 //				}
-//				if (!m_ModifiableGlobals.isModifiable(bnov, callee)) {
+//				if (!mModifiableGlobals.isModifiable(bnov, callee)) {
 //					alternativeResult.add(bv);
 //				}
 //			}
@@ -442,16 +441,16 @@ public class RelevantVariables {
 		
 		
 		// add all vars that were relevant before the call
-		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		final Set<BoogieVar> result = new HashSet<BoogieVar>();
 		
-		for (BoogieVar bv : callPredRv) {
+		for (final BoogieVar bv : callPredRv) {
 			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		// add all global vars that are relevant before the return
-		for (BoogieVar bv : returnPredRv) {
+		for (final BoogieVar bv : returnPredRv) {
 			if (bv.isGlobal()) {
 				if (!returnTF.isHavocedOut(bv) && true) {
 					result.add(bv);
@@ -459,13 +458,13 @@ public class RelevantVariables {
 			}
 		}
 		// add all vars that are assigned by the call
-		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
+		for (final BoogieVar bv : returnTF.getOutVars().keySet()) {
 			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
 		// add all arguments of the call
-		for (BoogieVar bv : localVarAssignment.getInVars().keySet()) {
+		for (final BoogieVar bv : localVarAssignment.getInVars().keySet()) {
 			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
@@ -490,43 +489,43 @@ public class RelevantVariables {
 	
 	
 	private void computeBackwardRelevantVariables() {
-		assert m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] == null : "already computed";
-		m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] = 
-				new HashSet<BoogieVar>(m_TraceWithFormulas.getPostcondition().getVars());
-		for (int i=m_TraceWithFormulas.getTrace().length()-1; i>=0; i--) {
-			assert m_BackwardRelevantVariables[i] == null : "already computed";
-			m_BackwardRelevantVariables[i] = computeBackwardRelevantVariables(i);
+		assert mBackwardRelevantVariables[mTraceWithFormulas.getTrace().length()] == null : "already computed";
+		mBackwardRelevantVariables[mTraceWithFormulas.getTrace().length()] = 
+				new HashSet<BoogieVar>(mTraceWithFormulas.getPostcondition().getVars());
+		for (int i=mTraceWithFormulas.getTrace().length()-1; i>=0; i--) {
+			assert mBackwardRelevantVariables[i] == null : "already computed";
+			mBackwardRelevantVariables[i] = computeBackwardRelevantVariables(i);
 		}
 	}
 	
 	private Set<BoogieVar> computeBackwardRelevantVariables(int i) {
 		Set<BoogieVar> result;
-		Set<BoogieVar> currentRelevantVariables = m_BackwardRelevantVariables[i+1];
-		if (m_TraceWithFormulas.getTrace().isInternalPosition(i)) {
-			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
+		final Set<BoogieVar> currentRelevantVariables = mBackwardRelevantVariables[i+1];
+		if (mTraceWithFormulas.getTrace().isInternalPosition(i)) {
+			final TransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i);
 			result = computePredecessorRvInternal(currentRelevantVariables,tf,i);
-		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i)) {
-			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i);
-			TransFormula oldVarAssignment = m_TraceWithFormulas.getOldVarAssignment(i);
-			TransFormula globalVarAssignment = m_TraceWithFormulas.getGlobalVarAssignment(i);
-			String callee = m_TraceWithFormulas.getTrace().getSymbol(i).getSucceedingProcedure();
-			if (m_TraceWithFormulas.getTrace().isPendingCall(i)) {
+		} else if (mTraceWithFormulas.getTrace().isCallPosition(i)) {
+			final TransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i);
+			final TransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i);
+			final TransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i);
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getSucceedingProcedure();
+			if (mTraceWithFormulas.getTrace().isPendingCall(i)) {
 				result = computePredecessorRvCall_Pending(currentRelevantVariables, localVarAssignment, oldVarAssignment, globalVarAssignment, callee, i);
 			} else {
-				int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
-				Set<BoogieVar> relevantVariablesAfterReturn = 
-						m_BackwardRelevantVariables[correspondingReturnPosition+1];
-				TransFormula returnTF = m_TraceWithFormulas.getFormulaFromNonCallPos(correspondingReturnPosition);
+				final int correspondingReturnPosition = mTraceWithFormulas.getTrace().getReturnPosition(i);
+				final Set<BoogieVar> relevantVariablesAfterReturn = 
+						mBackwardRelevantVariables[correspondingReturnPosition+1];
+				final TransFormula returnTF = mTraceWithFormulas.getFormulaFromNonCallPos(correspondingReturnPosition);
 				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
 						relevantVariablesAfterReturn, localVarAssignment, returnTF, oldVarAssignment, globalVarAssignment, callee, i, correspondingReturnPosition);
 				addNonModifiableGlobalsAlongCalledProcedure(result,i);
 			}
-		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
-			int correspondingCallPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
-			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
-			TransFormula localVarAssignment =m_TraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
-			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
-			String callee = m_TraceWithFormulas.getTrace().getSymbol(i).getPreceedingProcedure();
+		} else if (mTraceWithFormulas.getTrace().isReturnPosition(i)) {
+			final int correspondingCallPosition = mTraceWithFormulas.getTrace().getCallPosition(i);
+			final TransFormula oldVarAssignment =mTraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
+			final TransFormula localVarAssignment =mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
+			final TransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i);
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getPreceedingProcedure();
 			result = computePredecessorRvReturn(currentRelevantVariables, 
 					tfReturn, oldVarAssignment, localVarAssignment, callee, correspondingCallPosition, i);
 		} else {
@@ -543,14 +542,14 @@ public class RelevantVariables {
 	 */
 	private void addNonModifiableGlobalsAlongCalledProcedure(
 			Set<BoogieVar> relevantVariablesBeforeCall, int i) {
-		assert m_TraceWithFormulas.getTrace().isCallPosition(i);
-		assert !m_TraceWithFormulas.getTrace().isPendingCall(i);
-		Set<BoogieVar> modifiableGlobals = 
-				m_TraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
-		Set<BoogieVar> oldVarsOfModifiableGlobals = 
-				m_TraceWithFormulas.getOldVarAssignment(i).getOutVars().keySet();
-		Set<BoogieVar> varsThatWeHaveToAdd = new HashSet<BoogieVar>();
-		for (BoogieVar bv : relevantVariablesBeforeCall) {
+		assert mTraceWithFormulas.getTrace().isCallPosition(i);
+		assert !mTraceWithFormulas.getTrace().isPendingCall(i);
+		final Set<BoogieVar> modifiableGlobals = 
+				mTraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
+		final Set<BoogieVar> oldVarsOfModifiableGlobals = 
+				mTraceWithFormulas.getOldVarAssignment(i).getOutVars().keySet();
+		final Set<BoogieVar> varsThatWeHaveToAdd = new HashSet<BoogieVar>();
+		for (final BoogieVar bv : relevantVariablesBeforeCall) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					if (!oldVarsOfModifiableGlobals.contains(bv)) {
@@ -564,27 +563,27 @@ public class RelevantVariables {
 			}
 		}
 		if (!varsThatWeHaveToAdd.isEmpty()) {
-			int returnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+			final int returnPosition = mTraceWithFormulas.getTrace().getReturnPosition(i);
 			for (int pos = i+1; pos<=returnPosition; pos++) {
-				m_BackwardRelevantVariables[pos].addAll(varsThatWeHaveToAdd);
+				mBackwardRelevantVariables[pos].addAll(varsThatWeHaveToAdd);
 			}
 		}
 	}
 
 	private Set<BoogieVar> computePredecessorRvInternal(Set<BoogieVar> succRv, TransFormula tf, int pos) {
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(succRv);
-		ConstraintAnalysis tfConstraints = 
-				m_NestedConstraintAnalysis.getFormulaFromNonCallPos(pos);
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(succRv);
+		final ConstraintAnalysis tfConstraints = 
+				mNestedConstraintAnalysis.getFormulaFromNonCallPos(pos);
 		alternativeResult.removeAll(tfConstraints.getUnconstraintIn());
 		alternativeResult.addAll(tfConstraints.getConstraintIn());
 		
-		Set<BoogieVar> result = new HashSet<BoogieVar>(succRv.size());
-		for (BoogieVar bv : succRv) {
+		final Set<BoogieVar> result = new HashSet<BoogieVar>(succRv.size());
+		for (final BoogieVar bv : succRv) {
 			if (!tf.isHavocedIn(bv)) {
 				result.add(bv);
 			}
 		}
-		for (BoogieVar bv : tf.getInVars().keySet()) {
+		for (final BoogieVar bv : tf.getInVars().keySet()) {
 			if (!tf.isHavocedIn(bv)) {
 				result.add(bv);
 			}
@@ -606,29 +605,29 @@ public class RelevantVariables {
 			Set<BoogieVar> returnPredRv,
 			TransFormula localVarAssignment, TransFormula returnTF, 
 			TransFormula oldVarAssignment, TransFormula globalVarAssignment, String callee, int posOfCall, int posOfCorrespondingReturn) {
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(returnPredRv);
-		ConstraintAnalysis returnTfCa = 
-				m_NestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>(returnPredRv);
+		final ConstraintAnalysis returnTfCa = 
+				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
 		// remove all that were reassigned
 		alternativeResult.removeAll(returnTF.getAssignedVars());
 		addAllNonModifiableGlobals(callPredRv, callee, alternativeResult);
-		ConstraintAnalysis globalVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
+		final ConstraintAnalysis globalVarAssignmentCa = 
+				mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 
 		alternativeResult.removeAll(globalVarAssignmentCa.getUnconstraintOut());
-		ConstraintAnalysis localVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
+		final ConstraintAnalysis localVarAssignmentCa = 
+				mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
 
 		// add all (non-old) global vars that are used in the procedure
-		ConstraintAnalysis oldVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		final ConstraintAnalysis oldVarAssignmentCa = 
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
 		alternativeResult.addAll(oldVarAssignmentCa.getConstraintIn());
 		
 		
 		
-		Set<BoogieVar> result = new HashSet<BoogieVar>();
-		for (BoogieVar bv : returnPredRv) {
+		final Set<BoogieVar> result = new HashSet<BoogieVar>();
+		for (final BoogieVar bv : returnPredRv) {
 			isHavoced(globalVarAssignment, oldVarAssignment, bv);
 			if (!returnTF.isHavocedIn(bv) && !isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
 				result.add(bv);
@@ -651,21 +650,21 @@ public class RelevantVariables {
 
 	private Set<BoogieVar> computePredecessorRvCall_Pending(Set<BoogieVar> callPredRv,
 			TransFormula localVarAssignment, TransFormula oldVarAssignment, TransFormula globalVarAssignment, String callee, int posOfCall) {
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>();
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>();
 		addAllNonModifiableGlobals(callPredRv, callee, alternativeResult);
 		
-		ConstraintAnalysis localVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
+		final ConstraintAnalysis localVarAssignmentCa = 
+				mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
 		
 		// add all (non-old) global vars that are used in the procedure
-		ConstraintAnalysis oldVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		final ConstraintAnalysis oldVarAssignmentCa = 
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
 		alternativeResult.addAll(oldVarAssignmentCa.getConstraintIn());
 		
-		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		final Set<BoogieVar> result = new HashSet<BoogieVar>();
 		result.addAll(localVarAssignment.getInVars().keySet());
-		for (BoogieVar bv : callPredRv) {
+		for (final BoogieVar bv : callPredRv) {
 			if (bv.isGlobal()) {
 				if (!isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
 					result.add(bv);
@@ -681,29 +680,29 @@ public class RelevantVariables {
 	private Set<BoogieVar> computePredecessorRvReturn(Set<BoogieVar> returnSuccRv,
 			TransFormula returnTf,
 			TransFormula oldVarAssignmentAtCall, TransFormula localVarAssignmentAtCall, String callee, int posOfCorrespondingCall, int posOfReturn) {
-		Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>();
-		for (BoogieVar bv : returnSuccRv) {
+		final Set<BoogieVar> alternativeResult = new HashSet<BoogieVar>();
+		for (final BoogieVar bv : returnSuccRv) {
 			if (bv instanceof BoogieNonOldVar) {
-				if (m_ModifiableGlobals.isModifiable((BoogieNonOldVar) bv, callee)) {
+				if (mModifiableGlobals.isModifiable((BoogieNonOldVar) bv, callee)) {
 					alternativeResult.add(bv);
 				}
 			}
 		}
 		alternativeResult.removeAll(returnTf.getAssignedVars());
-		ConstraintAnalysis localVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCorrespondingCall);
+		final ConstraintAnalysis localVarAssignmentCa = 
+				mNestedConstraintAnalysis.getLocalVarAssignment(posOfCorrespondingCall);
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintOut());
-		ConstraintAnalysis returnTfCa = 
-				m_NestedConstraintAnalysis.getFormulaFromNonCallPos(posOfReturn);
+		final ConstraintAnalysis returnTfCa = 
+				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfReturn);
 		alternativeResult.addAll(returnTfCa.getConstraintIn());
-		ConstraintAnalysis oldVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getOldVarAssignment(posOfCorrespondingCall);
+		final ConstraintAnalysis oldVarAssignmentCa = 
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCorrespondingCall);
 		alternativeResult.addAll(oldVarAssignmentCa.getConstraintOut());
 		//FIXME: and remove all globals that are modified???
 		
 		
-		Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
-		for (BoogieVar bv : returnSuccRv) {
+		final Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
+		for (final BoogieVar bv : returnSuccRv) {
 			if (bv.isGlobal()) {
 				if (!returnTf.isHavocedIn(bv) && true) {
 					result.add(bv);
@@ -712,25 +711,25 @@ public class RelevantVariables {
 				//do nothing
 			}
 		}
-		for (BoogieVar bv : returnTf.getInVars().keySet()) {
+		for (final BoogieVar bv : returnTf.getInVars().keySet()) {
 			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
-		for (BoogieVar bv : oldVarAssignmentAtCall.getInVars().keySet()) {
+		for (final BoogieVar bv : oldVarAssignmentAtCall.getInVars().keySet()) {
 			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
-		for (BoogieVar bv : oldVarAssignmentAtCall.getOutVars().keySet()) {
+		for (final BoogieVar bv : oldVarAssignmentAtCall.getOutVars().keySet()) {
 			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
-		for (BoogieVar bv : localVarAssignmentAtCall.getOutVars().keySet()) {
+		for (final BoogieVar bv : localVarAssignmentAtCall.getOutVars().keySet()) {
 			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
@@ -767,70 +766,70 @@ public class RelevantVariables {
 	
 	
 	private static class ConstraintAnalysis {
-		private final TransFormula m_TransFormula;
-		private final Set<BoogieVar> m_ConstraintIn = new HashSet<>();
-		private final Set<BoogieVar> m_UnconstraintIn = new HashSet<>();
-		private final Set<BoogieVar> m_ConstraintOut = new HashSet<>();
-		private final Set<BoogieVar> m_UnconstraintOut = new HashSet<>();
-		private final Set<TermVariable> m_FreeVars;
+		private final TransFormula mTransFormula;
+		private final Set<BoogieVar> mConstraintIn = new HashSet<>();
+		private final Set<BoogieVar> mUnconstraintIn = new HashSet<>();
+		private final Set<BoogieVar> mConstraintOut = new HashSet<>();
+		private final Set<BoogieVar> mUnconstraintOut = new HashSet<>();
+		private final Set<TermVariable> mFreeVars;
 		
 		public ConstraintAnalysis(TransFormula transFormula) {
 			super();
-			this.m_TransFormula = transFormula;
-			m_FreeVars = new HashSet<TermVariable>(Arrays.asList(
+			mTransFormula = transFormula;
+			mFreeVars = new HashSet<TermVariable>(Arrays.asList(
 					transFormula.getFormula().getFreeVars()));
 			analyze();
 		}
 		
 		public Set<BoogieVar> getConstraintIn() {
-			return m_ConstraintIn;
+			return mConstraintIn;
 		}
 
 		public Set<BoogieVar> getUnconstraintIn() {
-			return m_UnconstraintIn;
+			return mUnconstraintIn;
 		}
 
 		public Set<BoogieVar> getConstraintOut() {
-			return m_ConstraintOut;
+			return mConstraintOut;
 		}
 
 		public Set<BoogieVar> getUnconstraintOut() {
-			return m_UnconstraintOut;
+			return mUnconstraintOut;
 		}
 
 
 
 		private void analyze() {
-			for (BoogieVar bv : m_TransFormula.getInVars().keySet()) {
-				TermVariable inVar = m_TransFormula.getInVars().get(bv);
-				TermVariable outVar = m_TransFormula.getOutVars().get(bv);
+			for (final BoogieVar bv : mTransFormula.getInVars().keySet()) {
+				final TermVariable inVar = mTransFormula.getInVars().get(bv);
+				final TermVariable outVar = mTransFormula.getOutVars().get(bv);
 				if (outVar == null) {
-					m_UnconstraintOut.add(bv);
+					mUnconstraintOut.add(bv);
 				}
-				if (m_FreeVars.contains(inVar)) {
-					m_ConstraintIn.add(bv);
+				if (mFreeVars.contains(inVar)) {
+					mConstraintIn.add(bv);
 				} else {
 					if (inVar == outVar) {
 						// do nothing. special case where inVar==outVar holds.
 					} else {
-						m_UnconstraintIn.add(bv);
+						mUnconstraintIn.add(bv);
 					}
 				}
 			}
 			
-			for (BoogieVar bv : m_TransFormula.getOutVars().keySet()) {
-				TermVariable inVar = m_TransFormula.getInVars().get(bv);
-				TermVariable outVar = m_TransFormula.getOutVars().get(bv);
+			for (final BoogieVar bv : mTransFormula.getOutVars().keySet()) {
+				final TermVariable inVar = mTransFormula.getInVars().get(bv);
+				final TermVariable outVar = mTransFormula.getOutVars().get(bv);
 				if (inVar == null) {
-					m_UnconstraintIn.add(bv);
+					mUnconstraintIn.add(bv);
 				}
-				if (m_FreeVars.contains(outVar)) {
-					m_ConstraintOut.add(bv);
+				if (mFreeVars.contains(outVar)) {
+					mConstraintOut.add(bv);
 				} else {
 					if (inVar == outVar) {
 						// do nothing. special case where inVar==outVar holds.
 					} else {
-						m_UnconstraintOut.add(bv);
+						mUnconstraintOut.add(bv);
 					}
 				}
 			}
@@ -839,10 +838,10 @@ public class RelevantVariables {
 
 		@Override
 		public String toString() {
-			return "ConstraintAnalysis [m_ConstraintIn=" + m_ConstraintIn
-					+ ", m_UnconstraintIn=" + m_UnconstraintIn
-					+ ", m_ConstraintOut=" + m_ConstraintOut
-					+ ", m_UnconstraintOut=" + m_UnconstraintOut + "]";
+			return "ConstraintAnalysis [mConstraintIn=" + mConstraintIn
+					+ ", mUnconstraintIn=" + mUnconstraintIn
+					+ ", mConstraintOut=" + mConstraintOut
+					+ ", mUnconstraintOut=" + mUnconstraintOut + "]";
 		}
 
 		
@@ -857,14 +856,14 @@ public class RelevantVariables {
 			super(nestedWord, pendingContexts);
 			for (int i=0; i<nestedWord.length(); i++) {
 				if (getTrace().isCallPosition(i)) {
-					TransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);
+					final TransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);
 					setGlobalVarAssignmentAtPos(i, new ConstraintAnalysis(globalVarAssignment)); 
-					TransFormula oldVarAssignment = traceWithFormulas.getOldVarAssignment(i);
+					final TransFormula oldVarAssignment = traceWithFormulas.getOldVarAssignment(i);
 					setOldVarAssignmentAtPos(i, new ConstraintAnalysis(oldVarAssignment));
-					TransFormula localVarAssignment = traceWithFormulas.getLocalVarAssignment(i);
+					final TransFormula localVarAssignment = traceWithFormulas.getLocalVarAssignment(i);
 					setLocalVarAssignmentAtPos(i, new ConstraintAnalysis(localVarAssignment));
 				} else {
-					TransFormula tf = traceWithFormulas.getFormulaFromNonCallPos(i);
+					final TransFormula tf = traceWithFormulas.getFormulaFromNonCallPos(i);
 					setFormulaAtNonCallPos(i, new ConstraintAnalysis(tf));
 				}
 			}

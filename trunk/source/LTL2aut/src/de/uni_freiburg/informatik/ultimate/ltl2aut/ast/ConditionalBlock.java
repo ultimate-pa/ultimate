@@ -35,11 +35,13 @@ public class ConditionalBlock extends AstNode {
 		this.addAllOutgoing(o);
 	}
 	
+	@Override
 	public String toString()
 	{
 		String result = "if\n";
-		for(AstNode node: this.getOutgoingNodes())
+		for(final AstNode node: getOutgoingNodes()) {
 			result += node.toString();
+		}
 		result += "fi;\n";
 		return result;
 	}

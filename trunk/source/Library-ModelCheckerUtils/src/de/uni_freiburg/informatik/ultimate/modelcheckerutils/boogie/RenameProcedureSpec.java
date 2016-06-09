@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 
 /**
@@ -62,7 +62,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 
 		/* Iterate through all spec variables */
 		for (int i1 = 0; i1 < specVars.length; i1++) {
-			String[] specIds = specVars[i1].getIdentifiers();
+			final String[] specIds = specVars[i1].getIdentifiers();
 			for (int i2 = 0; i2 < specIds.length; i2++) {
 
 				/* Find next implementation variable */
@@ -73,8 +73,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				
 				assert specVars[i1].getType().getBoogieType()
 					.equals(implVars[j1-1].getType().getBoogieType());
-				if (!specIds[i2].equals(implIds[j2]))
+				if (!specIds[i2].equals(implIds[j2])) {
 					renaming.put(specIds[i2], implIds[j2]);
+				}
 				j2++;
 			}
 		}
@@ -82,8 +83,8 @@ public class RenameProcedureSpec extends BoogieTransformer {
 	}		
 	
 	public Specification[] renameSpecs(Procedure proc, Procedure impl) {
-		Specification[] oldSpecs = proc.getSpecification();
-		Specification[] specs = oldSpecs.clone();
+		final Specification[] oldSpecs = proc.getSpecification();
+		final Specification[] specs = oldSpecs.clone();
 		boolean changed = false;
 
 		/* Put the input variables into renaming */
@@ -94,8 +95,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof RequiresSpecification) {
 					specs[i] = processSpecification(specs[i]);
-					if (specs[i] != oldSpecs[i])
+					if (specs[i] != oldSpecs[i]) {
 						changed = true;
+					}
 				}
 			}
 		}
@@ -107,8 +109,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof EnsuresSpecification) {
 					specs[i] = processSpecification(specs[i]);
-					if (specs[i] != oldSpecs[i])
+					if (specs[i] != oldSpecs[i]) {
 						changed = true;
+					}
 				}
 			}
 		}
@@ -120,17 +123,18 @@ public class RenameProcedureSpec extends BoogieTransformer {
 	public Expression processExpression(Expression expr) {
 		/* TODO: handle name conflicts in quantifiers */
 		if (expr instanceof IdentifierExpression) {
-			IdentifierExpression id = (IdentifierExpression) expr;
-			String newName = renaming.get(id.getIdentifier());
+			final IdentifierExpression id = (IdentifierExpression) expr;
+			final String newName = renaming.get(id.getIdentifier());
 			if (newName != null) {
-			    IdentifierExpression newExpr = new IdentifierExpression(
+			    final IdentifierExpression newExpr = new IdentifierExpression(
 			    		expr.getLocation(), expr.getType(), newName, 
 			    		id.getDeclarationInformation());
 			    ModelUtils.copyAnnotations(expr, newExpr);
 			    return newExpr;
 			}
 			return expr;
-		} else
+		} else {
 			return super.processExpression(expr);
+		}
 	}
 }

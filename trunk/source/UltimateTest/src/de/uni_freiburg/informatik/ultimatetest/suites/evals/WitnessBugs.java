@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinitionGenerator;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -50,7 +50,7 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] BPL = new String[] { ".bpl" };
 
 	private static Collection<UltimateRunDefinition> createDefs() {
-		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
+		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 //		rtr.addAll(produceWitnessSV("locks"));
 //		rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
 		rtr.addAll(verifyWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));

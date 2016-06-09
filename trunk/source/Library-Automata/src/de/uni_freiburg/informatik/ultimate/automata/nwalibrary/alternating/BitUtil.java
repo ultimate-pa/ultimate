@@ -68,7 +68,7 @@ public class BitUtil{
 	public static String getText(long bitVector){
         String text = "";
         for(int i=0;i<64;i++){
-            long currentBit = (bitVector & 1);
+            final long currentBit = (bitVector & 1);
             text += ((currentBit == 1)?1:0);
             bitVector >>>= 1;
         }

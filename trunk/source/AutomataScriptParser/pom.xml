@@ -57,11 +57,11 @@
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${automatascriptparserDir}">
+									dir="${automatascriptparserDir}" failonerror="true">
 									<arg line="-parser Parser"/>
 									<arg value="AutomataTestFileGrammar.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}">
+								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}" failonerror="true">
 									<arg value="AutomataTestFileLexerSpec.jflex" />
 								</java>
 							</tasks>

@@ -133,7 +133,7 @@ final class Horn3ArrayBuilder {
 	}
 
 	Horn3Array extract() {
-		Horn3Array result = solveable ? array : null;
+		final Horn3Array result = solveable ? array : null;
 
 		array = null;
 		single = null;

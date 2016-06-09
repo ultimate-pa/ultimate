@@ -30,30 +30,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * Simulation that realizes <b>fair simulation</b> for reduction of a given
- * nwa automaton.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Simulation that realizes <b>fair simulation</b> for reduction of a given nwa
+ * automaton.<br/>
+ * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
  * For more information on the type of simulation see {@link FairNwaGameGraph}.
- * <br/>
- * <br/>
- * 
- * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
- * where n is the amount of states and k the amount of transitions from the
- * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
- * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
  * 
@@ -63,6 +52,44 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  *            State class of nwa automaton
  */
 public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTER, STATE> {
+
+	/**
+	 * Creates a new fair simulation that tries to reduce the given nwa
+	 * automaton using <b>fair simulation</b>. Uses a given collection of
+	 * equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            ILogger of the Ultimate framework.
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param possibleEquivalentClasses
+	 *            A collection of sets which contains states of the nwa
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @param game
+	 *            The fair nwa game graph to use for simulation.
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final FairNwaGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
+		super(progressTimer, logger, useSCCs, stateFactory, possibleEquivalentClasses, game);
+	}
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given nwa
@@ -78,10 +105,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
-	 * @param buechi
-	 *            The nwa automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
+	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -89,59 +113,16 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair nwa game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
-		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(), game);
+					throws AutomataOperationCanceledException {
+		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
-	/**
-	 * Creates a new fair simulation that tries to reduce the given nwa
-	 * automaton using <b>fair simulation</b>. Uses a given
-	 * collection of equivalence classes to optimize the simulation.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
-	 * <br/>
-	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
-	 * 
-	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
-	 * @param logger
-	 *            Logger of the Ultimate framework.
-	 * @param buechi
-	 *            The nwa automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param stateFactory
-	 *            The state factory used for creating states.
-	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the nwa
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
-	 * @param game
-	 *            The fair nwa game graph to use for simulation.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final FairNwaGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses, game);
-	}
-	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -149,10 +130,10 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
 	@Override
-	public void doSimulation() throws OperationCanceledException {
-//		super.doSimulation();
-		getLogger().debug(getGameGraph().toAtsFormat());
-		setResult(getGameGraph().generateBuchiAutomatonFromGraph());
+	public void doSimulation() throws AutomataOperationCanceledException {
+		// super.doSimulation();
+		//getLogger().debug(getGameGraph().toAtsFormat());
+		setResult(getGameGraph().generateAutomatonFromGraph());
 		// TODO Implement some different stuff
 	}
 }

@@ -75,7 +75,7 @@ public class VertexV0Delayed<LETTER,STATE> extends VertexV0<LETTER, STATE> {
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<").append(b).append(",(").append(getQ0()).append(",");
         sb.append(getQ1()).append(",").append(getA()).append("),p:");
         sb.append(getPriority()).append(",pm:").append(getPM());

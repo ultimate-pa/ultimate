@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 
 public class SpaceExModelEdge
 		extends ModifiableMultigraphEdge<SpaceExNode, SpaceExModelEdge, SpaceExNode, SpaceExModelEdge> {

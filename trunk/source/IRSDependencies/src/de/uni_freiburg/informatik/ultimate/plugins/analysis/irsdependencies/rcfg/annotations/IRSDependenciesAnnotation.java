@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
 
 public abstract class IRSDependenciesAnnotation extends AbstractAnnotations {
@@ -38,7 +38,7 @@ public abstract class IRSDependenciesAnnotation extends AbstractAnnotations {
 	public static <T extends IRSDependenciesAnnotation> T getAnnotation(
 			IElement e, Class<?> c) {
 		if (e.hasPayload()) {
-			Object rtr = e.getPayload().getAnnotations()
+			final Object rtr = e.getPayload().getAnnotations()
 					.get(Activator.PLUGIN_ID + c.getName());
 			if (rtr != null) {
 				return (T) rtr;

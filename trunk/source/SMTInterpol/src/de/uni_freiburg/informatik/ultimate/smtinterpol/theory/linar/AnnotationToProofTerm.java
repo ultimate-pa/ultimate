@@ -77,15 +77,19 @@ public class AnnotationToProofTerm {
 	private Rational computeGcd(LAAnnotation annot) {
 		Rational gcd = null;
 		Iterator<Rational> it = annot.getCoefficients().values().iterator();
-		if (it.hasNext())
+		if (it.hasNext()) {
 			gcd = it.next();
-		while (it.hasNext())
+		}
+		while (it.hasNext()) {
 			gcd = gcd.gcd(it.next());
+		}
 		it = annot.getAuxAnnotations().values().iterator();
-		if (gcd == null && it.hasNext())
+		if (gcd == null && it.hasNext()) {
 			gcd = it.next();
-		while (it.hasNext())
+		}
+		while (it.hasNext()) {
 			gcd = gcd.gcd(it.next());
+		}
 		assert gcd != null;
 		return gcd;
 	}
@@ -98,12 +102,13 @@ public class AnnotationToProofTerm {
 	 */
 	private void computeLiterals(LAAnnotation annot, Theory theory,
 				AnnotationInfo info) {
-		MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffinTerm at = new MutableAffinTerm();
 		at.add(Rational.ONE, annot.getLinVar());
 		at.add(annot.getBound().negate());
-		if (!annot.isUpper())
+		if (!annot.isUpper()) {
 			at.add(annot.getLinVar().getEpsilon());
-		Term posTerm = at.toSMTLibLeq0(theory, true);
+		}
+		final Term posTerm = at.toSMTLibLeq0(theory, true);
 		if (annot.isUpper()) {
 			info.mLiteral = posTerm;
 			info.mNegLiteral = theory.term("not", posTerm);
@@ -121,34 +126,36 @@ public class AnnotationToProofTerm {
 	 */
 	public Term convert(LAAnnotation parent, Theory theory) {
 		assert (parent.getLinVar() == null);
-		HashMap<LAAnnotation, AnnotationInfo> infos = 
+		final HashMap<LAAnnotation, AnnotationInfo> infos = 
 			new HashMap<LAAnnotation, AnnotationInfo>();
 
 		// Count the occurences of each annotation (and compute literals).
-		ArrayDeque<LAAnnotation> todo = new ArrayDeque<LAAnnotation>();
+		final ArrayDeque<LAAnnotation> todo = new ArrayDeque<LAAnnotation>();
 		todo.add(parent);
 		while (!todo.isEmpty()) {
-			LAAnnotation annot = todo.removeFirst();
+			final LAAnnotation annot = todo.removeFirst();
 			AnnotationInfo info = infos.get(annot);
 			if (info == null) {
 				info = new AnnotationInfo();
 				infos.put(annot, info);
-				if (annot.getLinVar() != null)
+				if (annot.getLinVar() != null) {
 					computeLiterals(annot, theory, info);
+				}
 				todo.addAll(annot.getAuxAnnotations().keySet());
 			}
 			info.mCount++;
 		}
 
-		ArrayDeque<Term> antes = new ArrayDeque<Term>();
+		final ArrayDeque<Term> antes = new ArrayDeque<Term>();
 		todo.add(parent);
 	todo_loop:
 		while (!todo.isEmpty()) {
-			LAAnnotation annot = todo.removeFirst();
-			AnnotationInfo info = infos.get(annot);
+			final LAAnnotation annot = todo.removeFirst();
+			final AnnotationInfo info = infos.get(annot);
 			info.mVisited++;
-			if (info.mVisited < info.mCount)
+			if (info.mVisited < info.mCount) {
 				continue;
+			}
 
 			// The annotation was visited for the final time.
 
@@ -156,32 +163,33 @@ public class AnnotationToProofTerm {
 			todo.addAll(annot.getAuxAnnotations().keySet());
 
 			// Now convert it to a clause and add it to antes.
-			Rational gcd = computeGcd(annot);
-			int numdisjs = annot.getCoefficients().size()
+			final Rational gcd = computeGcd(annot);
+			final int numdisjs = annot.getCoefficients().size()
 					+ annot.getAuxAnnotations().size()
 					+ (info.mLiteral == null ? 0 : 1);
 			int i = 0;
-			Term[] disjs = new Term[numdisjs];
-			Term[] coeffs = new Term[numdisjs];
+			final Term[] disjs = new Term[numdisjs];
+			final Term[] coeffs = new Term[numdisjs];
 			if (info.mLiteral != null) {
-				Rational sign = annot.isUpper() ? Rational.MONE : Rational.ONE;
+				final Rational sign = annot.isUpper() ? Rational.MONE : Rational.ONE;
 				disjs[i] = info.mLiteral;
 				coeffs[i] = sign.div(gcd).toTerm(getSort(theory));
 				++i;
 			}
 			boolean trichotomy = false;
-			for (Map.Entry<Literal, Rational> me
+			for (final Map.Entry<Literal, Rational> me
 				: annot.getCoefficients().entrySet()) {
-				Literal lit = me.getKey();
-				if (lit instanceof LAEquality)
+				final Literal lit = me.getKey();
+				if (lit instanceof LAEquality) {
 					trichotomy = true;
+				}
 				disjs[i] = me.getKey().getSMTFormula(theory, true);
 				coeffs[i] = me.getValue().div(gcd).toTerm(getSort(theory));
 				++i;
 			}
-			for (Map.Entry<LAAnnotation, Rational> me
+			for (final Map.Entry<LAAnnotation, Rational> me
 				: annot.getAuxAnnotations().entrySet()) {
-				AnnotationInfo auxInfo = infos.get(me.getKey());
+				final AnnotationInfo auxInfo = infos.get(me.getKey());
 				disjs[i] = auxInfo.mNegLiteral;
 				coeffs[i] = me.getValue().div(gcd).toTerm(getSort(theory));
 				++i;
@@ -189,10 +197,11 @@ public class AnnotationToProofTerm {
 			// If the generated clause would just be of the form
 			// ell \/ not ell, we omit the clause from the
 			// proof.
-			if (disjs.length == 2 && disjs[1] == info.mNegLiteral)
+			if (disjs.length == 2 && disjs[1] == info.mNegLiteral) {
 				continue todo_loop;
+			}
 			Term proofAnnot = theory.term(theory.mOr, disjs);
-			Annotation[] annots = new Annotation[] {
+			final Annotation[] annots = new Annotation[] {
 				trichotomy ? TRICHOTOMY : new Annotation(":LA", coeffs)
 			};
 			proofAnnot = theory.annotatedTerm(annots, proofAnnot);
@@ -208,8 +217,9 @@ public class AnnotationToProofTerm {
 			}
 			antes.add(proofAnnot);
 		}
-		if (antes.size() == 1)
+		if (antes.size() == 1) {
 			return antes.getFirst();
+		}
 		return theory.term("@res", antes.toArray(new Term[antes.size()]));
 	}
 	
@@ -221,7 +231,7 @@ public class AnnotationToProofTerm {
 	 * @return A sort to use for conversion of Rationals.
 	 */
 	private Sort getSort(Theory t) {
-		Sort res = t.getSort("Int");
+		final Sort res = t.getSort("Int");
 		return res == null ? t.getSort("Real") : res;
 	}
 }

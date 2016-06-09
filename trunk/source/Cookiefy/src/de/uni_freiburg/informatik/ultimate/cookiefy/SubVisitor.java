@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Formula;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Literal;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.UnaryOperator;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Visitor;
-
 import de.uni_freiburg.informatik.ultimate.cookiefy.utils.Tuple;
 
 public class SubVisitor extends Visitor {
@@ -52,20 +51,23 @@ public class SubVisitor extends Visitor {
 		return mList;
 	}
 
+	@Override
 	public void visit(Literal f) {
-		String context = mStack.pop();
+		final String context = mStack.pop();
 		mList.add(new Tuple<Formula, String>(f, context));
 	}
 
+	@Override
 	public void visit(BinaryOperator f) {
-		String context = mStack.pop();
+		final String context = mStack.pop();
 		mList.add(new Tuple<Formula, String>(f, context));
 		mStack.add(context + "R");
 		mStack.add(context + "L");
 	}
 
+	@Override
 	public void visit(UnaryOperator f) {
-		String context = mStack.pop();
+		final String context = mStack.pop();
 		mList.add(new Tuple<Formula, String>(f, context));
 		mStack.add(context + "L");
 	}

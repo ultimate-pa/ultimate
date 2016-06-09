@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 
@@ -91,7 +91,7 @@ public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomai
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 
-		final SignDomainState newState = (SignDomainState) first.copy();
+		final SignDomainState newState = first.copy();
 
 		final Map<String, IBoogieVar> variables = first.getVariables();
 		final Map<String, SignDomainValue> firstValues = first.getValues();

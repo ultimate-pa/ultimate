@@ -26,26 +26,29 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class ExternalParserToolchainJob extends BasicToolchainJob {
 
-	private IElement mAST;
-	private ModelType mOutputDefinition;
+	private final IElement mAST;
+	private final ModelType mOutputDefinition;
 
-	public ExternalParserToolchainJob(String name, ICore core, IController controller, IElement ast,
-			ModelType outputDefinition, Logger logger) {
+	public ExternalParserToolchainJob(String name, ICore<ToolchainListType> core,
+			IController<ToolchainListType> controller, IElement ast, ModelType outputDefinition, ILogger logger) {
 		super(name, core, controller, logger);
 		mAST = ast;
 		mOutputDefinition = outputDefinition;
@@ -68,25 +71,25 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 
 	@Override
 	protected IStatus runToolchainDefault(IProgressMonitor monitor) {
-
+		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
-		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
-		IToolchain currentToolchain = null;
+		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
+		IToolchain<ToolchainListType> currentToolchain = null;
 
 		try {
-			monitor.worked(1);
+			tpm.worked(1);
 			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_Toolchain)) {
 				throw new Exception("Rerun currently unsupported! Aborting...");
 			}
 			// all modes requires this
 			currentToolchain = mCore.requestToolchain();
 
-			currentToolchain.init(monitor);
-			monitor.worked(1);
+			currentToolchain.init(tpm);
+			tpm.worked(1);
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
 
 			if (mJobMode == ChainMode.DEFAULT || mJobMode == ChainMode.KEEP_INPUT) {
-				mChain = currentToolchain.makeToolSelection(monitor);
+				mChain = currentToolchain.makeToolSelection(tpm);
 				if (mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
 					return new Status(Status.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
@@ -94,36 +97,36 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 				setServices(mChain.getServices());
 			}
 
-			monitor.worked(1);
+			tpm.worked(1);
 			currentToolchain.addAST(mAST, mOutputDefinition);
-			monitor.worked(1);
-			returnstatus = currentToolchain.processToolchain(monitor);
+			tpm.worked(1);
+			returnstatus = convert(currentToolchain.processToolchain(tpm));
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
-			String idOfCore = Activator.PLUGIN_ID;
+			final String idOfCore = Activator.PLUGIN_ID;
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 		} finally {
-			monitor.worked(1);
+			tpm.worked(1);
 			logResults();
 			releaseToolchain(currentToolchain);
 			// TODO: Maybe we need to destroy the storage here, but I think not.
-			monitor.done();
+			tpm.done();
 		}
 
 		return returnstatus;
 	}
-	
+
 	/**
-	 * This method releases the active toolchain back to the core. Overwrite
-	 * this method if you want to delay the release of the toolchain.
+	 * This method releases the active toolchain back to the core. Overwrite this method if you want to delay the
+	 * release of the toolchain.
 	 * 
 	 * @param currentToolchain
 	 */
-	protected void releaseToolchain(IToolchain chain) {
+	protected void releaseToolchain(IToolchain<ToolchainListType> chain) {
 		mCore.releaseToolchain(chain);
 	}
 

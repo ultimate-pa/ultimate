@@ -49,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
  */
 public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
-	private final Random m_Random;
-	private final List<LETTER> m_InternalAlphabet;
-	private final List<LETTER> m_CallAlphabet;
-	private final List<LETTER> m_ReturnAlphabet;
+	private final Random mRandom;
+	private final List<LETTER> mInternalAlphabet;
+	private final List<LETTER> mCallAlphabet;
+	private final List<LETTER> mReturnAlphabet;
 	
-	private final static int s_TemporaryPendingCall = -7;
+	private final static int TEMPORARY_PENDING_CALL = -7;
 	
-	private final NestedWord<LETTER> m_Result;
+	private final NestedWord<LETTER> mResult;
 	
 	@Override
 	public String operationName() {
@@ -70,9 +70,9 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 				" letters, call alphabet has {2} letters, return alphabet" +
 				" has {3} letters", 
 				operationName(), 
-				m_InternalAlphabet.size(),
-				m_CallAlphabet.size(),
-				m_ReturnAlphabet.size());
+				mInternalAlphabet.size(),
+				mCallAlphabet.size(),
+				mReturnAlphabet.size());
 	}
 	
 	
@@ -83,7 +83,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	
 	@Override
 	public NestedWord<LETTER> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 
@@ -97,22 +97,22 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	
 	public GetRandomNestedWord(INestedWordAutomatonSimple<LETTER, STATE> nwa, int length) {
 		super();
-		m_InternalAlphabet = new ArrayList<LETTER>(nwa.getInternalAlphabet());
-		m_CallAlphabet = new ArrayList<LETTER>(nwa.getCallAlphabet());
-		m_ReturnAlphabet = new ArrayList<LETTER>(nwa.getReturnAlphabet());
-		m_Random = new Random();
+		mInternalAlphabet = new ArrayList<LETTER>(nwa.getInternalAlphabet());
+		mCallAlphabet = new ArrayList<LETTER>(nwa.getCallAlphabet());
+		mReturnAlphabet = new ArrayList<LETTER>(nwa.getReturnAlphabet());
+		mRandom = new Random();
 		
-		int sum = m_InternalAlphabet.size() + m_CallAlphabet.size() + m_ReturnAlphabet.size();
-		double probabilityCall = ((double) m_CallAlphabet.size()) / sum;
-		double probabilityReturn = ((double) m_ReturnAlphabet.size()) / sum;
+		final int sum = mInternalAlphabet.size() + mCallAlphabet.size() + mReturnAlphabet.size();
+		final double probabilityCall = ((double) mCallAlphabet.size()) / sum;
+		final double probabilityReturn = ((double) mReturnAlphabet.size()) / sum;
 		
-		m_Result = generateNestedWord(length, probabilityCall, probabilityReturn);
+		mResult = generateNestedWord(length, probabilityCall, probabilityReturn);
 	}
 	
 	
 	private NestedWord<LETTER> generateNestedWord(int length, 
 							double probabilityCall, double probabilityReturn) {
-		String errorMessage = 
+		final String errorMessage = 
 				"probability for call and return both have to between 0 and 1"
 				+ " also the sum has to be between 0 and 1";
 		if (probabilityCall < 0) {
@@ -131,75 +131,75 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 			throw new IllegalArgumentException(errorMessage);
 		}
 
-		LETTER[] word = (LETTER[]) new Object[length];
-		int[] nestingRelation = new int[length];
-		Stack<Integer> callPositionStack = new Stack<Integer>();
+		final LETTER[] word = (LETTER[]) new Object[length];
+		final int[] nestingRelation = new int[length];
+		final Stack<Integer> callPositionStack = new Stack<Integer>();
 		int pendingCalls = 0;
 		for (int i=0; i<length; i++) {
-			double inORcaORre = m_Random.nextDouble();
+			final double inORcaORre = mRandom.nextDouble();
 			if (inORcaORre < probabilityCall) {
-				word[i] = getRandomLetter(m_CallAlphabet);
-				nestingRelation[i] = s_TemporaryPendingCall;
+				word[i] = getRandomLetter(mCallAlphabet);
+				nestingRelation[i] = TEMPORARY_PENDING_CALL;
 				callPositionStack.push(i);
 				pendingCalls++;
 			} else if (pendingCalls > 0 && inORcaORre < probabilityCall + probabilityReturn ) {
-				word[i] = getRandomLetter(m_ReturnAlphabet);
-				int correspondingCallPosition = callPositionStack.pop();
+				word[i] = getRandomLetter(mReturnAlphabet);
+				final int correspondingCallPosition = callPositionStack.pop();
 				nestingRelation[i] = correspondingCallPosition;
 				nestingRelation[correspondingCallPosition] = i;
 				pendingCalls--;
 			} else {
-				if (m_InternalAlphabet.isEmpty()) {
+				if (mInternalAlphabet.isEmpty()) {
 					// if internal alphabet is empty we use a call instead
-					word[i] = getRandomLetter(m_CallAlphabet);
-					nestingRelation[i] = s_TemporaryPendingCall;
+					word[i] = getRandomLetter(mCallAlphabet);
+					nestingRelation[i] = TEMPORARY_PENDING_CALL;
 					callPositionStack.push(i);
 					pendingCalls++;
 				} else {
-					word[i] = getRandomLetter(m_InternalAlphabet);
+					word[i] = getRandomLetter(mInternalAlphabet);
 					nestingRelation[i] = NestedWord.INTERNAL_POSITION;
 				}
 			}
 		}
 		while (!callPositionStack.isEmpty()) {
-			int pendingCallPosition = callPositionStack.pop();
+			final int pendingCallPosition = callPositionStack.pop();
 			nestingRelation[pendingCallPosition] = NestedWord.PLUS_INFINITY;
 		}
-		NestedWord<LETTER> result = new NestedWord<LETTER>(word, nestingRelation);
+		final NestedWord<LETTER> result = new NestedWord<LETTER>(word, nestingRelation);
 		return result;
 	}
 	
 	private NestedWord<LETTER> internalSingleton() {
-		LETTER letter = getRandomLetter(m_InternalAlphabet);
-		int nestingRelation = NestedWord.INTERNAL_POSITION;
+		final LETTER letter = getRandomLetter(mInternalAlphabet);
+		final int nestingRelation = NestedWord.INTERNAL_POSITION;
 		return new NestedWord<LETTER>(letter, nestingRelation);
 	}
 	
 	private NestedWord<LETTER> pendingCallSingleton() {
-		LETTER letter = getRandomLetter(m_CallAlphabet);
-		int nestingRelation = NestedWord.PLUS_INFINITY;
+		final LETTER letter = getRandomLetter(mCallAlphabet);
+		final int nestingRelation = NestedWord.PLUS_INFINITY;
 		return new NestedWord<LETTER>(letter, nestingRelation);
 	}
 	
 	private NestedWord<LETTER> pendingReturnSingleton() {
-		LETTER letter = getRandomLetter(m_ReturnAlphabet);
-		int nestingRelation = NestedWord.MINUS_INFINITY;
+		final LETTER letter = getRandomLetter(mReturnAlphabet);
+		final int nestingRelation = NestedWord.MINUS_INFINITY;
 		return new NestedWord<LETTER>(letter, nestingRelation);
 	}
 	
 	private LETTER getRandomLetter(List<LETTER> list) {
-		int numberOfLetters = list.size();
+		final int numberOfLetters = list.size();
 		assert numberOfLetters > 0;
-		LETTER letter = list.get(m_Random.nextInt(numberOfLetters));
+		final LETTER letter = list.get(mRandom.nextInt(numberOfLetters));
 		return letter;
 	}
 	
 	public NestedLassoWord<LETTER> generateNestedLassoWord(int lengthStem, 
 			int lengthLoop, double probabilityCall, double probabilityReturn) {
 		NestedLassoWord<LETTER> result;
-		NestedWord<LETTER> stem = generateNestedWord(
+		final NestedWord<LETTER> stem = generateNestedWord(
 							lengthStem, probabilityCall, probabilityReturn);
-		NestedWord<LETTER> loop = generateNestedWord(
+		final NestedWord<LETTER> loop = generateNestedWord(
 							lengthLoop, probabilityCall, probabilityReturn);
 		result = new NestedLassoWord<LETTER>(stem, loop);
 		return result;
@@ -207,12 +207,12 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	
 	public NestedLassoWord<LETTER> generateNestedLassoWord(int lengthStemAndLoop, 
 			double probabilityCall, double probabilityReturn) {
-		int lengthStem = m_Random.nextInt(lengthStemAndLoop);
-		int lengthLoop = lengthStemAndLoop - lengthStem + 1;
+		final int lengthStem = mRandom.nextInt(lengthStemAndLoop);
+		final int lengthLoop = lengthStemAndLoop - lengthStem + 1;
 		NestedLassoWord<LETTER> result;
-		NestedWord<LETTER> stem = generateNestedWord(
+		final NestedWord<LETTER> stem = generateNestedWord(
 							lengthStem, probabilityCall, probabilityReturn);
-		NestedWord<LETTER> loop = generateNestedWord(
+		final NestedWord<LETTER> loop = generateNestedWord(
 							lengthLoop, probabilityCall, probabilityReturn);
 		result = new NestedLassoWord<LETTER>(stem, loop);
 		return result;

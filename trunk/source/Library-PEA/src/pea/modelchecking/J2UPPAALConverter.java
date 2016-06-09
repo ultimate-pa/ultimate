@@ -1,17 +1,16 @@
 
 package pea.modelchecking;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Vector;
+
 import pea.CDD;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Transition;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import java.util.List;
-import java.util.Vector;
 
 
 /**
@@ -37,8 +36,8 @@ import java.util.Vector;
  * @see J2UPPAALWriter
  */
 public class J2UPPAALConverter {
-    private Vector<String> disjuncts = new Vector<String>();
-    private String initialState = "initialState";
+    private final Vector<String> disjuncts = new Vector<String>();
+    private final String initialState = "initialState";
     protected int dnfCount = 1;
     protected int transCount = 0;
     protected BufferedWriter writer;
@@ -53,17 +52,17 @@ public class J2UPPAALConverter {
     protected int deletedTransitions = 0;
 
     public String[] getDisjuncts(CDD cdd) {
-        this.disjuncts.clear();
+        disjuncts.clear();
         //System.out.println("Computing dnf " + dnfCount + "/" + this.transCount +
         //   "pea transitions");
         dnfCount++;
-        this.cddToDNF(new StringBuffer(), cdd);
+        cddToDNF(new StringBuffer(), cdd);
 
-        int disjunctCount = this.disjuncts.size();
-        String[] strings = new String[disjunctCount];
+        final int disjunctCount = disjuncts.size();
+        final String[] strings = new String[disjunctCount];
 
         for (int i = 0; i < disjunctCount; i++) {
-            strings[i] = (String) this.disjuncts.elementAt(i);
+            strings[i] = disjuncts.elementAt(i);
         }
 
         return strings;
@@ -78,7 +77,7 @@ public class J2UPPAALConverter {
             }
 
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
 
             return;
         } else if (cdd == CDD.FALSE) {
@@ -86,13 +85,13 @@ public class J2UPPAALConverter {
         }
 
         for (int i = 0; i < cdd.getChilds().length; i++) {
-            StringBuffer newBuf = new StringBuffer();
+            final StringBuffer newBuf = new StringBuffer();
             newBuf.append(buf.toString());
 
             newBuf.append(cdd.getDecision().toUppaalString(i));
             newBuf.append(" &amp;&amp; ");
 
-            this.cddToDNF(newBuf, cdd.getChilds()[i]);
+            cddToDNF(newBuf, cdd.getChilds()[i]);
         }
     }
 
@@ -104,22 +103,22 @@ public class J2UPPAALConverter {
             }
 
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
 
             return buf;
         } else if (cdd == CDD.FALSE) {
-            StringBuffer emptyBuf = new StringBuffer();
+            final StringBuffer emptyBuf = new StringBuffer();
 
             return emptyBuf;
         }
 
-        StringBuffer newBuf = new StringBuffer();
+        final StringBuffer newBuf = new StringBuffer();
 
         for (int i = 0; i < cdd.getChilds().length; i++) {
             newBuf.append(buf.toString());
             newBuf.append(cdd.getDecision().toUppaalString(i));
             newBuf.append(XMLString.AND);
-            this.cddToDNF(newBuf, cdd.getChilds()[i]);
+            cddToDNF(newBuf, cdd.getChilds()[i]);
         }
 
         return newBuf;
@@ -129,7 +128,7 @@ public class J2UPPAALConverter {
     //we introduce a new state "initialState"
     private void addInitialStates(PhaseEventAutomata pea)
         throws IOException {
-        Phase[] init = pea.getInit();
+        final Phase[] init = pea.getInit();
 
         //the following case should never occur if the pea was properly built, but you can never be sure...
         if (init.length <= 0) {
@@ -151,7 +150,7 @@ public class J2UPPAALConverter {
     }
 
     private String getClocksToReset(Phase state, List<String> peaClocks) {
-        String initClockString = state.getClockInvariant().toString();
+        final String initClockString = state.getClockInvariant().toString();
         Boolean firstClock = true;
 
         //List<String> peaClocks = pea.getClocks();
@@ -173,8 +172,8 @@ public class J2UPPAALConverter {
 
     private void addInitialTransitions(PhaseEventAutomata pea)
         throws IOException {
-        Phase[] init = pea.getInit();
-        List<String> peaClocks = pea.getClocks();
+        final Phase[] init = pea.getInit();
+        final List<String> peaClocks = pea.getClocks();
 
         //if the PEA has only one init state, then we do not need the further initialState, and thus no further transitions
         //otherwise add transitions from initialState to every init state and if this init state has a clock invariant
@@ -182,11 +181,11 @@ public class J2UPPAALConverter {
         if (init.length > 1) {
             for (int i = 0; i < init.length; i++) { //for all init states
 
-                Phase initState = init[i];
-                CDD initClock = initState.getClockInvariant();
+                final Phase initState = init[i];
+                final CDD initClock = initState.getClockInvariant();
 
                 //What clocks are part of the clock invariant of the initial state    		
-                String reset = getClocksToReset(initState, peaClocks);
+                final String reset = getClocksToReset(initState, peaClocks);
 
                 writer.write("<transition>\n" + "  <source ref = \"" +
                     initialState + "\"/>\n" + "  <target ref = \"" +
@@ -208,12 +207,12 @@ public class J2UPPAALConverter {
 
     protected void addPEAStates(Phase[] phases) throws IOException {
         for (int i = 0; i < phases.length; i++) {
-            Phase phase = phases[i];
+            final Phase phase = phases[i];
             writer.write("<location id = \"" + phase.getName() + "\"" + ">\n" +
                 "  <name>" + phase.getName() + "</name>\n");
 
             if (phase.getClockInvariant() != CDD.TRUE) {
-                String[] formula2 = this.getDisjuncts(phase.getClockInvariant());
+                final String[] formula2 = getDisjuncts(phase.getClockInvariant());
                 writer.write("  <label kind = \"invariant\">" + formula2[0]);
 
                 for (int j = 1; j < formula2.length; j++) {
@@ -229,27 +228,27 @@ public class J2UPPAALConverter {
 
     //add the transitions of the pea
     protected void addPEATransitions(Phase[] phases) {
-        Vector<Transition> transitions = new Vector<Transition>();
+        final Vector<Transition> transitions = new Vector<Transition>();
 
         for (int i = 0; i < phases.length; i++) {
-            Phase phase = phases[i];
-            List<Transition> transition = phase.getTransitions();
+            final Phase phase = phases[i];
+            final List<Transition> transition = phase.getTransitions();
             transitionsInA = transitionsInA + transition.size();
             transitions.addAll(transition);
         }
 
-        this.transCount = transitions.size();
+        transCount = transitions.size();
 
         for (int j = 0; j < transCount; j++) {
-            Transition trans = transitions.elementAt(j);
-            this.createPEATransitionString(trans);
+            final Transition trans = transitions.elementAt(j);
+            createPEATransitionString(trans);
         }
     }
 
     protected void createPEATransitionString(Transition transition) {
-        String[] disjuncts = this.getDisjuncts(transition.getGuard());
-        String[] resets = transition.getResets();
-        StringBuffer assignment = new StringBuffer();
+        final String[] disjuncts = getDisjuncts(transition.getGuard());
+        final String[] resets = transition.getResets();
+        final StringBuffer assignment = new StringBuffer();
 
         for (int i = 0; i < resets.length; i++) {
             assignment.append(resets[i]).append(":=0, ");
@@ -258,21 +257,21 @@ public class J2UPPAALConverter {
         assignment.append("timer:=0");
 
         for (int i = 0; i < disjuncts.length; i++) {
-            String source = transition.getSrc().getName();
-            String destination = transition.getDest().getName();
+            final String source = transition.getSrc().getName();
+            final String destination = transition.getDest().getName();
 
             if (source.matches(destination) && (resets.length <= 0)) {
                 //selfloops in which no clock is reset do not need to be transfered to the uppaal model
-                this.deletedSelfloops++; //only for measurement
+                deletedSelfloops++; //only for measurement
             } else {
                 //if s(p)&s(p')&g is unsatisfiable, delete this edge
                 //CDD sourceInv = transition.getSrc().getStateInvariant();
-                CDD destInv = transition.getDest().getStateInvariant();
-                CDD guard = transition.getGuard();
+                final CDD destInv = transition.getDest().getStateInvariant();
+                final CDD guard = transition.getGuard();
 
                 if (guard.and(destInv) == CDD.FALSE) {
                     //do nothing
-                    this.deletedTransitions++;
+                    deletedTransitions++;
                 } else {
                     try {
                         writer.write("<transition>\n" + "  <source ref = \"" +
@@ -293,7 +292,7 @@ public class J2UPPAALConverter {
                             "</transition>\n");
                         transitionsInS++;
                         writer.flush();
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
@@ -304,12 +303,12 @@ public class J2UPPAALConverter {
 
     protected void createPEAString(PhaseEventAutomata pea)
         throws IOException {
-        Phase[] phases = pea.getPhases();
+        final Phase[] phases = pea.getPhases();
 
-        this.addPEAStates(phases);
-        this.addInitialStates(pea);
-        this.addInitialTransitions(pea);
-        this.addPEATransitions(phases);
+        addPEAStates(phases);
+        addInitialStates(pea);
+        addInitialTransitions(pea);
+        addPEATransitions(phases);
     }
 
     protected String addDeclarationOfClocks(PhaseEventAutomata pea) {
@@ -317,7 +316,7 @@ public class J2UPPAALConverter {
         String clockDeclaration = "clock timer; ";
 
         //and (of course) we also add the clocks of the pea
-        int numberOfClocks = pea.getClocks().size();
+        final int numberOfClocks = pea.getClocks().size();
 
         for (int i = 0; i < numberOfClocks; i++) {
             clockDeclaration = clockDeclaration + "clock " +
@@ -328,13 +327,13 @@ public class J2UPPAALConverter {
     }
 
     public void writePEA2UppaalFile(String file, PhaseEventAutomata pea) {
-        long actTime = System.currentTimeMillis();
+        final long actTime = System.currentTimeMillis();
 
         try {
-            this.writer = new BufferedWriter(new FileWriter(file));
+            writer = new BufferedWriter(new FileWriter(file));
 
             //FileWriter writer = new FileWriter(file);
-            String clockDeclaration = addDeclarationOfClocks(pea);
+            final String clockDeclaration = addDeclarationOfClocks(pea);
 
             //First we need to simplify some guards
             pea.simplifyGuards();
@@ -345,7 +344,7 @@ public class J2UPPAALConverter {
             //        if (namelength >= 15){
             //        	shortName = pea.getName().substring(0,15);
             //        }
-            String shortName = systemName;
+            final String shortName = systemName;
 
             //System.out.println(shortName);
 
@@ -354,14 +353,14 @@ public class J2UPPAALConverter {
                 "<nta>\n" + "<declaration/>\n" + "<template>\n" + "<name>" +
                 shortName + "</name>\n" + "<declaration>" + clockDeclaration +
                 "</declaration>\n");
-            this.createPEAString(pea);
+            createPEAString(pea);
             writer.write("</template>\n" + "<system>system " + shortName +
                 ";</system>\n" + "</nta>");
             writer.flush();
             writer.close();
 
            // System.out.println("System Name is: " + shortName);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println(
                 "Errors writing the Uppaal representation of pea");
             e.printStackTrace();
@@ -369,11 +368,11 @@ public class J2UPPAALConverter {
         System.out.println("*****************************");
         System.out.println("Writing Uppaal representation took " +
             (System.currentTimeMillis() - actTime) + "ms");
-        System.out.println("Computed " + (--this.dnfCount) +
+        System.out.println("Computed " + (--dnfCount) +
             " disjunctive normalforms");
         System.out.println("Added: " + (pea.getInit().length) +
             " further transitions to initial states");
-        System.out.println("Deleted: " + (this.deletedSelfloops) +
+        System.out.println("Deleted: " + (deletedSelfloops) +
             " selfloops without clock reset");
         System.out.println("The Timed Automaton has " +
             (pea.getPhases().length) + " phases");
@@ -394,7 +393,7 @@ public class J2UPPAALConverter {
         // TODO Auto-generated method stub
     }
 
-    //Wie in HTML müssen auch in XML Sonderzeichen speziell formatiert werden. Die Zeichen &, <, > sind:
+    //Wie in HTML mï¿½ssen auch in XML Sonderzeichen speziell formatiert werden. Die Zeichen &, <, > sind:
     //  &      &amp;
     //	<      &lt;
     //  >      &gt;

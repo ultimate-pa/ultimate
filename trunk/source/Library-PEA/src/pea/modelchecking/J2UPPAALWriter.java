@@ -33,8 +33,8 @@ import java.util.Vector;
 import pea.CDD;
 import pea.EventDecision;
 import pea.Phase;
-import pea.Transition;
 import pea.PhaseEventAutomata;
+import pea.Transition;
 
 /**
  * @author roland
@@ -43,21 +43,21 @@ import pea.PhaseEventAutomata;
  */
 public class J2UPPAALWriter {
     
-    private Vector<String> disjuncts = new Vector<String>();
+    private final Vector<String> disjuncts = new Vector<String>();
     
     private int dnfCount=1;
     private int transCount = 0;
     
     public String[] getDisjuncts(CDD cdd) {
-        this.disjuncts.clear();
-        System.out.println("Computing dnf "+dnfCount+"/"+this.transCount);
+        disjuncts.clear();
+        System.out.println("Computing dnf "+dnfCount+"/"+transCount);
         dnfCount++;
-        this.cddToDNF(new StringBuffer(), cdd);
+        cddToDNF(new StringBuffer(), cdd);
         
-        int disjunctCount = this.disjuncts.size();
-        String[] strings = new String[disjunctCount];
+        final int disjunctCount = disjuncts.size();
+        final String[] strings = new String[disjunctCount];
         for(int i=0; i<disjunctCount; i++) {
-            strings[i] = (String) this.disjuncts.elementAt(i);
+            strings[i] = disjuncts.elementAt(i);
         }
         
         return strings;
@@ -71,47 +71,47 @@ public class J2UPPAALWriter {
                 buf.delete(buf.length()-12, buf.length());
             }
             //System.out.println("Adding="+buf.toString());
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
             return;
         } else if (cdd == CDD.FALSE) {
             return;
         }
         for(int i=0;i<cdd.getChilds().length;i++) {
-            StringBuffer newBuf = new StringBuffer();
+            final StringBuffer newBuf = new StringBuffer();
             newBuf.append(buf.toString());
             
             newBuf.append(cdd.getDecision().toUppaalString(i));
             newBuf.append(" &amp;&amp; ");
             
-            this.cddToDNF(newBuf,cdd.getChilds()[i]);
+            cddToDNF(newBuf,cdd.getChilds()[i]);
         }
     }
     
     private String createPEAString(PhaseEventAutomata pea) {
-        StringBuffer buf = new StringBuffer();
-        Phase[] phases = pea.getPhases();
-        Vector<Transition> transitions = new Vector<Transition>();
+        final StringBuffer buf = new StringBuffer();
+        final Phase[] phases = pea.getPhases();
+        final Vector<Transition> transitions = new Vector<Transition>();
         for(int i=0; i<phases.length; i++) {
-            buf.append(this.createPEAPhaseString(phases[i]));
+            buf.append(createPEAPhaseString(phases[i]));
             transitions.addAll(phases[i].getTransitions());
         }
-        Phase[] init = pea.getInit();
+        final Phase[] init = pea.getInit();
         buf.append("<init ref = \""+init[0].getName()+"\"/>");
-        this.transCount = transitions.size();
-        Iterator transIter = transitions.iterator();
+        transCount = transitions.size();
+        final Iterator transIter = transitions.iterator();
         while (transIter.hasNext()) {
-            Transition actTrans = (Transition) transIter.next();
-            buf.append(this.createPEATransitionString(actTrans));
+            final Transition actTrans = (Transition) transIter.next();
+            buf.append(createPEATransitionString(actTrans));
         }
         return buf.toString();
     }
     
     private String createPEAPhaseString(Phase phase) {
-        StringBuffer buf = new StringBuffer();
+        final StringBuffer buf = new StringBuffer();
         buf.append("<location id = \""+phase.getName()+"\""+">\n"+
                 "  <name>"+phase.getName()+"</name>\n");
         if(phase.getClockInvariant()!=CDD.TRUE) {
-	    StringBuffer formula = new StringBuffer();
+	    final StringBuffer formula = new StringBuffer();
 	    cddToDNF(formula, phase.getClockInvariant());
             buf.append("  <label kind = \"invariant\">"+formula.toString()+"</label>\n");
         }
@@ -120,11 +120,11 @@ public class J2UPPAALWriter {
     }
     
     private String createPEATransitionString(Transition transition) {
-        StringBuffer buf = new StringBuffer();
-        String[] disjuncts = this.getDisjuncts(transition.getGuard());
+        final StringBuffer buf = new StringBuffer();
+        final String[] disjuncts = getDisjuncts(transition.getGuard());
         
-        String[] resets = transition.getResets();
-        StringBuffer assignment = new StringBuffer();
+        final String[] resets = transition.getResets();
+        final StringBuffer assignment = new StringBuffer();
         for (int i = 0; i < resets.length; i++) {
             assignment.append(resets[i]).append(":=0, ");
         }
@@ -141,9 +141,9 @@ public class J2UPPAALWriter {
         return buf.toString();
     }
     public void writePEA2UppaalFile(String file, PhaseEventAutomata pea) {
-        long actTime = System.currentTimeMillis();
+        final long actTime = System.currentTimeMillis();
         try {
-        FileWriter writer = new FileWriter(file);
+        final FileWriter writer = new FileWriter(file);
         writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<!DOCTYPE nta PUBLIC \"-//Uppaal Team//DTD Flat System 1.0//EN\" \"http://www.docs.uu.se/docs/rtmv/uppaal/xml/flat-1_0.dtd\">" +
                      "<nta>\n"+
@@ -151,38 +151,38 @@ public class J2UPPAALWriter {
                      "<template>\n" +
                      "<name>"+//pea.getName()
                      "TrainSystem"+"</name>\n");
-        writer.write(this.createPEAString(pea));
+        writer.write(createPEAString(pea));
         writer.write("</template>\n"+
                         "<system>system "+//pea.getName()
                         "DeadlockSystem"+";</system>\n"+
                         "</nta>");
         writer.flush();
         writer.close();
-        }catch(Exception e) {
+        }catch(final Exception e) {
             System.out.println("Errors writing the Uppaal representation of pea");
             e.printStackTrace();
         }
         System.out.println("Writing Uppaal representation took "+(System.currentTimeMillis()-actTime)+"ms");
-        System.out.println("Computed "+(--this.dnfCount)+" disjunctive normalforms");
+        System.out.println("Computed "+(--dnfCount)+" disjunctive normalforms");
     }
     
     public static void main(String[] param) {
-        CDD a = EventDecision.create("a");
-        CDD b = EventDecision.create("b");
-        CDD c = EventDecision.create("c");
-        CDD e = EventDecision.create("e");
+        final CDD a = EventDecision.create("a");
+        final CDD b = EventDecision.create("b");
+        final CDD c = EventDecision.create("c");
+        final CDD e = EventDecision.create("e");
         
-        CDD temp = a.and(b.or(c).and(e.negate()));
+        final CDD temp = a.and(b.or(c).and(e.negate()));
         System.out.println(temp.toString());
-        J2UPPAALWriter writer = new J2UPPAALWriter();
-        String[] result = writer.getDisjuncts(temp);
+        final J2UPPAALWriter writer = new J2UPPAALWriter();
+        final String[] result = writer.getDisjuncts(temp);
         System.out.println("Result = ");
         for(int i=0; i<result.length; i++) {
             System.out.println(result[i]);
         }
         //private static final String PATH = "C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/";
         try {
-            PEAXML2JConverter xml2JConverter = new PEAXML2JConverter(false);
+            final PEAXML2JConverter xml2JConverter = new PEAXML2JConverter(false);
             PhaseEventAutomata[] systemPeas = xml2JConverter
                     .convert("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/Environment.xml");
             PhaseEventAutomata toUppaal = systemPeas[0];
@@ -205,14 +205,14 @@ public class J2UPPAALWriter {
             for (int i = 0; i < systemPeas.length; i++) {
                 toUppaal = toUppaal.parallel(systemPeas[i]);
             }
-            PhaseEventAutomata[] propertyPeas = xml2JConverter
+            final PhaseEventAutomata[] propertyPeas = xml2JConverter
                     .convert("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/Property0.xml");
             for (int i = 0; i < propertyPeas.length; i++) {
                 toUppaal = toUppaal.parallel(propertyPeas[i]);
             }
-            J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
+            final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
             j2uppaalWriter.writePEA2UppaalFile("C:/Documents and Settings/oea1lr/My Documents/Test/PEA/peatoolkit-0.89b-src/src/pea/modelchecking/CaseStudy/toCheck.xml", toUppaal);
-        }catch(Exception ex) {
+        }catch(final Exception ex) {
             ex.printStackTrace();
         }
     }

@@ -28,6 +28,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -36,19 +42,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class OverapproximationUF implements IPointerIntegerConversion {
 	
-	protected final  AExpressionTranslation m_ExpressionTranslation;
-	private final FunctionDeclarations m_FunctionDeclarations;
-	private final ITypeHandler m_TypeHandler;
+	protected final  AExpressionTranslation mExpressionTranslation;
+	private final FunctionDeclarations mFunctionDeclarations;
+	private final ITypeHandler mTypeHandler;
 	
 
 	/**
@@ -62,9 +62,9 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	public OverapproximationUF(AExpressionTranslation expressionTranslation, FunctionDeclarations functionDeclarations,
 			ITypeHandler typeHandler) {
 		super();
-		m_ExpressionTranslation = expressionTranslation;
-		m_FunctionDeclarations = functionDeclarations;
-		m_TypeHandler = typeHandler;
+		mExpressionTranslation = expressionTranslation;
+		mFunctionDeclarations = functionDeclarations;
+		mTypeHandler = typeHandler;
 	}
 
 	/* (non-Javadoc)
@@ -74,13 +74,13 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	public void convertPointerToInt(ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
 		if (newType.getType() == PRIMITIVE.BOOL) {
-			m_ExpressionTranslation.convertToBool(loc, rexp);
+			mExpressionTranslation.convertToBool(loc, rexp);
 		} else {
-			String prefixedFunctionName = declareConvertPointerToIntFunction(
+			final String prefixedFunctionName = declareConvertPointerToIntFunction(
 					loc, newType);
-			Expression pointerExpression = rexp.lrVal.getValue();
-			Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
-			RValue rValue = new RValue(intExpression, newType, false, false);
+			final Expression pointerExpression = rexp.lrVal.getValue();
+			final Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
+			final RValue rValue = new RValue(intExpression, newType, false, false);
 			rexp.lrVal = rValue;
 		}
 	}
@@ -91,44 +91,44 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	@Override
 	public void convertIntToPointer(ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
-		boolean overapproximate = false;
+		final boolean overapproximate = false;
 		if (overapproximate) {
-			String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.lrVal.getCType());
-			Expression intExpression = rexp.lrVal.getValue();
-			Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
-			RValue rValue = new RValue(pointerExpression, newType, false, false);
+			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.lrVal.getCType());
+			final Expression intExpression = rexp.lrVal.getValue();
+			final Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
+			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.lrVal = rValue;
 		} else {
-			m_ExpressionTranslation.convertIntToInt(loc, rexp, m_ExpressionTranslation.getCTypeOfPointerComponents());
-			Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
-					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
+			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
+					loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
 			rexp.lrVal = rValue;
 		}
 	}
 	
 	private String declareConvertIntToPointerFunction(ILocation loc, CPrimitive newType) {
-		String functionName = "convert" + newType.toString() + "toPointer";
-		String prefixedFunctionName = "~" + functionName;
-		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = m_TypeHandler.constructPointerType(loc); 
-			ASTType paramASTType = m_TypeHandler.ctype2asttype(loc, newType);
-			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		final String functionName = "convert" + newType.toString() + "toPointer";
+		final String prefixedFunctionName = "~" + functionName;
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType resultASTType = mTypeHandler.constructPointerType(loc); 
+			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, newType);
+			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
 	}
 	
 	private String declareConvertPointerToIntFunction(ILocation loc, CPrimitive newType) {
-		String functionName = "convertPointerTo" + newType.toString();
-		String prefixedFunctionName = "~" + functionName;
-		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = m_TypeHandler.constructPointerType(loc);
-			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		final String functionName = "convertPointerTo" + newType.toString();
+		final String prefixedFunctionName = "~" + functionName;
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final ASTType paramASTType = mTypeHandler.constructPointerType(loc);
+			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
 	}

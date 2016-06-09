@@ -34,8 +34,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 
 /**
  * 
@@ -51,12 +51,12 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 	}
 
 	protected Set<String> getDistinctFolderSuffixes(PartitionedResults results) {
-		Set<File> folders = results.All.stream().flatMap(c -> Arrays.stream(c.getKey().getInput()))
+		final Set<File> folders = results.All.stream().flatMap(c -> Arrays.stream(c.getKey().getInput()))
 				.map(a -> a.getParentFile()).collect(Collectors.toSet());
 
-		Set<String[]> working = new HashSet<>();
+		final Set<String[]> working = new HashSet<>();
 
-		for (File folder : folders) {
+		for (final File folder : folders) {
 			working.add(folder.getAbsolutePath().split(Pattern.quote(File.separator)));
 		}
 		int offset = 0;
@@ -64,9 +64,9 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 		while (!offsetsEqual) {
 			offsetsEqual = true;
 			String last = null;
-			for (String[] pathSegments : working) {
+			for (final String[] pathSegments : working) {
 				String currentlast = File.separator;
-				int end = pathSegments.length - 1;
+				final int end = pathSegments.length - 1;
 				int j = end - offset;
 
 				while (j <= end) {
@@ -84,8 +84,8 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 			}
 		}
 
-		HashSet<String> rtr = new HashSet<>();
-		for (String[] pathSegments : working) {
+		final HashSet<String> rtr = new HashSet<>();
+		for (final String[] pathSegments : working) {
 			String suffix = "";
 			for (int i = pathSegments.length - 1 - offset; i < pathSegments.length; ++i) {
 				suffix += pathSegments[i] + File.separator;

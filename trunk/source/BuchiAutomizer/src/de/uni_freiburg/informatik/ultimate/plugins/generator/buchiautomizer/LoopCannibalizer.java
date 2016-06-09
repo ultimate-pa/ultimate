@@ -32,22 +32,21 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 /**
@@ -59,16 +58,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class LoopCannibalizer {
 
-	private final NestedLassoRun<CodeBlock, IPredicate> m_Counterexample;
-	private final BinaryStatePredicateManager m_Bspm;
-	private final PredicateUnifier m_PredicateUnifier;
-	private final SmtManager m_SmtManager;
-	private final BuchiModGlobalVarManager m_buchiModGlobalVarManager;
-	private final Set<IPredicate> m_ResultPredicates;
-	private final Set<IPredicate> m_OriginalLoopInterpolants;
-	private NestedWord<CodeBlock> m_Loop;
+	private final NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
+	private final BinaryStatePredicateManager mBspm;
+	private final PredicateUnifier mPredicateUnifier;
+	private final SmtManager mSmtManager;
+	private final BuchiModGlobalVarManager mbuchiModGlobalVarManager;
+	private final Set<IPredicate> mResultPredicates;
+	private final Set<IPredicate> mOriginalLoopInterpolants;
+	private final NestedWord<CodeBlock> mLoop;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	public LoopCannibalizer(NestedLassoRun<CodeBlock, IPredicate> counterexample, Set<IPredicate> loopInterpolants,
@@ -77,53 +76,53 @@ public class LoopCannibalizer {
 			IUltimateServiceProvider services) {
 		super();
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_Counterexample = counterexample;
-		m_Bspm = bspm;
-		m_PredicateUnifier = predicateUnifier;
-		m_SmtManager = smtManager;
-		m_buchiModGlobalVarManager = buchiModGlobalVarManager;
-		m_OriginalLoopInterpolants = loopInterpolants;
-		m_ResultPredicates = new HashSet<IPredicate>(loopInterpolants);
-		m_Loop = m_Counterexample.getLoop().getWord();
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mCounterexample = counterexample;
+		mBspm = bspm;
+		mPredicateUnifier = predicateUnifier;
+		mSmtManager = smtManager;
+		mbuchiModGlobalVarManager = buchiModGlobalVarManager;
+		mOriginalLoopInterpolants = loopInterpolants;
+		mResultPredicates = new HashSet<IPredicate>(loopInterpolants);
+		mLoop = mCounterexample.getLoop().getWord();
 		cannibalize(interpolation);
 		mLogger.info(exitMessage());
 	}
 
 	private StringBuilder exitMessage() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(m_OriginalLoopInterpolants.size());
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mOriginalLoopInterpolants.size());
 		sb.append(" predicates before loop cannibalization ");
-		sb.append(m_ResultPredicates.size());
+		sb.append(mResultPredicates.size());
 		sb.append(" predicates after loop cannibalization ");
 		return sb;
 	}
 
 	private void cannibalize(INTERPOLATION interpolation) {
 		final int startPosition;
-		if (m_Loop.isCallPosition(0) && !m_Loop.isPendingCall(0)) {
-			int correspondingReturn = m_Loop.getReturnPosition(0);
+		if (mLoop.isCallPosition(0) && !mLoop.isPendingCall(0)) {
+			final int correspondingReturn = mLoop.getReturnPosition(0);
 			startPosition = correspondingReturn;
 		} else {
 			startPosition = 1;
 		}
 		int i = startPosition;
-		while (i < m_Loop.length() - 1) {
-			if (m_Loop.isCallPosition(i) && !m_Loop.isPendingCall(i)) {
-				int correspondingReturn = m_Loop.getReturnPosition(i);
+		while (i < mLoop.length() - 1) {
+			if (mLoop.isCallPosition(i) && !mLoop.isPendingCall(i)) {
+				final int correspondingReturn = mLoop.getReturnPosition(i);
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					NestedWord<CodeBlock> before = m_Loop.subWord(0, i);
-					NestedWord<CodeBlock> after = m_Loop.subWord(i + 1, m_Loop.length() - 1);
-					NestedWord<CodeBlock> shifted = after.concatenate(before);
-					InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
-					LBool loopCheck = traceChecker.isCorrect();
+					final NestedWord<CodeBlock> before = mLoop.subWord(0, i);
+					final NestedWord<CodeBlock> after = mLoop.subWord(i + 1, mLoop.length() - 1);
+					final NestedWord<CodeBlock> shifted = after.concatenate(before);
+					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
+					final LBool loopCheck = traceChecker.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
 						loopInterpolants = traceChecker.getInterpolants();
-						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(false, loopInterpolants);
-						m_ResultPredicates.addAll(cannibalized);
+						final Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, loopInterpolants);
+						mResultPredicates.addAll(cannibalized);
 					} else {
 						mLogger.info("termination argument not suffcient for all loop shiftings");
 					}
@@ -138,22 +137,22 @@ public class LoopCannibalizer {
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceChecker = new InterpolatingTraceCheckerCraig(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager, m_buchiModGlobalVarManager,
+			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier,
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
 						interpolation, true);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			traceChecker = new TraceCheckerSpWp(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager, m_buchiModGlobalVarManager,
+			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -161,8 +160,8 @@ public class LoopCannibalizer {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier,
-						interpolation, m_SmtManager);
+					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
+						interpolation, mSmtManager);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -179,15 +178,15 @@ public class LoopCannibalizer {
 	 * is a non-pending call.
 	 */
 	private boolean checkForNewPredicates(int i) {
-		if (codeBlockContainsVarOfHondaPredicate(m_Loop.getSymbol(i))) {
+		if (codeBlockContainsVarOfHondaPredicate(mLoop.getSymbol(i))) {
 			return true;
 		}
-		if (m_Loop.isReturnPosition(i)) {
-			assert !m_Loop.isPendingReturn(i) : "not yet supported";
+		if (mLoop.isReturnPosition(i)) {
+			assert !mLoop.isPendingReturn(i) : "not yet supported";
 			return true;
 		}
-		if (m_Loop.isCallPosition(i + 1)) {
-			if (!m_Loop.isPendingCall(i + 1)) {
+		if (mLoop.isCallPosition(i + 1)) {
+			if (!mLoop.isPendingCall(i + 1)) {
 				return true;
 			}
 		}
@@ -195,12 +194,12 @@ public class LoopCannibalizer {
 	}
 
 	private boolean codeBlockContainsVarOfHondaPredicate(CodeBlock cb) {
-		Set<BoogieVar> hondaVars = m_Bspm.getHondaPredicate().getVars();
-		Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
+		final Set<BoogieVar> hondaVars = mBspm.getHondaPredicate().getVars();
+		final Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {
 			return true;
 		}
-		Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
+		final Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
 		if (!Collections.disjoint(hondaVars, outVars)) {
 			return true;
 		}
@@ -208,7 +207,7 @@ public class LoopCannibalizer {
 	}
 
 	public Set<IPredicate> getResult() {
-		return m_ResultPredicates;
+		return mResultPredicates;
 	}
 
 }

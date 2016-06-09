@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.math.BigDecimal;
 
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
  * 
@@ -106,9 +106,9 @@ public class GeneratedWitnessEdge<TE, E> {
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder();
-		for (E var : mState.getVariables()) {
-			for (E val : mState.getValues(var)) {
+		final StringBuilder sb = new StringBuilder();
+		for (final E var : mState.getVariables()) {
+			for (final E val : mState.getValues(var)) {
 				appendValidExpression(var, val, sb);
 			}
 		}
@@ -139,7 +139,7 @@ public class GeneratedWitnessEdge<TE, E> {
 		final String stepAsString = mStringProvider.getStringFromStep(mATE.getStep());
 		final StringBuilder sb = new StringBuilder();
 
-		boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)
+		final boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)
 				|| mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
 
 		if (isConditional) {
@@ -172,7 +172,7 @@ public class GeneratedWitnessEdge<TE, E> {
 
 		try {
 			new BigDecimal(valStr);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			// this is no valid number literal, maybe its true or false?
 			if (!valStr.equalsIgnoreCase("true") && !valStr.equalsIgnoreCase("false")) {
 				// nope, give up

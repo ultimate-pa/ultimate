@@ -26,26 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * Wrapper for ILoggingService and IProgressMonitorService that are used in
- * the automata library.
+ * Wrapper for ILoggingService and IProgressMonitorService that are used in the automata library.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class AutomataLibraryServices {
-	
+
 	private final ILoggingService mLoggingService;
 	private final IProgressMonitorService mProgressMonitorService;
-	
+
 	public AutomataLibraryServices(IUltimateServiceProvider ultimateServices) {
 		mLoggingService = ultimateServices.getLoggingService();
 		mProgressMonitorService = ultimateServices.getProgressMonitorService();
 	}
-	
+
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}
@@ -53,5 +53,4 @@ public class AutomataLibraryServices {
 	public IProgressMonitorService getProgressMonitorService() {
 		return mProgressMonitorService;
 	}
-
 }

@@ -36,18 +36,19 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SSATermTransformer extends TermTransformer{
 
-	private HashMap<TermVariable, TermVariable> m_VariableMapping 	= null;
+	private HashMap<TermVariable, TermVariable> mVariableMapping 	= null;
 	
 	
 	public SSATermTransformer(Script script, HashMap<TermVariable, TermVariable> variableMapping){
-		m_VariableMapping	= variableMapping;
+		mVariableMapping	= variableMapping;
 	}
 	
+	@Override
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
-			TermVariable tv		= (TermVariable) term;
-			if (m_VariableMapping.containsKey(tv)){
-				super.setResult(m_VariableMapping.get(tv));
+			final TermVariable tv		= (TermVariable) term;
+			if (mVariableMapping.containsKey(tv)){
+				super.setResult(mVariableMapping.get(tv));
 				return;
 			}
 		}

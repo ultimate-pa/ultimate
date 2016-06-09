@@ -52,26 +52,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array, the indices and the value.
  * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, m_Array is null, m_Index is empty and m_Value coincides with
- * m_StoreTerm.
+ * this case, mArray is null, mIndex is empty and mValue coincides with
+ * mStoreTerm.
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore {
-	private Term m_Array;
-	private final ArrayIndex m_Index;
-	private final Term m_Value;
-	private final ApplicationTerm m_StoreTerm;
+	private final Term mArray;
+	private final ArrayIndex mIndex;
+	private final Term mValue;
+	private final ApplicationTerm mStoreTerm;
 	
 	public MultiDimensionalStore(Term term) {
-		m_StoreTerm = (ApplicationTerm) term;
+		mStoreTerm = (ApplicationTerm) term;
 		Term array = null;
-		ArrayList<Term> index = new ArrayList<Term>();
+		final ArrayList<Term> index = new ArrayList<Term>();
 		Term value = term;
 		while (true) {
 			if (!(value instanceof ApplicationTerm)) {
 				break;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) value;
+			final ApplicationTerm appTerm = (ApplicationTerm) value;
 			if (!appTerm.getFunction().getName().equals("store")) {
 				break;
 			}
@@ -84,52 +84,52 @@ public class MultiDimensionalStore {
 			index.add(appTerm.getParameters()[1]);
 			value = appTerm.getParameters()[2];
 		}
-		m_Array = array;
-		m_Index = new ArrayIndex(index);
-		m_Value = value;
+		mArray = array;
+		mIndex = new ArrayIndex(index);
+		mValue = value;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
-		if (m_Array == null) {
-			return m_Index.size() == 0 && m_StoreTerm == m_Value;
+		if (mArray == null) {
+			return mIndex.size() == 0 && mStoreTerm == mValue;
 		} else {
-			return m_Array.getSort() == m_StoreTerm.getSort() &&
+			return mArray.getSort() == mStoreTerm.getSort() &&
 					MultiDimensionalSort.
-					areDimensionsConsistent(m_Array, m_Index, m_Value);
+					areDimensionsConsistent(mArray, mIndex, mValue);
 		}
 	}
 	
 	private boolean isCompatibleSelect(Term term, Term array, ArrayList<Term> index) {
-		MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
+		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
 
 	public Term getArray() {
-		return m_Array;
+		return mArray;
 	}
 
 	public ArrayIndex getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	public Term getValue() {
-		return m_Value;
+		return mValue;
 	}
 
 	public ApplicationTerm getStoreTerm() {
-		return m_StoreTerm;
+		return mStoreTerm;
 	}
 
 	@Override
 	public String toString() {
-		return m_StoreTerm.toString();
+		return mStoreTerm.toString();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof MultiDimensionalStore) {
-			return m_StoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
+			return mStoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
 		} else {
 			return false;
 		}
@@ -137,7 +137,7 @@ public class MultiDimensionalStore {
 
 	@Override
 	public int hashCode() {
-		return m_StoreTerm.hashCode();
+		return mStoreTerm.hashCode();
 	}
 	
 	
@@ -151,11 +151,11 @@ public class MultiDimensionalStore {
 	 * in the result.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
-		List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
-		Set<ApplicationTerm> storeTerms = 
+		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
+		final Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
-		for (Term storeTerm : storeTerms) {
-			MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
+		for (final Term storeTerm : storeTerms) {
+			final MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
 			if (mdStore.getIndex().size() == 0) {
 				throw new AssertionError("store must not have dimension 0");
 			}
@@ -175,17 +175,17 @@ public class MultiDimensionalStore {
 	 * in the resulting list.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresDeep(Term term) {
-		List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
+		final List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
 		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
+			final List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
-			for (MultiDimensionalStore asd : foundInLastIteration) {
+			for (final MultiDimensionalStore asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getValue()));
-				ArrayIndex index = asd.getIndex();
-				for (Term entry : index) {
+				final ArrayIndex index = asd.getIndex();
+				for (final Term entry : index) {
 					foundInThisIteration.addAll(extractArrayStoresShallow(entry));
 				}
 			}

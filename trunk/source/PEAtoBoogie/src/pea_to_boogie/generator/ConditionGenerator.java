@@ -25,38 +25,47 @@
  * to convey the resulting work.
  */
 package pea_to_boogie.generator;
-import pea.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import pea.CDD;
+import pea.Phase;
+import pea.PhaseEventAutomata;
+import pea.Transition;
 import pea_to_boogie.translator.CDDTranslator;
 import pea_to_boogie.translator.Translator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import java.util.*;
 public class ConditionGenerator {
     public Translator translator;
     public Expression nonDLCGenerator (PhaseEventAutomata[] automata, int[] automataPermutation, String fileName, 
 			BoogieLocation bl) {
 
-		int[][] phases = new int[automataPermutation.length][];
+		final int[][] phases = new int[automataPermutation.length][];
 		for (int i = 0; i < automataPermutation.length; i++) {
-			PhaseEventAutomata automaton = automata[automataPermutation[i]];
-			int phaseCount = automaton.getPhases().length;
+			final PhaseEventAutomata automaton = automata[automataPermutation[i]];
+			final int phaseCount = automaton.getPhases().length;
 			phases[i] = new int[phaseCount];
-			for (int j = 0; j < phaseCount; j++)
+			for (int j = 0; j < phaseCount; j++) {
 				phases[i][j] = j;
+			}
 		}
 		
-		List<int[]> phasePermutations = new Permutation().crossProduct(phases);
-		List<Expression> conditions = new ArrayList<Expression>();
-		for (int[] vector : phasePermutations) {
+		final List<int[]> phasePermutations = new Permutation().crossProduct(phases);
+		final List<Expression> conditions = new ArrayList<Expression>();
+		for (final int[] vector : phasePermutations) {
 			assert(vector.length == automataPermutation.length);
 			CDD cddOuter = CDD.TRUE;
-    		List<Expression> impliesLHS = new ArrayList<Expression>();
+    		final List<Expression> impliesLHS = new ArrayList<Expression>();
         	for (int j = 0; j < vector.length; j++) {
     			CDD cddInner = CDD.FALSE;
-        		PhaseEventAutomata automaton = automata[automataPermutation[j]];
-        		Phase phase = automaton.getPhases()[vector[j]];
-           		List<Transition> transitions = phase.getTransitions();
+        		final PhaseEventAutomata automaton = automata[automataPermutation[j]];
+        		final Phase phase = automaton.getPhases()[vector[j]];
+           		final List<Transition> transitions = phase.getTransitions();
            		for (int k = 0; k < transitions.size(); k++) {
            			cddInner = cddInner
            				.or(genIntersectionAll(genGuardANDPrimedStInv(transitions.get(k)),
@@ -65,17 +74,18 @@ public class ConditionGenerator {
            		cddOuter = cddOuter.and(cddInner);
            		impliesLHS.add(genPCCompEQ(automataPermutation[j], vector[j], fileName, bl));
         	}
-       	    CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, this.translator.primedVars);
+       	    final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, translator.primedVars);
        	    if (cdd == CDD.TRUE) {
        	    	continue;
        	    }
-       	    Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, bl);
-       	    Expression implies = new BinaryExpression(bl, BinaryExpression.Operator.LOGICIMPLIES,
+       	    final Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, bl);
+       	    final Expression implies = new BinaryExpression(bl, BinaryExpression.Operator.LOGICIMPLIES,
        	    		buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, impliesLHS), impliesRHS);
        	    conditions.add(implies);
 		}
-		if (conditions.isEmpty())
+		if (conditions.isEmpty()) {
 			return null;
+		}
 		return buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, conditions);
 	}
     
@@ -142,27 +152,27 @@ public class ConditionGenerator {
 		return (cdd1.and(cdd2));
 	}
 	public CDD genStrictInv(Transition transition) {
-	    Phase phase = transition.getDest();
-	    String[] resetVars = transition.getResets();
-	    List<String> resetList = new ArrayList<String>();
+	    final Phase phase = transition.getDest();
+	    final String[] resetVars = transition.getResets();
+	    final List<String> resetList = new ArrayList<String>();
 	    for (int i = 0; i < resetVars.length; i++) {
 	    	resetList.add(resetVars[i]);
 	    }
-	    CDD cdd = new StrictInvariant().genStrictInv(phase.getClockInvariant(), resetList);
+	    final CDD cdd = new StrictInvariant().genStrictInv(phase.getClockInvariant(), resetList);
   	    return cdd;
 	}
 	public CDD genGuardANDPrimedStInv(Transition transition) {
-		CDD guard = transition.getGuard();
-		Phase phase = transition.getDest();
-		CDD primedStInv = phase.getStateInvariant().prime();
-		CDD cdd = guard.and(primedStInv);
+		final CDD guard = transition.getGuard();
+		final Phase phase = transition.getDest();
+		final CDD primedStInv = phase.getStateInvariant().prime();
+		final CDD cdd = guard.and(primedStInv);
 	//	cdd = new VarRemoval().varRemoval(cdd, this.translator.primedVars, this.translator.eventVars);
 		return cdd;
 	}
     public Expression genPCCompEQ(int autIndex, int phaseIndex, String fileName, BoogieLocation bl) {
-	     	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
-	     	IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
-	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
+	     	final IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
+	     	final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
+	     	final BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
 	     			identifier, intLiteral);
     	 return binaryExpr;  	    
     }

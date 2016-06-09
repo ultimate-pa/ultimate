@@ -33,7 +33,7 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 			CCTerm mOther;
 			
 			Entry(CCTerm other) {
-				this.mOther = other;
+				mOther = other;
 			}
 			
 			Info getInfo() {
@@ -41,10 +41,11 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 			}
 			
 			Entry getOtherEntry() {
-				return Info.this.mLhsEntry == this 
-					? Info.this.mRhsEntry : Info.this.mLhsEntry; 
+				return mLhsEntry == this 
+					? mRhsEntry : mLhsEntry; 
 			}
 
+			@Override
 			public String toString() {
 				return Info.this.toString();
 			}
@@ -58,15 +59,17 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 			mEqlits = new SimpleList<CCEquality.Entry>();
 		}
 		
+		@Override
 		public int hashCode() {
 			return pairHash(mRhsEntry.mOther, mLhsEntry.mOther);
 		}
 		
 		public final boolean equals(CCTerm lhs, CCTerm rhs) {
-			return (this.mRhsEntry.mOther == lhs && this.mLhsEntry.mOther == rhs)
-					|| (this.mRhsEntry.mOther == rhs && this.mLhsEntry.mOther == lhs);
+			return (mRhsEntry.mOther == lhs && mLhsEntry.mOther == rhs)
+					|| (mRhsEntry.mOther == rhs && mLhsEntry.mOther == lhs);
 		}
 		
+		@Override
 		public String toString() {
 			return "Info[" + mRhsEntry.mOther + "," + mLhsEntry.mOther + "]";
 		}
@@ -85,24 +88,27 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 	}
 	
 	private Info getInfoStash(CCTerm lhs, CCTerm rhs) {
-		StashList<Info> stash = this.mStashList;
+		StashList<Info> stash = mStashList;
 		while (stash != null) {
-			if (stash.getEntry().equals(lhs,rhs))
+			if (stash.getEntry().equals(lhs,rhs)) {
 				return stash.getEntry();
+			}
 			stash = stash.getNext();
 		}
 		return null;
 	}
 	
 	public Info getInfo(CCTerm lhs, CCTerm rhs) {
-		int hash = hash(pairHash(lhs, rhs));
-		int hash1 = hash1(hash);
+		final int hash = hash(pairHash(lhs, rhs));
+		final int hash1 = hash1(hash);
 		Info bucket = (Info) mBuckets[hash1]; 
-  		if (bucket != null && bucket.equals(lhs, rhs))
+  		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
+		}
 		bucket = (Info) mBuckets[hash2(hash) ^ hash1]; 
-  		if (bucket != null && bucket.equals(lhs, rhs))
+  		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
+		}
 		return mStashList == null ? null : getInfoStash(lhs, rhs);
 	}
 

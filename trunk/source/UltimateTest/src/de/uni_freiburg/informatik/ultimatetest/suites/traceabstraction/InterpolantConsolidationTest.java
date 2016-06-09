@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
@@ -25,74 +25,74 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
  */
 public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSuite {
 	
-//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-	private static int m_FilesPerDirectoryLimit = 5;
+//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 2. Bit Vectors ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 4. Control Flow and Integer Variables ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
 //		
-//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
 //		
-//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 5. Device Drivers Linux 64-bit ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 7. Memory Safety ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //
 //		/*** Category 8. Recursive ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 9. Sequentialized Concurrent Programs ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 10. Simple  ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 //		
 //		/*** Category 12. Termination ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
@@ -108,7 +108,7 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 			"automizer/interpolantConsolidation/FP.epf",
 			"automizer/interpolantConsolidation/FP_CO.epf",
 			"automizer/interpolantConsolidation/BP.epf",
@@ -125,33 +125,33 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 		return 60 * 1000;
 	}
 	
-	private static final String[] m_BoogieToolchains = {
+	private static final String[] mBoogieToolchains = {
 //		"AutomizerBpl.xml",
 		"AutomizerBplInline.xml",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_SVCOMP_Examples);
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		
-		for (String setting : m_Settings) {
-			for (String toolchain : m_BoogieToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (final String setting : mSettings) {
+			for (final String toolchain : mBoogieToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}
@@ -161,13 +161,13 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
 						new ColumnDefinition(
 								"Overall time", "Avg. runtime",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	

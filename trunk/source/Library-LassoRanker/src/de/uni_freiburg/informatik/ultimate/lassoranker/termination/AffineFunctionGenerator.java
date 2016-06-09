@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineFunctionGenerator implements Serializable {
 	private static final long serialVersionUID = 4376363192635730213L;
 	
-	private final Term m_constant;
-	private final Map<RankVar, Term> m_coefficients;
+	private final Term mconstant;
+	private final Map<RankVar, Term> mcoefficients;
 	
 	/**
 	 * Name of the variable for the affine function's affine constant
@@ -81,11 +81,11 @@ public class AffineFunctionGenerator implements Serializable {
 	public AffineFunctionGenerator(Script script, Collection<RankVar> variables,
 			String prefix) {
 		// Create variables
-		m_constant = SmtUtils.buildNewConstant(script, constName(prefix), 
+		mconstant = SmtUtils.buildNewConstant(script, constName(prefix), 
 				"Real");
-		m_coefficients = new LinkedHashMap<RankVar, Term>();
-		for (RankVar var : variables) {
-			m_coefficients.put(var, SmtUtils.buildNewConstant(script,
+		mcoefficients = new LinkedHashMap<RankVar, Term>();
+		for (final RankVar var : variables) {
+			mcoefficients.put(var, SmtUtils.buildNewConstant(script,
 					coeffName(prefix, var), "Real"));
 		}
 	}
@@ -96,12 +96,12 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @return Linear inequality corresponding to si(x)
 	 */
 	public LinearInequality generate(Map<RankVar, Term> vars) {
-		LinearInequality li = new LinearInequality();
-		li.add(new AffineTerm(m_constant, Rational.ONE));
-		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
-			if (m_coefficients.containsKey(entry.getKey())) {
+		final LinearInequality li = new LinearInequality();
+		li.add(new AffineTerm(mconstant, Rational.ONE));
+		for (final Map.Entry<RankVar, Term> entry : vars.entrySet()) {
+			if (mcoefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(),
-						new AffineTerm(m_coefficients.get(entry.getKey()),
+						new AffineTerm(mcoefficients.get(entry.getKey()),
 								Rational.ONE));
 			}
 		}
@@ -112,9 +112,9 @@ public class AffineFunctionGenerator implements Serializable {
 	 * Return all SMT variables used by this template
 	 */
 	public Collection<Term> getVariables() {
-		Collection<Term> vars = new ArrayList<Term>();
-		vars.addAll(m_coefficients.values());
-		vars.add(m_constant);
+		final Collection<Term> vars = new ArrayList<Term>();
+		vars.addAll(mcoefficients.values());
+		vars.add(mconstant);
 		return vars;
 	}
 	
@@ -125,8 +125,8 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @return the greatest common denominator
 	 */
 	public Rational getGcd(Map<Term, Rational> assignment) {
-		Rational gcd = assignment.get(m_constant);
-		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
+		Rational gcd = assignment.get(mconstant);
+		for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
 			gcd = gcd.gcd(assignment.get(entry.getValue()));
 		}
 		// use the absolute value of the GCD obtained from Rational.gcd
@@ -147,7 +147,7 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	public AffineFunction extractAffineFunction(
 			Map<Term, Rational> assignment) {
-		return extractAffineFunction(assignment, this.getGcd(assignment));
+		return extractAffineFunction(assignment, getGcd(assignment));
 	}
 	
 	/**
@@ -163,23 +163,23 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	public AffineFunction extractAffineFunction(Map<Term, Rational> assignment,
 			Rational gcd) {
-		AffineFunction f = new AffineFunction();
+		final AffineFunction f = new AffineFunction();
 		if (gcd.equals(Rational.ZERO)) {
 			// special case: gcd is zero, this happens only if all
 			// coefficients are zero.
-			Rational c = assignment.get(m_constant);
+			Rational c = assignment.get(mconstant);
 			assert (c.equals(Rational.ZERO));
-			for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
+			for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
 				c = assignment.get(entry.getValue());
 				assert (c.equals(Rational.ZERO));
 				f.put(entry.getKey(), c.numerator());
 			}
 		} else {
 			// Divide all coefficients by the gcd
-			Rational c = assignment.get(m_constant).div(gcd);
+			Rational c = assignment.get(mconstant).div(gcd);
 			assert(c.denominator().equals(BigInteger.ONE));
 			f.setConstant(c.numerator());
-			for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
+			for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
 				c = assignment.get(entry.getValue()).div(gcd);
 				assert(c.denominator().equals(BigInteger.ONE));
 				f.put(entry.getKey(), c.numerator());

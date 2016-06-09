@@ -51,7 +51,7 @@ public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueE
 		BigInteger number;
 		try {
 			number = new BigInteger(value);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new UnsupportedOperationException("The value \"" + value + "\" cannot be transformed to an integer.");
 		}
 		return number;

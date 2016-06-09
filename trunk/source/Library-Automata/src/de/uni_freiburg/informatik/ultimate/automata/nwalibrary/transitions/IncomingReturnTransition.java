@@ -39,30 +39,32 @@ import java.text.MessageFormat;
  */
 public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
-	private final STATE m_LinPred;
-	private final STATE m_HierPred;
-	private final LETTER m_Letter; 
+	private final STATE mLinPred;
+	private final STATE mHierPred;
+	private final LETTER mLetter; 
 
 	
 	public IncomingReturnTransition(STATE linPred, STATE hierPred, LETTER letter) {
-		m_LinPred = linPred;
-		m_HierPred = hierPred;
-		m_Letter = letter;
+		mLinPred = linPred;
+		mHierPred = hierPred;
+		mLetter = letter;
 	}
 	
 	public STATE getLinPred() {
-		return m_LinPred;
+		return mLinPred;
 	}
 	
 	public STATE getHierPred() {
-		return m_HierPred;
+		return mHierPred;
 	}
 	
+	@Override
 	public LETTER getLetter() {
-		return m_Letter;
+		return mLetter;
 	}
 	
 	
+	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , {2} , _ )",getLinPred(), getHierPred(), getLetter());
 	}
@@ -72,38 +74,47 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+				+ ((mHierPred == null) ? 0 : mHierPred.hashCode());
 		result = prime * result
-				+ ((m_Letter == null) ? 0 : m_Letter.hashCode());
+				+ ((mLetter == null) ? 0 : mLetter.hashCode());
 		result = prime * result
-				+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
+				+ ((mLinPred == null) ? 0 : mLinPred.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		IncomingReturnTransition other = (IncomingReturnTransition) obj;
-		if (m_HierPred == null) {
-			if (other.m_HierPred != null)
+		}
+		final IncomingReturnTransition other = (IncomingReturnTransition) obj;
+		if (mHierPred == null) {
+			if (other.mHierPred != null) {
 				return false;
-		} else if (!m_HierPred.equals(other.m_HierPred))
+			}
+		} else if (!mHierPred.equals(other.mHierPred)) {
 			return false;
-		if (m_Letter == null) {
-			if (other.m_Letter != null)
+		}
+		if (mLetter == null) {
+			if (other.mLetter != null) {
 				return false;
-		} else if (!m_Letter.equals(other.m_Letter))
+			}
+		} else if (!mLetter.equals(other.mLetter)) {
 			return false;
-		if (m_LinPred == null) {
-			if (other.m_LinPred != null)
+		}
+		if (mLinPred == null) {
+			if (other.mLinPred != null) {
 				return false;
-		} else if (!m_LinPred.equals(other.m_LinPred))
+			}
+		} else if (!mLinPred.equals(other.mLinPred)) {
 			return false;
+		}
 		return true;
 	}
 	

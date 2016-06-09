@@ -37,16 +37,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.JVContextMenu;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelection;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;
-
-import org.eclipse.jface.viewers.ISelection;
-
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.MultiLayerTransformer;
 import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
@@ -77,7 +74,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (e.getButton() == MouseEvent.BUTTON3) {
-			JVContextMenu menu = new JVContextMenu(mEditorInput);
+			final JVContextMenu menu = new JVContextMenu(mEditorInput);
 			menu.show(e.getComponent(), e.getX(), e.getY());
 		}
 	}
@@ -102,12 +99,12 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 		}
 
 		// deselect elements
-		Iterator<IElement> elementIt = mSelectedElements.iterator();
+		final Iterator<IElement> elementIt = mSelectedElements.iterator();
 
 		// timing problem while refreshing picked state
 		while (elementIt.hasNext()) {
 
-			IElement currentElement = elementIt.next();
+			final IElement currentElement = elementIt.next();
 
 			if (currentElement instanceof VisualizationNode) {
 				mEditorInput.getViewer().getPickedVertexState().pick((VisualizationNode) currentElement, false);
@@ -126,11 +123,11 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 		}
 
 		// deselect elements
-		Iterator<IElement> elementIt = mSelectedElements.iterator();
+		final Iterator<IElement> elementIt = mSelectedElements.iterator();
 
 		while (elementIt.hasNext()) {
 
-			IElement currentElement = elementIt.next();
+			final IElement currentElement = elementIt.next();
 
 			if (currentElement instanceof VisualizationEdge) {
 				mEditorInput.getViewer().getPickedEdgeState().pick((VisualizationEdge) currentElement, false);
@@ -146,7 +143,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 		mSelectedElements.addAll(selectedEdges);
 		mSelectedElements.addAll(selectedNodes);
 
-		JungSelection sel = new JungSelection();
+		final JungSelection sel = new JungSelection();
 
 		if (selectedNodes.size() > 0) {
 			// clears the Node View, if more than one node selected
@@ -155,22 +152,22 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 				sel.setElement(null);
 			} else // shows Payload, if one node is selected
 			{
-				Iterator<VisualizationNode> nodeIt = selectedNodes.iterator();
-				final VisualizationNode currentNode = (VisualizationNode) nodeIt.next();
+				final Iterator<VisualizationNode> nodeIt = selectedNodes.iterator();
+				final VisualizationNode currentNode = nodeIt.next();
 				sel.setElement(currentNode);
 			}
 
-			this.mSelectionProvider.setSelection((ISelection) sel);
-			this.mSelectionProvider.fireSelectionEvent();
+			mSelectionProvider.setSelection(sel);
+			mSelectionProvider.fireSelectionEvent();
 		} else {
 
 			if (selectedEdges.size() == 1) {
-				VisualizationEdge currentEdge = selectedEdges.iterator().next();
+				final VisualizationEdge currentEdge = selectedEdges.iterator().next();
 				sel.setElement(currentEdge);
 
 			}
-			this.mSelectionProvider.setSelection((ISelection) sel);
-			this.mSelectionProvider.fireSelectionEvent();
+			mSelectionProvider.setSelection(sel);
+			mSelectionProvider.fireSelectionEvent();
 
 		}
 
@@ -196,7 +193,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	 * @return A set of selected nodes.
 	 */
 	public Set<VisualizationNode> getSelectedNodes() {
-		return this.selectedNodes;
+		return selectedNodes;
 	}
 
 	@Override

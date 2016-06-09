@@ -33,34 +33,34 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import pea.Phase;
 import pea.PhaseBits;
 import pea.PhaseEventAutomata;
@@ -147,7 +147,7 @@ public class Translator {
      * @param The input file name.
      */
     public void setInputFilePath(String path) {
-    	this.inputFilePath = path;
+		inputFilePath = path;
     }
     public String getInputFilePath() {
     	return inputFilePath;
@@ -158,14 +158,14 @@ public class Translator {
      * @param The address of a Boogie text file.
      */
     public void setBoogieFilePath(String path) {
-    	this.boogieFilePath = path;
+		boogieFilePath = path;
     }
     /**
      * 
      * @return The address of a Boogie text file.
      */
     public String getBoogieFilePath() {
-    	return this.boogieFilePath;
+		return boogieFilePath;
     }
     
     /**
@@ -175,7 +175,7 @@ public class Translator {
      * for the i-th property.
      */
     public void setVacuityChecks(BitSet vacuityChecks) {
-    	this.mVacuityChecks = vacuityChecks;
+		mVacuityChecks = vacuityChecks;
     }
     
     public boolean checkVacuity(int propertyNum) {
@@ -187,7 +187,7 @@ public class Translator {
      * @param num
      */
     public void setCombinationNum(int num) {
-    	this.combinationNum = num;
+		combinationNum = num;
     }
     
     /**
@@ -196,44 +196,40 @@ public class Translator {
     public void genGlobVars() {
     	
        try {
-          BoogieLocation blUnit = boogieLocations[0];
-          BoogieLocation blVar = blUnit;
-          BoogieLocation blPrimType = blUnit;
+			final BoogieLocation blUnit = boogieLocations[0];
+			final BoogieLocation blVar = blUnit;
+			final BoogieLocation blPrimType = blUnit;
          
-
-          for (int i = 0; i < this.automata.length; i++) { 
-        	    List<String> tempClocks = this.automata[i].getClocks();
+			for (int i = 0; i < automata.length; i++) {
+				final List<String> tempClocks = automata[i].getClocks();
         	  for (int j = 0; j < tempClocks.size(); j++) {  
-        	    this.clockIds.add(tempClocks.get(j));
+					clockIds.add(tempClocks.get(j));
               }            
           }
           ASTType astType = new PrimitiveType(blPrimType, "real"); 
-          VarList clockVars = new VarList(blVar, this.clockIds.toArray(new String[this.clockIds.size()]),
-          		  astType); 
+			final VarList clockVars = new VarList(blVar, clockIds.toArray(new String[clockIds.size()]), astType);
           
-          //generate program counters
-          List<String> extraVars = new ArrayList<String>();
-          for (int i = 0; i < this.automata.length; i++) {
-        	  this.pcIds.add("pc"+i);
+			final List<String> extraVars = new ArrayList<String>();
+			for (int i = 0; i < automata.length; i++) {
+				pcIds.add("pc" + i);
         	  extraVars.add("pc"+i);
           }
           astType = new PrimitiveType(blPrimType, "int");
-          VarList pcVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]),
-        		  astType);
+			final VarList pcVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]), astType);
           
           //collect global vars from system states
           boolean visited = false;
-          for (int i = 0; i < this.automata.length; i++) {
+			for (int i = 0; i < automata.length; i++) {
         	  // System.out.println(this.automata[i].getVariables().size());
 
-        	  Map<String, String> map = this.automata[i].getVariables();
+				final Map<String, String> map = automata[i].getVariables();
     	    
-      		  for( String name: map.keySet() ) {
+				for (final String name : map.keySet()) {
       			  //every var that is not an event var must be a state var, as clocks
       			  //are stored seperately
       			  if (!map.get(name).equals("event")){
-    	    		  for (int j = 0; j < this.stateVars.size(); j++) { 
-    	    			  if (name.equals(this.stateVars.get(j))) {
+						for (int j = 0; j < stateVars.size(); j++) {
+							if (name.equals(stateVars.get(j))) {
     	    				  visited = true;
     	    				  break; 
     	    			  }
@@ -244,14 +240,14 @@ public class Translator {
     	    		  }
 
     	    	  } else {
-    	    		  for (int j = 0; j < this.eventVars.size(); j++) { 
-    	    			  if (name.equals(this.eventVars.get(j))) {
+						for (int j = 0; j < eventVars.size(); j++) {
+							if (name.equals(eventVars.get(j))) {
     	    				  visited = true;
     	    				  break;
     	    			  }
     	    		  }
     	    		  if (!visited) {
-    	    			  this.eventVars.add(name);
+							eventVars.add(name);
     	    		  }
     	    	  }
     	    	  visited = false; 
@@ -260,15 +256,15 @@ public class Translator {
           extraVars.clear();
           extraVars.add("delta");
           astType = new PrimitiveType(blPrimType, "real");
-          VarList deltaVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]),
-        		  astType);
-          List<VarList> varList = new ArrayList<VarList>();
-          if (!this.clockIds.isEmpty())
+			final VarList deltaVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]), astType);
+			final List<VarList> varList = new ArrayList<VarList>();
+			if (!clockIds.isEmpty()) {
         	  varList.add(clockVars);
+			}
           varList.add(pcVar);
           varList.add(deltaVar);
           
-          if (this.stateVars.size() != 0) {
+			if (stateVars.size() != 0) {
         	  for(String name : this.stateVars.keySet()){
 	              astType = new PrimitiveType(blPrimType, this.stateVars.get(name)); 
 	              List<String> stVarsList = new ArrayList<String>();
@@ -287,20 +283,18 @@ public class Translator {
         	  }
           }
           
-          if (this.eventVars.size() != 0) {
+			if (eventVars.size() != 0) {
               astType = new PrimitiveType(blPrimType, "bool"); 
-              VarList evVars = new VarList(blVar, this.eventVars.toArray(new String[this.eventVars.size()]),
-              		  astType); 
+				final VarList evVars = new VarList(blVar, eventVars.toArray(new String[eventVars.size()]), astType);
         	  varList.add(evVars);
           }
-          Attribute[] attribute = new Attribute[0];
-          VariableDeclaration vars = new VariableDeclaration(blVar, attribute,
+			final Attribute[] attribute = new Attribute[0];
+			final VariableDeclaration vars = new VariableDeclaration(blVar, attribute,
         		  varList.toArray(new VarList[varList.size()]));
-          this.decList.add(vars);
-          Declaration[]  decArray = this.decList.toArray(new Declaration[this.decList.size()]);
-          this.unit = new Unit (blUnit, decArray);
-       }
-       catch (Exception e) {
+			decList.add(vars);
+			final Declaration[] decArray = decList.toArray(new Declaration[decList.size()]);
+			unit = new Unit(blUnit, decArray);
+		} catch (final Exception e) {
     	   e.printStackTrace();
        }
     }
@@ -311,9 +305,10 @@ public class Translator {
      * @return the CNF of a list of expressions.
      */
     public Expression genConjunction (List<Expression> exprs, BoogieLocation bl) {
-    	Iterator<Expression> it = exprs.iterator();
-    	if (!it.hasNext())
+		final Iterator<Expression> it = exprs.iterator();
+		if (!it.hasNext()) {
     		return new BooleanLiteral(bl, true);
+		}
     	Expression cnf = it.next();
     	while (it.hasNext()) {
     		cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
@@ -328,9 +323,10 @@ public class Translator {
      * @return the CNF of a list of expressions.
      */
     public Expression genDisjunction (List<Expression> exprs, BoogieLocation bl) {
-    	Iterator<Expression> it = exprs.iterator();
-    	if (!it.hasNext())
+		final Iterator<Expression> it = exprs.iterator();
+		if (!it.hasNext()) {
     		return new BooleanLiteral(bl, false);
+		}
     	Expression cnf = it.next();
     	while (it.hasNext()) {
     		cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR,
@@ -345,17 +341,16 @@ public class Translator {
      * @return time passing statement. 
      */
     public Statement genClockPlusDelta(String clockId, BoogieLocation bl) {
-	    VariableLHS clockVar = new VariableLHS(bl, clockId);
+		final VariableLHS clockVar = new VariableLHS(bl, clockId);
 	    
-	    IdentifierExpression clockID = new IdentifierExpression(bl, clockId);
-	    IdentifierExpression deltaID = new IdentifierExpression(bl, "delta");
-	    BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.ARITHPLUS,
-	    		clockID, deltaID);
-	    LeftHandSide[] lhs = new LeftHandSide[1];
+		final IdentifierExpression clockID = new IdentifierExpression(bl, clockId);
+		final IdentifierExpression deltaID = new IdentifierExpression(bl, "delta");
+		final BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.ARITHPLUS, clockID, deltaID);
+		final LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = clockVar;
-	    Expression[] expr = new Expression[1];
+		final Expression[] expr = new Expression[1];
 	    expr[0] = binaryExpr;
-	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
+		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
@@ -374,27 +369,27 @@ public class Translator {
      */
     public Statement[] genDelay(BoogieLocation bl) {
     	
-    	List<VariableLHS> havocIds = new ArrayList<VariableLHS>();
-    	for (int i = 0; i < this.primedVars.size(); i++) {
-    		havocIds.add(new VariableLHS(bl, this.primedVars.get(i)));
+		final List<VariableLHS> havocIds = new ArrayList<VariableLHS>();
+		for (int i = 0; i < primedVars.size(); i++) {
+			havocIds.add(new VariableLHS(bl, primedVars.get(i)));
     	}
-    	for (int i = 0; i < this.eventVars.size(); i++) {
-    		havocIds.add(new VariableLHS(bl, this.eventVars.get(i)));
+		for (int i = 0; i < eventVars.size(); i++) {
+			havocIds.add(new VariableLHS(bl, eventVars.get(i)));
     	}
     	havocIds.add(new VariableLHS(bl, "delta"));   	
-     	VariableLHS[] ids =  havocIds.toArray(new VariableLHS[havocIds.size()]);
-     	HavocStatement havocSmt = new HavocStatement(bl, ids);    	
-	    IdentifierExpression identifier = new IdentifierExpression(bl, "delta");
-	    RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
-	    BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPGT,
-	    		identifier, realLiteral);
-    	AssumeStatement assumeDelta = new AssumeStatement(bl, binaryExpr);
+		final VariableLHS[] ids = havocIds.toArray(new VariableLHS[havocIds.size()]);
+		final HavocStatement havocSmt = new HavocStatement(bl, ids);
+		final IdentifierExpression identifier = new IdentifierExpression(bl, "delta");
+		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
+		final BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPGT, identifier,
+				realLiteral);
+		final AssumeStatement assumeDelta = new AssumeStatement(bl, binaryExpr);
     	
-    	Statement[] smtArray = new Statement[this.clockIds.size()];
-    	for (int i = 0; i < this.clockIds.size(); i++) {
-    		smtArray[i] = genClockPlusDelta(this.clockIds.get(i), bl);
+		final Statement[] smtArray = new Statement[clockIds.size()];
+		for (int i = 0; i < clockIds.size(); i++) {
+			smtArray[i] = genClockPlusDelta(clockIds.get(i), bl);
     	}    	  	
-    	Statement[] statements = new Statement[smtArray.length + 2];
+		final Statement[] statements = new Statement[smtArray.length + 2];
     	statements[0] = havocSmt;
     	statements[1] = assumeDelta;
     	for (int i = 2; i < statements.length; i++) {
@@ -412,11 +407,9 @@ public class Translator {
      * @return
      */
     public Expression genComparePhaseCounter (int phaseIndex, int autIndex, BoogieLocation bl) {
-    	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
-    	IntegerLiteral intLiteral = new IntegerLiteral(bl, 
-    			Integer.toString(phaseIndex));
-    	BinaryExpression ifCon = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
-    			identifier, intLiteral);
+		final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
+		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
+		final BinaryExpression ifCon = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
     	return ifCon;
     }
     /**
@@ -427,29 +420,27 @@ public class Translator {
      */
     public Statement[] genCheckPhaseInvariant(Phase phase, BoogieLocation bl) {
  	    Expression expr	= new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(),getBoogieFilePath(), bl);
-     	AssumeStatement assumeClInv = new AssumeStatement(bl, expr);
+		final AssumeStatement assumeClInv = new AssumeStatement(bl, expr);
      	expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(),getBoogieFilePath(), bl);
-     	AssumeStatement assumeStateInv = new AssumeStatement(bl, expr);
-     	Statement[] statements = new Statement[2];
+		final AssumeStatement assumeStateInv = new AssumeStatement(bl, expr);
+		final Statement[] statements = new Statement[2];
     	statements[0] = assumeClInv;
     	statements[1] = assumeStateInv;
     	return statements;
     }
     public Statement joinIfSmts (Statement[] statements, BoogieLocation bl) {
     	
-    	List<Statement> smtList = new ArrayList<Statement>();
+		final List<Statement> smtList = new ArrayList<Statement>();
     	for (int i = 0; i < statements.length; i++) {
-    		IfStatement oldIfSmt = (IfStatement)statements[i];
+			final IfStatement oldIfSmt = (IfStatement) statements[i];
     		if (smtList.size() == 0) {
-    	     Statement[] emptyArray = new Statement[0];
-           	 IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
-           			  oldIfSmt.getThenPart(), emptyArray);	
+				final Statement[] emptyArray = new Statement[0];
+				final IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), oldIfSmt.getThenPart(), emptyArray);
            	smtList.add(newIfSmt);
     		} else {
-    			Statement[] smt = new Statement[1];
+				final Statement[] smt = new Statement[1];
     			smt[0] = smtList.get(smtList.size()-1);
-              	IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
-              			  oldIfSmt.getThenPart(), smt);
+				final IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), oldIfSmt.getThenPart(), smt);
               	smtList.add(newIfSmt);
     		}
     	}
@@ -458,22 +449,20 @@ public class Translator {
     }
     public Statement joinInnerIfSmts (Statement[] statements, BoogieLocation bl) {
     	
-    	List<Statement> smtList = new ArrayList<Statement>();
+		final List<Statement> smtList = new ArrayList<Statement>();
     	for (int i = 0; i < statements.length; i++) {
-    		IfStatement oldIfSmt = (IfStatement)statements[i];
+			final IfStatement oldIfSmt = (IfStatement) statements[i];
     		if (smtList.size() == 0) {
-    	     BooleanLiteral bLiteral = new BooleanLiteral(bl, false);
-    	     AssumeStatement assumeFalse = new AssumeStatement(bl, bLiteral);	
-    	     Statement[] smt = new Statement[1];
+				final BooleanLiteral bLiteral = new BooleanLiteral(bl, false);
+				final AssumeStatement assumeFalse = new AssumeStatement(bl, bLiteral);
+				final Statement[] smt = new Statement[1];
     	     smt[0] = assumeFalse;
-    	     IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
-           			  oldIfSmt.getThenPart(), smt);	
+				final IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), oldIfSmt.getThenPart(), smt);
            	smtList.add(newIfSmt);
     		} else {
-    			Statement[] smt = new Statement[1];
+				final Statement[] smt = new Statement[1];
     			smt[0] = smtList.get(smtList.size()-1);
-              	IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
-              			  oldIfSmt.getThenPart(), smt);
+				final IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), oldIfSmt.getThenPart(), smt);
               	smtList.add(newIfSmt);
     		}
     	}
@@ -492,41 +481,38 @@ public class Translator {
      */
     public Statement genCheckInvariants(PhaseEventAutomata automaton, int autIndex, BoogieLocation bl) {
     	
-    	Phase[] phases = automaton.getPhases();
-    	Statement[] statements = new Statement[phases.length];
+		final Phase[] phases = automaton.getPhases();
+		final Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-    		Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
-    		Statement [] emptyArray = new Statement[0];
-			IfStatement ifStatement = new IfStatement(bl, ifCon, 
-    				genCheckPhaseInvariant(phases[i],bl), emptyArray);
+			final Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
+			final Statement[] emptyArray = new Statement[0];
+			final IfStatement ifStatement = new IfStatement(bl, ifCon, genCheckPhaseInvariant(phases[i], bl), emptyArray);
     		statements[i] = ifStatement;
     	}
-    	Statement statement = joinIfSmts(statements, bl);
+		final Statement statement = joinIfSmts(statements, bl);
     	return statement;
     }
     public Statement genReset(String resetVar, BoogieLocation bl) {
-	    VariableLHS reset = new VariableLHS(bl, resetVar);
+		final VariableLHS reset = new VariableLHS(bl, resetVar);
      	
-    	RealLiteral realLiteral = new RealLiteral(bl, 
-    			Double.toString(0.0));
-	    LeftHandSide[] lhs = new LeftHandSide[1];
+		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
+		final LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = reset;
-	    Expression[] expr = new Expression[1];
+		final Expression[] expr = new Expression[1];
 	    expr[0] = realLiteral;
-	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
+		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
     public Statement genPCAssign(int autIndex, int phaseIndex, BoogieLocation bl) {
-	    VariableLHS pc = new VariableLHS(bl, "pc"+autIndex);
+		final VariableLHS pc = new VariableLHS(bl, "pc" + autIndex);
      	
-    	IntegerLiteral intLiteral = new IntegerLiteral(bl, 
-    			Integer.toString(phaseIndex));
-	    LeftHandSide[] lhs = new LeftHandSide[1];
+		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
+		final LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = pc;
-	    Expression[] expr = new Expression[1];
+		final Expression[] expr = new Expression[1];
 	    expr[0] = intLiteral;
-	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
+		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
@@ -534,60 +520,60 @@ public class Translator {
     public Statement[] genInnerIfBody(PhaseEventAutomata automaton, Transition transition, 
     		int autIndex, BoogieLocation bl) {
            	
-    	List<Statement> smtList = new ArrayList<Statement>();
+		final List<Statement> smtList = new ArrayList<Statement>();
     //	StringLiteral strLiteral = new StringLiteral(blAssumeGuard, 
   	//    		CDDTranslation.CDD_To_Boogie(transition.getGuard()));
-    	Expression expr	= new CDDTranslator().CDD_To_Boogie(transition.getGuard(),getBoogieFilePath(),
-    			bl);
-      	AssumeStatement assumeGuard = new AssumeStatement(bl, expr);     	 
+		final Expression expr = new CDDTranslator().CDD_To_Boogie(transition.getGuard(), getBoogieFilePath(), bl);
+		final AssumeStatement assumeGuard = new AssumeStatement(bl, expr);
       	smtList.add(assumeGuard);
         if (transition.getResets().length != 0) {
-        	String[] resets = transition.getResets();
+			final String[] resets = transition.getResets();
         	for (int i = 0; i < resets.length; i++) {
         		smtList.add(genReset(resets[i], bl));
         	} 
         }
-        Phase desPhase = transition.getDest();
-        Phase[] phases = automaton.getPhases();
+		final Phase desPhase = transition.getDest();
+		final Phase[] phases = automaton.getPhases();
         int phaseIndex = -1;
         for (int i = 0; i < phases.length; i++) {
-        	if (phases[i].getName().equals(desPhase.getName())) phaseIndex = i;
-        }
+			if (phases[i].getName().equals(desPhase.getName())) {
+				phaseIndex = i;
+			}
+		}
         smtList.add(genPCAssign(autIndex, phaseIndex, bl));
         
-        Statement[] statements = smtList.toArray(new Statement[smtList.size()]);
+		final Statement[] statements = smtList.toArray(new Statement[smtList.size()]);
     	return statements;
     }
     
     public Statement genOuterIfBody(PhaseEventAutomata automaton, Phase phase, int autIndex, BoogieLocation bl) {
     	
-    	Statement[] statements = new Statement[phase.getTransitions().size()];
-    	List<Transition> transitions = phase.getTransitions();
+		final Statement[] statements = new Statement[phase.getTransitions().size()];
+		final List<Transition> transitions = phase.getTransitions();
     	for (int i = 0; i < transitions.size(); i++) {
-          WildcardExpression wce = new WildcardExpression(bl);
-       	  Statement[] emptyArray = new Statement[0];
-       	  IfStatement ifStatement = new IfStatement(bl, wce, 
+			final WildcardExpression wce = new WildcardExpression(bl);
+			final Statement[] emptyArray = new Statement[0];
+			final IfStatement ifStatement = new IfStatement(bl, wce,
        			 genInnerIfBody(automaton, transitions.get(i), autIndex, bl), emptyArray);
        	 statements[i] = ifStatement;
       	}
-    	Statement statement = joinInnerIfSmts(statements, bl);
+		final Statement statement = joinInnerIfSmts(statements, bl);
     	
     	return statement;
     } 
     public Statement genOuterIfTransition(PhaseEventAutomata automaton, int autIndex, BoogieLocation bl) {
 	   	
-    	Phase[] phases = automaton.getPhases();
-    	Statement[] statements = new Statement[phases.length];
+		final Phase[] phases = automaton.getPhases();
+		final Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-     	  Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
-     	  Statement[] emptyArray = new Statement[0];
-     	  Statement[] outerIfBodySmt = new Statement[1];
+			final Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
+			final Statement[] emptyArray = new Statement[0];
+			final Statement[] outerIfBodySmt = new Statement[1];
      	  outerIfBodySmt[0] = genOuterIfBody(automaton, phases[i], autIndex, bl);
-     	  IfStatement ifStatement = new IfStatement(bl, ifCon, 
-     			 outerIfBodySmt, emptyArray);
+			final IfStatement ifStatement = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
      	 statements[i] = ifStatement;
     	}
-    	Statement statement = joinIfSmts(statements, bl);
+		final Statement statement = joinIfSmts(statements, bl);
     	
     	return statement;
     }
@@ -598,22 +584,23 @@ public class Translator {
     	IdentifierExpression rhs = new IdentifierExpression(bl, name+"'");
  	    LeftHandSide[] lhs = new LeftHandSide[1];
  	    lhs[0] = lhsVar;
-	    Expression[] expr = new Expression[1];
+			final Expression[] expr = new Expression[1];
 	    expr[0] = rhs;
- 	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
+			final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
  	    statements.add(assignment);
       }
     	return statements;
     }
     public Statement genAssertRTInconsistency(int[] permutation, BoogieLocation bl) {
-     	ConditionGenerator conGen = new ConditionGenerator();
+		final ConditionGenerator conGen = new ConditionGenerator();
      	conGen.setTranslator(this);
-     	Expression expr = conGen.nonDLCGenerator(this.automata, permutation, 
-     			getBoogieFilePath(), bl);
-     	if (expr == null) return null;
-     	ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.RTINCONSISTENT, permutation, this);
-     	ReqLocation loc = new ReqLocation(check);
- 	    AssertStatement assertSmt = new AssertStatement(loc, expr);
+		final Expression expr = conGen.nonDLCGenerator(automata, permutation, getBoogieFilePath(), bl);
+		if (expr == null) {
+			return null;
+		}
+		final ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.RTINCONSISTENT, permutation, this);
+		final ReqLocation loc = new ReqLocation(check);
+		final AssertStatement assertSmt = new AssertStatement(loc, expr);
     	return assertSmt;
     }
     /**
@@ -628,36 +615,39 @@ public class Translator {
      */
     private Statement genAssertNonVacuous(PhaseEventAutomata pea,
 			int automatonIndex, BoogieLocation bl) {
-    	Phase[] phases = pea.getPhases();
+		final Phase[] phases = pea.getPhases();
 
     	// compute the maximal phase number occurring in the automaton. 
     	int maxBits = 0;
-    	for (Phase phase : phases) {
-    		PhaseBits bits = phase.getPhaseBits();
+		for (final Phase phase : phases) {
+			final PhaseBits bits = phase.getPhaseBits();
 			// ignore start node when computing max phase 
     		if (bits != null) {
-    			int act = bits.getActive();
+				final int act = bits.getActive();
 	    		if (act > maxBits) {
 	    			maxBits = act;
 	    		}
     		}
     	}
     	int pnr = 0;
-    	while ((1 << pnr) <= maxBits)
+		while ((1 << pnr) <= maxBits) {
     		pnr++;
+		}
     	
     	// check that one of those phases is eventually reached.
-    	List<Expression> checkReached = new ArrayList<Expression>();
+		final List<Expression> checkReached = new ArrayList<Expression>();
     	for (int i = 0; i < phases.length; i++) {
-    		PhaseBits bits = phases[i].getPhaseBits();
-    		if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0)
+			final PhaseBits bits = phases[i].getPhaseBits();
+			if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0) {
     			checkReached.add(genComparePhaseCounter(i, automatonIndex, bl));
-    	}
-    	if (checkReached.isEmpty())
+			}
+		}
+		if (checkReached.isEmpty()) {
     		return null;
-		Expression disjunction = genDisjunction(checkReached, bl);
-		ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.VACUOUS, new int[] {automatonIndex}, this);
-		ReqLocation loc = new ReqLocation(check);
+		}
+		final Expression disjunction = genDisjunction(checkReached, bl);
+		final ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.VACUOUS, new int[] { automatonIndex }, this);
+		final ReqLocation loc = new ReqLocation(check);
 		return new AssertStatement(loc, disjunction);
 	}
     /**
@@ -678,30 +668,34 @@ public class Translator {
     	List<Statement> stmtList = new ArrayList<Statement>();
     	stmtList.addAll(Arrays.asList(genDelay(bl)));
        
-    	for (int i = 0; i < this.automata.length; i++) {    
-    	    stmtList.add(genCheckInvariants(this.automata[i], i, bl));   	    
+		for (int i = 0; i < automata.length; i++) {
+			stmtList.add(genCheckInvariants(automata[i], i, bl));
     	}
-    	int[] automataIndices = new int[automata.length];
-    	for(int i = 0; i < this.automata.length; i++) {
+		final int[] automataIndices = new int[automata.length];
+		for (int i = 0; i < automata.length; i++) {
     		automataIndices[i] = i;
     	}
-    	for (int[] subset : new Permutation().subArrays(automataIndices, this.combinationNum)) {
-    		Statement assertStmt = genAssertRTInconsistency(subset, bl);
-    		if (assertStmt != null)
+		for (final int[] subset : new Permutation().subArrays(automataIndices, combinationNum)) {
+			final Statement assertStmt = genAssertRTInconsistency(subset, bl);
+			if (assertStmt != null) {
     			stmtList.add(assertStmt);
-    	}
-    	for (int i = 0; i < this.automata.length; i++) {
+			}
+		}
+		for (int i = 0; i < automata.length; i++) {
     		if (checkVacuity(i)) {
-        		Statement assertStmt = genAssertNonVacuous(this.automata[i], i, bl);
-        		if (assertStmt != null)
+				final Statement assertStmt = genAssertNonVacuous(automata[i], i, bl);
+				if (assertStmt != null) {
         			stmtList.add(assertStmt);
-    		}
+				}
+			}
+		}
+
+
+		for (int i = 0; i < automata.length; i++) {
+			stmtList.add(genOuterIfTransition(automata[i], i, bl));
     	}
-    	for (int i = 0; i < this.automata.length; i++) { 
-    		stmtList.add(genOuterIfTransition(this.automata[i], i, bl));   	    
-    	}
-   	    if (this.stateVars.size() != 0) {
-   	    	List<Statement> stateVarsAssigns = genStateVarsAssign(bl);
+		if (stateVars.size() != 0) {
+			final List<Statement> stateVarsAssigns = genStateVarsAssign(bl);
    	    	for (int i = 0; i < stateVarsAssigns.size(); i++) {
    	    		stmtList.add(stateVarsAssigns.get(i));
    	    	} 
@@ -722,14 +716,13 @@ public class Translator {
      *        The while-statement.
      */
     public Statement genWhileSmt (BoogieLocation bl) {
-    	WildcardExpression wce = new WildcardExpression(bl);
-    	LoopInvariantSpecification[] invariants = new LoopInvariantSpecification[0];
-    	WhileStatement whileStatement = new WhileStatement(bl, wce,invariants, 
-    			genWhileBody (bl));
+		final WildcardExpression wce = new WildcardExpression(bl);
+		final LoopInvariantSpecification[] invariants = new LoopInvariantSpecification[0];
+		final WhileStatement whileStatement = new WhileStatement(bl, wce, invariants, genWhileBody(bl));
     	return whileStatement;
     }
     public Expression genPcExpr(Phase[] phases,Phase[] initialPhases, int autIndex, BoogieLocation bl) {
-    	List<Expression> exprList = new ArrayList<Expression>();
+		final List<Expression> exprList = new ArrayList<Expression>();
     	for (int i = 0; i < phases.length; i++) {
     		for (int j = 0; j < initialPhases.length; j++) {
     			if (phases[i].getName().equals(initialPhases[j].getName())) {
@@ -740,8 +733,8 @@ public class Translator {
     	}
     	for (int i = 0; i < phases.length; i++) {
 	      if (phases[i].isInit) {	
- 	     	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
- 	     	IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(i));
+				final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
+				final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(i));
  	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
  	     			identifier, intLiteral);
     		if (exprList.size() == 0) {
@@ -756,31 +749,31 @@ public class Translator {
     	return exprList.get(exprList.size()-1);
     } 
     public Statement[] genInitialPhasesSmts (BoogieLocation bl) {
-    	VariableLHS[] ids = new VariableLHS[this.pcIds.size()];
-    	for (int i = 0; i < this.pcIds.size(); i++) {
-    		ids[i] = new VariableLHS(bl, this.pcIds.get(i));
+		final VariableLHS[] ids = new VariableLHS[pcIds.size()];
+		for (int i = 0; i < pcIds.size(); i++) {
+			ids[i] = new VariableLHS(bl, pcIds.get(i));
     	}
-    	HavocStatement pcHavoc = new HavocStatement(bl, ids);
+		final HavocStatement pcHavoc = new HavocStatement(bl, ids);
     	
-    	List<Expression> pcExprs = new ArrayList<Expression>();
-    	for (int i = 0; i < this.automata.length; i++) {
-    		pcExprs.add(genPcExpr(this.automata[i].getPhases(), this.automata[i].getInit(), i, bl));
+		final List<Expression> pcExprs = new ArrayList<Expression>();
+		for (int i = 0; i < automata.length; i++) {
+			pcExprs.add(genPcExpr(automata[i].getPhases(), automata[i].getInit(), i, bl));
     	}
     	
-    	AssumeStatement assumeSmt = new AssumeStatement(bl, genConjunction(pcExprs, bl));
+		final AssumeStatement assumeSmt = new AssumeStatement(bl, genConjunction(pcExprs, bl));
     	
-    	Statement[] statements = new Statement[2];
+		final Statement[] statements = new Statement[2];
     	statements[0] = pcHavoc;
     	statements[1] = assumeSmt;
     	return statements;
     }
     public Expression genClockInit (BoogieLocation bl) {
     	Expression initializer = null;
-    	for (int i = 0; i < this.clockIds.size(); i++) {
- 	     	IdentifierExpression identifier = new IdentifierExpression(bl, this.clockIds.get(i));
- 	     	RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0));
- 	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
- 	     			identifier, realLiteral);
+		for (int i = 0; i < clockIds.size(); i++) {
+			final IdentifierExpression identifier = new IdentifierExpression(bl, clockIds.get(i));
+			final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0));
+			final BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier,
+					realLiteral);
     		if (initializer == null) {
     			initializer = binaryExpr;
     		} else {
@@ -788,22 +781,24 @@ public class Translator {
      	     			initializer, binaryExpr);
     		}
     	}
-    	if (initializer == null)
+		if (initializer == null) {
     		initializer = new BooleanLiteral(bl, true);
+		}
     	return initializer;
     }
     public Statement[] genClockInitSmts (BoogieLocation bl) {
     	if (clockIds.isEmpty()) {
     		return new Statement[0];
     	}
-    	VariableLHS[] clocks = new VariableLHS[clockIds.size()];
+		final VariableLHS[] clocks = new VariableLHS[clockIds.size()];
     	int i=0;
-    	for (String clkId : this.clockIds)
+		for (final String clkId : clockIds) {
     		clocks[i++] = new VariableLHS(bl, clkId);
-     	HavocStatement clockHavoc = new HavocStatement(bl, clocks); 
-     	AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
+		}
+		final HavocStatement clockHavoc = new HavocStatement(bl, clocks);
+		final AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
      	
-     	Statement[] statements = new Statement[2];
+		final Statement[] statements = new Statement[2];
      	statements[0] = clockHavoc;
      	statements[1] = assumeSmt;
 
@@ -819,7 +814,7 @@ public class Translator {
      *        Statements of the procedure body which includes one assignment and one while-statement.
      */
     public Statement[] genProcBodySmts (BoogieLocation bl) {
-    	List<Statement> statements = new ArrayList<Statement>();
+		final List<Statement> statements = new ArrayList<Statement>();
     	statements.addAll(Arrays.asList(genInitialPhasesSmts (bl)));
     	statements.addAll(Arrays.asList(genClockInitSmts (bl)));
     	statements.add(genWhileSmt(bl));
@@ -830,15 +825,15 @@ public class Translator {
      * The unit is sent to the print process. The result is a Boogie text file. 
      */
     public Unit genProc () {
-    	BoogieLocation bl = boogieLocations[0];
-        VariableDeclaration[] localVars = new VariableDeclaration[0];
-        Body body = new Body(bl, localVars, genProcBodySmts (bl));         
-        List<String> modifiedVarsList = new ArrayList<String>();
-        for (int i = 0; i < this.clockIds.size(); i++) {
-        	modifiedVarsList.add(this.clockIds.get(i));
+		final BoogieLocation bl = boogieLocations[0];
+		final VariableDeclaration[] localVars = new VariableDeclaration[0];
+		final Body body = new Body(bl, localVars, genProcBodySmts(bl));
+		final List<String> modifiedVarsList = new ArrayList<String>();
+		for (int i = 0; i < clockIds.size(); i++) {
+			modifiedVarsList.add(clockIds.get(i));
         }
-        for (int i = 0; i < this.pcIds.size(); i++) {
-        	modifiedVarsList.add(this.pcIds.get(i));
+		for (int i = 0; i < pcIds.size(); i++) {
+			modifiedVarsList.add(pcIds.get(i));
         }
         modifiedVarsList.add("delta");
         
@@ -847,30 +842,31 @@ public class Translator {
         	modifiedVarsList.add(name+"'");
         }
         
-        for (int i = 0; i < this.eventVars.size(); i++) {
-        	modifiedVarsList.add(this.eventVars.get(i));
+		for (int i = 0; i < eventVars.size(); i++) {
+			modifiedVarsList.add(eventVars.get(i));
         }
-        VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
+		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
         for (int i = 0; i < modifiedVars.length; i++) {
         	modifiedVars[i] = new VariableLHS(bl, modifiedVarsList.get(i));
         }       
-        ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
-        ModifiesSpecification[] modArray = new ModifiesSpecification[1];
+		final ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
+		final ModifiesSpecification[] modArray = new ModifiesSpecification[1];
         modArray[0] = mod;
-        Attribute[] attribute = new Attribute[0];
-        String[] typeParams = new String[0];
-        VarList[] inParams = new VarList[0];
-        VarList[] outParams = new VarList[0];
-        Procedure proc = new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
+		final Attribute[] attribute = new Attribute[0];
+		final String[] typeParams = new String[0];
+		final VarList[] inParams = new VarList[0];
+		final VarList[] outParams = new VarList[0];
+		final Procedure proc = new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
         decList.add(proc);
-        Declaration[] decArray = decList.toArray(new Declaration[decList.size()]); 
+		final Declaration[] decArray = decList.toArray(new Declaration[decList.size()]);
         unit.setDeclarations(decArray);
         return unit;
   }  
 
     public void initBoogieLocations(int count) {
-    	if (inputFilePath == null)
+		if (inputFilePath == null) {
     		inputFilePath = boogieFilePath;
+		}
     	boogieLocations = new BoogieLocation[count+1];
 		boogieLocations[0] =
 				new BoogieLocation(inputFilePath, 1, count, 0, 100, false);
@@ -885,7 +881,7 @@ public class Translator {
     }
     
     public Unit genBoogie (PatternType[] patterns) {
-    	this.mRequirements = patterns;
+		mRequirements = patterns;
 		return genBoogie(new ReqToPEA().genPEA(patterns));
     }
     

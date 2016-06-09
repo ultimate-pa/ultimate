@@ -32,9 +32,6 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
 
 import java.util.HashSet;
 
-import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.PrintEdgeVisitor;
@@ -43,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnno
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -50,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import junit.framework.TestCase;
 
 /**
  * After the first step of BlockEncoding we have a new model, which have to be
@@ -76,7 +75,7 @@ public class TestMinModelConversion extends TestCase {
 
 	private RCFGNode rcfgNode;
 
-	private Logger logger;
+	private ILogger logger;
 	
 	private HashSet<RCFGEdge> visitedEdges;
 
@@ -100,10 +99,10 @@ public class TestMinModelConversion extends TestCase {
 		// model
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			ProgramPoint methodEntryPoint = (ProgramPoint) edge.getTarget();
+			final ProgramPoint methodEntryPoint = (ProgramPoint) edge.getTarget();
 			assertNotNull(methodEntryPoint.getIncomingEdges());
 			// It can happen that while minimizing we already created an
 			// Min.Node we have to use here
@@ -122,7 +121,7 @@ public class TestMinModelConversion extends TestCase {
 		}
 		// Now the minimized model is initialized, so we can perform the
 		// conversion with the MinModelConverter
-		RootNode convRoot = minModelConverter
+		final RootNode convRoot = minModelConverter
 				.startConversion((RootNode) rcfgNode);
 		// now we compare the original and the converted one, it should be
 		// exactly the same (semantically)!
@@ -143,10 +142,10 @@ public class TestMinModelConversion extends TestCase {
 		// We iterate over the outgoing edges of the corresponding root nodes
 		for (int i = 0; i < origRoot.getOutgoingEdges().size(); i++) {
 			assertTrue(origRoot.getOutgoingEdges().get(i).getTarget() instanceof ProgramPoint);
-			ProgramPoint oFuncEntry = (ProgramPoint) origRoot
+			final ProgramPoint oFuncEntry = (ProgramPoint) origRoot
 					.getOutgoingEdges().get(i).getTarget();
 			assertTrue(convRoot.getOutgoingEdges().get(i).getTarget() instanceof ProgramPoint);
-			ProgramPoint cFuncEntry = (ProgramPoint) convRoot
+			final ProgramPoint cFuncEntry = (ProgramPoint) convRoot
 					.getOutgoingEdges().get(i).getTarget();
 			// we can do a check with equals, since this is overwritten
 			assertEquals(oFuncEntry, cFuncEntry);
@@ -172,8 +171,8 @@ public class TestMinModelConversion extends TestCase {
 			return;
 		}
 		for (int i = 0; i < oNode.getOutgoingEdges().size(); i++) {
-			RCFGEdge oEdge = oNode.getOutgoingEdges().get(i);
-			RCFGEdge cEdge = cNode.getOutgoingEdges().get(i);
+			final RCFGEdge oEdge = oNode.getOutgoingEdges().get(i);
+			final RCFGEdge cEdge = cNode.getOutgoingEdges().get(i);
 			// if already visited the edges, we stop...
 			if (visitedEdges.contains(oEdge)) {
 				assertTrue(visitedEdges.contains(cEdge));

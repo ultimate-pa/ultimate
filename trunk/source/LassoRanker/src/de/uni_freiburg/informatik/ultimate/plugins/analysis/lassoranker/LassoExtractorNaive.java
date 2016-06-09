@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class LassoExtractorNaive extends AbstractLassoExtractor {
 
 	public LassoExtractorNaive(RootNode rootNode) {
-		List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
+		final List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
 		ProgramPoint firstNode = null;
 		boolean programStemsFromCacslTranslation = false;
 		boolean atLeastOneInappropriateSuccessor = false;
 		int i = 0;
-		for (RCFGNode succ : rootSucc) {
-			ProgramPoint pp = (ProgramPoint) succ;
+		for (final RCFGNode succ : rootSucc) {
+			final ProgramPoint pp = (ProgramPoint) succ;
 			if (isProgramPointOfInitProcedure(pp)) {
 				programStemsFromCacslTranslation = true;
 			} else if (isProgramPointOfStartProcedure(pp)) {
@@ -65,89 +65,89 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 		}
 		assert (i<=3 || atLeastOneInappropriateSuccessor);
 		if (atLeastOneInappropriateSuccessor) {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = firstNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = firstNode;
 			return;
 		}
 		if (firstNode == null) {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = rootNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = rootNode;
 			return;
 		}
-		List<RCFGEdge> firstSucc = firstNode.getOutgoingEdges();
+		final List<RCFGEdge> firstSucc = firstNode.getOutgoingEdges();
 		if (firstSucc.size() == 1) {
 			// this edge be the stem, the next node must be the honda
-			CodeBlock stemCodeBlock = (CodeBlock) firstSucc.get(0);
-			m_Honda = (ProgramPoint) stemCodeBlock.getTarget();
-			m_Stem = constructNestedWordOfLenthOne(stemCodeBlock);
+			final CodeBlock stemCodeBlock = (CodeBlock) firstSucc.get(0);
+			mHonda = (ProgramPoint) stemCodeBlock.getTarget();
+			mStem = constructNestedWordOfLenthOne(stemCodeBlock);
 		} else if (firstSucc.size() == 2) {
 			// there is no stem, this must already be the honda
-			m_Stem = null;
-			m_Honda = firstNode;
+			mStem = null;
+			mHonda = firstNode;
 		} else {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = firstNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = firstNode;
 			return;
 		}
-		List<RCFGEdge> hondaSuccs = m_Honda.getOutgoingEdges();
+		final List<RCFGEdge> hondaSuccs = mHonda.getOutgoingEdges();
 		if (hondaSuccs.size() != 2) {
 			// honda has to have two outgoing edges (one where the while loop
 			// was taken, one where is is not taken)
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = m_Honda;
-			m_Loop = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = mHonda;
+			mLoop = null;
 			return;
 		}
-		CodeBlock hondaSucc0 = (CodeBlock) hondaSuccs.get(0);
-		CodeBlock hondaSucc1 = (CodeBlock) hondaSuccs.get(1);
+		final CodeBlock hondaSucc0 = (CodeBlock) hondaSuccs.get(0);
+		final CodeBlock hondaSucc1 = (CodeBlock) hondaSuccs.get(1);
 		
-		CodeBlock loopCand0 = checkForOneStepLoop(m_Honda, hondaSucc0);
-		CodeBlock loopCand1 = checkForOneStepLoop(m_Honda, hondaSucc1);
+		CodeBlock loopCand0 = checkForOneStepLoop(mHonda, hondaSucc0);
+		CodeBlock loopCand1 = checkForOneStepLoop(mHonda, hondaSucc1);
 		if (loopCand0 != null & loopCand1 != null) {
 			// double loop
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = m_Honda;
-			m_Loop = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = mHonda;
+			mLoop = null;
 		} else if (loopCand0 != null) {
-			m_LassoFound = true;
-			m_SomeNoneForErrorReport = null;
-			m_Loop = constructNestedWordOfLenthOne(loopCand0);
+			mLassoFound = true;
+			mSomeNoneForErrorReport = null;
+			mLoop = constructNestedWordOfLenthOne(loopCand0);
 		} else if (loopCand1 != null) {
-			m_LassoFound = true;
-			m_SomeNoneForErrorReport = null;
-			m_Loop = constructNestedWordOfLenthOne(loopCand1);
+			mLassoFound = true;
+			mSomeNoneForErrorReport = null;
+			mLoop = constructNestedWordOfLenthOne(loopCand1);
 		} else {
 			// now, check for two step loop
-			loopCand0 = checkForTwoStepLoop(m_Honda, hondaSucc0);
-			loopCand1 = checkForTwoStepLoop(m_Honda, hondaSucc1);
+			loopCand0 = checkForTwoStepLoop(mHonda, hondaSucc0);
+			loopCand1 = checkForTwoStepLoop(mHonda, hondaSucc1);
 			if (loopCand0 != null & loopCand1 != null) {
 				// double loop
-				m_LassoFound = false;
-				m_SomeNoneForErrorReport = m_Honda;
-				m_Loop = null;
+				mLassoFound = false;
+				mSomeNoneForErrorReport = mHonda;
+				mLoop = null;
 			} else if (loopCand0 != null) {
-				m_LassoFound = true;
-				m_SomeNoneForErrorReport = null;
-				m_Loop = constructNestedWordOfLenthOne(loopCand0);
+				mLassoFound = true;
+				mSomeNoneForErrorReport = null;
+				mLoop = constructNestedWordOfLenthOne(loopCand0);
 				assert programStemsFromCacslTranslation;
 			} else if (loopCand1 != null) {
-				m_LassoFound = true;
-				m_SomeNoneForErrorReport = null;
-				m_Loop = constructNestedWordOfLenthOne(loopCand1);
+				mLassoFound = true;
+				mSomeNoneForErrorReport = null;
+				mLoop = constructNestedWordOfLenthOne(loopCand1);
 				assert programStemsFromCacslTranslation;
 			} else {
-				m_LassoFound = false;
-				m_SomeNoneForErrorReport = m_Honda;
-				m_Loop = null;
+				mLassoFound = false;
+				mSomeNoneForErrorReport = mHonda;
+				mLoop = null;
 			}
 		}
 	}
@@ -183,14 +183,14 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 	 */
 	private CodeBlock checkForTwoStepLoop(ProgramPoint honda, CodeBlock hondaSucc) {
 		final CodeBlock loopEdge;
-		ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
-		List<RCFGEdge> interpositionSuccs = interposition.getOutgoingEdges();
+		final ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
+		final List<RCFGEdge> interpositionSuccs = interposition.getOutgoingEdges();
 		if (interpositionSuccs.size() != 2) {
 			loopEdge = null;
 		} else {
-			CodeBlock interpositionSucc0 = checkForOneStepLoop(honda, 
+			final CodeBlock interpositionSucc0 = checkForOneStepLoop(honda, 
 					(CodeBlock) interpositionSuccs.get(0));
-			CodeBlock interpositionSucc1 = checkForOneStepLoop(honda, 
+			final CodeBlock interpositionSucc1 = checkForOneStepLoop(honda, 
 					(CodeBlock) interpositionSuccs.get(1));
 			if (interpositionSucc0 != null & interpositionSucc1 != null) {
 				// double loop
@@ -212,7 +212,7 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 	 * Throw exception if formula of CodeBlock is not "true"
 	 */
 	private void checkThatFormulaIsTrue(CodeBlock cb) {
-		Term formula = cb.getTransitionFormula().getFormula();
+		final Term formula = cb.getTransitionFormula().getFormula();
 		if (!formula.toString().equals("true")) {
 			throw new UnsupportedOperationException(
 									"unexpected loop representation");

@@ -58,7 +58,7 @@ public class DOTWriter extends TCSWriter{
     
     public DOTWriter(String fileName, PhaseEventAutomata pea) {
         super(fileName);
-        this.pea2write = pea;
+        pea2write = pea;
     }
     
     public DOTWriter(String fileName) {
@@ -82,16 +82,16 @@ public class DOTWriter extends TCSWriter{
 	public void write(String fileName, PhaseEventAutomata pea) {
         try {
         	pea2write = pea;
-            this.writer = new FileWriter(fileName);
+            writer = new FileWriter(fileName);
             //init();
             writePreamble();
             writeInitialTransitions();
             writeTransitions();
             writeClose();
-            this.writer.flush();
-            this.writer.close();
+            writer.flush();
+            writer.close();
             System.out.println("Successfully written to "+fileName);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -100,16 +100,16 @@ public class DOTWriter extends TCSWriter{
 	@Override
 	public void write() {
         try {
-            this.writer = new FileWriter(fileName);
+            writer = new FileWriter(fileName);
             //init();
             writePreamble();
             writeInitialTransitions();
             writeTransitions();
             writeClose();
-            this.writer.flush();
-            this.writer.close();
+            writer.flush();
+            writer.close();
             System.out.println("Successfully written to "+fileName);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -128,7 +128,7 @@ public class DOTWriter extends TCSWriter{
 	}
 	
 	 protected void writePreamble() throws IOException {
-	        this.writer
+	        writer
 	            .write("/* Preamble:\n"
 	                        + " File automatically generated via DOTWriter\n\n */"
 	                        + " digraph G { \n");
@@ -144,12 +144,12 @@ public class DOTWriter extends TCSWriter{
 	     */
 	    protected void writeInitialTransitions() throws IOException {
 	    	
-	    	Phase[] init = pea2write.getInit();
+	    	final Phase[] init = pea2write.getInit();
 	    	for (int i = 0; i < init.length; i++) {
 	    		String initState = init[i].toString();
 	    		initState = initState.replace("_", "");
-	    		this.writer.write("null"+initState+ " [shape = plaintext label=\"\"] \n");
-	    		this.writer.write("null"+initState+ DOTString.TO + initState + DOTString.STOP + "\n");
+	    		writer.write("null"+initState+ " [shape = plaintext label=\"\"] \n");
+	    		writer.write("null"+initState+ DOTString.TO + initState + DOTString.STOP + "\n");
 	    		//this.writer.write("init "+ DOTString.TO + initState + DOTString.STOP + "\n");
 	    		
 	    		
@@ -160,7 +160,7 @@ public class DOTWriter extends TCSWriter{
 	    }
 	    
 	    protected void writeClose()throws IOException{
-	    	this.writer.write("\n }");
+	    	writer.write("\n }");
 	    }
 	    
 	    
@@ -169,10 +169,10 @@ public class DOTWriter extends TCSWriter{
 		  *  As Tex interprets "_" as command, we need to delete(or change) it from the names of the states.
 		     */
 	    protected void writeTransitions() throws IOException {
-	        Phase[] phases = pea2write.getPhases();
+	        final Phase[] phases = pea2write.getPhases();
 	        
 	        for (int i=0; i<phases.length; i++){
-	        	Phase currentPhase = phases[i];
+	        	final Phase currentPhase = phases[i];
 	        	String location = currentPhase.getName();
 	        	location = location.replace("_", "");
 	        	String clock = currentPhase.getClockInvariant().toTexString();
@@ -181,15 +181,15 @@ public class DOTWriter extends TCSWriter{
 	        	predicate = predicate.replace("\\wedge", "\\wedge \\\\");
 	        	predicate = predicate.replace("\\vee", "\\vee \\\\");
 	        	predicate = predicate.replace("_", "");
-	        	this.writer.write(location + DOTString.DOT_NODEDEF_START 
+	        	writer.write(location + DOTString.DOT_NODEDEF_START 
 	        			+ location +" \\\\ "
 	        			+ predicate + " \\\\ " 
 	        			+ clock + DOTString.DOT_NODEDEF_END);
 	        	
-	        	List<Transition> transitions = currentPhase.getTransitions();
-	        	Iterator it = transitions.iterator();
+	        	final List<Transition> transitions = currentPhase.getTransitions();
+	        	final Iterator it = transitions.iterator();
 		        while (it.hasNext()) {
-		            Transition t = (Transition) it.next();
+		            final Transition t = (Transition) it.next();
 		            String start = t.getSrc().getName();
 		            start = start.replace("_", "");
 		            String end = t.getDest().getName();
@@ -197,7 +197,7 @@ public class DOTWriter extends TCSWriter{
 		            String guard = t.getGuard().toTexString();
 		            guard = guard.replace("_", "");
 		            guard = guard.replace("\\wedge", "\\wedge \\\\");
-		            String[] reset = t.getResets();	   
+		            final String[] reset = t.getResets();	   
 		            
 		            String guard2 = " ";
 		            for (int j = guard.length(); j>0; j--){
@@ -212,7 +212,7 @@ public class DOTWriter extends TCSWriter{
 		        	}}
 		            result = result.replace("_", "");
 		            
-		            this.writer.write(" "+ start + DOTString.TO + end 
+		            writer.write(" "+ start + DOTString.TO + end 
 		            		+ DOTString.DOT_LABEL_START1 + guard2 + DOTString.DOT_LABEL_START2 + guard +" \\\\ " +
 		            		result + DOTString.DOT_LABEL_END);
 		           

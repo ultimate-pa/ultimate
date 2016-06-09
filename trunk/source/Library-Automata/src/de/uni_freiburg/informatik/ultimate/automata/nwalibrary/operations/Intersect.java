@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -38,18 +36,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
-	private final IntersectNwa<LETTER, STATE> m_Intersect;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
-	private final StateFactory<STATE> m_StateFactory;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
+	private final IntersectNwa<LETTER, STATE> mIntersect;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private final StateFactory<STATE> mStateFactory;
 	
 	
 	@Override
@@ -61,15 +60,15 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start intersect. First operand " + 
-				m_FstOperand.sizeInformation() + ". Second operand " + 
-				m_SndOperand.sizeInformation();	
+				mFstOperand.sizeInformation() + ". Second operand " + 
+				mSndOperand.sizeInformation();	
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result.sizeInformation();
+				mResult.sizeInformation();
 	}
 	
 	
@@ -79,15 +78,15 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_FstOperand = fstOperand;
-		m_SndOperand = sndOperand;
-		m_StateFactory = m_FstOperand.getStateFactory();
-		m_Logger.info(startMessage());
-		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndOperand, m_StateFactory, false);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = mFstOperand.getStateFactory();
+		mLogger.info(startMessage());
+		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
+		mLogger.info(exitMessage());
 	}
 	
 
@@ -99,27 +98,28 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 
 	
+	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(m_Services, fstOperandOldApi,sndOperandOldApi)).getResult();
+		mLogger.info("Start testing correctness of " + operationName());
+		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
+		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+		final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
-		correct &= (resultDD.size() == m_Result.size());
+		correct &= (resultDD.size() == mResult.size());
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD, m_Result, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD, mResult, sf) == null);
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, resultDD, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, resultDD, sf) == null);
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

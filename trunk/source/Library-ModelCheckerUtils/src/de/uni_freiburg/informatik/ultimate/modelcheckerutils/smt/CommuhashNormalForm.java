@@ -30,10 +30,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -66,25 +66,25 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class CommuhashNormalForm {
 
-	private final IUltimateServiceProvider m_Services;
-	private final Script m_Script;
+	private final IUltimateServiceProvider mServices;
+	private final Script mScript;
 	
 	public CommuhashNormalForm(IUltimateServiceProvider services, Script script) {
 		super();
-		m_Services = services;
-		m_Script = script;
+		mServices = services;
+		mScript = script;
 	}
 	
 	public Term transform(Term term) {
-		Logger logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		logger.debug(new DebugMessage(
 				"applying CommuhashNormalForm to formula of DAG size {0}", 
 				new DagSizePrinter(term)));
-		Term result = (new CommuhashNormalFormHelper()).transform(term);
+		final Term result = (new CommuhashNormalFormHelper()).transform(term);
 		logger.debug(new DebugMessage(
 				"DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}", 
 				new DagSizePrinter(term), new DagSizePrinter(result)));
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
+		assert (Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
 		return result;
 	}
 	
@@ -107,9 +107,9 @@ public class CommuhashNormalForm {
 
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			String funcname = appTerm.getFunction().getApplicationString();
+			final String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
-				Term simplified = constructTermWithSortedParams(
+				final Term simplified = constructTermWithSortedParams(
 						funcname, appTerm.getSort().getIndices(), newArgs);
 				setResult(simplified);
 			} else {
@@ -120,23 +120,23 @@ public class CommuhashNormalForm {
 		@Override
 		protected void convert(Term term) {
 			try {
-				Term result = tryToTransformToPositiveNormalForm(term);
+				final Term result = tryToTransformToPositiveNormalForm(term);
 				setResult(result);
-			} catch (NotAffineException e) {
+			} catch (final NotAffineException e) {
 				// descent, input is no AffineRelation
 				super.convert(term);
 			} 
 		}
 
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
-			AffineRelation affRel = new AffineRelation(m_Script, simplified, TransformInequality.STRICT2NONSTRICT);
-			Term pnf = affRel.positiveNormalForm(m_Script);
+			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
+			final Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
 		}
 
 		private Term[] sortByHashCode(final Term[] params) {
-			Term[] sortedParams = params.clone();
-			Comparator<Term> hashBasedComperator = new Comparator<Term>() {
+			final Term[] sortedParams = params.clone();
+			final Comparator<Term> hashBasedComperator = new Comparator<Term>() {
 				@Override
 				public int compare(Term arg0, Term arg1) {
 					return Integer.compare(arg0.hashCode(), arg1.hashCode());
@@ -148,11 +148,21 @@ public class CommuhashNormalForm {
 		
 		private Term constructTermWithSortedParams(String funcname, 
 									BigInteger[] indices, Term[] params) {
-			Term[] sortedParams = sortByHashCode(params);
-			Term simplified = SmtUtils.termWithLocalSimplification(
-					m_Script, funcname, indices, sortedParams);
+			final Term[] sortedParams = sortByHashCode(params);
+			final Term simplified = SmtUtils.termWithLocalSimplification(
+					mScript, funcname, indices, sortedParams);
 			return simplified;
 		}
+
+		@Override
+		public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+			final Term result = SmtUtils.quantifier(mScript, 
+					old.getQuantifier(), Arrays.asList(old.getVariables()), newBody);
+			setResult(result);
+		}
+		
+		
+		
 
 	}
 }

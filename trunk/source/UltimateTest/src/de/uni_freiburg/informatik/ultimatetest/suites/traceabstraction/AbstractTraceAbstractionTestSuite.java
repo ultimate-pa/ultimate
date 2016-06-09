@@ -29,18 +29,21 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier.PredicateUniferStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -59,22 +62,25 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
 						new ColumnDefinition(
-								"Overall time", "Avg. runtime",
+								CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
 //						new ColumnDefinition(
 //								"Peak memory consumption (bytes)", "Mem{-}ory",
 //								ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
 						new ColumnDefinition(
-								"Overall iterations", "Iter{-}ations",
+								CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition(
+								CegarLoopStatisticsDefinitions.TraceHistogramMax.toString(), "TrHist max",
 								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 //						
 //						new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
@@ -109,17 +115,19 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
 //								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
-						new ColumnDefinition("Minimization time", "mnmz time", 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+//						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+//								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString() + "_" + HoareTripleCheckerStatisticsDefinitions.Time.toString(), "htc time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.PredicateUnifierStatistics.toString() + "_" + PredicateUniferStatisticsDefinitions.Time.toString(), "pu time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("PredicateUnifierData_Time", "pu time", 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataDifference.toString(), "adiff time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_InterpolantComputationTime", "itp time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("Automata difference", "adiff time", 
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() +"_SatisfiabilityAnalysisTime", "check-sat time", 
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 
 					};

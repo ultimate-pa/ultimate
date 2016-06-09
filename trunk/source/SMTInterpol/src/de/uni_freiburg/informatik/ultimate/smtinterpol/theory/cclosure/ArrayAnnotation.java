@@ -89,7 +89,7 @@ public class ArrayAnnotation extends CCAnnotation {
 		super(diseq, paths);
 		mWeakIndices = new CCTerm[mPaths.length];
 		int i = 0;
-		for (SubPath p : paths) {
+		for (final SubPath p : paths) {
 			mWeakIndices[i++] = p instanceof WeakSubPath
 					? ((WeakSubPath) p).getIndex() : null;
 		}
@@ -102,19 +102,21 @@ public class ArrayAnnotation extends CCAnnotation {
 	
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {
-		Term base = cls.toTerm(theory);
-		Object[] subannots =
+		final Term base = cls.toTerm(theory);
+		final Object[] subannots =
 				new Object[2 * mPaths.length + (mDiseq == null ? 0 : 1)];
 		int i = 0;
-		if (mDiseq != null)
+		if (mDiseq != null) {
 			subannots [i++] = mDiseq.getSMTFormula(theory);
+		}
 		for (int p = 0; p < mPaths.length; ++p) {
-			CCTerm idx = mWeakIndices[p];
-			CCTerm[] path = mPaths[p];
+			final CCTerm idx = mWeakIndices[p];
+			final CCTerm[] path = mPaths[p];
 
-			Term[] subs = new Term[path.length];
-			for (int j = 0; j < path.length; ++j)
+			final Term[] subs = new Term[path.length];
+			for (int j = 0; j < path.length; ++j) {
 				subs[j] = path[j].toSMTTerm(theory);
+			}
 			if (idx == null) {
 				subannots[i++] = ":subpath";
 				subannots[i++] = subs;
@@ -125,7 +127,7 @@ public class ArrayAnnotation extends CCAnnotation {
 				};
 			}
 		}
-		Annotation[] annots = new Annotation[] {
+		final Annotation[] annots = new Annotation[] {
 			new Annotation(mRule.getKind(), subannots)
 		};
 		return theory.term("@lemma", theory.annotatedTerm(annots, base));

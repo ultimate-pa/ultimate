@@ -53,13 +53,13 @@ public enum UserListType {
 
 	public static String description() {
 		final String indent = "    ";
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("There are 3 sets of calls:\n");
 		sb.append(indent + "ALL: All calls from the program\n");
 		sb.append(indent + "PREF: Calls, selected by the other preferences\n");
 		sb.append(indent + "LIST: Calls to procedures from the user list\n");
 		sb.append("The user list type defines, how the are mixed:");
-		for (UserListType type : UserListType.values()) {
+		for (final UserListType type : UserListType.values()) {
 			sb.append("\n" + indent);
 			sb.append(type);
 			sb.append(" = ");

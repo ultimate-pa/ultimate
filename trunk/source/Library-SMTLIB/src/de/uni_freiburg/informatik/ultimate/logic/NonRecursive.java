@@ -123,6 +123,7 @@ public class NonRecursive {
 		}
 	}
 	
+	@Override
 	public String toString() {
 		return mTodo.toString();
 	}
@@ -139,19 +140,21 @@ public class NonRecursive {
 		public TermWalker(Term term) {
 			mTerm = term;
 		}
+		@Override
 		public void walk(NonRecursive walker) {
-			if (mTerm instanceof ApplicationTerm)
+			if (mTerm instanceof ApplicationTerm) {
 				walk(walker, (ApplicationTerm) mTerm);
-			else if (mTerm instanceof LetTerm)
+			} else if (mTerm instanceof LetTerm) {
 				walk(walker, (LetTerm) mTerm);
-			else if (mTerm instanceof AnnotatedTerm)
+			} else if (mTerm instanceof AnnotatedTerm) {
 				walk(walker, (AnnotatedTerm) mTerm);
-			else if (mTerm instanceof QuantifiedFormula)
+			} else if (mTerm instanceof QuantifiedFormula) {
 				walk(walker, (QuantifiedFormula) mTerm);
-			else if (mTerm instanceof ConstantTerm)
+			} else if (mTerm instanceof ConstantTerm) {
 				walk(walker, (ConstantTerm) mTerm);
-			else if (mTerm instanceof TermVariable)
+			} else if (mTerm instanceof TermVariable) {
 				walk(walker, (TermVariable) mTerm);
+			}
 		}
 
 		public abstract void walk(NonRecursive walker, ConstantTerm term);
@@ -165,6 +168,7 @@ public class NonRecursive {
 			return mTerm;
 		}
 
+		@Override
 		public String toString() {
 			return getClass().getSimpleName() + ":" + mTerm;
 		}

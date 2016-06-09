@@ -32,36 +32,37 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.AutomataScriptTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AutomataScriptTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
 
-	private static final String m_Toolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
-	private static final File m_ToolchainFile = new File(TestUtil.getPathFromTrunk(m_Toolchain));
-	private static int m_Timeout = 10 * 1000;
-	private static final String[] m_Directories = { 
-		"examples/Automata/atsTestFiles",
-		"examples/Automata/AUTOMATA_SCRIPT", 
+	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
+	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
+	private static int mTimeout = 10 * 1000;
+	private static final String[] mDirectories = { 
+//		"examples/Automata/atsTestFiles",
+//		"examples/Automata/AUTOMATA_SCRIPT", 
 		"examples/Automata/BuchiAutomata", 
-		"examples/Automata/BuchiNwa",
-		"examples/Automata/finiteAutomata", 
-		"examples/Automata/nwa", 
-		"examples/Automata/nwaOperations",
+//		"examples/Automata/BuchiNwa",
+//		"examples/Automata/finiteAutomata", 
+//		"examples/Automata/nwa", 
+//		"examples/Automata/nwaOperations/debugging/",
+//		"examples/Automata/nwaOperations/minimizeMaxSAT/",
 	// the following two have still bugs
 	// "examples/Automata/PetriNet",
 	// "examples/Automata/senwa",
 	// the following is not yet tested
 	// "examples/Automata/syntaxError",
 	};
-	private static final String[] m_FileEndings = { ".ats" };
+	private static final String[] mFileEndings = { ".ats" };
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -75,23 +76,24 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
+		final List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
 
-		Collection<File> inputFiles = new ArrayList<File>();
-		for (String directory : m_Directories) {
-			inputFiles.addAll(getInputFiles(directory, m_FileEndings));
+		final Collection<File> inputFiles = new ArrayList<File>();
+		for (final String directory : mDirectories) {
+			inputFiles.addAll(getInputFiles(directory, mFileEndings));
 		}
 
-		for (File inputFile : inputFiles) {
-			File settingsFile = null;
-			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, m_ToolchainFile);
-			UltimateStarter starter = new UltimateStarter(urd, m_Timeout, null, null);
-			UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
+		for (final File inputFile : inputFiles) {
+			final File settingsFile = null;
+			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
+			final UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
+			final UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
 					new AutomataScriptTestResultDecider(), starter,
-					// m_Description + "_" + inputFile.getAbsolutePath(),
+					// mDescription + "_" + inputFile.getAbsolutePath(),
 					urd, super.getSummaries(), null);
 			testCases.add(utc);
 		}
+		testCases.sort(null);
 		return testCases;
 	}
 

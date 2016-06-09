@@ -33,24 +33,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
 
 public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	protected final RootNode mResult;
 	protected int mRemovedEdges;
@@ -130,7 +128,7 @@ public abstract class BaseProductOptimizer {
 	protected void generateTransFormula(RootNode root, StatementSequence ss) {
 		final Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
-		tfb.addTransitionFormulas((CodeBlock) ss, ((ProgramPoint) ss.getSource()).getProcedure());
+		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure());
 		assert ss.getTransitionFormula() != null;
 	}
 }

@@ -37,9 +37,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.PEANet;
 import pea.Phase;
@@ -62,7 +62,7 @@ public class PEAJ2XMLConverter {
 
     protected static final String DEFAULT_LOGGER = "PEAJ2XMLConverter";
 
-    protected Logger logger = null;
+    protected ILogger logger = null;
 
     protected FormulaJ2XMLConverter formulaConverter = null;
 
@@ -98,23 +98,23 @@ public class PEAJ2XMLConverter {
      * logger is initialised via <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public PEAJ2XMLConverter(String loggerName) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            logger = ILogger
                     .getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.formulaConverter = new FormulaJ2XMLConverter();
+        formulaConverter = new FormulaJ2XMLConverter();
 
-        this.clocks = new ArrayList<String>();
-        this.events = new ArrayList<String>();
-        this.rangeVariables = new ArrayList<String>();
-        this.variables = new HashMap<String,String>();
+        clocks = new ArrayList<String>();
+        events = new ArrayList<String>();
+        rangeVariables = new ArrayList<String>();
+        variables = new HashMap<String,String>();
     }
 
     /**
@@ -127,11 +127,11 @@ public class PEAJ2XMLConverter {
     public void convert(PEANet peanet, String file) {
         PhaseEventAutomata[] peas = new PhaseEventAutomata[0];
         peas = peanet.getPeas().toArray(peas);
-        ArrayList<String> declarations = peanet.getDeclarations();
+        final ArrayList<String> declarations = peanet.getDeclarations();
         try {
             // peas[0].dump();
             peaCounter = 0;
-            this.writer = new FileWriter(file);
+            writer = new FileWriter(file);
             if (peas.length == 0) {
                 throw new RuntimeException(
                         "The array of peas is not allowed to be empty");
@@ -142,7 +142,7 @@ public class PEAJ2XMLConverter {
                             + "<peaNet xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
                             + " xsi:noNamespaceSchemaLocation=\"../schemas/PEA.xsd\">\n");
 
-            writeTypeDeclarations(declarations, this.writer);
+            writeTypeDeclarations(declarations, writer);
             for (int i = 0; i < peas.length; i++) {
                 logger.info("Trying to create peaNode " + i);
                 createPhaseEventAutomaton(peas[i]);
@@ -154,7 +154,7 @@ public class PEAJ2XMLConverter {
 
             writer.flush();
             writer.close();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println("Errors writing the XML representation of pea");
             e.printStackTrace();
         }
@@ -168,16 +168,16 @@ public class PEAJ2XMLConverter {
             writer.write("<declaration>\n");
 
             createStandardTypes(writer);
-            for (String term : declarations) {
+            for (final String term : declarations) {
                 vardecl = ZWrapper.INSTANCE.declToZml(term);
-                this.logger
+                logger
                         .info("Creating ZML <VarDecl> out of the Term object");
                 writer.write(vardecl);
             }
 
             writer.write("</declaration>\n");
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println("Errors writing the Type declarations to XML");
             e.printStackTrace();
         }
@@ -189,7 +189,8 @@ public class PEAJ2XMLConverter {
      * @param writer
      * @deprecated
      */
-    protected void createStandardTypes(FileWriter writer) {
+    @Deprecated
+	protected void createStandardTypes(FileWriter writer) {
 //        try {
 //            // true is defined as the empty _schema_
 //            writer.write("<ConstDecl " + Z_NAMESPACE + " >\n");
@@ -253,33 +254,34 @@ public class PEAJ2XMLConverter {
                     "PEA with initial phase count = 0 is not allowed");
         }
 
-        this.clocks.clear();
-        this.events.clear();
+        clocks.clear();
+        events.clear();
         
         // TODO: the collection of range variables does not work correctly because there is no type declarations
         // are lacking. Use the variable list of PhaseEventAutomata instead.
-        this.rangeVariables.clear();
-        this.variables = pea.getVariables();
+        rangeVariables.clear();
+        variables = pea.getVariables();
 
         writer.write("<pea name=\"" + pea.getName() + "\">\n");
         
         // Create local declarations
-        if(pea.getDeclarations() != null)
-            writeTypeDeclarations(pea.getDeclarations(),writer);
+        if(pea.getDeclarations() != null) {
+			writeTypeDeclarations(pea.getDeclarations(),writer);
+		}
 
         // Create phase nodes
         writer.write("<phases>\n");
-        Phase[] phases = pea.getPhases();
-        Phase[] init = pea.getInit();
-        List<Phase> temp = new LinkedList<Phase>(Arrays.asList(phases));
+        final Phase[] phases = pea.getPhases();
+        final Phase[] init = pea.getInit();
+        final List<Phase> temp = new LinkedList<Phase>(Arrays.asList(phases));
         temp.removeAll(Arrays.asList(init));
-        Phase[] notInitPhases = (Phase[]) temp.toArray(new Phase[0]);
+        final Phase[] notInitPhases = temp.toArray(new Phase[0]);
 
         for (int i = 0; i < init.length; i++) {
-            this.createPhaseNode(init[i], true);
+            createPhaseNode(init[i], true);
         }
         for (int i = 0; i < notInitPhases.length; i++) {
-            this.createPhaseNode(notInitPhases[i], false);
+            createPhaseNode(notInitPhases[i], false);
         }
         writer.write("</phases>\n");
 
@@ -287,10 +289,10 @@ public class PEAJ2XMLConverter {
         if (peaHasTransitions(pea)) {
             writer.write("<transitions>\n");
             for (int i = 0; i < phases.length; i++) {
-                List transitions = phases[i].getTransitions();
-                Iterator transIter = transitions.iterator();
+                final List transitions = phases[i].getTransitions();
+                final Iterator transIter = transitions.iterator();
                 while (transIter.hasNext()) {
-                    Transition trans = (Transition) transIter.next();
+                    final Transition trans = (Transition) transIter.next();
                     createTransitionNode(trans);
 
                 }
@@ -299,38 +301,39 @@ public class PEAJ2XMLConverter {
         }
 
         // Add additional variables to var list.
-        if (this.variables!=null && !this.variables.isEmpty()
-                || (this.additionalVariables != null && !this.additionalVariables[peaCounter]
+        if (variables!=null && !variables.isEmpty()
+                || (additionalVariables != null && !additionalVariables[peaCounter]
                         .isEmpty())) {
             writer.write("<variables>\n");
-            if (this.additionalVariables != null
-                    && !this.additionalVariables[peaCounter].isEmpty()) {
-                Iterator addVarIterator = this.additionalVariables[peaCounter]
+            if (additionalVariables != null
+                    && !additionalVariables[peaCounter].isEmpty()) {
+                final Iterator addVarIterator = additionalVariables[peaCounter]
                         .iterator();
-                Iterator typesIterator = this.additionalTypes[peaCounter]
+                final Iterator typesIterator = additionalTypes[peaCounter]
                         .iterator();
                 while (addVarIterator.hasNext()) {
-                    String actVariable = (String) addVarIterator.next();
-                    String typeName = (String) typesIterator.next();
+                    final String actVariable = (String) addVarIterator.next();
+                    final String typeName = (String) typesIterator.next();
                     writer.write("<variable name=\"" + actVariable
                             + "\" type=\"" + typeName + "\"/>");
                 }
             }
-            if (!this.variables.isEmpty()) {
-                Iterator variablesIterator = this.variables.keySet().iterator();
+            if (!variables.isEmpty()) {
+                final Iterator variablesIterator = variables.keySet().iterator();
                 while (variablesIterator.hasNext()) {
-                    String actVariable = (String) variablesIterator.next();
+                    final String actVariable = (String) variablesIterator.next();
                     writer.write("<variable name=\"" + actVariable
                             + "\" type=\"" + variables.get(actVariable) + "\"/>");
                 }
             }
-            if (!this.rangeVariables.isEmpty()) {
-                Iterator rvariablesIterator = this.rangeVariables.iterator();
+            if (!rangeVariables.isEmpty()) {
+                final Iterator rvariablesIterator = rangeVariables.iterator();
                 while (rvariablesIterator.hasNext()) {
-                    String actRVariable = (String) rvariablesIterator.next();
-                    if(!variables.containsKey(actRVariable))
-                        writer.write("<variable name=\"" + actRVariable
+                    final String actRVariable = (String) rvariablesIterator.next();
+                    if(!variables.containsKey(actRVariable)) {
+						writer.write("<variable name=\"" + actRVariable
                                 + "\" type=\"default\"/>");
+					}
                 }
             }
             writer.write("</variables>\n");
@@ -342,23 +345,23 @@ public class PEAJ2XMLConverter {
         // and variable range expressions, thus all names are added to the
         // clocks list and those that have been recognised to be variables
         // are removed with this statement.
-        this.clocks.removeAll(this.rangeVariables);
+        clocks.removeAll(rangeVariables);
 
-        if (!this.clocks.isEmpty()) {
+        if (!clocks.isEmpty()) {
             writer.write("<clocks>\n");
-            Iterator clocksIterator = this.clocks.iterator();
+            final Iterator clocksIterator = clocks.iterator();
             while (clocksIterator.hasNext()) {
-                String actClock = (String) clocksIterator.next();
+                final String actClock = (String) clocksIterator.next();
                 writer.write("<clock name=\"" + actClock + "\"/>\n");
             }
             writer.write("</clocks>\n");
         }
 
-        if (!this.events.isEmpty()) {
+        if (!events.isEmpty()) {
             writer.write("<events>\n");
-            Iterator eventsIterator = this.events.iterator();
+            final Iterator eventsIterator = events.iterator();
             while (eventsIterator.hasNext()) {
-                String actEvent = (String) eventsIterator.next();
+                final String actEvent = (String) eventsIterator.next();
                 writer.write("<event name=\"" + actEvent + "\"/>\n");
             }
             writer.write("</events>\n");
@@ -369,7 +372,7 @@ public class PEAJ2XMLConverter {
     }
 
     private boolean peaHasTransitions(PhaseEventAutomata pea) {
-        Phase[] phases = pea.getPhases();
+        final Phase[] phases = pea.getPhases();
         for (int i = 0; i < phases.length; i++) {
             if (phases[i].getTransitions().size() > 0) {
                 return true;
@@ -380,32 +383,32 @@ public class PEAJ2XMLConverter {
 
     protected void createPhaseNode(Phase phase, boolean init)
             throws IOException {
-        this.writer.write("<phase name=\"" + phase.getName() + "\" >\n");
+        writer.write("<phase name=\"" + phase.getName() + "\" >\n");
 
         // if this phase is an initial phase, create the initial tag
         if (init) {
-            this.writer.write("<initial/>\n");
+            writer.write("<initial/>\n");
         }
-        this.writer.write("<invariant>\n");
-        this.writer.write(this.formulaConverter.convertFast(phase
-                .getStateInvariant(), this.rangeVariables, this.events));
-        this.writer.write("</invariant>\n");
+        writer.write("<invariant>\n");
+        writer.write(formulaConverter.convertFast(phase
+                .getStateInvariant(), rangeVariables, events));
+        writer.write("</invariant>\n");
         if (phase.getClockInvariant() != CDD.TRUE) {
-            this.writer.write("<clockInvariant>\n");
-            this.writer.write(this.formulaConverter.convertFast(phase
-                    .getClockInvariant(), this.clocks, this.events));
-            this.writer.write("</clockInvariant>\n");
+            writer.write("<clockInvariant>\n");
+            writer.write(formulaConverter.convertFast(phase
+                    .getClockInvariant(), clocks, events));
+            writer.write("</clockInvariant>\n");
         }
-        this.writer.write("</phase>\n");
+        writer.write("</phase>\n");
     }
 
     protected void createTransitionNode(Transition trans) throws IOException {
-        String source = trans.getSrc().getName();
-        String dest = trans.getDest().getName();
-        this.logger.info("Creating transition from " + source + " to " + dest);
+        final String source = trans.getSrc().getName();
+        final String dest = trans.getDest().getName();
+        logger.info("Creating transition from " + source + " to " + dest);
         
         
-        String guardsDNFResolved = formulaConverter.formulaToXML(trans
+        final String guardsDNFResolved = formulaConverter.formulaToXML(trans
                 .getGuard(), clocks, events);
         
             //{ "\nblubb und test\n" } ; 
@@ -413,7 +416,7 @@ public class PEAJ2XMLConverter {
             //formulaConverter.getDisjuncts(trans
             //    .getGuard(), clocks, events);
         String resetString = "";
-        String[] resets = trans.getResets();
+        final String[] resets = trans.getResets();
         for (int i = 0; i < resets.length; i++) {
             resetString += "<reset name=\"" + resets[i] + "\"/>\n";
             if (!clocks.contains(resets[i])) {
@@ -448,24 +451,24 @@ public class PEAJ2XMLConverter {
      */
     @Deprecated
     public void setAdditionalTypes(ArrayList[] types) {
-        this.additionalTypes = types;
+        additionalTypes = types;
     }
 
     public static void main(String[] args) {
         try {
-            PEAXML2JConverter xml2j = new PEAXML2JConverter(false);
+            final PEAXML2JConverter xml2j = new PEAXML2JConverter(false);
             PhaseEventAutomata[] peas = xml2j
                     .convert("./pea/modelchecking/CaseStudy/ComNW.xml");
-            PEANet peanet = new PEANet();
-            List<PhaseEventAutomata> peaL = Arrays.asList(peas);
-            ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(
+            final PEANet peanet = new PEANet();
+            final List<PhaseEventAutomata> peaL = Arrays.asList(peas);
+            final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(
                     peaL);
 
             peanet.setPeas(peaList);
-            PEAJ2XMLConverter j2XMLFast = new PEAJ2XMLConverter();
+            final PEAJ2XMLConverter j2XMLFast = new PEAJ2XMLConverter();
             j2XMLFast.convert(peanet, "./pea/modelchecking/example/test.xml");
             peas = xml2j.convert("./pea/modelchecking/example/test.xml");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.out.println("Outermost exception");
             e.printStackTrace();
         }

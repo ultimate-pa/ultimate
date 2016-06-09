@@ -35,31 +35,31 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 public class Automaton2UltimateModel<LETTER,STATE> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws OperationCanceledException {
+	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
-			INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
-			NwaToUltimateModel transformer = new NwaToUltimateModel(services);
+			final INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
+			final NwaToUltimateModel transformer = new NwaToUltimateModel(services);
 				return transformer.getUltimateModelOfNwa(nwa);
 		}
 		else if (automaton instanceof IPetriNet) {
-			IPetriNet net = (IPetriNet) automaton;
-			PetriNetToUltimateModel transformer = new PetriNetToUltimateModel();
+			final IPetriNet net = (IPetriNet) automaton;
+			final PetriNetToUltimateModel transformer = new PetriNetToUltimateModel();
 			return transformer.getUltimateModelOfPetriNet(net);
 		}
 		else if (automaton instanceof BranchingProcess) {
-			BranchingProcess bp = (BranchingProcess) automaton;
-			BranchingProcessToUltimateModel transformer = new BranchingProcessToUltimateModel();
+			final BranchingProcess bp = (BranchingProcess) automaton;
+			final BranchingProcessToUltimateModel transformer = new BranchingProcessToUltimateModel();
 			return transformer.getUltimateModelOfBranchingProcess(bp);
 		}
 		else if (automaton instanceof AlternatingAutomaton) {
-			AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
-			AAToUltimateModel transformer = new AAToUltimateModel();
+			final AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
+			final AAToUltimateModel transformer = new AAToUltimateModel();
 			return transformer.getUltimateModelOfAA(aa);
 		}
 		else {

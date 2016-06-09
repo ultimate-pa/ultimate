@@ -31,22 +31,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
 /**
  * This plugin implements the product algorithm described in the Masterthesis
@@ -59,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  */
 public class BuchiProgramProduct implements IGenerator {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;
 	private boolean mPreviousToolFoundErrors;
@@ -76,7 +74,7 @@ public class BuchiProgramProduct implements IGenerator {
 			return null;
 		}
 
-		List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<String>();
 		filenames.add("LTL+Program Product");
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
@@ -112,11 +110,14 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final List<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG
-					&& new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
-				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage));
+					&& mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+							.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
+				final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
+				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage, rewriteAssumes));
 			}
 
 			if (mUseBuchiProductObserver) {
@@ -161,7 +162,7 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
@@ -174,7 +175,7 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Expression.class);

@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.act
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -65,22 +65,22 @@ public class ContextMenuActions implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		String actionCommmand = e.getActionCommand();
+		final String actionCommmand = e.getActionCommand();
 
 		if (actionCommmand.equals(ACTION_EXPORT)) {
-			CommandExportAsSVG cmd = new CommandExportAsSVG();
+			final CommandExportAsSVG cmd = new CommandExportAsSVG();
 			cmd.exportAsSVG(mEditorInput);
 		} else if (actionCommmand.equals(ACTION_PICKING)) {
 			((DefaultModalGraphMouse<?, ?>) mEditorInput.getViewer().getGraphMouse())
 					.setMode(ModalGraphMouse.Mode.PICKING);
 			mEditorInput.setMode(Mode.PICKING);
 		} else if (actionCommmand.equals(ACTION_TRANSFORMING)) {
-			VisualizationViewer<VisualizationNode, VisualizationEdge> current = mEditorInput.getViewer();
-			DefaultModalGraphMouse<?, ?> mouse = ((DefaultModalGraphMouse<?, ?>) current.getGraphMouse());
+			final VisualizationViewer<VisualizationNode, VisualizationEdge> current = mEditorInput.getViewer();
+			final DefaultModalGraphMouse<?, ?> mouse = ((DefaultModalGraphMouse<?, ?>) current.getGraphMouse());
 			mouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 			mEditorInput.setMode(Mode.TRANSFORMING);
 		} else if (actionCommmand.equals(ACTION_KEYHELP)) {
-			CommandShowKeyHelp cmd = new CommandShowKeyHelp();
+			final CommandShowKeyHelp cmd = new CommandShowKeyHelp();
 			cmd.openKeyHelp();
 		}
 	}

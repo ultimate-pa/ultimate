@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * Represents the context-free grammar for which we build a parser.  An object of this class is 
@@ -37,7 +37,7 @@ public class Grammar {
   private final ArrayList<lalr_state> _lalr_states = new ArrayList<lalr_state>();
 
   /** Number of conflict found while building tables. */
-  private int _num_conflicts = 0;
+  private int _numconflicts = 0;
   
   /* . . . . . . . . . . . . . . . . . . . . . . . . . */
   /* . . Internal Results of Generating the Parser . . */
@@ -85,19 +85,19 @@ public class Grammar {
     {
       return _start_production;
     }
-  public int num_terminals()
+  public int numterminals()
     {
       return _terminals.size();
     }
-  public int num_non_terminals()
+  public int numnon_terminals()
     {
       return _nonterminals.size();
     }
-  public int num_productions()
+  public int numproductions()
     {
       return _productions.size();
     }
-  public int num_actions()
+  public int numactions()
     {
       return _actions.size();
     }
@@ -122,23 +122,23 @@ public class Grammar {
       return _actions;
     }
 
-  public int num_conflicts()
+  public int numconflicts()
     {
-      return _num_conflicts;
+      return _numconflicts;
     }
 
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   public terminal add_terminal(String name, String type)
     {
-      terminal term = new terminal(name, type, _terminals.size());
+      final terminal term = new terminal(name, type, _terminals.size());
       _terminals.add(term);
       return term;
     }
   
   public non_terminal add_non_terminal(String name, String type)
     {
-      non_terminal nt = new non_terminal(name, type, _nonterminals.size());
+      final non_terminal nt = new non_terminal(name, type, _nonterminals.size());
       _nonterminals.add(nt);
       return nt;
     }
@@ -149,7 +149,7 @@ public class Grammar {
 	{
 	  /* create plus symbol as * is defined via +. */
 	  plus_symbol(sym);
-	  String type = sym._stack_type == null ? null : sym._stack_type+"[]";
+	  final String type = sym._stack_type == null ? null : sym._stack_type+"[]";
 	  sym._star_symbol = add_non_terminal(sym._name+"*", type);
 	}
       return sym._star_symbol;
@@ -159,7 +159,7 @@ public class Grammar {
     {
       if (sym._plus_symbol == null)
 	{
-	  String type = sym._stack_type == null ? null : sym._stack_type+"[]";
+	  final String type = sym._stack_type == null ? null : sym._stack_type+"[]";
 	  sym._plus_symbol = add_non_terminal(sym._name+"+", type);
 	}
       return sym._plus_symbol;
@@ -178,7 +178,7 @@ public class Grammar {
   public void set_start_symbol(non_terminal start_nt)
     {
       /* build a special start production */
-      symbol_part[] rhs = new symbol_part[2];
+      final symbol_part[] rhs = new symbol_part[2];
       action_part action = null;
       String result;
       if (start_nt.stack_type() != null)
@@ -255,26 +255,30 @@ public class Grammar {
       /* count use of lhs */
       lhs.note_use();
       if (precedence != null)
-	precedence.note_use();
+	{
+	    precedence.note_use();
+	  }
 
       /* merge adjacent actions (if any) */
-      Iterator<production_part> it = rhs_parts.iterator();
+      final Iterator<production_part> it = rhs_parts.iterator();
       action_part prev_action = null;
       while (it.hasNext())
 	{
-	  production_part part = it.next();
+	  final production_part part = it.next();
 	  if (part instanceof action_part)
 	    {
 	      if (prev_action != null)
 		{
 		  prev_action.add_code_string(((action_part)part).code_string());
 		  it.remove();
-		}
-	      else
-		prev_action = (action_part) part;
-	    }
-	  else
-	    prev_action = null;
+		} else
+		{
+		    prev_action = (action_part) part;
+		  }
+	    } else
+	    {
+		prev_action = null;
+	      }
 	}
       
       action_part action = null;
@@ -286,16 +290,16 @@ public class Grammar {
 	}
 
       /* allocate and copy over the right-hand-side */
-      symbol_part[] rhs = new symbol_part[rhs_parts.size()];
+      final symbol_part[] rhs = new symbol_part[rhs_parts.size()];
       /* count use of each rhs symbol */
       int last_act_loc = -1;
       for (i = 0; i < rhs.length; i++)
 	{
-	  production_part prod = rhs_parts.get(i);
+	  final production_part prod = rhs_parts.get(i);
 	  if (prod instanceof action_part)
 	    {
 	      /* create a new non terminal for the action production */
-	      non_terminal new_nt = create_anon_nonterm(lhs.stack_type()); 
+	      final non_terminal new_nt = create_anon_nonterm(lhs.stack_type()); 
 	      new_nt.note_use();
 	      rhs[i] = new symbol_part(new_nt);
 	      last_act_loc = i;
@@ -309,10 +313,12 @@ public class Grammar {
 
       /* proxy productions are optimized away; they need no action */
       if (rhs.length == 1 && action == null)
-	action_index = -1;
+	{
+	    action_index = -1;
+	  }
       
       /* check if there is a production with exactly the same action and reuse it.*/
-      for (production prod : lhs.productions()) 
+      for (final production prod : lhs.productions()) 
 	{
 	  if ((action == null ? prod.action() == null :
 	      prod.action() != null && 
@@ -328,7 +334,7 @@ public class Grammar {
 	}
       
       /* put the production in the production list of the lhs non terminal */
-      production prod = new production(_productions.size(), action_index, lhs, rhs, last_act_loc, action, precedence);
+      final production prod = new production(_productions.size(), action_index, lhs, rhs, last_act_loc, action, precedence);
       _productions.add(prod);
       if (action_index == _actions.size())
 	{
@@ -337,10 +343,10 @@ public class Grammar {
       last_act_loc = -1;
       for (i = 0; i < rhs.length; i++)
 	{
-	  production_part part = rhs_parts.get(i);
+	  final production_part part = rhs_parts.get(i);
 	  if (part instanceof action_part)
 	    {
-	      production actprod = new action_production
+	      final production actprod = new action_production
 	      	(_productions.size(), _actions.size(),
 	      	    prod, (non_terminal) rhs[i].the_symbol, 
 	      	    (action_part) part, i, last_act_loc);
@@ -360,17 +366,23 @@ public class Grammar {
 	  if (rhs[idx].label == null)
 	    {
 	      if (prod.rhs(idx).label != null)
-		return false;
+		{
+		    return false;
+		  }
 	    }
 	  else
 	    {
 	      if (!rhs[idx].label.equals(prod.rhs(idx).label))
-		return false;
+		{
+		    return false;
+		  }
 	      if (rhs[idx].the_symbol.stack_type() == null ?
 		  prod.rhs(idx).the_symbol.stack_type() != null :
 		  !rhs[idx].the_symbol.stack_type()
 		  .equals(prod.rhs(idx).the_symbol.stack_type()))
-		return false;
+		{
+		    return false;
+		  }
 	    }
 	}
       return true;
@@ -378,7 +390,7 @@ public class Grammar {
 
   public lalr_state get_lalr_state(Map<lr_item, terminal_set> kernel)
     {
-      Collection<lr_item> key = kernel.keySet();
+      final Collection<lr_item> key = kernel.keySet();
       lalr_state state = _kernels_to_lalr.get(key);
       if (state != null)
 	{
@@ -415,7 +427,7 @@ public class Grammar {
 	  change = false;
 
 	  /* consider each non-terminal */
-	  for (non_terminal nt : _nonterminals)
+	  for (final non_terminal nt : _nonterminals)
 	    {
 	      /* check nullable and set change flag */
 	      change |= nt.check_nullable();
@@ -433,8 +445,10 @@ public class Grammar {
       boolean      change = true;
 
       /* initialize first sets */
-      for (non_terminal nt : _nonterminals)
-	nt._first_set = new terminal_set(this);
+      for (final non_terminal nt : _nonterminals)
+	{
+	    nt._first_set = new terminal_set(this);
+	  }
       
       /* repeat this process until we have no change */
       while (change)
@@ -443,13 +457,13 @@ public class Grammar {
 	  change = false;
 
 	  /* consider each non-terminal */
-	  for (non_terminal nt : _nonterminals)
+	  for (final non_terminal nt : _nonterminals)
 	    {
 	      /* consider every production of that non terminal */
-	      for (production prod : nt.productions())
+	      for (final production prod : nt.productions())
 		{
 		  /* get the updated first of that production */
-		  terminal_set prod_first = prod.first_set(this);
+		  final terminal_set prod_first = prod.first_set(this);
 
 		  /* if this going to add anything, add it */
 		  change |= nt._first_set.add(prod_first);
@@ -481,7 +495,7 @@ public class Grammar {
    *  items so that it included items that represented productions of things
    *  the parser was now looking for.  In this case we would items 
    *  corresponding to productions of Y, since various forms of Y are expected
-   *  next when in this state (see lalr_item_set.compute_closure() for details 
+   *  next when in this state (see lalr_itemset.compute_closure() for details 
    *  on closure). <p>
    *
    *  The process of building the viable prefix recognizer terminates when no
@@ -493,7 +507,7 @@ public class Grammar {
    *  propagate_all_lookaheads().  This makes use of propagation links 
    *  constructed during the closure and transition process.
    *
-   * @see   java_cup.lalr_item_set#compute_closure
+   * @see   java_cup.lalr_itemset#compute_closure
    * @see   java_cup.lalr_state#propagate_all_lookaheads
    */
 
@@ -504,12 +518,12 @@ public class Grammar {
 	"Attempt to build viable prefix recognizer using a null production";
 
       /* build item with dot at front of start production and EOF lookahead */	
-      TreeMap<lr_item, terminal_set> start_items = new TreeMap<lr_item, terminal_set>();
-      terminal_set lookahead = new terminal_set(this);
+      final TreeMap<lr_item, terminal_set> start_items = new TreeMap<lr_item, terminal_set>();
+      final terminal_set lookahead = new terminal_set(this);
       lookahead.add(terminal.EOF);
-      lr_item core = _start_production.item();
+      final lr_item core = _start_production.item();
       start_items.put(core, lookahead);
-      lalr_state start_state = get_lalr_state(start_items);
+      final lalr_state start_state = get_lalr_state(start_items);
 
       /* continue looking at new states until we have no more work to do.
        * Note that the lalr_states are continually expanded.
@@ -517,7 +531,7 @@ public class Grammar {
       for (int i = 0; i < _lalr_states.size(); i++)
 	{
 	  /* remove a state from the work set */
-	  lalr_state st = _lalr_states.get(i);;
+	  final lalr_state st = _lalr_states.get(i);;
 	  st.compute_closure(this);
 	  st.compute_successors(this);
 	}
@@ -532,29 +546,33 @@ public class Grammar {
     {
       System.err.println("===== Terminals =====");
       int cnt = 0;
-      for (terminal t : terminals())
+      for (final terminal t : terminals())
 	{
 	  System.err.print("[" + t.index() + "]" + t.name() + " ");
 	  if ((++cnt) % 5 == 0)
-	    System.err.println();
+	    {
+		System.err.println();
+	      }
 	}
       System.err.println();
       System.err.println();
 
       System.err.println("===== Non terminals =====");
       cnt = 0;
-      for (non_terminal nt : non_terminals())
+      for (final non_terminal nt : non_terminals())
 	{
 	  System.err.print("[" + nt.index() + "]" + nt.name()
 	      + " ");
 	  if ((++cnt) % 5 == 0)
-	    System.err.println();
+	    {
+		System.err.println();
+	      }
 	}
       System.err.println();
       System.err.println();
 
       System.err.println("===== Productions =====");
-      for (production prod : productions())
+      for (final production prod : productions())
 	{
 	  System.err.println("[" + prod.index() + "] " + prod);
 	}
@@ -570,7 +588,7 @@ public class Grammar {
   public void dump_machine()
     {
       System.err.println("===== Viable Prefix Recognizer =====");
-      for (lalr_state st : lalr_states())
+      for (final lalr_state st : lalr_states())
 	{
 	  System.err.println(st);
 	  System.err.println("-------------------");
@@ -597,13 +615,13 @@ public class Grammar {
       Entry<lr_item,lookaheads> itm1,
       Entry<lr_item,lookaheads> itm2)
     {
-      StringBuilder message = new StringBuilder();
+      final StringBuilder message = new StringBuilder();
       message.append("*** Reduce/Reduce conflict found in state #").append(state.index()).append("\n")
       	.append("  between ").append(itm1.getKey().toString()).append("\n")
       	.append("  and     ").append(itm2.getKey().toString()).append("\n")
 	.append("  under symbols: {");
       String comma = "";
-      for (int t = 0; t < num_terminals(); t++)
+      for (int t = 0; t < numterminals(); t++)
 	{
 	  if (itm1.getValue().contains(t) && itm2.getValue().contains(t))
 	    {
@@ -614,7 +632,7 @@ public class Grammar {
       message.append("}\n  Resolved in favor of the first production.\n");
 
       /* count the conflict */
-      _num_conflicts++;
+      _numconflicts++;
       ErrorManager.getManager().emit_warning(message.toString());
     }
 
@@ -630,12 +648,12 @@ public class Grammar {
     symbol     conflict_sym)
     {
       /* emit top part of message including the reduce item */
-      StringBuilder message = new StringBuilder();
+      final StringBuilder message = new StringBuilder();
       message.append("*** Shift/Reduce conflict found in state #").append(state.index()).append("\n");
       message.append("  between ").append(p).append("(*)\n");
 
       /* find and report on all items that shift under our conflict symbol */
-      for (lr_item itm : state.items().keySet())
+      for (final lr_item itm : state.items().keySet())
 	{
 	  /* only look if its not the same item and not a reduce */
 	  if (!itm.dot_at_end() && itm.symbol_after_dot().equals(conflict_sym))
@@ -648,7 +666,7 @@ public class Grammar {
       message.append("  Resolved in favor of shifting.\n");
 
       /* count the conflict */
-      _num_conflicts++;
+      _numconflicts++;
       ErrorManager.getManager().emit_warning(message.toString());
     }
 
@@ -656,7 +674,7 @@ public class Grammar {
     {
       action_table = new parse_action_table(this);
       reduce_table = new parse_reduce_table(this);
-      for (lalr_state lst : lalr_states())
+      for (final lalr_state lst : lalr_states())
 	{
 	  lst.build_table_entries(this, action_table, reduce_table,
 	      compact_reduces);
@@ -665,14 +683,14 @@ public class Grammar {
 
   public void check_tables()
     {
-      boolean[] used_productions = new boolean[_productions.size()];
+      final boolean[] used_productions = new boolean[_productions.size()];
       /* tabulate reductions -- look at every table entry */
       for (int row = 0; row < lalr_states().size(); row++)
 	{
-	  for (int col = 0; col < num_terminals(); col++)
+	  for (int col = 0; col < numterminals(); col++)
 	    {
 	      /* look at the action entry to see if its a reduce */
-	      int act = action_table.table[row][col];
+	      final int act = action_table.table[row][col];
 	      if (parse_action_table.isReduce(act))
 		{
 		  /* tell production that we used it */
@@ -682,7 +700,7 @@ public class Grammar {
 	}
 
       /* now go across every production and make sure we hit it */
-      for (production prod : actions())
+      for (final production prod : actions())
 	{
 	  /* if we didn't hit it give a warning */
 	  if (!used_productions[prod.action_index()])
@@ -704,13 +722,15 @@ public class Grammar {
       return reduce_table;
     }
 
-  public void add_star_production(non_terminal lhs, non_terminal sym_star, symbol sym)
+  public void add_star_production(non_terminal lhs, non_terminal symstar, symbol sym)
     {
-      ArrayList<production_part> rhs = new ArrayList<production_part>(2);
-      rhs.add(new symbol_part(sym_star));
+      final ArrayList<production_part> rhs = new ArrayList<production_part>(2);
+      rhs.add(new symbol_part(symstar));
       rhs.add(new symbol_part(sym));
       if (sym.stack_type() != null)
-	rhs.add(new action_part("CUP$STAR2"));
+	{
+	    rhs.add(new action_part("CUP$STAR2"));
+	  }
       build_production(lhs, rhs, null);
     }
   
@@ -721,7 +741,9 @@ public class Grammar {
 	{
 	  rhs = new ArrayList<production_part>(1);
 	  if (sym.stack_type() != null)
-	    rhs.add(new action_part("RESULT=null;"));
+	    {
+		rhs.add(new action_part("RESULT=null;"));
+	      }
 	  build_production(sym._opt_symbol, rhs, null);
 	  
 	  rhs = new ArrayList<production_part>(1);
@@ -734,7 +756,9 @@ public class Grammar {
 	  assert sym._plus_symbol != null;
 	  rhs = new ArrayList<production_part>(1);
 	  if (sym.stack_type() != null)
-	    rhs.add(new action_part("CUP$STAR0"));
+	    {
+		rhs.add(new action_part("CUP$STAR0"));
+	      }
 	  build_production(sym._star_symbol, rhs, null);
 
 	  rhs = new ArrayList<production_part>(1);
@@ -747,7 +771,9 @@ public class Grammar {
 	  rhs = new ArrayList<production_part>(1);
 	  rhs.add(new symbol_part(sym));
 	  if (sym.stack_type() != null)
-	    rhs.add(new action_part("CUP$STAR1"));
+	    {
+		rhs.add(new action_part("CUP$STAR1"));
+	      }
 	  build_production(sym._plus_symbol, rhs, null);
 
 	  add_star_production(sym._plus_symbol, sym._plus_symbol, sym);
@@ -757,9 +783,13 @@ public class Grammar {
   
   public void add_wildcard_rules()
     {
-      for (symbol sym : terminals())
-	add_wildcard_rules(sym);
-      for (symbol sym : non_terminals())
-	add_wildcard_rules(sym);
+      for (final symbol sym : terminals())
+	{
+	    add_wildcard_rules(sym);
+	  }
+      for (final symbol sym : non_terminals())
+	{
+	    add_wildcard_rules(sym);
+	  }
     }
 }

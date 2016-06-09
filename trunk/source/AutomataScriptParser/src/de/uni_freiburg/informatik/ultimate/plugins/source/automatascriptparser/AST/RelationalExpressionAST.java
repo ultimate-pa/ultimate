@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -43,25 +43,25 @@ public class RelationalExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -5806173754091876977L;
-	private RelationalOperatorAST m_operator;
+	private RelationalOperatorAST moperator;
 
 	public RelationalOperatorAST getOperator() {
-		return m_operator;
+		return moperator;
 	}
 
 	public void setOperator(RelationalOperatorAST operator) {
-		this.m_operator = operator;
+		moperator = operator;
 	}
 	
 	public RelationalExpressionAST(ILocation loc) {
 		super(loc);
-		m_returnType = Boolean.class;
-		m_expectingType = Integer.class;
+		mreturnType = Boolean.class;
+		mexpectingType = Integer.class;
 	}
 
 	@Override
 	public String toString() {
-		return "RelationalExpression [Operator: " + operatorToString(m_operator) + "]";
+		return "RelationalExpression [Operator: " + operatorToString(moperator) + "]";
 	}
 	
 	private String operatorToString(RelationalOperatorAST ro) {
@@ -77,15 +77,15 @@ public class RelationalExpressionAST extends AtsASTNode {
 	}
 
 	public String getOperatorAsString() {
-		return operatorToString(m_operator);
+		return operatorToString(moperator);
 	}
 	
 	@Override
 	public String getAsString() {
-		if (m_children.size() == 2) {
-			return m_children.get(0).getAsString() +  
-		           operatorToString(m_operator) +
-				   m_children.get(1).getAsString();	
+		if (mchildren.size() == 2) {
+			return mchildren.get(0).getAsString() +  
+		           operatorToString(moperator) +
+				   mchildren.get(1).getAsString();	
 		} else {
 			return "";
 		}

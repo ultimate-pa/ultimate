@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public enum BoolValue {
 
-	// Ordinal numbers of constants are a bit fields, describing a powerset of {true, false}.
+	// Ordinal numbers of constants are a bit fields, describing a subset of {true, false}.
 	BOT,   // 00 = {    ,      }
 	FALSE, // 01 = {    , false}
 	TRUE,  // 10 = {true,      }
@@ -60,7 +60,7 @@ public enum BoolValue {
 	 * @return Union
 	 */
 	public BoolValue union(final BoolValue other) {
-		return values()[this.ordinal() | other.ordinal()];
+		return values()[ordinal() | other.ordinal()];
 	}
 	
 	/**
@@ -69,7 +69,7 @@ public enum BoolValue {
 	 * @return Intersection
 	 */
 	public BoolValue intersect(final BoolValue other) {
-		return values()[this.ordinal() & other.ordinal()];
+		return values()[ordinal() & other.ordinal()];
 	}
 
 	/**
@@ -92,9 +92,9 @@ public enum BoolValue {
 		if (this == BOT || other == BOT) {
 			return BOT;
 		}
-		final int x = this.ordinal();
-		final int y = other.ordinal();
-		final int xAndY = (x & y) | ((x | y) & 0b01);
+		final int thisBitField = ordinal();
+		final int otherBitField = other.ordinal();
+		final int xAndY = (thisBitField & otherBitField) | ((thisBitField | otherBitField) & 0b01);
 		return values()[xAndY];
 	}
 	
@@ -108,9 +108,9 @@ public enum BoolValue {
 		if (this == BOT || other == BOT) {
 			return BOT;
 		}
-		final int x = this.ordinal();
-		final int y = other.ordinal();
-		final int xOrY = ((x | y) & 0b10) | (x & y);
+		final int thisBitField = ordinal();
+		final int otherBitField = other.ordinal();
+		final int xOrY = ((thisBitField | otherBitField) & 0b10) | (thisBitField & otherBitField);
 		return values()[xOrY];
 	}
 

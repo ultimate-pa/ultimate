@@ -27,16 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Node of a recursive control flow graph. This can be seen as
@@ -142,8 +142,8 @@ public class ProgramPoint extends RCFGNode {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof ProgramPoint) {
-			ProgramPoint pp2 = (ProgramPoint) obj;
-			return this.mProcedure.equals(pp2.getProcedure()) && this.mPosition.equals(pp2.getPosition());
+			final ProgramPoint pp2 = (ProgramPoint) obj;
+			return mProcedure.equals(pp2.getProcedure()) && mPosition.equals(pp2.getPosition());
 		} else {
 			return false;
 		}
@@ -151,7 +151,7 @@ public class ProgramPoint extends RCFGNode {
 
 	@Override
 	public int hashCode() {
-		return 3 * this.mPosition.hashCode() + 5 * this.mProcedure.hashCode();
+		return 3 * mPosition.hashCode() + 5 * mProcedure.hashCode();
 	}
 
 	@Override

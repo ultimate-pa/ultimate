@@ -49,10 +49,10 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
 
 /**
@@ -73,7 +73,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
 		mTitle = title;
-		mPreferenceStore = new ScopedPreferenceStore(new UltimatePreferenceStore(mPluginID).getScopeContext(),
+		mPreferenceStore = new ScopedPreferenceStore(new RcpPreferenceProvider(mPluginID).getScopeContext(),
 				mPluginID);
 		mCheckedFields = new HashMap<FieldEditor, UltimatePreferenceItem<?>>();
 		setPreferenceStore(mPreferenceStore);
@@ -88,7 +88,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	protected void createFieldEditors() {
 		for (final BaseUltimatePreferenceItem prefItem : mDefaultPreferences) {
 			if (prefItem instanceof UltimatePreferenceItem) {
-				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
+				final UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
 				final FieldEditor editor;
 				switch (item.getType()) {
 				case Label:
@@ -154,7 +154,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	protected void checkState() {
 		super.checkState();
 		if (isValid()) {
-			for (FieldEditor entry : mCheckedFields.keySet()) {
+			for (final FieldEditor entry : mCheckedFields.keySet()) {
 				checkState(entry);
 			}
 		}
@@ -177,7 +177,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	public boolean performOk() {
 		try {
 			mPreferenceStore.save();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 		return super.performOk();
@@ -186,11 +186,11 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 	@SuppressWarnings("unchecked")
 	private void checkState(FieldEditor editor) {
 		if (editor.isValid()) {
-			UltimatePreferenceItem<?> preferenceDescriptor = mCheckedFields.get(editor);
+			final UltimatePreferenceItem<?> preferenceDescriptor = mCheckedFields.get(editor);
 			if (preferenceDescriptor == null) {
 				return;
 			}
-			IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor.getPreferenceValidator();
+			final IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor.getPreferenceValidator();
 			switch (preferenceDescriptor.getType()) {
 			case Boolean:
 				validateField((IUltimatePreferenceItemValidator<Boolean>) validator,

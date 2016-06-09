@@ -38,9 +38,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
@@ -57,7 +56,7 @@ public class AStar<V, E> {
 
 	private static final String INDENT = "   ";
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IHeuristic<V, E> mHeuristic;
 	private final V mStart;
 	private final V mTarget;
@@ -65,16 +64,16 @@ public class AStar<V, E> {
 	private final IGraph<V, E> mGraph;
 	private final IProgressAwareTimer mTimer;
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(),timer);
 	}
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
 			Collection<E> forbiddenEdges, IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges),timer);
 	}
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
 			IEdgeDenier<E> edgeDenier, IProgressAwareTimer timer) {
 		mLogger = logger;
 		mHeuristic = heuristic;
@@ -90,7 +89,7 @@ public class AStar<V, E> {
 		final OpenItem<V, E> initialOpenItem = createInitialSuccessorItem(mStart);
 
 		// check for trivial paths
-		for (E edge : mGraph.getOutgoingEdges(mStart)) {
+		for (final E edge : mGraph.getOutgoingEdges(mStart)) {
 			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(initialOpenItem.getAnnotation()))) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Forbidden [" + edge.hashCode() + "] " + edge);
@@ -269,7 +268,7 @@ public class AStar<V, E> {
 	private final class BackpointerIterator implements Iterator<E> {
 
 		private AstarAnnotation<E> mAnnotation;
-		private Set<AstarAnnotation<E>> mClosed;
+		private final Set<AstarAnnotation<E>> mClosed;
 
 		private BackpointerIterator(AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;

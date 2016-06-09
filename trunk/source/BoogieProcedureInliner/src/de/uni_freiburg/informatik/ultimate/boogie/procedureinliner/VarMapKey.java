@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 
 /**
  * Key for the map from old to new variable identifiers, used while creating an inline version of a Boogie procedure.
@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
  */
 public class VarMapKey {
 	
-	private String mVarId;
-	private DeclarationInformation mDeclInfo;
-	private String mInOldExprOfProc;
+	private final String mVarId;
+	private final DeclarationInformation mDeclInfo;
+	private final String mInOldExprOfProc;
 
 	/**
 	 * Convenience constructor for variables, which didn't appear in (inlined) old() expressions.
@@ -92,28 +92,37 @@ public class VarMapKey {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		VarMapKey other = (VarMapKey) obj;
+		}
+		final VarMapKey other = (VarMapKey) obj;
 		if (mDeclInfo == null) {
-			if (other.mDeclInfo != null)
+			if (other.mDeclInfo != null) {
 				return false;
-		} else if (!mDeclInfo.equals(other.mDeclInfo))
+			}
+		} else if (!mDeclInfo.equals(other.mDeclInfo)) {
 			return false;
+		}
 		if (mInOldExprOfProc == null) {
-			if (other.mInOldExprOfProc != null)
+			if (other.mInOldExprOfProc != null) {
 				return false;
-		} else if (!mInOldExprOfProc.equals(other.mInOldExprOfProc))
+			}
+		} else if (!mInOldExprOfProc.equals(other.mInOldExprOfProc)) {
 			return false;
+		}
 		if (mVarId == null) {
-			if (other.mVarId != null)
+			if (other.mVarId != null) {
 				return false;
-		} else if (!mVarId.equals(other.mVarId))
+			}
+		} else if (!mVarId.equals(other.mVarId)) {
 			return false;
+		}
 		return true;
 	}
 

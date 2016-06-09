@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -45,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -54,17 +53,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  */
 public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
-	private final IDoubleDeckerAutomaton<LETTER, STATE> m_Operand;
-	private final boolean m_Result;
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
+	private final boolean mResult;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	public DownStateConsistencyCheck(AutomataLibraryServices services, 
-			IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = nwa;
-		m_Result = consistentForAll();
+			IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = nwa;
+		mResult = consistentForAll();
 	}
 	
 	
@@ -76,27 +75,27 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result;
+				mResult;
 	}
 
 	@Override
 	public Boolean getResult() {
-		return m_Result;
+		return mResult;
 	}
 	
-	public boolean consistentForAll() throws OperationCanceledException {
+	public boolean consistentForAll() throws AutomataOperationCanceledException {
 		boolean result = true;
 		result &= consistentForInitials();
-		for (STATE state : m_Operand.getStates()) {
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+		for (final STATE state : mOperand.getStates()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			result &= consistentForState(state);
 		}
@@ -105,9 +104,9 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	
 	private boolean consistentForInitials() {
 		boolean result = true;
-		for (STATE state : m_Operand.getInitialStates()) {
-			Set<STATE> downStates = m_Operand.getDownStates(state);
-			result &= downStates.contains(m_Operand.getEmptyStackState());
+		for (final STATE state : mOperand.getInitialStates()) {
+			final Set<STATE> downStates = mOperand.getDownStates(state);
+			result &= downStates.contains(mOperand.getEmptyStackState());
 		}
 		assert result : "down states inconsistent";
 		return result;
@@ -115,7 +114,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 
 	private boolean consistentForState(STATE state) {
 		boolean result = true;
-		Set<STATE> downStates = m_Operand.getDownStates(state);
+		final Set<STATE> downStates = mOperand.getDownStates(state);
 		result &= getIsComparison(state, downStates);
 		result &= checkIfDownStatesArePassedToSuccessors(state, downStates);
 		result &= checkIfEachDownStateIsJustified(state, downStates);
@@ -125,29 +124,29 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	
 	private boolean checkIfEachDownStateIsJustified(STATE state, Set<STATE> downStates) {
 		downStates = new HashSet<STATE>(downStates);
-		for (IncomingInternalTransition<LETTER, STATE> t : m_Operand.internalPredecessors(state)) {
-			Set<STATE> preDown = m_Operand.getDownStates(t.getPred());
+		for (final IncomingInternalTransition<LETTER, STATE> t : mOperand.internalPredecessors(state)) {
+			final Set<STATE> preDown = mOperand.getDownStates(t.getPred());
 			downStates.removeAll(preDown);
 		}
 
-		for (IncomingCallTransition<LETTER, STATE> t : m_Operand.callPredecessors(state)) {
+		for (final IncomingCallTransition<LETTER, STATE> t : mOperand.callPredecessors(state)) {
 			downStates.remove(t.getPred());
 		}
 
-		for (IncomingReturnTransition<LETTER, STATE> t : m_Operand.returnPredecessors(state)) {
-			Set<STATE> predDownStates = m_Operand.getDownStates(t.getLinPred());
+		for (final IncomingReturnTransition<LETTER, STATE> t : mOperand.returnPredecessors(state)) {
+			final Set<STATE> predDownStates = mOperand.getDownStates(t.getLinPred());
 			if (predDownStates.contains(t.getHierPred())) {
-				Set<STATE> hierDownStates = m_Operand.getDownStates(t.getHierPred());
+				final Set<STATE> hierDownStates = mOperand.getDownStates(t.getHierPred());
 				downStates.removeAll(hierDownStates);
 			} else {
 				throw new AssertionError("unreachable return");
 			}
 		}
-		if (m_Operand.isInitial(state)) {
-			downStates.remove(m_Operand.getEmptyStackState());
+		if (mOperand.isInitial(state)) {
+			downStates.remove(mOperand.getEmptyStackState());
 		}
 		if (!downStates.isEmpty()) {
-			m_Logger.warn("State " + state + " has unjustified down states " + downStates );
+			mLogger.warn("State " + state + " has unjustified down states " + downStates );
 		}
 		return downStates.isEmpty();
 	}
@@ -155,19 +154,19 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	private boolean checkIfDownStatesArePassedToSuccessors(STATE state,
 			Set<STATE> downStates) {
 		boolean result = true;
-		for (OutgoingInternalTransition<LETTER, STATE> t : m_Operand.internalSuccessors(state)) {
-			Set<STATE> succDownStates = m_Operand.getDownStates(t.getSucc());
+		for (final OutgoingInternalTransition<LETTER, STATE> t : mOperand.internalSuccessors(state)) {
+			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
 			result &= succDownStates.containsAll(downStates);
 			assert result : "down states inconsistent";
 		}
-		for (OutgoingCallTransition<LETTER, STATE> t : m_Operand.callSuccessors(state)) {
-			Set<STATE> succDownStates = m_Operand.getDownStates(t.getSucc());
+		for (final OutgoingCallTransition<LETTER, STATE> t : mOperand.callSuccessors(state)) {
+			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
 			result &= succDownStates.contains(state);
 			assert result : "down states inconsistent";
 		}
-		for (OutgoingReturnTransition<LETTER, STATE> t : m_Operand.returnSuccessors(state)) {
-			Set<STATE> succDownStates = m_Operand.getDownStates(t.getSucc());
-			Set<STATE> hierDownStates = m_Operand.getDownStates(t.getHierPred());
+		for (final OutgoingReturnTransition<LETTER, STATE> t : mOperand.returnSuccessors(state)) {
+			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
+			final Set<STATE> hierDownStates = mOperand.getDownStates(t.getHierPred());
 			if (downStates.contains(t.getHierPred())) {
 				result &= succDownStates.containsAll(hierDownStates);
 				assert result : "down states inconsistent";
@@ -175,8 +174,8 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 				// nothing to check, we cannot take this transition
 			}
 		}
-		for (SummaryReturnTransition<LETTER, STATE> t : m_Operand.returnSummarySuccessor(state)) {
-			Set<STATE> succDownStates = m_Operand.getDownStates(t.getSucc());
+		for (final SummaryReturnTransition<LETTER, STATE> t : mOperand.returnSummarySuccessor(state)) {
+			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
 			result &= succDownStates.containsAll(downStates);
 			assert result : "down states inconsistent";
 		}
@@ -202,8 +201,8 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	 */
 	private boolean getIsComparison1(STATE state, Set<STATE> downStates) {
 		boolean result = true;
-		for (STATE down : downStates) {
-			result &= m_Operand.isDoubleDecker(state, down);
+		for (final STATE down : downStates) {
+			result &= mOperand.isDoubleDecker(state, down);
 		}
 		return result;
 	}
@@ -218,8 +217,8 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	 */
 	private boolean getIsComparison2(STATE state, Set<STATE> downStates) {
 		boolean result = true;
-		for (STATE down : m_Operand.getStates()) {
-			if (m_Operand.isDoubleDecker(state, down)) {
+		for (final STATE down : mOperand.getStates()) {
+			if (mOperand.isDoubleDecker(state, down)) {
 				result &= downStates.contains(down);
 			}
 		}

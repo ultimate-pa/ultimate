@@ -26,10 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.DebugRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
@@ -44,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public class DependencyFinder extends BaseObserver {
 
 	private final int mUnrollings;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public DependencyFinder(Logger logger) {
+	public DependencyFinder(ILogger logger) {
 		super();
 		mUnrollings = 1;
 		mLogger = logger;
@@ -66,8 +65,8 @@ public class DependencyFinder extends BaseObserver {
 	}
 
 	private void doit(IElement root, int unrollings) {
-		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
-		RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, mLogger, unrollings);
+		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		final RCFGWalkerUnroller walker = new RCFGWalkerUnroller(od, mLogger, unrollings);
 		od.setWalker(walker);
 
 		walker.addObserver(new DebugRCFGVisitor(mLogger, 500));
@@ -75,7 +74,7 @@ public class DependencyFinder extends BaseObserver {
 		// walker.addObserver(new SequencingVisitor(walker));
 		walker.run((RCFGNode) root);
 
-		DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
+		final DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
 		dfw.run();
 	}
 

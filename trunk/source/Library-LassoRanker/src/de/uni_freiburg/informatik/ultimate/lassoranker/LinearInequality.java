@@ -93,7 +93,7 @@ public class LinearInequality implements Serializable {
 	/**
 	 * Whether the inequality is strict (">") versus non-strict ("≥")
 	 */
-	private boolean m_strict = false;
+	private boolean mstrict = false;
 	
 	/**
 	 * What kind of Motzkin coefficients this inequality needs 
@@ -104,23 +104,23 @@ public class LinearInequality implements Serializable {
 	/**
 	 * List of variables and their coefficients
 	 */
-	private final Map<Term, AffineTerm> m_coefficients;
+	private final Map<Term, AffineTerm> mcoefficients;
 	
 	/**
 	 * Affine constant
 	 */
-	private AffineTerm m_constant;
+	private AffineTerm mconstant;
 	
 	/**
 	 * Construct an empty linear inequality, i.e. 0 ≥ 0.
 	 */
 	public LinearInequality() {
-		m_coefficients = new LinkedHashMap<Term, AffineTerm>();
-		m_constant = new AffineTerm();
+		mcoefficients = new LinkedHashMap<Term, AffineTerm>();
+		mconstant = new AffineTerm();
 	}
 	
 	public static LinearInequality constructFalse() {
-		LinearInequality result = new LinearInequality();
+		final LinearInequality result = new LinearInequality();
 		result.setStrict(true);
 		return result;
 	}
@@ -129,12 +129,12 @@ public class LinearInequality implements Serializable {
 	 * Copy constructor
 	 */
 	public LinearInequality(LinearInequality other) {
-		m_constant = new AffineTerm(other.m_constant);
-		m_strict = other.m_strict;
+		mconstant = new AffineTerm(other.mconstant);
+		mstrict = other.mstrict;
 		motzkin_coefficient = other.motzkin_coefficient;
-		m_coefficients = new LinkedHashMap<Term, AffineTerm>();
-		for (Map.Entry<Term, AffineTerm> entry : other.m_coefficients.entrySet()) {
-			m_coefficients.put(entry.getKey(), new AffineTerm(entry.getValue()));
+		mcoefficients = new LinkedHashMap<Term, AffineTerm>();
+		for (final Map.Entry<Term, AffineTerm> entry : other.mcoefficients.entrySet()) {
+			mcoefficients.put(entry.getKey(), new AffineTerm(entry.getValue()));
 		}
 	}
 	
@@ -152,13 +152,14 @@ public class LinearInequality implements Serializable {
 					term)));
 		} else if (term instanceof TermVariable) {
 			li = new LinearInequality();
-			li.add((TermVariable) term, Rational.ONE);
+			li.add(term, Rational.ONE);
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
+			final ApplicationTerm appt = (ApplicationTerm) term;
 			if (appt.getFunction().getName().equals("+")) {
 				li = fromTerm(appt.getParameters()[0]);
-				for (int i = 1; i < appt.getParameters().length; ++i)
+				for (int i = 1; i < appt.getParameters().length; ++i) {
 					li.add(fromTerm(appt.getParameters()[i]));
+				}
 			} else if (appt.getFunction().getName().equals("-")) {
 				if (appt.getFunction().getParameterSorts().length == 1) {
 					// unary minus
@@ -167,20 +168,21 @@ public class LinearInequality implements Serializable {
 				} else { // binary minus (and polyary minus)
 					li = fromTerm(appt.getParameters()[0]);
 					li.mult(Rational.MONE);
-					for (int i = 1; i < appt.getParameters().length; ++i)
+					for (int i = 1; i < appt.getParameters().length; ++i) {
 						li.add(fromTerm(appt.getParameters()[i]));
+					}
 					li.mult(Rational.MONE);
 				}
 			} else if (appt.getFunction().getName().equals("*")) {
 				li = new LinearInequality();
-				li.m_constant = new AffineTerm(Rational.ONE);
-				for (Term u : appt.getParameters()) {
-					LinearInequality liu = fromTerm(u);
-					if (li.isConstant() && li.m_constant.isConstant()) {
-						liu.mult(li.m_constant.getConstant());
+				li.mconstant = new AffineTerm(Rational.ONE);
+				for (final Term u : appt.getParameters()) {
+					final LinearInequality liu = fromTerm(u);
+					if (li.isConstant() && li.mconstant.isConstant()) {
+						liu.mult(li.mconstant.getConstant());
 						li = liu;
-					} else if (liu.isConstant() && liu.m_constant.isConstant()) {
-						li.mult(liu.m_constant.getConstant());
+					} else if (liu.isConstant() && liu.mconstant.isConstant()) {
+						li.mult(liu.mconstant.getConstant());
 					} else {
 						throw new TermIsNotAffineException(
 								TermIsNotAffineException.s_MultipleNonConstantFactors, appt);
@@ -188,17 +190,17 @@ public class LinearInequality implements Serializable {
 				}
 			} else if (appt.getFunction().getName().equals("/")) {
 				assert(appt.getParameters().length == 2);
-				LinearInequality divident = fromTerm(appt.getParameters()[0]);
-				LinearInequality divisor  = fromTerm(appt.getParameters()[1]);
-				if (!divisor.isConstant() || !divisor.m_constant.isConstant()) {
+				final LinearInequality divident = fromTerm(appt.getParameters()[0]);
+				final LinearInequality divisor  = fromTerm(appt.getParameters()[1]);
+				if (!divisor.isConstant() || !divisor.mconstant.isConstant()) {
 					throw new TermIsNotAffineException(
 							TermIsNotAffineException.s_NonConstantDivisor, appt);
-				} else if (divisor.m_constant.getConstant().equals(Rational.ZERO)) {
+				} else if (divisor.mconstant.getConstant().equals(Rational.ZERO)) {
 					throw new TermIsNotAffineException(
 							TermIsNotAffineException.s_DivisionByZero, appt);
 				} else {
 					li = divident;
-					li.mult(divisor.m_constant.getConstant().inverse());
+					li.mult(divisor.mconstant.getConstant().inverse());
 				}
 			} else if (appt.getParameters().length == 0){
 				li = new LinearInequality();
@@ -216,7 +218,7 @@ public class LinearInequality implements Serializable {
 	 * @return true iff the affine term is just a constant
 	 */
 	public boolean isConstant() {
-		return m_coefficients.isEmpty() && m_constant.isConstant();
+		return mcoefficients.isEmpty() && mconstant.isConstant();
 	}
 	
 	/**
@@ -224,8 +226,8 @@ public class LinearInequality implements Serializable {
 	 */
 	public boolean allAffineTermsAreConstant() {
 		boolean result = true;
-		result &= m_constant.isConstant();
-		for (AffineTerm coeff : m_coefficients.values()) {
+		result &= mconstant.isConstant();
+		for (final AffineTerm coeff : mcoefficients.values()) {
 			result &= coeff.isConstant();
 		}
 		return result;
@@ -235,35 +237,35 @@ public class LinearInequality implements Serializable {
 	 * @return the constant component
 	 */
 	public AffineTerm getConstant() {
-		return m_constant;
+		return mconstant;
 	}
 	
 	/**
 	 * Is this a strict inequality?
 	 */
 	public boolean isStrict() {
-		return m_strict;
+		return mstrict;
 	}
 	
 	/**
 	 * Set whether this is a strict inequality
 	 */
 	public void setStrict(boolean strict) {
-		m_strict = strict;
+		mstrict = strict;
 	}
 	
 	/**
 	 * Returns '>' if this is a strict inequality and '>=' otherwise
 	 */
 	public String getInequalitySymbol() {
-		return m_strict ? ">" : ">=";
+		return mstrict ? ">" : ">=";
 	}
 	
 	/**
 	 * Returns '<' if this is a strict inequality and '<=' otherwise
 	 */
 	public String getInequalitySymbolReverse() {
-		return m_strict ? "<" : "<=";
+		return mstrict ? "<" : "<=";
 	}
 	
 	/**
@@ -272,7 +274,7 @@ public class LinearInequality implements Serializable {
 	 * @return zero if the variable does not occur
 	 */
 	public AffineTerm getCoefficient(Term var) {
-		AffineTerm p = m_coefficients.get(var);
+		final AffineTerm p = mcoefficients.get(var);
 		if (p == null) {
 			return new AffineTerm();
 		}
@@ -283,7 +285,7 @@ public class LinearInequality implements Serializable {
 	 * @return a collection of all occuring variables
 	 */
 	public Collection<Term> getVariables() {
-		return m_coefficients.keySet();
+		return mcoefficients.keySet();
 	}
 	
 	/**
@@ -291,9 +293,9 @@ public class LinearInequality implements Serializable {
 	 * @param li other linear inequality
 	 */
 	public void add(LinearInequality li) {
-		this.add(li.m_constant);
-		for (Map.Entry<Term, AffineTerm> entry
-				: li.m_coefficients.entrySet()) {
+		this.add(li.mconstant);
+		for (final Map.Entry<Term, AffineTerm> entry
+				: li.mcoefficients.entrySet()) {
 			this.add(entry.getKey(), entry.getValue());
 		}
 	}
@@ -304,17 +306,17 @@ public class LinearInequality implements Serializable {
 	 * @param t   the variable's coefficient to be added
 	 */
 	public void add(Term var, AffineTerm a) {
-		AffineTerm a2 = m_coefficients.get(var);
+		final AffineTerm a2 = mcoefficients.get(var);
 		if (a2 != null) {
 			a2.add(a);
 			if (!a2.isZero()) {
-				m_coefficients.put(var, a2);
+				mcoefficients.put(var, a2);
 			} else {
-				m_coefficients.remove(var);
+				mcoefficients.remove(var);
 			}
 		} else {
 			if (!a.isZero()) {
-				m_coefficients.put(var, a);
+				mcoefficients.put(var, a);
 			}
 		}
 	}
@@ -333,7 +335,7 @@ public class LinearInequality implements Serializable {
 	 * @param t a constant
 	 */
 	public void add(AffineTerm p) {
-		m_constant.add(p);
+		mconstant.add(p);
 	}
 	
 	/**
@@ -341,9 +343,9 @@ public class LinearInequality implements Serializable {
 	 * @param t factor
 	 */
 	public void mult(Rational r) {
-		m_constant.mult(r);
-		for (Map.Entry<Term, AffineTerm> entry
-				: m_coefficients.entrySet()) {
+		mconstant.mult(r);
+		for (final Map.Entry<Term, AffineTerm> entry
+				: mcoefficients.entrySet()) {
 			entry.getValue().mult(r);
 		}
 	}
@@ -357,19 +359,19 @@ public class LinearInequality implements Serializable {
 	 */
 	public void negate() {
 		mult(Rational.MONE);
-		m_strict = !m_strict;
+		mstrict = !mstrict;
 	}
 	
 	/**
 	 * @return the name of the Sort of the summands ("Real" or "Int")
 	 */
 	public String getSortName() {
-		if (m_coefficients.size() == 0) {
+		if (mcoefficients.size() == 0) {
 			return "Real"; // default to Real
 		}
-		Term firstVar = m_coefficients.keySet().iterator().next();
-		Sort result = firstVar.getSort();
-		for (Term var : m_coefficients.keySet()) {
+		final Term firstVar = mcoefficients.keySet().iterator().next();
+		final Sort result = firstVar.getSort();
+		for (final Term var : mcoefficients.keySet()) {
 			assert var.getSort() == result;
 		}
 		return result.getName();
@@ -380,15 +382,15 @@ public class LinearInequality implements Serializable {
 	 * @return this as a term
 	 */
 	public Term asTerm(Script script) {
-		String sortName = getSortName();
-		boolean real = sortName.equals("Real");
-		Term[] summands = new Term[m_coefficients.size() + 1];
-		Term zero = real ? script.decimal(BigDecimal.ZERO)
+		final String sortName = getSortName();
+		final boolean real = sortName.equals("Real");
+		final Term[] summands = new Term[mcoefficients.size() + 1];
+		final Term zero = real ? script.decimal(BigDecimal.ZERO)
 				: script.numeral(BigInteger.ZERO);
 		
 		int i = 0;
-		for (Entry<Term, AffineTerm> entry : m_coefficients.entrySet()) {
-			Term var = entry.getKey();
+		for (final Entry<Term, AffineTerm> entry : mcoefficients.entrySet()) {
+			final Term var = entry.getKey();
 			Term coeff;
 			if (real) {
 				assert var.getSort().getName().equals("Real");
@@ -402,11 +404,11 @@ public class LinearInequality implements Serializable {
 		}
 		
 		if (real) {
-			summands[i] = m_constant.asRealTerm(script);
+			summands[i] = mconstant.asRealTerm(script);
 		} else {
-			summands[i] = m_constant.asIntTerm(script);
+			summands[i] = mconstant.asIntTerm(script);
 		}
-		Term sum = SmtUtils.sum(script, script.sort(sortName),
+		final Term sum = SmtUtils.sum(script, script.sort(sortName),
 				summands);
 		
 		return script.term(getInequalitySymbol(), sum, zero);
@@ -414,17 +416,17 @@ public class LinearInequality implements Serializable {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("0 ");
 		sb.append(getInequalitySymbolReverse());
 		sb.append(" ");
 		boolean first = true;
-		for (Map.Entry<Term, AffineTerm> entry
-				: m_coefficients.entrySet()) {
+		for (final Map.Entry<Term, AffineTerm> entry
+				: mcoefficients.entrySet()) {
 			if (entry.getValue().isZero()) {
 				continue;
 			}
-			String param = entry.getValue().toString();
+			final String param = entry.getValue().toString();
 			if (param.length() > 2 && param.substring(2).contains(" ")) {
 				if (!first) {
 					sb.append(" + ");
@@ -449,8 +451,8 @@ public class LinearInequality implements Serializable {
 			sb.append(entry.getKey());
 			first = false;
 		}
-		if (!m_constant.isZero() || first) {
-			String s = m_constant.toString();
+		if (!mconstant.isZero() || first) {
+			final String s = mconstant.toString();
 			if (s.startsWith("-")) {
 				if (!first) {
 					sb.append(" -");

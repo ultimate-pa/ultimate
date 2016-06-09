@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimatetest.summaries;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
@@ -50,14 +51,14 @@ public final class ConversionContext {
 	}
 
 	public static ConversionContext Keep() {
-		ConversionContext c = new ConversionContext();
+		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.KEEP;
 		c.mUnit = "";
 		return c;
 	}
 
 	public static ConversionContext Keep(String unit) {
-		ConversionContext c = new ConversionContext();
+		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.KEEP;
 		c.mUnit = unit;
 		return c;
@@ -68,7 +69,7 @@ public final class ConversionContext {
 			throw new IllegalArgumentException("precision has to be positive");
 		}
 
-		ConversionContext c = new ConversionContext();
+		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.PERCENT;
 		if (escape) {
 			c.mUnit = "\\%";
@@ -82,7 +83,7 @@ public final class ConversionContext {
 	}
 
 	public static ConversionContext BestFitNumber() {
-		ConversionContext c = new ConversionContext();
+		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.BESTFITNUMBER;
 		return c;
 	}
@@ -94,7 +95,7 @@ public final class ConversionContext {
 		if (divisor == 0) {
 			throw new IllegalArgumentException("divisor may not be 0");
 		}
-		ConversionContext c = new ConversionContext();
+		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.DIVIDE;
 		c.mFactor = Integer.toString(divisor);
 		c.mUnit = unit;
@@ -118,40 +119,40 @@ public final class ConversionContext {
 	}
 
 	private String makeHumanReadableDivide(String input, String divisor, int precision, String unit) {
-		BigDecimal current = convert(input);
+		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
 		}
 
 		try {
 			return current.divide(new BigDecimal(divisor)).setScale(precision, RoundingMode.HALF_UP).toString() + unit;
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return "NaN";
 		}
 	}
 
 	private String makeHumanReadablePercent(String input, String unit, int precision) {
-		BigDecimal current = convert(input);
+		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
 		}
 
 		try {
 			return current.multiply(new BigDecimal("100")).setScale(precision, RoundingMode.HALF_UP).toString() + unit;
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return "NaN";
 		}
 	}
 
 	private String makeHumanReadableNumber(String input) {
-		BigDecimal current = convert(input);
+		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
 		}
 
 		try {
 			return Utils.humanReadableNumber(current.longValue());
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return "NaN";
 		}
 	}
@@ -159,7 +160,7 @@ public final class ConversionContext {
 	private BigDecimal convert(String input) {
 		try {
 			return new BigDecimal(input);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return null;
 		}
 	}

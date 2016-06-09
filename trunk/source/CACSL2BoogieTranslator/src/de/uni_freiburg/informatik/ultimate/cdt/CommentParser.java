@@ -40,15 +40,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * @author Markus Lindenmann
@@ -60,11 +60,11 @@ public class CommentParser {
 	/**
 	 * The list of comments.
 	 */
-	private IASTComment[] commentList;
+	private final IASTComment[] commentList;
 	/**
 	 * Map startline numbers of a block to end line numbers.
 	 */
-	private HashMap<Integer, Integer> functionLineRange;
+	private final HashMap<Integer, Integer> functionLineRange;
 	/**
 	 * Pattern which recognizes ACSL comments.
 	 */
@@ -76,9 +76,9 @@ public class CommentParser {
 	/**
 	 * The compiled pattern to use.
 	 */
-	private Pattern pattern;
-	private Logger mLogger;
-	private Dispatcher mDispatcher;
+	private final Pattern pattern;
+	private final ILogger mLogger;
+	private final Dispatcher mDispatcher;
 
 	/**
 	 * The Constructor.
@@ -89,11 +89,11 @@ public class CommentParser {
 	 *            Map with line ranges of functions. Can be determined with
 	 *            FunctionLineVisitor.
 	 */
-	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, Logger logger,
+	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, ILogger logger,
 			Dispatcher dispatch) {
-		this.commentList = comments;
-		this.functionLineRange = lineRange;
-		this.pattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
+		commentList = comments;
+		functionLineRange = lineRange;
+		pattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
 		mLogger = logger;
 		mDispatcher = dispatch;
 	}
@@ -113,15 +113,15 @@ public class CommentParser {
 	 * @return <code>List&lt;ACSLNode&gt;</code> a list of ACSL ASTs
 	 */
 	public List<ACSLNode> processComments() {
-		StringBuilder sb = new StringBuilder();
-		ArrayList<ACSLNode> acslList = new ArrayList<ACSLNode>();
-		for (IASTComment comment : commentList) {
+		final StringBuilder sb = new StringBuilder();
+		final ArrayList<ACSLNode> acslList = new ArrayList<ACSLNode>();
+		for (final IASTComment comment : commentList) {
 			sb.append(comment.getComment());
 			// We check if the comment is a ACSL_Comment
-			Matcher matcher = this.pattern.matcher(sb);
+			final Matcher matcher = pattern.matcher(sb);
 			if (matcher.matches()) {
 				// We need to remove comment symbols
-				StringBuilder input = new StringBuilder();
+				final StringBuilder input = new StringBuilder();
 				input.append(determineCodePosition(comment));
 				input.append('\n');
 				input.append(removeCommentSymbols(sb.toString()));
@@ -133,8 +133,8 @@ public class CommentParser {
 						acslNode = Parser.parseComment(input.toString(),
 								comment.getFileLocation().getStartingLineNumber(),
 								comment.getFileLocation().getEndingLineNumber(), mLogger);
-					} catch (ExceptionInInitializerError e) { // ignore
-					} catch (NoClassDefFoundError e) { // ignore
+					} catch (final ExceptionInInitializerError e) { // ignore
+					} catch (final NoClassDefFoundError e) { // ignore
 					} finally {
 						acslNode = Parser.parseComment(input.toString(),
 								comment.getFileLocation().getStartingLineNumber(),
@@ -144,12 +144,12 @@ public class CommentParser {
 						acslNode.setFileName(comment.getContainingFilename());
 						acslList.add(acslNode);
 					}
-				} catch (ACSLSyntaxErrorException e) {
-					ACSLNode node = e.getLocation();
+				} catch (final ACSLSyntaxErrorException e) {
+					final ACSLNode node = e.getLocation();
 					node.setFileName(comment.getFileLocation().getFileName());
-					ILocation loc = LocationFactory.createACSLLocation(node);
+					final ILocation loc = LocationFactory.createACSLLocation(node);
 					mDispatcher.syntaxError(loc, e.getMessageText());
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					throw new IllegalArgumentException("Exception should be cached: " + e.getMessage());
 				}
 			}
@@ -184,10 +184,10 @@ public class CommentParser {
 	 * @return "lstart" or "gstart" depending on the position
 	 */
 	private String determineCodePosition(IASTComment comment) {
-		int start = comment.getFileLocation().getStartingLineNumber();
-		int end = comment.getFileLocation().getEndingLineNumber();
-		for (Integer lineStart : this.functionLineRange.keySet()) {
-			if (start >= lineStart && end <= this.functionLineRange.get(lineStart)) {
+		final int start = comment.getFileLocation().getStartingLineNumber();
+		final int end = comment.getFileLocation().getEndingLineNumber();
+		for (final Integer lineStart : functionLineRange.keySet()) {
+			if (start >= lineStart && end <= functionLineRange.get(lineStart)) {
 				return "lstart";
 			}
 		}

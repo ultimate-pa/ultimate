@@ -28,11 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.LinkedHashSet;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -56,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class ReachDefRCFG extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 
-	public ReachDefRCFG(Logger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+	public ReachDefRCFG(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
 			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
@@ -70,7 +69,7 @@ public class ReachDefRCFG extends BaseObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			RootNode rootNode = (RootNode) root;
+			final RootNode rootNode = (RootNode) root;
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
@@ -83,17 +82,17 @@ public class ReachDefRCFG extends BaseObserver {
 
 	private void process(RootNode node) throws Throwable {
 
-		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
+		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
 		if (pa == null || pa.getSymbolTable() == null) {
-			String errorMsg = "No symbol table found on given RootNode.";
+			final String errorMsg = "No symbol table found on given RootNode.";
 			mLogger.fatal(errorMsg);
 			throw new UnsupportedOperationException(errorMsg);
 		}
-		ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
+		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
 
-		LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
+		final LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
 
-		for (RCFGEdge next : node.getOutgoingEdges()) {
+		for (final RCFGEdge next : node.getOutgoingEdges()) {
 			remaining.add(next);
 		}
 
@@ -103,16 +102,16 @@ public class ReachDefRCFG extends BaseObserver {
 				mLogger.debug("                    Open: "
 						+ Util.prettyPrintIterable(remaining, Util.<RCFGEdge> createHashCodePrinter()));
 			}
-			RCFGEdge current = remaining.iterator().next();
+			final RCFGEdge current = remaining.iterator().next();
 			remaining.remove(current);
-			ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
+			final ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
 
-			boolean fxpReached = v.process(current);
+			final boolean fxpReached = v.process(current);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
-				for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+				for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
 					remaining.add(next);
 				}
 			}

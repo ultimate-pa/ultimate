@@ -26,11 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -45,17 +49,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_Filename, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_Directory,
 						DEF_Directory, PreferenceType.Directory),
+				new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
+						DEF_HornSolverMode, PreferenceType.Boolean),
 		};
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "SMT parser";
 	}
 	
 	public static final String LABEL_UseExtSolver = "Use external solver";
@@ -73,4 +69,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Directory = "Directory";
 	public static final String DEF_Directory = "";
 	
+	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file contains Horn clauses only).";
+	public static final boolean DEF_HornSolverMode = false;
 }

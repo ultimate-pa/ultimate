@@ -27,11 +27,11 @@ public class parse_reduce_table {
   public parse_reduce_table(Grammar grammar)
     {
       /* determine how many states we are working with */
-      _num_states = grammar.lalr_states().size();
-      _num_nonterm = grammar.num_non_terminals();
+      _numstates = grammar.lalr_states().size();
+      _numnonterm = grammar.numnon_terminals();
 
       /* allocate the array and fill it in with empty rows */
-      table = new lalr_state[_num_states][_num_nonterm];
+      table = new lalr_state[_numstates][_numnonterm];
     }
 
    
@@ -40,11 +40,11 @@ public class parse_reduce_table {
   /*-----------------------------------------------------------*/
 
   /** How many rows/states in the machine/table. */
-  protected int _num_states;
-  private int _num_nonterm;
+  protected int _numstates;
+  private final int _numnonterm;
 
   /** How many rows/states in the machine/table. */
-  public int num_states() {return _num_states;}
+  public int numstates() {return _numstates;}
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -61,43 +61,57 @@ public class parse_reduce_table {
    */
   public short[] compress()
     {
-      BitSet used = new BitSet();
-      TreeSet<CombRow> rows = new TreeSet<CombRow>();
-      for (int i = 0; i < _num_states; i++)
+      final BitSet used = new BitSet();
+      final TreeSet<CombRow> rows = new TreeSet<CombRow>();
+      for (int i = 0; i < _numstates; i++)
 	{
 	  int len = 0;
-	  for (int j = 0; j < _num_nonterm; j++)
-	    if (table[i][j] != null)
-	      len++;
+	  for (int j = 0; j < _numnonterm; j++)
+	    {
+		if (table[i][j] != null)
+		  {
+		  len++;
+		}
+	      }
 	  if (len == 0)
-	    continue;
+	    {
+		continue;
+	      }
 	  
 	  used.set(i);
-	  int[] rowidx = new int[len];
+	  final int[] rowidx = new int[len];
 	  len = 0;
-	  for (int j = 0; j < _num_nonterm; j++)
-	    if (table[i][j] != null)
-	      rowidx[len++] = j;
-	  CombRow row = new CombRow(i, rowidx);
+	  for (int j = 0; j < _numnonterm; j++)
+	    {
+		if (table[i][j] != null)
+		  {
+		  rowidx[len++] = j;
+		}
+	      }
+	  final CombRow row = new CombRow(i, rowidx);
 	  rows.add(row);
 	}
       
-      for (CombRow row : rows)
+      for (final CombRow row : rows)
 	{
 	  row.fitInComb(used);
 	}
       int maxbase = used.size();
       while (!used.get(maxbase-1))
-	maxbase--;
+	{
+	    maxbase--;
+	  }
 
-      short[] compressed = new short[maxbase];
+      final short[] compressed = new short[maxbase];
       /* initialize compressed table with 1 (shortest UTF-8 encoding) */
       for (int i = 0; i < maxbase; i++)
-	compressed[i] = (short) 1;
-	
-      for (CombRow row : rows)
 	{
-	  int base = row.base;
+	    compressed[i] = (short) 1;
+	  }
+	
+      for (final CombRow row : rows)
+	{
+	  final int base = row.base;
 	  compressed[row.index] = (short) base;
 	  for (int j = 0; j < row.comb.length; j++)
 	    {
@@ -109,18 +123,19 @@ public class parse_reduce_table {
     }
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder();
+      final StringBuilder result = new StringBuilder();
       lalr_state goto_st;
       int cnt;
 
       result.append("-------- REDUCE_TABLE --------\n");
-      for (int row = 0; row < num_states(); row++)
+      for (int row = 0; row < numstates(); row++)
 	{
 	  result.append("From state #").append(row).append("\n");
 	  cnt = 0;
-	  for (int col = 0; col < _num_nonterm; col++)
+	  for (int col = 0; col < _numnonterm; col++)
 	    {
 	      /* pull out the table entry */
 	      goto_st = table[row][col];
@@ -141,7 +156,10 @@ public class parse_reduce_table {
 		}
 	    }
           /* finish the line if we haven't just done that */
-	  if (cnt != 0) result.append("\n");
+	  if (cnt != 0)
+	    {
+		result.append("\n");
+	      }
 	}
       result.append("-----------------------------");
 

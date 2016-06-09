@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 
@@ -49,16 +49,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
  */
 public class CodeCheck implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private CodeCheckObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private CodeCheckObserver mObserver;
+	private ModelType mInputDefinition;
 
 	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage m_toolchainStorage;
-	private List<IObserver> m_Observers;
+	private IToolchainStorage mtoolchainStorage;
+	private List<IObserver> mObservers;
 
 	@Override
 	public String getPluginName() {
@@ -72,8 +72,8 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void init() {
-		m_Observer = new CodeCheckObserver(mServices, m_toolchainStorage);
-		m_Observers =  Collections.singletonList((IObserver) m_Observer);
+		mObserver = new CodeCheckObserver(mServices, mtoolchainStorage);
+		mObservers =  Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -89,25 +89,26 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return m_Observers;
+		return mObservers;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return m_Observer.getRoot();
+		return mObserver.getRoot();
 	}
 
 	@Override
@@ -116,13 +117,13 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new CodeCheckPreferenceInitializer();
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage tcStorage) {
-		m_toolchainStorage = tcStorage;
+		mtoolchainStorage = tcStorage;
 	}
 
 	@Override

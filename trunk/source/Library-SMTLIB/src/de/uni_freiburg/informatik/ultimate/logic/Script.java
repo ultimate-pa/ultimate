@@ -54,16 +54,19 @@ public interface Script {
 	 */
 	public enum LBool {
 		UNSAT {
+			@Override
 			public String toString() {
 				return "unsat";
 			}
 		},
 		UNKNOWN {
+			@Override
 			public String toString() {
 				return "unknown";
 			}
 		},
 		SAT {
+			@Override
 			public String toString() {
 				return "sat";
 			}

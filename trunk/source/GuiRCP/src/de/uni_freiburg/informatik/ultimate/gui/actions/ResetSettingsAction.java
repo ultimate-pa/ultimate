@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.gui.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 
 /**
  * 
@@ -38,22 +38,21 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
  */
 public class ResetSettingsAction extends Action implements IWorkbenchAction {
 
-	private final ICore mCore;
+	private final ICore<?> mCore;
 
-	public ResetSettingsAction(final ICore icore) {
+	public ResetSettingsAction(final ICore<?> icore) {
 		setId(getClass().getName());
 		setText("Reset settings");
 		setToolTipText("Reset all settings to default values");
 		mCore = icore;
 	}
 
+	@Override
 	public void run() {
 		mCore.resetPreferences();
 	}
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
-
 	}
 }

@@ -35,31 +35,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
+	
+	/**
+	 * Returns the DAG size of the predicate's formula. 
+	 * (DAG size means that similar sub-formulas are counted only once.)
+	 */
+	public static int computeDagSizeOfPredicate(IPredicate p) {
+		return (new DAGSize()).size(p.getFormula());
+	}
+	
+	/**
+	 * Computes DAG size for an array of predicates.
+	 */
+	public static int[] computeDagSizeOfPredicates(List<IPredicate> predicates) {
+		final int[] sizeOfPredicates = new int[predicates.size()];
+		for (int i = 0; i < predicates.size(); i++) {
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
+		}
+		return sizeOfPredicates;
+	}
+	
 
 	public static Term computeClosedFormula(Term formula, Set<BoogieVar> boogieVars, Script script) {
-		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
-		for (BoogieVar bv : boogieVars) {
+		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
+		for (final BoogieVar bv : boogieVars) {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
-		Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
+		final Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
 	}
@@ -90,7 +108,7 @@ public class PredicateUtils {
 	//
 	// //We want to return true if (fState1 && fTrans)-> fState2 is valid
 	// //This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-	// Term f = Util.not(boogie2smt.getScript(),ps2renamed);
+	// Term f = SmtUtils.not(boogie2smt.getScript(),ps2renamed);
 	// f = Util.and(boogie2smt.getScript(),fTrans,f);
 	// f = Util.and(boogie2smt.getScript(),ps1renamed, f);
 	//
@@ -120,19 +138,19 @@ public class PredicateUtils {
 	public static Term formulaWithIndexedVars(IPredicate ps, Set<BoogieVar> varsWithSpecialIdx, int specialIdx,
 			int defaultIdx, int oldVarIdx, Set<BoogieVar> globalsWithSpecialIdx, int globSpecialIdx, int globDefaultIdx,
 			Map<String, Term> indexedConstants, Script script, Set<BoogieVar> modifiableGlobals) {
-		Term psTerm = ps.getFormula();
+		final Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
 		}
 
-		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
+		final Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 
-		for (BoogieVar var : ps.getVars()) {
+		for (final BoogieVar var : ps.getVars()) {
 			Term cIndex;
 			if (varsWithSpecialIdx.contains(var)) {
 				cIndex = getIndexedConstant(var, specialIdx, indexedConstants, script);
 			} else if (var.isOldvar()) {
-				BoogieNonOldVar bnov = ((BoogieOldVar) var).getNonOldVar();
+				final BoogieNonOldVar bnov = ((BoogieOldVar) var).getNonOldVar();
 				if (modifiableGlobals.contains(bnov)) {
 					if (oldVarIdx == Integer.MIN_VALUE) {
 						cIndex = var.getDefaultConstant();
@@ -153,19 +171,19 @@ public class PredicateUtils {
 				// var is local and not contained in specialIdx
 				cIndex = getIndexedConstant(var, defaultIdx, indexedConstants, script);
 			}
-			TermVariable c = var.getTermVariable();
+			final TermVariable c = var.getTermVariable();
 			substitution.put(c, cIndex);
 		}
 
-		TermVariable[] vars = new TermVariable[substitution.size()];
-		Term[] values = new Term[substitution.size()];
+		final TermVariable[] vars = new TermVariable[substitution.size()];
+		final Term[] values = new Term[substitution.size()];
 		int i = 0;
-		for (TermVariable var : substitution.keySet()) {
+		for (final TermVariable var : substitution.keySet()) {
 			vars[i] = var;
 			values[i] = substitution.get(var);
 			i++;
 		}
-		Term result = script.let(vars, values, psTerm);
+		final Term result = script.let(vars, values, psTerm);
 		return result;
 	}
 
@@ -180,29 +198,32 @@ public class PredicateUtils {
 	 * </ul>
 	 */
 	public static Term formulaWithIndexedVars(TransFormula tf, int idxInVar, int idxOutVar, Set<BoogieVar> assignedVars,
-			Map<String, Term> indexedConstants, Script script, VariableManager variableManager) {
+			Map<String, Term> indexedConstants, Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
-		Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
+		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		String t = fTrans.toString();
-		for (BoogieVar inVar : tf.getInVars().keySet()) {
-			TermVariable tv = tf.getInVars().get(inVar);
+		final Map<TermVariable, BoogieVar> reverseMapping = new HashMap<TermVariable, BoogieVar>();
+		for (final BoogieVar inVar : tf.getInVars().keySet()) {
+			final TermVariable tv = tf.getInVars().get(inVar);
+			reverseMapping.put(tv, inVar);
 			Term cIndex;
 			if (inVar.isOldvar()) {
 				cIndex = inVar.getDefaultConstant();
 			} else {
 				cIndex = getIndexedConstant(inVar, idxInVar, indexedConstants, script);
 			}
-			TermVariable[] vars = { tv };
-			Term[] values = { cIndex };
-			Term undamagedFTrans = fTrans;
+			final TermVariable[] vars = { tv };
+			final Term[] values = { cIndex };
+			final Term undamagedFTrans = fTrans;
 			fTrans = script.let(vars, values, fTrans);
 			t = fTrans.toString();
 			notYetSubst.remove(tv);
 		}
-		for (BoogieVar outVar : tf.getOutVars().keySet()) {
-			TermVariable tv = tf.getOutVars().get(outVar);
+		for (final BoogieVar outVar : tf.getOutVars().keySet()) {
+			final TermVariable tv = tf.getOutVars().get(outVar);
+			reverseMapping.put(tv, outVar);
 			if (tf.getInVars().get(outVar) != tv) {
 				assignedVars.add(outVar);
 				Term cIndex;
@@ -211,17 +232,17 @@ public class PredicateUtils {
 				} else {
 					cIndex = getIndexedConstant(outVar, idxOutVar, indexedConstants, script);
 				}
-				TermVariable[] vars = { tv };
-				Term[] values = { cIndex };
+				final TermVariable[] vars = { tv };
+				final Term[] values = { cIndex };
 				fTrans = script.let(vars, values, fTrans);
 				t = fTrans.toString();
 				notYetSubst.remove(tv);
 			}
 		}
-		for (TermVariable tv : notYetSubst) {
-			Term cIndex = variableManager.getOrConstructCorrespondingConstant(tv);
-			TermVariable[] vars = { tv };
-			Term[] values = { cIndex };
+		for (final TermVariable tv : notYetSubst) {
+			final Term cIndex = reverseMapping.get(tv).getDefaultConstant();
+			final TermVariable[] vars = { tv };
+			final Term[] values = { cIndex };
 			fTrans = script.let(vars, values, fTrans);
 			t = fTrans.toString();
 		}
@@ -235,27 +256,27 @@ public class PredicateUtils {
 
 	public static Term getIndexedConstant(String id, Sort sort, int index, Map<String, Term> indexedConstants,
 			Script script) {
-		String indexString = String.valueOf(index);
-		String name = id + "_" + indexString;
+		final String indexString = String.valueOf(index);
+		final String name = id + "_" + indexString;
 		Term constant = indexedConstants.get(name);
 		if (constant == null) {
-			Sort[] emptySorts = {};
+			final Sort[] emptySorts = {};
 			script.declareFun(name, emptySorts, sort);
-			Term[] emptyTerms = {};
+			final Term[] emptyTerms = {};
 			constant = script.term(name, emptyTerms);
 			indexedConstants.put(name, constant);
 		}
 		return constant;
 	}
 
-	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate precond, IPredicate postcond,
+	public static LBool isInductiveHelper(Script script, IPredicate precond, IPredicate postcond,
 			TransFormula tf, Set<BoogieVar> modifiableGlobalsBefore, Set<BoogieVar> modifiableGlobalsAfter) {
-		boogie2smt.getScript().push(1);
+		script.push(1);
 
-		Set<BoogieVar> empty = Collections.emptySet();
+		final Set<BoogieVar> empty = Collections.emptySet();
 		{
-			Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
-			Set<BoogieNonOldVar> primedOldVarEqualities = new HashSet<>();
+			final Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+			final Set<BoogieNonOldVar> primedOldVarEqualities = new HashSet<>();
 
 			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, empty, unprimedOldVarEqualities,
 					primedOldVarEqualities);
@@ -264,46 +285,46 @@ public class PredicateUtils {
 			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
-			List<Term> positiveConjuncts = new ArrayList<Term>();
-			for (BoogieNonOldVar bv : unprimedOldVarEqualities) {
+			final List<Term> positiveConjuncts = new ArrayList<Term>();
+			for (final BoogieNonOldVar bv : unprimedOldVarEqualities) {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
-						boogie2smt.getScript()));
+						script));
 			}
-			for (BoogieNonOldVar bv : primedOldVarEqualities) {
+			for (final BoogieNonOldVar bv : primedOldVarEqualities) {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
-						boogie2smt.getScript()));
+						script));
 			}
-			Term tfRenamed = tf.getClosedFormula();
+			final Term tfRenamed = tf.getClosedFormula();
 			assert tfRenamed != null;
-			Term precondRenamed = precond.getClosedFormula();
+			final Term precondRenamed = precond.getClosedFormula();
 			assert precondRenamed != null;
 			positiveConjuncts.add(precondRenamed);
 			positiveConjuncts.add(tfRenamed);
-			Term positive = SmtUtils.and(boogie2smt.getScript(), positiveConjuncts);
-			boogie2smt.getScript().assertTerm(positive);
+			final Term positive = SmtUtils.and(script, positiveConjuncts);
+			script.assertTerm(positive);
 		}
 		{
-			Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
-			Set<BoogieNonOldVar> primedOldVarEqualities = new HashSet<>();
-			List<Term> negativeConjuncts = new ArrayList<Term>();
+			final Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+			final Set<BoogieNonOldVar> primedOldVarEqualities = new HashSet<>();
+			final List<Term> negativeConjuncts = new ArrayList<Term>();
 			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
-			for (BoogieNonOldVar bv : unprimedOldVarEqualities) {
+			for (final BoogieNonOldVar bv : unprimedOldVarEqualities) {
 				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
-						boogie2smt.getScript()));
+						script));
 			}
-			for (BoogieNonOldVar bv : primedOldVarEqualities) {
+			for (final BoogieNonOldVar bv : primedOldVarEqualities) {
 				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
-						boogie2smt.getScript()));
+						script));
 			}
-			Term postcondRenamed = rename(boogie2smt.getScript(), postcond, tf.getAssignedVars());
+			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
 			negativeConjuncts.add(postcondRenamed);
-			Term negative = SmtUtils.and(boogie2smt.getScript(), negativeConjuncts);
-			boogie2smt.getScript().assertTerm(Util.not(boogie2smt.getScript(), negative));
+			final Term negative = SmtUtils.and(script, negativeConjuncts);
+			script.assertTerm(SmtUtils.not(script, negative));
 		}
-		LBool result = boogie2smt.getScript().checkSat();
+		final LBool result = script.checkSat();
 
-		boogie2smt.getScript().pop(1);
+		script.pop(1);
 		return result;
 	}
 
@@ -320,9 +341,9 @@ public class PredicateUtils {
 	private static void findNonModifiablesGlobals(Set<BoogieVar> vars, Set<BoogieVar> modifiables,
 			Set<BoogieVar> primedRequired, Set<BoogieNonOldVar> nonModifiableGlobalsUnprimed,
 			Set<BoogieNonOldVar> nonModifiableGlobalsPrimed) {
-		for (BoogieVar bv : vars) {
+		for (final BoogieVar bv : vars) {
 			if (bv instanceof BoogieOldVar) {
-				BoogieNonOldVar nonOldVar = ((BoogieOldVar) bv).getNonOldVar();
+				final BoogieNonOldVar nonOldVar = ((BoogieOldVar) bv).getNonOldVar();
 				if (modifiables.contains(nonOldVar)) {
 					// var modifiable, do nothing
 				} else {
@@ -337,8 +358,8 @@ public class PredicateUtils {
 	}
 
 	private static Term rename(Script script, IPredicate postcond, Set<BoogieVar> assignedVars) {
-		Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (BoogieVar bv : postcond.getVars()) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final BoogieVar bv : postcond.getVars()) {
 			Term constant;
 			if (assignedVars.contains(bv)) {
 				constant = bv.getPrimedConstant();
@@ -347,7 +368,7 @@ public class PredicateUtils {
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(postcond.getFormula());
+		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(postcond.getFormula());
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
 	}

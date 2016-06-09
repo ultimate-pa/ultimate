@@ -71,27 +71,27 @@ public class PiecewiseTemplate extends RankingTemplate {
 	private static final String s_name_function = "rank";
 	private static final String s_name_pred = "pred";
 	
-	private Term m_delta;
-	private AffineFunctionGenerator[] m_fgens; // functions
-	private AffineFunctionGenerator[] m_pgens; // discriminatory predicates
+	private Term mdelta;
+	private final AffineFunctionGenerator[] mfgens; // functions
+	private final AffineFunctionGenerator[] mpgens; // discriminatory predicates
 	
 	/**
-	 * @param num_functions number of pieces
+	 * @param numfunctions number of pieces
 	 */
-	public PiecewiseTemplate(int num_pieces) {
-		assert(num_pieces >= 2);
-		size = num_pieces;
-		m_fgens = new AffineFunctionGenerator[size];
-		m_pgens = new AffineFunctionGenerator[size];
+	public PiecewiseTemplate(int numpieces) {
+		assert(numpieces >= 2);
+		size = numpieces;
+		mfgens = new AffineFunctionGenerator[size];
+		mpgens = new AffineFunctionGenerator[size];
 	}
 	
 	@Override
 	protected void _init() {
-		m_delta = newDelta(s_name_delta);
+		mdelta = newDelta(s_name_delta);
 		for (int i = 0; i < size; ++i) {
-			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_function + i);
-			m_pgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+			mpgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_pred + i);
 		}
 	}
@@ -103,7 +103,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(size);
 		sb.append("-piece template:\n");
 		sb.append("   delta > 0\n");
@@ -132,16 +132,16 @@ public class PiecewiseTemplate extends RankingTemplate {
 	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
 		// /\_i /\_j g_i(x) < 0 \/ g_j(x') < 0 \/ f_j(x') < f_i(x) - delta
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {
-				List<LinearInequality> disjunction =
+				final List<LinearInequality> disjunction =
 						new ArrayList<LinearInequality>();
 				
-				LinearInequality li1 = m_pgens[i].generate(inVars);
+				final LinearInequality li1 = mpgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
 				li1.motzkin_coefficient = sBlueAtoms && i == j ?
@@ -149,17 +149,17 @@ public class PiecewiseTemplate extends RankingTemplate {
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
 				
-				LinearInequality li2 = m_pgens[j].generate(outVars);
+				final LinearInequality li2 = mpgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
 				li2.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li2);
 				
-				LinearInequality li3 = m_fgens[i].generate(inVars);
-				LinearInequality li4 = m_fgens[j].generate(outVars);
+				final LinearInequality li3 = mfgens[i].generate(inVars);
+				final LinearInequality li4 = mfgens[j].generate(outVars);
 				li4.negate();
 				li3.add(li4);
-				AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+				final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
 				li3.motzkin_coefficient = sRedAtoms ?
@@ -172,7 +172,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		
 		// /\_i f_i(x) > 0
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
@@ -180,9 +180,9 @@ public class PiecewiseTemplate extends RankingTemplate {
 		}
 		
 		// \/_i g_i(x) >= 0
-		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+		final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_pgens[i].generate(inVars);
+			final LinearInequality li = mpgens[i].generate(inVars);
 			li.setStrict(false);
 			li.motzkin_coefficient = sRedAtoms && i == 0 ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -197,11 +197,11 @@ public class PiecewiseTemplate extends RankingTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
-		list.add(m_delta);
+		final Collection<Term> list = new ArrayList<Term>();
+		list.add(mdelta);
 		for (int i = 0; i < size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
-			list.addAll(m_pgens[i].getVariables());
+			list.addAll(mfgens[i].getVariables());
+			list.addAll(mpgens[i].getVariables());
 		}
 		return list;
 	}
@@ -210,23 +210,23 @@ public class PiecewiseTemplate extends RankingTemplate {
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The ranking pieces need a common gcd
-		Rational gcd_f = m_fgens[0].getGcd(val);
+		Rational gcd_f = mfgens[0].getGcd(val);
 		for (int i = 1; i < size; ++i) {
-			gcd_f = gcd_f.gcd(m_fgens[i].getGcd(val));
+			gcd_f = gcd_f.gcd(mfgens[i].getGcd(val));
 		}
 		
-		AffineFunction[] fs = new AffineFunction[size];
-		AffineFunction[] gs = new AffineFunction[size];
+		final AffineFunction[] fs = new AffineFunction[size];
+		final AffineFunction[] gs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val, gcd_f);
-			gs[i] = m_pgens[i].extractAffineFunction(val);
+			fs[i] = mfgens[i].extractAffineFunction(val, gcd_f);
+			gs[i] = mpgens[i].extractAffineFunction(val);
 		}
 		return new PiecewiseRankingFunction(fs, gs);
 	}
 	
 	@Override
 	public List<String> getAnnotations() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {
 				annotations.add("transition from piece " + i + " to piece " + j);

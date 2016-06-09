@@ -30,7 +30,7 @@ import org.eclipse.jface.preference.PreferenceNode;
 
 public class UltimatePreferenceNode extends PreferenceNode {
 	
-	private UltimateGeneratedPreferencePage mCachedPage;
+	private final UltimateGeneratedPreferencePage mCachedPage;
 	
 	public UltimatePreferenceNode(String id, UltimateGeneratedPreferencePage preferencePage) {
 		super(id, preferencePage);
@@ -40,7 +40,7 @@ public class UltimatePreferenceNode extends PreferenceNode {
 
 	@Override
 	public void createPage() {
-		UltimateGeneratedPreferencePage p = mCachedPage.copy();
+		final UltimateGeneratedPreferencePage p = mCachedPage.copy();
 		setPage(p);
 	}
 	

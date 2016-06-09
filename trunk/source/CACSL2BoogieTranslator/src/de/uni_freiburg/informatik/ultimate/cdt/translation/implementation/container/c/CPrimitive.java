@@ -100,17 +100,17 @@ public class CPrimitive extends CType {
         VOID(GENERALPRIMITIVE.VOID);
         
         PRIMITIVE(GENERALPRIMITIVE generalprimitive) {
-    		m_Generalprimitive = generalprimitive;
+    		mGeneralprimitive = generalprimitive;
     	}
         
-    	private final GENERALPRIMITIVE m_Generalprimitive;
+    	private final GENERALPRIMITIVE mGeneralprimitive;
     	
     	public boolean isIntegertype() {
-    		return m_Generalprimitive == GENERALPRIMITIVE.INTTYPE;
+    		return mGeneralprimitive == GENERALPRIMITIVE.INTTYPE;
     	}
     	
     	public boolean isFloatingtype() {
-    		return m_Generalprimitive == GENERALPRIMITIVE.FLOATTYPE;
+    		return mGeneralprimitive == GENERALPRIMITIVE.FLOATTYPE;
     	}
     }
     
@@ -230,18 +230,19 @@ public class CPrimitive extends CType {
     public CPrimitive(IASTDeclSpecifier cDeclSpec) {
         super(false, false, false, false); //FIXME: integrate those flags
         if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
+            final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
             switch (sds.getType()) {
                 case IASTSimpleDeclSpecifier.t_bool:
-                    this.type = PRIMITIVE.BOOL;
+                    type = PRIMITIVE.BOOL;
                     break;
                 case IASTSimpleDeclSpecifier.t_char:
-                	if (sds.isSigned())
-                		this.type = PRIMITIVE.SCHAR;
-                	else if (sds.isUnsigned())
-                		this.type = PRIMITIVE.UCHAR;
-                	else
-                		this.type = PRIMITIVE.CHAR;
+                	if (sds.isSigned()) {
+						type = PRIMITIVE.SCHAR;
+					} else if (sds.isUnsigned()) {
+						type = PRIMITIVE.UCHAR;
+					} else {
+						type = PRIMITIVE.CHAR;
+					}
                     break;
 //                case IASTSimpleDeclSpecifier.t_char16_t:
 //                    this.type = PRIMITIVE.CHAR16;
@@ -250,59 +251,73 @@ public class CPrimitive extends CType {
 //                    this.type = PRIMITIVE.CHAR32;
 //                    break;
                 case IASTSimpleDeclSpecifier.t_double:
-                	if (sds.isComplex())
-                		this.type = PRIMITIVE.COMPLEX_DOUBLE;
-                	else
-                		this.type = PRIMITIVE.DOUBLE;
+                	if (sds.isComplex()) {
+                		if (sds.isLong()) {
+                			type = PRIMITIVE.COMPLEX_LONGDOUBLE;
+                		} else {
+                			type = PRIMITIVE.COMPLEX_DOUBLE;
+                		}
+                	} else {
+                		if (sds.isLong()) {
+                			type = PRIMITIVE.LONGDOUBLE;
+                		} else {
+                			type = PRIMITIVE.DOUBLE;
+                		}
+                	}
                     break;
                 case IASTSimpleDeclSpecifier.t_float:
-                 	if (sds.isComplex())
-                		this.type = PRIMITIVE.COMPLEX_FLOAT;
-                	else
-                		this.type = PRIMITIVE.FLOAT;
+                 	if (sds.isComplex()) {
+						type = PRIMITIVE.COMPLEX_FLOAT;
+					} else {
+						type = PRIMITIVE.FLOAT;
+					}
                     break;
                 case IASTSimpleDeclSpecifier.t_int:
-                	if (sds.isUnsigned())
-                		if (sds.isLong())
-                			this.type = PRIMITIVE.ULONG;
-                		else if (sds.isLongLong())
-                			this.type = PRIMITIVE.ULONGLONG;
-                		else if (sds.isShort())
-                			this.type = PRIMITIVE.USHORT;
-                		else
-                			this.type = PRIMITIVE.UINT;
-                	else                 		
-                		if (sds.isLong())
-                			this.type = PRIMITIVE.LONG;
-                		else if (sds.isLongLong())
-                			this.type = PRIMITIVE.LONGLONG;
-                		else if (sds.isShort())
-                			this.type = PRIMITIVE.SHORT;
-                		else
-                			this.type = PRIMITIVE.INT;
+                	if (sds.isUnsigned()) {
+						if (sds.isLong()) {
+							type = PRIMITIVE.ULONG;
+						} else if (sds.isLongLong()) {
+							type = PRIMITIVE.ULONGLONG;
+						} else if (sds.isShort()) {
+							type = PRIMITIVE.USHORT;
+						} else {
+							type = PRIMITIVE.UINT;
+						}
+					} else                 		
+                		if (sds.isLong()) {
+							type = PRIMITIVE.LONG;
+						} else if (sds.isLongLong()) {
+							type = PRIMITIVE.LONGLONG;
+						} else if (sds.isShort()) {
+							type = PRIMITIVE.SHORT;
+						} else {
+							type = PRIMITIVE.INT;
+						}
                     break;
                 case IASTSimpleDeclSpecifier.t_unspecified:
-                	if (sds.isUnsigned())
-                		if (sds.isLong())
-                			this.type = PRIMITIVE.ULONG;
-                		else if (sds.isLongLong())
-                			this.type = PRIMITIVE.ULONGLONG;
-                		else if (sds.isShort())
-                			this.type = PRIMITIVE.USHORT;
-                		else
-                			this.type = PRIMITIVE.UINT;
-                	else                 		
-                		if (sds.isLong())
-                			this.type = PRIMITIVE.LONG;
-                		else if (sds.isLongLong())
-                			this.type = PRIMITIVE.LONGLONG;
-                		else if (sds.isShort())
-                			this.type = PRIMITIVE.SHORT;
-                		else
-                			this.type = PRIMITIVE.INT;
+                	if (sds.isUnsigned()) {
+						if (sds.isLong()) {
+							type = PRIMITIVE.ULONG;
+						} else if (sds.isLongLong()) {
+							type = PRIMITIVE.ULONGLONG;
+						} else if (sds.isShort()) {
+							type = PRIMITIVE.USHORT;
+						} else {
+							type = PRIMITIVE.UINT;
+						}
+					} else                 		
+                		if (sds.isLong()) {
+							type = PRIMITIVE.LONG;
+						} else if (sds.isLongLong()) {
+							type = PRIMITIVE.LONGLONG;
+						} else if (sds.isShort()) {
+							type = PRIMITIVE.SHORT;
+						} else {
+							type = PRIMITIVE.INT;
+						}
                     break;
                 case IASTSimpleDeclSpecifier.t_void:
-                    this.type = PRIMITIVE.VOID;
+                    type = PRIMITIVE.VOID;
                     break;
 //                case IASTSimpleDeclSpecifier.t_wchar_t:
 //                    this.type = PRIMITIVE.WCHAR;
@@ -340,7 +355,7 @@ public class CPrimitive extends CType {
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = ((CType)o).getUnderlyingType();
         if (oType instanceof CPrimitive) {
             return type == ((CPrimitive)oType).type;
         }
@@ -358,11 +373,12 @@ public class CPrimitive extends CType {
 	public boolean isCompatibleWith(CType o) {
 //		if (this.type == PRIMITIVE.VOID)
 //			return true;
-        CType oType = ((CType) o).getUnderlyingType();
+        final CType oType = o.getUnderlyingType();
         
         if (oType instanceof CEnum 
-        		&& this.generalType == GENERALPRIMITIVE.INTTYPE)
-        	return true;
+        		&& generalType == GENERALPRIMITIVE.INTTYPE) {
+			return true;
+		}
         
         if (oType instanceof CPrimitive) {
             return type == ((CPrimitive)oType).type;
@@ -372,13 +388,13 @@ public class CPrimitive extends CType {
 	}
 	
 	public CPrimitive getCorrespondingUnsignedType() {
-		if (!this.isIntegerType()) {
+		if (!isIntegerType()) {
 			throw new IllegalArgumentException("no integer type " + this);
 		}
 		if (this.isUnsigned()) {
 			throw new IllegalArgumentException("already unsigned " + this);
 		}
-		switch (this.getType()) {
+		switch (getType()) {
 		case CHAR:
 			if (TypeSizes.isCharSigned()) {
 				return new CPrimitive(PRIMITIVE.UCHAR);

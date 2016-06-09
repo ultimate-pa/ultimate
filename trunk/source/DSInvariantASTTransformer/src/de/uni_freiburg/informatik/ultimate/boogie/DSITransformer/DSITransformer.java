@@ -30,26 +30,22 @@ package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * This Class transforms a Boogie AST into a new one to generate data structure
- * invariants
+ * This Class transforms a Boogie AST into a new one to generate data structure invariants
  * 
  * @author arenis
  * 
  */
 
 public class DSITransformer implements IGenerator {
-
-	private static final String s_PLUGIN_NAME = "DSITransformer";
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
 	private DSITransformerObserver mObserver;
 	private ModelType mInputType;
@@ -58,43 +54,50 @@ public class DSITransformer implements IGenerator {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public IElement getModel() {
 		return mObserver.getRoot();
 	}
 
+	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return "DSITransformer";
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(s_PLUGIN_ID));
+		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mServices);
 		return Collections.singletonList((IObserver) mObserver);
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mInputType.getFileNames());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
 
+	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
 
+	@Override
 	public void init() {
 	}
 
@@ -103,12 +106,13 @@ public class DSITransformer implements IGenerator {
 		return false;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		mInputType = graphType;
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -126,6 +130,6 @@ public class DSITransformer implements IGenerator {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

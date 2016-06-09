@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class CollectionUtil {
 
 	public static <T> ArrayList<T> singeltonArrayList(T value) {
-		ArrayList<T> list = new ArrayList<>();
+		final ArrayList<T> list = new ArrayList<>();
 		list.add(value);
 		return list;
 	}

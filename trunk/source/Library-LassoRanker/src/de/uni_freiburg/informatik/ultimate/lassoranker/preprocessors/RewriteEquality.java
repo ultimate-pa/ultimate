@@ -54,8 +54,8 @@ public class RewriteEquality extends TransformerPreprocessor {
 	@Override
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
+		final Term old_term = oldTF.getFormula();
+		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
 				script.term("distinct", old_term, new_term));
 	}
@@ -67,30 +67,30 @@ public class RewriteEquality extends TransformerPreprocessor {
 	
 	private class RewriteEqualityTransformer extends TermTransformer {
 		
-		private final Script m_Script;
+		private final Script mScript;
 		
 		RewriteEqualityTransformer(Script script) {
 			assert script != null;
-			m_Script = script;
+			mScript = script;
 		}
 		
 		@Override
 		protected void convert(Term term) {
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appt = (ApplicationTerm) term;
+				final ApplicationTerm appt = (ApplicationTerm) term;
 				if (appt.getFunction().getName().equals("=") &&
 						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
 					assert(appt.getParameters().length == 2) : "equality with more than two parameters not yet supported";
-					Term param1 = m_Script.term("<=", appt.getParameters());
-					Term param2 = m_Script.term(">=", appt.getParameters());
-					setResult(m_Script.term("and", param1, param2));
+					final Term param1 = mScript.term("<=", appt.getParameters());
+					final Term param2 = mScript.term(">=", appt.getParameters());
+					setResult(mScript.term("and", param1, param2));
 					return;
 				} else if (appt.getFunction().getName().equals("distinct") &&
 						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
 					assert(appt.getParameters().length == 2) : "distinct with more than two parameters not yet supported";
-					Term param1 = m_Script.term("<", appt.getParameters());
-					Term param2 = m_Script.term(">", appt.getParameters());
-					setResult(m_Script.term("or", param1, param2));
+					final Term param1 = mScript.term("<", appt.getParameters());
+					final Term param2 = mScript.term(">", appt.getParameters());
+					setResult(mScript.term("or", param1, param2));
 					return;
 				}
 			}

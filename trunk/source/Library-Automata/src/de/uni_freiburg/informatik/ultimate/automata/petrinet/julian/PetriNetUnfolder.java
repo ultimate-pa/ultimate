@@ -32,13 +32,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -47,19 +45,20 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final PetriNetJulian<S, C> m_Net;
-	private final boolean m_StopIfAcceptingRunFound;
-	private final boolean m_SameTransitionCutOff;
-	private final order m_Order;
-	private final IPossibleExtensions<S, C> m_PossibleExtensions;
-	private final BranchingProcess<S, C> m_Unfolding;
-	private PetriNetRun<S, C> m_Run;
+	private final PetriNetJulian<S, C> mNet;
+	private final boolean mStopIfAcceptingRunFound;
+	private final boolean mSameTransitionCutOff;
+	private final order mOrder;
+	private final IPossibleExtensions<S, C> mPossibleExtensions;
+	private final BranchingProcess<S, C> mUnfolding;
+	private PetriNetRun<S, C> mRun;
 
 	@Override
 	public String operationName() {
@@ -71,15 +70,15 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		return "Start "
 				+ operationName()
 				+ ". Net "
-				+ m_Net.sizeInformation()
-				+ (m_StopIfAcceptingRunFound ? "We stop if some accepting run was found"
+				+ mNet.sizeInformation()
+				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
 						: "We compute complete finite Prefix");
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Unfolding.sizeInformation();
+				+ mUnfolding.sizeInformation();
 	}
 
 	private final Order<S, C> MC_MILLANS_ORDER = new Order<S, C>() {
@@ -91,17 +90,20 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 	private final Order<S, C> ESPARZAS_ROEMER_VOGLER_ORDER = new Order<S, C>() {
 
+		@Override
 		public int compare(Configuration<S, C> c1, Configuration<S, C> c2) {
 			int result = c1.compareTo(c2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			Configuration<S, C> min1 = c1.getMin(m_Unfolding);
-			Configuration<S, C> min2 = c2.getMin(m_Unfolding);
+			}
+			final Configuration<S, C> min1 = c1.getMin(mUnfolding);
+			final Configuration<S, C> min2 = c2.getMin(mUnfolding);
 			result = min1.compareTo(min2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			Configuration<S, C> c1withoutMin1 = c1.removeMin();
-			Configuration<S, C> c2withoutMin2 = c2.removeMin();
+			}
+			final Configuration<S, C> c1withoutMin1 = c1.removeMin();
+			final Configuration<S, C> c2withoutMin2 = c2.removeMin();
 
 			assert (c1.equals(c2) || !c1withoutMin1.equals(c2withoutMin2)) : "\ne1\t="
 					+ c1
@@ -131,12 +133,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		@Override
 		public int compare(Event<S, C> o1, Event<S, C> o2) {
 			int result = MC_MILLANS_ORDER.compare(o1, o2);
-			if (result != 0)
+			if (result != 0) {
 				return result;
-			if (!o1.getMark().equals(o2.getMark()))
+			}
+			if (!o1.getMark().equals(o2.getMark())) {
 				return 0;
-			Configuration<S, C> c1 = o1.getLocalConfiguration();
-			Configuration<S, C> c2 = o2.getLocalConfiguration();
+			}
+			final Configuration<S, C> c1 = o1.getLocalConfiguration();
+			final Configuration<S, C> c2 = o2.getLocalConfiguration();
 			assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
 					+ c1.equals(c2);
 			result = compare(c1, c2);
@@ -150,7 +154,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		}
 	};
 	
-	private PetriNetUnfolder<S, C>.Statistics m_Statistics = new Statistics();
+	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
 
 	/**
 	 * 
@@ -165,20 +169,20 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            from the net.
 	 * @param stopIfAcceptingRunFound
 	 *            if false, the complete finite Prefix will be build.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	public PetriNetUnfolder(AutomataLibraryServices services, 
 			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
-			throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_Net = net;
-		this.m_StopIfAcceptingRunFound = stopIfAcceptingRunFound;
-		this.m_SameTransitionCutOff = sameTransitionCutOff;
-		this.m_Order = Order;
-		m_Logger.info(startMessage());
-		this.m_Unfolding = new BranchingProcess<S, C>(m_Services, net, ESPARZAS_ROEMER_VOGLER_ORDER);
+			throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mNet = net;
+		this.mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
+		this.mSameTransitionCutOff = sameTransitionCutOff;
+		this.mOrder = Order;
+		mLogger.info(startMessage());
+		this.mUnfolding = new BranchingProcess<S, C>(mServices, net, ESPARZAS_ROEMER_VOGLER_ORDER);
 		// this.cutOffEvents = new HashSet<Event<S, C>>();
 		Order<S, C> queueOrder = MC_MILLANS_ORDER;
 		switch (Order) {
@@ -189,54 +193,54 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			queueOrder = ESPARZAS_ROEMER_VOGLER_ORDER;
 			break;
 		}
-		this.m_PossibleExtensions = new PossibleExtensions<S, C>(m_Unfolding,
+		this.mPossibleExtensions = new PossibleExtensions<S, C>(mUnfolding,
 				queueOrder);
 
 		computeUnfolding();
-		m_Logger.info(exitMessage());
-		m_Logger.info(m_Statistics.cutOffInformation());
-		m_Logger.info(m_Statistics.coRelationInformation());
+		mLogger.info(exitMessage());
+		mLogger.info(mStatistics.cutOffInformation());
+		mLogger.info(mStatistics.coRelationInformation());
 	}
 
-	private void computeUnfolding() throws OperationCanceledException {
-		m_PossibleExtensions.update(m_Unfolding.getDummyRoot());
+	private void computeUnfolding() throws AutomataOperationCanceledException {
+		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
-		while (!m_PossibleExtensions.isEmpy()) {
-			Event<S, C> e = m_PossibleExtensions.remove();
+		while (!mPossibleExtensions.isEmpy()) {
+			final Event<S, C> e = mPossibleExtensions.remove();
 
 			if (!parentIsCutoffEvent(e)) {
-				boolean succOfEventIsAccpting = m_Unfolding.addEvent(e);
+				final boolean succOfEventIsAccpting = mUnfolding.addEvent(e);
 				// assert !unfolding.pairwiseConflictOrCausalRelation(
 				// e.getPredecessorConditions());
-				if (succOfEventIsAccpting && m_Run == null) {
-					m_Run = constructRun(e);
-					if (m_StopIfAcceptingRunFound) {
+				if (succOfEventIsAccpting && mRun == null) {
+					mRun = constructRun(e);
+					if (mStopIfAcceptingRunFound) {
 						return;
 					}
 				}
 				// TODO: switch over the order given in the constructor.
-				if (!m_Unfolding.isCutoffEvent(e, ESPARZAS_ROEMER_VOGLER_ORDER,
-						m_SameTransitionCutOff)) {
-					m_PossibleExtensions.update(e);
-					m_Logger.debug("Constructed Non-cut-off-Event: "
+				if (!mUnfolding.isCutoffEvent(e, ESPARZAS_ROEMER_VOGLER_ORDER,
+						mSameTransitionCutOff)) {
+					mPossibleExtensions.update(e);
+					mLogger.debug("Constructed Non-cut-off-Event: "
 							+ e.toString());
 				} else {
-					m_Logger.debug("Constructed     Cut-off-Event: "
+					mLogger.debug("Constructed     Cut-off-Event: "
 							+ e.toString());
 				}
-				m_Logger.debug("Possible Extension size: "
-						+ m_PossibleExtensions.size() + ", total #Events: "
-						+ m_Unfolding.getEvents().size()
+				mLogger.debug("Possible Extension size: "
+						+ mPossibleExtensions.size() + ", total #Events: "
+						+ mUnfolding.getEvents().size()
 						+ ", total #Conditions: "
-						+ m_Unfolding.getConditions().size());
-				m_Statistics.add(e);
+						+ mUnfolding.getConditions().size());
+				mStatistics.add(e);
 			}
 			// else {
 			// assert (false);
 			// }
 
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 	}
@@ -251,8 +255,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * @return
 	 */
 	private PetriNetRun<S, C> constructRun(Event<S, C> e) {
-		m_Logger.debug("Marking: " + m_Unfolding.getDummyRoot().getMark());
-		return constructRun(e, m_Unfolding.getDummyRoot().getConditionMark()).Run;
+		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
+		return constructRun(e, mUnfolding.getDummyRoot().getConditionMark()).Run;
 	}
 
 	/**
@@ -268,31 +272,32 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 */
 	private RunAndConditionMarking constructRun(Event<S, C> e,
 			ConditionMarking<S, C> initialMarking) {
-		assert (e != m_Unfolding.getDummyRoot());
+		assert (e != mUnfolding.getDummyRoot());
 		assert (e.getPredecessorConditions().size() > 0);
-		assert !m_Unfolding.pairwiseConflictOrCausalRelation(e
+		assert !mUnfolding.pairwiseConflictOrCausalRelation(e
 				.getPredecessorConditions());
 		PetriNetRun<S, C> run = new PetriNetRun<S, C>(
 				initialMarking.getMarking());
 		ConditionMarking<S, C> current = initialMarking;
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
-			if (current.contains(c))
+		for (final Condition<S, C> c : e.getPredecessorConditions()) {
+			if (current.contains(c)) {
 				continue;
-			RunAndConditionMarking result = constructRun(
+			}
+			final RunAndConditionMarking result = constructRun(
 					c.getPredecessorEvent(), current);
 			run = run.concatenate(result.Run);
 			current = result.Marking;
 		}
 		assert (current != null);
 
-		ConditionMarking<S, C> finalMarking = current.fireEvent(e);
-		ITransition<S, C> t = e.getTransition();
-		PetriNetRun<S, C> appendix = new PetriNetRun<S, C>(
+		final ConditionMarking<S, C> finalMarking = current.fireEvent(e);
+		final ITransition<S, C> t = e.getTransition();
+		final PetriNetRun<S, C> appendix = new PetriNetRun<S, C>(
 				current.getMarking(), t.getSymbol(), finalMarking.getMarking());
 		run = run.concatenate(appendix);
 
-		m_Logger.debug("Event  : " + e);
-		m_Logger.debug("Marking: " + run.getMarking(run.getWord().length()));
+		mLogger.debug("Event  : " + e);
+		mLogger.debug("Marking: " + run.getMarking(run.getWord().length()));
 		return new RunAndConditionMarking(run, finalMarking);
 	}
 
@@ -308,7 +313,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	private boolean parentIsCutoffEvent(Event<S, C> e) {
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
+		for (final Condition<S, C> c : e.getPredecessorConditions()) {
 			if (c.getPredecessorEvent().isCutoffEvent()) {
 				return true;
 			}
@@ -320,19 +325,19 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * Return some accepting run of PetriNet net, return null if net does not
 	 * have an accepting run.
 	 * @throws AssertionError 
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
-		return m_Run;
+	public PetriNetRun<S, C> getAcceptingRun() throws AutomataOperationCanceledException, AssertionError {
+		return mRun;
 	}
 
 	/**
 	 * Return the occurrence net which is the finite prefix of the unfolding of
 	 * net.
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
-		return m_Unfolding;
+	public BranchingProcess<S, C> getFinitePrefix() throws AutomataOperationCanceledException {
+		return mUnfolding;
 	}
 
 	/**
@@ -349,31 +354,31 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		ERV("Esparza Römer Vogler"), KMM("Ken McMillan"), ERV_MARK(
 				"ERV with equal markings");
 
-		String m_Description;
+		String mDescription;
 
 		private order(String name) {
-			m_Description = name;
+			mDescription = name;
 		}
 
 		public String getDescription() {
-			return m_Description;
+			return mDescription;
 		}
 	};
 
 	// FIXME documentation
 	private class Statistics {
-		Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> m_Trans2Mark2Events = new HashMap<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>>();
-		int m_CutOffEvents = 0;
-		int m_NonCutOffEvents = 0;
+		Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> mTrans2Mark2Events = new HashMap<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>>();
+		int mCutOffEvents = 0;
+		int mNonCutOffEvents = 0;
 
 		public void add(Event<S, C> e) {
-			Marking<S, C> marking = e.getMark();
-			ITransition<S, C> transition = e.getTransition();
-			Map<Marking<S, C>, Set<Event<S, C>>> mark2Events = m_Trans2Mark2Events
+			final Marking<S, C> marking = e.getMark();
+			final ITransition<S, C> transition = e.getTransition();
+			Map<Marking<S, C>, Set<Event<S, C>>> mark2Events = mTrans2Mark2Events
 					.get(transition);
 			if (mark2Events == null) {
 				mark2Events = new HashMap<Marking<S, C>, Set<Event<S, C>>>();
-				m_Trans2Mark2Events.put(transition, mark2Events);
+				mTrans2Mark2Events.put(transition, mark2Events);
 			}
 			Set<Event<S, C>> events = mark2Events.get(marking);
 			if (events == null) {
@@ -381,13 +386,13 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 				mark2Events.put(marking, events);
 			}
 			if (!events.isEmpty()) {
-				m_Logger.info("inserting again Event for Transition "
+				mLogger.info("inserting again Event for Transition "
 						+ transition + " and Marking " + marking);
-				m_Logger.info("new Event has " + e.getAncestors()
+				mLogger.info("new Event has " + e.getAncestors()
 						+ " ancestors and is "
 						+ (e.isCutoffEvent() ? "" : "not ") + "cut-off event");
-				for (Event<S, C> event : events) {
-					m_Logger.info("  existing Event has "
+				for (final Event<S, C> event : events) {
+					mLogger.info("  existing Event has "
 							+ event.getAncestors() + " ancestors and is "
 							+ (e.isCutoffEvent() ? "" : "not ")
 							+ "cut-off event");
@@ -398,53 +403,53 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			events.add(e);
 
 			if (e.isCutoffEvent()) {
-				m_CutOffEvents++;
+				mCutOffEvents++;
 			} else {
-				m_NonCutOffEvents++;
+				mNonCutOffEvents++;
 			}
 
 		}
 
 		public String cutOffInformation() {
-			return "has " + m_CutOffEvents + " CutOffEvents and "
-					+ m_NonCutOffEvents + " nonCutOffEvents";
+			return "has " + mCutOffEvents + " CutOffEvents and "
+					+ mNonCutOffEvents + " nonCutOffEvents";
 		}
 
 		public String coRelationInformation() {
 			return "co relation was queried "
-					+ m_Unfolding.getCoRelationQueries() + " times.";
+					+ mUnfolding.getCoRelationQueries() + " times.";
 		}
 	}
 
 	@Override
 	public BranchingProcess<S, C> getResult() throws AutomataLibraryException {
-		return m_Unfolding;
+		return mUnfolding;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Testing correctness of emptinessCheck");
+		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct = true;
-		if (m_Run == null) {
-			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(m_Services, (new PetriNet2FiniteAutomaton<S, C>(m_Services, m_Net)).getResult())).getNestedRun();
+		if (mRun == null) {
+			final NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
-				m_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
+				mLogger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
 			}
 			correct = (automataRun == null);
 		} else {
-			Word<S> word = m_Run.getWord();
-			if (m_Net.accepts(word)) {
+			final Word<S> word = mRun.getWord();
+			if (mNet.accepts(word)) {
 				correct = true;
 			}
 			else {
-				m_Logger.error("Result of EmptinessCheck, but not accepted: " + word);
+				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
 				correct = false;
 			}
 		}
-		m_Logger.info("Finished testing correctness of emptinessCheck");
+		mLogger.info("Finished testing correctness of emptinessCheck");
 		return false;
 	}
 

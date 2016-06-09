@@ -32,11 +32,11 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -61,19 +61,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
 	private final Supplier<OctDomainState> mOctDomainStateFactory; 
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory; 
 	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory; 
 	
-	public OctagonDomain(final Logger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollectorFactory literalCollectorFactory) {
+	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
+			final LiteralCollectorFactory literalCollectorFactory,IUltimateServiceProvider services) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
 
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
 		mPostOperatorFactory = makePostOperatorFactory(ups);
@@ -87,7 +87,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @param ups Preferences
 	 * @return Factory for creating empty octagons
 	 */
-	private Supplier<OctDomainState> makeDomainStateFactory(final  UltimatePreferenceStore ups) {
+	private Supplier<OctDomainState> makeDomainStateFactory(final  IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 
@@ -118,7 +118,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractStateBinaryOperator<OctDomainState>> makeWideningOperatorFactory(
-			final UltimatePreferenceStore ups) {
+			final IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.WIDENING_OPERATOR;
 		final WideningOperator settingValue = ups.getEnum(settingLabel, WideningOperator.class);
 
@@ -126,15 +126,15 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		case SIMPLE:
 			return () -> new OctSimpleWideningOperator();
 		case EXPONENTIAL:
-			String thresholdString = ups.getString(OctPreferences.EXP_WIDENING_THRESHOLD);
+			final String thresholdString = ups.getString(OctPreferences.EXP_WIDENING_THRESHOLD);
 			try {
-				BigDecimal threshold = new BigDecimal(thresholdString);
+				final BigDecimal threshold = new BigDecimal(thresholdString);
 				return () -> new OctExponentialWideningOperator(threshold);
-			} catch (NumberFormatException nfe) {
+			} catch (final NumberFormatException nfe) {
 				throw makeIllegalSettingException(settingLabel, settingValue);
 			} 
 		case LITERAL:
-			Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
+			final Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
 			return () -> new OctLiteralWideningOperator(literals);
 		default:
 			throw makeIllegalSettingException(OctPreferences.WIDENING_OPERATOR, settingValue);
@@ -150,7 +150,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> makePostOperatorFactory(
-			final UltimatePreferenceStore ups) {
+			final IPreferenceProvider ups) {
 		final int maxParallelStates =
 				ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =
@@ -183,7 +183,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	public IAbstractStateBinaryOperator<OctDomainState> getMergeOperator() {
 		return new IAbstractStateBinaryOperator<OctDomainState>() {
 			@Override
-			public OctDomainState apply(OctDomainState first, OctDomainState second) {
+			public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 				return first.join(second);
 			}
 		};

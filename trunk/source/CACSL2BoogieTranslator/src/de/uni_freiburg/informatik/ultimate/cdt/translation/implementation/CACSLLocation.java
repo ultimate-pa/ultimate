@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * 
@@ -42,7 +42,7 @@ public abstract class CACSLLocation implements Serializable, ILocation {
 	private static final long serialVersionUID = -5505219183722347819L;
 
 	/**
-	 * The m_CheckedSpecification of check/assertion applied to this node.
+	 * The mCheckedSpecification of check/assertion applied to this node.
 	 */
 	private final Check mCheckedSpecification;
 

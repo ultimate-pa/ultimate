@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * Static class which stores the Ultimate Results per File. It is accessible for
@@ -112,9 +112,9 @@ public class CDTResultStore {
 	 */
 	public static List<IResult> getResults(String key) {
 		if (fileToResults != null && fileToResults.containsKey(key)) {
-			ArrayList<IResult> compResults = new ArrayList<IResult>();
-			for (String toolId : fileToResults.get(key).keySet()) {
-				List<IResult> results = fileToResults.get(key).get(toolId);
+			final ArrayList<IResult> compResults = new ArrayList<IResult>();
+			for (final String toolId : fileToResults.get(key).keySet()) {
+				final List<IResult> results = fileToResults.get(key).get(toolId);
 				if(results == null){
 					continue;
 				}

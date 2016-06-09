@@ -26,16 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -46,45 +44,45 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class TraceAbstractionObserver implements IUnmanagedObserver {
 
-	private final Logger m_Logger;
-	private final IUltimateServiceProvider m_Services;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 	
-	private RootNode m_RcfgRootNode;
-	private RootNode m_BlockEncodedRcfgRootNode;
-	private IElement m_RootOfNewModel;
-	private WitnessNode m_WitnessNode;
-	private boolean m_LastModel = false;
-	private IToolchainStorage m_Storage;
-	private ModelType m_CurrentGraphType;
+	private RootNode mRcfgRootNode;
+	private RootNode mBlockEncodedRcfgRootNode;
+	private IElement mRootOfNewModel;
+	private WitnessNode mWitnessNode;
+	private boolean mLastModel = false;
+	private final IToolchainStorage mStorage;
+	private ModelType mCurrentGraphType;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
-		m_Services = services;
-		m_Storage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mServices = services;
+		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
-			if (isOriginalRcfg(m_CurrentGraphType)) {
-				if (m_RcfgRootNode == null) {
-					m_RcfgRootNode = (RootNode) root;
+			if (isOriginalRcfg(mCurrentGraphType)) {
+				if (mRcfgRootNode == null) {
+					mRcfgRootNode = (RootNode) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
 			} 
-			if (isBlockEncodingRcfg(m_CurrentGraphType)) {
-				if (m_BlockEncodedRcfgRootNode == null) {
-					m_BlockEncodedRcfgRootNode = (RootNode) root;
+			if (isBlockEncodingRcfg(mCurrentGraphType)) {
+				if (mBlockEncodedRcfgRootNode == null) {
+					mBlockEncodedRcfgRootNode = (RootNode) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
 			}
 		}
-		if (m_CurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
-			if (m_WitnessNode == null) {
-				m_WitnessNode = (WitnessNode) root;
+		if (mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+			if (mWitnessNode == null) {
+				mWitnessNode = (WitnessNode) root;
 			} else {
 				throw new UnsupportedOperationException("two witness models");
 			}
@@ -102,26 +100,26 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		if (m_LastModel) {
+		if (mLastModel) {
 			final RootNode rcfgRootNode;
-			if (m_BlockEncodedRcfgRootNode != null) {
-				rcfgRootNode = m_BlockEncodedRcfgRootNode;
+			if (mBlockEncodedRcfgRootNode != null) {
+				rcfgRootNode = mBlockEncodedRcfgRootNode;
 			} else {
-				rcfgRootNode = m_RcfgRootNode;
+				rcfgRootNode = mRcfgRootNode;
 			}
 			
 			if (rcfgRootNode == null) {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			} else {
 				NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
-				if (m_WitnessNode == null) {
+				if (mWitnessNode == null) {
 					witnessAutomaton = null;
 				} else {
-					m_Logger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, m_Services)).getResult();
+					mLogger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+					witnessAutomaton = (new WitnessModelToAutomatonTransformer(mWitnessNode, mServices)).getResult();
 				}
-				TraceAbstractionStarter tas = new TraceAbstractionStarter(m_Services, m_Storage, rcfgRootNode, witnessAutomaton);
-				m_RootOfNewModel = tas.getRootOfNewModel();
+				final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton);
+				mRootOfNewModel = tas.getRootOfNewModel();
 			}
 		}
 	}
@@ -130,20 +128,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
-		return m_RootOfNewModel;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
+		return mRootOfNewModel;
 	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		m_CurrentGraphType = modelType;
+		mCurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels -1) {
-			m_LastModel = true;
+			mLastModel = true;
 		}
 	}
 

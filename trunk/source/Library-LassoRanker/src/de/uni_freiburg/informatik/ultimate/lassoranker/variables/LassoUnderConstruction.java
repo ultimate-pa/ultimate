@@ -42,38 +42,38 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *
  */
 public class LassoUnderConstruction {
-	private final TransFormulaLR m_Stem;
-	private final TransFormulaLR m_Loop;
-	private final int m_StemSize;
-	private final int m_LoopSize;
+	private final TransFormulaLR mStem;
+	private final TransFormulaLR mLoop;
+	private final int mStemSize;
+	private final int mLoopSize;
 	public LassoUnderConstruction(TransFormulaLR stem, TransFormulaLR loop) {
 		super();
-		m_Stem = stem;
-		m_Loop = loop;
-		m_StemSize = (new DAGSize()).treesize(m_Stem.getFormula());
-		m_LoopSize = (new DAGSize()).treesize(m_Loop.getFormula());
+		mStem = stem;
+		mLoop = loop;
+		mStemSize = (new DAGSize()).treesize(mStem.getFormula());
+		mLoopSize = (new DAGSize()).treesize(mLoop.getFormula());
 	}
 	public TransFormulaLR getStem() {
-		return m_Stem;
+		return mStem;
 	}
 	public TransFormulaLR getLoop() {
-		return m_Loop;
+		return mLoop;
 	}
 //	public int getStemSize() {
-//		return m_StemSize;
+//		return mStemSize;
 //	}
 //	public int getLoopSize() {
-//		return m_LoopSize;
+//		return mLoopSize;
 //	}
 	
 	public int getFormulaSize() {
-		return m_StemSize + m_LoopSize;
+		return mStemSize + mLoopSize;
 	}
 	
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Stem:" + System.lineSeparator());
 		sb.append(getStem());
 		sb.append(System.lineSeparator());
@@ -88,8 +88,8 @@ public class LassoUnderConstruction {
 	 * Check whether the stem of this lasso is feasible.
 	 */
 	public LBool checkStemFeasiblity(Script script) {
-		Term term = m_Stem.getFormula();
-		LBool lbool = Util.checkSat(script, term);
+		final Term term = mStem.getFormula();
+		final LBool lbool = Util.checkSat(script, term);
 		return lbool;
 	}
 	

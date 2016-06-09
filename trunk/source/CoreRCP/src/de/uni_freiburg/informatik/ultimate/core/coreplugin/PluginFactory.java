@@ -30,24 +30,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 /**
  * 
@@ -64,7 +65,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			ISource.class };
 
 	private final IExtensionRegistry mRegistry;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final SettingsManager mSettingsManager;
 	private final HashMap<Class<?>, List<IConfigurationElement>> mAvailableToolsByClass;
 	private final HashMap<String, IConfigurationElement> mAvailableToolsByClassName;
@@ -72,11 +73,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private final HashMap<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
 
 	private boolean mGuiMode;
-	private IController mController;
+	private final IController<ToolchainListType> mController;
 	private List<IToolchainPlugin> mToolchainPluginCache;
 	private List<ITool> mToolCache;
 
-	PluginFactory(SettingsManager settingsManager, Logger logger) {
+	PluginFactory(SettingsManager settingsManager, ILogger logger) {
 		mLogger = logger;
 		mRegistry = Platform.getExtensionRegistry();
 		mAvailableToolsByClass = new HashMap<>();
@@ -106,15 +107,15 @@ final class PluginFactory implements IServiceFactoryFactory {
 	// checkPreferencesForActivePlugins();
 	// mLogger.debug("--------------------------------------------------------------------------------");
 
-	IController getController() {
+	IController<ToolchainListType> getController() {
 		return mController;
 	}
 
 	List<String> getPluginClassNames(Class<?> clazz) {
-		List<IConfigurationElement> elems = mAvailableToolsByClass.get(clazz);
-		List<String> rtr = new ArrayList<>();
+		final List<IConfigurationElement> elems = mAvailableToolsByClass.get(clazz);
+		final List<String> rtr = new ArrayList<>();
 		if (elems != null) {
-			for (IConfigurationElement elem : elems) {
+			for (final IConfigurationElement elem : elems) {
 				rtr.add(elem.getAttribute("class"));
 			}
 		}
@@ -142,7 +143,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			// maybe the user used the PluginID?
 			element = mAvailableToolsByClassName.get(mPluginIDToClassName.get(toolId));
 		}
-		T plugin = createInstance(element);
+		final T plugin = createInstance(element);
 		return prepareToolchainPlugin(plugin);
 	}
 
@@ -152,13 +153,13 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 
 		if (plugin instanceof ITool) {
-			ITool tool = (ITool) plugin;
+			final ITool tool = (ITool) plugin;
 			if (tool.isGuiRequired() && !mGuiMode) {
 				mLogger.error("Cannot load plugin " + tool.getPluginID() + ": Requires GUI controller");
 				return null;
 			}
 		}
-		mSettingsManager.checkPreferencesForActivePlugins(plugin.getPluginID(), plugin.getPluginName());
+		mSettingsManager.registerPlugin(plugin);
 		return plugin;
 	}
 
@@ -177,12 +178,12 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	List<ITool> getAllAvailableTools() {
-		List<ITool> rtr = new ArrayList<>();
+		final List<ITool> rtr = new ArrayList<>();
 		if (mToolCache != null) {
 			rtr.addAll(mToolCache);
 			return rtr;
 		}
-		for (IToolchainPlugin plugin : getAllAvailableToolchainPlugins()) {
+		for (final IToolchainPlugin plugin : getAllAvailableToolchainPlugins()) {
 			// TODO: This may be misleading, as direct subclasses of ITool are
 			// not applicable here
 			if (plugin instanceof ITool) {
@@ -212,7 +213,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 						continue;
 					}
 					rtr.add(tool);
-				} catch (Exception ex) {
+				} catch (final Exception ex) {
 					mLogger.fatal("Exception during admissibility check of plugin " + elem.getName() + ": "
 							+ ex.getMessage());
 				}
@@ -241,8 +242,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 *            Platform.getExtensionRegistry()
 	 * @throws CoreException
 	 */
-	private IController loadControllerPlugin(IExtensionRegistry reg) {
-		List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
+	private IController<ToolchainListType> loadControllerPlugin(IExtensionRegistry reg) {
+		final List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
 
 		if (configElements.size() != 1) {
 			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
@@ -252,15 +253,15 @@ final class PluginFactory implements IServiceFactoryFactory {
 				return null;
 			}
 
-			for (IConfigurationElement elem : configElements) {
+			for (final IConfigurationElement elem : configElements) {
 				mLogger.fatal(elem.getAttribute("class"));
 			}
 			return null;
 		}
-		IConfigurationElement controllerDescriptor = configElements.get(0);
-		IController controller = createInstance(controllerDescriptor);
+		final IConfigurationElement controllerDescriptor = configElements.get(0);
+		final IController<ToolchainListType> controller = createInstance(controllerDescriptor);
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
-		mSettingsManager.checkPreferencesForActivePlugins(controller.getPluginID(), controller.getPluginName());
+		mSettingsManager.registerPlugin(controller);
 
 		mLogger.info("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
 		return controller;
@@ -273,7 +274,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 		try {
 			return (T) element.createExecutableExtension("class");
-		} catch (CoreException ex) {
+		} catch (final CoreException ex) {
 			mLogger.fatal("Exception during instantiation of ultimate plugin " + element.getAttribute("class"), ex);
 			return null;
 		}
@@ -281,15 +282,15 @@ final class PluginFactory implements IServiceFactoryFactory {
 
 	private void registerType(Class<?> clazz) {
 		if (clazz.equals(IServiceFactory.class)) {
-			for (IConfigurationElement element : mRegistry
+			for (final IConfigurationElement element : mRegistry
 					.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
-				String className = element.getAttribute("class");
+				final String className = element.getAttribute("class");
 				try {
-					Class<?> myClass = Class.forName(className);
-					IServiceFactory<?> factory = createInstance(element);
-					mSettingsManager.checkPreferencesForActivePlugins(factory.getPluginID(), factory.getPluginName());
+					final Class<?> myClass = Class.forName(className);
+					final IServiceFactory<?> factory = createInstance(element);
+					mSettingsManager.registerPlugin(factory);
 					mAvailableServicesByClassName.put(myClass, factory);
-				} catch (ClassNotFoundException e) {
+				} catch (final ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 			}
@@ -300,11 +301,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private void registerTool(Class<?> clazz) {
-		List<IConfigurationElement> result = new ArrayList<IConfigurationElement>();
+		final List<IConfigurationElement> result = new ArrayList<IConfigurationElement>();
 		mAvailableToolsByClass.put(clazz, result);
-		for (IConfigurationElement element : mRegistry.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
+		for (final IConfigurationElement element : mRegistry.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
 			result.add(element);
-			String className = element.getAttribute("class");
+			final String className = element.getAttribute("class");
 			mAvailableToolsByClassName.put(className, element);
 			mPluginIDToClassName.put(createPluginID(className), className);
 		}
@@ -312,41 +313,42 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private String createPluginID(String classname) {
-		String rtr = classname.substring(0, classname.lastIndexOf("."));
+		final String rtr = classname.substring(0, classname.lastIndexOf("."));
 		return rtr;
 	}
 
 	private String getExtensionPointFromClass(Class<?> clazz) {
-		String qualifiedName = clazz.getName();
+		final String qualifiedName = clazz.getName();
 		switch (qualifiedName) {
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IController":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IController":
 			return ExtensionPoints.EP_CONTROLLER;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource":
+		case "de.uni_freiburg.informatik.ultimate.core.model.ISource":
 			return ExtensionPoints.EP_SOURCE;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IOutput":
 			return ExtensionPoints.EP_OUTPUT;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IGenerator":
 			return ExtensionPoints.EP_GENERATOR;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IAnalysis":
 			return ExtensionPoints.EP_ANALYSIS;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory":
 			return ExtensionPoints.EP_SERVICE;
 		default:
 			throw new IllegalArgumentException();
 		}
 	}
 
+	@Override
 	public <T, K extends IServiceFactory<T>> T createService(Class<K> service, IUltimateServiceProvider services,
 			IToolchainStorage storage) {
-		IServiceFactory<?> unknownfactory = mAvailableServicesByClassName.get(service);
+		final IServiceFactory<?> unknownfactory = mAvailableServicesByClassName.get(service);
 
 		if (unknownfactory == null) {
 			return null;
 		}
 
-		IServiceFactory<T> factory = service.cast(unknownfactory);
+		final IServiceFactory<T> factory = service.cast(unknownfactory);
 
-		T rtr = factory.createInstance(services, storage);
+		final T rtr = factory.createInstance(services, storage);
 		return rtr;
 	}
 }

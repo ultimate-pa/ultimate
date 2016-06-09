@@ -24,12 +24,12 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
@@ -43,25 +43,14 @@ public class SpaceExParserPreferenceInitializer extends UltimatePreferenceInitia
 	}
 
 	private static final String sMode = "Mode";
+	
+	public SpaceExParserPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] { new UltimatePreferenceItem<Mode>(sMode, Mode.Default,
 				PreferenceType.Combo, Mode.values()), };
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return Activator.PLUGIN_NAME;
-	}
-
-	public static Mode getMode() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
-	}
-
 }

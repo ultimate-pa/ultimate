@@ -29,7 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -48,11 +48,11 @@ public class AutomatonAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = -5781432895026883308L;
 	// The variable which is associated with this automaton
-	protected String m_Name;
+	protected String mName;
 	
 
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 
 
@@ -60,25 +60,30 @@ public class AutomatonAST extends AtsASTNode {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 7;
-		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
+		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
 		return result;
 	}
 
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		AutomatonAST other = (AutomatonAST) obj;
-		if (m_Name == null) {
-			if (other.m_Name != null)
+		}
+		final AutomatonAST other = (AutomatonAST) obj;
+		if (mName == null) {
+			if (other.mName != null) {
 				return false;
-		} else if (!m_Name.equals(other.m_Name))
+			}
+		} else if (!mName.equals(other.mName)) {
 			return false;
+		}
 		return true;
 	}
 	

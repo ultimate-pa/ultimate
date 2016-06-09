@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  */
 public class IteRemover extends NonCoreBooleanSubTermTransformer {
-	private final Script m_Script;
+	private final Script mScript;
 
 	public IteRemover(Script script) {
 		super();
-		m_Script = script;
+		mScript = script;
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
 		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
+		assert (Util.checkSat(mScript, mScript.term("distinct", 
 				term, result)) != LBool.SAT);
 		return result;
 	}
@@ -80,26 +80,26 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	private Term removeIteTerm(Term term, ApplicationTerm iteTerm) {
 		assert iteTerm.getFunction().getName().equals("ite");
 		assert iteTerm.getParameters().length == 3;
-		Term condition = iteTerm.getParameters()[0];
-		Term ifTerm = iteTerm.getParameters()[1];
-		Term elseTerm = iteTerm.getParameters()[2];
+		final Term condition = iteTerm.getParameters()[0];
+		final Term ifTerm = iteTerm.getParameters()[1];
+		final Term elseTerm = iteTerm.getParameters()[2];
 		Term replacedWithIf;
 		{
-			Map<Term, Term> substitutionMapping = 
+			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, ifTerm);
 			replacedWithIf = (new SafeSubstitutionWithLocalSimplification(
-					m_Script, substitutionMapping)).transform(term);
+					mScript, substitutionMapping)).transform(term);
 		}
 		Term replacedWithElse;
 		{
-			Map<Term, Term> substitutionMapping = 
+			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, elseTerm);
-			replacedWithElse = (new SafeSubstitution(
-					m_Script, substitutionMapping)).transform(term);
+			replacedWithElse = (new SafeSubstitutionWithLocalSimplification(
+					mScript, substitutionMapping)).transform(term);
 		}
-		Term withoutThisIte = Util.or(m_Script, 
-				Util.and(m_Script, condition, replacedWithIf), 
-				Util.and(m_Script, Util.not(m_Script, condition), replacedWithElse)
+		final Term withoutThisIte = Util.or(mScript, 
+				Util.and(mScript, condition, replacedWithIf), 
+				Util.and(mScript, SmtUtils.not(mScript, condition), replacedWithElse)
 				);
 		return withoutThisIte;
 	}

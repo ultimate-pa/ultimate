@@ -28,7 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -42,10 +43,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testContainmentClosedPositive() {
 		// Create Interval [2;3]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(2, 3);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(2, 3);
 
 		// Create Interval [0;10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(0, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(0, 10);
 
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));
@@ -55,10 +56,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testUnContainmentClosedPositive() {
 		// Create Interval [0;3]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(0, 3);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(0, 3);
 
 		// Create Interval [2;10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(2, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(2, 10);
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));
@@ -68,10 +69,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testContainmentClosedNegative() {
 		// Create Interval [-3;-2]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(-3, -2);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(-3, -2);
 
 		// Create Interval [-10;0]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-10, 0);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-10, 0);
 
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));
@@ -81,10 +82,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testUnContainmentClosedNegative() {
 		// Create Interval [-3;0]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(-3, 0);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(-3, 0);
 
 		// Create Interval [-10;-2]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-10, -2);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-10, -2);
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));
@@ -94,10 +95,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testContainmentClosedMixed() {
 		// Create Interval [-2;3]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(-2, 3);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(-2, 3);
 
 		// Create Interval [-10;10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-10, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-10, 10);
 
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));
@@ -107,10 +108,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testUnContainmentClosedMixed() {
 		// Create Interval [-10;3]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(-10, 3);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(-10, 3);
 
 		// Create Interval [-2;10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-2, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-2, 10);
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));
@@ -120,10 +121,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testContainmentOpenPositive() {
 		// Create Interval [2; \infty]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
+		final IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
 
 		// Create Interval [0; \infty]
-		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO), new IntervalValue());
+		final IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO), new IntervalValue());
 
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));
@@ -133,10 +134,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testUnContainmentOpenMixed() {
 		// Create Interval [2; \infty]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
+		final IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
 
 		// Create Interval [-\infty; 0]
-		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(BigDecimal.ZERO));
+		final IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(BigDecimal.ZERO));
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));
@@ -146,10 +147,10 @@ public class IntervalContainmentChecks {
 	@Test
 	public void testContainmentFullOpenPositive() {
 		// Create Interval [-\infty; \infty]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue());
+		final IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue());
 		
 		// Create Interval [3; 3]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(3, 3);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(3, 3);
 		
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));

@@ -33,16 +33,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -68,22 +67,22 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger mLogger;
 
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
 
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -96,40 +95,64 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The buechi automaton to reduce
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeDfaSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
+	public MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand,
+				new DirectSimulation<>(services.getProgressMonitorService(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), true, stateFactory,
+						new DirectGameGraph<>(services, services.getProgressMonitorService(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
+								stateFactory)));
+	}
 
-		DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(),
-				m_Logger, m_Operand, stateFactory);
-		graph.generateGameGraphFromBuechi();
-		DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
-				true, stateFactory, graph);
-		sim.doSimulation();
-		m_Result = sim.getResult();
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton using a given simulation.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param simulation
+	 *            Simulation to use for reduction
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
+					throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
 
-		boolean compareWithNonSccResult = false;
+		simulation.getGameGraph().generateGameGraphFromAutomaton();
+		simulation.doSimulation();
+		mResult = simulation.getResult();
+
+		final boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
-					stateFactory);
-			graph.generateGameGraphFromBuechi();
-			DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
-					m_Services.getProgressMonitorService(), m_Logger, false, stateFactory, graph);
+			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
+					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
+			graph.generateGameGraphFromAutomaton();
+			final DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
+					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (m_Result.size() != nonSCCresult.size()) {
+			final INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
+			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}
 		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*
@@ -141,14 +164,14 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mOperand, mResult, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, mOperand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 
@@ -160,7 +183,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + m_Result.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 
 	/*
@@ -170,7 +193,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 	/*
@@ -192,6 +215,33 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
+	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected ILogger getLogger() {
+		return mLogger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return mServices;
 	}
 }

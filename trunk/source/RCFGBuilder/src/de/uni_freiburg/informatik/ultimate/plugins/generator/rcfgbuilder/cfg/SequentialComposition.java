@@ -32,18 +32,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
@@ -53,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class SequentialComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = 9192152338120598669L;
-	private final List<CodeBlock> m_CodeBlocks;
-	private final String m_PrettyPrinted;
+	private final List<CodeBlock> mCodeBlocks;
+	private final String mPrettyPrinted;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -71,13 +69,13 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CodeBlocks (Sequentially Composed)") {
-			return m_CodeBlocks;
+			return mCodeBlocks;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrinted;
+			return mPrettyPrinted;
 		} else if (field == "TransitionFormula") {
-			return m_TransitionFormula;
+			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
-			return m_OccurenceInCounterexamples;
+			return mOccurenceInCounterexamples;
 		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
@@ -87,9 +85,9 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe,
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		this.m_CodeBlocks = codeBlocks;
+		mCodeBlocks = codeBlocks;
 
-		StringBuilder prettyPrinted = new StringBuilder();
+		final StringBuilder prettyPrinted = new StringBuilder();
 
 		int numberCalls = 0;
 		int numberReturns = 0;
@@ -115,18 +113,18 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
-		boolean s_TransformToCNF = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final boolean s_TransformToCNF = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
+		mTransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 				s_TransformToCNF, false, mLogger, services, codeBlocks);
-		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify,
+		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify,
 				extPqe, s_TransformToCNF, true, mLogger, services, codeBlocks);
 
-		m_PrettyPrinted = prettyPrinted.toString();
+		mPrettyPrinted = prettyPrinted.toString();
 	}
 
 	protected void checkNumberOfCallsAndReturns(int numberCalls, int numberReturns) {
@@ -137,11 +135,11 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrinted;
+		return mPrettyPrinted;
 	}
 
 	public List<CodeBlock> getCodeBlocks() {
-		return m_CodeBlocks;
+		return mCodeBlocks;
 	}
 
 	@Override
@@ -158,16 +156,16 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	 */
 	public static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
-			boolean withBranchEncoders, Logger logger, IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
+			boolean withBranchEncoders, ILogger logger, IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		return getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, null, null, null, logger, services, codeBlocks);
 	}
 
 	private static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
-			boolean withBranchEncoders, TransFormula[] beforeCall, Call call, Return ret, Logger logger,
+			boolean withBranchEncoders, TransFormula[] beforeCall, Call call, Return ret, ILogger logger,
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
-		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
+		final List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;
 		int callsSinceLastUnmatchedCall = 0;
 		int returnsSinceLastUnmatchedCall = 0;
@@ -187,9 +185,9 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			} else {
 				if (codeBlocks.get(i) instanceof Return) {
 					if (callsSinceLastUnmatchedCall == returnsSinceLastUnmatchedCall) {
-						Return correspondingReturn = (Return) codeBlocks.get(i);
-						List<CodeBlock> codeBlocksBetween = new ArrayList<CodeBlock>(afterLastUnmatchedCall);
-						TransFormula localTransFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager,
+						final Return correspondingReturn = (Return) codeBlocks.get(i);
+						final List<CodeBlock> codeBlocksBetween = new ArrayList<CodeBlock>(afterLastUnmatchedCall);
+						final TransFormula localTransFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager,
 								simplify, extPqe, tranformToCNF, withBranchEncoders, null, lastUnmatchedCall,
 								correspondingReturn, logger, services, codeBlocksBetween);
 						beforeFirstPendingCall.add(localTransFormula);
@@ -220,7 +218,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		} else {
 			// there is a pending call in codeBlocks
 			assert (ret == null) : "no pending call between call and return possible!";
-			List<CodeBlock> codeBlocksBetween = afterLastUnmatchedCall;
+			final List<CodeBlock> codeBlocksBetween = afterLastUnmatchedCall;
 			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 					tranformToCNF, withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]),
 					lastUnmatchedCall, null, logger, services, codeBlocksBetween);
@@ -233,22 +231,22 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			result = tfForCodeBlocks;
 		} else {
 			if (ret == null) {
-				String proc = call.getCallStatement().getMethodName();
-				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				final String proc = call.getCallStatement().getMethodName();
+				final TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				final String nameEndProcedure;
 				if (lastUnmatchedCall == null) {
 					nameEndProcedure = proc;
 				} else {				
 					nameEndProcedure = lastUnmatchedCall.getCallStatement().getMethodName();
 				}
-				Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
+				final Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
 						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure);
 			} else {
 				assert (beforeCall == null);
-				String proc = call.getCallStatement().getMethodName();
-				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
-				TransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
+				final String proc = call.getCallStatement().getMethodName();
+				final TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				final TransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
 				result = TransFormula.sequentialCompositionWithCallAndReturn(boogie2smt, simplify, extPqe,
 						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
 						tfForCodeBlocks, ret.getTransitionFormula(), logger, services);
@@ -260,8 +258,8 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (CodeBlock cb : m_CodeBlocks) {
+		final StringBuilder sb = new StringBuilder();
+		for (final CodeBlock cb : mCodeBlocks) {
 			sb.append(cb.toString());
 		}
 		return sb.toString();

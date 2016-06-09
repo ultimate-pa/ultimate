@@ -47,8 +47,8 @@ import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.RangeDecision;
 import pea.ZDecision;
-import pea.modelchecking.TCSWriter;
 import pea.modelchecking.PEA2TCSConverter.TransitionConstraint;
+import pea.modelchecking.TCSWriter;
 import pea.util.z.TermToZCDDVisitor;
 import pea.util.z.ZTerm;
 import pea.util.z.ZWrapper;
@@ -140,7 +140,7 @@ public class LocalizeWriter extends TCSWriter {
     /**
      * A set of constant symbols that do not need to be primed.
      */
-    private Set<String> unprimedGlobalConstants = new HashSet<String>();
+    private final Set<String> unprimedGlobalConstants = new HashSet<String>();
 
     private int fileCounter;
 
@@ -221,9 +221,9 @@ public class LocalizeWriter extends TCSWriter {
      * Maps the user-specified
      * Z null symbols to the default localize null symbols. 
      */
-    private Map<String,String> nullPointerMap;
+    private final Map<String,String> nullPointerMap;
 
-    private String andDelimiter = ";\n";
+    private final String andDelimiter = ";\n";
     
     private Set<String> pcVars;
 
@@ -237,9 +237,9 @@ public class LocalizeWriter extends TCSWriter {
      */
     public LocalizeWriter(String fileName) {
         super(fileName);
-        int extIndex = fileName.lastIndexOf(".");
+        final int extIndex = fileName.lastIndexOf(".");
         this.fileName = fileName.substring(0, extIndex);
-        this.fileNameSuffix = fileName.substring(extIndex);
+        fileNameSuffix = fileName.substring(extIndex);
 
         functionSymbols = new HashMap<String,String>();
         arity = new HashMap<String,Integer>();
@@ -261,9 +261,9 @@ public class LocalizeWriter extends TCSWriter {
             List<Integer> stableExts, List<String> nullPointers, 
             String query, PC pcFlag, boolean usePointerTypes) {
         this(file);
-        this.unicodeQuery = query.replaceAll("\n", "\n" + LocalizeString.INDENT);
+        unicodeQuery = query.replaceAll("\n", "\n" + LocalizeString.INDENT);
         this.pcFlag = pcFlag;
-        this.usePointerType = usePointerTypes;
+        usePointerType = usePointerTypes;
         this.extensionLevels = extensionLevels;
         this.stableExts = stableExts;
         this.nullPointers = nullPointers;
@@ -280,7 +280,7 @@ public class LocalizeWriter extends TCSWriter {
             fileCounter = 0;
             zVariables = converter.getVariables();
             // TODO jf: handle initConstraints
-            TransitionConstraint firstTrans = converter.getNextTransitionConstraint() ;
+            final TransitionConstraint firstTrans = converter.getNextTransitionConstraint() ;
             transformTypes();
             buildNullPointerMap();
             addProgramCounter(firstTrans);
@@ -288,11 +288,11 @@ public class LocalizeWriter extends TCSWriter {
             buildUnchangedVarMap();
             writeTransitions(firstTrans);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (final InstantiationException e) {
             e.printStackTrace();
         }
     }
@@ -303,14 +303,15 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void buildNullPointerMap() {
         if(usePointerType){
-            for(String nullPointer : nullPointers){
-                String type = zVariables.get(nullPointer).trim();
+            for(final String nullPointer : nullPointers){
+                final String type = zVariables.get(nullPointer).trim();
                 if(type == null ||
-                    freeTypes.get(type) == null)
-                    throw new LocalizeException(LocalizeException.WRONG_NULLPOINTER_TYPE
+                    freeTypes.get(type) == null) {
+					throw new LocalizeException(LocalizeException.WRONG_NULLPOINTER_TYPE
                             + nullPointer);
-                else
-                    nullPointerMap.put(nullPointer,LocalizeString.NULLPOINTER + freeTypes.get(type));
+				} else {
+					nullPointerMap.put(nullPointer,LocalizeString.NULLPOINTER + freeTypes.get(type));
+				}
             }
         }
     }
@@ -323,16 +324,21 @@ public class LocalizeWriter extends TCSWriter {
      *                  Localize operator
      */
     public static String operatorFor(String string) {
-        if(string.equals(ZString.EQUALS))
-            return LocalizeString.EQUALS;
-        if(string.equals(ZString.LESS))
-            return LocalizeString.LESS;
-        if(string.equals(ZString.GREATER))
-            return LocalizeString.GREATER;
-        if(string.equals(ZString.LEQ))
-            return LocalizeString.LEQ;
-        if(string.equals(ZString.GEQ))
-            return LocalizeString.GEQ;
+        if(string.equals(ZString.EQUALS)) {
+			return LocalizeString.EQUALS;
+		}
+        if(string.equals(ZString.LESS)) {
+			return LocalizeString.LESS;
+		}
+        if(string.equals(ZString.GREATER)) {
+			return LocalizeString.GREATER;
+		}
+        if(string.equals(ZString.LEQ)) {
+			return LocalizeString.LEQ;
+		}
+        if(string.equals(ZString.GEQ)) {
+			return LocalizeString.GEQ;
+		}
 
         return null;
     } 
@@ -343,7 +349,7 @@ public class LocalizeWriter extends TCSWriter {
      */
     @Override
     protected void writeAndDelimiter(Writer writer) throws IOException {
-        writer.write(this.andDelimiter );
+        writer.write(andDelimiter );
     }
     
 
@@ -366,13 +372,13 @@ public class LocalizeWriter extends TCSWriter {
             throws IOException {
         //StringBuilder buf = new StringBuilder(currentIndent );
         outputWriter.append(currentIndent);
-        String andSep = ",";
+        final String andSep = ",";
         
         if(dec instanceof RangeDecision){
-                String variable = ((RangeDecision)dec).getVar();
+                final String variable = ((RangeDecision)dec).getVar();
                 outputWriter.append(variable);
 
-                int[] limits = ((RangeDecision)dec).getLimits();
+                final int[] limits = ((RangeDecision)dec).getLimits();
                 if (child == 0) {
                         if ((limits[0] & 1) == 0) {
                                 outputWriter.append(LocalizeString.LESS);
@@ -416,17 +422,17 @@ public class LocalizeWriter extends TCSWriter {
         }
         if(child==0){
                 if(dec instanceof BooleanDecision){
-                    String toWrite = ((BooleanDecision)dec).getVar();
+                    final String toWrite = ((BooleanDecision)dec).getVar();
                     outputWriter.append(toWrite);
                 } else if(dec instanceof EventDecision){
-                        String event = ((EventDecision)dec).getEvent();
+                        final String event = ((EventDecision)dec).getEvent();
                         outputWriter.append(event+LocalizeString.GREATER+event+"'");
                 } else if (dec instanceof ZDecision) {
                     writeZDecision((ZDecision)dec, outputWriter,useClausesForm);
                 }
         }else{
                 if(dec instanceof BooleanDecision){
-                    String toWrite = ((BooleanDecision)dec).getVar();                       
+                    final String toWrite = ((BooleanDecision)dec).getVar();                       
                     // The following seems to implement negation of boolean
                     // expression. But only for very restrictive cases (without a check
                     // that the current instance is really of the desired shape).
@@ -444,7 +450,7 @@ public class LocalizeWriter extends TCSWriter {
                         outputWriter.append("NOT("+toWrite + ")");
                     }
                 } else if(dec instanceof EventDecision){
-                    String event = ((EventDecision)dec).getEvent();
+                    final String event = ((EventDecision)dec).getEvent();
                     outputWriter.append(event+" = "+event+"'");                  
                 } else if (dec instanceof ZDecision) {
                     writeZDecision(((ZDecision)dec).negate(),outputWriter,useClausesForm);
@@ -470,35 +476,36 @@ public class LocalizeWriter extends TCSWriter {
      */
     protected void writeDeclarations(TransitionConstraint constraint) 
             throws IOException, ParseException, InstantiationException {
-        this.writer.write("\n% " + converter.getName() + "\n\n");
+        writer.write("\n% " + converter.getName() + "\n\n");
         
-        CollectFunctionsVisitor visitor = new CollectFunctionsVisitor(functionSymbols);
-        Set<String> decisionCache = new HashSet<String>();
+        final CollectFunctionsVisitor visitor = new CollectFunctionsVisitor(functionSymbols);
+        final Set<String> decisionCache = new HashSet<String>();
         collectFunctionsFromCDDCached(constraint.getConstraint(),visitor,decisionCache);
 
         // Base functions
-        this.writer.write("Base_functions:={");
+        writer.write("Base_functions:={");
         //this.writer.write(queryBaseFunctions);
-        Set<String> baseFun = visitor.getBaseFunctions();
+        final Set<String> baseFun = visitor.getBaseFunctions();
         baseFun.addAll(queryFunctions.getBaseFunctions());
-        for (Iterator<String> i = baseFun.iterator() ; i.hasNext() ;) {
-            this.writer.write("(" + replaceZSymbols(i.next()) + ", 2)");
-            if(i.hasNext())
-                this.writer.write(", ");
+        for (final Iterator<String> i = baseFun.iterator() ; i.hasNext() ;) {
+            writer.write("(" + replaceZSymbols(i.next()) + ", 2)");
+            if(i.hasNext()) {
+				writer.write(", ");
+			}
         }
-        this.writer.write("}\n");
+        writer.write("}\n");
 
         // Extension functions
         /* functions with arity 0 are constants for localize */
-        Map<String,String> extFun = visitor.getExtFunctions();
-        this.writer.write("Extension_functions:={");
+        final Map<String,String> extFun = visitor.getExtFunctions();
+        writer.write("Extension_functions:={");
         extFun.putAll(queryFunctions.getExtFunctions());
         /* We collect all constant symbols (functions with arity 0) into this
          * set */
-        Set<String> constants = new HashSet<String>();
-        for (Iterator<String> i = extFun.keySet().iterator(); i.hasNext() ; ) {
-            String var = i.next();
-            String varWithoutPrime = var.replaceAll(ZString.PRIME, "");
+        final Set<String> constants = new HashSet<String>();
+        for (final Iterator<String> i = extFun.keySet().iterator(); i.hasNext() ; ) {
+            final String var = i.next();
+            final String varWithoutPrime = var.replaceAll(ZString.PRIME, "");
             if(arity.get(varWithoutPrime) == 0) {
                 constants.add(var);
                 continue;
@@ -508,8 +515,9 @@ public class LocalizeWriter extends TCSWriter {
             //ignore primes from imprimedGlobalConstants
             if(var.contains(ZString.PRIME) &&
                     unprimedGlobalConstants.contains(varWithoutPrime)){
-                if(extFun.keySet().contains(varWithoutPrime)) 
-                    continue;
+                if(extFun.keySet().contains(varWithoutPrime)) {
+					continue;
+				}
                 extLevel = extensionLevels.get(varWithoutPrime);
                 varName = replaceZSymbols(varWithoutPrime);
             }else {
@@ -517,91 +525,100 @@ public class LocalizeWriter extends TCSWriter {
                 varName = replaceZSymbols(var);
             }
             
-            if(extLevel == null)
-                throw new LocalizeException(LocalizeException.EXTENSION_LEVEL_NOT_DEFINED + var);
+            if(extLevel == null) {
+				throw new LocalizeException(LocalizeException.EXTENSION_LEVEL_NOT_DEFINED + var);
+			}
 //            if(var.contains(ZString.PRIME))
 //                extLevel = 2;
 //            else
 //                extLevel = 1;
             //write tuple (varname,arity,level,domain,range) 
-            if(varName.startsWith(LocalizeString.NUMPREFIX))
-                varName = varName.substring(1);
-            this.writer.write("(" + varName + "," 
+            if(varName.startsWith(LocalizeString.NUMPREFIX)) {
+				varName = varName.substring(1);
+			}
+            writer.write("(" + varName + "," 
                     + arity.get(varWithoutPrime)
                     + "," + extLevel  + "," + 
                     extFun.get(var) + ")");
-            if(i.hasNext())
-                this.writer.write(", ");
+            if(i.hasNext()) {
+				writer.write(", ");
+			}
         }
-        this.writer.write("}\n");      
+        writer.write("}\n");      
 
         // Relations
-        this.writer.write("Relations:={");
+        writer.write("Relations:={");
         //this.writer.write(queryRelations);
-        Set<String> rel = visitor.getRelations();
+        final Set<String> rel = visitor.getRelations();
         rel.addAll(queryFunctions.getRelations());
-        for (Iterator<String> i = rel.iterator() ; i.hasNext() ;) {
-            this.writer.write("(" + replaceZSymbols(i.next()) + ", 2)");
-            if(i.hasNext())
-                this.writer.write(", ");
+        for (final Iterator<String> i = rel.iterator() ; i.hasNext() ;) {
+            writer.write("(" + replaceZSymbols(i.next()) + ", 2)");
+            if(i.hasNext()) {
+				writer.write(", ");
+			}
         }
-        this.writer.write("}\n");
+        writer.write("}\n");
         
         // Constants
-        this.writer.write("Constants:={");
+        writer.write("Constants:={");
         boolean first = true;
-        for (Iterator<String> i = constants.iterator(); i.hasNext() ; ) {
-            String var = i.next();
+        for (final Iterator<String> i = constants.iterator(); i.hasNext() ; ) {
+            final String var = i.next();
             String varName;
-            String varNameWithoutPrime = var.replace(ZString.PRIME, "");
+            final String varNameWithoutPrime = var.replace(ZString.PRIME, "");
             /* check whether var represents a null pointer and replace this to the
              * corresponding hpilot null pointer
              */
             if(nullPointerMap.containsKey(var)){
                 varName = nullPointerMap.get(var);
             }else if(nullPointerMap.containsKey(varNameWithoutPrime)){
-                if(constants.contains(varNameWithoutPrime)) 
-                    continue;
+                if(constants.contains(varNameWithoutPrime)) {
+					continue;
+				}
                 varName = nullPointerMap.get(varNameWithoutPrime);
             }else{
                 //ignore primes from unprimedGlobalConstants
                 if(var.contains(ZString.PRIME) &&
                         unprimedGlobalConstants.contains(varNameWithoutPrime)){
-                    if(constants.contains(varNameWithoutPrime)) 
-                        continue;
+                    if(constants.contains(varNameWithoutPrime)) {
+						continue;
+					}
                     varName = replaceZSymbols(varNameWithoutPrime);
                 }else {
                     varName = replaceZSymbols(var);
                 }
-                if(varName.startsWith(LocalizeString.NUMPREFIX))
-                    varName = varName.substring(1);
+                if(varName.startsWith(LocalizeString.NUMPREFIX)) {
+					varName = varName.substring(1);
+				}
             }
-            if(!first)
-                this.writer.write(", ");
-            else
-                first = false;
-            this.writer.write("(" + varName + "," 
+            if(!first) {
+				writer.write(", ");
+			} else {
+				first = false;
+			}
+            writer.write("(" + varName + "," 
                    + extFun.get(var) + ")");
         }
         // program counter to constant declaration
         if(pcFlag.equals(PC.SINGLE)) {
-            String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES,
+            final String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES,
                     LocalizeString.SEPARATOR);
-            String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES,
+            final String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES,
                     LocalizeString.SEPARATOR);
-            this.writer.write("(" + pc1 + ", int), " +
+            writer.write("(" + pc1 + ", int), " +
             		"(" + pc2 + ", int)");
         } 
-        this.writer.write("}\n");
+        writer.write("}\n");
         
         if(stableExts != null && !stableExts.isEmpty()){
-            this.writer.write("Stable:=");
-            for (Iterator<Integer> i = stableExts.iterator(); i.hasNext();) {
-                this.writer.write(i.next().toString());
-                if(i.hasNext())
-                    this.writer.write(",");
+            writer.write("Stable:=");
+            for (final Iterator<Integer> i = stableExts.iterator(); i.hasNext();) {
+                writer.write(i.next().toString());
+                if(i.hasNext()) {
+					writer.write(",");
+				}
             }
-            this.writer.write(";\n\n");
+            writer.write(";\n\n");
         }
     }
     
@@ -615,47 +632,52 @@ public class LocalizeWriter extends TCSWriter {
      */
     protected void writeClauseToWriter(CDD clause, Writer sb) {
 
-        ArrayList<CDD> positives = new ArrayList<CDD>();
-        ArrayList<CDD> negatives= new ArrayList<CDD>();
-        CDD[] disjTerm = clause.toDNF();
+        final ArrayList<CDD> positives = new ArrayList<CDD>();
+        final ArrayList<CDD> negatives= new ArrayList<CDD>();
+        final CDD[] disjTerm = clause.toDNF();
         try {
             currentIndent="";
             if(disjTerm.length<=1) {
-                if(clause.getChilds()[0]==CDD.TRUE)
-                    writeDecision(clause.getDecision(), 0, sb);
-                else
-                    writeDecision(clause.getDecision(), 1, sb);
+                if(clause.getChilds()[0]==CDD.TRUE) {
+					writeDecision(clause.getDecision(), 0, sb);
+				} else {
+					writeDecision(clause.getDecision(), 1, sb);
+				}
                 return;
             }
             for (int k = 0; k < disjTerm.length; k++) {
                 if(disjTerm[k].getChilds().length<=0 ||
-                        !(disjTerm[k].getDecision() instanceof ZDecision))
-                    throw new LocalizeException(LocalizeException.UNEXPECTED_TERM 
+                        !(disjTerm[k].getDecision() instanceof ZDecision)) {
+					throw new LocalizeException(LocalizeException.UNEXPECTED_TERM 
                             + disjTerm[k] );
-                if(disjTerm[k].getChilds()[0]==CDD.TRUE)
-                    positives.add(disjTerm[k]);
-                else
-                    negatives.add(disjTerm[k].negate());
+				}
+                if(disjTerm[k].getChilds()[0]==CDD.TRUE) {
+					positives.add(disjTerm[k]);
+				} else {
+					negatives.add(disjTerm[k].negate());
+				}
             }
         
-            for (Iterator<CDD> iter = negatives.iterator(); iter.hasNext();) {
-                CDD cdd = (CDD) iter.next();
+            for (final Iterator<CDD> iter = negatives.iterator(); iter.hasNext();) {
+                final CDD cdd = iter.next();
                 writeDecision(cdd.getDecision(), 0, sb);
                 //ZTerm zTerm 
                 //    = ZWrapper.INSTANCE.predicateToTerm(((ZDecision)cdd.getDecision()).getPredicate());
                 //sb.append(zTerm.getTerm().accept(zVisitor));
-                if(iter.hasNext())
-                    sb.write(", ");
+                if(iter.hasNext()) {
+					sb.write(", ");
+				}
             }
             sb.append(LocalizeString.SEQUENT);
-            for (Iterator<CDD> iter = positives.iterator(); iter.hasNext();) {
-                CDD cdd = (CDD) iter.next();
+            for (final Iterator<CDD> iter = positives.iterator(); iter.hasNext();) {
+                final CDD cdd = iter.next();
                 writeDecision(cdd.getDecision(), 0, sb);
-                if(iter.hasNext())
-                    sb.write(", ");
+                if(iter.hasNext()) {
+					sb.write(", ");
+				}
             }
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }finally {
             currentIndent = LocalizeString.INDENT;
@@ -673,23 +695,25 @@ public class LocalizeWriter extends TCSWriter {
      */
     protected void writeClauseAsDisjunction(CDD clause, Writer sb) {
 
-        CDD[] disjTerm = clause.toDNF();
+        final CDD[] disjTerm = clause.toDNF();
         try {
             currentIndent="";
             if(disjTerm.length==1) {
-                if(clause.getChilds()[0]==CDD.TRUE)
-                    writeDecision(clause.getDecision(), 0, sb, false);
-                else
-                    writeDecision(clause.getDecision(), 1, sb, false);
+                if(clause.getChilds()[0]==CDD.TRUE) {
+					writeDecision(clause.getDecision(), 0, sb, false);
+				} else {
+					writeDecision(clause.getDecision(), 1, sb, false);
+				}
                 return;
             }
             sb.append(LocalizeString.OR + LocalizeString.LPAREN);
             
             for (int k = 0; k < disjTerm.length; k++) {
                 if(disjTerm[k].getChilds().length<=0 ||
-                        !(disjTerm[k].getDecision() instanceof ZDecision))
-                    throw new LocalizeException(LocalizeException.UNEXPECTED_TERM 
+                        !(disjTerm[k].getDecision() instanceof ZDecision)) {
+					throw new LocalizeException(LocalizeException.UNEXPECTED_TERM 
                             + disjTerm[k] );
+				}
                 if(disjTerm[k].getChilds()[0]==CDD.TRUE){
                     writeDecision(disjTerm[k].getDecision(), 0, sb, false);
                 } else {
@@ -697,12 +721,13 @@ public class LocalizeWriter extends TCSWriter {
                     writeDecision(disjTerm[k].getDecision(), 0, sb, false);
                     sb.append(LocalizeString.RPAREN);
                 }
-                if(k+1 < disjTerm.length)
-                    sb.append(", ");
+                if(k+1 < disjTerm.length) {
+					sb.append(", ");
+				}
             }
             sb.append(LocalizeString.RPAREN);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }finally {
             currentIndent = LocalizeString.INDENT;
@@ -727,15 +752,15 @@ public class LocalizeWriter extends TCSWriter {
                 Map<String, String> variables) {
         if(zDeclarations != null){
             String declarationString = "";
-            for (String decl : zDeclarations) {
+            for (final String decl : zDeclarations) {
                 declarationString += decl + "\n";
             }
             ZTerm zTerm;
             try {
                 zTerm = ZWrapper.INSTANCE.declToTerm(declarationString);
 
-            ProcessDeclarationsVisitor constVisitor = new ProcessDeclarationsVisitor(zTerm);
-            Map<String,String> declarations = zTerm.getTerm().accept(constVisitor);
+            final ProcessDeclarationsVisitor constVisitor = new ProcessDeclarationsVisitor(zTerm);
+            final Map<String,String> declarations = zTerm.getTerm().accept(constVisitor);
             freeTypes = constVisitor.getFreeTypes();
 
             if(declarations != null &&
@@ -744,10 +769,10 @@ public class LocalizeWriter extends TCSWriter {
                 unprimedGlobalConstants.addAll(declarations.keySet());
             }
             return constVisitor.getInvariant();
-            } catch (ParseException e) {
+            } catch (final ParseException e) {
                 e.printStackTrace();
                 throw new LocalizeException(LocalizeException.DECLARATION_ERROR + declarationString);
-            } catch (InstantiationException e) {
+            } catch (final InstantiationException e) {
                 e.printStackTrace();
                 throw new LocalizeException(LocalizeException.DECLARATION_ERROR + declarationString);
             }
@@ -799,30 +824,34 @@ public class LocalizeWriter extends TCSWriter {
     private void collectFunctionsFromCDDCached(CDD constraint,
             CollectFunctionsVisitor visitor, Set<String> decCache)
             throws ParseException, InstantiationException {
-        if (constraint == CDD.TRUE || constraint == CDD.FALSE)
-            return;
+        if (constraint == CDD.TRUE || constraint == CDD.FALSE) {
+			return;
+		}
 
         if(constraint.getDecision() instanceof ZDecision){
-            ZDecision dec = ((ZDecision)constraint.getDecision());
+            final ZDecision dec = ((ZDecision)constraint.getDecision());
             if(decCache == null || !decCache.contains(dec.getPredicate())) {
-                ZTerm zTerm = ZWrapper.INSTANCE.predicateToTerm(
+                final ZTerm zTerm = ZWrapper.INSTANCE.predicateToTerm(
                         dec.getPredicate());
                 zTerm.getTerm().accept(visitor);
-                if(decCache != null)
-                    decCache.add(dec.getPredicate());
+                if(decCache != null) {
+					decCache.add(dec.getPredicate());
+				}
             }
         }
         /* special handling of clock expressions (RangeDecision) necessary */
         if(constraint.getDecision() instanceof RangeDecision){
-            Map<String,String> symb = visitor.getExtFunctions();
-            String clock = ((RangeDecision)constraint.getDecision()).getVar();
-            if(!symb.containsKey(clock))
-                symb.put(clock, LocalizeString.REAL);
+            final Map<String,String> symb = visitor.getExtFunctions();
+            final String clock = ((RangeDecision)constraint.getDecision()).getVar();
+            if(!symb.containsKey(clock)) {
+				symb.put(clock, LocalizeString.REAL);
+			}
         }
         
         for (int i = 0; i < constraint.getChilds().length; i++) {
-            if(constraint.getChilds()[i] == CDD.FALSE || constraint.getChilds()[i] == CDD.TRUE)
-                continue;
+            if(constraint.getChilds()[i] == CDD.FALSE || constraint.getChilds()[i] == CDD.TRUE) {
+				continue;
+			}
             collectFunctionsFromCDDCached(constraint.getChilds()[i],visitor,decCache);
         }
         
@@ -863,66 +892,75 @@ public class LocalizeWriter extends TCSWriter {
         arity = new HashMap<String,Integer>();
       
         
-        for (String var : zVariables.keySet()) {
+        for (final String var : zVariables.keySet()) {
             //The type of var as an array with the shape [domain,range]
-            String[] type = zVariables.get(var).split(ZString.FUN);
-            if(type.length == 0)
-                throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
-            String[] domains = type[0].split(ZString.CROSS);
-            if(domains.length == 0)
-                throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
-            String domain = domains[0].trim();
+            final String[] type = zVariables.get(var).split(ZString.FUN);
+            if(type.length == 0) {
+				throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+			}
+            final String[] domains = type[0].split(ZString.CROSS);
+            if(domains.length == 0) {
+				throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+			}
+            final String domain = domains[0].trim();
             //very simple consistency check
-            if(!Pattern.matches("[a-zA-Z_0-9\u2124\u211D]*", domain))
-                throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+            if(!Pattern.matches("[a-zA-Z_0-9\u2124\u211D]*", domain)) {
+				throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+			}
             int arityCounter;
             for (arityCounter = 1; arityCounter < domains.length; arityCounter++) {
-                if(!domains[arityCounter].equals(domain))
-                    throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+                if(!domains[arityCounter].equals(domain)) {
+					throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+				}
             }
             String range = "";
             if(type.length > 1) { // type has a range
                 range = type[1].trim();
-                if(!Pattern.matches("[a-zA-Z_0-9\u2124\u211D]*", range))
-                    throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+                if(!Pattern.matches("[a-zA-Z_0-9\u2124\u211D]*", range)) {
+					throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + zVariables.get(var));
+				}
             }
             
             //we check if the types are declared
             if(!domain.equals(Z_REAL_TYPE) && !domain.equals(Z_INT_TYPE)) {
-                if(!freeTypes.containsKey(domain))
-                    throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + domain);
+                if(!freeTypes.containsKey(domain)) {
+					throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + domain);
+				}
             }
             if(!range.equals("") && !range.equals(Z_REAL_TYPE) && !range.equals(Z_INT_TYPE)) {
-                if(!freeTypes.containsKey(range))
-                    throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + range);
+                if(!freeTypes.containsKey(range)) {
+					throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + range);
+				}
             }
 
             //we now translate the types to the Localize representations
             String locDomain;
-            if(domain.equals(Z_REAL_TYPE))
-                locDomain = LocalizeString.REAL;
-            else if(domain.equals(Z_INT_TYPE))
-                locDomain = LocalizeString.INT;
-            else if(freeTypes.containsKey(domain))
-                locDomain = usePointerType ? 
+            if(domain.equals(Z_REAL_TYPE)) {
+				locDomain = LocalizeString.REAL;
+			} else if(domain.equals(Z_INT_TYPE)) {
+				locDomain = LocalizeString.INT;
+			} else if(freeTypes.containsKey(domain)) {
+				locDomain = usePointerType ? 
                     LocalizeString.POINTERTYPE + freeTypes.get(domain):
                     LocalizeString.FREETYPE + freeTypes.get(domain);
-            else
-                throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + domain);
+			} else {
+				throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + domain);
+			}
             
             //basing on the previous results we now compute the localize type 
             String locRange;
             if(!range.equals("")) {
-                if(range.equals(Z_REAL_TYPE))
-                    locRange = LocalizeString.REAL;
-                else if(range.equals(Z_INT_TYPE))
-                    locRange = LocalizeString.INT;
-                else if(freeTypes.containsKey(range))
-                    locRange = usePointerType ? 
+                if(range.equals(Z_REAL_TYPE)) {
+					locRange = LocalizeString.REAL;
+				} else if(range.equals(Z_INT_TYPE)) {
+					locRange = LocalizeString.INT;
+				} else if(freeTypes.containsKey(range)) {
+					locRange = usePointerType ? 
                             LocalizeString.POINTERTYPE + freeTypes.get(range):
                             LocalizeString.FREETYPE + freeTypes.get(range);
-                else
-                    throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + range);
+				} else {
+					throw new LocalizeException(LocalizeException.TYPE_NOT_SUPPORTED + range);
+				}
 
                 //variables.put(var,arityCounter + "," + extLevel + "," + locDomain + "," + locRange);
                 functionSymbols.put(var,locDomain + "," + locRange);
@@ -953,16 +991,17 @@ public class LocalizeWriter extends TCSWriter {
             arity.put("pc" + ZString.PRIME, 0);
         }else if(pcFlag.equals(PC.MULTIPLE)) {
 
-            this.pcVars = new HashSet<String>();
+            pcVars = new HashSet<String>();
             int numberOfComponents = 0;
-            Phase[] phases = this.converter.getPEA().getPhases();
+            final Phase[] phases = converter.getPEA().getPhases();
             for(int i = 0; i < phases.length; i++){
-                String[] pcNames = phases[i].getName().split(PhaseEventAutomata.TIMES);
-                if(numberOfComponents == 0)
-                    numberOfComponents = pcNames.length;
-                else if(pcNames.length != numberOfComponents)
-                    throw new LocalizeException(LocalizeException.MALFORMED_LOCATION
+                final String[] pcNames = phases[i].getName().split(PhaseEventAutomata.TIMES);
+                if(numberOfComponents == 0) {
+					numberOfComponents = pcNames.length;
+				} else if(pcNames.length != numberOfComponents) {
+					throw new LocalizeException(LocalizeException.MALFORMED_LOCATION
                             + phases[i].getName());
+				}
                 for (int j = 0; j < pcNames.length; j++) {
                     if(!pcVars.contains(pcNames[j])){
                         pcVars.add(pcNames[j]);
@@ -992,10 +1031,10 @@ public class LocalizeWriter extends TCSWriter {
     private void writeClausesToFile(TransitionConstraint constraint) 
     throws IOException {
 
-            this.writer.write("Clauses :=\n");
-            writeConjunction(constraint.getConstraint(),this.writer);
-            this.writer.write(queryClauses);
-            this.writer.write("\n");
+            writer.write("Clauses :=\n");
+            writeConjunction(constraint.getConstraint(),writer);
+            writer.write(queryClauses);
+            writer.write("\n");
             
     }
 
@@ -1009,16 +1048,17 @@ public class LocalizeWriter extends TCSWriter {
             if(localizeQuery == null) {
                 processQuery();
             }
-            if(CHECK_QUERY_AS_INVARIANT)
-                this.writer.write("Formulas :=\n");
-            else
-                this.writer.write("Query :=\n");
-            this.writer.write(this.localizeQuery);
-            this.writer.write("\n");
-            this.writer.write("\n");
-        } catch (ParseException e) {
+            if(CHECK_QUERY_AS_INVARIANT) {
+				writer.write("Formulas :=\n");
+			} else {
+				writer.write("Query :=\n");
+			}
+            writer.write(localizeQuery);
+            writer.write("\n");
+            writer.write("\n");
+        } catch (final ParseException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (final InstantiationException e) {
             e.printStackTrace();
         }  
         
@@ -1040,24 +1080,24 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void processGeneralQuery() throws ParseException, InstantiationException,
             IOException {
-        ZTerm queryTerm = ZWrapper.INSTANCE.predicateToTerm(unicodeQuery);
+        final ZTerm queryTerm = ZWrapper.INSTANCE.predicateToTerm(unicodeQuery);
         
         // Generate query string
-        TermToZCDDVisitor visitor = new TermToZCDDVisitor(queryTerm);
-        CDD queryCDD = queryTerm.getTerm().accept(visitor);
+        final TermToZCDDVisitor visitor = new TermToZCDDVisitor(queryTerm);
+        final CDD queryCDD = queryTerm.getTerm().accept(visitor);
         
         //separate quantified expressions from non-quantified expressions
         //a query is a conjunction term, so we use toCNF to get all of 
         //its conjuncts.
-        StringWriter queryPart = new StringWriter();
-        StringWriter clausesPart = new StringWriter();
+        final StringWriter queryPart = new StringWriter();
+        final StringWriter clausesPart = new StringWriter();
 
-        CDD[] conjuncts = queryCDD.toCNF();
+        final CDD[] conjuncts = queryCDD.toCNF();
         for (int i = 0; i < conjuncts.length; i++) {
             if(conjuncts[i].getDecision() instanceof ZDecision) {
                 // just some simple string processing here to avoid
                 // expensive parsing of the unicode Z expression.
-                String pred = ((ZDecision) conjuncts[i].getDecision())
+                final String pred = ((ZDecision) conjuncts[i].getDecision())
                                     .getPredicate();
                 if(pred.trim().startsWith(ZString.ALL)) {
                     clausesPart.write(LocalizeString.INDENT);
@@ -1070,12 +1110,12 @@ public class LocalizeWriter extends TCSWriter {
             writeClauseToWriter(conjuncts[i],queryPart);
             queryPart.write(";\n");
         }
-        this.localizeQuery = queryPart.toString();        
-        this.queryClauses = clausesPart.toString();        
+        localizeQuery = queryPart.toString();        
+        queryClauses = clausesPart.toString();        
         
         // Collect functions from query
         queryFunctions = new CollectFunctionsVisitor(functionSymbols);
-        Set<String> decisionCache = new HashSet<String>();
+        final Set<String> decisionCache = new HashSet<String>();
         collectFunctionsFromCDDCached(queryCDD,queryFunctions,decisionCache);
 
         // For PC.MULTIPLE mode, we collect all relevant program counters
@@ -1096,10 +1136,11 @@ public class LocalizeWriter extends TCSWriter {
     private void processQuery() throws ParseException, InstantiationException,
     IOException {
         
-        if(CHECK_QUERY_AS_INVARIANT)
-            processInvariantQuery();
-        else
-            processGeneralQuery();
+        if(CHECK_QUERY_AS_INVARIANT) {
+			processInvariantQuery();
+		} else {
+			processGeneralQuery();
+		}
         
     }
 
@@ -1120,13 +1161,13 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void processInvariantQuery() throws ParseException,
             InstantiationException, IOException {
-        ZTerm queryTerm = ZWrapper.INSTANCE.predicateToTerm(unicodeQuery);
+        final ZTerm queryTerm = ZWrapper.INSTANCE.predicateToTerm(unicodeQuery);
 
-        TermToZCDDVisitor visitor = new TermToZCDDVisitor(queryTerm);
-        CDD queryCDD = queryTerm.getTerm().accept(visitor);
+        final TermToZCDDVisitor visitor = new TermToZCDDVisitor(queryTerm);
+        final CDD queryCDD = queryTerm.getTerm().accept(visitor);
         
-        StringWriter queryPart = new StringWriter();
-        StringWriter formulasPart = new StringWriter();
+        final StringWriter queryPart = new StringWriter();
+        final StringWriter formulasPart = new StringWriter();
 
         writeConjunction(queryCDD, queryPart);
 
@@ -1141,9 +1182,9 @@ public class LocalizeWriter extends TCSWriter {
 //                LocalizeString.RPAREN + LocalizeString.RPAREN + ";");
 //        andDelimiter = ";\n";
 
-        CDD negQueryCDD = queryCDD.prime().negate();
+        final CDD negQueryCDD = queryCDD.prime().negate();
 
-        CDD[] cnf = negQueryCDD.toCNF();
+        final CDD[] cnf = negQueryCDD.toCNF();
         
         for(int i = 0; i<cnf.length;i++){
             formulasPart.append(LocalizeString.INDENT);
@@ -1153,22 +1194,23 @@ public class LocalizeWriter extends TCSWriter {
         
         
 
-        this.queryClauses = "\n" + LocalizeString.INDENT + 
+        queryClauses = "\n" + LocalizeString.INDENT + 
             "% Invariant\n" + queryPart.toString();
-        this.localizeQuery = formulasPart.toString();        
+        localizeQuery = formulasPart.toString();        
 
         // Collect functions from query
         queryFunctions = new CollectFunctionsVisitor(functionSymbols);
-        Set<String> decisionCache = new HashSet<String>();
+        final Set<String> decisionCache = new HashSet<String>();
         collectFunctionsFromCDDCached(negQueryCDD,queryFunctions,decisionCache);
         collectFunctionsFromCDDCached(queryCDD,queryFunctions,decisionCache);
         
         // Collect program counters from query
         if(pcFlag.equals(PC.MULTIPLE)){
             pcQuery = new ArrayList<String>();
-            for(String symb : queryFunctions.getExtFunctions().keySet()){
-                if(pcVars.contains(symb))
-                    pcQuery.add(symb);
+            for(final String symb : queryFunctions.getExtFunctions().keySet()){
+                if(pcVars.contains(symb)) {
+					pcQuery.add(symb);
+				}
             }
         }
     }
@@ -1190,14 +1232,14 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void writeTransitions(TransitionConstraint constraint) throws IOException, ParseException, InstantiationException {
         while(constraint != null) {
-            this.writer = new FileWriter(fileName + FILENAME_TASK_SUFFIX + fileCounter++ + fileNameSuffix);
-            TransitionConstraint constraintWithPC = addPC2Constraint(constraint);
+            writer = new FileWriter(fileName + FILENAME_TASK_SUFFIX + fileCounter++ + fileNameSuffix);
+            final TransitionConstraint constraintWithPC = addPC2Constraint(constraint);
             /* write declarations, clauses, and query for one transition */
             writeDeclarations(constraintWithPC);
             writeClausesToFile(constraintWithPC);
             writeQuery();
-            this.writer.flush();
-            this.writer.close();
+            writer.flush();
+            writer.close();
             constraint = converter.getNextTransitionConstraint() ;
         }
     }
@@ -1208,52 +1250,59 @@ public class LocalizeWriter extends TCSWriter {
      */
     private TransitionConstraint addPC2Constraint(TransitionConstraint constraint) {
      
-        if(constraint.getSource().contains(LocalizeString.SEPARATOR))
-            throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+        if(constraint.getSource().contains(LocalizeString.SEPARATOR)) {
+			throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                     + constraint.getSource());
-        if(constraint.getDest().contains(LocalizeString.SEPARATOR))
-            throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+		}
+        if(constraint.getDest().contains(LocalizeString.SEPARATOR)) {
+			throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                     + constraint.getDest());
+		}
         
         CDD newCDD = constraint.getConstraint();
         if(pcFlag.equals(PC.SINGLE)) {
-            String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES,
+            final String pc1 = constraint.getSource().replaceAll(PhaseEventAutomata.TIMES,
                     LocalizeString.SEPARATOR);
-            String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES,
+            final String pc2 = constraint.getDest().replaceAll(PhaseEventAutomata.TIMES,
                     LocalizeString.SEPARATOR);
-            if(pc1.contains(LocalizeString.NUMPREFIX))
-                throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+            if(pc1.contains(LocalizeString.NUMPREFIX)) {
+				throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                         + constraint.getSource());
-            if(pc2.contains(LocalizeString.NUMPREFIX))
-                throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+			}
+            if(pc2.contains(LocalizeString.NUMPREFIX)) {
+				throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                         + constraint.getDest());
+			}
 
             newCDD = newCDD.and(ZDecision.create("pc" + ZString.EQUALS +pc1 ));
             newCDD = newCDD.and(ZDecision.create("pc" + ZString.PRIME + ZString.EQUALS + pc2 ));
 
         }else if(pcFlag.equals(PC.MULTIPLE)) {
 
-            String[] sourcePLs = 
+            final String[] sourcePLs = 
                 constraint.getSource().split(PhaseEventAutomata.TIMES);
-            String[] targetPLs = 
+            final String[] targetPLs = 
                 constraint.getDest().split(PhaseEventAutomata.TIMES);
-            if(sourcePLs.length != targetPLs.length)
-                throw new LocalizeException(LocalizeException.MALFORMED_LOCATION
+            if(sourcePLs.length != targetPLs.length) {
+				throw new LocalizeException(LocalizeException.MALFORMED_LOCATION
                         + constraint.getSource() + " or " + constraint.getDest());
+			}
             for (int i = 0; i < targetPLs.length; i++) {
                 
-                if(sourcePLs[i].contains(LocalizeString.NUMPREFIX))
-                    throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+                if(sourcePLs[i].contains(LocalizeString.NUMPREFIX)) {
+					throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                             + constraint.getSource());
-                if(targetPLs[i].contains(LocalizeString.NUMPREFIX))
-                    throw new LocalizeException(LocalizeException.MALFORMED_NAME 
+				}
+                if(targetPLs[i].contains(LocalizeString.NUMPREFIX)) {
+					throw new LocalizeException(LocalizeException.MALFORMED_NAME 
                             + constraint.getDest());
+				}
 
-                String pc1 = "pc" + i;
-                String pc2 = "pc" + i + ZString.PRIME;
+                final String pc1 = "pc" + i;
+                final String pc2 = "pc" + i + ZString.PRIME;
                 if(queryFunctions.getExtFunctions().containsKey(pc1)) {
                     newCDD = newCDD.and(ZDecision.create(pc1 + ZString.EQUALS + sourcePLs[i] ));
-                    for(String pcName : pcQuery){
+                    for(final String pcName : pcQuery){
                         if(!pcName.equals(sourcePLs[i])){
                             newCDD = newCDD.and(ZDecision.create(pcName + ZString.EQUALS + sourcePLs[i] ).negate());                            
                         }
@@ -1261,7 +1310,7 @@ public class LocalizeWriter extends TCSWriter {
                 }
                 if(queryFunctions.getExtFunctions().containsKey(pc2)) {
                     newCDD = newCDD.and(ZDecision.create(pc2 + ZString.EQUALS + targetPLs[i] ));
-                    for(String pcName : pcQuery){
+                    for(final String pcName : pcQuery){
                         if(!pcName.equals(targetPLs[i])){
                             newCDD = newCDD.and(ZDecision.create(pcName + ZString.EQUALS + targetPLs[i] ).negate());                            
                         }
@@ -1285,27 +1334,28 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void writeZDecision(ZDecision dec, Writer outputWriter, boolean useClausesForm) {
         try {
-            ZTerm zTerm = ZWrapper.INSTANCE.predicateToTerm(dec.getPredicate());
-            LocalizeZVisitor visitor = new LocalizeZVisitor(
+            final ZTerm zTerm = ZWrapper.INSTANCE.predicateToTerm(dec.getPredicate());
+            final LocalizeZVisitor visitor = new LocalizeZVisitor(
                     zTerm,
                     unprimedGlobalConstants,
                     functionSymbols,
                     freeTypes,
                     nullPointerMap,
                     this,useClausesForm);
-            String toWrite = replaceZSymbols(
+            final String toWrite = replaceZSymbols(
                     zTerm.getTerm().accept(visitor).toString());
             /* We still have to transform constraints like x'=x for
                complexer types into FORALL expressions. */
-            if(unchangedVarMap.containsKey(toWrite))
-                outputWriter.write(unchangedVarMap.get(toWrite));
-            else
-                outputWriter.write(toWrite);
-        } catch (ParseException e) {
+            if(unchangedVarMap.containsKey(toWrite)) {
+				outputWriter.write(unchangedVarMap.get(toWrite));
+			} else {
+				outputWriter.write(toWrite);
+			}
+        } catch (final ParseException e) {
             e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (final InstantiationException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }       
     }
@@ -1316,12 +1366,13 @@ public class LocalizeWriter extends TCSWriter {
      */
     private void buildUnchangedVarMap() {
         unchangedVarMap = new HashMap<String,String>();
-        for(String symb : functionSymbols.keySet()) { 
-            if(!arity.containsKey(symb))
-                throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + symb);
-            int sarity = arity.get(symb); 
+        for(final String symb : functionSymbols.keySet()) { 
+            if(!arity.containsKey(symb)) {
+				throw new LocalizeException(LocalizeException.TYPE_NOT_DECLARED + symb);
+			}
+            final int sarity = arity.get(symb); 
             if(sarity>0) {
-                String left = symb + LocalizeString.PRIME + LocalizeString.EQUALS
+                final String left = symb + LocalizeString.PRIME + LocalizeString.EQUALS
                     + symb;
                 String right = 
                     LocalizeString.LPAREN +

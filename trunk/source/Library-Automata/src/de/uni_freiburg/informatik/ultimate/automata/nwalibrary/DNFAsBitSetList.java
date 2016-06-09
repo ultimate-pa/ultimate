@@ -57,16 +57,16 @@ public class DNFAsBitSetList {
 		this((BitSet) daa.alpha.clone(), (BitSet) daa.beta.clone(), null);
 		DNFAsBitSetList nextEl = next;
 		while (nextEl != null) {
-			this.insert(new DNFAsBitSetList((BitSet) nextEl.alpha.clone(), (BitSet) nextEl.beta.clone(), null));
+			insert(new DNFAsBitSetList((BitSet) nextEl.alpha.clone(), (BitSet) nextEl.beta.clone(), null));
 			nextEl = nextEl.next;
 		}
 	}
 	
 	public void insert(DNFAsBitSetList dai) {
-		if (this.next == null) {
-			this.next = dai;
+		if (next == null) {
+			next = dai;
 		} else {
-			this.next.insert(dai);
+			next.insert(dai);
 		}
 	}
 	
@@ -78,7 +78,7 @@ public class DNFAsBitSetList {
 	 * @return
 	 */
 	public <STATE> DNFAsBitSetList rewriteWithNewStateList(ArrayList<STATE> oldStateList, HashMap<STATE, Integer> newStateToIndex) {
-		DNFAsBitSetList newDNF = new DNFAsBitSetList(this);
+		final DNFAsBitSetList newDNF = new DNFAsBitSetList(this);
 		DNFAsBitSetList current = newDNF;
 		while (current != null) {
 			current.alpha = rewriteBitSet(alpha, oldStateList, newStateToIndex);
@@ -92,7 +92,7 @@ public class DNFAsBitSetList {
 	 */
 	private <STATE> BitSet rewriteBitSet(BitSet bs, ArrayList<STATE> oldStateList, 
 			HashMap<STATE, Integer> newStateToIndex) {
-		BitSet newBs = new BitSet();
+		final BitSet newBs = new BitSet();
 		int setBit = bs.nextSetBit(0);
 		while (setBit != -1) {
 			newBs.set(newStateToIndex.get(oldStateList.get(setBit)));
@@ -102,15 +102,17 @@ public class DNFAsBitSetList {
 	}
 	
 	public void prettyPrintDNF(StringBuilder sb, ArrayList stateList) {
-		if (sb.toString().equals(""))
+		if (sb.toString().equals("")) {
 			sb.append(" \\/ (");
+		}
 		
 		String comma = "";
 		for (int i = 0; i < stateList.size(); i++) {
-			if (!alpha.isEmpty() && i == 0)
+			if (!alpha.isEmpty() && i == 0) {
 				sb.append(" /\\ {");
-			boolean isStateVariablePresent = alpha.get(i);
-			boolean isStateVariablePositive = beta.get(i);
+			}
+			final boolean isStateVariablePresent = alpha.get(i);
+			final boolean isStateVariablePositive = beta.get(i);
 			if (isStateVariablePresent) {
 				if (!isStateVariablePositive) {
 					sb.append(" not");
@@ -118,17 +120,19 @@ public class DNFAsBitSetList {
 				sb.append(comma + stateList.get(i)); // or put the state here?
 				comma = ", ";
 			}
-			if (!alpha.isEmpty() && i == stateList.size() - 1)
+			if (!alpha.isEmpty() && i == stateList.size() - 1) {
 				sb.append("}, ");
+			}
 		}
-		if (next != null)
+		if (next != null) {
 			next.prettyPrintDNF(sb, stateList);
-		else 
+		} else {
 			sb.append(")\n");
+		}
 	}
 
 	public boolean applyTo(BitSet u) {
-		BitSet alphaAndUXorBeta = (BitSet) alpha.clone();
+		final BitSet alphaAndUXorBeta = (BitSet) alpha.clone();
 		alphaAndUXorBeta.and(u);
 		alphaAndUXorBeta.xor(beta);
 //		Salomaa(2010): f(u) = 1 <-> (alpha & u) xor beta == 0

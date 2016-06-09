@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.translation;
 import java.io.File;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class SVCOMPCTranslationTestSuite extends AbstractCTranslationTestSuite {
 

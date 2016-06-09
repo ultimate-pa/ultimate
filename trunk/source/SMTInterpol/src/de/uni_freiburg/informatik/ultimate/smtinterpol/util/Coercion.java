@@ -37,7 +37,7 @@ public final class Coercion {
 	public static Term toInt(Term t) {
 		assert t.getSort().getName().equals("Real");
 		if (t instanceof ConstantTerm) {
-			Rational val = SMTAffineTerm.create(t).getConstant();
+			final Rational val = SMTAffineTerm.create(t).getConstant();
 			assert val.isIntegral();
 			return val.toTerm(t.getTheory().getSort("Int"));
 		}
@@ -46,38 +46,46 @@ public final class Coercion {
 	public static Term toReal(Term t) {
 		assert t.getSort().getName().equals("Int");
 		if (t instanceof ConstantTerm) {
-			SMTAffineTerm tmp = SMTAffineTerm.create(t);
+			final SMTAffineTerm tmp = SMTAffineTerm.create(t);
 			assert tmp.getConstant().isIntegral();
 			return tmp.getConstant().toTerm(t.getTheory().getSort("Real"));
 		}
 		return t.getTheory().term("to_real", t);
 	}
 	public static Term coerce(Term t, Sort s) {
-		if (t.getSort() == s)
+		if (t.getSort() == s) {
 			return t;
-		if (s.getName().equals("Int"))
+		}
+		if (s.getName().equals("Int")) {
 			return toInt(t);
-		if (s.getName().equals("Real"))
+		}
+		if (s.getName().equals("Real")) {
 			return toReal(t);
+		}
 		throw new InternalError("Should only be called with numeric sort!");
 	}
 	/// BE CAREFUL: args might be modified!!!
 	public static Term buildApp(FunctionSymbol fsymb, Term[] args) {
-		Sort[] paramSorts = fsymb.getParameterSorts();
-		if (fsymb.getTheory().getLogic().isIRA())
-			for (int i = 0; i < args.length; ++i)
-				if (args[i].getSort() != paramSorts[i])
+		final Sort[] paramSorts = fsymb.getParameterSorts();
+		if (fsymb.getTheory().getLogic().isIRA()) {
+			for (int i = 0; i < args.length; ++i) {
+				if (args[i].getSort() != paramSorts[i]) {
 					args[i] = coerce(args[i], paramSorts[i]);
+				}
+			}
+		}
 		return fsymb.getTheory().term(fsymb, args);
 	}
 	
 	public static Term buildEq(Term lhs, Term rhs) {
 		if (lhs.getSort() != rhs.getSort()) {
 			assert lhs.getTheory().getLogic().isIRA();
-			if (!lhs.getSort().getName().equals("Real"))
+			if (!lhs.getSort().getName().equals("Real")) {
 				lhs = toReal(lhs);
-			if (!rhs.getSort().getName().equals("Real"))
+			}
+			if (!rhs.getSort().getName().equals("Real")) {
 				rhs = toReal(rhs);
+			}
 		}
 		return lhs.getTheory().term("=", lhs, rhs);
 	}
@@ -85,10 +93,12 @@ public final class Coercion {
 	public static Term buildDistinct(Term lhs, Term rhs) {
 		if (lhs.getSort() != rhs.getSort()) {
 			assert lhs.getTheory().getLogic().isIRA();
-			if (!lhs.getSort().getName().equals("Real"))
+			if (!lhs.getSort().getName().equals("Real")) {
 				lhs = toReal(lhs);
-			if (!rhs.getSort().getName().equals("Real"))
+			}
+			if (!rhs.getSort().getName().equals("Real")) {
 				rhs = toReal(rhs);
+			}
 		}
 		return lhs.getTheory().distinct(lhs, rhs);
 	}

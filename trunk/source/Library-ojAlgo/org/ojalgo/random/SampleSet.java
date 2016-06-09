@@ -241,7 +241,7 @@ public final class SampleSet implements Access1D<Double> {
      * unadjusted measure of dispersion (also called variability). When scaled for the number of degrees of
      * freedom, it estimates the variance, or spread of the observations about their mean value.
      *
-     * @see <a href="http://en.wikipedia.org/wiki/Sum_of_squares">WikipediA</a>
+     * @see <a href="http://en.wikipedia.org/wiki/Sumof_squares">WikipediA</a>
      */
     public double getSumOfSquares() {
 

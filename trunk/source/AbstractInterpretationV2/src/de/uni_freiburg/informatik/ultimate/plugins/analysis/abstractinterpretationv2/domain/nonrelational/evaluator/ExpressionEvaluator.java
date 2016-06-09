@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	private Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>> mEvaluators;
+	private final Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>> mEvaluators;
 	private IEvaluator<VALUE, STATE, ACTION, VARDECL> mRootEvaluator;
 
 	/**
@@ -68,8 +68,8 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 				throw new UnsupportedOperationException("The root evaluator is not empty.");
 			}
 			
-			mEvaluators.push((IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator);
-			mRootEvaluator = (IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator;
+			mEvaluators.push(evaluator);
+			mRootEvaluator = evaluator;
 		} else {
 			if (mEvaluators.peek().hasFreeOperands()) {
 				mEvaluators.peek().addSubEvaluator(evaluator);

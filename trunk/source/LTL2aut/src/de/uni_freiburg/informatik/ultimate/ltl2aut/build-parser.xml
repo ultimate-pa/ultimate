@@ -8,23 +8,23 @@
 	<target name="generate_parser">
 		
 		<echo>AutPromela.flex</echo>
-		<java jar="${flexJar}" fork="true">
+		<java jar="${flexJar}" fork="true" failonerror="true">
 			<arg value="AutPromela.flex" />
 		</java>
 		
 		<echo>AutPromela.cup</echo>
-		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
+		<java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
 		<arg line="-parser Parser"/>
 			<arg value="AutPromela.cup" />
 		</java>
 		
 		<echo>Apformula.flex</echo>
-		<java jar="${flexJar}" fork="true">
+		<java jar="${flexJar}" fork="true" failonerror="true">
 			<arg value="Apformula.flex" />
 		</java>
 		
 		<echo>Apformula.cup</echo>
-		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
+		<java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
 		<arg line="-parser Parser"/>
 			<arg value="Apformula.cup" />
 		</java>

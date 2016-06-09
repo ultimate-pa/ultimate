@@ -33,7 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -42,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomainValue.Values;
@@ -98,10 +98,10 @@ public class VPDomainStatementProcessor extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive walker) {
-			if (m_Visited.contains(getTerm())) {
+			if (mVisited.contains(getTerm())) {
 				// do nothing
 			} else {
-				m_Visited.add(getTerm());
+				mVisited.add(getTerm());
 				super.walk(walker);
 			}
 		}
@@ -117,9 +117,9 @@ public class VPDomainStatementProcessor extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName() == "=") {
-				m_Result.add(term);
+				mResult.add(term);
 			}
-			for (Term t : term.getParameters()) {
+			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new VPDomainTermWalker(t));
 			}
 		}
@@ -138,18 +138,18 @@ public class VPDomainStatementProcessor extends NonRecursive {
 	}
 	
 
-	private Set<ApplicationTerm> m_Result;
-	private Set<Term> m_Visited;
+	private Set<ApplicationTerm> mResult;
+	private Set<Term> mVisited;
 	
 	public Set<ApplicationTerm> processTerm(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
-		m_Visited = new HashSet<>();
-		m_Result = new HashSet<ApplicationTerm>();
+		mVisited = new HashSet<>();
+		mResult = new HashSet<ApplicationTerm>();
 		run(new VPDomainTermWalker(term));
-		m_Visited = null;
-		return m_Result;
+		mVisited = null;
+		return mResult;
 	}
 	
 	

@@ -35,16 +35,17 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
 		}
 		
 		boolean first = true;
-		Iterator iter=list.iterator();
+		final Iterator iter=list.iterator();
 		
         out.write('[');
 		while(iter.hasNext()){
-            if(first)
-                first = false;
-            else
-                out.write(',');
+            if(first) {
+				first = false;
+			} else {
+				out.write(',');
+			}
             
-			Object value=iter.next();
+			final Object value=iter.next();
 			if(value == null){
 				out.write("null");
 				continue;
@@ -55,6 +56,7 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
 		out.write(']');
 	}
 	
+	@Override
 	public void writeJSONString(Writer out) throws IOException{
 		writeJSONString(this, out);
 	}
@@ -69,21 +71,23 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
 	 * @return JSON text, or "null" if list is null.
 	 */
 	public static String toJSONString(List list){
-		if(list == null)
+		if(list == null) {
 			return "null";
+		}
 		
         boolean first = true;
-        StringBuffer sb = new StringBuffer();
-		Iterator iter=list.iterator();
+        final StringBuffer sb = new StringBuffer();
+		final Iterator iter=list.iterator();
         
         sb.append('[');
 		while(iter.hasNext()){
-            if(first)
-                first = false;
-            else
-                sb.append(',');
+            if(first) {
+				first = false;
+			} else {
+				sb.append(',');
+			}
             
-			Object value=iter.next();
+			final Object value=iter.next();
 			if(value == null){
 				sb.append("null");
 				continue;
@@ -94,10 +98,12 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
 		return sb.toString();
 	}
 
+	@Override
 	public String toJSONString(){
 		return toJSONString(this);
 	}
 	
+	@Override
 	public String toString() {
 		return toJSONString();
 	}

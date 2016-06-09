@@ -84,7 +84,7 @@ public class Activator extends AbstractUIPlugin {
 		try {
 			ResourcesPlugin.getWorkspace().getRoot()
 					.deleteMarkers(IProblemReporter.GENERIC_CODE_ANALYSIS_MARKER_TYPE, true, IResource.DEPTH_INFINITE);
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			CodanCorePlugin.log(e);
 		}
 	}

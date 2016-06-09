@@ -33,24 +33,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 public class CFGConsoleOutObserver implements IUnmanagedObserver {
 
 	private Map<IElement, String> mSeenList;
 	private int mNumRoots;
-	private Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PrintWriter mWriter;
 
@@ -86,11 +84,11 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 		mSeenList.put(node, numbering);
 		mWriter.println("Node " + numbering + ";Annotations: ");
 		if (node.hasPayload()) {
-			IPayload payload = node.getPayload();
+			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				for (Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
+				for (final Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
 					mWriter.println("  " + annotation.getKey());
-					for (Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
+					for (final Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
 						mWriter.print("    " + keyvalue.getKey() + ": ");
 						if (keyvalue.getValue() instanceof Term) {
 							new PrintTerm().append(mWriter, (Term) keyvalue.getValue());
@@ -103,31 +101,27 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 			}
 		}
 
-		List<IWalkable> newnodes = new ArrayList<IWalkable>();
-		List<IWalkable> children = node.getSuccessors();
+		final List<IWalkable> newnodes = new ArrayList<IWalkable>();
+		final List<IWalkable> children = node.getSuccessors();
 		int num = -1;
 		// Add new nodes and detect back edges...
-		for (IWalkable n : children) {
-			String backedge = mSeenList.get(n);
-			if (backedge != null)
+		for (final IWalkable n : children) {
+			final String backedge = mSeenList.get(n);
+			if (backedge != null) {
 				mWriter.println("Back edge from " + numbering + " to " + backedge);
-			else {
-				String newnumbering = numbering + "." + (++num);
+			} else {
+				final String newnumbering = numbering + "." + (++num);
 				mSeenList.put(n, newnumbering);
 				newnodes.add(n);
 			}
 		}
-		for (IWalkable n : newnodes)
+		for (final IWalkable n : newnodes) {
 			dfstraverse(n, mSeenList.get(n));
+		}
 	}
 
 	@Override
 	public boolean performedChanges() {
 		return false;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 }

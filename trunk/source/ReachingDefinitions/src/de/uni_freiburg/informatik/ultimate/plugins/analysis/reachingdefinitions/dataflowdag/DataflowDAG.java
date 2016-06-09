@@ -27,18 +27,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG<T>, ScopedBoogieVar> {
 
 	private static final long serialVersionUID = 1L;
 
-	private T mNodeLabel;
+	private final T mNodeLabel;
 
 	public DataflowDAG(T stmt) {
 		mNodeLabel = stmt;
@@ -59,13 +58,14 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 		return "[" + mNodeLabel.hashCode() + "]: " + mNodeLabel.toString();
 	}
 
-	public void printGraphDebug(Logger logger) {
-		for (String s : getDebugString().split("\n"))
+	public void printGraphDebug(ILogger logger) {
+		for (final String s : getDebugString().split("\n")) {
 			logger.debug(s);
+		}
 	}
 
 	public String getDebugString() {
-		StringBuilder st = new StringBuilder();
+		final StringBuilder st = new StringBuilder();
 		getDebugString(st, this, "", "");
 		return st.toString();
 	}
@@ -77,7 +77,7 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 			st.append(ident + "--" + edgeLabel + "--> " + dag + "\n");
 		}
 
-		for (DataflowDAG<T> next : dag.getOutgoingNodes()) {
+		for (final DataflowDAG<T> next : dag.getOutgoingNodes()) {
 			getDebugString(st, next, dag.getOutgoingEdgeLabel(next).toString(), ident + "  ");
 		}
     }

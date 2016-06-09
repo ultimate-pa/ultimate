@@ -40,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -48,8 +47,9 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 public class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private WitnessNode mWitnessNode;
 	private IASTTranslationUnit mTranslationUnit;
 	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> mAST2Invariant;
@@ -211,7 +211,7 @@ public class CorrectnessWitnessExtractor {
 					+ node.getRawSignature());
 			mLogger.warn("  Witness node label is " + current);
 			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
-			Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
+			final Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
 			labels.add(current.getName());
 			rtr.put(node, new WitnessInvariant(newInvariant, labels));
 		}
@@ -285,8 +285,8 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private String toLogString(IASTNode bScope, IASTNode aScope) {
-		String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
-		String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
+		final String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
+		final String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
 		return "B=" + bScopeId + ", A=" + aScopeId;
 	}
 

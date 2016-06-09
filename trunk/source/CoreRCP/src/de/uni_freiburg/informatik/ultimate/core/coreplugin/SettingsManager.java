@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
@@ -32,41 +33,66 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.util.RcpPreferenceBinder;
 
-class SettingsManager {
+/**
+ * The SettingsManager initializes the default settings of all plugins as well as loading and saving settings of an
+ * Ultimate instance.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+final class SettingsManager {
 
 	// TODO: Check if this works with multiple instances of plugins
 
-	private final Logger mLogger;
-	private HashMap<String, LogPreferenceChangeListener> mActivePreferenceListener;
+	private static final String SAVING_PREFERENCES_FAILED_WITH_EXCEPTION = "Saving preferences failed with exception: ";
+	private final ILogger mLogger;
+	private final Map<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
-	SettingsManager(Logger logger) {
+	SettingsManager(final ILogger logger) {
 		mLogger = logger;
 		mActivePreferenceListener = new HashMap<String, LogPreferenceChangeListener>();
 	}
 
-	void checkPreferencesForActivePlugins(String pluginId, String pluginName) {
+	void registerPlugin(final IUltimatePlugin plugin) {
+		if (plugin == null) {
+			return;
+		}
+		
+		final String pluginName = plugin.getPluginName();
+		final IPreferenceInitializer prefs = plugin.getPreferences();
+		if (prefs == null) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Plugin " + pluginName + " does not have preferences");
+			}
+			return;
+		}
+		final String pluginId = plugin.getPluginID();
+		RcpPreferenceBinder.registerDefaultPreferences(pluginId, prefs.getPreferenceItems());
 		attachLogPreferenceChangeListenerToPlugin(pluginId, pluginName);
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(ICore core, String filename) {
+	void loadPreferencesFromFile(ICore<ToolchainListType> core, String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Beginning loading settings from " + filename);
@@ -77,7 +103,7 @@ class SettingsManager {
 
 			try {
 				final FileInputStream fis = new FileInputStream(filename);
-				final IStatus status = UltimatePreferenceStore.importPreferences(fis);
+				final IStatus status = RcpPreferenceProvider.importPreferences(fis);
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 					mLogger.warn("Did not attach debug property logger");
@@ -86,7 +112,7 @@ class SettingsManager {
 				}
 				mLogger.info("Preferences different from defaults after loading the file:");
 				logPreferencesDifferentFromDefaults(core);
-			} catch (Exception e) {
+			} catch (IOException | CoreException e) {
 				mLogger.error("Could not load preferences because of exception: ", e);
 				mLogger.warn("Did not attach debug property logger");
 			} finally {
@@ -97,11 +123,11 @@ class SettingsManager {
 		}
 	}
 
-	private void logPreferencesDifferentFromDefaults(ICore core) {
+	private void logPreferencesDifferentFromDefaults(ICore<ToolchainListType> core) {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
-			final String[] delta = new UltimatePreferenceStore(pluginId).getDeltaPreferencesStrings();
+			final String[] delta = new RcpPreferenceProvider(pluginId).getDeltaPreferencesStrings();
 			if (delta != null && delta.length > 0) {
 				isSomePluginDifferent = true;
 				mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
@@ -115,7 +141,7 @@ class SettingsManager {
 		}
 	}
 
-	void savePreferences(ICore core, String filename) {
+	void savePreferences(ICore<ToolchainListType> core, String filename) {
 		if (filename == null || filename.isEmpty()) {
 			return;
 		}
@@ -128,27 +154,27 @@ class SettingsManager {
 			final FileOutputStream fis = new FileOutputStream(filename);
 
 			for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-				new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
+				new RcpPreferenceProvider(plugin.getPluginID()).exportPreferences(fis);
 			}
 
 			fis.flush();
 			fis.close();
-		} catch (FileNotFoundException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
-		} catch (IOException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
-		} catch (CoreException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
+		} catch (final FileNotFoundException e) {
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
+		} catch (final IOException e) {
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
+		} catch (final CoreException e) {
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		}
 	}
 
-	void resetPreferences(ICore core) {
+	void resetPreferences(final ICore<ToolchainListType> core) {
 		mLogger.info("Resetting all preferences to default values...");
-		for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-			UltimatePreferenceInitializer preferences = plugin.getPreferences();
+		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+			final IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
 				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
-				preferences.resetDefaults();
+				RcpPreferenceBinder.resetToDefaultPreferences(plugin.getPluginID(), preferences.getPreferenceItems());
 			} else {
 				mLogger.info(plugin.getPluginName() + " provides no preferences, ignoring...");
 			}
@@ -157,20 +183,19 @@ class SettingsManager {
 		mLogger.info("Finished resetting all preferences to default values...");
 	}
 
-	private void logDefaultPreferences(String pluginID, String pluginName) {
+	private void logDefaultPreferences(final String pluginID, final String pluginName) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(pluginID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(pluginID);
 		try {
-			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
-			String prefix = "[" + pluginName + " (Current)] Preference \"";
-			for (String key : defaults.keys()) {
+			final IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
+			final String prefix = "[" + pluginName + " (Current)] Preference \"";
+			for (final String key : defaults.keys()) {
 				mLogger.debug(prefix + key + "\" = " + ups.getString(key, "NOT DEFINED"));
 			}
-		} catch (BackingStoreException e) {
-			mLogger.debug("An exception occurred during printing of default preferences for plugin " + pluginName + ":"
-					+ e.getMessage());
+		} catch (final BackingStoreException e) {
+			mLogger.fatal("An exception occurred during printing of default preferences for plugin " + pluginName, e);
 		}
 	}
 
@@ -181,10 +206,12 @@ class SettingsManager {
 	 * @param pluginId
 	 */
 	private void attachLogPreferenceChangeListenerToPlugin(String pluginId, String pluginName) {
-
-		LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, pluginName, "Instance");
-		LogPreferenceChangeListener configListener = retrieveListener(pluginId, pluginName, "Configuration");
-		LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, pluginName, "Default");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Attaching preference change listener for plugin " + pluginName);
+		}
+		final LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, pluginName, "Instance");
+		final LogPreferenceChangeListener configListener = retrieveListener(pluginId, pluginName, "Configuration");
+		final LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, pluginName, "Default");
 
 		InstanceScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(instanceListener);
 		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(instanceListener);
@@ -197,11 +224,11 @@ class SettingsManager {
 	}
 
 	private LogPreferenceChangeListener retrieveListener(String pluginID, String pluginName, String scope) {
-		String listenerID = pluginID + scope;
+		final String listenerID = pluginID + scope;
 		if (mActivePreferenceListener.containsKey(listenerID)) {
 			return mActivePreferenceListener.get(listenerID);
 		} else {
-			LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
+			final LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
 			mActivePreferenceListener.put(listenerID, listener);
 			return listener;
 		}
@@ -210,12 +237,12 @@ class SettingsManager {
 	class LogPreferenceChangeListener implements IPreferenceChangeListener {
 
 		private final String mScope;
-		private final UltimatePreferenceStore mPreferences;
+		private final RcpPreferenceProvider mPreferences;
 		private final String mPrefix;
 
 		public LogPreferenceChangeListener(String scope, String pluginID, String pluginName) {
 			mScope = scope;
-			mPreferences = new UltimatePreferenceStore(pluginID);
+			mPreferences = new RcpPreferenceProvider(pluginID);
 			mPrefix = "[" + pluginName + " (" + mScope + ")] Preference \"";
 		}
 

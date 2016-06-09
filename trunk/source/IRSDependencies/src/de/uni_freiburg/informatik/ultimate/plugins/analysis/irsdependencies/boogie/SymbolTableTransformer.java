@@ -26,27 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class SymbolTableTransformer extends BoogieTransformer
 {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 	protected SymbolTable mSymbolTable;
 
 	protected String mCurrentScopeIdentifier;
 
-	public SymbolTableTransformer(Logger logger)
+	public SymbolTableTransformer(ILogger logger)
 	{
 		super();
 		mLogger = logger;
@@ -62,10 +61,10 @@ public class SymbolTableTransformer extends BoogieTransformer
 	public boolean process(IElement root)
 	{
 		if (root instanceof WrapperNode) {
-			Unit unit = (Unit) ((WrapperNode) root).getBacking();
-			Declaration[] declarations = unit.getDeclarations();
+			final Unit unit = (Unit) ((WrapperNode) root).getBacking();
+			final Declaration[] declarations = unit.getDeclarations();
 
-			for (Declaration decl : declarations) {
+			for (final Declaration decl : declarations) {
 				processDeclaration(decl);
 			}
 			return false;
@@ -79,17 +78,17 @@ public class SymbolTableTransformer extends BoogieTransformer
 	protected Declaration processDeclaration(Declaration decl)
 	{
 		if (decl instanceof Procedure) {
-			Procedure proc = (Procedure) decl;
+			final Procedure proc = (Procedure) decl;
 			mCurrentScopeIdentifier = proc.getIdentifier();
 			addVariables(proc.getInParams());
 			addVariables(proc.getOutParams());
 		}
 		else if (decl instanceof VariableDeclaration) {
 			mCurrentScopeIdentifier = "global";
-			VariableDeclaration vdecl = (VariableDeclaration) decl;
+			final VariableDeclaration vdecl = (VariableDeclaration) decl;
 			
-			for (VarList vl : vdecl.getVariables()) {
-				for (String varName : vl.getIdentifiers()) {
+			for (final VarList vl : vdecl.getVariables()) {
+				for (final String varName : vl.getIdentifiers()) {
 					mSymbolTable.addGlobalVariable(varName, vl.getType()
 							.getBoogieType());
 				}
@@ -107,15 +106,15 @@ public class SymbolTableTransformer extends BoogieTransformer
 
 	private void addVariables(VariableDeclaration[] vdecls)
 	{
-		for (VariableDeclaration vdecl : vdecls) {
+		for (final VariableDeclaration vdecl : vdecls) {
 			addVariables(vdecl.getVariables());
 		}
 	}
 
 	private void addVariables(VarList[] vlists)
 	{
-		for (VarList vl : vlists) {
-			for (String varName : vl.getIdentifiers()) {
+		for (final VarList vl : vlists) {
+			for (final String varName : vl.getIdentifiers()) {
 				mSymbolTable.addLocalVariable(varName, mCurrentScopeIdentifier,
 						vl.getType().getBoogieType());
 			}

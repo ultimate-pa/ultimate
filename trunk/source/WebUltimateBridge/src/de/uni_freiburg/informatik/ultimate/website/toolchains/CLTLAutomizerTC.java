@@ -46,7 +46,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> rtr = new ArrayList<Tool>();
+		final List<Tool> rtr = new ArrayList<Tool>();
 
 		rtr.add(new Tool(PrefStrings.s_syntaxchecker));
 		rtr.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
@@ -62,7 +62,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = new ArrayList<Setting>();
+		final List<Setting> rtr = new ArrayList<Setting>();
 
 		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
 				"main", true));

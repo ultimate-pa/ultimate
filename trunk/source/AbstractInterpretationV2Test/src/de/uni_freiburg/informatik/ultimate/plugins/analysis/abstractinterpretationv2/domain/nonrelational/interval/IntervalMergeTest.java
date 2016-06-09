@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -42,13 +42,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergePoint() {
 		// [0; 0]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(0, 0);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(0, 0);
 
 		// [1; 1]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(1, 1);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(1, 1);
 
 		// Expected: [0; 1]
-		IntervalDomainValue exp1 = HelperFunctions.createInterval(0, 1);
+		final IntervalDomainValue exp1 = HelperFunctions.createInterval(0, 1);
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}
@@ -56,13 +56,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergeClosed() {
 		// [0; 1]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(0, 0);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(0, 0);
 
 		// [0; 10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(0, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(0, 10);
 
 		// Expected: [0; 10]
-		IntervalDomainValue exp1 = HelperFunctions.createInterval(0, 10);
+		final IntervalDomainValue exp1 = HelperFunctions.createInterval(0, 10);
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}
@@ -70,13 +70,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergeNegativeClosed() {
 		// [-5; -1]
-		IntervalDomainValue int1 = HelperFunctions.createInterval(-5, -1);
+		final IntervalDomainValue int1 = HelperFunctions.createInterval(-5, -1);
 
 		// [-3; 0]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-3, 0);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-3, 0);
 
 		// Expected: [-5; 0]
-		IntervalDomainValue exp1 = HelperFunctions.createInterval(-5, 0);
+		final IntervalDomainValue exp1 = HelperFunctions.createInterval(-5, 0);
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}
@@ -84,13 +84,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergeOpen() {
 		// [10; \infty]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(BigDecimal.TEN), new IntervalValue());
+		final IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(BigDecimal.TEN), new IntervalValue());
 
 		// [1; 10]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(1, 10);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(1, 10);
 
 		// Expected: [1; \infty]
-		IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE), new IntervalValue());
+		final IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE), new IntervalValue());
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}
@@ -98,13 +98,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergeOpenNegative() {
 		// [-\infty; -10]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(-10)));
+		final IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(-10)));
 
 		// [-3; -1]
-		IntervalDomainValue int2 = HelperFunctions.createInterval(-3, -1);
+		final IntervalDomainValue int2 = HelperFunctions.createInterval(-3, -1);
 
 		// Expected: [-\infty; -1]
-		IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(-1)));
+		final IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(-1)));
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}

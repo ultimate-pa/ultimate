@@ -32,11 +32,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Lists how often a toolchain/setting pair produced a certain result.
@@ -53,12 +53,12 @@ public class StandingsSummary extends NewTestSummary {
 	
 	@Override
 	public String getSummaryLog() {
-		PartitionedResults pr = getAllResultsPartitioned();
-		StringBuilder sb = new StringBuilder();
+		final PartitionedResults pr = getAllResultsPartitioned();
+		final StringBuilder sb = new StringBuilder();
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Success;
-			String resultCategory = "SUCCESS";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Success;
+			final String resultCategory = "SUCCESS";
 			printStandingsForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -67,8 +67,8 @@ public class StandingsSummary extends NewTestSummary {
 		}
 		
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Timeout;
-			String resultCategory = "TIMEOUT";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Timeout;
+			final String resultCategory = "TIMEOUT";
 			printStandingsForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -77,8 +77,8 @@ public class StandingsSummary extends NewTestSummary {
 		}
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Unknown;
-			String resultCategory = "UNKNOWN";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Unknown;
+			final String resultCategory = "UNKNOWN";
 			printStandingsForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -87,8 +87,8 @@ public class StandingsSummary extends NewTestSummary {
 		}
 
 		{
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Failure;
-			String resultCategory = "FAILURE";
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> allOfResultCategory = pr.Failure;
+			final String resultCategory = "FAILURE";
 			printStandingsForResultCategory(allOfResultCategory, resultCategory, sb);
 			sb.append(System.lineSeparator());
 			sb.append(System.lineSeparator());
@@ -106,22 +106,22 @@ public class StandingsSummary extends NewTestSummary {
 			String resultCategory, StringBuilder sb) {
 		sb.append("======= Standings for ").append(resultCategory).append(" =======").append(System.lineSeparator());
 		
-		HashRelation<TCS, String> tcse2input = new HashRelation<>();
-		for (Entry<UltimateRunDefinition, ExtendedResult> result : allOfResultCategory) {
-			UltimateRunDefinition urd = result.getKey();
-			TCS tcs = new TCS(urd.getToolchain(), urd.getSettings());
+		final HashRelation<TCS, String> tcse2input = new HashRelation<>();
+		for (final Entry<UltimateRunDefinition, ExtendedResult> result : allOfResultCategory) {
+			final UltimateRunDefinition urd = result.getKey();
+			final TCS tcs = new TCS(urd.getToolchain(), urd.getSettings());
 			tcse2input.addPair(tcs, urd.getInputFileNames());
 		}
 		
 		// sort by TCS strings
-		TreeMap<String, Integer> tcs2amount = new TreeMap<>();
-		for (TCS tcs : tcse2input.getDomain()) {
-			Set<String> inputFiles = tcse2input.getImage(tcs);
-			String tcsString = String.valueOf(tcs);
+		final TreeMap<String, Integer> tcs2amount = new TreeMap<>();
+		for (final TCS tcs : tcse2input.getDomain()) {
+			final Set<String> inputFiles = tcse2input.getImage(tcs);
+			final String tcsString = String.valueOf(tcs);
 			tcs2amount.put(tcsString, inputFiles.size());
 		}
 		
-		for (Entry<String, Integer> entry : tcs2amount.entrySet()) {
+		for (final Entry<String, Integer> entry : tcs2amount.entrySet()) {
 			sb.append(entry.getValue());
 			sb.append(" times ");
 			sb.append(resultCategory);

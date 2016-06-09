@@ -11,7 +11,7 @@ public class CombRow implements Comparable<CombRow> {
   public CombRow(int index, int[] comb)
     {
       this.index = index;
-      this.width = comb[comb.length-1] - comb[0] + 1;
+      width = comb[comb.length-1] - comb[0] + 1;
       this.comb = comb;
     }
 
@@ -23,14 +23,21 @@ public class CombRow implements Comparable<CombRow> {
    * @param other the other comb.
    * @return negative if smaller, positive if larger than other comb.
    */
+  @Override
   public int compareTo(CombRow other)
     {
       if (width != other.width)
-	return other.width - width;
+	{
+	    return other.width - width;
+	  }
       if (comb.length != other.comb.length)
-	return other.comb.length - comb.length;
+	{
+	    return other.comb.length - comb.length;
+	  }
       if (comb[comb.length-1] != other.comb[other.comb.length-1])
-	return comb[comb.length-1] - other.comb[other.comb.length-1];
+	{
+	    return comb[comb.length-1] - other.comb[other.comb.length-1];
+	  }
       return other.index - index;
       //return index - other.index;
     }
@@ -49,11 +56,15 @@ public class CombRow implements Comparable<CombRow> {
 	    for (int j = 0; j < comb.length; j++)
 	      {
 		if (used.get(base+comb[j]))
-		  continue next_base;
+		  {
+		      continue next_base;
+		    }
 	      }
 
 	    for (int j = 0; j < comb.length; j++)
-	      used.set(base+comb[j]);
+	      {
+		  used.set(base+comb[j]);
+		}
 
 	    this.base = base;
 	    return;

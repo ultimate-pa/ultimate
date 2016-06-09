@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 public class RValue extends LRValue {
 
@@ -68,8 +68,9 @@ public class RValue extends LRValue {
 		this.value = value;
 	}
 
+	@Override
 	public Expression getValue() {
-		return this.value;
+		return value;
 	}
 	
 	public void checkType(CType type) {

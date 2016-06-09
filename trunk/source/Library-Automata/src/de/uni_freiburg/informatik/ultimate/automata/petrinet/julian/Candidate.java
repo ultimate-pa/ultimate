@@ -43,22 +43,22 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  * </ul>
  **/
 public class Candidate<S, C> {
-	final public Transition<S, C> m_t;
-	final public ArrayList<Condition<S, C>> m_Chosen;
-	final public ArrayList<Place<S, C>> m_Places;
+	final public Transition<S, C> mt;
+	final public ArrayList<Condition<S, C>> mChosen;
+	final public ArrayList<Place<S, C>> mPlaces;
 	
 	public Candidate(
 			Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
-		this.m_t = candidate.getKey();
-		this.m_Chosen = new ArrayList<Condition<S, C>>(candidate.getValue()
+		this.mt = candidate.getKey();
+		this.mChosen = new ArrayList<Condition<S, C>>(candidate.getValue()
 				.values());
-		this.m_Places = new ArrayList<Place<S, C>>(candidate.getValue().keySet());
+		this.mPlaces = new ArrayList<Place<S, C>>(candidate.getValue().keySet());
 	}
 
 	public Candidate(Transition<S, C> t2) {
-		this.m_t = t2;
-		this.m_Chosen = new ArrayList<Condition<S, C>>(m_t.getPredecessors().size());
-		this.m_Places = new ArrayList<Place<S, C>>(m_t.getPredecessors());
+		this.mt = t2;
+		this.mChosen = new ArrayList<Condition<S, C>>(mt.getPredecessors().size());
+		this.mPlaces = new ArrayList<Place<S, C>>(mt.getPredecessors());
 	}
 
 
@@ -67,36 +67,45 @@ public class Candidate<S, C> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_Chosen == null) ? 0 : m_Chosen.hashCode());
-		result = prime * result + ((m_Places == null) ? 0 : m_Places.hashCode());
-		result = prime * result + ((m_t == null) ? 0 : m_t.hashCode());
+		result = prime * result + ((mChosen == null) ? 0 : mChosen.hashCode());
+		result = prime * result + ((mPlaces == null) ? 0 : mPlaces.hashCode());
+		result = prime * result + ((mt == null) ? 0 : mt.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Candidate<?, ?> other = (Candidate<?, ?>) obj;
-		if (m_Chosen == null) {
-			if (other.m_Chosen != null)
+		}
+		final Candidate<?, ?> other = (Candidate<?, ?>) obj;
+		if (mChosen == null) {
+			if (other.mChosen != null) {
 				return false;
-		} else if (!m_Chosen.equals(other.m_Chosen))
+			}
+		} else if (!mChosen.equals(other.mChosen)) {
 			return false;
-		if (m_Places == null) {
-			if (other.m_Places != null)
+		}
+		if (mPlaces == null) {
+			if (other.mPlaces != null) {
 				return false;
-		} else if (!m_Places.equals(other.m_Places))
+			}
+		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
-		if (m_t == null) {
-			if (other.m_t != null)
+		}
+		if (mt == null) {
+			if (other.mt != null) {
 				return false;
-		} else if (!m_t.equals(other.m_t))
+			}
+		} else if (!mt.equals(other.mt)) {
 			return false;
+		}
 		return true;
 	}	
 	

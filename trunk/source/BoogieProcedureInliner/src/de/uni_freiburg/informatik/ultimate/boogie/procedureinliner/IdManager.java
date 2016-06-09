@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.Collections;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Used to manage identifiers.
@@ -44,7 +44,7 @@ public class IdManager {
 	private static final String POSTFIX_DELIM = "#";
 
 	/** All registered ids (renamed to be unique). */
-	private Set<String> mIds = new HashSet<>();
+	private final Set<String> mIds = new HashSet<>();
 	
 	/**
 	 * Adds an id to this manager. The id will be registered as it is.

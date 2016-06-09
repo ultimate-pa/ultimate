@@ -27,11 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
 
 /**
@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
  *
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
 
 	public enum WitnessVerifierType {
 		CPACHECKER
@@ -96,14 +97,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean, new WitnessVerifierValidator()), };
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return Activator.PLUGIN_NAME;
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	private class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
@@ -111,7 +106,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		@Override
 		public boolean isValid(Boolean value) {
 			if (value) {
-				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+				final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
 			} else {
 				return true;

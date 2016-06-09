@@ -44,7 +44,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	public ScopedHashMap(ScopedHashMap<K, V> otherMap) {
 		mScopes = new ArrayDeque<Map<K, V>>();
-		for (Map<K, V> map : otherMap.mScopes) {
+		for (final Map<K, V> map : otherMap.mScopes) {
 			mScopes.addLast(new HashMap<>(map));
 		}
 		assert !mScopes.isEmpty();
@@ -57,7 +57,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean isEmpty() {
-		for (Map<K, V> map : mScopes) {
+		for (final Map<K, V> map : mScopes) {
 			if (!map.isEmpty()) {
 				return false;
 			}
@@ -67,7 +67,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean containsKey(Object key) {
-		for (Map<K, V> map : mScopes) {
+		for (final Map<K, V> map : mScopes) {
 			if (map.containsKey(key)) {
 				return true;
 			}
@@ -77,7 +77,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean containsValue(Object value) {
-		for (Map<K, V> map : mScopes) {
+		for (final Map<K, V> map : mScopes) {
 			if (map.containsValue(value)) {
 				return true;
 			}
@@ -87,7 +87,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	@Override
 	public V get(Object key) {
-		for (Map<K, V> map : mScopes) {
+		for (final Map<K, V> map : mScopes) {
 			final V val = map.get(key);
 			if (val != null) {
 				return val;

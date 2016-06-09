@@ -1,8 +1,20 @@
 package pea.reqCheck;
 
 import java.util.ArrayList;
-import pea.*;
-import pea.modelchecking.*;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.CounterTrace;
+import pea.EventDecision;
+import pea.PEANet;
+import pea.PhaseEventAutomata;
+import pea.Trace2PEACompiler;
+import pea.modelchecking.DOTWriter;
+import pea.modelchecking.J2UPPAALConverter;
+import pea.modelchecking.J2UPPAALConverterDOM;
+import pea.modelchecking.J2UPPAALWriterV4;
+import pea.modelchecking.MCTrace;
+import pea.modelchecking.PEAJ2XMLConverter;
 
 /**
  * The class <code>PatternToPEA</code> offers functionality to
@@ -34,7 +46,7 @@ public class PatternToPEA {
     public PhaseEventAutomata absencePattern(CDD P, CDD Q, CDD R, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(P),
 			    new CounterTrace.DCPhase()
@@ -44,7 +56,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(R.negate()),
     		    new CounterTrace.DCPhase(P.and(R.negate())),
     		    new CounterTrace.DCPhase(R.negate()),
@@ -56,7 +68,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-        	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+        	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
            	    new CounterTrace.DCPhase(),
            	    new CounterTrace.DCPhase(Q.and(R.negate())),
            	    new CounterTrace.DCPhase(R.negate()),
@@ -68,7 +80,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    	    new CounterTrace.DCPhase(),
     	    	    new CounterTrace.DCPhase(Q),
     	    	    new CounterTrace.DCPhase(),
@@ -80,7 +92,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         	  	    new CounterTrace.DCPhase(),
         	   	    new CounterTrace.DCPhase(Q.and(R.negate())),
         	   	    new CounterTrace.DCPhase(R.negate()),
@@ -92,7 +104,7 @@ public class PatternToPEA {
                	ctA = compiler.compile("TAbsBet", ct); //ctA.dump();
         	   	return ctA;
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -105,7 +117,7 @@ public class PatternToPEA {
     public PhaseEventAutomata universalityPattern(CDD P, CDD Q, CDD R, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(P.negate()),
 			    new CounterTrace.DCPhase()
@@ -115,7 +127,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(R.negate()),
     		    new CounterTrace.DCPhase(P.negate().and(R.negate())),
     		    //new CounterTrace.DCPhase(R.negate()),
@@ -127,7 +139,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-        	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+        	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
            	    new CounterTrace.DCPhase(),
            	    new CounterTrace.DCPhase(Q.and(R.negate())),
            	    new CounterTrace.DCPhase(R.negate()),
@@ -139,7 +151,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    	    new CounterTrace.DCPhase(),
     	    	    new CounterTrace.DCPhase(Q),
     	    	    new CounterTrace.DCPhase(),
@@ -151,7 +163,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         	    	    new CounterTrace.DCPhase(),
         	    	    new CounterTrace.DCPhase(Q.and(R.negate())),
         	    	    new CounterTrace.DCPhase(R.negate()),
@@ -164,7 +176,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -188,7 +200,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(P.negate().and(R.negate())),
     		    new CounterTrace.DCPhase(R),
     		    new CounterTrace.DCPhase()
@@ -206,7 +218,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         	    	    new CounterTrace.DCPhase(),
         	    	    new CounterTrace.DCPhase(Q.and(R.negate())),
         	    	    new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -217,7 +229,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -232,7 +244,7 @@ public class PatternToPEA {
     public PhaseEventAutomata bndExistencePattern(CDD P, CDD Q, CDD R, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			new CounterTrace.DCPhase(),
 			new CounterTrace.DCPhase(P),
 		    new CounterTrace.DCPhase(P.negate()),
@@ -246,7 +258,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
      		    new CounterTrace.DCPhase(P.and(R.negate())),
      		    new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -262,7 +274,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate())),
          		    new CounterTrace.DCPhase(R.negate()),
@@ -279,7 +291,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q),
          		    new CounterTrace.DCPhase(),
@@ -295,7 +307,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
              		    new CounterTrace.DCPhase(R.negate()),
@@ -312,7 +324,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -325,7 +337,7 @@ public class PatternToPEA {
     public PhaseEventAutomata precedencePattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			new CounterTrace.DCPhase(S.negate()),
 			new CounterTrace.DCPhase(P),
 			new CounterTrace.DCPhase()
@@ -335,7 +347,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate().and(S.negate())),
      		    new CounterTrace.DCPhase(P.and(R.negate())),
      		    //new CounterTrace.DCPhase(R.negate()),
@@ -347,7 +359,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate()).and(S.negate())),
          		    new CounterTrace.DCPhase(S.negate().and(R.negate())),
@@ -359,7 +371,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(S.negate())),
          		    new CounterTrace.DCPhase(S.negate()),
@@ -371,7 +383,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(S.negate()).and(R.negate())),
              		    new CounterTrace.DCPhase(S.negate().and(R.negate())),
@@ -384,7 +396,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -396,7 +408,7 @@ public class PatternToPEA {
     public PhaseEventAutomata precedenceChainPattern12(CDD P, CDD Q, CDD R, CDD S, CDD T, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			new CounterTrace.DCPhase(P.negate()),
 			new CounterTrace.DCPhase(S),
 			new CounterTrace.DCPhase(),
@@ -408,7 +420,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(P.negate().and(R.negate())),
     			new CounterTrace.DCPhase(S.and(R.negate()).and(P.negate())),
     			new CounterTrace.DCPhase(R.negate()),
@@ -422,7 +434,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     				new CounterTrace.DCPhase(P.negate()),
         			new CounterTrace.DCPhase(Q.and(P.negate()).and(R.negate())),
         			new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -436,7 +448,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     				new CounterTrace.DCPhase(P.negate()),
         			new CounterTrace.DCPhase(Q.and(P.negate())),
         			new CounterTrace.DCPhase(P.negate()),
@@ -450,7 +462,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(P.negate()),
             			new CounterTrace.DCPhase(Q.and(P.negate()).and(R.negate())),
             			new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -465,7 +477,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -476,9 +488,10 @@ public class PatternToPEA {
     //Scope Globally
     //Klappt noch gar nicht
     public PhaseEventAutomata precedenceChainPattern21(CDD P, CDD Q, CDD R, CDD S, CDD T, String scope) {
-    	PhaseEventAutomata ctA, ctA1, ctA2, ctA3;
+    	PhaseEventAutomata ctA, ctA1;
+		final PhaseEventAutomata ctA2, ctA3;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			new CounterTrace.DCPhase(S.negate()),
 			new CounterTrace.DCPhase(S.and(T.negate())),
 			new CounterTrace.DCPhase(T.negate()),
@@ -486,7 +499,7 @@ public class PatternToPEA {
 			new CounterTrace.DCPhase()
 			});
 		
-		CounterTrace ct1 = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct1 = new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(T.negate()),
 				new CounterTrace.DCPhase(P),
 				new CounterTrace.DCPhase()
@@ -509,7 +522,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase()
     		 });    	
     		System.out.println("not yet provided");
@@ -518,7 +531,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 //    				new CounterTrace.DCPhase(P.negate()),
 //        			new CounterTrace.DCPhase(Q.and(P.negate()).and(R.negate())),
 //        			new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -533,7 +546,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 //    				new CounterTrace.DCPhase(P.negate()),
 //        			new CounterTrace.DCPhase(Q.and(P.negate())),
 //        			new CounterTrace.DCPhase(P.negate()),
@@ -548,7 +561,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 //    					new CounterTrace.DCPhase(P.negate()),
 //            			new CounterTrace.DCPhase(Q.and(P.negate()).and(R.negate())),
 //            			new CounterTrace.DCPhase(P.negate().and(R.negate())),
@@ -564,7 +577,7 @@ public class PatternToPEA {
         	    return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -575,9 +588,10 @@ public class PatternToPEA {
     //Scope Globally
     //Klappt noch gar nicht
     public PhaseEventAutomata responseChainPattern21(CDD P, CDD Q, CDD R, CDD S, CDD T, String scope) {
-    	PhaseEventAutomata ctA, ctA1, ctA2, ctA3;
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata ctA1, ctA2, ctA3;
     	if (scope.contains("Globally")){
-		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase()
 			});
 				
@@ -586,7 +600,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
     			new CounterTrace.DCPhase(S.and(R.negate()).and(T.negate())),
     			new CounterTrace.DCPhase(R.negate()),
@@ -600,7 +614,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase()
         		 });    	 	
         		ctA = compiler.compile("respCh21U", ct); //ctA.dump();
@@ -608,7 +622,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase()
         		 });    	
         		ctA = compiler.compile("respCh21A", ct); //ctA.dump();
@@ -616,7 +630,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
             			new CounterTrace.DCPhase(Q.and(R.negate())),
             			new CounterTrace.DCPhase(R.negate()),
@@ -631,7 +645,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -640,7 +654,7 @@ public class PatternToPEA {
     public PhaseEventAutomata responseChainPattern12(CDD P, CDD Q, CDD R, CDD S, CDD T, String requestedLogic){
     	System.out.println("Not yet implemented");
     	PhaseEventAutomata ctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -650,9 +664,10 @@ public class PatternToPEA {
     //minimum Duration Pattern
     //komplett und validiert
     public PhaseEventAutomata minDurationPattern(CDD P, CDD Q, CDD R, int timebound, String scope) {
-    	PhaseEventAutomata ctA,ctA2;
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata ctA2;
     	if (scope.contains("Globally")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P.negate()),
     	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_LESS, timebound),
@@ -667,7 +682,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
     			new CounterTrace.DCPhase(R.negate().and(P.negate())),
      		    new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_LESS, timebound),
@@ -682,7 +697,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate())),
         		    new CounterTrace.DCPhase(R.negate()),
@@ -698,7 +713,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q),
          		    new CounterTrace.DCPhase(),
@@ -714,7 +729,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
             		    new CounterTrace.DCPhase(R.negate()),
@@ -730,7 +745,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -740,11 +755,12 @@ public class PatternToPEA {
     //maximum Duration Pattern
     //in Entwicklung
     public PhaseEventAutomata maxDurationPattern(CDD P, CDD Q, CDD R, int timebound, String scope) {
-    	PhaseEventAutomata ctA, ctA2;
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata ctA2;
     	//mit der auskommentierten Zeile sind wir näher an der Semantik von Konrad/Cheng, aber in der Benutzung ist 
     	//diese Version die einfachere
     	if (scope.contains("Globally")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(P.negate()),
     	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATEREQUAL, timebound),
@@ -757,7 +773,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
     			new CounterTrace.DCPhase(R.negate().and(P.negate())),
      		    new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
@@ -771,7 +787,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate())),
         		    new CounterTrace.DCPhase(R.negate()),
@@ -786,7 +802,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q),
          		    new CounterTrace.DCPhase(),
@@ -801,7 +817,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
             		    new CounterTrace.DCPhase(R.negate()),
@@ -815,7 +831,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -827,7 +843,7 @@ public class PatternToPEA {
     public PhaseEventAutomata bndResponsePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P.and(S.negate())),
     	    //new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATEREQUAL, timebound),
@@ -840,7 +856,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
     			new CounterTrace.DCPhase(R.negate().and(P).and(S.negate())),
      		    new CounterTrace.DCPhase(S.negate().and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
@@ -852,7 +868,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate())),
         		    new CounterTrace.DCPhase(R.negate()),
@@ -866,7 +882,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q),
          		    new CounterTrace.DCPhase(),
@@ -881,7 +897,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
             		    new CounterTrace.DCPhase(R.negate()),
@@ -896,7 +912,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -908,7 +924,7 @@ public class PatternToPEA {
     public PhaseEventAutomata periodicPattern(CDD P, CDD Q, CDD R, int timebound, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    	    new CounterTrace.DCPhase(),
     	    	    new CounterTrace.DCPhase(P.negate(), CounterTrace.BOUND_GREATER, 10),
     	    	    new CounterTrace.DCPhase()
@@ -919,7 +935,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
      		    new CounterTrace.DCPhase(P.negate().and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
     		    //new CounterTrace.DCPhase(R.negate()),
@@ -932,7 +948,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q.and(R.negate())),
         		    new CounterTrace.DCPhase(R.negate()),
@@ -945,7 +961,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase(),
          		    new CounterTrace.DCPhase(Q),
          		    new CounterTrace.DCPhase(),
@@ -959,7 +975,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
     					new CounterTrace.DCPhase(R.negate()),
@@ -973,7 +989,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -986,7 +1002,7 @@ public class PatternToPEA {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
     		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
      	    	   new CounterTrace.DCPhase()
      	    	});
     		System.out.println("Not yet provided");
@@ -995,7 +1011,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(R.negate()),
      		    new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())),
     		    new CounterTrace.DCPhase(S.negate().and(R.negate())),
@@ -1008,7 +1024,7 @@ public class PatternToPEA {
     	else
     	if (scope.contains("until")){
     		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
     	    	});    	
     		System.out.println("Not yet provided");
@@ -1018,7 +1034,7 @@ public class PatternToPEA {
     	else	
     	if (scope.contains("After")){
     		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase()
         		 });          		 
     		System.out.println("Not yet provided");
@@ -1028,7 +1044,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					new CounterTrace.DCPhase(),
              		    new CounterTrace.DCPhase(Q.and(R.negate())),
     					new CounterTrace.DCPhase(R.negate()),
@@ -1041,7 +1057,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -1050,9 +1066,10 @@ public class PatternToPEA {
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //bounded Entry Condition Pattern
     public PhaseEventAutomata bndEntryConditionPattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
-    	PhaseEventAutomata ctA, ctA2;
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata ctA2;
     	if (scope.contains("Globally")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    	    new CounterTrace.DCPhase(),
     	    	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATER, timebound),
     	    	    new CounterTrace.DCPhase(S.negate()),
@@ -1066,7 +1083,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     				new CounterTrace.DCPhase(R.negate()),
     				new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
     				new CounterTrace.DCPhase(S.negate().and(R.negate())),
@@ -1078,7 +1095,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		           	    
             	    new CounterTrace.DCPhase(),
             	    new CounterTrace.DCPhase(Q.and(R.negate())),
@@ -1094,7 +1111,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-        	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+        	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(Q),
         	    new CounterTrace.DCPhase(),
@@ -1108,7 +1125,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					 new CounterTrace.DCPhase(),
     	            	    new CounterTrace.DCPhase(Q.and(R.negate())),
     	            	    new CounterTrace.DCPhase(R.negate()),
@@ -1123,7 +1140,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -1143,9 +1160,10 @@ public class PatternToPEA {
     //bounded Invariance Pattern
     //(außer between) validiert
     public PhaseEventAutomata bndInvariancePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
-    	PhaseEventAutomata ctA, ctA2;
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata ctA2;
     	if (scope.contains("Globally")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    	    new CounterTrace.DCPhase(),
     	    	    new CounterTrace.DCPhase(P),
     	    	    new CounterTrace.DCPhase(CDD.TRUE, CounterTrace.BOUND_LESS, timebound),
@@ -1160,7 +1178,7 @@ public class PatternToPEA {
 	}
     	else 
     	if (scope.contains("Before")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     				new CounterTrace.DCPhase(R.negate()),
     	    	    new CounterTrace.DCPhase(P.and(R.negate())),
     	    	    new CounterTrace.DCPhase(R.negate(), CounterTrace.BOUND_LESS, timebound),
@@ -1173,7 +1191,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		           	    
             	    new CounterTrace.DCPhase(),
             	    new CounterTrace.DCPhase(Q.and(R.negate())),
@@ -1190,7 +1208,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-        	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+        	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(Q),
         	    new CounterTrace.DCPhase(),
@@ -1205,7 +1223,7 @@ public class PatternToPEA {
     	}
     	else
     		if(scope.contains("Between")){
-    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     					 new CounterTrace.DCPhase(),
     	            	    new CounterTrace.DCPhase(Q.and(R.negate())),
     	            	    new CounterTrace.DCPhase(R.negate()),
@@ -1221,7 +1239,7 @@ public class PatternToPEA {
         	    	return ctA;
     		
     		}
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
@@ -1243,8 +1261,9 @@ public class PatternToPEA {
 
     
     public PhaseEventAutomata bndResp_Glob(CDD P, CDD S, int bound) {
-    	PhaseEventAutomata ctA, mctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	PhaseEventAutomata ctA;
+		final PhaseEventAutomata mctA;
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P.and(S.negate())),
     	    new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound),
@@ -1261,7 +1280,7 @@ public class PatternToPEA {
      
     public PhaseEventAutomata testPrecedenceVac(CDD P, CDD S, CDD R) {
     	PhaseEventAutomata ctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(S.negate().and(R.negate())),
     	    new CounterTrace.DCPhase((P.and(R.negate())).or(S.negate().and(R.negate()))),
     	    new CounterTrace.DCPhase()
@@ -1271,9 +1290,9 @@ public class PatternToPEA {
         }
 
     public void runTest3() {
-	CDD A = BooleanDecision.create("A");
-	CDD B = BooleanDecision.create("B");
-	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	final CDD A = BooleanDecision.create("A");
+	final CDD B = BooleanDecision.create("B");
+	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(A, CounterTrace.BOUND_LESS, 1),
 	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_LESSEQUAL, 2)
 	});
@@ -1285,7 +1304,7 @@ public class PatternToPEA {
     
     public PhaseEventAutomata deadlockCounterexample(CDD P, CDD S, int bound, int bound2) {
     	PhaseEventAutomata ctA, ctA2;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		new CounterTrace.DCPhase(),
     	   // new CounterTrace.DCPhase(P.negate()),
     	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATEREQUAL, bound),
@@ -1293,7 +1312,7 @@ public class PatternToPEA {
     	    new CounterTrace.DCPhase()
     	});
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
     		    new CounterTrace.DCPhase(P),
         	    new CounterTrace.DCPhase(P.negate(), CounterTrace.BOUND_LESSEQUAL, bound2),
@@ -1323,11 +1342,11 @@ public class PatternToPEA {
 
     public void run() {
     PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A;
-    CDD P = BooleanDecision.create("P");
-	CDD S = BooleanDecision.create("S");
-	CDD T = BooleanDecision.create("T");
-	CDD R = BooleanDecision.create("R");
-	CDD Q = BooleanDecision.create("Q");		
+    final CDD P = BooleanDecision.create("P");
+	final CDD S = BooleanDecision.create("S");
+	final CDD T = BooleanDecision.create("T");
+	final CDD R = BooleanDecision.create("R");
+	final CDD Q = BooleanDecision.create("Q");		
     
 	//Zweimal sich wiedersprechende BoundedInvariance Anforderungen; Der resultierende Automat ist nur für den Fall 
 	// G(not(P)) erfüllbar;
@@ -1352,7 +1371,7 @@ public class PatternToPEA {
     
     ct1A=bndEntryConditionPattern(P,Q,R,S,100,"Globally");
    ct1A.dump();
-   DOTWriter dotwriter = new DOTWriter("D:/Globally.dot", ct1A);//ctParallel
+   final DOTWriter dotwriter = new DOTWriter("D:/Globally.dot", ct1A);//ctParallel
    dotwriter.write();
    
    ct1A=bndEntryConditionPattern(P,Q,R,S,100,"After");
@@ -1373,35 +1392,35 @@ public class PatternToPEA {
     //ct1A = precedenceChainPattern21(P,Q,R,S,T,"Globally");
     //ct1A.dump();
   
-    ct1A = this.testPrecedenceVac(P, S, R);
+    ct1A = testPrecedenceVac(P, S, R);
     dotwriter.write("C:/vacuous/TestPrecVac.dot", ct1A);
     
     ct1A = precedencePattern(P,Q,R,S, "Between");
     ct1A.dump();
     
-    DOTWriter dotwriter2 = new DOTWriter("C:/minDur.dot", ct1A);
+    final DOTWriter dotwriter2 = new DOTWriter("C:/minDur.dot", ct1A);
     dotwriter2.write();
     
       
-    J2UPPAALWriterV4 j2uppaalWriter = new J2UPPAALWriterV4();
+    final J2UPPAALWriterV4 j2uppaalWriter = new J2UPPAALWriterV4();
     j2uppaalWriter.writePEA2UppaalFile("C:/UppaalWriterV4_neu.xml", ctParallel);   
     
-    J2UPPAALConverter j2uppaalWr = new J2UPPAALConverter();
+    final J2UPPAALConverter j2uppaalWr = new J2UPPAALConverter();
     j2uppaalWr.writePEA2UppaalFile("C:/UppaalConverter_neu.xml", ctParallel);   
     
-    J2UPPAALConverterDOM j2uppaalDom = new J2UPPAALConverterDOM();
+    final J2UPPAALConverterDOM j2uppaalDom = new J2UPPAALConverterDOM();
     j2uppaalDom.create("C:/UppaalConverterDOM.xml", ctParallel);
     
     
     try {
-        PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
+        final PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
 
-        ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+        final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
         peaList.add(ctParallel);
-        PEANet peanet = new PEANet();
+        final PEANet peanet = new PEANet();
         peanet.setPeas(peaList);
         conv.convert(peanet, "AmiTest2.xml");
-    } catch (Exception e) {
+    } catch (final Exception e) {
         e.printStackTrace();
     }
     

@@ -27,7 +27,8 @@
 package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
 import java.util.Collection;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
@@ -72,7 +73,7 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
-		String[] directories = {
+		final String[] directories = {
 			"examples/svcomp/memsafety/",
 			"examples/svcomp/memsafety-ext/",
 			"examples/svcomp/list-ext-properties/",

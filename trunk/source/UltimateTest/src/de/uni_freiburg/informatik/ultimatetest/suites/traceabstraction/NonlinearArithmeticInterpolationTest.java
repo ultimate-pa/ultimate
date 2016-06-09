@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class NonlinearArithmeticInterpolationTest extends
 		AbstractTraceAbstractionTestSuite {
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairsMemsafety = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairsMemsafety = {
 		new DirectoryFileEndingsPair("examples/programs/nonlinearArithmetic/memsafety", new String[]{ ".i", ".c" }) ,
 	};
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairsReach = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairsReach = {
 		new DirectoryFileEndingsPair("examples/programs/nonlinearArithmetic/reach", new String[]{ ".i", ".c" }) ,
 	};
 
@@ -59,19 +59,19 @@ public class NonlinearArithmeticInterpolationTest extends
 		return 900 * 1000;
 	}
 
-	private static final boolean m_AutomizerWithForwardPredicates = true;
+	private static final boolean mAutomizerWithForwardPredicates = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-memsafety-Automizer.epf",
-					m_DirectoryFileEndingsPairsMemsafety);
+					mDirectoryFileEndingsPairsMemsafety);
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-precise-Automizer.epf",
-					m_DirectoryFileEndingsPairsReach);
+					mDirectoryFileEndingsPairsReach);
 		}
 		return super.createTestCases();
 	}

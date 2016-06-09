@@ -57,13 +57,13 @@ public class AffineTemplate extends ComposableTemplate {
 	private static final String s_name_delta = "delta_";
 	private static final String s_name_function = "rank_";
 	
-	private Term m_delta;
-	private AffineFunctionGenerator m_fgen;
+	private Term mdelta;
+	private AffineFunctionGenerator mfgen;
 	
 	@Override
 	protected void _init() {
-		m_delta = newDelta(s_name_delta + getInstanceNumber());
-		m_fgen = new AffineFunctionGenerator(m_script, m_variables,
+		mdelta = newDelta(s_name_delta + getInstanceNumber());
+		mfgen = new AffineFunctionGenerator(mscript, mvariables,
 				s_name_function + getInstanceNumber());
 	}
 	
@@ -82,11 +82,11 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x') < f(x) - delta
-		LinearInequality li = m_fgen.generate(inVars);
-		LinearInequality li2 = m_fgen.generate(outVars);
+		final LinearInequality li = mfgen.generate(inVars);
+		final LinearInequality li2 = mfgen.generate(outVars);
 		li2.negate();
 		li.add(li2);
-		AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+		final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 		li.add(a);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
@@ -100,8 +100,8 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x') ≤ f(x)
-		LinearInequality li = m_fgen.generate(inVars);
-		LinearInequality li2 = m_fgen.generate(outVars);
+		final LinearInequality li = mfgen.generate(inVars);
+		final LinearInequality li2 = mfgen.generate(outVars);
 		li2.negate();
 		li.add(li2);
 		li.setStrict(false);
@@ -114,7 +114,7 @@ public class AffineTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f(x) > 0
-		LinearInequality li = m_fgen.generate(inVars);
+		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
@@ -139,15 +139,15 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = m_fgen.getVariables();
-		list.add(m_delta);
+		final Collection<Term> list = mfgen.getVariables();
+		list.add(mdelta);
 		return list;
 	}
 
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction f = m_fgen.extractAffineFunction(val);
+		final AffineFunction f = mfgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);
 	}
 	

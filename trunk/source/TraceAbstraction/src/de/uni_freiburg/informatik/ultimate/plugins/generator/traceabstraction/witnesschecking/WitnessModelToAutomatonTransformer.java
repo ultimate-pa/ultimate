@@ -34,52 +34,52 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessModelToAutomatonTransformer {
-	private final NestedWordAutomaton<WitnessEdge, WitnessNode> m_Result;
-	private final WitnessNode m_WitnessRoot;
+	private final NestedWordAutomaton<WitnessEdge, WitnessNode> mResult;
+	private final WitnessNode mWitnessRoot;
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
 	
 	public WitnessModelToAutomatonTransformer(WitnessNode witnessRoot, IUltimateServiceProvider services) {
 		super();
-		m_WitnessRoot = witnessRoot;
-		Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
-		Set<WitnessEdge> callAlphabet = Collections.emptySet();
-		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
-		StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
+		mWitnessRoot = witnessRoot;
+		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
+		final Set<WitnessEdge> callAlphabet = Collections.emptySet();
+		final Set<WitnessEdge> returnAlphabet = Collections.emptySet();
+		final StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
 		};
-		m_Result = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		mResult = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 
 	private void constructAutomaton(Set<WitnessEdge> internalAlphabet) {
-		addNewState(m_WitnessRoot);
+		addNewState(mWitnessRoot);
 		while (!worklist.isEmpty()) {
-			WitnessNode current = worklist.removeFirst();
-			for (WitnessEdge we : current.getOutgoingEdges()) {
-				WitnessNode successor = we.getTarget();
-				if (!m_Result.getStates().contains(successor)) {
+			final WitnessNode current = worklist.removeFirst();
+			for (final WitnessEdge we : current.getOutgoingEdges()) {
+				final WitnessNode successor = we.getTarget();
+				if (!mResult.getStates().contains(successor)) {
 					addNewState(successor);
 				}
 				internalAlphabet.add(we);
-				m_Result.addInternalTransition(current, we, successor);
+				mResult.addInternalTransition(current, we, successor);
 			}
 		}
 	}
 
 	private void addNewState(WitnessNode successor) {
-		WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
-		boolean isInitial = (annotation != null && annotation.isInitial());
-		boolean isFinal = (annotation != null && annotation.isError());
-		m_Result.addState(isInitial, isFinal, successor);
+		final WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
+		final boolean isInitial = (annotation != null && annotation.isInitial());
+		final boolean isFinal = (annotation != null && annotation.isError());
+		mResult.addState(isInitial, isFinal, successor);
 		worklist.add(successor);
 	}
 
 	public NestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
-		return m_Result;
+		return mResult;
 	}
 }

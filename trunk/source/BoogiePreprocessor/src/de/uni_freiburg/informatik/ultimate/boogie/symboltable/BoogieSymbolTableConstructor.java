@@ -27,22 +27,20 @@
 
 package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * 
@@ -51,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  */
 public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	private BoogieSymbolTable mSymbolTable;
 	private Unit mRootNode;
@@ -59,7 +57,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	private Declaration mCurrentDeclaration;
 	private String mCurrentScopeName;
 
-	public BoogieSymbolTableConstructor(Logger logger){
+	public BoogieSymbolTableConstructor(ILogger logger){
 		mLogger = logger;
 		mSymbolTable = new BoogieSymbolTable();	
 	}
@@ -74,18 +72,13 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 
 	@Override
 	public void finish() throws Throwable {
-		PreprocessorAnnotation pa = new PreprocessorAnnotation();
+		final PreprocessorAnnotation pa = new PreprocessorAnnotation();
 		pa.setSymbolTable(mSymbolTable);
 		pa.annotate(mRootNode);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("SymbolTable\r" + mSymbolTable.prettyPrintSymbolTable());
 		}
 		mSymbolTable = null;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override
@@ -108,7 +101,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 
 	public Boolean process(Unit node) throws Throwable {
 		mRootNode = node;
-		for (Declaration decl : mRootNode.getDeclarations()) {
+		for (final Declaration decl : mRootNode.getDeclarations()) {
 			if (decl instanceof VariableDeclaration || decl instanceof ConstDeclaration) {
 				mCurrentScope = StorageClass.GLOBAL;
 				mCurrentDeclaration = decl;
@@ -126,15 +119,15 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
-			for (VarList vl : decl.getInParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getInParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
 
 		if (decl.getOutParam() != null) {
-			for (String name : decl.getOutParam().getIdentifiers()) {
+			for (final String name : decl.getOutParam().getIdentifiers()) {
 				mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 			}
 		}
@@ -150,16 +143,16 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		mSymbolTable.addProcedureOrFunction(decl.getIdentifier(), decl);
 
 		if (decl.getInParams() != null) {
-			for (VarList vl : decl.getInParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getInParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addInParams(decl.getIdentifier(), name, decl);
 				}
 			}
 		}
 
 		if (decl.getOutParams() != null) {
-			for (VarList vl : decl.getOutParams()) {
-				for (String name : vl.getIdentifiers()) {
+			for (final VarList vl : decl.getOutParams()) {
+				for (final String name : vl.getIdentifiers()) {
 					mSymbolTable.addOutParams(decl.getIdentifier(), name, decl);
 				}
 			}
@@ -180,12 +173,12 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	protected VarList processVarList(VarList vl) {
 		switch (mCurrentScope) {
 		case LOCAL:
-			for (String name : vl.getIdentifiers()) {
+			for (final String name : vl.getIdentifiers()) {
 				mSymbolTable.addLocalVariable(mCurrentScopeName, name, mCurrentDeclaration);
 			}
 			break;
 		case GLOBAL:
-			for (String name : vl.getIdentifiers()) {
+			for (final String name : vl.getIdentifiers()) {
 				mSymbolTable.addGlobalVariable(name, mCurrentDeclaration);
 			}
 			break;

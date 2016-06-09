@@ -59,11 +59,11 @@
 								<echo>BoogiePLParser: flexBinary is ${flexBinary}</echo>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${boogieparserDir}">
+									dir="${boogieparserDir}" failonerror="true">
 									<arg line="-expect 1" /> <!-- FIXME: Necessary for attributes of assert and assume -->
 									<arg value="Boogie.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${boogieparserDir}">
+								<java jar="${flexBinary}" fork="true" dir="${boogieparserDir}" failonerror="true">
 									<arg value="Boogie.flex" />
 								</java>
 							</tasks>

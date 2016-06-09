@@ -33,7 +33,7 @@ import java.util.List;
 
 	public class Word<Symbol> implements Iterable<Symbol> {
 
-		protected Symbol[] m_Word;
+		protected Symbol[] mWord;
 		
 	
 		/**
@@ -41,7 +41,7 @@ import java.util.List;
 		 */
 		@SafeVarargs
 		public Word(Symbol... symbols) {
-			this.m_Word = symbols;
+			this.mWord = symbols;
 		}
 		
 		
@@ -50,11 +50,11 @@ import java.util.List;
 		 * word that consists of one symbol, etc.
 		 */
 		public int length() {
-			return m_Word.length;
+			return mWord.length;
 		}
 		
 		public List<Symbol> asList() {
-			return Arrays.asList(m_Word);
+			return Arrays.asList(mWord);
 		}
 		
 		
@@ -65,18 +65,18 @@ import java.util.List;
 		 */
 		public Symbol getSymbol(int position) 
 		{
-			if (position < 0 || position >= m_Word.length) {
+			if (position < 0 || position >= mWord.length) {
 				throw new IllegalArgumentException("index out of range");
 			}
-			return m_Word[position];
+			return mWord[position];
 		}
 		
 		
 		@SuppressWarnings("unchecked")
 		public Word<Symbol> concatenate(Word<Symbol> nestedWord2) {
-			int lengthWord1 = this.length();
-			int lengthWord2 = nestedWord2.length();
-			Symbol[] concatenationSymbols = 
+			final int lengthWord1 = this.length();
+			final int lengthWord2 = nestedWord2.length();
+			final Symbol[] concatenationSymbols = 
 				(Symbol[]) new Object[lengthWord1 + lengthWord2];
 			
 			for (int i=0; i<lengthWord1; i++) {
@@ -90,16 +90,16 @@ import java.util.List;
 		
 		
 		public List<Symbol> lettersAsList() {
-			return Arrays.asList(m_Word);
+			return Arrays.asList(mWord);
 		}
 		
 
 		@Override
 		public String toString() {
-			//return m_Word.toString();
+			//return mWord.toString();
 			String s = "[";
-			for (int i = 0; i < m_Word.length; i++) {
-				s += m_Word[i];
+			for (int i = 0; i < mWord.length; i++) {
+				s += mWord[i];
 			}
 			s += "]";
 			return s;
@@ -108,6 +108,6 @@ import java.util.List;
 
 		@Override
 		public Iterator<Symbol> iterator() {
-			return Arrays.asList(m_Word).iterator();
+			return Arrays.asList(mWord).iterator();
 		}
 	}

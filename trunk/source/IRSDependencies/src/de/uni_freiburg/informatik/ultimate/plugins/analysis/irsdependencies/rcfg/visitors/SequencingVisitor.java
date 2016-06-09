@@ -32,10 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
@@ -46,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 
 public class SequencingVisitor extends SimpleRCFGVisitor {
 
-	private RCFGWalkerUnroller mWalker;
+	private final RCFGWalkerUnroller mWalker;
 
-	private HashSet<String> mInputs;
-	private HashSet<String> mOutputs;
-	private HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
+	private final HashSet<String> mInputs;
+	private final HashSet<String> mOutputs;
+	private final HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
-	public SequencingVisitor(RCFGWalkerUnroller w, Logger logger) {
+	public SequencingVisitor(RCFGWalkerUnroller w, ILogger logger) {
 		super(logger);
 		mWalker = w;
 		mInputs = new HashSet<>();
@@ -98,27 +97,27 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void RealSequencingEOT() {
-		List<RCFGEdge> trace = getCurrentPrefix();
+		final List<RCFGEdge> trace = getCurrentPrefix();
 
 		HashSet<String> remainingInputs = new HashSet<>(mInputs);
 		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
 
 		ZoneAnnotation currentZone = null;
 
-		boolean startFound = false;
+		final boolean startFound = false;
 		boolean endFound = false;
 		boolean zoneShift = true;
 		boolean isStable = true;
 
-		for (RCFGEdge currentEdge : trace) {
-			UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
+		for (final RCFGEdge currentEdge : trace) {
+			final UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
 					UseDefSequence.class);
 			if (ud != null) {
 
-				List<Statement> stmts = extractStatements(currentEdge);
+				final List<Statement> stmts = extractStatements(currentEdge);
 
 				for (int j = 0; j < ud.Sequence.size(); j++) {
-					UseDefSet uds = ud.Sequence.get(j);
+					final UseDefSet uds = ud.Sequence.get(j);
 
 					if (zoneShift) {
 						if (currentZone != null) {
@@ -135,8 +134,8 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 						zoneShift = false;
 					}
 
-					boolean removedInput = remainingInputs.removeAll(uds.Use);
-					boolean removedOutput = remainingOutputs.removeAll(uds.Def);
+					final boolean removedInput = remainingInputs.removeAll(uds.Use);
+					final boolean removedOutput = remainingOutputs.removeAll(uds.Def);
 
 					if (removedInput || removedOutput) {
 						if (isStable) {
@@ -146,7 +145,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 					}
 
 					if (endFound) {
-						HashSet<String> readInputs = Utils.intersect(uds.Use,
+						final HashSet<String> readInputs = Utils.intersect(uds.Use,
 								mInputs);
 					}
 
@@ -166,7 +165,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		if (e instanceof StatementSequence) {
 			return ((StatementSequence) e).getStatements();
 		} else if (e instanceof Call) {
-			ArrayList<Statement> rtr = new ArrayList<>();
+			final ArrayList<Statement> rtr = new ArrayList<>();
 			rtr.add(((Call) e).getCallStatement());
 			return rtr;
 		} else {
@@ -175,13 +174,13 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void DebugSequencingEOT() {
-		List<RCFGEdge> trace = getCurrentPrefix();
+		final List<RCFGEdge> trace = getCurrentPrefix();
 
-		List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
+		final List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
 
 		Tuple<Integer> start = new Tuple<Integer>(0, 0);
 		Tuple<Integer> end = new Tuple<Integer>(0, 0);
-		Tuple<Integer> last = new Tuple<Integer>(0, 0);
+		final Tuple<Integer> last = new Tuple<Integer>(0, 0);
 
 		HashSet<String> remainingInputs = new HashSet<>(mInputs);
 		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
@@ -190,14 +189,14 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		boolean startFound = false;
 
 		for (int i = 0; i < trace.size(); ++i) {
-			UseDefSequence ud = UseDefSequence.getAnnotation(trace.get(i),
+			final UseDefSequence ud = UseDefSequence.getAnnotation(trace.get(i),
 					UseDefSequence.class);
 			if (ud != null) {
 				for (int j = 0; j < ud.Sequence.size(); j++) {
-					UseDefSet uds = ud.Sequence.get(j);
+					final UseDefSet uds = ud.Sequence.get(j);
 
 					if (searchForRealEnd) {
-						HashSet<String> readInputs = Utils.intersect(uds.Use,
+						final HashSet<String> readInputs = Utils.intersect(uds.Use,
 								mInputs);
 
 						if (!readInputs.isEmpty()) {
@@ -242,15 +241,15 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void DebugFinish() {
-		StringBuilder outer = new StringBuilder();
+		final StringBuilder outer = new StringBuilder();
 
 		outer.append("List of zones:\n");
-		for (Entry<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
+		for (final Entry<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
 				.entrySet()) {
 			int i = 0;
-			StringBuilder inner = new StringBuilder();
-			for (RCFGEdge edge : e.getKey()) {
-				ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
+			final StringBuilder inner = new StringBuilder();
+			for (final RCFGEdge edge : e.getKey()) {
+				final ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
 						edge, ZoneAnnotation.class);
 				if (za != null) {
 					outer.append(za).append(";");
@@ -264,7 +263,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			outer.append(Utils.insertLineBreaks(200, inner.toString()));
 			outer.append("\n");
 
-			for (Tuple<Tuple<Integer>> zone : e.getValue()) {
+			for (final Tuple<Tuple<Integer>> zone : e.getValue()) {
 				outer.append(zone.First.First).append(",")
 						.append(zone.First.Last);
 				outer.append(" - ");
@@ -302,7 +301,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 
 		private void addOrMergeAnnotation(IElement e) {
-			ZoneAnnotation za = getAnnotation(e, this.getClass());
+			final ZoneAnnotation za = getAnnotation(e, this.getClass());
 			if (za != null) {
 				if (!za.equals(this)) {
 					// merge

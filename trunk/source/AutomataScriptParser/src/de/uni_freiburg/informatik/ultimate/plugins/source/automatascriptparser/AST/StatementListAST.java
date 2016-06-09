@@ -31,7 +31,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -49,6 +49,7 @@ public class StatementListAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = 4839521364713345580L;
 
+	@Override
 	public Class<?> getReturnType() {
 		throw new RuntimeException("StatementList does not have and does not need any type!");
 	}
@@ -65,8 +66,8 @@ public class StatementListAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder();
-		for (AtsASTNode n : m_children) {
+		final StringBuilder builder = new StringBuilder();
+		for (final AtsASTNode n : mchildren) {
 			builder.append(n.getAsString() + ";\n");
 		}
 		return builder.toString();

@@ -82,7 +82,7 @@ public class LocationTraceLabelProvider implements ITableLabelProvider {
 	@Override
 	public String getColumnText(Object element, int columnIndex) {
 		if (element instanceof TraceNode) {
-			TraceNode tn = (TraceNode)element;
+			final TraceNode tn = (TraceNode)element;
 			switch (columnIndex) {
 			case 0:
 				return Integer.toString(tn.getIndex());

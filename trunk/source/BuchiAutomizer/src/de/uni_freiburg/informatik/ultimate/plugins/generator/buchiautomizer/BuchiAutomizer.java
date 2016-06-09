@@ -31,19 +31,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * Main class of Plug-In BuchiAutomizer
@@ -54,10 +53,7 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResult;
  */
 public class BuchiAutomizer implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
-
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private BuchiAutomizerObserver mObserver;
 	private ModelType mInputDefinition;
@@ -66,12 +62,12 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -91,7 +87,7 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -112,7 +108,7 @@ public class BuchiAutomizer implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
@@ -129,13 +125,13 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
 	private boolean programContainsErrors(IResultService service) {
-		for (Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
-			for (IResult resul : entry.getValue()) {
+		for (final Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
+			for (final IResult resul : entry.getValue()) {
 				if (resul instanceof CounterExampleResult) {
 					return true;
 				}
@@ -152,7 +148,7 @@ public class BuchiAutomizer implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 	}
 

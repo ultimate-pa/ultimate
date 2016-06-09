@@ -32,7 +32,6 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * NestedFormulas where we can set formulas after construction of the object.
@@ -52,14 +51,14 @@ public class ModifiableNestedFormulas<TF, SF> extends
 	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final TF[] m_Terms;
+	private final TF[] mTerms;
 	
 	/**
 	 * Maps a call position to a formula that represents the assignment 
 	 * {@code x_1,...,x_n := t_1,...,t_n} where x_1,...,x_n are the parameters
 	 * of the callee and t_1,...,t_n are the arguments of the caller.
 	 */
-	private final Map<Integer,TF> m_LocalVarAssignmentAtCall =
+	private final Map<Integer,TF> mLocalVarAssignmentAtCall =
 			new HashMap<Integer,TF>();
 	
 	/**
@@ -67,58 +66,58 @@ public class ModifiableNestedFormulas<TF, SF> extends
 	 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final Map<Integer,TF> m_GlobalOldVarAssignmentAtCall =
+	private final Map<Integer,TF> mGlobalOldVarAssignmentAtCall =
 			new HashMap<Integer,TF>();
 	
 
 	public ModifiableNestedFormulas(
 			NestedWord<? extends IAction> nestedWord, SortedMap<Integer, SF> pendingContexts) {
 		super(nestedWord, pendingContexts);
-		m_Terms = (TF[]) new Object[nestedWord.length()];
+		mTerms = (TF[]) new Object[nestedWord.length()];
 	}
 
 	@Override
 	protected TF getFormulaFromValidNonCallPos(int i) {
-		return m_Terms[i];
+		return mTerms[i];
 	}
 
 	@Override
 	protected TF getLocalVarAssignmentFromValidPos(int i) {
-		return m_LocalVarAssignmentAtCall.get(i);
+		return mLocalVarAssignmentAtCall.get(i);
 	}
 
 	@Override
 	protected TF getGlobalVarAssignmentFromValidPos(int i) {
-		return m_Terms[i];
+		return mTerms[i];
 	}
 
 	@Override
 	protected TF getOldVarAssignmentFromValidPos(int i) {
-		return m_GlobalOldVarAssignmentAtCall.get(i);
+		return mGlobalOldVarAssignmentAtCall.get(i);
 	}
 	
 	void setFormulaAtNonCallPos(int i, TF tf) {
 		assert !super.getTrace().isCallPosition(i);
-		assert m_Terms[i] == null : "already set";
-		m_Terms[i] = tf;
+		assert mTerms[i] == null : "already set";
+		mTerms[i] = tf;
 	}
 	
 	void setLocalVarAssignmentAtPos(int i, TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
-		assert m_LocalVarAssignmentAtCall.get(i) == null : "already set";
-		m_LocalVarAssignmentAtCall.put(i, tf);
+		assert mLocalVarAssignmentAtCall.get(i) == null : "already set";
+		mLocalVarAssignmentAtCall.put(i, tf);
 	}
 	
 	void setOldVarAssignmentAtPos(int i, TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
-		assert m_GlobalOldVarAssignmentAtCall.get(i) == null : "already set";
-		m_GlobalOldVarAssignmentAtCall.put(i, tf);
+		assert mGlobalOldVarAssignmentAtCall.get(i) == null : "already set";
+		mGlobalOldVarAssignmentAtCall.put(i, tf);
 	}
 	
 	void setGlobalVarAssignmentAtPos(int i, TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
-		assert m_Terms[i] == null : "already set";
-		m_Terms[i] = tf;
+		assert mTerms[i] == null : "already set";
+		mTerms[i] = tf;
 	}
 
 	

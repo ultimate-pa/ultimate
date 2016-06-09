@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class AllExamplesTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { "examples/programs/" };
+	private static final String[] mDirectories = { "examples/programs/" };
 	
 	/**
 	 * {@inheritDoc}
@@ -50,39 +50,39 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		return 20 * 1000;
 	}
 
-	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
-	private static final boolean m_TraceAbstractionWithBackwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = true;
+	private static final boolean mTraceAbstractionWithForwardPredicates = true;
+	private static final boolean mTraceAbstractionWithBackwardPredicates = true;
+	private static final boolean mTraceAbstractionCWithForwardPredicates = true;
+	private static final boolean mTraceAbstractionCWithBackwardPredicates = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_TraceAbstractionWithForwardPredicates) {
+		if (mTraceAbstractionWithForwardPredicates) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		} 
-		if (m_TraceAbstractionWithBackwardPredicates) {
+		if (mTraceAbstractionWithBackwardPredicates) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		}
-		if (m_TraceAbstractionCWithForwardPredicates) {
+		if (mTraceAbstractionCWithForwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
-		if (m_TraceAbstractionCWithBackwardPredicates) {
+		if (mTraceAbstractionCWithBackwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();

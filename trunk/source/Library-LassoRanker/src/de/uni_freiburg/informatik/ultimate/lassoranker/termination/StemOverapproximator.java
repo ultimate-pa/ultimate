@@ -34,8 +34,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * @author Jan Leike
  */
 class StemOverapproximator {
-	private boolean m_annotate_terms;
+	private final boolean mannotate_terms;
 
 	/**
 	 * This setting makes the overapproximation somewhat better but also much
@@ -78,7 +78,7 @@ class StemOverapproximator {
 	/**
 	 * This script is a new script of QF_LRA that belongs only to this object
 	 */
-	private Script m_script;
+	private Script mscript;
 
 	/**
 	 * Create a new StemOverapproximator
@@ -89,18 +89,18 @@ class StemOverapproximator {
 	 */
 	public StemOverapproximator(LassoRankerPreferences preferences, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
-		m_annotate_terms = preferences.annotate_terms;
+		mannotate_terms = preferences.annotate_terms;
 
 		// Create a new QF_LRA script
-		m_script = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
-		m_script.setLogic(Logics.QF_LRA);
+		mscript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
+		mscript.setLogic(Logics.QF_LRA);
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (m_script != null) {
-			m_script.exit();
-			m_script = null;
+		if (mscript != null) {
+			mscript.exit();
+			mscript = null;
 		}
 		super.finalize();
 	}
@@ -110,11 +110,11 @@ class StemOverapproximator {
 			return stem; // nothing to do
 		}
 
-		Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
+		final Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
 		if (s_less_efficient_and_more_complete) {
 			// Add all linear inequalities occuring somewhere in the stem to the
 			// list of candidates
-			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
+			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				candidate_lis.addAll(polyhedron);
 			}
 		} else {
@@ -122,24 +122,24 @@ class StemOverapproximator {
 			candidate_lis.addAll(stem.getPolyhedra().get(1));
 		}
 
-		List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
-		for (LinearInequality candidate_li : candidate_lis) {
+		final List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
+		for (final LinearInequality candidate_li : candidate_lis) {
 			// Check if stem -> candidate_li
-			m_script.push(1);
-			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
-				MotzkinTransformation motzkin = new MotzkinTransformation(m_script, AnalysisType.Linear,
-						m_annotate_terms);
+			mscript.push(1);
+			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
+				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, AnalysisType.Linear,
+						mannotate_terms);
 				motzkin.add_inequalities(polyhedron);
-				LinearInequality li = new LinearInequality(candidate_li);
+				final LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
 				motzkin.add_inequality(li);
 				motzkin.annotation = "stem implies candidate linear inequality";
-				m_script.assertTerm(motzkin.transform(new Rational[0]));
+				mscript.assertTerm(motzkin.transform(new Rational[0]));
 			}
-			if (m_script.checkSat().equals(LBool.SAT)) {
+			if (mscript.checkSat().equals(LBool.SAT)) {
 				new_stem.add(candidate_li);
 			}
-			m_script.pop(1);
+			mscript.pop(1);
 		}
 
 		if (new_stem.isEmpty()) {

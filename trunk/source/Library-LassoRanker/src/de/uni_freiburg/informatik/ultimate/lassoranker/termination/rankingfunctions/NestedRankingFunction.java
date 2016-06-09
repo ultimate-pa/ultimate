@@ -48,44 +48,44 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class NestedRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 380153194719949843L;
 	
-	private final AffineFunction[] m_Ranking;
-	public final int m_Functions;
+	private final AffineFunction[] mRanking;
+	public final int mFunctions;
 	
 	public NestedRankingFunction(AffineFunction[] ranking) {
-		m_Ranking = ranking;
-		m_Functions = ranking.length;
-		assert(m_Functions > 0);
+		mRanking = ranking;
+		mFunctions = ranking.length;
+		assert(mFunctions > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_Ranking.length + "-nested";
+		return mRanking.length + "-nested";
 	}
 
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : m_Ranking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mRanking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
 	}
 	
 	public AffineFunction[] getComponents() {
-		return m_Ranking;
+		return mRanking;
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(m_Ranking.length);
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mRanking.length);
 		sb.append("-nested ranking function:\n");
-		for (int i = 0; i < m_Functions; ++i) {
+		for (int i = 0; i < mFunctions; ++i) {
 			sb.append("  f" + i);
 			sb.append(" = ");
-			sb.append(m_Ranking[i]);
-			if (i < m_Functions - 1) {
+			sb.append(mRanking[i]);
+			if (i < mFunctions - 1) {
 				sb.append("\n");
 			}
 		}
@@ -98,11 +98,11 @@ public class NestedRankingFunction extends RankingFunction {
 		// ranking function that proceed through phases.
 		BigInteger n = BigInteger.ZERO;
 		Term phase = script.numeral(n);
-		Term value = m_Ranking[m_Ranking.length - 1].asTerm(script);
-		for (int i = m_Ranking.length - 2; i >= 0; --i) {
+		Term value = mRanking[mRanking.length - 1].asTerm(script);
+		for (int i = mRanking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term f_term = m_Ranking[i].asTerm(script);
-			Term cond = script.term(">", f_term,
+			final Term f_term = mRanking[i].asTerm(script);
+			final Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
 			value = script.term("ite", cond, f_term, value);
@@ -118,6 +118,6 @@ public class NestedRankingFunction extends RankingFunction {
 	@Override
 	public Ordinal codomain() {
 		// phases * omega
-		return Ordinal.fromInteger(BigInteger.valueOf(m_Ranking.length)).mult(Ordinal.OMEGA);
+		return Ordinal.fromInteger(BigInteger.valueOf(mRanking.length)).mult(Ordinal.OMEGA);
 	}
 }

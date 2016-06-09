@@ -27,20 +27,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.heapseparator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
  * 
@@ -51,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  */
 public class HeapSeparator implements IGenerator {
 
-	private Logger m_logger;
-	private IToolchainStorage m_storage;
-	private HeapSeparatorObserver m_observer;
-	private IUltimateServiceProvider m_services;
+	private ILogger mlogger;
+	private IToolchainStorage mstorage;
+	private HeapSeparatorObserver mobserver;
+	private IUltimateServiceProvider mservices;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -82,8 +80,8 @@ public class HeapSeparator implements IGenerator {
 	}
 	@Override
 	public List<IObserver> getObservers() {
-		m_observer = new HeapSeparatorObserver(m_services);
-		return Collections.singletonList(m_observer);
+		mobserver = new HeapSeparatorObserver(mservices);
+		return Collections.singletonList(mobserver);
 	}
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
@@ -92,7 +90,7 @@ public class HeapSeparator implements IGenerator {
 	}
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		m_services = services;
+		mservices = services;
 	}
 
 	@Override
@@ -114,12 +112,12 @@ public class HeapSeparator implements IGenerator {
 		return Activator.PLUGIN_ID;
 	}
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 	@Override
 	public IElement getModel() {
-		return m_observer.getModel();
+		return mobserver.getModel();
 	}
 
 }

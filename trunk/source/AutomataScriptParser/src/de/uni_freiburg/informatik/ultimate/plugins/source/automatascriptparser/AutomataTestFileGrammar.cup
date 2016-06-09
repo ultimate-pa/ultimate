@@ -9,10 +9,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 action code {:
     // Here I store the variables, which occur during parsing a file, and their types.
@@ -56,7 +56,7 @@ parser code {:
     private String m_errorMessageLong;
     private String m_errorMessageShort;
     private ILocation m_errorLocation;
-	private Logger mLogger;
+	private ILogger mLogger;
     
     public void setFileName(String filename) {
        this.m_fileName = filename;
@@ -86,11 +86,11 @@ parser code {:
     	return m_errorLocation;
     }
 	
-	public Logger getLogger(){
+	public ILogger getLogger(){
 		return mLogger;
 	}
     
-	public Parser(java_cup.runtime.Scanner s, Logger logger) {
+	public Parser(java_cup.runtime.Scanner s, ILogger logger) {
 		super(s);
 		mLogger = logger;
 	}

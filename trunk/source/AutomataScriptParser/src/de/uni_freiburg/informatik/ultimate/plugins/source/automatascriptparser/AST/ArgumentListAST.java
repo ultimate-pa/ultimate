@@ -29,10 +29,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
@@ -46,15 +46,15 @@ public class ArgumentListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -7834789712780583991L;
-	private ArrayList<Object> m_arguments;
+	private final ArrayList<Object> marguments;
 	
 	public ArgumentListAST(ILocation loc) {
 		super(loc);
-		m_arguments = new ArrayList<Object>();
+		marguments = new ArrayList<Object>();
 	}
 	public ArgumentListAST(AtsASTNode e) {
 		this(e.getLocation());
-		m_arguments.add(e);
+		marguments.add(e);
 		addOutgoingNode(e);
 	}
 
@@ -63,7 +63,7 @@ public class ArgumentListAST extends AtsASTNode {
 	 * @param e the argument which should be added to this list.
 	 */
 	public void addArg(AtsASTNode e) {
-		m_arguments.add(e);
+		marguments.add(e);
 		addOutgoingNode(e);
 	}
 
@@ -77,13 +77,13 @@ public class ArgumentListAST extends AtsASTNode {
 	 * @return
 	 */
 	public List<Object> getArguments() {
-		return m_arguments;
+		return marguments;
 	}
 	
 	@Override
 	public String getAsString() {
-        StringBuilder builder = new StringBuilder();
-        for (AtsASTNode arg : m_children) {
+        final StringBuilder builder = new StringBuilder();
+        for (final AtsASTNode arg : mchildren) {
         	builder.append(arg.getAsString() + ", ");
         }
         builder.delete(builder.length() - 2, builder.length());

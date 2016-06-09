@@ -52,15 +52,15 @@ public class RewriteIte extends TransitionPreprocessor {
 	@Override
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
+		final Term old_term = oldTF.getFormula();
+		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
 				script.term("distinct", old_term, new_term));
 	}
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		IteRemover iteRemover = new IteRemover(script);
+		final IteRemover iteRemover = new IteRemover(script);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;
 	}

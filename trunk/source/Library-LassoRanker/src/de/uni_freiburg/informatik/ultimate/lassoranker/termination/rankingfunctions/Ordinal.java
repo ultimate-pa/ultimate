@@ -69,11 +69,11 @@ public class Ordinal implements Comparable<Ordinal> {
 		
 		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			if (exponent.equals(ONE)) {
 				sb.append("w");
 			} else if (!exponent.isZero()) {
-				String s = exponent.toString();
+				final String s = exponent.toString();
 				sb.append("w^");
 				if (s.contains(" ")) {
 					sb.append("(");
@@ -108,7 +108,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 */
 	public static final Ordinal OMEGA = new Ordinal(ONE);
 	
-	private final List<Component> m_components;
+	private final List<Component> mcomponents;
 	
 	public static Ordinal fromInteger(BigInteger i) {
 		if (!i.abs().equals(i)) {
@@ -128,9 +128,9 @@ public class Ordinal implements Comparable<Ordinal> {
 	private Ordinal(BigInteger i) {
 		assert(i.abs().equals(i)); // i is non-negative
 		if (i.equals(BigInteger.ZERO)) {
-			m_components = Collections.emptyList();
+			mcomponents = Collections.emptyList();
 		} else {
-			m_components = Collections.singletonList(new Component(i, ZERO));
+			mcomponents = Collections.singletonList(new Component(i, ZERO));
 		}
 	}
 	
@@ -139,7 +139,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * @param exponent the exponent α
 	 */
 	private Ordinal(Ordinal exponent) {
-		m_components = Collections.singletonList(
+		mcomponents = Collections.singletonList(
 				new Component(BigInteger.ONE, exponent));
 	}
 	
@@ -147,16 +147,17 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * Construct an ordinal from a component list
 	 */
 	private Ordinal(List<Component> components) {
-		m_components = Collections.unmodifiableList(components);
+		mcomponents = Collections.unmodifiableList(components);
 	}
 	
 	/**
 	 * Compare two ordinals for equality
 	 */
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Ordinal) {
-			Ordinal o = (Ordinal) obj;
-			return this.compareTo(o) == 0;
+			final Ordinal o = (Ordinal) obj;
+			return compareTo(o) == 0;
 		}
 		return false;
 	}
@@ -164,21 +165,21 @@ public class Ordinal implements Comparable<Ordinal> {
 	@Override
 	public int compareTo(Ordinal o) {
 		if (o.isZero()) {
-			if (this.isZero()) {
+			if (isZero()) {
 				return 0;
 			} else {
 				return 1;
 			}
 		}
-		if (this.isZero()) {
+		if (isZero()) {
 			return -1;
 		}
-		for (int i = 0; i < m_components.size(); ++i) {
-			Component c = m_components.get(i);
-			if (i >= o.m_components.size()) {
+		for (int i = 0; i < mcomponents.size(); ++i) {
+			final Component c = mcomponents.get(i);
+			if (i >= o.mcomponents.size()) {
 				return 1;
 			}
-			Component co = o.m_components.get(i);
+			final Component co = o.mcomponents.get(i);
 			int z = c.exponent.compareTo(co.exponent);
 			if (z != 0) {
 				return z;
@@ -188,7 +189,7 @@ public class Ordinal implements Comparable<Ordinal> {
 				return z;
 			}
 		}
-		if (m_components.size() < o.m_components.size()) {
+		if (mcomponents.size() < o.mcomponents.size()) {
 			return -1;
 		}
 		return 0;
@@ -196,22 +197,22 @@ public class Ordinal implements Comparable<Ordinal> {
 	
 	@Override
 	public int hashCode() {
-		return m_components.hashCode();
+		return mcomponents.hashCode();
 	}
 	
 	/**
 	 * @return whether this ordinal is equal to 0
 	 */
 	public boolean isZero() {
-		return m_components.isEmpty();
+		return mcomponents.isEmpty();
 	}
 	
 	/**
 	 * @return whether this is a finite ordinal (i.e., a natural number)
 	 */
 	public boolean isFinite() {
-		return isZero() || (m_components.size() == 1
-				&& m_components.get(0).exponent.isZero());
+		return isZero() || (mcomponents.size() == 1
+				&& mcomponents.get(0).exponent.isZero());
 	}
 	
 	/**
@@ -225,7 +226,7 @@ public class Ordinal implements Comparable<Ordinal> {
 		if (isZero()) {
 			return BigInteger.ZERO;
 		}
-		return m_components.get(m_components.size() - 1).base;
+		return mcomponents.get(mcomponents.size() - 1).base;
 	}
 	
 	/**
@@ -233,10 +234,10 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * (there is no ordinal β such that this is β + 1)
 	 */
 	public boolean isLimit() {
-		if (m_components.isEmpty()) {
+		if (mcomponents.isEmpty()) {
 			return false;
 		}
-		Component last = m_components.get(m_components.size() - 1);
+		final Component last = mcomponents.get(mcomponents.size() - 1);
 		return !last.exponent.isZero();
 	}
 	
@@ -257,19 +258,19 @@ public class Ordinal implements Comparable<Ordinal> {
 		 *                                  + sum{j=2..q} omega^{bj}*mj
 		 * is the Cantor normal form of a + b.
 		 */
-		if (this.isFinite() && o.isFinite()) {
+		if (isFinite() && o.isFinite()) {
 			return new Ordinal(toInteger().add(o.toInteger()));
 		}
-		if (this.compareTo(o) < 0) {
+		if (compareTo(o) < 0) {
 			return o;
 		}
 		if (o.isZero()) {
 			return this;
 		}
-		List<Component> result = new ArrayList<Component>();
-		Ordinal oexp = o.m_components.get(0).exponent;
+		final List<Component> result = new ArrayList<Component>();
+		final Ordinal oexp = o.mcomponents.get(0).exponent;
 		Component last = null;
-		for (Component c : m_components) {
+		for (final Component c : mcomponents) {
 			if (c.exponent.compareTo(oexp) > 0) {
 				result.add(c);
 			} else {
@@ -278,14 +279,14 @@ public class Ordinal implements Comparable<Ordinal> {
 			}
 		}
 		if (last != null && last.exponent.compareTo(oexp) == 0) {
-			result.add(new Component(last.base.add(o.m_components.get(0).base),
+			result.add(new Component(last.base.add(o.mcomponents.get(0).base),
 					oexp));
-			for (int i = 1; i < o.m_components.size(); ++i) {
+			for (int i = 1; i < o.mcomponents.size(); ++i) {
 				// omit first component (i = 1)
-				result.add(o.m_components.get(i));
+				result.add(o.mcomponents.get(i));
 			}
 		} else {
-			result.addAll(o.m_components);
+			result.addAll(o.mcomponents);
 		}
 		return new Ordinal(result);
 	}
@@ -310,10 +311,10 @@ public class Ordinal implements Comparable<Ordinal> {
 		if (isZero()) {
 			return ZERO;
 		}
-		List<Component> result = new ArrayList<Component>();
-		Component c = m_components.get(0);
+		final List<Component> result = new ArrayList<Component>();
+		final Component c = mcomponents.get(0);
 		BigInteger last = null;
-		for (Component co : o.m_components) {
+		for (final Component co : o.mcomponents) {
 			if (co.exponent.isZero()) {
 				last = co.base;
 				break;
@@ -323,9 +324,9 @@ public class Ordinal implements Comparable<Ordinal> {
 		if (last != null) {
 			// o is not a limit ordinal
 			result.add(new Component(c.base.multiply(last), c.exponent));
-			for (int i = 1; i < m_components.size(); ++i) {
+			for (int i = 1; i < mcomponents.size(); ++i) {
 				// omit first component (i = 1)
-				result.add(m_components.get(i));
+				result.add(mcomponents.get(i));
 			}
 		}
 		return new Ordinal(result);
@@ -336,9 +337,9 @@ public class Ordinal implements Comparable<Ordinal> {
 		if (isZero()) {
 			return "0";
 		}
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Component c : m_components) {
+		for (final Component c : mcomponents) {
 			if (!first) {
 				sb.append(" + ");
 			}

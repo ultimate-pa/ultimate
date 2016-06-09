@@ -34,11 +34,11 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 /**
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
  */
 public class BuchiAutomizerTemplateBenchmarkMode extends
 		AbstractBuchiAutomizerTestSuite {
-	private static final String[] m_Directories = {
+	private static final String[] mDirectories = {
 //		"examples/lassos",
 //		"examples/termination/TermCompOfficialBenchmarkSet",
 		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
@@ -92,12 +92,12 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		addTestCase(
 			"BuchiAutomizerBplWithBlockEncoding.xml",
 			s_Setting,
-		    m_Directories,
+		    mDirectories,
 		    new String[] {".bpl"});
 		addTestCase(
 			"BuchiAutomizerCWithBlockEncoding.xml",
 			s_Setting,
-			m_Directories,
+			mDirectories,
 			new String[] {".c"});
 		return super.createTestCases();
 	}

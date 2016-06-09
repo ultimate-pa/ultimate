@@ -30,17 +30,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test;
 
-import org.apache.log4j.Logger;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 
-	private static Logger sLogger;
+	private static ILogger sLogger;
 	private static IUltimateServiceProvider sServices;
 
 	/**
@@ -62,7 +61,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	 * 
 	 * @return Nothing of your damn business.
 	 */
-	public static Logger getLogger() {
+	public static ILogger getLogger() {
 		return sLogger;
 	}
 
@@ -92,11 +91,6 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
 		return false;
 	}
@@ -105,7 +99,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		this.root = root;
 		RCFGStore.setRCFG((RCFGNode) root);
-		Result res = JUnitCore.runClasses(
+		final Result res = JUnitCore.runClasses(
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestAbstractMinimizationVisitor.class,
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeBranchVisitor.class,
 				de.uni_freiburg.informatik.ultimate.blockencoding.test.unit.TestMinimizeLoopVisitor.class,
@@ -116,7 +110,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 			sLogger.error("A JUnit Test Case have failed!");
 		}
 
-		for (Failure failure : res.getFailures()) {
+		for (final Failure failure : res.getFailures()) {
 			sLogger.error(failure);
 			sLogger.error(failure.getDescription());
 			sLogger.error(failure.getException());

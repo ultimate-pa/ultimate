@@ -54,7 +54,8 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see pea.modelchecking.Formula2NFCompiler
      */
-    protected void changeNodeSyncChildAnd(Element node, Element[] children,
+    @Override
+	protected void changeNodeSyncChildAnd(Element node, Element[] children,
             int childIndex) {
         throw new RuntimeException(
                 "A formula that is no testformula is not allowed "
@@ -70,7 +71,8 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see pea.modelchecking.Formula2NFCompiler
      */
-    protected void changeNodeSyncChildOr(Element node, Element[] children,
+    @Override
+	protected void changeNodeSyncChildOr(Element node, Element[] children,
             int childIndex) {
         throw new RuntimeException("A formula in guards, invariants, "
                 + "or clockinvariants" + " may not have sync events");
@@ -83,8 +85,9 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see <code>BasicTypes.xsd</code>
      */
-    protected Element getNewTreeElement() {
-        return this.document.createElement(XMLTags.FORMULATREE_TAG);
+    @Override
+	protected Element getNewTreeElement() {
+        return document.createElement(XMLTags.FORMULATREE_TAG);
     }
 
     /**
@@ -95,7 +98,8 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see <code>BasicTypes.xsd</code>
      */
-    protected boolean isTreeElement(Node node) {
+    @Override
+	protected boolean isTreeElement(Node node) {
         return node.getNodeName().equals(XMLTags.FORMULATREE_TAG);
     }
 
@@ -107,8 +111,9 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see <code>BasicTypes.xsd</code>
      */
-    protected boolean isBasicElement(Node node) {
-        String nodeName = node.getNodeName();
+    @Override
+	protected boolean isBasicElement(Node node) {
+        final String nodeName = node.getNodeName();
         return nodeName.equals(XMLTags.BOOLEANEXPRESSION_TAG)
                 || nodeName.equals(XMLTags.EVENTEXPRESSION_TAG)
                 || nodeName.equals(XMLTags.RANGEEXPRESSION_TAG);
@@ -121,8 +126,9 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * @return true, if the tag is of the desired form.
      * 
      */
-    protected boolean isFormulaElement(Node node) {
-        String nodeName = node.getNodeName();
+    @Override
+	protected boolean isFormulaElement(Node node) {
+        final String nodeName = node.getNodeName();
         return nodeName.equals(XMLTags.INVARIANT_TAG)
                 || nodeName.equals(XMLTags.CLOCKINVARIANT_TAG)
                 || nodeName.equals(XMLTags.GUARD_TAG);
@@ -137,7 +143,8 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * 
      * @see <code>BasicTypes.xsd</code>
      */
-    protected boolean isCorrectOperator(String operator) {
+    @Override
+	protected boolean isCorrectOperator(String operator) {
         return operator.equals(XMLTags.OR_CONST)
                 || operator.equals(XMLTags.AND_CONST)
                 || operator.equals(XMLTags.NOT_CONST);
@@ -154,12 +161,12 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * @see Formula2NFCompiler
      */
     public Element compile(Element formula) {
-        this.document = new DocumentImpl();
-        Element formulaNode = (Element) this.document.importNode(formula, true);
-        this.document.appendChild(formulaNode);
-        this.makeBinary(formulaNode);
-        this.buildNF(formulaNode);
-        this.makeNAry(formulaNode);
+        document = new DocumentImpl();
+        final Element formulaNode = (Element) document.importNode(formula, true);
+        document.appendChild(formulaNode);
+        makeBinary(formulaNode);
+        buildNF(formulaNode);
+        makeNAry(formulaNode);
         return formulaNode;
     }
 
@@ -172,28 +179,28 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      */
     
     protected void makeNAry(Element formula) {
-        if (!this.isBasicElement(formula) && !this.isTreeElement(formula)
-                && !this.isFormulaElement(formula)) {
+        if (!isBasicElement(formula) && !isTreeElement(formula)
+                && !isFormulaElement(formula)) {
             throw new RuntimeException("A formula may only contain a tag "
                     + "indicating formula type, tree elements, "
                     + "and basic elements");
         }
 
-        if (this.isBasicElement(formula)) {
-            this.logger.debug("Elementary element, returning...");
+        if (isBasicElement(formula)) {
+            logger.debug("Elementary element, returning...");
             return;
         }
 
-        Element[] children = this.getFormulaOperands(formula);
+        final Element[] children = getFormulaOperands(formula);
         for (int i = 0; i < children.length; i++) {
-            this.makeNAry(children[i]);
+            makeNAry(children[i]);
             if ((formula.getAttribute(XMLTags.OPERATOR_TAG).equals(
                     XMLTags.OR_CONST) && children[i].getAttribute(
                     XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST))
                     || (formula.getAttribute(XMLTags.OPERATOR_TAG).equals(
                             XMLTags.AND_CONST) && children[i].getAttribute(
                             XMLTags.OPERATOR_TAG).equals(XMLTags.AND_CONST))) {
-                Element[] grandChildren = this.getFormulaOperands(children[i]);
+                final Element[] grandChildren = getFormulaOperands(children[i]);
                 for (int j = 0; j < grandChildren.length; j++) {
                     formula.appendChild(grandChildren[j]);
                 }
@@ -202,8 +209,8 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
                     XMLTags.NOT_CONST)
                     && children[i].getAttribute(XMLTags.OPERATOR_TAG).equals(
                             XMLTags.NOT_CONST)) {
-                Node formParent = formula.getParentNode();
-                Element[] grandChildren = this.getFormulaOperands(children[i]);
+                final Node formParent = formula.getParentNode();
+                final Element[] grandChildren = getFormulaOperands(children[i]);
                 formParent.replaceChild(grandChildren[0], formula);
             }
         }
@@ -216,40 +223,40 @@ public class Formula2DNFCompiler extends Formula2NFCompiler {
      * formulas have to be transformed.
      */
 	public void compile(Document autDoc) {
-        NodeList sInvs = autDoc.getElementsByTagName(XMLTags.INVARIANT_TAG);
-        int sInvCount = sInvs.getLength();
+        final NodeList sInvs = autDoc.getElementsByTagName(XMLTags.INVARIANT_TAG);
+        final int sInvCount = sInvs.getLength();
         for (int i = 0; i < sInvCount; i++) {
         	logger.info("Converting formula "+i + "/" + sInvCount);
         
-            Element form = this.compile((Element) sInvs.item(i));
-            Element newForm = (Element) autDoc.importNode(form, true);
-            Node sInvParent = sInvs.item(i).getParentNode();
+            final Element form = this.compile((Element) sInvs.item(i));
+            final Element newForm = (Element) autDoc.importNode(form, true);
+            final Node sInvParent = sInvs.item(i).getParentNode();
             sInvParent.replaceChild(newForm, sInvs.item(i));
         }
         logger.info("Finished!");
         
 
-        NodeList clockInvs = autDoc
+        final NodeList clockInvs = autDoc
                 .getElementsByTagName(XMLTags.CLOCKINVARIANT_TAG);
-        int clockInvCount = clockInvs.getLength();
+        final int clockInvCount = clockInvs.getLength();
         
         for (int i = 0; i < clockInvCount; i++) {
         	logger.info("Converting clockinvariant "+i + "/" + clockInvCount);
-            Element form = this.compile((Element) clockInvs.item(i));
-            Element newForm = (Element) autDoc.importNode(form, true);
-            Node clockInvParent = clockInvs.item(i).getParentNode();
+            final Element form = this.compile((Element) clockInvs.item(i));
+            final Element newForm = (Element) autDoc.importNode(form, true);
+            final Node clockInvParent = clockInvs.item(i).getParentNode();
             clockInvParent.replaceChild(newForm, clockInvs.item(i));
         }
         logger.info("Finished!");
 
     	
-        NodeList guards = autDoc.getElementsByTagName(XMLTags.GUARD_TAG);
-        int guardCount = guards.getLength();
+        final NodeList guards = autDoc.getElementsByTagName(XMLTags.GUARD_TAG);
+        final int guardCount = guards.getLength();
         for (int i = 0; i < guardCount; i++) {
         	logger.info("Converting guard "+i + "/" + guardCount)	;
-            Element form = this.compile((Element) guards.item(i));
-            Element newForm = (Element) autDoc.importNode(form, true);
-            Node guardParent = guards.item(i).getParentNode();
+            final Element form = this.compile((Element) guards.item(i));
+            final Element newForm = (Element) autDoc.importNode(form, true);
+            final Node guardParent = guards.item(i).getParentNode();
             guardParent.replaceChild(newForm, guards.item(i));
         }
         logger.info("Finished!");

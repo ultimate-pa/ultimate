@@ -28,10 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
+import org.junit.Test;
 
 /**
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -42,13 +42,13 @@ public class IntervalDomainArithmeticAdditionTest {
 	public void testIntervalAddition() {
 
 		// Interval [1;10]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 10);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 10);
 
 		// Interval [15;20]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(15, 20);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(15, 20);
 
 		// Result should be [16;30]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(16, 30);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(16, 30);
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval1, interval2, expectedResult));
 	}
@@ -56,45 +56,45 @@ public class IntervalDomainArithmeticAdditionTest {
 	@Test
 	public void testInfiniteIntervalAddition() {
 		// Interval [1, \infty]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 1);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 1);
 		interval1.getUpper().setToInfinity();
 
 		assertTrue(interval1.isUnbounded());
 		assertFalse(interval1.isInfinity());
 
 		// Interval [1,2]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(1, 2);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(1, 2);
 
 		// Result should be [2, \infty]
-		IntervalDomainValue expectedResult1 = HelperFunctions.createInterval(2, 2);
+		final IntervalDomainValue expectedResult1 = HelperFunctions.createInterval(2, 2);
 		expectedResult1.getUpper().setToInfinity();
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval1, interval2, expectedResult1));
 
 		// Interval [1, \infty]
-		IntervalDomainValue interval3 = HelperFunctions.createInterval(-1, -1);
+		final IntervalDomainValue interval3 = HelperFunctions.createInterval(-1, -1);
 		interval3.getUpper().setToInfinity();
 
 		// Result should be [0, \infty]
-		IntervalDomainValue expectedResult2 = HelperFunctions.createInterval(0, 0);
+		final IntervalDomainValue expectedResult2 = HelperFunctions.createInterval(0, 0);
 		expectedResult2.getUpper().setToInfinity();
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval3, interval2, expectedResult2));
 
 		// Interval [-\infty, 0]
-		IntervalDomainValue interval4 = HelperFunctions.createInterval(0, 0);
+		final IntervalDomainValue interval4 = HelperFunctions.createInterval(0, 0);
 		interval4.getLower().setToInfinity();
 		assertTrue(interval4.isUnbounded());
 		assertFalse(interval4.isInfinity());
 
 		// Result should be [-\infty, 2]
-		IntervalDomainValue expectedResult3 = HelperFunctions.createInterval(0, 2);
+		final IntervalDomainValue expectedResult3 = HelperFunctions.createInterval(0, 2);
 		expectedResult3.getLower().setToInfinity();
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval4, interval2, expectedResult3));
 
 		// Interval [\-infty, \infty]
-		IntervalDomainValue infinite = new IntervalDomainValue();
+		final IntervalDomainValue infinite = new IntervalDomainValue();
 		assertTrue(infinite.isInfinity());
 		assertFalse(infinite.isBottom());
 		assertTrue(infinite.getLower().isInfinity());
@@ -108,13 +108,13 @@ public class IntervalDomainArithmeticAdditionTest {
 	public void testNegativeIntervalAddition() {
 
 		// Interval [-30;-20]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-30, -20);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-30, -20);
 
 		// Interval [-5;-1]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, -1);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, -1);
 
 		// Result should be [-35;-21]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-35, -21);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-35, -21);
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval1, interval2, expectedResult));
 	}
@@ -122,21 +122,21 @@ public class IntervalDomainArithmeticAdditionTest {
 	@Test
 	public void testMixedNegativeIntervalAddition() {
 		// Interval [-30; -20]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(-30, -20);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(-30, -20);
 
 		// Interval [5; 10]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(5, 10);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(5, 10);
 
 		// Result should be [-25;-10]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-25, -10);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-25, -10);
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval1, interval2, expectedResult));
 
 		// Interval [-10; 5]
-		IntervalDomainValue interval3 = HelperFunctions.createInterval(-10, 5);
+		final IntervalDomainValue interval3 = HelperFunctions.createInterval(-10, 5);
 
 		// Result should be [-5; 15]
-		IntervalDomainValue expectedResult1 = HelperFunctions.createInterval(-5, 15);
+		final IntervalDomainValue expectedResult1 = HelperFunctions.createInterval(-5, 15);
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval3, interval2, expectedResult1));
 	}
@@ -144,15 +144,15 @@ public class IntervalDomainArithmeticAdditionTest {
 	@Test
 	public void testBottomIntervalAddition() {
 		// Interval \bot
-		IntervalDomainValue interval1 = new IntervalDomainValue(true);
+		final IntervalDomainValue interval1 = new IntervalDomainValue(true);
 		assertTrue(interval1.isBottom());
 		assertFalse(interval1.isInfinity());
 
 		// Interval [0, 1]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(0, 1);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(0, 1);
 
 		// Result should be \bot
-		IntervalDomainValue expectedResult = new IntervalDomainValue(true);
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(true);
 
 		assertTrue(HelperFunctions.computeAdditionResult(interval1, interval2, expectedResult));
 

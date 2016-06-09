@@ -24,17 +24,18 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -49,23 +50,29 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class RunToolchainAction extends Action {
 
 	protected final IWorkbenchWindow mWorkbenchWindow;
-	protected final Logger mLogger;
-	protected final ICore mCore;
+	protected final ILogger mLogger;
+	protected final ICore<ToolchainListType> mCore;
 	protected final GuiController mController;
 
-	public RunToolchainAction(Logger logger, IWorkbenchWindow window, ICore icore, GuiController controller, String id,
-			String label, String imageFilePath) {
+	public RunToolchainAction(ILogger logger, IWorkbenchWindow window, ICore<ToolchainListType> icore,
+			GuiController controller, String id, String label, String imageFilePath) {
 		super();
 		mLogger = logger;
 		mWorkbenchWindow = window;
@@ -73,41 +80,41 @@ public abstract class RunToolchainAction extends Action {
 		mController = controller;
 		setId(id);
 		setText(label);
-		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID, imageFilePath));
+		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.PLUGIN_ID, imageFilePath));
 	}
 
 	protected File[] getLastInputFiles() {
-		String lastInputFilePath = new UltimatePreferenceStore(GuiController.sPLUGINID)
+		final String lastInputFilePath = mCore.getPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTPATH);
 		if (lastInputFilePath == null || lastInputFilePath.isEmpty()) {
 			// there is no last input file saved
 			return null;
 		}
-		String[] singlePaths = lastInputFilePath.split(Pattern.quote(File.pathSeparator));
-		ArrayList<File> rtr = new ArrayList<>();
+		final String[] singlePaths = lastInputFilePath.split(Pattern.quote(File.pathSeparator));
+		final List<File> rtr = new ArrayList<>();
 
-		for (String path : singlePaths) {
-			File f = new File(path);
+		for (final String path : singlePaths) {
+			final File f = new File(path);
 			if (f.canRead()) {
 				// there is an inputfile saved and it is still there
 				rtr.add(f);
 			}
 		}
 		if (rtr.size() > 0) {
-			return rtr.toArray(new File[0]);
+			return rtr.toArray(new File[rtr.size()]);
 		}
 		return null;
 	}
 
-	protected ToolchainData getLastToolchainData() {
-		String toolchainxml = new UltimatePreferenceStore(GuiController.sPLUGINID)
+	protected IToolchainData<ToolchainListType> getLastToolchainData() {
+		final String toolchainxml = mCore.getPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTTOOLCHAINPATH);
 		if (toolchainxml == null || toolchainxml.isEmpty()) {
 			// there is no last toolchain saved
 			return null;
 		}
 		try {
-			return new ToolchainData(toolchainxml);
+			return mCore.createToolchainData(toolchainxml);
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
 			return null;
 		}
@@ -115,48 +122,46 @@ public abstract class RunToolchainAction extends Action {
 
 	protected File[] getInputFilesFromUser(String dialogTitle) {
 
-		ArrayList<String> extensions = new ArrayList<String>();
-		ArrayList<String> names = new ArrayList<String>();
+		final List<String> extensions = new ArrayList<String>();
+		final List<String> names = new ArrayList<String>();
 
 		extensions.add("*.*");
 		names.add("All");
 
-		for (ISource source : getAvailableSourcePlugins()) {
-			for (String s : source.getFileTypes()) {
+		for (final ISource source : getAvailableSourcePlugins()) {
+			for (final String s : source.getFileTypes()) {
 				extensions.add("*." + s);
 				names.add(source.getPluginName() + " (*." + s + ")");
 			}
 		}
 
-		FileDialog fd = new FileDialog(mWorkbenchWindow.getShell(), SWT.OPEN | SWT.MULTI);
+		final FileDialog fd = new FileDialog(mWorkbenchWindow.getShell(), SWT.OPEN | SWT.MULTI);
 		fd.setText(dialogTitle);
-
-		UltimatePreferenceStore prefStore = new UltimatePreferenceStore(GuiController.sPLUGINID);
 
 		fd.setFilterExtensions(extensions.toArray(new String[extensions.size()]));
 		fd.setFilterNames(names.toArray(new String[names.size()]));
 
-		File[] lastInput = getLastInputFiles();
+		final File[] lastInput = getLastInputFiles();
 		if (lastInput != null && lastInput.length > 0) {
 			fd.setFileName(lastInput[0].getAbsolutePath());
 		}
 
 		fd.open();
-		String[] fileNames = fd.getFileNames();
-		String path = fd.getFilterPath();
+		final String[] fileNames = fd.getFileNames();
+		final String path = fd.getFilterPath();
 
 		if (fileNames != null && fileNames.length > 0) {
-			StringBuilder sb = new StringBuilder();
-			for (String name : fileNames) {
+			final StringBuilder sb = new StringBuilder();
+			for (final String name : fileNames) {
 				sb.append(path).append(File.separator).append(name).append(File.pathSeparator);
 			}
 			sb.delete(sb.length() - 1, sb.length());
-			prefStore.put(IPreferencesKeys.LASTPATH, sb.toString());
+			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTPATH, sb.toString());
 		}
 
-		ArrayList<File> rtr = new ArrayList<>();
-		for (String filename : fileNames) {
-			File file = new File(path + File.separator + filename);
+		final List<File> rtr = new ArrayList<>();
+		for (final String filename : fileNames) {
+			final File file = new File(path + File.separator + filename);
 			if (file.isFile() && file.exists()) {
 				rtr.add(file);
 			}
@@ -165,18 +170,18 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {
-		ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
-		IExtensionRegistry reg = Platform.getExtensionRegistry();
+		final ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
+		final IExtensionRegistry reg = Platform.getExtensionRegistry();
 
-		IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
+		final IConfigurationElement[] configElements_source = reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
 		// iterate through every config element
-		for (IConfigurationElement element : configElements_source) {
+		for (final IConfigurationElement element : configElements_source) {
 			try {
 				// create class from plugin
-				ISource source = (ISource) element.createExecutableExtension("class");
+				final ISource source = (ISource) element.createExecutableExtension("class");
 				// and add to plugin ArrayList
 				sourceplugins.add(source);
-			} catch (CoreException e) {
+			} catch (final CoreException e) {
 				mLogger.error("Cannot create extension " + element, e);
 			}
 		}
@@ -184,9 +189,8 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	/**
-	 * ! This is a generated comment ! Selection in the workbench has been
-	 * changed. We can change the state of the 'real' action here if we want,
-	 * but this can only happen after the delegate has been created.
+	 * ! This is a generated comment ! Selection in the workbench has been changed. We can change the state of the
+	 * 'real' action here if we want, but this can only happen after the delegate has been created.
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
@@ -194,8 +198,8 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	/**
-	 * ! This is a generated comment ! We can use this method to dispose of any
-	 * system resources we previously allocated.
+	 * ! This is a generated comment ! We can use this method to dispose of any system resources we previously
+	 * allocated.
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#dispose
 	 */

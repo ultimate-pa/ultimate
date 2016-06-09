@@ -33,22 +33,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Objects that stores all global declarations and procedure contracts and makes
@@ -57,17 +56,17 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
  */
 public class BoogieDeclarations {
 	
-	private final Logger mLogger; 
+	private final ILogger mLogger; 
 
-	private final List<Axiom> m_Axioms = 
+	private final List<Axiom> mAxioms = 
 			new ArrayList<Axiom>();
-	private final List<TypeDeclaration> m_TypeDeclarations = 
+	private final List<TypeDeclaration> mTypeDeclarations = 
 			new ArrayList<TypeDeclaration>();
-	private final List<ConstDeclaration> m_ConstDeclarations = 
+	private final List<ConstDeclaration> mConstDeclarations = 
 			new ArrayList<ConstDeclaration>();
-	private final List<FunctionDeclaration> m_FunctionDeclarations = 
+	private final List<FunctionDeclaration> mFunctionDeclarations = 
 			new ArrayList<FunctionDeclaration>();
-	private final List<VariableDeclaration> m_GlobalVarDeclarations = 
+	private final List<VariableDeclaration> mGlobalVarDeclarations = 
 			new ArrayList<VariableDeclaration>();
 	
 	
@@ -75,20 +74,20 @@ public class BoogieDeclarations {
 	 * Maps a procedure name to the Procedure object that contains the
 	 * specification of the procedure. 
 	 */
-	private final Map<String,Procedure> m_ProcSpecification = 
+	private final Map<String,Procedure> mProcSpecification = 
 								new HashMap<String,Procedure>();
 	
 	/**
 	 * Maps a procedure name to the Procedure object that contains the
 	 * implementation of the procedure. 
 	 */	
-	private final Map<String,Procedure> m_ProcImplementation = 
+	private final Map<String,Procedure> mProcImplementation = 
 								new HashMap<String,Procedure>();
 	
 	/**
 	 * Maps a procedure name to the requires clauses of the procedure
 	 */
-	private final Map<String,List<RequiresSpecification>> m_Requires = 
+	private final Map<String,List<RequiresSpecification>> mRequires = 
 								new HashMap<String,List<RequiresSpecification>>();
 
 	/**
@@ -96,13 +95,13 @@ public class BoogieDeclarations {
 	 * not free. (A requires clause is not free if we have to proof that it
 	 * holds.)
 	 */
-	private final Map<String,List<RequiresSpecification>> m_RequiresNonFree = 
+	private final Map<String,List<RequiresSpecification>> mRequiresNonFree = 
 								new HashMap<String,List<RequiresSpecification>>();
 
 	/**
 	 * Maps a procedure name to the ensures clauses of the procedure
 	 */
-	private final Map<String,List<EnsuresSpecification>> m_Ensures = 
+	private final Map<String,List<EnsuresSpecification>> mEnsures = 
 								new HashMap<String,List<EnsuresSpecification>>();
 	
 	/**
@@ -110,7 +109,7 @@ public class BoogieDeclarations {
 	 * not free. (A ensures clause is not free if we have to proof that it 
 	 * holds.)
 	 */
-	private final Map<String,List<EnsuresSpecification>> m_EnsuresNonFree = 
+	private final Map<String,List<EnsuresSpecification>> mEnsuresNonFree = 
 								new HashMap<String,List<EnsuresSpecification>>();
 	
 	/**
@@ -119,25 +118,25 @@ public class BoogieDeclarations {
 	 * where the identifier of the variable is mapped to the type of the
 	 * variable. 
 	 */
-	private final Map<String,Set<String>> m_ModifiedVars = 
+	private final Map<String,Set<String>> mModifiedVars = 
 								new HashMap<String,Set<String>>();
 	
 	
-	public BoogieDeclarations(Unit unit, Logger logger) {
+	public BoogieDeclarations(Unit unit, ILogger logger) {
 		mLogger = logger;
-		for (Declaration decl : unit.getDeclarations()) {
-			if (decl instanceof Axiom)
-				m_Axioms.add((Axiom) decl);
-			else if (decl instanceof TypeDeclaration)
-				m_TypeDeclarations.add((TypeDeclaration) decl);
-			else if (decl instanceof ConstDeclaration)
-				m_ConstDeclarations.add((ConstDeclaration) decl);
-			else if (decl instanceof FunctionDeclaration)
-				m_FunctionDeclarations.add((FunctionDeclaration) decl);
-			else if (decl instanceof VariableDeclaration)
-				m_GlobalVarDeclarations.add((VariableDeclaration) decl);
-			else if (decl instanceof Procedure) {
-				Procedure proc = (Procedure) decl;
+		for (final Declaration decl : unit.getDeclarations()) {
+			if (decl instanceof Axiom) {
+				mAxioms.add((Axiom) decl);
+			} else if (decl instanceof TypeDeclaration) {
+				mTypeDeclarations.add((TypeDeclaration) decl);
+			} else if (decl instanceof ConstDeclaration) {
+				mConstDeclarations.add((ConstDeclaration) decl);
+			} else if (decl instanceof FunctionDeclaration) {
+				mFunctionDeclarations.add((FunctionDeclaration) decl);
+			} else if (decl instanceof VariableDeclaration) {
+				mGlobalVarDeclarations.add((VariableDeclaration) decl);
+			} else if (decl instanceof Procedure) {
+				final Procedure proc = (Procedure) decl;
 				if (proc.getSpecification() != null && proc.getBody() != null) {
 					mLogger.info(String.format(
 							"Specification and implementation of procedure %s given in one single declaration",
@@ -146,37 +145,38 @@ public class BoogieDeclarations {
 
 				if (proc.getSpecification() != null) {
 					mLogger.info("Found specification of procedure " + proc.getIdentifier());
-					if (m_ProcSpecification.containsKey(proc.getIdentifier())) {
+					if (mProcSpecification.containsKey(proc.getIdentifier())) {
 						throw new UnsupportedOperationException("Procedure" + proc.getIdentifier() + "declarated twice");
 					} else {
-						m_ProcSpecification.put(proc.getIdentifier(), proc);
+						mProcSpecification.put(proc.getIdentifier(), proc);
 					}
 				}
 				if (proc.getBody() != null) {
 					mLogger.info("Found implementation of procedure " + proc.getIdentifier());
-					if (m_ProcImplementation.containsKey(proc.getIdentifier())) {
+					if (mProcImplementation.containsKey(proc.getIdentifier())) {
 						throw new UnsupportedOperationException("File " + "contains two implementations of procedure"
 								+ proc.getIdentifier());
 					} else {
-						m_ProcImplementation.put(proc.getIdentifier(), proc);
+						mProcImplementation.put(proc.getIdentifier(), proc);
 					}
 				}
-			} else
+			} else {
 				throw new AssertionError("Unknown Declaration" + decl);
+			}
 		}
-		for (Procedure proc : m_ProcSpecification.values()) {
+		for (final Procedure proc : mProcSpecification.values()) {
 			extractContract(proc.getIdentifier());
 		}
 	}
 
 	/**
 	 * Get the contract (requires, ensures, modified variables) of a procedure
-	 * specification. Write it to m_Ensures, m_EnsuresNonFree, m_Requires,
-	 * m_RequiresNonFree and m_ModifiedVars.
+	 * specification. Write it to mEnsures, mEnsuresNonFree, mRequires,
+	 * mRequiresNonFree and mModifiedVars.
 	 */
 	private void extractContract(String procId) {
-		Procedure procSpec = m_ProcSpecification.get(procId);
-		Procedure procImpl = m_ProcImplementation.get(procId);
+		final Procedure procSpec = mProcSpecification.get(procId);
+		final Procedure procImpl = mProcImplementation.get(procId);
 		
 		Specification[] specifications;
 		if (procSpec != procImpl && procImpl != null) {
@@ -185,30 +185,30 @@ public class BoogieDeclarations {
 			 * of the specification to make them compatible with the variables
 			 * of the implementation.
 			 */
-			RenameProcedureSpec renamer = new RenameProcedureSpec();
+			final RenameProcedureSpec renamer = new RenameProcedureSpec();
 			specifications = renamer.renameSpecs(procSpec, procImpl);
 		} else {
 			specifications = procSpec.getSpecification();
 		}
 
-		List<EnsuresSpecification> ensures = 
+		final List<EnsuresSpecification> ensures = 
 				new ArrayList<EnsuresSpecification>();
-		List<EnsuresSpecification> ensuresNonFree = 
+		final List<EnsuresSpecification> ensuresNonFree = 
 				new ArrayList<EnsuresSpecification>();
-		List<RequiresSpecification> requires = 
+		final List<RequiresSpecification> requires = 
 				new ArrayList<RequiresSpecification>();
-		List<RequiresSpecification> requiresNonFree = 
+		final List<RequiresSpecification> requiresNonFree = 
 				new ArrayList<RequiresSpecification>();
-		Set<String> modifiedVars = new HashSet<String>();
-		for (Specification spec : specifications) {
+		final Set<String> modifiedVars = new HashSet<String>();
+		for (final Specification spec : specifications) {
 			if (spec instanceof EnsuresSpecification) {
-				EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
+				final EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
 				ensures.add(ensSpec);
 				if (!ensSpec.isFree()) {
 					ensuresNonFree.add(ensSpec);
 				}
 			} else if (spec instanceof RequiresSpecification) {
-				RequiresSpecification recSpec = (RequiresSpecification) spec;
+				final RequiresSpecification recSpec = (RequiresSpecification) spec;
 				requires.add(recSpec);
 				if (!recSpec.isFree()) {
 					requiresNonFree.add(recSpec);
@@ -219,69 +219,69 @@ public class BoogieDeclarations {
 				throw new IllegalArgumentException(
 						"LoopInvariantSpecification may not occur in procedure constract");
 			} else if (spec instanceof ModifiesSpecification) {
-				ModifiesSpecification modSpec = (ModifiesSpecification) spec;
-				for (VariableLHS var : modSpec.getIdentifiers()) {
-					String ident = var.getIdentifier();
+				final ModifiesSpecification modSpec = (ModifiesSpecification) spec;
+				for (final VariableLHS var : modSpec.getIdentifiers()) {
+					final String ident = var.getIdentifier();
 					modifiedVars.add(ident);
 				}
 			} else {
 				throw new UnsupportedOperationException(
 						"Unknown type of specification)");
 			}
-			m_Ensures.put(procId, ensures);
-			m_EnsuresNonFree.put(procId, ensuresNonFree);
-			m_Requires.put(procId, requires);
-			m_RequiresNonFree.put(procId, requiresNonFree);
-			m_ModifiedVars.put(procId, modifiedVars);
+			mEnsures.put(procId, ensures);
+			mEnsuresNonFree.put(procId, ensuresNonFree);
+			mRequires.put(procId, requires);
+			mRequiresNonFree.put(procId, requiresNonFree);
+			mModifiedVars.put(procId, modifiedVars);
 		}
 	}
 
 	public List<Axiom> getAxioms() {
-		return m_Axioms;
+		return mAxioms;
 	}
 
 	public List<TypeDeclaration> getTypeDeclarations() {
-		return m_TypeDeclarations;
+		return mTypeDeclarations;
 	}
 
 	public List<ConstDeclaration> getConstDeclarations() {
-		return m_ConstDeclarations;
+		return mConstDeclarations;
 	}
 
 	public List<FunctionDeclaration> getFunctionDeclarations() {
-		return m_FunctionDeclarations;
+		return mFunctionDeclarations;
 	}
 
 	public List<VariableDeclaration> getGlobalVarDeclarations() {
-		return m_GlobalVarDeclarations;
+		return mGlobalVarDeclarations;
 	}
 
 	public Map<String, Procedure> getProcSpecification() {
-		return m_ProcSpecification;
+		return mProcSpecification;
 	}
 
 	public Map<String, Procedure> getProcImplementation() {
-		return m_ProcImplementation;
+		return mProcImplementation;
 	}
 
 	public Map<String, List<RequiresSpecification>> getRequires() {
-		return m_Requires;
+		return mRequires;
 	}
 
 	public Map<String, List<RequiresSpecification>> getRequiresNonFree() {
-		return m_RequiresNonFree;
+		return mRequiresNonFree;
 	}
 
 	public Map<String, List<EnsuresSpecification>> getEnsures() {
-		return m_Ensures;
+		return mEnsures;
 	}
 
 	public Map<String, List<EnsuresSpecification>> getEnsuresNonFree() {
-		return m_EnsuresNonFree;
+		return mEnsuresNonFree;
 	}
 
 	public Map<String, Set<String>> getModifiedVars() {
-		return m_ModifiedVars;
+		return mModifiedVars;
 	}
 	
 	

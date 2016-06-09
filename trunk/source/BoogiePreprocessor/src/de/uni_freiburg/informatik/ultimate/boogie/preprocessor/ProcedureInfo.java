@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 
 public class ProcedureInfo {
 	private final Procedure declaration;
@@ -58,12 +58,13 @@ public class ProcedureInfo {
 		this.outParams = outParams;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(declaration.getIdentifier()).append('<').append(typeParams.getCount());
 		sb.append(">(");
 		String comma ="";
-		for (VariableInfo vi : inParams) {
+		for (final VariableInfo vi : inParams) {
 			sb.append(comma);
 			if (vi.getName() != null) {
 				sb.append(vi.getName()).append(":");
@@ -74,7 +75,7 @@ public class ProcedureInfo {
 		if (outParams.length > 0) {
 			sb.append(") returns (");
 			comma ="";
-			for (VariableInfo vi : outParams) {
+			for (final VariableInfo vi : outParams) {
 				sb.append(comma);
 				if (vi.getName() != null) {
 					sb.append(vi.getName()).append(":");

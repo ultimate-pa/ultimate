@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctDomainState;
 
 /**
@@ -22,7 +22,7 @@ public class TypeUtil {
 	}
 
 	public static boolean isNumeric(IType type) {
-		Integer t = primitiveType(type);
+		final Integer t = primitiveType(type);
 		return INT.equals(t) || REAL.equals(t);
 	}
 

@@ -34,14 +34,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -58,14 +58,14 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
-		PartitionedResults results = partitionResults(mResults.entrySet());
-		String linebreak = CoreUtil.getPlatformLineSeparator();
+		final StringBuilder sb = new StringBuilder();
+		final PartitionedResults results = partitionResults(mResults.entrySet());
+		final String linebreak = CoreUtil.getPlatformLineSeparator();
 
 		sb.append("<html><head><style>td { vertical-align:top;}</style></head><body>").append(linebreak);
 		sb.append("<h1>").append(TestUtil.generateLogfilename(this)).append("</h1>").append(linebreak);
 
-		List<Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>> partitions = new ArrayList<>();
+		final List<Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>> partitions = new ArrayList<>();
 		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
 				"Success", results.Success));
 		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
@@ -73,18 +73,18 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
 				"Error", results.Error));
 
-		ArrayList<ColumnDefinition> prefixedColumnDefinitions = new ArrayList<>();
+		final ArrayList<ColumnDefinition> prefixedColumnDefinitions = new ArrayList<>();
 		prefixedColumnDefinitions.addAll(ColumnDefinitionUtil.getColumnDefinitionForPrefix());
 		prefixedColumnDefinitions.addAll(mColumnDefinitions);
 
-		for (Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : partitions) {
+		for (final Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : partitions) {
 			if (entry.getValue().size() == 0) {
 				continue;
 			}
 			sb.append("<h2>").append(entry.getKey()).append("</h2>").append(linebreak);
 
 			// sort by variant
-			List<Entry<UltimateRunDefinition, ExtendedResult>> currentPartition = new ArrayList<>(entry.getValue());
+			final List<Entry<UltimateRunDefinition, ExtendedResult>> currentPartition = new ArrayList<>(entry.getValue());
 			Collections.sort(currentPartition, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 				@Override
 				public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,

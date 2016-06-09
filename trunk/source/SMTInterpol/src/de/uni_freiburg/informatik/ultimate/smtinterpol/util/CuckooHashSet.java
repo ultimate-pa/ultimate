@@ -99,26 +99,30 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	private boolean containsStash(Object object) {
 		StashList<E> stash = this.mStashList;
 		while (stash != null) {
-			if (object.equals(stash.mEntry))
+			if (object.equals(stash.mEntry)) {
 				return true;
+			}
 			stash = stash.mNext;
 		}
 		return false;
 	}
 	
+	@Override
 	public boolean contains(Object object) {
-		int hash = hash(object);
-		int hash1 = hash1(hash);
-		if (object.equals(mBuckets[hash1]))
+		final int hash = hash(object);
+		final int hash1 = hash1(hash);
+		if (object.equals(mBuckets[hash1])) {
 			return true;
-		if (object.equals(mBuckets[hash2(hash) ^ hash1]))
+		}
+		if (object.equals(mBuckets[hash2(hash) ^ hash1])) {
 			return true;
+		}
 		return mStashList != null && containsStash(object);
 	}
 	
 	@SuppressWarnings("unchecked")
 	private void resize() {
-		Object[] oldbuckets = mBuckets;
+		final Object[] oldbuckets = mBuckets;
 		StashList<E> oldstash = mStashList;
 		mStashList = null;
 		mLog2buckets++;
@@ -139,11 +143,12 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		int maxIter = mBuckets.length >> 2;
 		while (true) {
 			assert checkpos(hash);
-			Object spill = mBuckets[hash];
+			final Object spill = mBuckets[hash];
 			mBuckets[hash] = toAdd;
 			assert checkpos(hash);
-			if (spill == null)
+			if (spill == null) {
 				return;
+			}
 			toAdd = (E) spill;
 			hash ^= hash2(hash(toAdd));
 			if (maxIter-- == 0) {
@@ -162,9 +167,9 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	
 	private boolean checkpos(int i) {
 		if (mBuckets[i] != null) {
-			int hash = hash(mBuckets[i]);
-			int hash1 = hash1(hash);
-			int hash2 = hash1 ^ hash2(hash);
+			final int hash = hash(mBuckets[i]);
+			final int hash1 = hash1(hash);
+			final int hash2 = hash1 ^ hash2(hash);
 			assert(hash1 == i || hash2 == i);
 		}
 		return true;
@@ -175,8 +180,9 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		int cnt = 0;
 		for (int i = 0; i < mBuckets.length; i++) {
 			assert checkpos(i);
-			if (mBuckets[i] != null)
+			if (mBuckets[i] != null) {
 				cnt++;
+			}
 		}
 		StashList<E> stash = mStashList;
 		while (stash != null) {
@@ -187,25 +193,31 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		return true;
 	}
 	
+	@Override
 	public boolean add(E toAdd) {
-		int hash = hash(toAdd);
-		int hash1 = hash1(hash);
-		if (toAdd.equals(mBuckets[hash1]))
+		final int hash = hash(toAdd);
+		final int hash1 = hash1(hash);
+		if (toAdd.equals(mBuckets[hash1])) {
 			return false;
-		if (toAdd.equals(mBuckets[hash2(hash) ^ hash1]))
+		}
+		if (toAdd.equals(mBuckets[hash2(hash) ^ hash1])) {
 			return false;
-		if (mStashList != null && containsStash(toAdd))
+		}
+		if (mStashList != null && containsStash(toAdd)) {
 			return false;
-		if (mBuckets[hash1] == null)
+		}
+		if (mBuckets[hash1] == null) {
 			mBuckets[hash1] = toAdd;
-		else
+		} else {
 			add_internal(hash1, toAdd);
+		}
 		mSize++;
 		return true;
 	}
 	
+	@Override
 	public boolean remove(Object toRemove) {
-		int hash = hash(toRemove);
+		final int hash = hash(toRemove);
 		int hash1 = hash1(hash);
 		if (toRemove.equals(mBuckets[hash1])) {
 			mSize--;
@@ -220,18 +232,20 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 			mBuckets[hash1] = null;
 			return true;
 		}
-		if (mStashList == null)
+		if (mStashList == null) {
 			return false;
+		}
 		StashList<E> pre = null;
 		StashList<E> stash = this.mStashList;
 		while (stash != null) {
 			if (toRemove.equals(stash.mEntry)) {
 				mSize--;
 				assert mSize >= 0;
-				if (pre == null)
+				if (pre == null) {
 					this.mStashList = stash.mNext;
-				else
+				} else {
 					pre.mNext = stash.mNext;
+				}
 				assert invariant();
 				return true;
 			}
@@ -243,8 +257,9 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	
 	private final static int log2(int size) {
 		int i,j;
-		for (i = 4, j = 2; i < size; i += i, j++)// NOCHECKSTYLE
+		for (i = 4, j = 2; i < size; i += i, j++) {
 			/*empty*/;
+		}
 		return j;
 	}
 
@@ -255,22 +270,29 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 			int mPos = 0;
 			StashList<E> mPre = null;
 			StashList<E> mCurrent = null;
+			@Override
 			public boolean hasNext() {
-				while (mPos < mBuckets.length && mBuckets[mPos] == null)
+				while (mPos < mBuckets.length && mBuckets[mPos] == null) {
 					mPos++;
-				if (mPos < mBuckets.length)
+				}
+				if (mPos < mBuckets.length) {
 					return true;
-				if (mCurrent != null)
+				}
+				if (mCurrent != null) {
 					return mCurrent.mNext != null;
+				}
 				return mStashList != null;
 			}
+			@Override
 			@SuppressWarnings("unchecked")
 			public E next() {
-				while (mPos < mBuckets.length && mBuckets[mPos] == null)
+				while (mPos < mBuckets.length && mBuckets[mPos] == null) {
 					mPos++;
+				}
 				mLastPos = mPos;
-				if (mPos < mBuckets.length)
+				if (mPos < mBuckets.length) {
 					return (E) mBuckets[mPos++];
+				}
 				if (mCurrent == null) {
 					mCurrent = mStashList;
 				} else {
@@ -279,10 +301,11 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 				}
 				return mCurrent.mEntry;
 			}
+			@Override
 			public void remove() {
-				if (mLastPos < mBuckets.length)
+				if (mLastPos < mBuckets.length) {
 					mBuckets[mLastPos] = null;
-				else if (mPre == null) {
+				} else if (mPre == null) {
 					mStashList = mCurrent.mNext;
 					mCurrent = null;
 				} else {
@@ -300,27 +323,30 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 		return mSize;
 	}
 	
+	@Override
 	public void clear() {
 		mSize = 0;
-		for (int i = 0; i < mBuckets.length; i++)
+		for (int i = 0; i < mBuckets.length; i++) {
 			mBuckets[i] = null;
+		}
 		mStashList = null;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public E removeSome() {
-		if (mSize == 0)
+		if (mSize == 0) {
 			return null;
+		}
 		mSize--;
 		assert(mSize >= 0);
 		if (mStashList != null) {
-			E entry = mStashList.mEntry;
+			final E entry = mStashList.mEntry;
 			mStashList = mStashList.mNext;
 			return entry;
 		}
 		for (int i = 0; /* empty */; i++) {
 			if (mBuckets[i] != null) {
-				E entry = (E) mBuckets[i];
+				final E entry = (E) mBuckets[i];
 				mBuckets[i] = null;
 				return entry;
 			}

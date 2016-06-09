@@ -3,6 +3,7 @@
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=dump/
 #Thu Apr 09 17:58:49 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 file_export_version=3.0

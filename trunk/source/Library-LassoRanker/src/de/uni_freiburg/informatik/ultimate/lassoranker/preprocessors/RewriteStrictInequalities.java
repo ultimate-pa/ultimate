@@ -57,8 +57,8 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 	@Override
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
+		final Term old_term = oldTF.getFormula();
+		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
 				script.term("distinct", old_term, new_term));
 	}
@@ -75,18 +75,18 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 	 */
 	private class RewriteStrictInequalitiesTransformer extends TermTransformer {
 		
-		private final Script m_Script;
+		private final Script mScript;
 		
 		RewriteStrictInequalitiesTransformer(Script script) {
 			assert script != null;
-			m_Script = script;
+			mScript = script;
 		}
 		
 		@Override
 		protected void convert(Term term) {
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
-				String functionSymbolName = appTerm.getFunction().getName();
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				final String functionSymbolName = appTerm.getFunction().getName();
 				Term result = null;
 				if (functionSymbolName.equals("<")) {
 					result = computeCorrespondingInequality(appTerm);
@@ -109,23 +109,23 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 		 * Otherwise we return null.
 		 */
 		private Term computeCorrespondingInequality(ApplicationTerm appTerm) {
-			String functionSymbolName = appTerm.getFunction().getName();
+			final String functionSymbolName = appTerm.getFunction().getName();
 			if (appTerm.getParameters().length != 2) {
 				throw new AssertionError("expected binary terms");
 			}
 			if (!appTerm.getParameters()[0].getSort().getName().equals("Int")) {
 				return null;
 			}
-			Term one = m_Script.numeral(BigInteger.ONE);
+			final Term one = mScript.numeral(BigInteger.ONE);
 			Term result;
 			if (functionSymbolName.equals("<")) {
-				result = m_Script.term("<=",
-						m_Script.term("+",	appTerm.getParameters()[0], one), 
+				result = mScript.term("<=",
+						mScript.term("+",	appTerm.getParameters()[0], one), 
 						appTerm.getParameters()[1]);
 			} else if (functionSymbolName.equals(">")) {
-				result = m_Script.term(">=", 
+				result = mScript.term(">=", 
 						appTerm.getParameters()[0], 
-						m_Script.term("+", appTerm.getParameters()[1], one));
+						mScript.term("+", appTerm.getParameters()[1], one));
 			} else {
 				throw new AssertionError();
 			}

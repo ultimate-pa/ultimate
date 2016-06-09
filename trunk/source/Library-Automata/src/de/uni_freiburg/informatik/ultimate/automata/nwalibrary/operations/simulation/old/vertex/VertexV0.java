@@ -43,7 +43,7 @@ public class VertexV0<LETTER,STATE> extends VertexV1<LETTER, STATE> {
     /**
      * The label of the edge in the Buchi automaton.
      */
-    private LETTER a;
+    private final LETTER a;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -73,7 +73,7 @@ public class VertexV0<LETTER,STATE> extends VertexV1<LETTER, STATE> {
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<(").append(getQ0()).append(",").append(getQ1());
         sb.append(",").append(getA()).append("),p:").append(getPriority());
         sb.append(",pm:").append(getPM()).append(">");

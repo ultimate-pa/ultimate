@@ -25,9 +25,8 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.gui.actions;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
@@ -35,12 +34,19 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class SaveSettingsAction extends Action implements IWorkbenchAction {
 
-	private final ICore mCore;
+	private final ICore<?> mCore;
 	private final IWorkbenchWindow mWindow;
 
-	public SaveSettingsAction(final IWorkbenchWindow window, final ICore icore) {
+	public SaveSettingsAction(final IWorkbenchWindow window, final ICore<?> icore) {
 		setId(getClass().getName());
 		setText("Save settings");
 		setToolTipText("Saves current settings to a file");
@@ -48,6 +54,7 @@ public class SaveSettingsAction extends Action implements IWorkbenchAction {
 		mWindow = window;
 	}
 
+	@Override
 	public void run() {
 		final FileDialog fd = new FileDialog(mWindow.getShell(), SWT.SAVE);
 		fd.setText("Save settings to...");
@@ -59,5 +66,4 @@ public class SaveSettingsAction extends Action implements IWorkbenchAction {
 	@Override
 	public void dispose() {
 	}
-
 }

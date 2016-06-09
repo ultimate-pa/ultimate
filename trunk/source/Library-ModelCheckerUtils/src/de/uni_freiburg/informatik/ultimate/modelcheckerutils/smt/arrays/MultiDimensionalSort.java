@@ -43,34 +43,34 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * allows you to directly access the sort of the array values and, the sort of
  * the indices.
  * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, m_Index is empty.
+ * this case, mIndex is empty.
  * @author Matthias Heizmann
  */
 
 public class MultiDimensionalSort {
-	private final ArrayList<Sort> m_IndexSorts = new ArrayList<Sort>();
-	private final Sort m_ArrayValueSort;
+	private final ArrayList<Sort> mIndexSorts = new ArrayList<Sort>();
+	private final Sort mArrayValueSort;
 	
 	public MultiDimensionalSort(Sort sort) {
 		while (sort.isArraySort()) {
-			Sort[] arg = sort.getArguments();
+			final Sort[] arg = sort.getArguments();
 			assert arg.length == 2;
-			m_IndexSorts.add(arg[0]);
+			mIndexSorts.add(arg[0]);
 			sort = arg[1];
 		}
-		m_ArrayValueSort = sort;
+		mArrayValueSort = sort;
 	}
 
 	public ArrayList<Sort> getIndexSorts() {
-		return m_IndexSorts;
+		return mIndexSorts;
 	}
 
 	public Sort getArrayValueSort() {
-		return m_ArrayValueSort;
+		return mArrayValueSort;
 	}
 	
 	public int getDimension() {
-		return m_IndexSorts.size();
+		return mIndexSorts.size();
 	}
 	
 	/**
@@ -80,9 +80,9 @@ public class MultiDimensionalSort {
 	 */
 	public static boolean areDimensionsConsistent(Term outerArray, 
 			ArrayIndex index, Term innerArray) {
-		int dimensionInnerArray = (new MultiDimensionalSort(
+		final int dimensionInnerArray = (new MultiDimensionalSort(
 				innerArray.getSort())).getDimension();
-		int dimensionOuterArray = (new MultiDimensionalSort(
+		final int dimensionOuterArray = (new MultiDimensionalSort(
 				outerArray.getSort())).getDimension();
 		return (index.size() == dimensionOuterArray - dimensionInnerArray);
 	}

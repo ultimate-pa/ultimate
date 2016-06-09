@@ -26,16 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -108,16 +112,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						AutomataMinimization.values()),
 		};
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "Buchi Automizer (Termination Analysis)";
-	}
 	
 	public static final String LABEL_IgnoreDownStates = "Ignore down states";
 	public static final String LABEL_DeterminizationOnDemand = "Determinization on demand";
@@ -159,6 +153,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	public enum BComplementationConstruction { Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven };
 	
-	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
+	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, 
+		FairSimulation_WithoutSCC, FairDirectSimulation, MinimizeNwaMaxSat2, MinimizeNwaMaxSat };
 	
 }

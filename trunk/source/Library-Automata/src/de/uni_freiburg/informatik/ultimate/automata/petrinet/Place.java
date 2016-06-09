@@ -33,61 +33,61 @@ import java.util.Collection;
 public class Place<S,C> implements Serializable {
 	private static final long serialVersionUID = -4577818193149596161L;
 
-	private final int m_HashCode;
+	private final int mHashCode;
 	
 	static int s_SerialNumberCounter = 0;
 	
-	private final C m_Content;
-	private final ArrayList<ITransition<S,C>> m_Predecessors;
-	private final ArrayList<ITransition<S,C>> m_Successors;
+	private final C mContent;
+	private final ArrayList<ITransition<S,C>> mPredecessors;
+	private final ArrayList<ITransition<S,C>> mSuccessors;
 	
-	private final int m_SerialNumber = s_SerialNumberCounter++;
+	private final int mSerialNumber = s_SerialNumberCounter++;
 	
 	
 	
 	public Place(C content) {
-		this.m_Content = content;
-		this.m_Predecessors = new ArrayList<ITransition<S,C>>();
-		this.m_Successors = new ArrayList<ITransition<S,C>>();
-		m_HashCode = computeHashCode();
+		this.mContent = content;
+		this.mPredecessors = new ArrayList<ITransition<S,C>>();
+		this.mSuccessors = new ArrayList<ITransition<S,C>>();
+		mHashCode = computeHashCode();
 	}
 	
 	public C getContent() {
-		return m_Content;
+		return mContent;
 	}
 	
 	public Collection<ITransition<S, C>> getPredecessors() {
-		return m_Predecessors;
+		return mPredecessors;
 	}
 	
 	public Collection<ITransition<S, C>> getSuccessors() {
-		return m_Successors;
+		return mSuccessors;
 	}
 	
 	public void addPredecessor(ITransition<S,C> transition) {
-		m_Predecessors.add(transition);
+		mPredecessors.add(transition);
 	}
 	
 	public void addSuccessor(ITransition<S,C> transition) {
-		m_Successors.add(transition);
+		mSuccessors.add(transition);
 	}
 	
 	@Override
 	public String toString() {
-		return String.valueOf(m_Content);
+		return String.valueOf(mContent);
 	}
 	
 	public String toStringWithSerial() {
-		return "#"+ m_SerialNumber + "#" + String.valueOf(m_Content);
+		return "#"+ mSerialNumber + "#" + String.valueOf(mContent);
 	}
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 	public int computeHashCode() {
-		return m_SerialNumber;
+		return mSerialNumber;
 	}
 	
 }

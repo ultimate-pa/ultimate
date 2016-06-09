@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.InterfaceTest;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 //
 public abstract class IElementTest<T extends IElement> extends InterfaceTest<T> {

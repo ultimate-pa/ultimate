@@ -33,12 +33,6 @@ import java.awt.Frame;
 
 import javax.swing.JPanel;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphListener;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
@@ -50,6 +44,11 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.EditorPart;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphListener;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
@@ -101,24 +100,24 @@ public class JungEditor extends EditorPart implements IPartListener {
 
 	@Override
 	public void createPartControl(Composite parent) {
-		JungEditorInput ei = (JungEditorInput) getEditorInput();
-		String currentVVID = ei.getId();
+		final JungEditorInput ei = (JungEditorInput) getEditorInput();
+		final String currentVVID = ei.getId();
 		setPartProperty(VV_ID_EDITOR_PROPERTY_KEY, currentVVID);
 
-		Composite comp = new Composite(parent, SWT.EMBEDDED);
-		Frame awt = SWT_AWT.new_Frame(comp);
+		final Composite comp = new Composite(parent, SWT.EMBEDDED);
+		final Frame awt = SWT_AWT.new_Frame(comp);
 
-		JPanel panel = new JPanel();
+		final JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 		final VisualizationViewer<VisualizationNode, VisualizationEdge> vv = ei.getViewer();
 		vv.setPreferredSize(panel.getSize());
 
-		JungSelectionProvider jsp = new JungSelectionProvider();
+		final JungSelectionProvider jsp = new JungSelectionProvider();
 		getSite().setSelectionProvider(jsp);
 
-		GraphListener gl = new GraphListener(jsp,ei);
+		final GraphListener gl = new GraphListener(jsp,ei);
 
-		DefaultModalGraphMouse<VisualizationNode, VisualizationEdge> graphMouse = new DefaultModalGraphMouse<VisualizationNode, VisualizationEdge>();
+		final DefaultModalGraphMouse<VisualizationNode, VisualizationEdge> graphMouse = new DefaultModalGraphMouse<VisualizationNode, VisualizationEdge>();
 		graphMouse.setZoomAtMouse(true);
 
 		ei.setMode(Mode.PICKING);

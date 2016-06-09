@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.scc;
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Non-recursive implementation of {@link SccComputation} that uses the default
@@ -41,7 +41,7 @@ public class DefaultSccComputation<NODE> extends
 		SccComputationNonRecursive<NODE, StronglyConnectedComponent<NODE>> {
 
 	public DefaultSccComputation(
-			Logger logger,
+			ILogger logger,
 			ISuccessorProvider<NODE> successorProvider,
 			int numberOfAllNodes, Set<NODE> startNodes) {
 		super(logger, successorProvider, 

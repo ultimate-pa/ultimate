@@ -53,9 +53,9 @@ import java.util.Set;
 public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		Comparable<Configuration<S, C>> {
 
-	private Set<Event<S, C>> m_Events;
-	private Set<Event<S, C>> m_Min;
-	private ArrayList<Transition<S, C>> m_Phi = null;
+	private final Set<Event<S, C>> mEvents;
+	private Set<Event<S, C>> mMin;
+	private ArrayList<Transition<S, C>> mPhi = null;
 
 	/**
 	 * constructs a Configuration (Not a Suffix). The set given as parameter has
@@ -64,28 +64,28 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @param events
 	 */
 	public Configuration(Set<Event<S, C>> events) {
-		// this.m_Events = new HashSet<Event<S, C>>(events);
-		this.m_Events = events;
+		// this.mEvents = new HashSet<Event<S, C>>(events);
+		this.mEvents = events;
 	}
 
 	private Configuration(Set<Event<S, C>> events, Set<Event<S, C>> min) {
-		// this.m_Events = new HashSet<Event<S, C>>(events);
-		this.m_Events = events;
-		this.m_Min = min;
+		// this.mEvents = new HashSet<Event<S, C>>(events);
+		this.mEvents = events;
+		this.mMin = min;
 	}
 
 	private List<Transition<S, C>> getPhi() {
 
-		if (m_Phi == null) {
-			m_Phi = new ArrayList<Transition<S, C>>(m_Events.size());
-			for (Event<S, C> e : m_Events) {
-				m_Phi.add(e.getTransition());
+		if (mPhi == null) {
+			mPhi = new ArrayList<Transition<S, C>>(mEvents.size());
+			for (final Event<S, C> e : mEvents) {
+				mPhi.add(e.getTransition());
 			}
-			Collections.sort(m_Phi);
-//			m_Logger.debug("PhiSorted: " + m_Phi);
+			Collections.sort(mPhi);
+//			mLogger.debug("PhiSorted: " + mPhi);
 		}
-		// return Collections.unmodifiableList(m_Phi);
-		return m_Phi;
+		// return Collections.unmodifiableList(mPhi);
+		return mPhi;
 	}
 
 	/*
@@ -107,53 +107,53 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 */
 	public Configuration<S, C> getMin(BranchingProcess<S, C> unf) {
 		Set<Event<S, C>> result;
-		if (m_Min != null)
-			result = m_Min;
-		else {
+		if (mMin != null) {
+			result = mMin;
+		} else {
 			result = new HashSet<Event<S, C>>(unf.getMinEvents());
-			result.retainAll(m_Events);
+			result.retainAll(mEvents);
 			/*
 			 * for (Event<S, C> event : unf.getMinDot()) { if
-			 * (m_Events.contains(event)) result.add(event); }
+			 * (mEvents.contains(event)) result.add(event); }
 			 */
-			m_Min = result;
+			mMin = result;
 		}
 		return new Configuration<S, C>(result);
 	}
 
 	@Override
 	public Iterator<Event<S, C>> iterator() {
-		return m_Events.iterator();
+		return mEvents.iterator();
 	}
 
 	@Override
 	public int size() {
-		return m_Events.size();
+		return mEvents.size();
 	}
 
 	@Override
 	public boolean add(Event<S, C> arg0) {
-		return m_Events.add(arg0);
+		return mEvents.add(arg0);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends Event<S, C>> arg0) {
-		return m_Events.addAll(arg0);
+		return mEvents.addAll(arg0);
 	}
 
 	@Override
 	public void clear() {
-		m_Events.clear();
+		mEvents.clear();
 	}
 
 	@Override
 	public boolean contains(Object arg0) {
-		return m_Events.contains(arg0);
+		return mEvents.contains(arg0);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> arg0) {
-		return m_Events.containsAll(arg0);
+		return mEvents.containsAll(arg0);
 	}
 
 	/**
@@ -163,21 +163,22 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @return
 	 */
 	public boolean containsAny(Collection<Event<S, C>> events) {
-		for (Event<S, C> place : events) {
-			if (m_Events.contains(place))
+		for (final Event<S, C> place : events) {
+			if (mEvents.contains(place)) {
 				return true;
+			}
 		}
 		return false;
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return m_Events.isEmpty();
+		return mEvents.isEmpty();
 	}
 
 	@Override
 	public boolean remove(Object arg0) {
-		return m_Events.remove(arg0);
+		return mEvents.remove(arg0);
 	}
 
 	/**
@@ -190,42 +191,42 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @return
 	 */
 	public Configuration<S, C> removeMin() {
-		assert m_Min != null : "getMin() must have been called before removeMin()";
-		assert !m_Min.isEmpty() : "The minimum of a configuration must not be empty.";
-		HashSet<Event<S, C>> events = new HashSet<Event<S, C>>(m_Events);
-		events.removeAll(m_Min);
-		Set<Event<S, C>> min = Event.getSuccessorEvents(m_Min);
+		assert mMin != null : "getMin() must have been called before removeMin()";
+		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
+		final HashSet<Event<S, C>> events = new HashSet<Event<S, C>>(mEvents);
+		events.removeAll(mMin);
+		final Set<Event<S, C>> min = Event.getSuccessorEvents(mMin);
 		min.retainAll(events);
-		HashSet<Event<S, C>> newmin = new HashSet<Event<S, C>>();
-		for (Event<S, C> e : min) {
-			Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
-			predEventsOfE.retainAll(m_Events);
-			if (m_Min.containsAll(predEventsOfE)) {
+		final HashSet<Event<S, C>> newmin = new HashSet<Event<S, C>>();
+		for (final Event<S, C> e : min) {
+			final Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
+			predEventsOfE.retainAll(mEvents);
+			if (mMin.containsAll(predEventsOfE)) {
 				newmin.add(e);
 			}
 		}
-		Configuration<S, C> result = new Configuration<S, C>(events, newmin);
+		final Configuration<S, C> result = new Configuration<S, C>(events, newmin);
 		return result;
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> arg0) {
-		return m_Events.removeAll(arg0);
+		return mEvents.removeAll(arg0);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> arg0) {
-		return m_Events.retainAll(arg0);
+		return mEvents.retainAll(arg0);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return m_Events.toArray();
+		return mEvents.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] arg0) {
-		return m_Events.toArray(arg0);
+		return mEvents.toArray(arg0);
 	}
 
 	/**
@@ -235,16 +236,17 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 */
 	@Override
 	public int compareTo(Configuration<S, C> o) {
-		if (size() != o.size())
+		if (size() != o.size()) {
 			return size() - o.size();
-		List<Transition<S, C>> phi1 = getPhi();
-		List<Transition<S, C>> phi2 = o.getPhi();
+		}
+		final List<Transition<S, C>> phi1 = getPhi();
+		final List<Transition<S, C>> phi2 = o.getPhi();
 		for (int i = 0; i < phi1.size(); i++) {
-			Transition<S, C> t1 = phi1.get(i);
-			Transition<S, C> t2 = phi2.get(i);
-			int result = t1.getTotalOrderID() - t2.getTotalOrderID();
+			final Transition<S, C> t1 = phi1.get(i);
+			final Transition<S, C> t2 = phi2.get(i);
+			final int result = t1.getTotalOrderID() - t2.getTotalOrderID();
 			if (result != 0) {
-//				m_Logger.debug(phi1.toString() + (result < 0 ? "<" : ">")
+//				mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">")
 //						+ phi2.toString());
 				return result;
 			}
@@ -262,7 +264,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	// final int prime = 31;
 	// int result = super.hashCode();
 	// result = prime * result
-	// + ((m_Events == null) ? 0 : m_Events.hashCode());
+	// + ((mEvents == null) ? 0 : mEvents.hashCode());
 	// return result;
 	// }
 	//
@@ -275,10 +277,10 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	// if (getClass() != obj.getClass())
 	// return false;
 	// Configuration<S, C> other = (Configuration) obj;
-	// if (m_Events == null) {
-	// if (other.m_Events != null)
+	// if (mEvents == null) {
+	// if (other.mEvents != null)
 	// return false;
-	// } else if (!m_Events.equals(other.m_Events))
+	// } else if (!mEvents.equals(other.mEvents))
 	// return false;
 	// return true;
 	// }

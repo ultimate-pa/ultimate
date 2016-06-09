@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinitionGenerator;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 
 /**
  * 

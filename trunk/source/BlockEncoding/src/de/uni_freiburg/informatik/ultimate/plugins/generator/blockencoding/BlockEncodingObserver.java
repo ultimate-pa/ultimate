@@ -28,14 +28,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.BlockEncoder;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -44,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private IElement mRoot;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	public BlockEncodingObserver(Logger logger, IUltimateServiceProvider services) {
+	public BlockEncodingObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
 	}
@@ -68,11 +66,6 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		// not required
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

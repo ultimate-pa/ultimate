@@ -3,47 +3,32 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplToBoogie;
-import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import srParse.pattern.PatternType; 
 
 public class PeaTestTransformer implements ISource {
-	protected Logger mLogger;
 	List<String> m_FileNames = new ArrayList<String>();
 	private boolean previousToolFoundErrors;
 	private SystemInformation sysInfo = new SystemInformation();
+	private IUltimateServiceProvider mServices;
 	
-	
-	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-
-	}
-
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+		mServices = services;
+		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		previousToolFoundErrors = !cex.isEmpty();
 		PeaTestBackTranslator backtranslator = new PeaTestBackTranslator(BoogieASTNode.class, Expression.class, this.sysInfo);
@@ -65,11 +50,11 @@ public class PeaTestTransformer implements ISource {
 	}
 	
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		List<String> filenames = new ArrayList<String>();
 		filenames.add("Hardcoded");
 
-		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, filenames);
+		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, filenames);
 	}
 
 	@Override
@@ -95,7 +80,7 @@ public class PeaTestTransformer implements ISource {
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
 		this.sysInfo = new SystemInformation();
-		SplToBoogie parser = new SplToBoogie();
+		SplToBoogie parser = new SplToBoogie(mServices);
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();
 		for(File f: files){
@@ -120,9 +105,16 @@ public class PeaTestTransformer implements ISource {
 	public void setPreludeFile(File prelude) {
 		// TODO Auto-generated method stub
 	}
-	
+
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
+
 }

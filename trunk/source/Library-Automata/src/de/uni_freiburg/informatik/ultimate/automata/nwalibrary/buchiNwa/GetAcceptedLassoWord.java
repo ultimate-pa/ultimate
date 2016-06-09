@@ -26,42 +26,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	private final NestedLassoWord<LETTER> m_AcceptedWord;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private final NestedLassoWord<LETTER> mAcceptedWord;
 
 	public GetAcceptedLassoWord(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(m_Services, operand);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");
 		} else {
-			m_AcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
+			mAcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public NestedLassoWord<LETTER> getResult() throws AutomataLibraryException {
-		return m_AcceptedWord;
+		return mAcceptedWord;
 	}
 
 	@Override
@@ -72,14 +71,14 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Length of stem: "
-				+ m_AcceptedWord.getStem().length() + " Length of loop:" 
-				+ m_AcceptedWord.getLoop().length();
+				+ mAcceptedWord.getStem().length() + " Length of loop:" 
+				+ mAcceptedWord.getLoop().length();
 	}
 
 	@Override

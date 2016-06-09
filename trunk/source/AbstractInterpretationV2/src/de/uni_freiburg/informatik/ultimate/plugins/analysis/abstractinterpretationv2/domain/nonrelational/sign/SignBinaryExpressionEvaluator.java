@@ -33,12 +33,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -58,7 +57,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 	protected final EvaluatorType mEvaluatorType;
 
 	/**
@@ -91,10 +90,10 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 
 		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 

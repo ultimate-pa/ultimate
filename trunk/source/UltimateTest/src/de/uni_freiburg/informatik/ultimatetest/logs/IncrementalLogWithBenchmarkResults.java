@@ -30,13 +30,16 @@ package de.uni_freiburg.informatik.ultimatetest.logs;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Incremental log in which for each test the BenchmarkResults are shown.
@@ -52,15 +55,15 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition runDef) {
-		writeToFile(runDef.getInputFileNames() + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+	public void addEntryPreStart(UltimateRunDefinition runDef, ILogger testLogger) {
+		writeToFile(runDef.getInputFileNames() + CoreUtil.getPlatformLineSeparator(), testLogger);
 	}
 
 	@Override
 	public void addEntryPostCompletion(UltimateRunDefinition runDef, TestResult result, String resultCategory,
-			String resultMessage, IUltimateServiceProvider services) {
-		String indent = "\t";
-		String lineSeparator = System.getProperty("line.separator");
+			String resultMessage, IUltimateServiceProvider services, ILogger testLogger) {
+		final String indent = "\t";
+		final String lineSeparator = System.getProperty("line.separator");
 		Entry sum = null;
 		if (services != null) {
 			sum = new Entry(result, resultMessage, runDef, services.getResultService());
@@ -68,7 +71,8 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 			sum = new Entry(result, resultMessage, runDef, null);
 		}
 
-		writeToFile(sum.toLogString(indent, lineSeparator).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator()).toString());
+		writeToFile(sum.toLogString(indent, lineSeparator).append(CoreUtil.getPlatformLineSeparator()).toString(),
+				testLogger);
 	}
 
 	private class Entry {
@@ -92,23 +96,26 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 		private void interpretUltimateResults(IResultService resultService) {
 
-			for (IResult result : de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
-				StringBuilder sb = new StringBuilder();
-				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ")
-						.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.flatten(result.getLongDescription(), " # "));
+			for (final IResult result : ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
+				final StringBuilder sb = new StringBuilder();
+				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ").append(
+						de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(result.getLongDescription(), " # "));
 				mFlattenedBenchmarkResults.add(sb.toString());
 			}
 		}
 
 		public StringBuilder toLogString(String indent, String lineSeparator) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 
-			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(",").append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
+			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(",")
+					.append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
-			sb.append(indent).append("Message:     ").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
+			sb.append(indent).append("Message:     ")
+					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(mMessage, " # "))
+					.append(lineSeparator);
 			if (mFlattenedBenchmarkResults.size() > 0) {
 				sb.append(indent).append("Benchmarks:").append(lineSeparator);
-				for (String s : mFlattenedBenchmarkResults) {
+				for (final String s : mFlattenedBenchmarkResults) {
 					sb.append(indent).append(indent).append(s).append(lineSeparator);
 				}
 			}

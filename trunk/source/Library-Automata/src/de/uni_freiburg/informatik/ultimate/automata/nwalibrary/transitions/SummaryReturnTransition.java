@@ -37,24 +37,26 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
  */
 public class SummaryReturnTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
 	
-	private final STATE m_LinPred;
-	private final LETTER m_Letter; 
-	private final STATE m_Succ;
+	private final STATE mLinPred;
+	private final LETTER mLetter; 
+	private final STATE mSucc;
 	
 	public SummaryReturnTransition(STATE linPred, LETTER letter, STATE succ) {
-		m_LinPred = linPred;
-		m_Letter = letter;
-		m_Succ = succ;
+		mLinPred = linPred;
+		mLetter = letter;
+		mSucc = succ;
 	}
 	
 	public STATE getLinPred() {
-		return m_LinPred;
+		return mLinPred;
 	}
+	@Override
 	public LETTER getLetter() {
-		return m_Letter;
+		return mLetter;
 	}
+	@Override
 	public STATE getSucc() {
-		return m_Succ;
+		return mSucc;
 	}
 	
 }

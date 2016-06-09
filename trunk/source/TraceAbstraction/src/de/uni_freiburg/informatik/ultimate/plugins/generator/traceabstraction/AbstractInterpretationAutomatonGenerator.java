@@ -4,16 +4,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -29,7 +27,7 @@ public class AbstractInterpretationAutomatonGenerator {
 	private static final long PRINT_PREDS_LIMIT = 30;
 
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final SmtManager mSmtManager;
 
@@ -38,7 +36,7 @@ public class AbstractInterpretationAutomatonGenerator {
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
 
 		mResult = getTermAutomaton(oldAbstraction, aiResult.getTerms(), predUnifier);
@@ -64,9 +62,7 @@ public class AbstractInterpretationAutomatonGenerator {
 			if (term == null) {
 				continue;
 			}
-
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mSmtManager.getBoogie2Smt());
-			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(tvp);
+			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(term);
 			if (!predicates.add(newPred)) {
 				continue;
 			}

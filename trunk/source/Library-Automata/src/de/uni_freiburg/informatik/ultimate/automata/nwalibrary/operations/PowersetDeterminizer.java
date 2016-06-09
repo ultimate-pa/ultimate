@@ -50,25 +50,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public class PowersetDeterminizer<LETTER,STATE> 
 			implements IStateDeterminizer<LETTER,STATE> {
 
-	StateFactory<STATE> m_StateFactory;
-	INestedWordAutomatonSimple<LETTER,STATE> m_Nwa;
-	private final boolean m_UseDoubleDeckers;
+	StateFactory<STATE> mStateFactory;
+	INestedWordAutomatonSimple<LETTER,STATE> mNwa;
+	private final boolean mUseDoubleDeckers;
 	int maxDegreeOfNondeterminism = 0;
 	
 	public PowersetDeterminizer(INestedWordAutomatonSimple<LETTER,STATE> nwa, 
 			boolean useDoubleDeckers, StateFactory<STATE> stateFactory) { 
-		m_Nwa = nwa;
-		m_UseDoubleDeckers = useDoubleDeckers;
-		this.m_StateFactory = stateFactory;
+		mNwa = nwa;
+		mUseDoubleDeckers = useDoubleDeckers;
+		this.mStateFactory = stateFactory;
 	}
 
 	
 	@Override
 	public DeterminizedState<LETTER,STATE> initialState() {
-		DeterminizedState<LETTER,STATE> detState = 
-			new DeterminizedState<LETTER,STATE>(m_Nwa);
-		for (STATE initialState : m_Nwa.getInitialStates()) {
-			detState.addPair(m_Nwa.getEmptyStackState(), initialState, m_Nwa);
+		final DeterminizedState<LETTER,STATE> detState = 
+			new DeterminizedState<LETTER,STATE>(mNwa);
+		for (final STATE initialState : mNwa.getInitialStates()) {
+			detState.addPair(mNwa.getEmptyStackState(), initialState, mNwa);
 		}
 		updateMaxDegreeOfNondeterminism(detState.degreeOfNondeterminism());
 		return detState;
@@ -80,12 +80,12 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detState,
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
-				new DeterminizedState<LETTER,STATE>(m_Nwa);
-		for (STATE downState : detState.getDownStates()) {
-			for (STATE upState : detState.getUpStates(downState)) {
-				for (OutgoingInternalTransition<LETTER, STATE> upSucc : m_Nwa.internalSuccessors(upState, symbol)) {
-					succDetState.addPair(downState,upSucc.getSucc(), m_Nwa);
+		final DeterminizedState<LETTER,STATE> succDetState = 
+				new DeterminizedState<LETTER,STATE>(mNwa);
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> upSucc : mNwa.internalSuccessors(upState, symbol)) {
+					succDetState.addPair(downState,upSucc.getSucc(), mNwa);
 				}
 			}
 		}
@@ -100,21 +100,21 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detState, 
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
-				new DeterminizedState<LETTER,STATE>(m_Nwa);
-		for (STATE downState : detState.getDownStates()) {
-			for (STATE upState : detState.getUpStates(downState)) {
-				for (OutgoingCallTransition<LETTER, STATE> upSucc : m_Nwa.callSuccessors(upState, symbol)) {
+		final DeterminizedState<LETTER,STATE> succDetState = 
+				new DeterminizedState<LETTER,STATE>(mNwa);
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				for (final OutgoingCallTransition<LETTER, STATE> upSucc : mNwa.callSuccessors(upState, symbol)) {
 					STATE succDownState;
-					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
 					// sets of DoubleDeckers.
-					if (m_UseDoubleDeckers) {
+					if (mUseDoubleDeckers) {
 						succDownState = upState;
 					} else {
-						succDownState = m_Nwa.getEmptyStackState();
+						succDownState = mNwa.getEmptyStackState();
 					}
-					succDetState.addPair(succDownState,upSucc.getSucc(), m_Nwa);
+					succDetState.addPair(succDownState,upSucc.getSucc(), mNwa);
 				}
 			}
 		}
@@ -130,28 +130,30 @@ public class PowersetDeterminizer<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detLinPred,
 			LETTER symbol) {
 		
-		DeterminizedState<LETTER,STATE> succDetState = 
-				new DeterminizedState<LETTER,STATE>(m_Nwa);
+		final DeterminizedState<LETTER,STATE> succDetState = 
+				new DeterminizedState<LETTER,STATE>(mNwa);
 		
-		for (STATE downLinPred : detLinPred.getDownStates()) {
-			for (STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
+		for (final STATE downLinPred : detLinPred.getDownStates()) {
+			for (final STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
 				Set<STATE> upStates;
-				if (m_UseDoubleDeckers) {
+				if (mUseDoubleDeckers) {
 					upStates = detState.getUpStates(upLinPred);
-					if (upStates == null) continue;
+					if (upStates == null) {
+						continue;
+					}
 				} else {
 					assert detState.getDownStates().size() == 1;
 					assert detState.getDownStates().iterator().next() == 
-													m_Nwa.getEmptyStackState();
-					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+													mNwa.getEmptyStackState();
+					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
 					// sets of DoubleDeckers.
-					upStates = detState.getUpStates(m_Nwa.getEmptyStackState());
+					upStates = detState.getUpStates(mNwa.getEmptyStackState());
 				}
-				for (STATE upState : upStates) {
-					for (OutgoingReturnTransition<LETTER, STATE> upSucc : m_Nwa.returnSucccessors(upState, upLinPred, symbol)) {
-						assert m_UseDoubleDeckers || downLinPred == m_Nwa.getEmptyStackState();
-						succDetState.addPair(downLinPred, upSucc.getSucc(), m_Nwa);
+				for (final STATE upState : upStates) {
+					for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mNwa.returnSucccessors(upState, upLinPred, symbol)) {
+						assert mUseDoubleDeckers || downLinPred == mNwa.getEmptyStackState();
+						succDetState.addPair(downLinPred, upSucc.getSucc(), mNwa);
 					}
 				}
 			}
@@ -174,13 +176,13 @@ public class PowersetDeterminizer<LETTER,STATE>
 
 	@Override
 	public boolean useDoubleDeckers() {
-		return m_UseDoubleDeckers;
+		return mUseDoubleDeckers;
 	}
 
 
 	@Override
 	public STATE getState(DeterminizedState<LETTER, STATE> determinizedState) {
-		return determinizedState.getContent(m_StateFactory);
+		return determinizedState.getContent(mStateFactory);
 	}
 	
 	

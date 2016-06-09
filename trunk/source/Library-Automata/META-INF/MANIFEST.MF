@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: NestedWordAutomata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata
 Bundle-Version: 0.0.1
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil
@@ -26,14 +27,18 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
   uses:="de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
    org.apache.log4j,
-   de.uni_freiburg.informatik.ultimate.core.api",
+   de.uni_freiburg.informatik.ultimate.core.model.api",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.old.vertex,

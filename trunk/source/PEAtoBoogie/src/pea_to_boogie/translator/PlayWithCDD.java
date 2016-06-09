@@ -25,19 +25,22 @@
  * to convey the resulting work.
  */
 package pea_to_boogie.translator;
-import pea.*;
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.Decision;
+import pea.RangeDecision;
 public class PlayWithCDD {
 	public void CDDGame() {
 		
-		 CDD A  = BooleanDecision.create("A");
-		 CDD B  = BooleanDecision.create("B");
-		 CDD C  = BooleanDecision.create("C");
-		 CDD D = CDD.FALSE;
-		 CDD range1 = RangeDecision.create("E", RangeDecision.OP_GTEQ, 3);
-		 CDD range2 = RangeDecision.create("F", RangeDecision.OP_LTEQ, 6);
-		 CDD G  = BooleanDecision.create("G");
-		 CDD k = RangeDecision.create("C", RangeDecision.OP_LT, 3);
-		 CDD L = RangeDecision.create("0", RangeDecision.OP_LT, 5);
+		 final CDD A  = BooleanDecision.create("A");
+		 final CDD B  = BooleanDecision.create("B");
+		 final CDD C  = BooleanDecision.create("C");
+		 final CDD D = CDD.FALSE;
+		 final CDD range1 = RangeDecision.create("E", RangeDecision.OP_GTEQ, 3);
+		 final CDD range2 = RangeDecision.create("F", RangeDecision.OP_LTEQ, 6);
+		 final CDD G  = BooleanDecision.create("G");
+		 final CDD k = RangeDecision.create("C", RangeDecision.OP_LT, 3);
+		 final CDD L = RangeDecision.create("0", RangeDecision.OP_LT, 5);
 		 System.out.println(k.and(L));
 	//	 CDD conjunction = (A.and(B.negate().or(C).or(G)).or(D)).and(range1).and(range2);
 	//	 CDD conjunction = (A.or(G));
@@ -50,7 +53,7 @@ public class PlayWithCDD {
 
 	}
     public String toString(CDD cdd, boolean needsParens) {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
 
@@ -61,8 +64,8 @@ public class PlayWithCDD {
         if (cdd == CDD.FALSE) {
             return "false";
         }
-    	CDD[] childs = cdd.getChilds();
-    	Decision decision = cdd.getDecision(); 
+    	final CDD[] childs = cdd.getChilds();
+    	final Decision decision = cdd.getDecision(); 
     	for (int i = 0; i < childs.length; i++) {
     		System.out.println(childs[i]);
     	}

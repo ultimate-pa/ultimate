@@ -58,13 +58,15 @@ public class ArrayValue {
 			return mValue;
 		}
 		public int setValue(int value) {
-			int res = mValue;
+			final int res = mValue;
 			mValue = value;
 			return res;
 		}
+		@Override
 		public int hashCode() {
 			return mKey + 3643 * mValue;
 		}
+		@Override
 		public String toString() {
 			return "[" + mKey + "," + mValue + "]";
 		}
@@ -90,21 +92,22 @@ public class ArrayValue {
 			mSize = 0;
 			mThreshold = other.mThreshold;
 			mList = new Entry();
-			for (Entry e : other.forwardInsertionOrder())
+			for (final Entry e : other.forwardInsertionOrder()) {
 				add(e.getKey(), e.getValue());
+			}
 		}
 		private int idx2bucket(int idx) {
 			return idx & (mTable.length - 1);
 		}
 		
 		private void grow() {
-			Entry[] old = mTable;
+			final Entry[] old = mTable;
 			mTable = new Entry[mTable.length << 1];
 			mThreshold = (int) (mTable.length * LOAD_FACTOR);
-			for (Entry e : old) {
+			for (final Entry e : old) {
 				for (Entry bucket = e; bucket != null; ) {
-					int idx = idx2bucket(bucket.mKey);
-					Entry reinsert = bucket;
+					final int idx = idx2bucket(bucket.mKey);
+					final Entry reinsert = bucket;
 					bucket = bucket.mNext;
 					reinsert.mNext = mTable[idx];
 					mTable[idx] = reinsert;
@@ -113,9 +116,10 @@ public class ArrayValue {
 		}
 		
 		public int add(int key, int value) {
-			if (mSize >= mThreshold)
+			if (mSize >= mThreshold) {
 				grow();
-			int hash = idx2bucket(key);
+			}
+			final int hash = idx2bucket(key);
 			Entry e = findEntry(hash, key);
 			if (e == null) {
 				++mSize;
@@ -127,16 +131,17 @@ public class ArrayValue {
 		}
 		
 		public int remove(int key) {
-			int hash = idx2bucket(key);
+			final int hash = idx2bucket(key);
 			Entry prev = null;
 			for (Entry bucket = mTable[hash]; bucket != null;
 					bucket = bucket.mNext) {
 				if (bucket.getKey() == key) {
 					bucket.unlink();
-					if (prev == null)
+					if (prev == null) {
 						mTable[hash] = bucket.mNext;
-					else
+					} else {
 						prev.mNext = bucket.mNext;
+					}
 					--mSize;
 					return bucket.getValue();
 				}
@@ -146,23 +151,26 @@ public class ArrayValue {
 		}
 		
 		public int get(int key, boolean partial) {
-			int hash = idx2bucket(key);
-			Entry e = findEntry(hash, key);
-			if (e == null)
+			final int hash = idx2bucket(key);
+			final Entry e = findEntry(hash, key);
+			if (e == null) {
 				return partial ? -1 : 0;
+			}
 			return e.getValue();
 		}
 
 		private Entry findEntry(int hash, int key) {
 			for (Entry bucket = mTable[hash]; bucket != null;
-					bucket = bucket.mNext)
-				if (bucket.getKey() == key)
+					bucket = bucket.mNext) {
+				if (bucket.getKey() == key) {
 					return bucket;
+				}
+			}
 			return null;
 		}
 		
 		public boolean containsKey(int key) {
-			int hash = idx2bucket(key);
+			final int hash = idx2bucket(key);
 			return findEntry(hash, key) != null;
 		}
 		
@@ -170,24 +178,30 @@ public class ArrayValue {
 			return mSize;
 		}
 		
+		@Override
 		public int hashCode() {
 			int hash = 0;
-			for (Entry e : forwardInsertionOrder())
+			for (final Entry e : forwardInsertionOrder()) {
 				hash += e.hashCode();
+			}
 			return hash;
 		}
 		
+		@Override
 		public boolean equals(Object other) {
-			if (!(other instanceof IntIntMap))
+			if (!(other instanceof IntIntMap)) {
 				return false;
-			IntIntMap o = (IntIntMap) other;
-			if (o.getSize() != mSize)
+			}
+			final IntIntMap o = (IntIntMap) other;
+			if (o.getSize() != mSize) {
 				return false;
-			for (Entry e : o.forwardInsertionOrder()) {
-				int hash = idx2bucket(e.getKey());
-				Entry my = findEntry(hash, e.getKey());
-				if (my == null || my.getValue() != e.getValue())
+			}
+			for (final Entry e : o.forwardInsertionOrder()) {
+				final int hash = idx2bucket(e.getKey());
+				final Entry my = findEntry(hash, e.getKey());
+				if (my == null || my.getValue() != e.getValue()) {
 					return false;
+				}
 			}
 			return true;
 		}
@@ -208,7 +222,7 @@ public class ArrayValue {
 
 						@Override
 						public Entry next() {
-							Entry cur = mCur;
+							final Entry cur = mCur;
 							mCur = mCur.mListNext;
 							return cur;
 						}
@@ -239,7 +253,7 @@ public class ArrayValue {
 
 						@Override
 						public Entry next() {
-							Entry cur = mCur;
+							final Entry cur = mCur;
 							mCur = mCur.mListPrev;
 							return cur;
 						}
@@ -253,11 +267,13 @@ public class ArrayValue {
 			};
 			
 		}
+		@Override
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append('{');
-			for (Entry e : forwardInsertionOrder())
+			for (final Entry e : forwardInsertionOrder()) {
 				sb.append(e);
+			}
 			sb.append('}');
 			return sb.toString();
 		}
@@ -278,8 +294,9 @@ public class ArrayValue {
 	}
 	
 	public int store(int idx, int val) {
-		if (val == 0)
+		if (val == 0) {
 			return mValues.remove(idx);
+		}
 		return mValues.add(idx, val);
 	}
 	
@@ -287,22 +304,27 @@ public class ArrayValue {
 		return mValues == null ? 0 : mValues.get(idx, partial);
 	}
 	
+	@Override
 	public int hashCode() {
 		return mValues == null ? 0 : mValues.hashCode();
 	}
 	
+	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof ArrayValue))
+		if (!(other instanceof ArrayValue)) {
 			return false;
-		if (this == DEFAULT_ARRAY)
+		}
+		if (this == DEFAULT_ARRAY) {
 			return other == DEFAULT_ARRAY;
-		if (mValues.getSize() == 0)
+		}
+		if (mValues.getSize() == 0) {
 			return other == DEFAULT_ARRAY;
+		}
 		return mValues.equals(((ArrayValue) other).mValues);
 	}
 	
 	ArrayValue copy() {
-		IntIntMap copy = mValues == null
+		final IntIntMap copy = mValues == null
 				? new IntIntMap() : new IntIntMap(mValues);
 		return new ArrayValue(copy);
 	}
@@ -311,13 +333,14 @@ public class ArrayValue {
 			SortInterpretation index, SortInterpretation value) {
 		Term res = t.term(t.getFunctionWithResult("@0", null, s));
 		if (mValues.getSize() != 0) {
-			Sort indexSort = s.getArguments()[0];
-			Sort valueSort = s.getArguments()[1];
-			FunctionSymbol store = t.getFunction(
+			final Sort indexSort = s.getArguments()[0];
+			final Sort valueSort = s.getArguments()[1];
+			final FunctionSymbol store = t.getFunction(
 					"store", s, indexSort, valueSort);
-			for (Entry e : mValues.backwardInsertionOrder())
+			for (final Entry e : mValues.backwardInsertionOrder()) {
 				res = t.term(store, res, index.get(e.getKey(), indexSort, t),
 						value.get(e.getValue(), valueSort, t));
+			}
 		}
 		return res;
 	}
@@ -327,26 +350,31 @@ public class ArrayValue {
 	}
 	
 	public void addDiff(int snd, int val) {
-		if (mDiffMap == null)
+		if (mDiffMap == null) {
 			mDiffMap = new IntIntMap();
+		}
 		mDiffMap.add(snd, val);
 	}
 	
 	public int computeDiff(int idx, ArrayValue other) {
-		if (mValues == null)
+		if (mValues == null) {
 			return other == this ? 0 : other.computeDiff(0, this);
+		}
 		// diffs
-		if (mDiffMap != null && mDiffMap.containsKey(idx))
+		if (mDiffMap != null && mDiffMap.containsKey(idx)) {
 			return mDiffMap.get(idx, false);
+		}
 		// no diff matches
-		for (Entry e : mValues.forwardInsertionOrder()) {
-			if (other.select(e.getKey(), false) != e.getValue())
+		for (final Entry e : mValues.forwardInsertionOrder()) {
+			if (other.select(e.getKey(), false) != e.getValue()) {
 				return e.getKey();
+			}
 		}
 		assert this == other;
 		return 0;
 	}
 	
+	@Override
 	public String toString() {
 		return mValues == null ? "@0" : mValues.toString();
 	}

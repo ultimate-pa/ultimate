@@ -41,7 +41,7 @@ public class AnnotatedTerm extends Term {
 	
 	AnnotatedTerm(Annotation[] annots, Term term, int hash) {
 		super(hash);
-		this.mAnnotations = annots;
+		mAnnotations = annots;
 		mSubterm = term;
 	}
 	
@@ -71,18 +71,18 @@ public class AnnotatedTerm extends Term {
 	}
 	
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		// Add annotations to stack.
-		m_Todo.addLast(")");
-		Annotation[] annots = getAnnotations();
+		mTodo.addLast(")");
+		final Annotation[] annots = getAnnotations();
 		for (int i = annots.length - 1; i >= 0; i--) {
 			if (annots[i].getValue() != null) {
-				m_Todo.addLast(annots[i].getValue());
-				m_Todo.addLast(" ");
+				mTodo.addLast(annots[i].getValue());
+				mTodo.addLast(" ");
 			}
-			m_Todo.addLast(" " + annots[i].getKey());
+			mTodo.addLast(" " + annots[i].getKey());
 		}
-		m_Todo.addLast(getSubterm());
-		m_Todo.addLast("(! ");
+		mTodo.addLast(getSubterm());
+		mTodo.addLast("(! ");
 	}
 }

@@ -32,14 +32,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 
 public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	
-	private NestedWord<LETTER> m_NestedWord;
-	private ArrayList<STATE> m_StateSequence;
+	private NestedWord<LETTER> mNestedWord;
+	private ArrayList<STATE> mStateSequence;
 	
 	public NestedRun(NestedWord<LETTER> nw,
 					ArrayList<STATE> stateSequence) {
 		if (nw.length()+1 == stateSequence.size()) {
-			this.m_NestedWord = nw;
-			this.m_StateSequence = stateSequence;
+			this.mNestedWord = nw;
+			this.mStateSequence = stateSequence;
 		}
 		else {
 			throw new IllegalArgumentException("In a run the length of the" +
@@ -52,12 +52,13 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	 */
 
 	public NestedRun(STATE state) {
-		m_StateSequence = new ArrayList<STATE>(1);
-		m_StateSequence.add(state);
+		mStateSequence = new ArrayList<STATE>(1);
+		mStateSequence.add(state);
 		@SuppressWarnings("unchecked")
+		final
 		LETTER[] word =  (LETTER[])new Object[] { };
-		int[] nestingRelation = {};
-		m_NestedWord = new NestedWord<LETTER>(word, nestingRelation);
+		final int[] nestingRelation = {};
+		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
 	}
 
 	/**
@@ -73,31 +74,34 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 			throw new IllegalArgumentException();
 		}
 		@SuppressWarnings("unchecked")
+		final
 		LETTER[] word = (LETTER[])new Object[] {symbol};
-		int[] nestingRelation = { position };
-		m_NestedWord = new NestedWord<LETTER>(word,nestingRelation);
-		m_StateSequence = new ArrayList<STATE>(2);
-		m_StateSequence.add(q0);
-		m_StateSequence.add(q1);
+		final int[] nestingRelation = { position };
+		mNestedWord = new NestedWord<LETTER>(word,nestingRelation);
+		mStateSequence = new ArrayList<STATE>(2);
+		mStateSequence.add(q0);
+		mStateSequence.add(q1);
 	}
 	
 		
 	
+	@Override
 	public NestedWord<LETTER> getWord() {
-		return this.m_NestedWord;
+		return this.mNestedWord;
 	}
 	
 	
 	public ArrayList<STATE> getStateSequence() {
-		return this.m_StateSequence;
+		return this.mStateSequence;
 	}
 	
 	
 	/**
 	 * Length of this runs state sequence.
 	 */	
+	@Override
 	public int getLength() {
-		return this.m_StateSequence.size();
+		return this.mStateSequence.size();
 	}
 		
 	/**
@@ -106,7 +110,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isCallPosition(int)
 	 */
 	public boolean isCallPosition(int i) {
-		return m_NestedWord.isCallPosition(i);
+		return mNestedWord.isCallPosition(i);
 	}
 
 	
@@ -117,7 +121,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isInternalPosition(int)
 	 */
 	public boolean isInternalPosition(int i) {
-		return m_NestedWord.isInternalPosition(i);
+		return mNestedWord.isInternalPosition(i);
 	}
 
 	/**
@@ -126,7 +130,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isReturnPosition(int)
 	 */
 	public boolean isReturnPosition(int i) {
-		return m_NestedWord.isReturnPosition(i);
+		return mNestedWord.isReturnPosition(i);
 	}
 
 	/**
@@ -135,19 +139,19 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isPendingCall(int)
 	 */
 	public boolean isPendingCall(int i) {
-		return m_NestedWord.isPendingCall(i);
+		return mNestedWord.isPendingCall(i);
 	}
 
 	public NestedRun<LETTER,STATE> concatenate(NestedRun<LETTER,STATE> run) {
-		STATE lastStateOfThis = m_StateSequence.get(m_StateSequence.size()-1);
-		STATE firstStateOfRun = run.m_StateSequence.get(0);
+		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size()-1);
+		final STATE firstStateOfRun = run.mStateSequence.get(0);
 		
 		if (lastStateOfThis.equals(firstStateOfRun)) {
 	
-		NestedWord<LETTER> concatNestedWord =
-			m_NestedWord.concatenate(run.getWord());
-			ArrayList<STATE> concatStateSeq =
-					new ArrayList<STATE>(m_StateSequence);
+		final NestedWord<LETTER> concatNestedWord =
+			mNestedWord.concatenate(run.getWord());
+			final ArrayList<STATE> concatStateSeq =
+					new ArrayList<STATE>(mStateSequence);
 			for (int i=1; i<run.getStateSequence().size(); i++) {
 				concatStateSeq.add(run.getStateSequence().get(i));
 			}
@@ -164,30 +168,32 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 
 	
 	public STATE getStateAtPosition(int i) {
-		return m_StateSequence.get(i);
+		return mStateSequence.get(i);
 	}
 	
+	@Override
 	public LETTER getSymbol(int i) {
-		return m_NestedWord.getSymbolAt(i);
+		return mNestedWord.getSymbolAt(i);
 	}
 	
 
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i<m_NestedWord.length(); i++) {
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i<mNestedWord.length(); i++) {
 			sb.append(getStateAtPosition(i) + " ");
-			if (m_NestedWord.isInternalPosition(i)) {
-				sb.append(m_NestedWord.getSymbolAt(i)+" ");
+			if (mNestedWord.isInternalPosition(i)) {
+				sb.append(mNestedWord.getSymbolAt(i)+" ");
 			}
-			else if (m_NestedWord.isCallPosition(i)) {
-				sb.append(m_NestedWord.getSymbolAt(i)+"< ");
+			else if (mNestedWord.isCallPosition(i)) {
+				sb.append(mNestedWord.getSymbolAt(i)+"< ");
 			}
-			else if (m_NestedWord.isReturnPosition(i)) {
-				sb.append(">" + m_NestedWord.getSymbolAt(i) + " ");
+			else if (mNestedWord.isReturnPosition(i)) {
+				sb.append(">" + mNestedWord.getSymbolAt(i) + " ");
 			}
 		}
-		sb.append(getStateAtPosition(m_StateSequence.size()-1) + " ");
+		sb.append(getStateAtPosition(mStateSequence.size()-1) + " ");
 		return sb.toString();
 	}
 	

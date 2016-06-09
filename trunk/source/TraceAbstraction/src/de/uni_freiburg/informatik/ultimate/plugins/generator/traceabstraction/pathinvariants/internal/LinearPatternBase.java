@@ -65,7 +65,7 @@ public final class LinearPatternBase {
 	public LinearPatternBase(final Script solver,
 			final Collection<RankVar> variables, final String prefix,
 			boolean strict) {
-		this.function = new AffineFunctionGenerator(solver, variables, prefix);
+		function = new AffineFunctionGenerator(solver, variables, prefix);
 		this.strict = strict;
 	}
 
@@ -110,9 +110,9 @@ public final class LinearPatternBase {
 	}
 	
 	/**
-	 * Returns the affine function \sum_i a_ix_i corresponding to the
-	 * linear inequality \sum_i a_ix_i < b (for strict linear inequalities)
-	 * or \sum_i a_ix_i \le b (for non-strict linear inequalites).
+	 * Returns the affine function \sumi a_ix_i corresponding to the
+	 * linear inequality \sumi a_ix_i < b (for strict linear inequalities)
+	 * or \sumi a_ix_i \le b (for non-strict linear inequalites).
 	 * In addition variables given in the valuation are valuated with
 	 * given values
 	 * @param valuation the valuation (map for TermVariables to Rational)

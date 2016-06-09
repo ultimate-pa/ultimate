@@ -52,21 +52,21 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 
 	@SuppressWarnings("unused")
 	public <E, V> SizeBenchmark(NestedWordAutomaton<E, V> nwa, String label) {
-		Collection<V> states = nwa.getStates();
+		final Collection<V> states = nwa.getStates();
 		int edges = 0;
 		int locs = 0;
-		for (V state : states) {
+		for (final V state : states) {
 			++locs;
-			for (OutgoingInternalTransition<E, V> out : nwa.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<E, V> out : nwa.internalSuccessors(state)) {
 				++edges;
 			}
-			for (OutgoingCallTransition<E, V> out : nwa.callSuccessors(state)) {
+			for (final OutgoingCallTransition<E, V> out : nwa.callSuccessors(state)) {
 				++edges;
 			}
-			for (OutgoingReturnTransition<E, V> out : nwa.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<E, V> out : nwa.returnSuccessors(state)) {
 				++edges;
 			}
-			for (SummaryReturnTransition<E, V> out : nwa.returnSummarySuccessor(state)) {
+			for (final SummaryReturnTransition<E, V> out : nwa.returnSummarySuccessor(state)) {
 				++edges;
 			}
 		}
@@ -76,14 +76,14 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 	}
 
 	public SizeBenchmark(RootNode root, String label) {
-		ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		HashSet<RCFGEdge> closedE = new HashSet<>();
-		HashSet<RCFGNode> closedV = new HashSet<>();
+		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
+		final HashSet<RCFGEdge> closedE = new HashSet<>();
+		final HashSet<RCFGNode> closedV = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			RCFGEdge current = edges.removeFirst();
+			final RCFGEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
@@ -94,7 +94,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			}
 			
 			closedV.add(current.getTarget());
-			for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+			for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}
@@ -106,15 +106,15 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 
 	@Override
 	public ICsvProvider<Integer> createCvsProvider() {
-		List<String> columnTitles = new ArrayList<>();
+		final List<String> columnTitles = new ArrayList<>();
 		columnTitles.add(mLabel + " Locations");
 		columnTitles.add(mLabel + " Edges");
 
-		List<Integer> row = new ArrayList<>();
+		final List<Integer> row = new ArrayList<>();
 		row.add(mLocations);
 		row.add(mEdges);
 
-		SimpleCsvProvider<Integer> rtr = new SimpleCsvProvider<>(columnTitles);
+		final SimpleCsvProvider<Integer> rtr = new SimpleCsvProvider<>(columnTitles);
 		rtr.addRow(row);
 		return rtr;
 	}

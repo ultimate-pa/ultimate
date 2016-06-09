@@ -3,8 +3,9 @@ Bundle-ManifestVersion: 2
 Bundle-Name: AutomataScriptParser
 Bundle-SymbolicName: AutomataScriptParser;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.Activator
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ Library-UltimateModel,
+ UltimateCore,
  Library-log4j,
  JavaCup,
  de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1"

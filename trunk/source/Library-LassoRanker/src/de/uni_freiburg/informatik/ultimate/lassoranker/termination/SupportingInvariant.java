@@ -56,18 +56,18 @@ public class SupportingInvariant extends AffineFunction {
 	 * Construct a supporting invariant from an AffineFunction
 	 */
 	public SupportingInvariant(AffineFunction f) {
-		m_coefficients.putAll(f.m_coefficients);
-		m_constant = f.m_constant;
+		mcoefficients.putAll(f.mcoefficients);
+		mconstant = f.mconstant;
 	}
 	
 	/**
 	 * Check whether this supporting invariant is equivalent to false.
 	 */
 	public boolean isFalse() {
-		if (!m_coefficients.isEmpty()) {
+		if (!mcoefficients.isEmpty()) {
 			return false;
 		}
-		int cmp = m_constant.compareTo(BigInteger.ZERO);
+		final int cmp = mconstant.compareTo(BigInteger.ZERO);
 		return (cmp <= 0 && strict) || (cmp < 0 && !strict);
 	}
 	
@@ -75,16 +75,16 @@ public class SupportingInvariant extends AffineFunction {
 	 * Check whether this supporting invariant is equivalent to true.
 	 */
 	public boolean isTrue() {
-		if (!m_coefficients.isEmpty()) {
+		if (!mcoefficients.isEmpty()) {
 			return false;
 		}
-		int cmp = m_constant.compareTo(BigInteger.ZERO);
+		final int cmp = mconstant.compareTo(BigInteger.ZERO);
 		return (cmp > 0 && strict) || (cmp >= 0 && !strict);
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(super.toString());
 		sb.append(strict ? " > 0" : " >= 0");
 		return sb.toString();
@@ -92,7 +92,7 @@ public class SupportingInvariant extends AffineFunction {
 	
 	@Override
 	public Term asTerm(Script script) throws SMTLIBException {
-		Term t = super.asTerm(script);
+		final Term t = super.asTerm(script);
 		return script.term(strict ? ">" : ">=", t,
 				script.numeral(BigInteger.ZERO));
 	}

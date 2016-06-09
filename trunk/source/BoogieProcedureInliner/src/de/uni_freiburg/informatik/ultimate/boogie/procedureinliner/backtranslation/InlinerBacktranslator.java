@@ -35,26 +35,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.IToString;
-import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
  * Backtranslates an inlined boogie program.
@@ -63,16 +62,16 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult;
  */
 public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 
-	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	/**
 	 * Backtranslation mapping for statements, specifications (and expressions, for trace element step). If there is no
 	 * mapping for a node, then it wasn't affected by the inlining process.
 	 */
-	private Map<BoogieASTNode, BackTransValue> mBackTransMap = new HashMap<>();
+	private final Map<BoogieASTNode, BackTransValue> mBackTransMap = new HashMap<>();
 
-	private ExpressionBacktranslation mExprBackTrans = new ExpressionBacktranslation();
+	private final ExpressionBacktranslation mExprBackTrans = new ExpressionBacktranslation();
 
 	public InlinerBacktranslator(IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
@@ -93,8 +92,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 
 	// Does not need to preserve instances
 	public Collection<Expression> translateExpressions(Collection<Expression> exprs) {
-		Collection<Expression> translatedExprs = new ArrayList<>();
-		for (Expression expr : exprs) {
+		final Collection<Expression> translatedExprs = new ArrayList<>();
+		for (final Expression expr : exprs) {
 			translatedExprs.add(translateExpression(expr));
 		}
 		return translatedExprs;
@@ -109,14 +108,14 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	// Should preserve instances
 	@Override
 	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
-		Set<CallStatement> knownCalls = new HashSet<>();
-		List<BoogieASTNode> translatedTrace = new ArrayList<>();
-		CallReinserter callReinserter = new CallReinserter();
+		final Set<CallStatement> knownCalls = new HashSet<>();
+		final List<BoogieASTNode> translatedTrace = new ArrayList<>();
+		final CallReinserter callReinserter = new CallReinserter();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
-		for (BoogieASTNode traceElem : trace) {
+		for (final BoogieASTNode traceElem : trace) {
 			AtomicTraceElement<BoogieASTNode> atomicTraceElem;
 			if (traceElem instanceof CallStatement) {
-				CallStatement call = (CallStatement) traceElem;
+				final CallStatement call = (CallStatement) traceElem;
 				if (knownCalls.contains(call)) {
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
@@ -125,16 +124,16 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 			} else {
 				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider, null);
 			}
-			BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
-			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
+			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
+			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
 					.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
-			for (AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
+			for (final AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}
 			if (traceElemMapping == null) {
 				translatedTrace.add(traceElem);
 			} else {
-				BoogieASTNode originalNode = traceElemMapping.getOriginalNode();
+				final BoogieASTNode originalNode = traceElemMapping.getOriginalNode();
 				if (originalNode != null) {
 					translatedTrace.add(originalNode);
 				}
@@ -143,24 +142,25 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		return translatedTrace;
 	}
 
+	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> exec) {
 		final int length = exec.getLength();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
-		CallReinserter callReinserter = new CallReinserter();
-		Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
-		List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
+		final CallReinserter callReinserter = new CallReinserter();
+		final Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
+		final List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
 		for (int i = 0; i < length; ++i) {
-			AtomicTraceElement<BoogieASTNode> traceElem = exec.getTraceElement(i);
-			BackTransValue traceElemMapping = mBackTransMap.get(traceElem.getTraceElement());
+			final AtomicTraceElement<BoogieASTNode> traceElem = exec.getTraceElement(i);
+			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem.getTraceElement());
 			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(traceElem, traceElemMapping));
 			if (traceElemMapping == null) {
 				translatedTrace.add(traceElem); // traceElem wasn't affected by
 												// inlining
 			} else {
-				BoogieASTNode translatedTraceElem = traceElemMapping.getOriginalNode();
+				final BoogieASTNode translatedTraceElem = traceElemMapping.getOriginalNode();
 				if (translatedTraceElem != null) {
-					BackTransValue stepMapping = mBackTransMap.get(traceElem.getStep());
+					final BackTransValue stepMapping = mBackTransMap.get(traceElem.getStep());
 					BoogieASTNode translatedStep;
 					if (stepMapping == null || stepMapping.getOriginalNode() == null) {
 						translatedStep = translatedTraceElem;
@@ -174,13 +174,13 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 								// makes no sense, without Statement)
 				}
 			}
-			ProgramState<Expression> progState = exec.getProgramState(i);
+			final ProgramState<Expression> progState = exec.getProgramState(i);
 			if (progState != null) {
-				Set<String> inlinedActiveProcs = callReinserter.unreturnedInlinedProcedures();
-				Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
-				for (Expression variable : progState.getVariables()) {
+				final Set<String> inlinedActiveProcs = callReinserter.unreturnedInlinedProcedures();
+				final Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
+				for (final Expression variable : progState.getVariables()) {
 					mExprBackTrans.setInlinedActiveProcedures(inlinedActiveProcs);
-					Expression translatedVar = mExprBackTrans.processExpression(variable);
+					final Expression translatedVar = mExprBackTrans.processExpression(variable);
 					if (mExprBackTrans.processedExprWasActive()) {
 						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));
 					}
@@ -188,7 +188,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 				translatedStates.put(translatedTrace.size() - 1, new ProgramState<>(translatedVar2Values));
 			}
 		}
-		BoogieProgramExecution translatedExec = new BoogieProgramExecution(translatedStates, translatedTrace);
+		final BoogieProgramExecution translatedExec = new BoogieProgramExecution(translatedStates, translatedTrace);
 		return translatedExec;
 	}
 
@@ -199,8 +199,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 
 	@Override
 	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
-		List<String> rtr = new ArrayList<>();
-		for (BoogieASTNode node : trace) {
+		final List<String> rtr = new ArrayList<>();
+		for (final BoogieASTNode node : trace) {
 			if (node instanceof Statement) {
 				rtr.add(BoogiePrettyPrinter.print((Statement) node));
 			} else {

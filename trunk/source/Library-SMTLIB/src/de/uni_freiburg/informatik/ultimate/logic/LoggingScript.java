@@ -103,12 +103,13 @@ public class LoggingScript implements Script {
 		throws FileNotFoundException {
 		mScript = script;
 		OutputStream out;
-		if (file.equals("<stdout>"))
+		if (file.equals("<stdout>")) {
 			out = System.out;
-		else if (file.equals("<stderr>"))
+		} else if (file.equals("<stderr>")) {
 			out = System.err;
-		else
+		} else {
 			out = new FileOutputStream(file);
+		}
 		mPw = new PrintWriter(
 				new BufferedWriter(new OutputStreamWriter(out)), autoFlush);
 		mLetter = useCSE ? new FormulaLet() : null;
@@ -170,7 +171,7 @@ public class LoggingScript implements Script {
 		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(" (");
 		String sep = "";
-		for (Sort p : sortParams) {
+		for (final Sort p : sortParams) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, p);
 			sep = " ";
@@ -188,7 +189,7 @@ public class LoggingScript implements Script {
 		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "";
-		for (Sort p : paramSorts) {
+		for (final Sort p : paramSorts) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, p);
 			sep = " ";
@@ -206,7 +207,7 @@ public class LoggingScript implements Script {
 		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "(";
-		for (TermVariable t : params) {
+		for (final TermVariable t : params) {
 			mPw.print(sep);
 			mPw.print(t);
 			mPw.print(' ');
@@ -273,7 +274,7 @@ public class LoggingScript implements Script {
 			UnsupportedOperationException {
 		mPw.print("(get-value (");
 		String sep = "";
-		for (Term t : terms) {
+		for (final Term t : terms) {
 			mPw.print(sep);
 			mTermPrinter.append(mPw, formatTerm(t));
 			sep = " ";
@@ -319,7 +320,7 @@ public class LoggingScript implements Script {
 	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
 			UnsupportedOperationException {
 		mPw.print("(get-interpolants");
-		for (Term t : partition) {
+		for (final Term t : partition) {
 			mPw.print(' ');
 			mTermPrinter.append(mPw, t);
 		}
@@ -342,8 +343,9 @@ public class LoggingScript implements Script {
 				prevStart = startOfSubtree[prevStart - 1];
 			}
 			mPw.print(' ');
-			if (startOfSubtree[i] == i)
+			if (startOfSubtree[i] == i) {
 				mPw.print('(');
+			}
 			mTermPrinter.append(mPw, partition[i]);
 		}
 		mPw.println(')');
@@ -454,10 +456,10 @@ public class LoggingScript implements Script {
 	@Override
 	public Iterable<Term[]> checkAllsat(Term[] predicates)
 		throws SMTLIBException,	UnsupportedOperationException {
-		PrintTerm pt = new PrintTerm();
+		final PrintTerm pt = new PrintTerm();
 		mPw.print("(check-allsat (");
 		String spacer = "";
-		for (Term p : predicates) {
+		for (final Term p : predicates) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";
@@ -468,17 +470,17 @@ public class LoggingScript implements Script {
 
 	@Override
 	public Term[] findImpliedEquality(Term[] x, Term[] y) {
-		PrintTerm pt = new PrintTerm();
+		final PrintTerm pt = new PrintTerm();
 		mPw.print("(find-implied-equality (");
 		String spacer = "";
-		for (Term p : x) {
+		for (final Term p : x) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";
 		}
 		mPw.print(") (");
 		spacer = "";
-		for (Term p : x) {
+		for (final Term p : x) {
 			mPw.print(spacer);
 			pt.append(mPw, p);
 			spacer = " ";

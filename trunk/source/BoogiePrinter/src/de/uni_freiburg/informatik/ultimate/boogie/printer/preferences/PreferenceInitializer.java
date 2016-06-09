@@ -27,12 +27,28 @@
 package de.uni_freiburg.informatik.ultimate.boogie.printer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.printer.Activator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String SAVE_IN_SOURCE_DIRECTORY_LABEL = "Save file in source directory?";
+	private static final boolean SAVE_IN_SOURCE_DIRECTORY_DEFAULT = false;
+
+	public static final String UNIQUE_NAME_LABEL = "Use automatic naming?";
+	private static final boolean UNIQUE_NAME_DEFAULT = false;
+
+	public static final String DUMP_PATH_LABEL = "Dump path:";
+	private static final String DUMP_PATH_DEFAULT = System
+			.getProperty("java.io.tmpdir");
+
+	public static final String FILE_NAME_LABEL = "File name:";
+	private static final String FILE_NAME_DEFAULT = "boogiePrinter.bpl";
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -45,56 +61,12 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(
 						SAVE_IN_SOURCE_DIRECTORY_LABEL,
 						SAVE_IN_SOURCE_DIRECTORY_DEFAULT,
-						PreferenceType.Boolean), 
-						new UltimatePreferenceItem<Boolean>(
-								UNIQUE_NAME_LABEL,
-								UNIQUE_NAME_DEFAULT,
-								PreferenceType.Boolean), 
-								
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						UNIQUE_NAME_LABEL,
+						UNIQUE_NAME_DEFAULT,
+						PreferenceType.Boolean),
+
 		};
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "Boogie Printer";
-	}
-
-	public static String getDumpPath() {
-		return new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getString(DUMP_PATH_LABEL);
-	}
-
-	public static String getFilename() {
-		return new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getString(FILE_NAME_LABEL);
-	}
-
-	public static boolean getUseUniqueFilename() {
-		return new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getBoolean(UNIQUE_NAME_LABEL);
-	}
-
-	public static boolean getSaveInSourceDirectory() {
-		return new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getBoolean(SAVE_IN_SOURCE_DIRECTORY_LABEL);
-	}
-
-	private static final String SAVE_IN_SOURCE_DIRECTORY_LABEL = "Save file in source directory?";
-	private static final boolean SAVE_IN_SOURCE_DIRECTORY_DEFAULT = false;
-
-	private static final String UNIQUE_NAME_LABEL = "Use automatic naming?";
-	private static final boolean UNIQUE_NAME_DEFAULT = false;
-
-	private static final String DUMP_PATH_LABEL = "Dump path:";
-	private static final String DUMP_PATH_DEFAULT = System
-			.getProperty("java.io.tmpdir");
-
-	private static final String FILE_NAME_LABEL = "File name:";
-	private static final String FILE_NAME_DEFAULT = "boogiePrinter.bpl";
-
 }

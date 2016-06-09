@@ -29,17 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -55,9 +53,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	private RootNode mGraphroot;
 
 	/**
-	 * Logger for this plugin.
+	 * ILogger for this plugin.
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -86,20 +84,21 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * 
 	 * @throws IOException
 	 */
+	@Override
 	public boolean process(IElement root) throws IOException {
 		if (!(root instanceof Unit)) {
 			// TODO
 			mLogger.debug("No WrapperNode. Let Ultimate process with next node");
 			return true;
 		} else {
-			Unit unit = (Unit) root;
+			final Unit unit = (Unit) root;
 			final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
 			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
 				mGraphroot = recCFGBuilder.getRootNode(unit);
 				ModelUtils.copyAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
-			} catch (SMTLIBException e) {
+			} catch (final SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
 					mLogger.warn("Unsupported syntax: " + e.getMessage());
 				} else if (e.getMessage().equals("Sort Array not declared")) {
@@ -118,12 +117,6 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	public void finish() {
 		// TODO Auto-generated method stub
 
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

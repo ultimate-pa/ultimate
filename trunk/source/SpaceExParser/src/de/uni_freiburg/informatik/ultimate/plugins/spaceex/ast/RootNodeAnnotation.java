@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 
 public class RootNodeAnnotation extends AbstractAnnotations {
 
@@ -38,8 +38,8 @@ public class RootNodeAnnotation extends AbstractAnnotations {
 
 	private static final String[] sFieldNames = { "Math", "Version" };
 
-	private String mMath;
-	private String mVersion;
+	private final String mMath;
+	private final String mVersion;
 	
 	public RootNodeAnnotation(String math, String version) {
 		mMath = math;

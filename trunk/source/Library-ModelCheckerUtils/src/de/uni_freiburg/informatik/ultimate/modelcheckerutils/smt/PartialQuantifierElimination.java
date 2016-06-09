@@ -31,11 +31,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -44,10 +44,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
@@ -69,8 +73,31 @@ public class PartialQuantifierElimination {
 	static final boolean USE_TIR = true;
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = !true;
-	private static boolean m_PushPull = true;
+	private static boolean mPushPull = true;
 	
+	
+	public static Term tryToEliminate(IUltimateServiceProvider services, ILogger logger, Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
+		final Term withoutIte = (new IteRemover(script)).transform(term);
+		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
+		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(nnf);
+		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
+		final QuantifierSequence qs = new QuantifierSequence(script, pnf);
+		final Term matrix = qs.getInnerTerm();
+		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
+		Term result = matrix;
+//		if (qvs.size() > 1) {
+//			throw new AssertionError("Attention!!! quantifier alternation " + qvs.size());
+//		}
+		for (int i=qvs.size()-1; i >= 0; i--) {
+			final QuantifiedVariables qv = qvs.get(i);
+			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
+			result = elim(script, qv.getQuantifier(), eliminatees, result, services, logger, freshTermVariableConstructor);
+			result = SmtUtils.quantifier(script, qv.getQuantifier(), eliminatees, result);
+			result = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(result);
+		}
+		return result;
+	}
 	
 	/**
 	 * Compose term with outer operation of a XNF.
@@ -152,7 +179,7 @@ public class PartialQuantifierElimination {
 	 * @param services
 	 * @param logger
 	 */
-	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, 
+	public static Term quantifier(IUltimateServiceProvider services, ILogger logger, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, int quantifier,
 			final Collection<TermVariable> vars, final Term body, Term[]... patterns) {
 		Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
@@ -160,15 +187,16 @@ public class PartialQuantifierElimination {
 			return body;
 		}
 		Term elim = body;
-		if (m_PushPull ) {
-			int quantBefore = varSet.size();
+		if (mPushPull ) {
+			final int quantBefore = varSet.size();
 			//		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
 			elim = elimPushPull(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+//			return elim;
 			if (elim instanceof QuantifiedFormula) {
-				QuantifiedFormula qf = (QuantifiedFormula) elim;
+				final QuantifiedFormula qf = (QuantifiedFormula) elim;
 				varSet = new HashSet<TermVariable>(Arrays.asList(qf.getVariables()));
 				elim = qf.getSubformula();
-				int quantAfterwards = varSet.size();
+				final int quantAfterwards = varSet.size();
 //				logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
 			} else {
 //				logger.warn("push-pull eliminated " + quantBefore);
@@ -176,8 +204,8 @@ public class PartialQuantifierElimination {
 			}
 		}
 		try {
-		 elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
-		} catch (ToolchainCanceledException tce) {
+			elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(PartialQuantifierElimination.class,
 						tce.getRunningTaskInfo() + " during partial quantifier elimination");
 		}
@@ -189,9 +217,9 @@ public class PartialQuantifierElimination {
 	}
 	
 	private static Set<TermVariable> constructIntersectionWithFreeVars(Collection<TermVariable> vars, Term term) {
-		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
-		Set<TermVariable> occurringVars = new HashSet<>();
-		for (TermVariable tv : vars) {
+		final Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		final Set<TermVariable> occurringVars = new HashSet<>();
+		for (final TermVariable tv : vars) {
 			if (freeVars.contains(tv)) {
 				occurringVars.add(tv);
 			}
@@ -200,26 +228,27 @@ public class PartialQuantifierElimination {
 	}
 
 	public static Term elimPushPull(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			IUltimateServiceProvider services, Logger logger, 
+			IUltimateServiceProvider services, ILogger logger, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		final Term withoutIte = (new IteRemover(script)).transform(term);
-		final Term nnf = new Nnf(script, services, freshTermVariableConstructor).transform(withoutIte); 
+		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(quantified);
 		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
-		final Term pnf = new Nnf(script, services, freshTermVariableConstructor).transform(pushed);
+//		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
+		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
 		return pnf;
 	}
 
 	
 
 	public static Term elim(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			IUltimateServiceProvider services, Logger logger, 
+			IUltimateServiceProvider services, ILogger logger, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
-		Iterator<TermVariable> it = eliminatees.iterator();
+		final Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
-			TermVariable tv = it.next();
+			final TermVariable tv = it.next();
 			if (!occuringVars.contains(tv)) {
 				it.remove();
 			}
@@ -232,30 +261,30 @@ public class PartialQuantifierElimination {
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(script)).transform(term);
 		result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result);
-		if (result instanceof QuantifiedFormula) {
-			QuantifiedFormula qf = (QuantifiedFormula) result;
-			if (qf.getQuantifier() != quantifier) {
-				throw new UnsupportedOperationException("quantifier alternation unsupported! input: " + result);
-			}
-			eliminatees.addAll(Arrays.asList(qf.getVariables()));
-			result = qf.getSubformula();
-		}
+//		if (result instanceof QuantifiedFormula) {
+//			QuantifiedFormula qf = (QuantifiedFormula) result;
+//			if (qf.getQuantifier() != quantifier) {
+//				throw new UnsupportedOperationException("quantifier alternation unsupported! input: " + result);
+//			}
+//			eliminatees.addAll(Arrays.asList(qf.getVariables()));
+//			result = qf.getSubformula();
+//		}
 
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-			XnfDer xnfDer = new XnfDer(script, services);
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
+			final XnfDer xnfDer = new XnfDer(script, services, freshTermVariableConstructor);
+			final Term[] oldParams = getXjunctsOuter(quantifier, result);
+			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesDER = new HashSet<TermVariable>(eliminatees);
-				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				final Set<TermVariable> eliminateesDER = new HashSet<TermVariable>(eliminatees);
+				final Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
 				newParams[i] = composeXjunctsInner(script, quantifier, 
 						xnfDer.tryToEliminate(quantifier, oldAtoms, eliminateesDER));
 			}
 			termAfterDER = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterDER;
-			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>(eliminatees);
+			final Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>(eliminatees);
 			remainingAfterDER.retainAll(Arrays.asList(result.getFreeVars()));
 			eliminatees.retainAll(remainingAfterDER);
 		}
@@ -267,18 +296,18 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			XnfIrd xnfIRD = new XnfIrd(script, services);
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
+			final XnfIrd xnfIRD = new XnfIrd(script, services);
+			final Term[] oldParams = getXjunctsOuter(quantifier, result);
+			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
-				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				final Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
+				final Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
 				newParams[i] = composeXjunctsInner(script, quantifier, 
 						xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD));
 			}
 			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterIRD;
-			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
+			final Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
 			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
 			eliminatees.retainAll(remainingAfterIRD);
 		}
@@ -291,7 +320,7 @@ public class PartialQuantifierElimination {
 		// apply TIR
 		Term termAfterTIR;
 		if (USE_TIR) {
-			XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor);
+			final XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor);
 			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir, services, freshTermVariableConstructor);
 			result = termAfterTIR;
 			
@@ -305,7 +334,7 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			XnfUpd xnfUpd = new XnfUpd(script, services);
+			final XnfUpd xnfUpd = new XnfUpd(script, services);
 			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, result, xnfUpd, services, freshTermVariableConstructor);
 			result = termAfterUPD;
 		}
@@ -316,12 +345,12 @@ public class PartialQuantifierElimination {
 		final boolean sosChangedTerm;
 		// apply Store Over Select
 		if (USE_SOS) {
-			Set<TermVariable> remainingAndNewAfterSOS = new HashSet<TermVariable>();
+			final Set<TermVariable> remainingAndNewAfterSOS = new HashSet<TermVariable>();
 			Term termAfterSOS;
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
+			final Term[] oldParams = getXjunctsOuter(quantifier, result);
+			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesSOS = new HashSet<TermVariable>(eliminatees);
+				final Set<TermVariable> eliminateesSOS = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services, freshTermVariableConstructor);
 				remainingAndNewAfterSOS.addAll(eliminateesSOS);
 			}
@@ -360,16 +389,16 @@ public class PartialQuantifierElimination {
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : "superficial variables";
 		
 		if (USE_USR) {
-			XnfUsr xnfUsr = new XnfUsr(script, services);
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
+			final XnfUsr xnfUsr = new XnfUsr(script, services);
+			final Term[] oldParams = getXjunctsOuter(quantifier, result);
+			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesUsr = new HashSet<TermVariable>(eliminatees);
-				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				final Set<TermVariable> eliminateesUsr = new HashSet<TermVariable>(eliminatees);
+				final Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
 				newParams[i] = composeXjunctsInner(script, quantifier, 
 						xnfUsr.tryToEliminate(quantifier, oldAtoms, eliminateesUsr));
 			}
-			Term termAfterUsr = composeXjunctsOuter(script, quantifier, newParams);
+			final Term termAfterUsr = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterUsr;
 			if (!xnfUsr.getAffectedEliminatees().isEmpty()) {
 				result = elim(script, quantifier, eliminatees, result, services, logger, freshTermVariableConstructor);
@@ -396,7 +425,7 @@ public class PartialQuantifierElimination {
 		final Term[] oldXjunctsOuter = getXjunctsOuter(quantifier, term);
 		final Term[] newXjunctsOuter = new Term[oldXjunctsOuter.length];
 		for (int i = 0; i < oldXjunctsOuter.length; i++) {
-			HashSet<TermVariable> localEliminatees = constructIntersectionWithFreeVars(eliminatees, oldXjunctsOuter[i]);
+			final HashSet<TermVariable> localEliminatees = constructIntersectionWithFreeVars(eliminatees, oldXjunctsOuter[i]);
 			if (localEliminatees.isEmpty()) {
 				newXjunctsOuter[i] = oldXjunctsOuter[i];
 			} else {
@@ -445,7 +474,7 @@ public class PartialQuantifierElimination {
 	private static HashSet<TermVariable> constructIntersectionWithFreeVars(
 			final Set<TermVariable> vars, final Term term) {
 		final HashSet<TermVariable> result = new HashSet<TermVariable>();
-		for (TermVariable tv : term.getFreeVars()) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			if (vars.contains(tv)) {
 				result.add(tv);
 			}
@@ -454,21 +483,21 @@ public class PartialQuantifierElimination {
 	}
 
 
-	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
+	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, ILogger logger,
 			IUltimateServiceProvider services, IFreshTermVariableConstructor freshTermVariableConstructor) {
 		Term result = term;
-		Set<TermVariable> overallAuxVars = new HashSet<TermVariable>();
-		Iterator<TermVariable> it = eliminatees.iterator();
+		final Set<TermVariable> overallAuxVars = new HashSet<TermVariable>();
+		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
-			TermVariable tv = it.next();
+			final TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
 				// if (quantifier != QuantifiedFormula.EXISTS) {
 				// // return term;
 				// throw new
 				// UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
 				// }
-				Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
-				Term elim = (new ElimStore3(script, freshTermVariableConstructor, services)).elim(quantifier, tv, result, thisIterationAuxVars);
+				final Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
+				final Term elim = (new ElimStore3(script, freshTermVariableConstructor, services)).elim(quantifier, tv, result, thisIterationAuxVars);
 				logger.debug(new DebugMessage("eliminated quantifier via SOS for {0}, additionally introduced {1}", tv,
 						thisIterationAuxVars));
 				overallAuxVars.addAll(thisIterationAuxVars);
@@ -498,7 +527,7 @@ public class PartialQuantifierElimination {
 //	 * 
 //	 * @param logger
 //	 */
-//	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, Logger logger) {
+//	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, ILogger logger) {
 //		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 //		vars.retainAll(occuringVars);
 //		Set<Term> parameters;
@@ -605,8 +634,8 @@ public class PartialQuantifierElimination {
 	public static Term isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
-			LBool isSat = Util.checkSat(script, conjunction);
+			final Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
+			final LBool isSat = Util.checkSat(script, conjunction);
 			if (isSat == LBool.SAT) {
 				return script.term("true");
 			} else if (isSat == LBool.UNSAT) {
@@ -626,8 +655,8 @@ public class PartialQuantifierElimination {
 	public static Term isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
-			LBool isSat = Util.checkSat(script, Util.not(script, disjunction));
+			final Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
+			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
 			if (isSat == LBool.SAT) {
 				return script.term("false");
 			} else if (isSat == LBool.UNSAT) {
@@ -652,13 +681,13 @@ public class PartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	private static Term findEqualTermExists(TermVariable tv, Term term, Logger logger) {
+	private static Term findEqualTermExists(TermVariable tv, Term term, ILogger logger) {
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			FunctionSymbol sym = appTerm.getFunction();
-			Term[] params = appTerm.getParameters();
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final FunctionSymbol sym = appTerm.getFunction();
+			final Term[] params = appTerm.getParameters();
 			if (sym.getName().equals("=")) {
-				int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params, logger);
+				final int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params, logger);
 				if (tvOnOneSideOfEquality == -1) {
 					return null;
 				} else {
@@ -666,8 +695,8 @@ public class PartialQuantifierElimination {
 					return params[tvOnOneSideOfEquality];
 				}
 			} else if (sym.getName().equals("and")) {
-				for (Term param : params) {
-					Term equalTerm = findEqualTermExists(tv, param, logger);
+				for (final Term param : params) {
+					final Term equalTerm = findEqualTermExists(tv, param, logger);
 					if (equalTerm != null) {
 						return equalTerm;
 					}
@@ -686,7 +715,7 @@ public class PartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	private static Term findEqualTermForall(TermVariable tv, Term term, Logger logger) {
+	private static Term findEqualTermForall(TermVariable tv, Term term, ILogger logger) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			FunctionSymbol sym = appTerm.getFunction();
@@ -698,7 +727,7 @@ public class PartialQuantifierElimination {
 					sym = appTerm.getFunction();
 					params = appTerm.getParameters();
 					if (sym.getName().equals("=")) {
-						int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params, logger);
+						final int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params, logger);
 						if (tvOnOneSideOfEquality == -1) {
 							return null;
 						} else {
@@ -712,8 +741,8 @@ public class PartialQuantifierElimination {
 					return null;
 				}
 			} else if (sym.getName().equals("or")) {
-				for (Term param : params) {
-					Term equalTerm = findEqualTermForall(tv, param, logger);
+				for (final Term param : params) {
+					final Term equalTerm = findEqualTermForall(tv, param, logger);
 					if (equalTerm != null) {
 						return equalTerm;
 					}
@@ -740,7 +769,7 @@ public class PartialQuantifierElimination {
 	 * @param logger
 	 * 
 	 */
-	private static int tvOnOneSideOfEquality(TermVariable tv, Term[] params, Logger logger) {
+	private static int tvOnOneSideOfEquality(TermVariable tv, Term[] params, ILogger logger) {
 		if (params.length != 2) {
 			logger.warn("Equality of length " + params.length);
 		}
@@ -764,7 +793,7 @@ public class PartialQuantifierElimination {
 	
 	
 	
-//	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, Logger logger) {
+//	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, ILogger logger) {
 //		Term[] oldParams;
 //		if (quantifier == QuantifiedFormula.EXISTS) {
 //			oldParams = SmtUtils.getConjuncts(term);

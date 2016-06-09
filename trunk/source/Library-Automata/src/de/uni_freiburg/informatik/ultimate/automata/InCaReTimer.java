@@ -28,26 +28,26 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 public class InCaReTimer {
 	
-	private long m_Internal;
-	private long m_Call;
-	private long m_Return;
+	private long mInternal;
+	private final long mCall;
+	private final long mReturn;
 	
-	private long m_StartTime;
+	private long mStartTime;
 	
 	
 	
 
 	public InCaReTimer() {
 		super();
-		m_Internal = 0;
-		m_Call = 0;
-		m_Return = 0;
-		m_StartTime = 0;
+		mInternal = 0;
+		mCall = 0;
+		mReturn = 0;
+		mStartTime = 0;
 	}
 
 	private void run() {
-		assert m_StartTime == 0 : "timer already running";
-		m_StartTime = System.nanoTime();
+		assert mStartTime == 0 : "timer already running";
+		mStartTime = System.nanoTime();
 	}
 	
 	public void runIn() {
@@ -63,45 +63,46 @@ public class InCaReTimer {
 	}
 	
 	public void stopIn() {
-		m_Internal += (System.nanoTime() - m_StartTime);
-		m_StartTime = 0;
+		mInternal += (System.nanoTime() - mStartTime);
+		mStartTime = 0;
 	}
 	
 	public void stopCa() {
-		m_Internal += (System.nanoTime() - m_StartTime);
-		m_StartTime = 0;
+		mInternal += (System.nanoTime() - mStartTime);
+		mStartTime = 0;
 	}
 
 	public void stopRe() {
-		m_Internal += (System.nanoTime() - m_StartTime);
-		m_StartTime = 0;
+		mInternal += (System.nanoTime() - mStartTime);
+		mStartTime = 0;
 	}
 
 	public long getInternal() {
-		return m_Internal;
+		return mInternal;
 	}
 
 	public long getCall() {
-		return m_Call;
+		return mCall;
 	}
 
 	public long getReturn() {
-		return m_Return;
+		return mReturn;
 	}
 	
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time/1000000000;
-		long tenthDigit = (time/100000000) % 10;
+		final long seconds = time/1000000000;
+		final long tenthDigit = (time/100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(prettyprintNanoseconds(m_Internal));
+		final StringBuilder sb = new StringBuilder();
+		sb.append(prettyprintNanoseconds(mInternal));
 		sb.append("In");
-		sb.append(prettyprintNanoseconds(m_Call));
+		sb.append(prettyprintNanoseconds(mCall));
 		sb.append("Ca");
-		sb.append(prettyprintNanoseconds(m_Return));
+		sb.append(prettyprintNanoseconds(mReturn));
 		sb.append("Re");
 		return sb.toString();
 	}

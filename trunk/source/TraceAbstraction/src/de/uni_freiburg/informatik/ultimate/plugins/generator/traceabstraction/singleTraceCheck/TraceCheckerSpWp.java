@@ -38,21 +38,24 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -70,28 +73,28 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	// Forward relevant predicates
-	protected List<IPredicate> m_InterpolantsFp;
+	protected List<IPredicate> mInterpolantsFp;
 	// Backward relevant predicates
-	protected List<IPredicate> m_InterpolantsBp;
+	protected List<IPredicate> mInterpolantsBp;
 
-	private final UnsatCores m_UnsatCores;
-	private final boolean m_LiveVariables;
-	private final static boolean m_useLiveVariablesInsteadOfRelevantVariables = false;
-	private final static boolean m_CollectInformationAboutSizeOfPredicates = true;
+	private final UnsatCores mUnsatCores;
+	private final boolean mLiveVariables;
+	private final static boolean museLiveVariablesInsteadOfRelevantVariables = false;
+	private final static boolean mCollectInformationAboutSizeOfPredicates = true;
 	
 	// We may post-process the forwards predicates, after the backwards predicates has been computed in order 
 	// to potentially eliminate quantifiers. The idea is the following:
 	// If there is a predicate p in the forwards predicates that contains quantifiers and there is an equivalent predicate p' in the backwards 
 	// predicates that is quantifier-free, then we may replace p by p'.
-	private final static boolean m_PostProcess_FP_Predicates = false;
+	private final static boolean mPostProcess_FP_Predicates = false;
 
-	private final boolean m_ConstructForwardInterpolantSequence;
-	private final boolean m_ConstructBackwardInterpolantSequence;
+	private final boolean mConstructForwardInterpolantSequence;
+	private final boolean mConstructBackwardInterpolantSequence;
 
-	private AnnotateAndAssertConjunctsOfCodeBlocks m_AnnotateAndAsserterConjuncts;
+	private AnnotateAndAssertConjunctsOfCodeBlocks mAnnotateAndAsserterConjuncts;
 	
-	private int m_NonLiveVariablesFp = 0;
-	private int m_NonLiveVariablesBp = 0;
+	private int mNonLiveVariablesFp = 0;
+	private int mNonLiveVariablesBp = 0;
 	
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -103,20 +106,20 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManagerTc);
-		m_UnsatCores = unsatCores;
-		m_LiveVariables = useLiveVariables;
+		mUnsatCores = unsatCores;
+		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
 		case ForwardPredicates:
-			m_ConstructForwardInterpolantSequence = true;
-			m_ConstructBackwardInterpolantSequence = false;
+			mConstructForwardInterpolantSequence = true;
+			mConstructBackwardInterpolantSequence = false;
 			break;
 		case BackwardPredicates:
-			m_ConstructForwardInterpolantSequence = false;
-			m_ConstructBackwardInterpolantSequence = true;
+			mConstructForwardInterpolantSequence = false;
+			mConstructBackwardInterpolantSequence = true;
 			break;
 		case FPandBP:
-			m_ConstructForwardInterpolantSequence = true;
-			m_ConstructBackwardInterpolantSequence = true;
+			mConstructForwardInterpolantSequence = true;
+			mConstructBackwardInterpolantSequence = true;
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
@@ -134,35 +137,35 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	@Override
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
-		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
+		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
-		} catch (ToolchainCanceledException tce) {
-			m_Logger.info("Timeout while computing interpolants");
-			m_ToolchainCanceledException = tce;
+		} catch (final ToolchainCanceledException tce) {
+			mLogger.info("Timeout while computing interpolants");
+			mToolchainCanceledException = tce;
 		} finally {
-			m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
+			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		}
-		m_TraceCheckFinished = true;
+		mTraceCheckFinished = true;
 	}
 
 	public boolean forwardsPredicatesComputed() {
-		return m_ConstructForwardInterpolantSequence;
+		return mConstructForwardInterpolantSequence;
 	}
 
 	public boolean backwardsPredicatesComputed() {
-		return m_ConstructBackwardInterpolantSequence;
+		return mConstructBackwardInterpolantSequence;
 	}
 
 	public List<IPredicate> getForwardPredicates() {
-		assert m_InterpolantsFp != null : "Forwards predicates not computed!";
-		return m_InterpolantsFp;
+		assert mInterpolantsFp != null : "Forwards predicates not computed!";
+		return mInterpolantsFp;
 	}
 
 
 	public List<IPredicate> getBackwardPredicates() {
-		assert m_InterpolantsBp != null : "Backwards predicates not computed!";
-		return m_InterpolantsBp;
+		assert mInterpolantsBp != null : "Backwards predicates not computed!";
+		return mInterpolantsBp;
 	}
 
 
@@ -188,40 +191,40 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
 		}
-		Set<Term> unsatCore = new HashSet<Term>(
-				Arrays.asList(m_TcSmtManager.getScript().getUnsatCore()));
+		final Set<Term> unsatCore = new HashSet<Term>(
+				Arrays.asList(mTcSmtManager.getScript().getUnsatCore()));
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications
 		unlockSmtManager();
 		
 		{
-			final int numberOfConjunctsInTrace = m_AnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
+			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
 			final int numberOfConjunctsInUnsatCore;
-			if (m_UnsatCores == UnsatCores.IGNORE) {
+			if (mUnsatCores == UnsatCores.IGNORE) {
 				numberOfConjunctsInUnsatCore = 0;
 			} else {
 				numberOfConjunctsInUnsatCore= unsatCore.size();
 			}
-			m_Logger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
-			m_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
-			((TraceCheckerBenchmarkSpWpGenerator) m_TraceCheckerBenchmarkGenerator).setConjunctsInSSA(
+			mLogger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
+			mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
+			((TraceCheckerBenchmarkSpWpGenerator) mTraceCheckerBenchmarkGenerator).setConjunctsInSSA(
 					numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
 
 		
-		NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
+		final NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core";
 
 		
 		final Set<BoogieVar>[] liveVariables;
-		if (m_useLiveVariablesInsteadOfRelevantVariables) {
+		if (museLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
-			LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
-					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
+			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
+					mNsb.getIndexedVarRepresentative(), mSmtManager, mModifiedGlobals);
 			liveVariables = lvar.getLiveVariables();
 		} else {
 			// computation of live variables whose input takes the unsat core into a account (if applicable)
-			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
+			final RelevantVariables rvar = new RelevantVariables(rtf, mModifiedGlobals);
 			liveVariables = rvar.getRelevantVariables();
 		}
 
@@ -229,85 +232,94 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		int[] sizeOfPredicatesBP = null;
 
 
-		if (m_ConstructForwardInterpolantSequence) {
-			m_Logger.debug("Computing forward predicates...");
+		if (mConstructForwardInterpolantSequence) {
+			mLogger.debug("Computing forward predicates...");
 			try {
-				List<PredicatePostprocessor> postprocs = new ArrayList<>();
-				if (m_LiveVariables) {
+				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
+						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
-				IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
-						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
-						m_Precondition, m_Postcondition, m_PendingContexts, null);
-				m_InterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
-			} catch (ToolchainCanceledException tce) {
+				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
+						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
+						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
+						mPrecondition, mPostcondition, mPendingContexts, null);
+				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
+			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
-			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
-					m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "FP", 
-					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
-			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
-			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, 
+					mTrace, mPrecondition, mPostcondition, mPendingContexts, "FP", 
+					mModifiedGlobals, mLogger, mManagedScript, mVariableManager) : "invalid Hoare triple in FP";
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp);
+			if (mCollectInformationAboutSizeOfPredicates) {
+				sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsFp);
 			}
 		}
 		
-		if (m_ConstructBackwardInterpolantSequence) {
-			m_Logger.debug("Computing backward predicates...");
+		if (mConstructBackwardInterpolantSequence) {
+			mLogger.debug("Computing backward predicates...");
 			try {
-				List<PredicatePostprocessor> postprocs = new ArrayList<>();
-				if (m_LiveVariables) {
+				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
+						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
-				IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
-						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
-						m_Precondition, m_Postcondition, m_PendingContexts, null);
-				m_InterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
-			} catch (ToolchainCanceledException tce) {
+				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
+						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
+						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
+						mPrecondition, mPostcondition, mPendingContexts, null);
+				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
+			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}
-			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
-					m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "BP", 
-					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
-			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
-			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
+			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, 
+					mTrace, mPrecondition, mPostcondition, mPendingContexts, "BP", 
+					mModifiedGlobals, mLogger, mManagedScript, mVariableManager) : "invalid Hoare triple in BP";
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp);
+			if (mCollectInformationAboutSizeOfPredicates) {
+				sizeOfPredicatesBP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsBp);
 			}
 		}
 
 
 		
-		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
+		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
 			// Post-process forwards predicates			
-			if (m_PostProcess_FP_Predicates) {
-				for (int i = 0; i < m_InterpolantsFp.size(); i++) {
-					IPredicate p_old = m_InterpolantsFp.get(i);
-					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula(), p_old.getVars(), p_old.getProcedures());
-					m_InterpolantsFp.set(i, p_new);
+			if (mPostProcess_FP_Predicates) {
+				for (int i = 0; i < mInterpolantsFp.size(); i++) {
+					final IPredicate p_old = mInterpolantsFp.get(i);
+					final IPredicate p_new = mPredicateUnifier.getOrConstructPredicate(p_old.getFormula());
+					mInterpolantsFp.set(i, p_new);
 				}
-				if (m_CollectInformationAboutSizeOfPredicates) {
-					sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
+				if (mCollectInformationAboutSizeOfPredicates) {
+					sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsFp);
 				}
 			}
 		}
 		
-		((TraceCheckerBenchmarkSpWpGenerator) super.m_TraceCheckerBenchmarkGenerator).setPredicateData(
-				sizeOfPredicatesFP, sizeOfPredicatesBP, m_NonLiveVariablesFp, m_NonLiveVariablesBp);
+		((TraceCheckerBenchmarkSpWpGenerator) super.mTraceCheckerBenchmarkGenerator).setPredicateData(
+				sizeOfPredicatesFP, sizeOfPredicatesBP, mNonLiveVariablesFp, mNonLiveVariablesBp);
 
 		// Check the validity of the computed interpolants.
-//		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
-//			checkSPImpliesWP(m_InterpolantsFp, m_InterpolantsBp);
+//		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
+//			checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
 //		}
-		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
-			selectListOFPredicatesFromBothTypes();
-		} else if (m_ConstructForwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsFp.toArray(new IPredicate[m_InterpolantsFp.size()]);
-		} else if (m_ConstructBackwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsBp.toArray(new IPredicate[m_InterpolantsBp.size()]);
+		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
+			final boolean omitMixedSequence = true;
+			if (omitMixedSequence) {
+				mInterpolants = null;
+			} else {
+				selectListOFPredicatesFromBothTypes();
+			}
+		} else if (mConstructForwardInterpolantSequence) {
+			mInterpolants = mInterpolantsFp.toArray(new IPredicate[mInterpolantsFp.size()]);
+		} else if (mConstructBackwardInterpolantSequence) {
+			mInterpolants = mInterpolantsBp.toArray(new IPredicate[mInterpolantsBp.size()]);
 		} else {
 			throw new AssertionError("illegal choice");
 		}
@@ -319,23 +331,23 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private NestedFormulas<TransFormula, IPredicate> constructRelevantTransFormulas(Set<Term> unsatCore) {
 		final NestedFormulas<TransFormula, IPredicate> rtf;
-		if (m_UnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
-					m_ModifiedGlobals, false);
-		} else if (m_UnsatCores == UnsatCores.STATEMENT_LEVEL) {
-			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
-			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
+		if (mUnsatCores == UnsatCores.IGNORE) {
+			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
+					mModifiedGlobals, false);
+		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
+			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
+			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
-			Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(m_Trace, unsatCore,
+			final Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
-					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, m_SmtManager.getBoogie2Smt());
-		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
-					unsatCore, m_ModifiedGlobals, m_SmtManager.getBoogie2Smt(), m_AAA, m_AnnotateAndAsserterConjuncts);
+			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
+					codeBlocksInUnsatCore, mModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
+					oldVarAssignmentAtCallInUnsatCore, mSmtManager.getBoogie2Smt());
+		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
+			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
+					unsatCore, mModifiedGlobals, mSmtManager.getBoogie2Smt(), mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
-			throw new AssertionError("unknown case:" + m_UnsatCores);
+			throw new AssertionError("unknown case:" + mUnsatCores);
 		}
 		return rtf;
 	}
@@ -349,30 +361,35 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * 
 	 */
 	private void selectListOFPredicatesFromBothTypes() {
-		assert m_InterpolantsFp.size() == m_InterpolantsBp.size();
-		m_Interpolants = new IPredicate[m_InterpolantsBp.size()];
+		assert mInterpolantsFp.size() == mInterpolantsBp.size();
+		mInterpolants = new IPredicate[mInterpolantsBp.size()];
 		int i = 0; // position of predicate computed by strongest post-condition
-		int j = m_InterpolantsBp.size(); // position of predicate computed by
+		int j = mInterpolantsBp.size(); // position of predicate computed by
 		// weakest precondition
+		final ContainsQuantifier containsQuantifier = new ContainsQuantifier();
 		while (i != j) {
-			if (!(m_InterpolantsBp.get(j - 1) instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
+			if (!containsQuantifier.containsQuantifier(mInterpolantsBp.get(j - 1).getFormula())) {
+				mInterpolants[j - 1] = mInterpolantsBp.get(j - 1);
 				j--;
-			} else if (!(m_InterpolantsFp.get(i) instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[i] = m_InterpolantsFp.get(i);
+			} else if (!containsQuantifier.containsQuantifier(mInterpolantsFp.get(i).getFormula())) {
+				mInterpolants[i] = mInterpolantsFp.get(i);
 				i++;
 			} else {
-				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp.get(i))
-						.getQuantifiedVariables().size();
-				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp.get(j - 1))
-						.getQuantifiedVariables().size();
-				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
-					m_Interpolants[i] = m_InterpolantsFp.get(i);
-					i++;
-				} else {
-					m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
-					j--;
-				}
+				throw new UnsupportedOperationException("removed in refactoring");
+				// 2016-05-05 Matthias: I deleted BasicPredicateExplicitQuantifier, hence
+				// the following code does not compile any more
+				// fix: Count quantified variables
+//				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) mInterpolantsFp.get(i))
+//						.getQuantifiedVariables().size();
+//				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) mInterpolantsBp.get(j - 1))
+//						.getQuantifiedVariables().size();
+//				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
+//					mInterpolants[i] = mInterpolantsFp.get(i);
+//					i++;
+//				} else {
+//					mInterpolants[j - 1] = mInterpolantsBp.get(j - 1);
+//					j--;
+//				}
 			}
 		}
 	}
@@ -383,13 +400,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * finer granularity.
 	 */
 	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
-		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
-				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, rv,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, true);
+		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
+				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mSmtManager, mModifiedGlobals, rv,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
 		if (tc.getToolchainCancelledExpection() != null) {
 			throw tc.getToolchainCancelledExpection();
 		}
-		boolean result = (tc.isCorrect() == LBool.UNSAT);
+		final boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
 	}
 
@@ -401,22 +418,22 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private Set<IAction> filterOutIrrelevantStatements(NestedWord<? extends IAction> trace, Set<Term> unsat_coresAsSet,
 			boolean[] localVarAssignmentAtCallInUnsatCore, boolean[] oldVarAssignmentAtCallInUnsatCore) {
-		Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
+		final Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
-					&& unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
+					&& unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
 			} else if (trace.isCallPosition(i)
-					&& (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i)) || unsat_coresAsSet
-							.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i)))) {
+					&& (unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getGlobalVarAssignment(i)) || unsat_coresAsSet
+							.contains(mAAA.getAnnotatedSsa().getOldVarAssignment(i)))) {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable
 				// assignments
 				// is in unsat core, if it is Call statement
-				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+				if (unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
 					localVarAssignmentAtCallInUnsatCore[i] = true;
 				}
-				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i))) {
+				if (unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getOldVarAssignment(i))) {
 					oldVarAssignmentAtCallInUnsatCore[i] = true;
 				}
 				// Add the globalVarAssignments to the unsat_core, if it is a
@@ -425,7 +442,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
 			} else {
 				if (trace.getSymbol(i) instanceof Call) {
-					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+					if (unsat_coresAsSet.contains(mAAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
@@ -438,19 +455,22 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	public class LiveVariablesPostprocessor_Forward implements PredicatePostprocessor {
 
-		private final Set<BoogieVar>[] m_RelevantVars;
+		private final Set<BoogieVar>[] mRelevantVars;
 		
 		public LiveVariablesPostprocessor_Forward(Set<BoogieVar>[] relevantVars) {
-			m_RelevantVars = relevantVars;
+			mRelevantVars = relevantVars;
 		}
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
-			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
-					pred.getFormula(), QuantifiedFormula.EXISTS, nonLiveVars);
-			m_NonLiveVariablesFp += nonLiveVars.size();
+			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
+			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
+					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
+			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
+					mSmtManager.getVariableManager()).transform(projectedT);
+			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
+			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
 		
@@ -464,20 +484,23 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	public class LiveVariablesPostprocessor_Backward implements PredicatePostprocessor {
 
-		private final Set<BoogieVar>[] m_RelevantVars;
+		private final Set<BoogieVar>[] mRelevantVars;
 		
 		public LiveVariablesPostprocessor_Backward(Set<BoogieVar>[] relevantVars) {
 			super();
-			m_RelevantVars = relevantVars;
+			mRelevantVars = relevantVars;
 		}
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
-			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
-					pred.getFormula(), QuantifiedFormula.FORALL, nonLiveVars);
-			m_NonLiveVariablesBp += nonLiveVars.size();
+			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
+			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
+					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
+			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
+					mSmtManager.getVariableManager()).transform(projectedT);
+			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
+			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;
 		}
 	}
@@ -486,8 +509,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
-					pred.getFormula(), pred.getVars(), pred.getProcedures());
+			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(
+					pred.getFormula());
 			return unified;
 		}
 		
@@ -504,8 +527,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @see LiveVariables
 	 */
 	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
-		Set<TermVariable> result = new HashSet<TermVariable>();
-		for (BoogieVar bv : p.getVars()) {
+		final Set<TermVariable> result = new HashSet<TermVariable>();
+		for (final BoogieVar bv : p.getVars()) {
 			if (!relevantVars.contains(bv)) {
 				result.add(bv.getTermVariable());
 			}
@@ -525,10 +548,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * the predicates.
 	 */
 	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
-		m_Logger.debug("Checking implication of SP and WP...");
+		mLogger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
-			LBool result = m_SmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
-			m_Logger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
+			final LBool result = mSmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
+			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
 					+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
 			assert (result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";
 		}
@@ -536,11 +559,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
-		if (m_AnnotateAndAsserterConjuncts == null) {
-			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_TcSmtManager, ssa,
-					m_NestedFormulas, m_Logger, m_SmtManager);
+		if (mAnnotateAndAsserterConjuncts == null) {
+			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, ssa,
+					mNestedFormulas, mLogger, mSmtManager);
 		}
-		return m_AnnotateAndAsserterConjuncts;
+		return mAnnotateAndAsserterConjuncts;
 	}
 
 
@@ -561,8 +584,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public Collection<String> getKeys() {
-			ArrayList<String> result = new ArrayList<String>();
-			for (String key : super.getKeys()) {
+			final ArrayList<String> result = new ArrayList<String>();
+			for (final String key : super.getKeys()) {
 				result.add(key);
 			}
 			result.add(s_SizeOfPredicatesFP);
@@ -579,9 +602,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			switch (key) {
 			case s_SizeOfPredicatesFP:
 			case s_SizeOfPredicatesBP:
-				long size1 = (long) value1;
-				long size2 = (long) value2;
-				long result = size1 + size2;
+				final long size1 = (long) value1;
+				final long size2 = (long) value2;
+				final long result = size1 + size2;
 				return result;
 			case s_NumberOfNonLivePredicateFP:
 			case s_NumberOfNonLivePredicateBP:
@@ -596,24 +619,24 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");
 			sb.append(s_ConjunctsInSSA).append(": ");
-			int conjunctsSSA = (int) benchmarkData.getValue(s_ConjunctsInSSA);
+			final int conjunctsSSA = (int) benchmarkData.getValue(s_ConjunctsInSSA);
 			sb.append(conjunctsSSA);
 			sb.append(" ");
 			sb.append(s_ConjunctsInUnsatCore).append(": ");
-			int conjunctsUC = (int) benchmarkData.getValue(s_ConjunctsInUnsatCore);
+			final int conjunctsUC = (int) benchmarkData.getValue(s_ConjunctsInUnsatCore);
 			sb.append(conjunctsUC);
 			sb.append("\t");
-			long sizeOfPredicatesFP = (long) benchmarkData.getValue(s_SizeOfPredicatesFP);
+			final long sizeOfPredicatesFP = (long) benchmarkData.getValue(s_SizeOfPredicatesFP);
 			sb.append("Size of predicates FP: " + sizeOfPredicatesFP + " ");
-			long sizeOfPredicatesBP = (long) benchmarkData.getValue(s_SizeOfPredicatesBP);
+			final long sizeOfPredicatesBP = (long) benchmarkData.getValue(s_SizeOfPredicatesBP);
 			sb.append("Size of predicates BP: " + sizeOfPredicatesBP + " ");
-			int numberOfNonLivePredicateFP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateFP);
+			final int numberOfNonLivePredicateFP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateFP);
 			sb.append("Non-live variables FP: " + numberOfNonLivePredicateFP + " ");
-			int numberOfNonLivePredicateBP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateBP);
+			final int numberOfNonLivePredicateBP = (int) benchmarkData.getValue(s_NumberOfNonLivePredicateBP);
 			sb.append("Non-live variables BP: " + numberOfNonLivePredicateBP + " ");
 			return sb.toString();
 		}
@@ -625,17 +648,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements
 	IStatisticsDataProvider {
-		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of
+		// mNumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of
 		// predicates computed via FP
-		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of
+		// mNumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of
 		// predicates computed via BP
-		private long[] m_SizeOfPredicates = new long[2];
+		private long[] mSizeOfPredicates = new long[2];
 		
-		private int m_NumberOfNonLiveVariablesFP = -1;
-		private int m_NumberOfNonLiveVariablesBP = -1;
+		private int mNumberOfNonLiveVariablesFP = -1;
+		private int mNumberOfNonLiveVariablesBP = -1;
 
-		private int m_ConjunctsInSSA;
-		private int m_ConjunctsInUC;
+		private int mConjunctsInSSA;
+		private int mConjunctsInUC;
 
 		@Override
 		public String[] getStopwatches() {
@@ -644,26 +667,26 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		public void setPredicateData(int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP,
 				int numberOfNonLiveVariablesFP, int numberOfNonLiveVariablesBP) {
-			m_SizeOfPredicates = new long[2];
+			mSizeOfPredicates = new long[2];
 			if (sizeOfPredicatesFP != null) {
-				m_SizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
+				mSizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
 			} else {
-				m_SizeOfPredicates[0] = 0;
+				mSizeOfPredicates[0] = 0;
 			}
 			if (sizeOfPredicatesBP != null) {
-				m_SizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
+				mSizeOfPredicates[1] = getSumOfIntArray(sizeOfPredicatesBP);
 			} else {
-				m_SizeOfPredicates[1] = 0;
+				mSizeOfPredicates[1] = 0;
 			}
-			m_NumberOfNonLiveVariablesFP = numberOfNonLiveVariablesFP;
-			m_NumberOfNonLiveVariablesBP = numberOfNonLiveVariablesBP;
+			mNumberOfNonLiveVariablesFP = numberOfNonLiveVariablesFP;
+			mNumberOfNonLiveVariablesBP = numberOfNonLiveVariablesBP;
 		}
 
 		public void setConjunctsInSSA(int conjunctsInSSA, int conjunctsInUC) {
-			assert m_ConjunctsInSSA == 0 : "have already been set";
-			assert m_ConjunctsInUC == 0 : "have already been set";
-			m_ConjunctsInSSA = conjunctsInSSA;
-			m_ConjunctsInUC = conjunctsInUC;
+			assert mConjunctsInSSA == 0 : "have already been set";
+			assert mConjunctsInUC == 0 : "have already been set";
+			mConjunctsInSSA = conjunctsInSSA;
+			mConjunctsInUC = conjunctsInUC;
 		}
 
 		private long getSumOfIntArray(int[] arr) {
@@ -683,17 +706,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		public Object getValue(String key) {
 			switch (key) {
 			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInSSA:
-				return m_ConjunctsInSSA;
+				return mConjunctsInSSA;
 			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInUnsatCore:
-				return m_ConjunctsInUC;
+				return mConjunctsInUC;
 			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicatesFP:
-				return m_SizeOfPredicates[0];
+				return mSizeOfPredicates[0];
 			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicatesBP:
-				return m_SizeOfPredicates[1];
+				return mSizeOfPredicates[1];
 			case TraceCheckerSpWpBenchmarkType.s_NumberOfNonLivePredicateFP:
-				return m_NumberOfNonLiveVariablesFP;
+				return mNumberOfNonLiveVariablesFP;
 			case TraceCheckerSpWpBenchmarkType.s_NumberOfNonLivePredicateBP:
-				return m_NumberOfNonLiveVariablesBP;
+				return mNumberOfNonLiveVariablesBP;
 			default:
 				return super.getValue(key);
 			}

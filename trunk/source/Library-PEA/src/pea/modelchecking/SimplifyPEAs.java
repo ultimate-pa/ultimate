@@ -35,13 +35,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.EventDecision;
 import pea.PEANet;
@@ -50,7 +50,6 @@ import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.RangeDecision;
 import pea.Transition;
-import pea.modelchecking.PEAJ2XMLConverter;
 
 /**
  * Simple class that perform some methods for simplifying Phase Event Automata (PEA) 
@@ -75,12 +74,12 @@ public class SimplifyPEAs {
 
     protected static final String DEFAULT_LOGGER = "SimplifyPEAs";
 
-    protected Logger logger;
+    protected ILogger logger;
 
     public SimplifyPEAs() {
-        URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
+        final URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
         PropertyConfigurator.configure(url);
-        this.logger = Logger.getLogger(SimplifyPEAs.DEFAULT_LOGGER);
+        logger = ILogger.getLogger(SimplifyPEAs.DEFAULT_LOGGER);
     }
 
     /**
@@ -103,16 +102,16 @@ public class SimplifyPEAs {
      * @return the formula without event decisions.
      */
     private CDD removeEventDecisions(CDD formula, Set<String> events) {
-        CDD[] children = formula.getChilds();
+        final CDD[] children = formula.getChilds();
 
         if(children!=null){
             if(formula.getDecision() instanceof EventDecision &&
                     (events == null || events.contains(((EventDecision)formula.getDecision()).getEvent()))) {
-                CDD formulaWithoutEvents = removeEventDecisions(children[0],events).or(
+                final CDD formulaWithoutEvents = removeEventDecisions(children[0],events).or(
                         removeEventDecisions(children[1],events));
                 return formulaWithoutEvents;
             }else {
-                CDD[] newChildren = new CDD[children.length];
+                final CDD[] newChildren = new CDD[children.length];
                 for (int i = 0; i < children.length; i++) {
                     newChildren[i] = removeEventDecisions(children[i],events);
                 }
@@ -135,11 +134,11 @@ public class SimplifyPEAs {
      *  
      */
     public void removeEvents(PhaseEventAutomata pea, Set<String> events) {
-        Phase[] phases = pea.getPhases();
+        final Phase[] phases = pea.getPhases();
         for (int i = 0; i < phases.length; i++) {
-            List<Transition> transitions =  phases[i].getTransitions();
-            for (Transition transition : transitions) {
-                CDD guard = transition.getGuard();
+            final List<Transition> transitions =  phases[i].getTransitions();
+            for (final Transition transition : transitions) {
+                final CDD guard = transition.getGuard();
                 transition.setGuard(removeEventDecisions(guard,events));
             }
         }
@@ -201,21 +200,23 @@ public class SimplifyPEAs {
      *          new PEA with (possibly) newly identified final locations
      */
     public PEATestAutomaton identifyImplicitFinalLocations(PEATestAutomaton pea, CDD assumption) {
-        ArrayList<Phase> notVisited = new ArrayList<Phase>(Arrays.asList(pea.getFinalPhases()));
-        Set<Phase> allFinals = new HashSet<Phase>(Arrays.asList(pea.getFinalPhases()));
+        final ArrayList<Phase> notVisited = new ArrayList<Phase>(Arrays.asList(pea.getFinalPhases()));
+        final Set<Phase> allFinals = new HashSet<Phase>(Arrays.asList(pea.getFinalPhases()));
         
         while(!notVisited.isEmpty()){
-            Phase finalPhase = notVisited.remove(0);
+            final Phase finalPhase = notVisited.remove(0);
             allFinals.add(finalPhase);
-            for(Phase phase : pea.getPhases()){
-                if(allFinals.contains(phase))
-                    continue;
-                for(Transition trans : phase.getTransitions()){
+            for(final Phase phase : pea.getPhases()){
+                if(allFinals.contains(phase)) {
+					continue;
+				}
+                for(final Transition trans : phase.getTransitions()){
                     if(allFinals.contains(trans.getDest())){
                         if(trans.getGuard().assume(assumption) ==  CDD.TRUE &&
                                 trans.getDest().getStateInvariant() == CDD.TRUE &&
-                                trans.getDest().getClockInvariant() == CDD.TRUE) 
-                            notVisited.add(trans.getSrc());
+                                trans.getDest().getClockInvariant() == CDD.TRUE) {
+							notVisited.add(trans.getSrc());
+						}
                     }
                 }
             }
@@ -240,13 +241,13 @@ public class SimplifyPEAs {
      * @param automaton with transitions that shall be merged.
      */
     public void mergeTransitions(PEATestAutomaton automaton) {
-        Phase[] phases = automaton.getPhases();
-        Phase[] init = automaton.getInit();
-        Phase[] finalPhases = new Phase[automaton.getFinalPhases().length];
-        HashSet<Phase> oldInit = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
-        HashSet<Phase> oldFinals = new HashSet<Phase>(Arrays.asList(automaton.getFinalPhases()));
+        final Phase[] phases = automaton.getPhases();
+        final Phase[] init = automaton.getInit();
+        final Phase[] finalPhases = new Phase[automaton.getFinalPhases().length];
+        final HashSet<Phase> oldInit = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
+        final HashSet<Phase> oldFinals = new HashSet<Phase>(Arrays.asList(automaton.getFinalPhases()));
 
-        HashMap<Phase,Phase> newPhases = new HashMap<Phase,Phase>();
+        final HashMap<Phase,Phase> newPhases = new HashMap<Phase,Phase>();
 
         /** Init newPhases-Map */
         int initCounter = 0,
@@ -254,46 +255,49 @@ public class SimplifyPEAs {
         for (int i = 0; i < phases.length; i++) {
             newPhases.put(phases[i], new Phase(phases[i].getName(),phases[i].getStateInvariant(),
 					       phases[i].getClockInvariant(), phases[i].getStoppedClocks()));
-            if(oldInit.contains(phases[i]))
-                init[initCounter++] = newPhases.get(phases[i]);
-            if(oldFinals.contains(phases[i]))
-                finalPhases[finalCounter++] = newPhases.get(phases[i]);
+            if(oldInit.contains(phases[i])) {
+				init[initCounter++] = newPhases.get(phases[i]);
+			}
+            if(oldFinals.contains(phases[i])) {
+				finalPhases[finalCounter++] = newPhases.get(phases[i]);
+			}
 
         }
 
 
         for (int i = 0; i < phases.length; i++) {
             //System.out.println("in phase for" + phases[i]);
-            List<Transition> transitions =  phases[i].getTransitions();
-            HashMap<Phase,ArrayList<Transition>> destinations 
+            final List<Transition> transitions =  phases[i].getTransitions();
+            final HashMap<Phase,ArrayList<Transition>> destinations 
             = new HashMap<Phase,ArrayList<Transition>>();
-            HashMap<Transition,ArrayList<Transition>> transitionsForMerging 
+            final HashMap<Transition,ArrayList<Transition>> transitionsForMerging 
             = new HashMap<Transition,ArrayList<Transition>>();
 
             //Collect the transitions for the merging operation.
-            for (Transition transition : transitions) {
+            for (final Transition transition : transitions) {
                 boolean transitionsMerged = false;
 
                 // Did we have seen the destination of this transition before?
                 if(destinations.containsKey(transition.getDest())){
 
                     //Compare the reset-arrays.
-                    ArrayList<Transition> transForDest = 
+                    final ArrayList<Transition> transForDest = 
                         destinations.get(transition.getDest());
                     Arrays.sort(transition.getResets());
                     boolean noIdenticalArrayFound = true;
-                    for (Transition tempTrans : transForDest) {
+                    for (final Transition tempTrans : transForDest) {
                         Arrays.sort(tempTrans.getResets());
                         //System.out.println("in 2. for" + tempTrans);
                         if(Arrays.equals(tempTrans.getResets(), transition.getResets())){
                             if(!transitionsForMerging.containsKey(tempTrans)){
                                 //System.out.println("in merge  t1:" + tempTrans + "t2:" + transitions);
-                                ArrayList<Transition> mergeList = new ArrayList<Transition>();
+                                final ArrayList<Transition> mergeList = new ArrayList<Transition>();
                                 mergeList.add(transition);
                                 transitionsForMerging.put(tempTrans,mergeList);
                             }else{
-                                if(transitionsForMerging.get(tempTrans) == null)
-                                    transitionsForMerging.put(tempTrans, new ArrayList<Transition>());
+                                if(transitionsForMerging.get(tempTrans) == null) {
+									transitionsForMerging.put(tempTrans, new ArrayList<Transition>());
+								}
                                 transitionsForMerging.get(tempTrans).add(transition);
                             }
                             noIdenticalArrayFound = false;
@@ -301,16 +305,18 @@ public class SimplifyPEAs {
                             break;
                         }
                     }
-                    if(noIdenticalArrayFound)
-                        transForDest.add(transition);
+                    if(noIdenticalArrayFound) {
+						transForDest.add(transition);
+					}
 
                 }else{
-                    ArrayList<Transition> transForDest = new ArrayList<Transition>();
+                    final ArrayList<Transition> transForDest = new ArrayList<Transition>();
                     transForDest.add(transition);
                     destinations.put(transition.getDest(), transForDest);
                 }
-                if(!transitionsMerged)
-                    transitionsForMerging.put(transition,null);
+                if(!transitionsMerged) {
+					transitionsForMerging.put(transition,null);
+				}
             }
 
             /** Set the phase-pointer to the new phase.*/
@@ -319,12 +325,12 @@ public class SimplifyPEAs {
             //merge the transitions
             if(!transitionsForMerging.isEmpty()){
 
-                for (Transition masterTransition : transitionsForMerging.keySet()) {
+                for (final Transition masterTransition : transitionsForMerging.keySet()) {
                     CDD masterGuard = masterTransition.getGuard();
                     if(transitionsForMerging.get(masterTransition) != null){
                         //System.out.println("Master guard: " + masterGuard);
 
-                        for (Transition subTransition : transitionsForMerging.get(masterTransition)) {
+                        for (final Transition subTransition : transitionsForMerging.get(masterTransition)) {
                             //System.out.println("Sub guard: " + subTransition.getGuard());
                             masterGuard = masterGuard.or(subTransition.getGuard());
                             //System.out.println("Baue guard: " + masterGuard);
@@ -337,7 +343,7 @@ public class SimplifyPEAs {
                 }
 
             } else {
-                for (Transition transition : transitions) {
+                for (final Transition transition : transitions) {
                     phases[i].addTransition(newPhases.get(transition.getDest()),transition.getGuard(),
                             transition.getResets());
                 }
@@ -377,41 +383,43 @@ public class SimplifyPEAs {
      * transitions.
      */
     public ArrayList<Element> eliminateORs(Element transition) {
-        NodeList guards = transition.getElementsByTagName(XMLTags.GUARD_TAG);
+        final NodeList guards = transition.getElementsByTagName(XMLTags.GUARD_TAG);
         if(guards.getLength() == 0){
             return null;
         }
 
-        ArrayList<Element> newTransitions = new ArrayList<Element>();
+        final ArrayList<Element> newTransitions = new ArrayList<Element>();
 
 
-        Element guard = (Element) guards.item(0); 
-        NodeList resetList = transition.getElementsByTagName(XMLTags.RESET_TAG);
-        int resetCount = resetList.getLength();
-        Element formula = (Element) guard.getFirstChild();
+        final Element guard = (Element) guards.item(0); 
+        final NodeList resetList = transition.getElementsByTagName(XMLTags.RESET_TAG);
+        final int resetCount = resetList.getLength();
+        final Element formula = (Element) guard.getFirstChild();
 
         if(formula.getNodeName().equals(XMLTags.FORMULATREE_TAG) &&
                 formula.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST)){
-            NodeList formulaChilds = formula.getChildNodes();
-            int formulaChildCount = formulaChilds.getLength();
+            final NodeList formulaChilds = formula.getChildNodes();
+            final int formulaChildCount = formulaChilds.getLength();
             for (int j = 0; j < formulaChildCount; j++) {
-                Document document = new DocumentImpl();
-                Element newTransition = (Element)document.importNode(transition,false);
+                final Document document = new DocumentImpl();
+                final Element newTransition = (Element)document.importNode(transition,false);
                 document.appendChild(newTransition);
-                Element newGuard = (Element)document.importNode(guard,false);
-                Element newFormula = (Element)document.importNode(formulaChilds.item(j),true);
+                final Element newGuard = (Element)document.importNode(guard,false);
+                final Element newFormula = (Element)document.importNode(formulaChilds.item(j),true);
                 newGuard.appendChild(newFormula);
                 newTransition.appendChild(newGuard);
                 //Append reset nodes
-                for (int i = 0; i < resetCount; i++)
-                    newTransition.appendChild(document.importNode(resetList.item(i),true));
+                for (int i = 0; i < resetCount; i++) {
+					newTransition.appendChild(document.importNode(resetList.item(i),true));
+				}
                 document.importNode(newTransition,true);
 
                 newTransitions.add(newTransition);
             }
         }
-        if(newTransitions.isEmpty())
-            return null;
+        if(newTransitions.isEmpty()) {
+			return null;
+		}
         return newTransitions;
     }
 
@@ -430,24 +438,25 @@ public class SimplifyPEAs {
      */
     public PEATestAutomaton mergeFinalLocations(PEATestAutomaton automaton, String badstatestring) {
         if(automaton.getFinalPhases() == null
-                || automaton.getFinalPhases().length == 0)
-            return automaton;
+                || automaton.getFinalPhases().length == 0) {
+			return automaton;
+		}
 
         //automaton.dump();
         
-        Phase[] phases = automaton.getPhases();
-        Phase badState = new Phase(badstatestring);
+        final Phase[] phases = automaton.getPhases();
+        final Phase badState = new Phase(badstatestring);
         //Phase[] newFinalPhases = {badState};
-        List<Phase> newInit = new ArrayList<Phase>();
-        ArrayList<Phase> newPhases= new ArrayList<Phase>();
-        ArrayList<Phase> newFinalPhases = new ArrayList<Phase>();
-        Set<Phase> initPhases = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
-        HashSet<Phase> finalPhases = automaton.getFinalPhases() != null ?
+        final List<Phase> newInit = new ArrayList<Phase>();
+        final ArrayList<Phase> newPhases= new ArrayList<Phase>();
+        final ArrayList<Phase> newFinalPhases = new ArrayList<Phase>();
+        final Set<Phase> initPhases = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
+        final HashSet<Phase> finalPhases = automaton.getFinalPhases() != null ?
                 new HashSet<Phase>(Arrays.asList(automaton.getFinalPhases())) :
                     null;
 
         //Maps the old phases to new phases.
-        HashMap<Phase,Phase> oldnewPhases = new HashMap<Phase,Phase>();
+        final HashMap<Phase,Phase> oldnewPhases = new HashMap<Phase,Phase>();
 
         /* fill oldnewPhases map */
         boolean foundBadState = false;
@@ -464,7 +473,7 @@ public class SimplifyPEAs {
 //                    newInit.add(badState);
 //                }
             }else{
-                Phase newPhase = new Phase(phases[i].getName(),
+                final Phase newPhase = new Phase(phases[i].getName(),
                                            phases[i].getStateInvariant(),
 					   phases[i].getClockInvariant(),
 					   phases[i].getStoppedClocks());
@@ -477,24 +486,27 @@ public class SimplifyPEAs {
                      * because the new final phase will not have state invariants and
                      * we have no possibility to prevent that this state is entered immediately.
                      */
-                    if(finalPhases != null && finalPhases.contains(phases[i]))
-                        newFinalPhases.add(newPhase);
+                    if(finalPhases != null && finalPhases.contains(phases[i])) {
+						newFinalPhases.add(newPhase);
+					}
                 }
                 
             }
         }
-        if(!foundBadState)
-            return automaton;
+        if(!foundBadState) {
+			return automaton;
+		}
 
         //Add transitions to the new states.
         for (int i = 0; i < phases.length; i++) {
-            Phase curPhase = oldnewPhases.get(phases[i]); 
-            if(curPhase == badState)
-                continue;
-            List transitions = phases[i].getTransitions();
-            for (Iterator iter = transitions.iterator(); iter.hasNext();) {
-                Transition trans =(Transition)iter.next();
-                Phase newDest = oldnewPhases.get(trans.getDest()); 
+            final Phase curPhase = oldnewPhases.get(phases[i]); 
+            if(curPhase == badState) {
+				continue;
+			}
+            final List transitions = phases[i].getTransitions();
+            for (final Iterator iter = transitions.iterator(); iter.hasNext();) {
+                final Transition trans =(Transition)iter.next();
+                final Phase newDest = oldnewPhases.get(trans.getDest()); 
                 if(newDest == badState){
                     /* In this case, where the new destination is the new merged
                      * bad state, we need to ensure that the invariants of the old state
@@ -505,7 +517,7 @@ public class SimplifyPEAs {
                      * location if it is compliant with the resets */
                     CDD clockInv = trans.getDest().getClockInvariant();
                     for (int j = 0; j < trans.getResets().length; j++) {
-                        CDD clockReset = RangeDecision.create(
+                        final CDD clockReset = RangeDecision.create(
                                 trans.getResets()[j], 
                                 RangeDecision.OP_EQ,
                                 0);
@@ -527,7 +539,7 @@ public class SimplifyPEAs {
             }
         }
 
-        PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(),
+        final PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(),
                 newPhases.toArray(new Phase[0]),
                 newInit.toArray(new Phase[0]),
                 automaton.getClocks(),
@@ -595,15 +607,17 @@ public class SimplifyPEAs {
                 while(argCounter < args.length-2){
                     if(args[argCounter].equals("-f")
                             || args[argCounter].equals("--formula-file")){
-                        if(++argCounter>=args.length-2)
-                            throw new ArgException();
+                        if(++argCounter>=args.length-2) {
+							throw new ArgException();
+						}
                         formulafile = args[argCounter++];
                         continue;
                     }
                     if(args[argCounter].equals("-w")
                             || args[argCounter].equals("--write-ta")){
-                        if(++argCounter>=args.length-2)
-                            throw new ArgException();
+                        if(++argCounter>=args.length-2) {
+							throw new ArgException();
+						}
                         tafile = args[argCounter++];
                         continue;
                     }
@@ -646,33 +660,35 @@ public class SimplifyPEAs {
                     System.out.println(SVNVERSION);
                     System.exit(0);
                 }
-            }else
-                throw new ArgException();
+            } else {
+				throw new ArgException();
+			}
 
 
             //PropertyConfigurator.configure(ClassLoader.getSystemResource("pea/modelchecking/CompilerLog.config"));
-            PEAJ2XMLConverter converter = new PEAJ2XMLConverter();
-            PEAXML2JConverterWithVarList fileParser = new PEAXML2JConverterWithVarList(false);
+            final PEAJ2XMLConverter converter = new PEAJ2XMLConverter();
+            final PEAXML2JConverterWithVarList fileParser = new PEAXML2JConverterWithVarList(false);
 
-            SimplifyPEAs simplifier = new SimplifyPEAs();
+            final SimplifyPEAs simplifier = new SimplifyPEAs();
 
-            PhaseEventAutomata[] peas = fileParser.convert(inputfile);
+            final PhaseEventAutomata[] peas = fileParser.convert(inputfile);
             //PhaseEventAutomata product = peas[0];
             PEATestAutomaton product = null;
 
             //Compile model-check formula and generate the appropriate automata.
             if(formulafile != null){
-                Compiler compiler = new Compiler(false);
-                ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile,"");
+                final Compiler compiler = new Compiler(false);
+                final ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile,"");
                 if(peanetList.size() > 1){
                     simplifier.logger.warn("The disjuncts in the normal form have to be checked independently.\n"
                             + "I will only check the first disjunct.");
                 }
 
-                PEATestAutomaton[] formulaPEAs = peanetList.get(0);
+                final PEATestAutomaton[] formulaPEAs = peanetList.get(0);
 
-                if(formulaPEAs.length > 0)
-                    product = formulaPEAs[0];
+                if(formulaPEAs.length > 0) {
+					product = formulaPEAs[0];
+				}
 
                 if(product != null){
                     for (int i = 1; i < formulaPEAs.length; i++) {
@@ -689,10 +705,10 @@ public class SimplifyPEAs {
 //                  }
 //                  PEATestAutomaton[] temp = new PEATestAutomaton[1];
 //                  temp[0] = product;
-                    ArrayList<PhaseEventAutomata> peaList = 
+                    final ArrayList<PhaseEventAutomata> peaList = 
                         new ArrayList<PhaseEventAutomata>();
                     peaList.add(product);
-                    PEANet temp = new PEANet();
+                    final PEANet temp = new PEANet();
                     temp.setPeas(peaList);
                     converter.convert(temp, tafile);
                 }
@@ -714,8 +730,9 @@ public class SimplifyPEAs {
 //          System.out.println();
 
             if(product == null){
-                if(peas.length < 1)
-                    throw new ArgException();
+                if(peas.length < 1) {
+					throw new ArgException();
+				}
                 product = new PEATestAutomaton(peas[0]);
                 for (int i = 1; i < peas.length; i++) {
                     simplifier.logger.info("Parallel composition with pea " + i);
@@ -749,20 +766,20 @@ public class SimplifyPEAs {
             simplifier.logger.info("Parallel composition finished.");
 
             simplifier.logger.info("Collect variables.");
-            ArrayList[] variables = fileParser.getAdditionalVariables();
-            ArrayList[] types =  fileParser.getTypes();
+            final ArrayList[] variables = fileParser.getAdditionalVariables();
+            final ArrayList[] types =  fileParser.getTypes();
             //peas = new PEATestAutomaton[1];
             //peas[0] = product;
             //Merge variables to one list.
-            ArrayList<String> mergedVariables0 = new ArrayList<String>();
-            ArrayList<String> mergedTypes0 = new ArrayList<String>();
-            ArrayList[] mergedVariables = {mergedVariables0};
-            ArrayList[] mergedTypes= {mergedTypes0};
+            final ArrayList<String> mergedVariables0 = new ArrayList<String>();
+            final ArrayList<String> mergedTypes0 = new ArrayList<String>();
+            final ArrayList[] mergedVariables = {mergedVariables0};
+            final ArrayList[] mergedTypes= {mergedTypes0};
             for (int i = 0; i < variables.length; i++) {
-                Iterator typeIter = types[i].iterator();
-                for (Iterator iter = variables[i].iterator(); iter.hasNext();) {
-                    String tempName = (String)iter.next();
-                    String tempType= (String)typeIter.next();
+                final Iterator typeIter = types[i].iterator();
+                for (final Iterator iter = variables[i].iterator(); iter.hasNext();) {
+                    final String tempName = (String)iter.next();
+                    final String tempType= (String)typeIter.next();
                     if(!mergedVariables[0].contains(tempName)){
                         mergedVariables0.add(tempName);
                         mergedTypes0.add(tempType);
@@ -808,37 +825,37 @@ public class SimplifyPEAs {
 //          System.out.println();
 
 
-            PEATestAutomaton[] products = {product};
+            final PEATestAutomaton[] products = {product};
 
 
-            long actTime = System.currentTimeMillis();
+            final long actTime = System.currentTimeMillis();
             if(armcOutput){
                 simplifier.logger
                         .info("Convert formulas to DNF and output ARMC-file.");
-                PEA2ARMCConverter tcsConverter = new PEA2ARMCConverter();
+                final PEA2ARMCConverter tcsConverter = new PEA2ARMCConverter();
                 // product.dump();
                 tcsConverter.convert(product, outputfile,
                         mergedVariables0, mergedTypes0, !preserveNames);
                 simplifier.logger.info("Finished.");
             } else if(tcsOutput){
                 simplifier.logger.info("Convert formulas to DNF and output TCS-file.");
-                PEA2TCSJ2XMLConverter tcsConverter = new PEA2TCSJ2XMLConverter();
+                final PEA2TCSJ2XMLConverter tcsConverter = new PEA2TCSJ2XMLConverter();
                 tcsConverter.setAdditionalVariables(mergedVariables);
                 tcsConverter.setAdditionalTypes(mergedTypes);
                 tcsConverter.convert(products,outputfile, !preserveNames);
                 simplifier.logger.info("Finished.");
             } else {
                 simplifier.logger.info("Convert formulas to DNF and output XML-file.");
-                List<PhaseEventAutomata> peaL = Arrays.asList((PhaseEventAutomata[])products);
-                ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(peaL) ;
-                PEANet peanet = new PEANet();
+                final List<PhaseEventAutomata> peaL = Arrays.asList((PhaseEventAutomata[])products);
+                final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(peaL) ;
+                final PEANet peanet = new PEANet();
                 peanet.setPeas(peaList);
                 converter.convert(peanet,outputfile);
                 simplifier.logger.info("Finished.");
             }
             System.out.println("Writing tcs representation took; "+(System.currentTimeMillis()-actTime)+" ms");
 
-        } catch(ArgException e){
+        } catch(final ArgException e){
             System.out.println("\nUsage: java pea.modelchecking.SimplifyPEAs "
                     + " [OPTIONS] input-file output-file\n\n"
                     + "OPTIONS:\n"
@@ -860,7 +877,7 @@ public class SimplifyPEAs {
                     + "    -v, --version               "
                     + "Outputs version number and terminates.\n"
             );
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

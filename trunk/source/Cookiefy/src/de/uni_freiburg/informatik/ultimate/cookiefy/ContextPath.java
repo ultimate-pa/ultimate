@@ -28,10 +28,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 
 /**
  * Contains all context path related operations
@@ -46,20 +46,20 @@ public class ContextPath {
 	}
 
 	static public class ContextPathNode {
-		private FormulaType m_FormulaType;
-		private String m_Path;
+		private final FormulaType mFormulaType;
+		private final String mPath;
 
 		public FormulaType getFormulaType() {
-			return this.m_FormulaType;
+			return mFormulaType;
 		}
 
 		public String getPath() {
-			return this.m_Path;
+			return mPath;
 		}
 
 		public ContextPathNode(FormulaType type, String path) {
-			this.m_FormulaType = type;
-			this.m_Path = path;
+			mFormulaType = type;
+			mPath = path;
 		}
 
 		/**
@@ -68,18 +68,22 @@ public class ContextPath {
 		 * @return
 		 */
 		public boolean isTemporal() {
-			if (this.m_FormulaType == FormulaType.AF)
+			if (mFormulaType == FormulaType.AF) {
 				return true;
-			if (this.m_FormulaType == FormulaType.AG)
+			}
+			if (mFormulaType == FormulaType.AG) {
 				return true;
-			if (this.m_FormulaType == FormulaType.AW)
+			}
+			if (mFormulaType == FormulaType.AW) {
 				return true;
+			}
 			return false;
 		}
 
 		public boolean isAtom() {
-			if (this.m_FormulaType == FormulaType.Alpha)
+			if (mFormulaType == FormulaType.Alpha) {
 				return true;
+			}
 			return false;
 		}
 		
@@ -90,15 +94,15 @@ public class ContextPath {
 	}
 
 	static public class ContextPathAlphaNode extends ContextPathNode {
-		private Expression m_Expression;
+		private final Expression mExpression;
 
 		public Expression getExpression() {
-			return this.m_Expression;
+			return mExpression;
 		}
 
 		public ContextPathAlphaNode(String path, Expression content) {
 			super(FormulaType.Alpha, path);
-			this.m_Expression = content;
+			mExpression = content;
 		}
 	}
 

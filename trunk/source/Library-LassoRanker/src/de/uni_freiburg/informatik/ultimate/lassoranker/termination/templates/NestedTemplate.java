@@ -64,41 +64,41 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class NestedTemplate extends ComposableTemplate {
 	
-	public final int m_Size;
+	public final int mSize;
 	
 	private static final String s_name_delta = "delta_";
 	private static final String s_name_function = "rank_";
 	
-	private Term m_delta;
-	private AffineFunctionGenerator[] m_fgens;
+	private Term mdelta;
+	private final AffineFunctionGenerator[] mfgens;
 	
 	/**
 	 * @param functions number of linear functions in the nested template
 	 */
 	public NestedTemplate(int functions) {
 		assert(functions > 1);
-		m_Size = functions;
-		m_fgens = new AffineFunctionGenerator[m_Size];
+		mSize = functions;
+		mfgens = new AffineFunctionGenerator[mSize];
 	}
 	
 	@Override
 	protected void _init() {
-		m_delta = newDelta(s_name_delta + getInstanceNumber());
-		for (int i = 0; i < m_Size; ++i) {
-			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+		mdelta = newDelta(s_name_delta + getInstanceNumber());
+		for (int i = 0; i < mSize; ++i) {
+			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
 	
 	@Override
 	public String getName() {
-		return m_Size + "-nested";
+		return mSize + "-nested";
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(m_Size);
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mSize);
 		sb.append("-nested template:");
 		sb.append("\n");
 		sb.append("   ");
@@ -106,21 +106,21 @@ public class NestedTemplate extends ComposableTemplate {
 		sb.append("\n");
 		sb.append("/\\ f_0(x') < f_0(x) - delta");
 		sb.append("\n");
-		for (int i = 1; i < m_Size; ++i) {
+		for (int i = 1; i < mSize; ++i) {
 			sb.append("/\\ f_" + i + "(x') < f_" + i + "(x) + f_" + (i-1) + "(x)");
 			sb.append("\n");
 		}
-		int n = m_Size-1;
+		final int n = mSize-1;
 		sb.append("/\\ f_" + n + "(x) > 0");
 		return sb.toString();
 	}
 	
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
-		list.add(m_delta);
-		for (int i = 0; i < m_Size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
+		final Collection<Term> list = new ArrayList<Term>();
+		list.add(mdelta);
+		for (int i = 0; i < mSize; ++i) {
+			list.addAll(mfgens[i].getVariables());
 		}
 		return list;
 	}
@@ -129,14 +129,14 @@ public class NestedTemplate extends ComposableTemplate {
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The affine-linear functions need a common gcd
-		Rational gcd = m_fgens[0].getGcd(val);
-		for (int i = 1; i < m_Size; ++i) {
-			gcd = gcd.gcd(m_fgens[i].getGcd(val));
+		Rational gcd = mfgens[0].getGcd(val);
+		for (int i = 1; i < mSize; ++i) {
+			gcd = gcd.gcd(mfgens[i].getGcd(val));
 		}
 		
-		AffineFunction[] fs = new AffineFunction[m_Size];
-		for (int i = 0; i < m_Size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val, gcd);
+		final AffineFunction[] fs = new AffineFunction[mSize];
+		for (int i = 0; i < mSize; ++i) {
+			fs[i] = mfgens[i].extractAffineFunction(val, gcd);
 		}
 		return new NestedRankingFunction(fs);
 	}
@@ -149,15 +149,15 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ
 		{
-			LinearInequality li = m_fgens[0].generate(inVars);
-			LinearInequality li2 = m_fgens[0].generate(outVars);
+			final LinearInequality li = mfgens[0].generate(inVars);
+			final LinearInequality li2 = mfgens[0].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+			final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -167,12 +167,12 @@ public class NestedTemplate extends ComposableTemplate {
 		}
 		
 		// /\_i f_i(x') < f_i(x) - δ_i + f_{i-1}(x)
-		for (int i = 1; i < m_Size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+		for (int i = 1; i < mSize; ++i) {
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			LinearInequality li3 = m_fgens[i-1].generate(inVars);
+			final LinearInequality li3 = mfgens[i-1].generate(inVars);
 			li.add(li3);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -188,12 +188,12 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// /\_i f_i(x') ≤ f_i(x)
-		for (int i = 0; i < m_Size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+		for (int i = 0; i < mSize; ++i) {
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
@@ -209,7 +209,7 @@ public class NestedTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// f_n(x) > 0
-		LinearInequality li = m_fgens[m_Size-1].generate(inVars);
+		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);
 		li.motzkin_coefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
@@ -219,9 +219,9 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsDec() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		annotations.add("rank f_0 is decreasing");
-		for (int i = 0; i < m_Size-1; ++i) {
+		for (int i = 0; i < mSize-1; ++i) {
 			annotations.add("rank f_" + i + " is decreasing by at least -f_" + (i-1));
 		}
 		return annotations;
@@ -229,8 +229,8 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsNonInc() {
-		List<String> annotations = new ArrayList<String>();
-		for (int i = 0; i < m_Size; ++i) {
+		final List<String> annotations = new ArrayList<String>();
+		for (int i = 0; i < mSize; ++i) {
 			annotations.add("rank f_" + i + " is nonincreasing");
 		}
 		return annotations;
@@ -239,6 +239,6 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsBounded() {
 		return Collections.singletonList(
-				"rank f_" + (m_Size - 1) + " is bounded");
+				"rank f_" + (mSize - 1) + " is bounded");
 	}
 }

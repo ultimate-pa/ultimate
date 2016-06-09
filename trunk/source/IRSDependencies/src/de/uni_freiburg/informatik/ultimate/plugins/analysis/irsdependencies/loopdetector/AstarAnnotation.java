@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 
 import java.lang.reflect.Field;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 
 /**
  * 
@@ -80,10 +80,10 @@ class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<Astar
 	@Override
 	protected Object getFieldValue(String field) {
 		try {
-			Field f = getClass().getDeclaredField(field);
+			final Field f = getClass().getDeclaredField(field);
 			f.setAccessible(true);
 			return f.get(this);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			return ex;
 		}
 	}

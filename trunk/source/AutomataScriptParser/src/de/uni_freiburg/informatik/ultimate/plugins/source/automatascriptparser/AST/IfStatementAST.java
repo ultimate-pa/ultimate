@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -61,11 +61,11 @@ public class IfStatementAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (m_children.size() == 2) {
-			StringBuilder builder = new StringBuilder("if (");
-			builder.append(m_children.get(0).getAsString());
+		if (mchildren.size() == 2) {
+			final StringBuilder builder = new StringBuilder("if (");
+			builder.append(mchildren.get(0).getAsString());
 			builder.append(") {\n");
-			builder.append(m_children.get(1).getAsString());
+			builder.append(mchildren.get(1).getAsString());
 			builder.append("\n}\n");
 			return builder.toString();
 		} else {

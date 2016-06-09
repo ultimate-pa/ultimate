@@ -34,7 +34,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
-import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
  * 
@@ -78,7 +78,7 @@ public class CACSLBacktranslationValueProvider implements
 	private String getStringFromIASTNode(IASTNode currentStepNode) {
 		String str = currentStepNode.getRawSignature();
 		if (currentStepNode instanceof CASTIdExpression) {
-			CASTIdExpression id = (CASTIdExpression) currentStepNode;
+			final CASTIdExpression id = (CASTIdExpression) currentStepNode;
 			if (id.getExpressionType() instanceof IPointerType) {
 				str = "\\read(" + getPointerStars((IPointerType) id.getExpressionType()) + str + ")";
 			} else {

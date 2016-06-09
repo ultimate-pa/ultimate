@@ -39,10 +39,10 @@ public class SymbolCollector extends TermTransformer {
 	 * @param input The given formula.
 	 */
 	public final Map<FunctionSymbol, Integer> collect(Term input) {
-		Map<FunctionSymbol, Integer> res = mSymbols = 
+		final Map<FunctionSymbol, Integer> res = mSymbols = 
 			new HashMap<FunctionSymbol, Integer>();
-		FormulaUnLet unletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-		Term t = unletter.unlet(input);
+		final FormulaUnLet unletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+		final Term t = unletter.unlet(input);
 		transform(t);
 		mSymbols = null;
 		return res;
@@ -53,7 +53,7 @@ public class SymbolCollector extends TermTransformer {
 	}
 	
 	public Set<FunctionSymbol> getTheorySymbols() {
-		Set<FunctionSymbol> res = mSymbols.keySet();
+		final Set<FunctionSymbol> res = mSymbols.keySet();
 		mSymbols = null;
 		return res;
 	}
@@ -65,10 +65,10 @@ public class SymbolCollector extends TermTransformer {
 	
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		FunctionSymbol fs = appTerm.getFunction();
+		final FunctionSymbol fs = appTerm.getFunction();
 		if (!fs.isIntern()) {
-			Integer old = mSymbols.get(fs);
-			int val = old == null ? 1 : old + 1;
+			final Integer old = mSymbols.get(fs);
+			final int val = old == null ? 1 : old + 1;
 			mSymbols.put(fs, val);
 		}
 		super.convertApplicationTerm(appTerm, newArgs);

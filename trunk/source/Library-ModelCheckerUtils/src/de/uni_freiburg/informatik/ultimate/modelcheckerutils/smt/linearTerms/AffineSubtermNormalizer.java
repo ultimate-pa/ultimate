@@ -26,8 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -40,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  */
 public class AffineSubtermNormalizer extends TermTransformer {
 
-	private final Script m_Script;
-	private final Logger mLogger;
+	private final Script mScript;
+	private final ILogger mLogger;
 
-	public AffineSubtermNormalizer(Script script, Logger logger) {
+	public AffineSubtermNormalizer(Script script, ILogger logger) {
 		super();
-		m_Script = script;
+		mScript = script;
 		mLogger = logger;
 	}
 
@@ -53,7 +52,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		boolean result = true;
 		try {
 			new BinaryNumericRelation(term);
-		} catch (NoRelationOfThisKindException e) {
+		} catch (final NoRelationOfThisKindException e) {
 			result = false;
 		}
 		return result;
@@ -69,12 +68,12 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		if (isBinaryNumericRelation(term)) {
 			AffineRelation affRel = null;
 			try {
-				affRel = new AffineRelation(m_Script, term);
-			} catch (NotAffineException e) {
+				affRel = new AffineRelation(mScript, term);
+			} catch (final NotAffineException e) {
 				setResult(term);
 				return;
 			}
-			Term pnf = affRel.positiveNormalForm(m_Script);
+			final Term pnf = affRel.positiveNormalForm(mScript);
 			setResult(pnf);
 			return;
 		}

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 
 public class IdentifierMapping<K, V> implements IStorable{
 

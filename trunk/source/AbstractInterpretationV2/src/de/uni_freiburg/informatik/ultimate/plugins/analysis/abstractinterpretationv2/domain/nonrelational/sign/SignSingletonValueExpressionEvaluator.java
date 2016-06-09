@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -53,7 +53,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	protected final T mValue;
 
 	public SignSingletonValueExpressionEvaluator(String value) {
-		T number = instantiate(value);
+		final T number = instantiate(value);
 		mValue = number;
 	}
 
@@ -61,7 +61,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
 		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		int num = getSignum();
+		final int num = getSignum();
 
 		if (num > 0) {
 			returnList.add(new SignDomainValue(Values.POSITIVE));

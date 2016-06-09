@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
 
 /**
  * Node of a Boogie call graph.
@@ -103,7 +103,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	 * @see CallGraphEdgeLabel#getInlineFlag()
 	 */
 	public boolean hasInlineFlags() {
-		for (CallGraphEdgeLabel edgeLabel : getOutgoingEdgeLabels()) {
+		for (final CallGraphEdgeLabel edgeLabel : getOutgoingEdgeLabels()) {
 			if (edgeLabel.getInlineFlag()) {
 				return true;
 			}
@@ -113,7 +113,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(mId);
 		sb.append('{');
 		sb.append(isImplemented() ? "impl" : "unimpl");

@@ -44,36 +44,36 @@ import java.util.Map;
  * @param <E>
  */
 public class HistogramOfIterable<E> {
-	private final Iterable<E> m_Iterable;
-	private final Map<E, Integer> m_HistogramMap;
-	private final Integer[] m_VisualizationArray;
+	private final Iterable<E> mIterable;
+	private final Map<E, Integer> mHistogramMap;
+	private final Integer[] mVisualizationArray;
 	
 	
 	public HistogramOfIterable(Iterable<E> iterable) {
 		super();
-		m_Iterable = iterable;
-		m_HistogramMap = generateHistogramMap(m_Iterable);
-		m_VisualizationArray = generateVisualizationArray(m_HistogramMap);
+		mIterable = iterable;
+		mHistogramMap = generateHistogramMap(mIterable);
+		mVisualizationArray = generateVisualizationArray(mHistogramMap);
 	}
 
 	private Integer[] generateVisualizationArray(Map<E, Integer> histogramMap) {
-		Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
+		final Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
 		Arrays.sort(result, Collections.reverseOrder());
 		return result;
 	}
 	
 	@Override
 	public String toString() {
-		return Arrays.toString(m_VisualizationArray);
+		return Arrays.toString(mVisualizationArray);
 	}
 
 	public Integer[] getVisualizationArray() {
-		return m_VisualizationArray;
+		return mVisualizationArray;
 	}
 
 	public static <E> Map<E, Integer> generateHistogramMap(Iterable<E> iterable) {
-		Map<E, Integer> result = new HashMap<E, Integer>();
-		for (E e : iterable) {
+		final Map<E, Integer> result = new HashMap<E, Integer>();
+		for (final E e : iterable) {
 			if (result.containsKey(e)) {
 				result.put(e, Integer.valueOf(result.get(e).intValue()+1));
 			} else {

@@ -30,8 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
-
 /**
  * Superclass for benchmark generators that use stopwatches. Takes care that
  * <li>no unregistered stopwatches are used
@@ -70,6 +68,15 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		mBenchmark.pause(stopwatchName);
 	}
 	
+	/*
+	 * 2016-05-14 Matthias:
+	 * Marked as deprecated since this method has several problems.
+	 * - Method adds new stopwatch, but stopwatches should only be added at the 
+	 * beginning.
+	 * - Method obfuscates the problem that the caller does not know which
+	 * of his clocks are currently running.
+	 */
+	@Deprecated
 	public void stopIfRunning(String name){
 		mRunningStopwatches.put(name, false);
 		mBenchmark.pause(name);
@@ -89,13 +96,13 @@ public abstract class StatisticsGeneratorWithStopwatches {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (String name : getStopwatches()) {
+		final StringBuilder sb = new StringBuilder();
+		for (final String name : getStopwatches()) {
 			sb.append(name);
 			sb.append(": ");
 			try {
 				sb.append(prettyprintNanoseconds(getElapsedTime(name)));
-			} catch (StopwatchStillRunningException e) {
+			} catch (final StopwatchStillRunningException e) {
 				sb.append("clockStillRunning!");
 			}
 			if (mRunningStopwatches.get(name)) {
@@ -107,8 +114,8 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	}
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 

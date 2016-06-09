@@ -30,32 +30,31 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public abstract class CodeChecker {
 
-	protected RootNode m_originalRoot;
-	protected SmtManager m_smtManager;
-	protected ImpRootNode m_graphRoot;
+	protected RootNode moriginalRoot;
+	protected SmtManager msmtManager;
+	protected ImpRootNode mgraphRoot;
 
 
 	protected IHoareTripleChecker _edgeChecker;
-	protected PredicateUnifier m_predicateUnifier;
+	protected PredicateUnifier mpredicateUnifier;
 
 	/*
 	 * Maps for storing edge check results. Not that in case of ImpulseChecker these really are valid, not sat, triples.
@@ -75,16 +74,16 @@ public abstract class CodeChecker {
 	protected GraphWriter _graphWriter;
 
 	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
-			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
+			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
 		mLogger = logger;
-		this.m_smtManager = smtManager;
-		this.m_originalRoot = originalRoot;
-		this.m_graphRoot = graphRoot;
+		msmtManager = smtManager;
+		moriginalRoot = originalRoot;
+		mgraphRoot = graphRoot;
 
-		this._edgeChecker = edgeChecker;
-		this.m_predicateUnifier = predicateUnifier;
+		_edgeChecker = edgeChecker;
+		mpredicateUnifier = predicateUnifier;
 
-		this._graphWriter = graphWriter;
+		_graphWriter = graphWriter;
 	}
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
@@ -111,8 +110,8 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().and(a, b);
-		return m_predicateUnifier.getOrConstructPredicate(tvp);
+		final Term tvp = msmtManager.getPredicateFactory().and(a, b);
+		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
@@ -122,8 +121,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
-		return m_predicateUnifier.getOrConstructPredicate(tvp);
+		final Term tvp = msmtManager.getPredicateFactory().not(a);
+		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
@@ -134,8 +133,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
-		return m_smtManager.getPredicateFactory().newPredicate(tvp);
+		final Term negation = msmtManager.getPredicateFactory().not(a);
+		return msmtManager.getPredicateFactory().newPredicate(negation);
 	}
 
 
@@ -147,11 +146,11 @@ public abstract class CodeChecker {
 	 * Debugs all the nodes in a graph.
 	 */
 	HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	public void debug() {
 		visited.clear();
-		dfs(m_graphRoot);
+		dfs(mgraphRoot);
 	}
 
 	protected boolean debugNode(AnnotatedProgramPoint node) {
@@ -173,15 +172,15 @@ public abstract class CodeChecker {
 		 * node.getOutgoingNodes()); display +=
 		 * String.format("connected Fr: %s\n", node.getIncomingNodes());
 		 */
-		// if (node.m_outgoingReturnCallPreds != null &&
-		// node.m_outgoingReturnCallPreds.size() > 0) {
+		// if (node.moutgoingReturnCallPreds != null &&
+		// node.moutgoingReturnCallPreds.size() > 0) {
 		// display += String.format("outGoing: %s\n",
-		// node.m_outgoingReturnCallPreds);
+		// node.moutgoingReturnCallPreds);
 		// }
-		// if (node.m_nodesThatThisIsReturnCallPredOf != null &&
-		// node.m_nodesThatThisIsReturnCallPredOf.size() > 0) {
+		// if (node.mnodesThatThisIsReturnCallPredOf != null &&
+		// node.mnodesThatThisIsReturnCallPredOf.size() > 0) {
 		// display += String.format("inHyperEdges: %s\n",
-		// node.m_nodesThatThisIsReturnCallPredOf);
+		// node.mnodesThatThisIsReturnCallPredOf);
 		// }
 		if (display.length() > 0) {
 			display = String.format("%s\nNode %s:\n", message, node) + display;
@@ -201,9 +200,10 @@ public abstract class CodeChecker {
 		if (!visited.contains(node)) {
 			visited.add(node);
 			debugNode(node);
-			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
-			for (AnnotatedProgramPoint child : adj)
+			final AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
+			for (final AnnotatedProgramPoint child : adj) {
 				dfs(child);
+			}
 		}
 		return false;
 	}

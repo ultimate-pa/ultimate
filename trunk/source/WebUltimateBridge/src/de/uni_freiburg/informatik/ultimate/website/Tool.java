@@ -7,7 +7,7 @@ package de.uni_freiburg.informatik.ultimate.website;
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class Tool {
-	private String mId;
+	private final String mId;
 
 	/**
 	 * @param id
@@ -34,7 +34,7 @@ public class Tool {
 	 *         code.
 	 */
 	public String getHTMLId() {
-		String s = mId.replaceAll("[^\\p{L}\\p{N}]", "");
+		final String s = mId.replaceAll("[^\\p{L}\\p{N}]", "");
 		return s.substring(0, s.length()).toLowerCase();
 	}
 }

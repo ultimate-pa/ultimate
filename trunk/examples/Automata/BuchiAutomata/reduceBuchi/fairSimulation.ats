@@ -7,7 +7,7 @@ assert(!isEmpty(nwa));
 // Before operation
 //print(nwa);
 // After operation
-print(reduceBuchiFairSimulation(nwa, false));
+print(reduceBuchiFairSimulation(removeDeadEnds(nwa), false));
 // Check correctness of operation
 //print(reduceBuchiFairSimulation(nwa, true, true));
 

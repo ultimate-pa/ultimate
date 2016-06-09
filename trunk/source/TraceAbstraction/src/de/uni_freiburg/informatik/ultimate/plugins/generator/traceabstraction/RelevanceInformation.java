@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 
 /**
  * Implementation of IRelevanceInformation that supports the non-flow-sensitive
@@ -43,37 +43,43 @@ import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 public class RelevanceInformation implements IRelevanceInformation 
 {
 
-	private final List<IAction> m_Actions;
-	private final boolean m_Criterion1UC;
-	private final boolean m_Criterion1GF;
-	private final boolean m_Criterion2;
-	
+	private final List<IAction> mActions;
+	private final boolean mCriterion1UC;
+	private final boolean mCriterion1GF;
+	private final boolean mCriterion2UC;
+	private final boolean mCriterion2GF;	
 	
 	
 	public RelevanceInformation(List<IAction> actions, boolean criterion1uc, 
-			boolean criterion1gf, boolean criterion2) {
+			boolean criterion1gf, boolean criterion2uc, boolean criterion2gf) {
 		super();
-		m_Actions = actions;
-		m_Criterion1UC = criterion1uc;
-		m_Criterion1GF = criterion1gf;
-		m_Criterion2 = criterion2;
+		mActions = actions;
+		mCriterion1UC = criterion1uc;
+		mCriterion1GF = criterion1gf;
+		mCriterion2UC = criterion2uc;
+		mCriterion2GF = criterion2gf;
 	}
 	
 	public List<IAction> getActions() {
-		return m_Actions;
+		return mActions;
 	}
 
 	public boolean getCriterion1UC() {
-		return m_Criterion1UC;
+		return mCriterion1UC;
 	}
 
 	public boolean getCriterion1GF() {
-		return m_Criterion1GF;
+		return mCriterion1GF;
 	}
 
-	public boolean getCriterion2() {
-		return m_Criterion2;
+	public boolean getCriterion2UC() {
+		return mCriterion2UC;
 	}
+	public boolean getCriterion2GF(){
+		return mCriterion2GF;
+	}
+	
+
 
 
 
@@ -81,22 +87,24 @@ public class RelevanceInformation implements IRelevanceInformation
 	public IRelevanceInformation merge(IRelevanceInformation... relevanceInformations) {
 		boolean criterion1uc = getCriterion1UC();
 		boolean criterion1gf = getCriterion1GF();
-		boolean criterion2 = getCriterion2();
-		List<IAction> actions = new ArrayList<>();
-		for (IRelevanceInformation iri : relevanceInformations) {
-			RelevanceInformation ri = (RelevanceInformation) iri;
+		boolean criterion2uc = getCriterion2UC();
+		boolean criterion2gf = getCriterion1GF();
+		final List<IAction> actions = new ArrayList<>();
+		for (final IRelevanceInformation iri : relevanceInformations) {
+			final RelevanceInformation ri = (RelevanceInformation) iri;
 			criterion1uc |= ri.getCriterion1UC();
 			criterion1gf |= ri.getCriterion1GF();
-			criterion2 |= ri.getCriterion2();
+			criterion2uc |= ri.getCriterion2UC();
+			criterion2gf |= ri.getCriterion2GF();
 			actions.addAll(ri.getActions());
 		}
-		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2);
+		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion2gf);
 	}
 
 	@Override
 	public String getShortString() {
 		
-		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2()) {
+		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2UC() && !getCriterion2GF()) {
 			return "-";
 		} else {
 			final StringBuilder sb = new StringBuilder();
@@ -106,8 +114,11 @@ public class RelevanceInformation implements IRelevanceInformation
 			if (getCriterion1GF()) {
 				sb.append("@");
 			}
-			if (getCriterion2()) {
+			if (getCriterion2UC()) {
 				sb.append("#");
+			}
+			if (getCriterion2GF()) {
+				sb.append("%");
 			}
 			return sb.toString();
 		}

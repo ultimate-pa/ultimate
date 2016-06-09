@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,7 +38,7 @@ import java.util.function.Consumer;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
  * Some basic tests for {@link BidirectionalMap}.
@@ -46,7 +49,7 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testContainsValue() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		assertTrue(m.containsValue(1));
@@ -56,18 +59,18 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testClear() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.clear();
-		Map<String, Integer> empty = new HashMap<>();
+		final Map<String, Integer> empty = new HashMap<>();
 		assertEquals(empty, m);
 		assertEquals(empty, m.inverse());
 	}
 
 	@Test
 	public void testInverse() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.put("c", 3);
@@ -78,15 +81,15 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testPut() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.inverse().put(2, "b");
 		m.put("c", 3);
-		Map<String, Integer> expected = new HashMap<>();
+		final Map<String, Integer> expected = new HashMap<>();
 		expected.put("a", 1);
 		expected.put("b", 2);
 		expected.put("c", 3);
-		Map<Integer, String> expectedInverse = new HashMap<>();
+		final Map<Integer, String> expectedInverse = new HashMap<>();
 		expectedInverse.put(1, "a");
 		expectedInverse.put(2, "b");
 		expectedInverse.put(3, "c");
@@ -96,11 +99,11 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testPutExisiting() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
-		Map<String, Integer> expected = new HashMap<>();
+		final Map<String, Integer> expected = new HashMap<>();
 		expected.put("a", 1);
-		Map<Integer, String> expectedInverse = new HashMap<>();
+		final Map<Integer, String> expectedInverse = new HashMap<>();
 		expectedInverse.put(1, "a");
 
 		m.put("a", 1);
@@ -114,15 +117,15 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testReplace() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.put("c", 1); // replaces (a, 1)
 		m.inverse().put(2, "d"); // replaces (b, 2)
-		Map<String, Integer> expected = new HashMap<>();
+		final Map<String, Integer> expected = new HashMap<>();
 		expected.put("d", 2);
 		expected.put("c", 1);
-		Map<Integer, String> expectedInverse = new HashMap<>();
+		final Map<Integer, String> expectedInverse = new HashMap<>();
 		expectedInverse.put(2, "d");
 		expectedInverse.put(1, "c");
 		assertEquals(expected, m);
@@ -131,17 +134,17 @@ public class BidirectionalMapTest {
 
 	@Test
 	public void testRemoveKeyValue() {
-		BidirectionalMap<Integer, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<Integer, Integer> m = new BidirectionalMap<>();
 		m.put(1, 4);
 		m.put(2, 3);
 		m.put(3, 2);
 		m.put(4, 1);
 		m.remove(1);
 		m.inverse().remove(3);
-		Map<Integer, Integer> expected = new HashMap<>();
+		final Map<Integer, Integer> expected = new HashMap<>();
 		expected.put(3, 2);
 		expected.put(4, 1);
-		Map<Integer, Integer> expectedInverse = new HashMap<>();
+		final Map<Integer, Integer> expectedInverse = new HashMap<>();
 		expectedInverse.put(2, 3);
 		expectedInverse.put(1, 4);
 		assertEquals(expected, m);
@@ -171,7 +174,7 @@ public class BidirectionalMapTest {
 	@Test
 	public void testEntrySetIteratorRemove() {
 		testUnsupportedRemoveB2(m -> {
-			Iterator<Map.Entry<String, Integer>> i = m.entrySet().iterator();
+			final Iterator<Map.Entry<String, Integer>> i = m.entrySet().iterator();
 			while (i.hasNext()) {
 				if (i.next().getKey().equals("b")) {
 					i.remove();
@@ -184,21 +187,21 @@ public class BidirectionalMapTest {
 		// both are accepted: correct remove and unsupported operation
 		try {
 			testGenericRemoveB2(removeOperation);
-		} catch(UnsupportedOperationException uoe) {
+		} catch(final UnsupportedOperationException uoe) {
 			// nothing to do
 		}
 	}
 	
 	private void testGenericRemoveB2(Consumer<BidirectionalMap<String, Integer>> removeOperation) {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.put("c", 3);
 		removeOperation.accept(m);
-		Map<String, Integer> expected = new HashMap<>();
+		final Map<String, Integer> expected = new HashMap<>();
 		expected.put("a", 1);
 		expected.put("c", 3);
-		Map<Integer, String> expectedInverse = new HashMap<>();
+		final Map<Integer, String> expectedInverse = new HashMap<>();
 		expectedInverse.put(1, "a");
 		expectedInverse.put(3, "c");
 		assertEquals(expected, m);
@@ -207,21 +210,21 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testPutAll() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.put("c", 3);
-		Map<String, Integer> n = new HashMap<>();
+		final Map<String, Integer> n = new HashMap<>();
 		n.put("c", 4); // replaces (c, 3)
 		n.put("d", 5);
 		n.put("e", 1); // replaces (a, 1)
 		m.putAll(n);
-		Map<String, Integer> expected = new HashMap<>();
+		final Map<String, Integer> expected = new HashMap<>();
 		expected.put("e", 1);
 		expected.put("b", 2);
 		expected.put("c", 4);
 		expected.put("d", 5);
-		Map<Integer, String> expectedInverse = new HashMap<>();
+		final Map<Integer, String> expectedInverse = new HashMap<>();
 		expectedInverse.put(1, "e");
 		expectedInverse.put(2, "b");
 		expectedInverse.put(4, "c");
@@ -232,11 +235,11 @@ public class BidirectionalMapTest {
 	
 	@Test
 	public void testPutSelf() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
 		m.put("c", 3);
-		BidirectionalMap<String, Integer> mCopy = new BidirectionalMap<>(m);
+		final BidirectionalMap<String, Integer> mCopy = new BidirectionalMap<>(m);
 		m.putAll(mCopy);
 		assertEquals(mCopy, m);
 		assertEquals(mCopy.inverse(), m.inverse());

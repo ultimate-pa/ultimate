@@ -69,8 +69,8 @@ public class Tarjan {
 
 		computeVertices(node);
 
-		for (RCFGNode currentVertice : mUnfinishedVertices) {
-			VerticeDecorator currentVerticeDecorator = mVerticeIndices
+		for (final RCFGNode currentVertice : mUnfinishedVertices) {
+			final VerticeDecorator currentVerticeDecorator = mVerticeIndices
 					.get(currentVertice);
 			if (currentVerticeDecorator.index == -1) {
 				computeComponents(currentVertice, currentVerticeDecorator);
@@ -96,7 +96,7 @@ public class Tarjan {
 		mUnfinishedVertices.add(node);
 		mVerticeIndices.put(node, new VerticeDecorator());
 
-		for (RCFGEdge edge : node.getOutgoingEdges()) {
+		for (final RCFGEdge edge : node.getOutgoingEdges()) {
 			if (!mForbiddenEdges.contains(edge)) {
 				computeVertices(edge.getTarget());
 			}
@@ -112,13 +112,13 @@ public class Tarjan {
 		mCurrentComponent.push(currentVertice);
 
 		// Consider successors of currentVertice
-		for (RCFGEdge possibleSuccessorEdge : currentVertice.getOutgoingEdges()) {
+		for (final RCFGEdge possibleSuccessorEdge : currentVertice.getOutgoingEdges()) {
 			if (!isAdmissible(possibleSuccessorEdge)) {
 				continue;
 			}
 
-			RCFGNode succesor = possibleSuccessorEdge.getTarget();
-			VerticeDecorator succesorVerticeDecorator = mVerticeIndices
+			final RCFGNode succesor = possibleSuccessorEdge.getTarget();
+			final VerticeDecorator succesorVerticeDecorator = mVerticeIndices
 					.get(succesor);
 			if (succesorVerticeDecorator.index == -1) {
 				// Successor has not yet been visited; recurse on it
@@ -138,7 +138,7 @@ public class Tarjan {
 
 		// If currentVertice is a root node, pop the stack and generate an SCC
 		if (currentVerticeDecorator.lowlink == currentVerticeDecorator.index) {
-			SCC newComponent = new SCC();
+			final SCC newComponent = new SCC();
 			RCFGNode member = null;
 			while (member != currentVertice) {
 				member = mCurrentComponent.pop();

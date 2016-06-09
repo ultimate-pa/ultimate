@@ -48,25 +48,25 @@ public class TCSFormulaJ2XMLConverter {
         protected List<String> events = null;
 
     
-	private Vector<String> disjuncts = new Vector<String>();
+	private final Vector<String> disjuncts = new Vector<String>();
 	private int dnfCount=1;
 	
 	public String[] getDisjuncts(boolean primed, CDD cdd, List<String> rangeExpressionVariables,
             List<String> events, int numberOfDNFs) {
-        this.disjuncts.clear();
+        disjuncts.clear();
         
         this.rangeExpressionVariables=rangeExpressionVariables;
         this.events = events;
         
         /*System.out.println("Computing DNF "+dnfCount+ ((numberOfDNFs==0)?"":"/"+numberOfDNFs));*/
         dnfCount++;
-        this.cddToDNF(new StringBuffer(), cdd, primed);
+        cddToDNF(new StringBuffer(), cdd, primed);
         
         
-        int disjunctCount = this.disjuncts.size();
-        String[] strings = new String[disjunctCount];
+        final int disjunctCount = disjuncts.size();
+        final String[] strings = new String[disjunctCount];
         for(int i=0; i<disjunctCount; i++) {
-            strings[i] = (String) this.disjuncts.elementAt(i);
+            strings[i] = disjuncts.elementAt(i);
         }
         
         return strings;
@@ -80,18 +80,18 @@ public class TCSFormulaJ2XMLConverter {
     
     protected void cddToDNF(StringBuffer buf, CDD cdd, boolean primed) {
         if(cdd == CDD.TRUE) {
-        	this.disjuncts.add(buf.toString());
+        	disjuncts.add(buf.toString());
             return;
         } else if (cdd == CDD.FALSE) {
             return;
         }
         for(int i=0;i<cdd.getChilds().length;i++) {
-            StringBuffer newBuf = new StringBuffer();
+            final StringBuffer newBuf = new StringBuffer();
             newBuf.append(buf.toString());
             
-            this.appendDecisionToBuffer(newBuf, cdd.getDecision(), i, primed);
+            appendDecisionToBuffer(newBuf, cdd.getDecision(), i, primed);
             
-            this.cddToDNF(newBuf,cdd.getChilds()[i], primed);
+            cddToDNF(newBuf,cdd.getChilds()[i], primed);
         }
     }
 
@@ -100,17 +100,17 @@ public class TCSFormulaJ2XMLConverter {
     		buf.append(" /\\ ");
     	}
     	if(dec instanceof RangeDecision){
-    		String variable = ((RangeDecision)dec).getVar();
+    		final String variable = ((RangeDecision)dec).getVar();
     		buf.append(variable);
     		if(primed){
     			buf.append("'");
     		}
             
-    		if (!this.rangeExpressionVariables.contains(variable)) {
-    			this.rangeExpressionVariables.add(variable);
+    		if (!rangeExpressionVariables.contains(variable)) {
+    			rangeExpressionVariables.add(variable);
     		}
 
-    		int[] limits = ((RangeDecision)dec).getLimits();
+    		final int[] limits = ((RangeDecision)dec).getLimits();
     		if (i == 0) {
     			if ((limits[0] & 1) == 0) {
     				buf.append(" &lt; ");
@@ -155,7 +155,7 @@ public class TCSFormulaJ2XMLConverter {
     	if(i==0){
     		if(dec instanceof BooleanDecision){
     			if(primed){
-    				buf.append(this.primeBooleanDecision(((BooleanDecision)dec).getVar()));
+    				buf.append(primeBooleanDecision(((BooleanDecision)dec).getVar()));
     			}else{
     				buf.append(((BooleanDecision)dec).getVar().replace("<", "&lt;").replace(">", "&gt;"));
     			}
@@ -163,9 +163,9 @@ public class TCSFormulaJ2XMLConverter {
     			if(primed){ 
     				throw new RuntimeException("No primed variable allowed here");
     			}
-    			String event = ((EventDecision)dec).getEvent();
-    			if (!this.events.contains(event)) {
-    	            this.events.add(event);
+    			final String event = ((EventDecision)dec).getEvent();
+    			if (!events.contains(event)) {
+    	            events.add(event);
     	        }
     			buf.append("! "+event+" = "+event+"'");
     		}
@@ -173,7 +173,7 @@ public class TCSFormulaJ2XMLConverter {
     		if(dec instanceof BooleanDecision){
     			buf.append("! ");
     			if(primed){
-    				buf.append(this.primeBooleanDecision(((BooleanDecision)dec).getVar()));
+    				buf.append(primeBooleanDecision(((BooleanDecision)dec).getVar()));
     			}else{
     				buf.append(((BooleanDecision)dec).getVar().replace("<", "&lt;").replace(">", "&gt;"));
     			}
@@ -181,9 +181,9 @@ public class TCSFormulaJ2XMLConverter {
     			if(primed){ 
     				throw new RuntimeException("No primed variable allowed here");
     			}
-    			String event = ((EventDecision)dec).getEvent();
-    			if (!this.events.contains(event)) {
-    	            this.events.add(event);
+    			final String event = ((EventDecision)dec).getEvent();
+    			if (!events.contains(event)) {
+    	            events.add(event);
     	        }
     			buf.append(event+" = "+event+"'");    		
     		}

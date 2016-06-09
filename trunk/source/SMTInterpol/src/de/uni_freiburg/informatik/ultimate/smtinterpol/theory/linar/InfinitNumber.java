@@ -136,20 +136,24 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	/// --- Comparing ---
 	@Override
 	public int compareTo(InfinitNumber arg0) {
-		int ac = mA.compareTo(arg0.mA);
-		if (ac == 0)
+		final int ac = mA.compareTo(arg0.mA);
+		if (ac == 0) {
 			return mEps - arg0.mEps;
+		}
 		return ac;
 	}
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof InfinitNumber) {
-			InfinitNumber n = (InfinitNumber) o;
+			final InfinitNumber n = (InfinitNumber) o;
 			return mA.equals(n.mA) && mEps == n.mEps;
 		}
-		if (o instanceof MutableInfinitNumber)
+		if (o instanceof MutableInfinitNumber) {
 			return ((MutableInfinitNumber)o).equals(this);
+		}
 		return false;
 	}
+	@Override
 	public int hashCode() {
 		return mA.hashCode() + 65537 * mEps;
 	}
@@ -161,7 +165,7 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	 * @return <code>true</code> iff this is less than other.
 	 */
 	public boolean less(InfinitNumber other) {
-		int ac = mA.compareTo(other.mA);
+		final int ac = mA.compareTo(other.mA);
 		return ac < 0 || (ac == 0 && mEps < other.mEps);
 	}
 	/**
@@ -172,7 +176,7 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	 * @return <code>true</code> iff this is less than or equal to other.
 	*/
 	public boolean lesseq(InfinitNumber other) {
-		int ac = mA.compareTo(other.mA);
+		final int ac = mA.compareTo(other.mA);
 		return ac < 0 || (ac == 0 && mEps <= other.mEps);
 	}
 	/// --- Checks ---
@@ -183,9 +187,11 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 		return mA == Rational.POSITIVE_INFINITY || mA == Rational.NEGATIVE_INFINITY;
 	}
 	
+	@Override
 	public String toString() {
-		if (mEps == 0)
+		if (mEps == 0) {
 			return mA.toString();
+		}
 		return mA + (mEps > 0 ? "+" : "-") + "eps";
 	}
 	/**
@@ -203,10 +209,12 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	 * @return The largest integral number less or equal to the current value.
 	 */
 	public InfinitNumber floor() {
-		if (!mA.isIntegral())
+		if (!mA.isIntegral()) {
 			return new InfinitNumber(mA.floor(),0);
-		if (mEps >= 0)
+		}
+		if (mEps >= 0) {
 			return new InfinitNumber(mA,0);
+		}
 		return new InfinitNumber(mA.sub(Rational.ONE),0);
 	}
 	/**
@@ -216,10 +224,12 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	 * @return The smallest integral number greater or equal to the current value.
 	 */
 	public InfinitNumber ceil() {
-		if (!mA.isIntegral())
+		if (!mA.isIntegral()) {
 			return new InfinitNumber(mA.ceil(),0);
-		if (mEps <= 0)
+		}
+		if (mEps <= 0) {
 			return new InfinitNumber(mA,0);
+		}
 		return new InfinitNumber(mA.add(Rational.ONE),0);
 	}
 	

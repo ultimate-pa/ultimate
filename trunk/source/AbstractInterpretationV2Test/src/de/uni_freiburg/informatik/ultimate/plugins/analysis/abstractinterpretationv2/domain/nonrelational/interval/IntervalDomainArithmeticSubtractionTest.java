@@ -28,10 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
+import org.junit.Test;
 
 /**
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -42,13 +41,13 @@ public class IntervalDomainArithmeticSubtractionTest {
 	public void testIntervalSimpleSubtraction() {
 		
 		// Interval [10, 20]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
 		
 		// Interval [10, 10]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(10, 10);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(10, 10);
 		
 		// Expected Interval [0, 10]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(0, 10);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(0, 10);
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval2, expectedResult));
 	}
@@ -56,13 +55,13 @@ public class IntervalDomainArithmeticSubtractionTest {
 	@Test
 	public void testIntervalNegativeSubtraction() {
 		// Interval [1, 5]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 5);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 5);
 		
 		// Interval [-5, -1]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, -1);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-5, -1);
 		
 		// Expected Interval [0, 0]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(2, 10);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(2, 10);
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval2, expectedResult));
 	}
@@ -70,13 +69,13 @@ public class IntervalDomainArithmeticSubtractionTest {
 	@Test
 	public void testIntervalMixedNegativeSubtraction() {
 		// Interval [1, 5]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 5);
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval(1, 5);
 		
 		// Interval [-5, -1]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval(-1, 5);
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-1, 5);
 		
 		// Expected Interval [0, 0]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-4, 6);
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval(-4, 6);
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval2, expectedResult));
 	}
@@ -84,30 +83,30 @@ public class IntervalDomainArithmeticSubtractionTest {
 	@Test
 	public void testInfiniteIntervalSubtraction() {
 		// Interval [-\infty, \infty]
-		IntervalDomainValue interval1 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval1 = HelperFunctions.createInterval();
 		
 		// Interval [-\infty, \infty]
-		IntervalDomainValue interval2 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval();
 		
 		// Expected Interval [-\infty, \infty]
-		IntervalDomainValue expectedResult = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult = HelperFunctions.createInterval();
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval2, expectedResult));
 		
 		
 		// Interval [-\infty, \infty]
-		IntervalDomainValue interval3 = HelperFunctions.createInterval();
+		final IntervalDomainValue interval3 = HelperFunctions.createInterval();
 		
 		// Interval [-5, -1]
-		IntervalDomainValue interval4 = HelperFunctions.createInterval(-5, -1);
+		final IntervalDomainValue interval4 = HelperFunctions.createInterval(-5, -1);
 		
 		// Expected Interval [-\infty, \infty]
-		IntervalDomainValue expectedResult2 = HelperFunctions.createInterval();
+		final IntervalDomainValue expectedResult2 = HelperFunctions.createInterval();
 		
 		assertTrue(HelperFunctions.computeSubtractionResult(interval3, interval4, expectedResult2));
 		
 		// Interval [10,20]
-		IntervalDomainValue interval5 = HelperFunctions.createInterval(10, 20);
+		final IntervalDomainValue interval5 = HelperFunctions.createInterval(10, 20);
 		
 		// Expected Interval [-\infty, \infty]
 		assertTrue(HelperFunctions.computeSubtractionResult(interval1, interval5, expectedResult));

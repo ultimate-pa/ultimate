@@ -20,12 +20,14 @@ public class Activator implements BundleActivator {
 	 */
 	private static Bundle plugin;
 	
+	@Override
 	public void start(BundleContext context) throws Exception {
 		httpServiceTracker = new HttpTracker(context);
 		httpServiceTracker.open();
 		plugin = context.getBundle();
 	}
 
+	@Override
 	public void stop(BundleContext context) throws Exception {
 		httpServiceTracker.close();
 		httpServiceTracker = null;

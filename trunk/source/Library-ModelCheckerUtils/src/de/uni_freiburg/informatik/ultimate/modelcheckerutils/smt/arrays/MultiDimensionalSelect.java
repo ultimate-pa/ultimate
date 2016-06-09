@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array and the indices.
  * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, m_Array is null, m_Index is empty and m_SelectTerm is some term.
+ * this case, mArray is null, mIndex is empty and mSelectTerm is some term.
  * @author Matthias Heizmann
  *
  */
 public class MultiDimensionalSelect {
 
-	private final Term m_Array;
-	private final ArrayIndex m_Index;
-	private final ApplicationTerm m_SelectTerm;
+	private final Term mArray;
+	private final ArrayIndex mIndex;
+	private final ApplicationTerm mSelectTerm;
 	
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
@@ -65,13 +65,13 @@ public class MultiDimensionalSelect {
 	 * index i2.
 	 */
 	public MultiDimensionalSelect(Term term) {
-		m_SelectTerm = (ApplicationTerm) term;
-		ArrayList<Term> index = new ArrayList<Term>();
+		mSelectTerm = (ApplicationTerm) term;
+		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
 				break;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (!appTerm.getFunction().getName().equals("select")) {
 				break;
 			}
@@ -79,41 +79,41 @@ public class MultiDimensionalSelect {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		m_Index = new ArrayIndex(index);
-		m_Array = term;
+		mIndex = new ArrayIndex(index);
+		mArray = term;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
-		if (m_Array == null) {
-			return m_Index.size() == 0;
+		if (mArray == null) {
+			return mIndex.size() == 0;
 		} else {
 			return MultiDimensionalSort.
-					areDimensionsConsistent(m_Array, m_Index, m_SelectTerm);
+					areDimensionsConsistent(mArray, mIndex, mSelectTerm);
 		}
 	}
 	
 	public Term getArray() {
-		return m_Array;
+		return mArray;
 	}
 
 	public ArrayIndex getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	public ApplicationTerm getSelectTerm() {
-		return m_SelectTerm;
+		return mSelectTerm;
 	}
 	
 	@Override
 	public String toString() {
-		return m_SelectTerm.toString();
+		return mSelectTerm.toString();
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof MultiDimensionalSelect) {
-			return m_SelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
+			return mSelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
 		} else {
 			return false;
 		}
@@ -121,7 +121,7 @@ public class MultiDimensionalSelect {
 
 	@Override
 	public int hashCode() {
-		return m_SelectTerm.hashCode();
+		return mSelectTerm.hashCode();
 	}
 	
 	
@@ -139,12 +139,12 @@ public class MultiDimensionalSelect {
 	 */
 	public static List<MultiDimensionalSelect> extractSelectShallow(
 			Term term, boolean allowArrayValues) {
-		List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
-		Set<ApplicationTerm> selectTerms = 
+		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
+		final Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		for (Term storeTerm : selectTerms) {
+		for (final Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
-				MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
+				final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
 				if (mdSelect.getIndex().size() == 0) {
 					throw new AssertionError("select must not have dimension 0");
 				}
@@ -168,16 +168,16 @@ public class MultiDimensionalSelect {
 	 */
 	public static List<MultiDimensionalSelect> extractSelectDeep(
 			Term term, boolean allowArrayValues) {
-		List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
+		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
 		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term, allowArrayValues);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
-			List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
+			final List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
 			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
-			for (MultiDimensionalSelect mdSelect : foundInLastIteration) {
+			for (final MultiDimensionalSelect mdSelect : foundInLastIteration) {
 				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray(), allowArrayValues));
-				ArrayIndex index = mdSelect.getIndex();
-				for (Term entry : index) {
+				final ArrayIndex index = mdSelect.getIndex();
+				for (final Term entry : index) {
 					foundInThisIteration.addAll(extractSelectShallow(entry, allowArrayValues));
 				}
 			}

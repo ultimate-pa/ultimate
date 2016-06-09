@@ -12,9 +12,9 @@ import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicT
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.SimplePositiveTestTransformer;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.SimplePositiveTestTranslator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.ClosedWorldTransformator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import java_cup.runtime.Symbol;
 import pea.PhaseEventAutomata;
 import srParse.ReqParser;
@@ -28,6 +28,12 @@ import srParse.pattern.PatternType;
  *
  */
 public class SplToBoogie {
+	
+	private final IUltimateServiceProvider mService;
+	
+	public SplToBoogie(IUltimateServiceProvider service){
+		mService = service;
+	}
 	
 	/***
 	 * Parse requirements file to array of SPL pattern types.
@@ -52,7 +58,7 @@ public class SplToBoogie {
 	 * @return requirements as peas
 	 */
 	public Unit generatePEA(ArrayList<PatternType> patterns){
-		PatternTransformerTypes ttype =  new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		PatternTransformerTypes ttype =  mService.getPreferenceProvider(Activator.PLUGIN_ID)
 			.getEnum(PreferenceInitializer.LABEL_TRANSFORMER, PreferenceInitializer.PatternTransformerTypes.class);
 		SystemInformation sysInfo = new SystemInformation(); //TODO: this will be parsed from elsewhere!
 		BasicTransformer patternToPea;

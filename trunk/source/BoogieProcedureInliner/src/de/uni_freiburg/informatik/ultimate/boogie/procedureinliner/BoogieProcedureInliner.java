@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Tool for inlining Boogie procedures.
@@ -74,7 +74,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
 		observers.add(new Inliner(mServices));
 		return observers;
@@ -104,7 +104,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

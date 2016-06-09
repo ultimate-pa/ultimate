@@ -28,28 +28,27 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefBaseAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
 public class ReachDefBoogieAnnotator {
 
-	private ReachDefBoogieVisitor mVisitor;
+	private final ReachDefBoogieVisitor mVisitor;
 
-	private Collection<ReachDefStatementAnnotation> mPredecessors;
-	private ReachDefStatementAnnotation mCurrent;
-	private final Logger mLogger;
+	private final Collection<ReachDefStatementAnnotation> mPredecessors;
+	private final ReachDefStatementAnnotation mCurrent;
+	private final ILogger mLogger;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder) {
+			ReachDefStatementAnnotation current, ILogger logger, ScopedBoogieVarBuilder builder) {
 		this(predecessors, current, logger, builder, null);
 	}
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder, String key) {
+			ReachDefStatementAnnotation current, ILogger logger, ScopedBoogieVarBuilder builder, String key) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;
@@ -64,7 +63,7 @@ public class ReachDefBoogieAnnotator {
 	 * @throws Throwable
 	 */
 	public boolean annotate(Statement stmt, TransFormula transFormula) throws Throwable {
-		ReachDefBaseAnnotation old = mCurrent.clone();
+		final ReachDefBaseAnnotation old = mCurrent.clone();
 		union(mCurrent, mPredecessors);
 
 		if (mLogger.isDebugEnabled()) {
@@ -92,7 +91,7 @@ public class ReachDefBoogieAnnotator {
 		assert previousRDs != null;
 		assert current != null;
 
-		for (ReachDefStatementAnnotation pre : previousRDs) {
+		for (final ReachDefStatementAnnotation pre : previousRDs) {
 			if (pre == current) {
 				continue;
 			}

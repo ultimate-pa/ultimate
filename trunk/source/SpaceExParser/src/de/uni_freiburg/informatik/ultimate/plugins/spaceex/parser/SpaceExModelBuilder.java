@@ -15,10 +15,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspa
  */
 public class SpaceExModelBuilder {
 
-	private Map<String, ComponentType> mComponents;
-	private Map<String, ComponentType> mSystems;
+	private final Map<String, ComponentType> mComponents;
+	private final Map<String, ComponentType> mSystems;
 	
-	private SpaceExRootNode mModel;
+	private final SpaceExRootNode mModel;
 	
 	public SpaceExModelBuilder(Sspaceex root) {
 		mComponents = new HashMap<String, ComponentType>();
@@ -34,7 +34,7 @@ public class SpaceExModelBuilder {
 	}
 
 	private void parseComponents(List<ComponentType> components) {
-		for (ComponentType c : components) {
+		for (final ComponentType c : components) {
 			if (c.getBind().size() == 0) {
 				addComponent(c);
 			}

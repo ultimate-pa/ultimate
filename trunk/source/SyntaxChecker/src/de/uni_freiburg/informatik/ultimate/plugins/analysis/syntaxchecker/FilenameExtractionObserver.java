@@ -28,11 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 /**
  * Extract filename of input from C AST.
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  */
 public class FilenameExtractionObserver implements IUnmanagedObserver {
 	
-	private String m_Filename;
+	private String mFilename;
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
@@ -55,12 +54,6 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
@@ -68,19 +61,19 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		WrapperNode wn = (WrapperNode) root;
-		IASTNode tu = (IASTNode) wn.getBacking();
-		String filename = tu.getFileLocation().getFileName();
-		if (m_Filename == null) {
-			m_Filename = filename;
+		final WrapperNode wn = (WrapperNode) root;
+		final IASTNode tu = (IASTNode) wn.getBacking();
+		final String filename = tu.getFileLocation().getFileName();
+		if (mFilename == null) {
+			mFilename = filename;
 		} else {
-			throw new IllegalStateException("m_Filename already set");
+			throw new IllegalStateException("mFilename already set");
 		}
 		return false;
 	}
 
 	public String getFilename() {
-		return m_Filename;
+		return mFilename;
 	}
 	
 	

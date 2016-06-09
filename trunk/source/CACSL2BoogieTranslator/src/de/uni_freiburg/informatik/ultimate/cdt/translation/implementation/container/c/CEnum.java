@@ -33,9 +33,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -73,7 +73,7 @@ public class CEnum extends CType {
     		Expression[] fValues) {
         super(false, false, false, false); //FIXME: integrate those flags
         assert fNames.length == fValues.length;
-        this.identifier = id;
+        identifier = id;
         this.fNames = fNames;
         this.fValues = fValues;
     }
@@ -106,7 +106,7 @@ public class CEnum extends CType {
      * @return the fields value.
      */
     public Expression getFieldValue(String id) {
-        int idx = Arrays.asList(fNames).indexOf(id);
+        final int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id
                     + "' not in struct!");
@@ -149,12 +149,12 @@ public class CEnum extends CType {
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = ((CType)o).getUnderlyingType();
         if (!(oType instanceof CEnum)) {
             return false;
         }
         
-        CEnum oEnum = (CEnum)oType;
+        final CEnum oEnum = (CEnum)oType;
         if (!(identifier.equals(oEnum.identifier))) {
             return false;
         }
@@ -170,7 +170,8 @@ public class CEnum extends CType {
     }
 
     //@Override
-    public boolean isIncomplete() {
+    @Override
+	public boolean isIncomplete() {
     	return fNames == null;
 	}
 
@@ -184,14 +185,16 @@ public class CEnum extends CType {
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
 				(((CPrimitive) o).getType() == PRIMITIVE.VOID 
-				|| ((CPrimitive) o).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) //enums are compatible with ints
+				|| ((CPrimitive) o).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
 			return true;
+		}
 		
-		CType oType = ((CType)o).getUnderlyingType();
-        if (!(oType instanceof CEnum)) 
-            return false;
+		final CType oType = o.getUnderlyingType();
+        if (!(oType instanceof CEnum)) {
+			return false;
+		}
         
-        CEnum oEnum = (CEnum)oType;
+        final CEnum oEnum = (CEnum)oType;
         if (!(identifier.equals(oEnum.identifier))) {
             return false;
         }

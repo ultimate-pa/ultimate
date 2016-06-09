@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ArgumentSynthesizer;
@@ -54,11 +54,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
@@ -92,39 +96,39 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * Counter for auxiliary variables
 	 */
-	public static long m_aux_counter = 0;
+	public static long maux_counter = 0;
 	
 	/**
 	 * Do we have to handle integers (QF_LIA logic)?
 	 */
-	private final boolean m_integer_mode;
+	private final boolean minteger_mode;
 	
 	/**
 	 * What analysis type should be used for the nontermination analysis?
 	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
 	 * of the loop, or use a nonlinear SMT query?
 	 */
-	private final AnalysisType m_analysis_type;
+	private final AnalysisType manalysis_type;
 	
 	/**
 	 * The settings for termination analysis
 	 */
-	private final NonTerminationAnalysisSettings m_settings;
+	private final NonTerminationAnalysisSettings msettings;
 	
 	/**
 	 * The corresponding preferred sort ("Int" or "Real")
 	 */
-	private final Sort m_sort;
+	private final Sort msort;
 	
 	/**
 	 * Contains the NonTerminationArgument object after successful discovery
 	 */
-	private NonTerminationArgument m_argument = null;
+	private NonTerminationArgument margument = null;
 	
 	/**
 	 * Result of SMT query
 	 */
-	private LBool m_IsSat;
+	private LBool mIsSat;
 	
 	/**
 	 * Constructor for the termination argument function synthesizer.
@@ -141,81 +145,101 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			NonTerminationAnalysisSettings settings, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		super(lasso, preferences, "nonterminationTemplate", services, storage);
 		
-		m_settings = new NonTerminationAnalysisSettings(settings); // defensive copy
+		msettings = new NonTerminationAnalysisSettings(settings); // defensive copy
 		mLogger.info(settings.toString());
 		
-		m_integer_mode = (lasso.getStem().containsIntegers())
+		minteger_mode = (lasso.getStem().containsIntegers())
 				|| lasso.getLoop().containsIntegers();
-		if (!m_integer_mode) {
-			m_analysis_type = m_settings.analysis;
-			if (m_analysis_type.isLinear()) {
-				m_script.setLogic(Logics.QF_LRA);
+		if (!minteger_mode) {
+			manalysis_type = msettings.analysis;
+			if (manalysis_type.isLinear()) {
+				mscript.setLogic(Logics.QF_LRA);
 			} else {
-				m_script.setLogic(Logics.QF_NRA);
+				mscript.setLogic(Logics.QF_NRA);
 			}
-			m_sort = m_script.sort("Real");
+			msort = mscript.sort("Real");
 		} else {
 			mLogger.info("Using integer mode.");
-			m_analysis_type = m_settings.analysis;
-			if (m_settings.analysis.isLinear()) {
-				m_script.setLogic(Logics.QF_LIA);
+			manalysis_type = msettings.analysis;
+			if (msettings.analysis.isLinear()) {
+				mscript.setLogic(Logics.QF_LIA);
 			} else {
-				m_script.setLogic(Logics.QF_NIA);
+				mscript.setLogic(Logics.QF_NIA);
 			}
-			m_sort = m_script.sort("Int");
+			msort = mscript.sort("Int");
 		}
-		assert !m_analysis_type.isDisabled();
+		assert !manalysis_type.isDisabled();
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected Script constructScript(LassoRankerPreferences preferences, String constraintsName) {
+		final Settings settings = preferences.getSolverConstructionSettings(
+				preferences.baseNameOfDumpedScript + "+" + constraintsName);
+		final SolverMode solverMode;
+		if (preferences.annotate_terms) {
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+		} else {
+			solverMode = SolverMode.External_ModelsMode;
+		}
+		final String solverId = "NonTerminationArgumentSynthesis solver ";
+		return SolverBuilder.buildAndInitializeSolver(mservices, mstorage, 
+				solverMode, settings, 
+				false, false, null, solverId);
+	}
+	
 	
 	@Override
 	protected LBool do_synthesis() {
-		assert m_settings.number_of_gevs >= 0;
-		String sort = m_integer_mode ? "Int" : "Real";
+		assert msettings.number_of_gevs >= 0;
+		final String sort = minteger_mode ? "Int" : "Real";
 		
 		// Create new variables
-		Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
-		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
-		List<Map<RankVar, Term>> vars_gevs =
-				new ArrayList<Map<RankVar, Term>>(m_settings.number_of_gevs);
-		List<Term> lambdas = new ArrayList<Term>(m_settings.number_of_gevs);
-		for (RankVar var : m_lasso.getAllRankVars()) {
-			String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
+		final Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
+		final Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
+		final List<Map<RankVar, Term>> vars_gevs =
+				new ArrayList<Map<RankVar, Term>>(msettings.number_of_gevs);
+		final List<Term> lambdas = new ArrayList<Term>(msettings.number_of_gevs);
+		for (final RankVar var : mlasso.getAllRankVars()) {
+			final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(s_prefix_init + name, sort));
 			vars_honda.put(var, newConstant(s_prefix_honda + name, sort));
 		}
-		for (int i = 0; i < m_settings.number_of_gevs; ++i) {
-			Map<RankVar, Term> vars_gev = new LinkedHashMap<RankVar, Term>();
-			for (RankVar var : m_lasso.getAllRankVars()) {
-				String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
+		for (int i = 0; i < msettings.number_of_gevs; ++i) {
+			final Map<RankVar, Term> vars_gev = new LinkedHashMap<RankVar, Term>();
+			for (final RankVar var : mlasso.getAllRankVars()) {
+				final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 				vars_gev.put(var, newConstant(s_prefix_gevector + name + i, sort));
 			}
 			vars_gevs.add(vars_gev);
 			lambdas.add(newConstant(s_prefix_evalue + i, sort));
 		}
 		List<Term> nus;
-		if (m_settings.number_of_gevs > 0) {
-			nus = new ArrayList<Term>(m_settings.number_of_gevs - 1);
-			for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
+		if (msettings.number_of_gevs > 0) {
+			nus = new ArrayList<Term>(msettings.number_of_gevs - 1);
+			for (int i = 0; i < msettings.number_of_gevs - 1; ++i) {
 				nus.add(newConstant(s_prefix_nilpotent + i, sort));
 			}
 		} else {
 			nus = Collections.emptyList();
 		}
 		
-		Term constraints = generateConstraints(vars_init, vars_honda, vars_gevs,
+		final Term constraints = generateConstraints(vars_init, vars_honda, vars_gevs,
 				lambdas, nus);
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
-		m_script.assertTerm(constraints);
+		mscript.assertTerm(constraints);
 		
 		// Check for satisfiability
-		m_IsSat = m_script.checkSat();
-		if (m_IsSat == LBool.SAT) {
-			m_argument = extractArgument(vars_init, vars_honda, vars_gevs,
+		mIsSat = mscript.checkSat();
+		if (mIsSat == LBool.SAT) {
+			margument = extractArgument(vars_init, vars_honda, vars_gevs,
 					lambdas, nus);
-		} else if (m_IsSat == LBool.UNKNOWN) {
-			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
+		} else if (mIsSat == LBool.UNKNOWN) {
+			mscript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 		}
-		return m_IsSat;
+		return mIsSat;
 	}
 	
 	/**
@@ -231,55 +255,55 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	public Term generateConstraints(Map<RankVar, Term> vars_init,
 			Map<RankVar, Term> vars_honda, List<Map<RankVar, Term>> vars_gevs,
 			List<Term> lambdas, List<Term> nus) {
-		m_settings.checkSanity();
-		assert m_settings.number_of_gevs >= 0;
-		assert vars_gevs.size() == m_settings.number_of_gevs;
-		assert lambdas.size() == m_settings.number_of_gevs;
-		int num_vars;
+		msettings.checkSanity();
+		assert msettings.number_of_gevs >= 0;
+		assert vars_gevs.size() == msettings.number_of_gevs;
+		assert lambdas.size() == msettings.number_of_gevs;
+		int numvars;
 		if (vars_gevs.isEmpty()) {
-			num_vars = 0;
+			numvars = 0;
 		} else {
-			num_vars = vars_gevs.get(0).size();
+			numvars = vars_gevs.get(0).size();
 		}
-		assert num_vars >= 0;
+		assert numvars >= 0;
 		
-		Collection<RankVar> rankVars = m_lasso.getAllRankVars();
+		final Collection<RankVar> rankVars = mlasso.getAllRankVars();
 		
 		Term zero; // = 0
 		Term one; // = 1
-		if (!m_integer_mode) {
-			zero = m_script.decimal("0");
-			one = m_script.decimal("1");
+		if (!minteger_mode) {
+			zero = mscript.decimal("0");
+			one = mscript.decimal("1");
 		} else {
-			zero = m_script.numeral("0");
-			one = m_script.numeral("1");
+			zero = mscript.numeral("0");
+			one = mscript.numeral("1");
 		}
 		
 		List<Term> lambda_guesses; // possible guesses for lambda if we are generating linear constraints
 		List<Term> nu_guesses; // possible values for nus
-		if (m_analysis_type == AnalysisType.Nonlinear) {
+		if (manalysis_type == AnalysisType.Nonlinear) {
 			// Use a variable for lambda
 			lambda_guesses = Collections.singletonList(null);
 			nu_guesses = Collections.singletonList(null);
 		} else {
-			List<Term> l = new ArrayList<Term>();
+			final List<Term> l = new ArrayList<Term>();
 			l.add(zero);
 			l.add(one);
 			nu_guesses = Collections.unmodifiableList(l);
 			
-			if (m_analysis_type == AnalysisType.Linear) {
+			if (manalysis_type == AnalysisType.Linear) {
 				// Just use lambda = 1
 				lambda_guesses = Collections.singletonList(one);
-			} else if (m_analysis_type == AnalysisType.Linear_with_guesses) {
+			} else if (manalysis_type == AnalysisType.Linear_with_guesses) {
 				// Use a list of guesses for lambda
-				Rational[] eigenvalues = m_lasso.guessEigenvalues(false);
+				final Rational[] eigenvalues = mlasso.guessEigenvalues(false);
 				lambda_guesses = new ArrayList<Term>(eigenvalues.length);
 				for (int i = 0; i < eigenvalues.length; ++i) {
 					assert !eigenvalues[i].isNegative();
-					if (m_integer_mode && !eigenvalues[i].isIntegral()) {
+					if (minteger_mode && !eigenvalues[i].isIntegral()) {
 						continue; // ignore non-integral guesses
 					}
-					lambda_guesses.add(eigenvalues[i].toTerm(m_sort));
+					lambda_guesses.add(eigenvalues[i].toTerm(msort));
 				}
 			} else {
 				assert false; // unreachable branch
@@ -290,11 +314,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Term t1, t2, t3; // Three parts of the constraints
 		
 		// t1: A_stem * (z, x) <= b_stem
-		t1 = m_script.term("true");
-		if (!m_lasso.getStem().isTrue()) {
-			LinearTransition stem = m_lasso.getStem();
-			List<Term> disjunction = new ArrayList<Term>(stem.getNumPolyhedra());
-			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
+		t1 = mscript.term("true");
+		if (!mlasso.getStem().isTrue()) {
+			final LinearTransition stem = mlasso.getStem();
+			final List<Term> disjunction = new ArrayList<Term>(stem.getNumPolyhedra());
+			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				disjunction.add(generateConstraint(
 						stem,
 						polyhedron,
@@ -303,33 +327,33 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						false
 				));
 			}
-			t1 = Util.or(m_script, disjunction.toArray(new Term[0]));
+			t1 = Util.or(mscript, disjunction.toArray(new Term[0]));
 		}
 		
 		// vars_end + vars_gevs
-		Map<RankVar, Term> vars_end_plus_gevs =
+		final Map<RankVar, Term> vars_end_plus_gevs =
 				new LinkedHashMap<RankVar, Term>();
 		vars_end_plus_gevs.putAll(vars_honda);
-		for (RankVar rkVar : rankVars) {
-			Term[] summands = new Term[m_settings.number_of_gevs + 1];
+		for (final RankVar rkVar : rankVars) {
+			final Term[] summands = new Term[msettings.number_of_gevs + 1];
 			summands[0] = vars_honda.get(rkVar);
-			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+			for (int i = 0; i < msettings.number_of_gevs; ++i) {
 				summands[i + 1] = vars_gevs.get(i).get(rkVar);
 			}
 			final Term sum;
 			if (summands.length == 1) {
 				sum = summands[0];
 			} else {
-				sum = m_script.term("+", summands);
+				sum = mscript.term("+", summands);
 			}
 			vars_end_plus_gevs.put(rkVar, sum);
 		}
 		
 		// vars_gev[i] * lambda_guesses + nu_i * vars_gev[i+1] for each i
-		List<List<Map<RankVar, Term>>> vars_gevs_next =
-				new ArrayList<List<Map<RankVar, Term>>>(m_settings.number_of_gevs);
-		for (int i = 0; i < m_settings.number_of_gevs; ++i) {
-			List<Map<RankVar, Term>> vars_gevs_next_i =
+		final List<List<Map<RankVar, Term>>> vars_gevs_next =
+				new ArrayList<List<Map<RankVar, Term>>>(msettings.number_of_gevs);
+		for (int i = 0; i < msettings.number_of_gevs; ++i) {
+			final List<Map<RankVar, Term>> vars_gevs_next_i =
 					new ArrayList<Map<RankVar, Term>>(lambda_guesses.size());
 			vars_gevs_next.add(vars_gevs_next_i);
 			for (int j = 0; j < lambda_guesses.size(); ++j) {
@@ -339,19 +363,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						lambda_guess = lambdas.get(i);
 					}
 					Term nu_guess = nu_guesses.get(k);
-					if (nu_guess == null && i < m_settings.number_of_gevs - 1) {
+					if (nu_guess == null && i < msettings.number_of_gevs - 1) {
 						nu_guess = nus.get(i);
 					}
 					
-					Map<RankVar, Term> gev_next = new LinkedHashMap<RankVar, Term>();
+					final Map<RankVar, Term> gev_next = new LinkedHashMap<RankVar, Term>();
 					vars_gevs_next_i.add(gev_next);
-					for (RankVar rkVar : rankVars) {
-						if (m_settings.nilpotent_components && i < m_settings.number_of_gevs - 1) {
-							gev_next.put(rkVar, m_script.term("+",
-								m_script.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
-								m_script.term("*", vars_gevs.get(i + 1).get(rkVar), nu_guess)));
+					for (final RankVar rkVar : rankVars) {
+						if (msettings.nilpotent_components && i < msettings.number_of_gevs - 1) {
+							gev_next.put(rkVar, mscript.term("+",
+								mscript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
+								mscript.term("*", vars_gevs.get(i + 1).get(rkVar), nu_guess)));
 						} else {
-							gev_next.put(rkVar, m_script.term("*",
+							gev_next.put(rkVar, mscript.term("*",
 									vars_gevs.get(i).get(rkVar), lambda_guess));
 						}
 					}
@@ -361,20 +385,20 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		// t2: honda and rays
 		{
-			LinearTransition loop = m_lasso.getLoop();
-			List<Term> disjunction = new ArrayList<Term>(loop.getNumPolyhedra());
-			for (List<LinearInequality> polyhedron : loop.getPolyhedra()) {
+			final LinearTransition loop = mlasso.getLoop();
+			final List<Term> disjunction = new ArrayList<Term>(loop.getNumPolyhedra());
+			for (final List<LinearInequality> polyhedron : loop.getPolyhedra()) {
 				// A_loop * (x, x + y) <= b_loop
-				Term t_honda = this.generateConstraint(loop, polyhedron,
+				final Term t_honda = generateConstraint(loop, polyhedron,
 						vars_honda, vars_end_plus_gevs, false);
 				
 				// A_loop * (y, lambda * y) <= 0
-				Term[] conjuction = new Term[m_settings.number_of_gevs + 1];
-				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
-					Term[] inner_disjunction = new Term[lambda_guesses.size()];
+				final Term[] conjuction = new Term[msettings.number_of_gevs + 1];
+				for (int i = 0; i < msettings.number_of_gevs; ++i) {
+					final Term[] inner_disjunction = new Term[lambda_guesses.size()];
 					for (int j = 0; j < lambda_guesses.size(); ++j) {
-						Term lambda_guess = lambda_guesses.get(j);
-						Term t_gev = this.generateConstraint(
+						final Term lambda_guess = lambda_guesses.get(j);
+						final Term t_gev = generateConstraint(
 								loop,
 								polyhedron,
 								vars_gevs.get(i),
@@ -383,55 +407,55 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						);
 						Term fix_lambda;
 						if (lambda_guess == null) {
-							fix_lambda = m_script.term("true");
+							fix_lambda = mscript.term("true");
 						} else {
-							fix_lambda = m_script.term("=", lambdas.get(i), lambda_guess);
+							fix_lambda = mscript.term("=", lambdas.get(i), lambda_guess);
 						}
-						inner_disjunction[j] = Util.and(m_script, t_gev, fix_lambda);
+						inner_disjunction[j] = Util.and(mscript, t_gev, fix_lambda);
 					}
-					conjuction[i] = Util.or(m_script, inner_disjunction);
+					conjuction[i] = Util.or(mscript, inner_disjunction);
 				}
-				conjuction[m_settings.number_of_gevs] = t_honda;
-				disjunction.add(Util.and(m_script, conjuction));
+				conjuction[msettings.number_of_gevs] = t_honda;
+				disjunction.add(Util.and(mscript, conjuction));
 			}
-			t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
+			t2 = Util.or(mscript, disjunction.toArray(new Term[0]));
 		}
 		
 		// t3: constraints on the lambdas and the nus
 		{
-			List<Term> conjunction = new ArrayList<Term>(2*m_settings.number_of_gevs);
+			final List<Term> conjunction = new ArrayList<Term>(2*msettings.number_of_gevs);
 			
 			// nu_i = 0 or nu_i = 1
-			for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
-				Term nu = nus.get(i);
-				conjunction.add(Util.or(m_script,
-						m_script.term("=", nu, zero),
-						m_script.term("=", nu, one)));
+			for (int i = 0; i < msettings.number_of_gevs - 1; ++i) {
+				final Term nu = nus.get(i);
+				conjunction.add(Util.or(mscript,
+						mscript.term("=", nu, zero),
+						mscript.term("=", nu, one)));
 			}
-			if (this.m_settings.allowBounded) {
+			if (msettings.allowBounded) {
 				// lambda_i >= 0
-				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
-					conjunction.add(m_script.term(">=", lambdas.get(i), zero));
+				for (int i = 0; i < msettings.number_of_gevs; ++i) {
+					conjunction.add(mscript.term(">=", lambdas.get(i), zero));
 				}
 			} else {
 				// lambda >= 1 and any vars_gev != 0;
-				List<Term> disjunction =
-						new ArrayList<Term>(m_settings.number_of_gevs*num_vars);
-				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
-					for (Term t : vars_gevs.get(i).values()) {
-						disjunction.add(m_script.term("<>", t, zero));
+				final List<Term> disjunction =
+						new ArrayList<Term>(msettings.number_of_gevs*numvars);
+				for (int i = 0; i < msettings.number_of_gevs; ++i) {
+					for (final Term t : vars_gevs.get(i).values()) {
+						disjunction.add(mscript.term("<>", t, zero));
 					}
-					conjunction.add(m_script.term(">=", lambdas.get(i), one));
+					conjunction.add(mscript.term(">=", lambdas.get(i), one));
 				}
-				conjunction.add(Util.or(m_script, disjunction.toArray(new Term[0])));
+				conjunction.add(Util.or(mscript, disjunction.toArray(new Term[0])));
 			}
-			t3 = Util.and(m_script, conjunction.toArray(new Term[0]));
+			t3 = Util.and(mscript, conjunction.toArray(new Term[0]));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t2)));
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t3)));
-		return m_script.term("and", t1, t2, t3);
+		return mscript.term("and", t1, t2, t3);
 	}
 	
 	private Term generateConstraint(LinearTransition transition,
@@ -439,75 +463,75 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Term> varsIn,
 			Map<RankVar, Term> varsOut,
 			boolean rays) {
-		Map<Term, Term> auxVars = new LinkedHashMap<Term, Term>();
-		List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
-		for (LinearInequality ieq : polyhedron) {
-			List<Term> summands = new ArrayList<Term>();
-			Collection<Term> added_vars = new LinkedHashSet<Term>();
+		final Map<Term, Term> auxVars = new LinkedHashMap<Term, Term>();
+		final List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
+		for (final LinearInequality ieq : polyhedron) {
+			final List<Term> summands = new ArrayList<Term>();
+			final Collection<Term> added_vars = new LinkedHashSet<Term>();
 			
 			// outVars
-			for (Map.Entry<RankVar, Term> entry :
+			for (final Map.Entry<RankVar, Term> entry :
 					transition.getOutVars().entrySet()) {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
 				}
-				AffineTerm a = ieq.getCoefficient(entry.getValue());
-				summands.add(m_script.term("*", varsOut.get(entry.getKey()),
-					m_integer_mode ? a.asIntTerm(m_script)
-							: a.asRealTerm(m_script)));
+				final AffineTerm a = ieq.getCoefficient(entry.getValue());
+				summands.add(mscript.term("*", varsOut.get(entry.getKey()),
+					minteger_mode ? a.asIntTerm(mscript)
+							: a.asRealTerm(mscript)));
 				added_vars.add(entry.getValue());
 			}
 			
 			// inVars
-			for (Map.Entry<RankVar, Term> entry :
+			for (final Map.Entry<RankVar, Term> entry :
 					transition.getInVars().entrySet()) {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
 					// entry.getKey() is constant
-					conjunction.add(m_script.term(
+					conjunction.add(mscript.term(
 							"=",
 							varsIn.get(entry.getKey()),
 							varsOut.get(entry.getKey())
 					));
 					continue;
 				}
-				AffineTerm a = ieq.getCoefficient(entry.getValue());
-				summands.add(m_script.term("*", varsIn.get(entry.getKey()),
-						m_integer_mode ? a.asIntTerm(m_script)
-								: a.asRealTerm(m_script)));
+				final AffineTerm a = ieq.getCoefficient(entry.getValue());
+				summands.add(mscript.term("*", varsIn.get(entry.getKey()),
+						minteger_mode ? a.asIntTerm(mscript)
+								: a.asRealTerm(mscript)));
 				added_vars.add(entry.getValue());
 			}
 			
 			// tmpVars
-			Set<Term> all_vars = new LinkedHashSet<Term>(ieq.getVariables());
+			final Set<Term> all_vars = new LinkedHashSet<Term>(ieq.getVariables());
 			all_vars.removeAll(added_vars);
-			for (Term var : all_vars) {
+			for (final Term var : all_vars) {
 				Term v;
 				if (auxVars.containsKey(var)) {
 					v = auxVars.get(var);
 				} else {
-					v = newConstant(s_prefix_aux + m_aux_counter,
-							m_integer_mode ? "Int" : "Real");
+					v = newConstant(s_prefix_aux + maux_counter,
+							minteger_mode ? "Int" : "Real");
 					auxVars.put(var, v);
 				}
-				AffineTerm a = ieq.getCoefficient(var);
-				summands.add(m_script.term("*", v,
-						m_integer_mode ? a.asIntTerm(m_script)
-								: a.asRealTerm(m_script)));
-				++m_aux_counter;
+				final AffineTerm a = ieq.getCoefficient(var);
+				summands.add(mscript.term("*", v,
+						minteger_mode ? a.asIntTerm(mscript)
+								: a.asRealTerm(mscript)));
+				++maux_counter;
 			}
 			if (!rays) {
-				AffineTerm a = ieq.getConstant();
-				summands.add(m_integer_mode ? a.asIntTerm(m_script)
-						: a.asRealTerm(m_script));
+				final AffineTerm a = ieq.getConstant();
+				summands.add(minteger_mode ? a.asIntTerm(mscript)
+						: a.asRealTerm(mscript));
 			}
-			conjunction.add(m_script.term(rays ? ">=" : ieq.getInequalitySymbol(),
-					SmtUtils.sum(m_script, m_sort,
+			conjunction.add(mscript.term(rays ? ">=" : ieq.getInequalitySymbol(),
+					SmtUtils.sum(mscript, msort,
 							summands.toArray(new Term[0])),
-					m_integer_mode ? m_script.numeral(BigInteger.ZERO)
-							: m_script.decimal("0")));
+					minteger_mode ? mscript.numeral(BigInteger.ZERO)
+							: mscript.decimal("0")));
 		}
-		return Util.and(m_script, conjunction.toArray(new Term[0]));
+		return Util.and(mscript, conjunction.toArray(new Term[0]));
 	}
 	
 	/**
@@ -524,10 +548,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (vars.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		Map<Term, Rational> val = ModelExtractionUtils.getValuation(m_script, vars.values());
+		final Map<Term, Rational> val = ModelExtractionUtils.getValuation(mscript, vars.values());
 		// Concatenate vars and val
-		Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
-		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
+		final Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
+		for (final Map.Entry<RankVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
 			state.put(entry.getKey(), val.get(entry.getValue()));
 		}
@@ -545,42 +569,42 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			List<Map<RankVar, Term>> vars_gevs,
 			List<Term> var_lambdas,
 			List<Term> var_nus) {
-//		assert m_script.checkSat() == LBool.SAT;
+//		assert mscript.checkSat() == LBool.SAT;
 		
 		try {
-			Map<RankVar, Rational> state0 = extractState(vars_init);
-			Map<RankVar, Rational> state1 = extractState(vars_honda);
-			List<Map<RankVar, Rational>> gevs =
-					new ArrayList<Map<RankVar, Rational>>(m_settings.number_of_gevs);
+			final Map<RankVar, Rational> state0 = extractState(vars_init);
+			final Map<RankVar, Rational> state1 = extractState(vars_honda);
+			final List<Map<RankVar, Rational>> gevs =
+					new ArrayList<Map<RankVar, Rational>>(msettings.number_of_gevs);
 			final Map<Term, Term> lambda_val;
 			if (var_lambdas.size() > 0) {
-				lambda_val = m_script.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
+				lambda_val = mscript.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
 			} else {
 				lambda_val = Collections.emptyMap();
 			}
 			final Map<Term, Term> nu_val;
 			if (var_nus.size() > 0) {
-				nu_val = m_script.getValue(var_nus.toArray(new Term[var_nus.size()]));
+				nu_val = mscript.getValue(var_nus.toArray(new Term[var_nus.size()]));
 			} else {
 				nu_val = Collections.emptyMap();
 			}
-			List<Rational> lambdas = new ArrayList<Rational>(m_settings.number_of_gevs);
-			List<Rational> nus = new ArrayList<Rational>();
-			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+			final List<Rational> lambdas = new ArrayList<Rational>(msettings.number_of_gevs);
+			final List<Rational> nus = new ArrayList<Rational>();
+			for (int i = 0; i < msettings.number_of_gevs; ++i) {
 				gevs.add(extractState(vars_gevs.get(i)));
 				lambdas.add(ModelExtractionUtils.const2Rational(
 						lambda_val.get(var_lambdas.get(i))));
-				if (i < m_settings.number_of_gevs - 1) {
+				if (i < msettings.number_of_gevs - 1) {
 					nus.add(ModelExtractionUtils.const2Rational(
 						nu_val.get(var_nus.get(i))));
 				}
 			}
-			boolean has_stem = !m_lasso.getStem().isTrue();
+			final boolean has_stem = !mlasso.getStem().isTrue();
 			return new NonTerminationArgument(has_stem ? state0 : state1,
 					state1, gevs, lambdas, nus);
-		} catch (UnsupportedOperationException e) {
+		} catch (final UnsupportedOperationException e) {
 			// do nothing
-		} catch (TermException e) {
+		} catch (final TermException e) {
 			// do nothing
 		}
 		return null;
@@ -591,7 +615,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	public NonTerminationArgument getArgument() {
 		assert synthesisSuccessful();
-		return m_argument;
+		return margument;
 	}
 	
 }

@@ -28,21 +28,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 public class UnknownState implements ISLPredicate {
 
 //	private static final long serialVersionUID = 9190582215913478152L;
-	private final ProgramPoint m_ProgramPoint;
-	private final int m_SerialNumber;
-	private final Term m_Term;
+	private final ProgramPoint mProgramPoint;
+	private final int mSerialNumber;
+	private final Term mTerm;
 	
 	protected UnknownState(ProgramPoint programPoint, int serialNumber, Term term) {
-		m_ProgramPoint = programPoint;
-		m_SerialNumber = serialNumber;
-		m_Term = term;
+		mProgramPoint = programPoint;
+		mSerialNumber = serialNumber;
+		mTerm = term;
 		
 //		super(programPoint, serialNumber, new String[0], term, null, null);
 	}
@@ -63,7 +63,7 @@ public class UnknownState implements ISLPredicate {
 //	@Override
 //	protected Object getFieldValue(String field) {
 //		if (field == "ProgramPoint")
-//			return m_ProgramPoint;
+//			return mProgramPoint;
 //		else if (field == "isUnknown")
 //			return true;
 //		else
@@ -72,9 +72,9 @@ public class UnknownState implements ISLPredicate {
 	
 	@Override
 	public String toString() {
-		String result = m_SerialNumber + "#";
-		if (m_ProgramPoint != null) {
-			result += m_ProgramPoint.getPosition();
+		String result = mSerialNumber + "#";
+		if (mProgramPoint != null) {
+			result += mProgramPoint.getPosition();
 		}
 		else {
 			result += "unknown";
@@ -84,18 +84,19 @@ public class UnknownState implements ISLPredicate {
 	
 	@Override
 	public int hashCode() {
-		return m_SerialNumber;
+		return mSerialNumber;
 	}
 	
 	
+	@Override
 	public ProgramPoint getProgramPoint() {
-		return m_ProgramPoint;
+		return mProgramPoint;
 	}
 	
 	
 	@Override
 	public Term getFormula() {
-		return m_Term;
+		return mTerm;
 	}
 
 	@Override

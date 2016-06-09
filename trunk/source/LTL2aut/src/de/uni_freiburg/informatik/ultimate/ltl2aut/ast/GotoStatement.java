@@ -33,9 +33,10 @@ public class GotoStatement extends AstNode {
 		this.addOutgoing(target);
 	}
 	
+	@Override
 	public String toString()
 	{
-		return "goto "+ this.getOutgoingNodes().get(0).toString();
+		return "goto "+ getOutgoingNodes().get(0).toString();
 	}
 
 }

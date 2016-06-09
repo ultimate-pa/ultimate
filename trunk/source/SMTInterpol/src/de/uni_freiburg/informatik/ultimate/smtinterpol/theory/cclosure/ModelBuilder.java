@@ -45,17 +45,18 @@ public class ModelBuilder {
 		}
 		public void add(int arg) {
 			if (mNextPos == mArgs.length) {
-				int[] old = mArgs;
+				final int[] old = mArgs;
 				mArgs = new int[old.length << 1];
 				System.arraycopy(old, 0, mArgs, 0, old.length);
 			}
 			mArgs[mNextPos++] = arg;
 		}
 		public int[] toArray() {
-			int[] res = new int[mNextPos];
+			final int[] res = new int[mNextPos];
 			int pos = 0;
-			for (int i = mNextPos - 1; i >= 0; --i)
+			for (int i = mNextPos - 1; i >= 0; --i) {
 				res[pos++] = mArgs[i];
+			}
 			return res;
 		}
 	}
@@ -104,19 +105,19 @@ public class ModelBuilder {
 			CCTerm trueNode, CCTerm falseNode) {
 		mCClosure = closure;
 		Rational biggest = Rational.MONE;
-		Set<CCTerm> delayed = new HashSet<CCTerm>();
-		for (CCTerm term : terms) {
+		final Set<CCTerm> delayed = new HashSet<CCTerm>();
+		for (final CCTerm term : terms) {
 			if (term == term.mRepStar) {
 				int value;
-				Term smtterm = term.toSMTTerm(t);
+				final Term smtterm = term.toSMTTerm(t);
 				if (smtterm.getSort().isNumericSort()) {
 					Rational v;
 					if (term.getSharedTerm() != null
-							&& term.getSharedTerm().validShared()) // NOPMD
+							&& term.getSharedTerm().validShared()) {
 						v = ste.evaluate(term.getSharedTerm(), t);
-					else if (smtterm instanceof ConstantTerm)
+					} else if (smtterm instanceof ConstantTerm) {
 						v = (Rational) ((ConstantTerm) smtterm).getValue();
-					else {
+					} else {
 						delayed.add(term);
 						continue;
 					}
@@ -132,25 +133,27 @@ public class ModelBuilder {
 					value = model.getFalseIdx();
 				} else if (smtterm.getSort().isArraySort()) {
 					//Array sort
-					ArraySortInterpretation arrSort = (ArraySortInterpretation)
+					final ArraySortInterpretation arrSort = (ArraySortInterpretation)
 							model.provideSortInterpretation(smtterm.getSort());
 					value = arrSort.createEmptyArrayValue();
 				} else {
 					value = model.extendFresh(smtterm.getSort());
 				}
 				term.mModelVal = value;
-				for (CCTerm mem : term.mMembers)
+				for (final CCTerm mem : term.mMembers) {
 					add(model, mem, value, t);
+				}
 			}
 		}
 		// Handle all delayed elements
 		// We use the smallest integer bigger than biggest
 		biggest = biggest.add(Rational.ONE).floor();
-		for (CCTerm term : delayed) {
-			int idx = model.putNumeric(biggest);
+		for (final CCTerm term : delayed) {
+			final int idx = model.putNumeric(biggest);
 			term.mModelVal = idx;
-			for (CCTerm mem : term.mMembers)
+			for (final CCTerm mem : term.mMembers) {
 				add(model, mem, idx, t);
+			}
 			biggest = biggest.add(Rational.ONE);
 		}
 		finishModel(model, t);
@@ -159,40 +162,41 @@ public class ModelBuilder {
 	
 	private void add(Model model, CCTerm term, int value, Theory t) {
 		if (term instanceof CCBaseTerm) {
-			CCBaseTerm bt = (CCBaseTerm) term;
+			final CCBaseTerm bt = (CCBaseTerm) term;
 			if (!bt.isFunctionSymbol()) {
 				// We have to remember the value of the term for applications
 				mProduced.put(term, value);
 				return;
 			}
-			FunctionSymbol symb = bt.getFunctionSymbol();
+			final FunctionSymbol symb = bt.getFunctionSymbol();
 			if (!symb.isIntern()) {
 				model.map(symb, value);
 				mProduced.put(term, value);
 			}
 		} else {
 			// It is a CCAppTerm
-			CCAppTerm app = (CCAppTerm) term;
+			final CCAppTerm app = (CCAppTerm) term;
 			assert(!app.mIsFunc);
 			addApp(model, app, value, t);
 		}
 	}
 	
 	private void addApp(Model model, CCAppTerm app, int value, Theory t) {
-		ArgHelper args = new ArgHelper();
+		final ArgHelper args = new ArgHelper();
 		CCTerm walk = app;
 		boolean enqueued = false;
 		while (walk instanceof CCAppTerm) {
-			CCAppTerm appwalk = (CCAppTerm) walk;
-			Integer val = mProduced.get(appwalk.getArg());
+			final CCAppTerm appwalk = (CCAppTerm) walk;
+			final Integer val = mProduced.get(appwalk.getArg());
 			if (val == null) {
 				if (!enqueued) {
 					Delay delay = mDelayed.get(app);
 					if (delay == null) {
 						delay = new Delay(app, value);
 						mDelayed.put(app, delay);
-					} else if (!delay.isInitialized())
+					} else if (!delay.isInitialized()) {
 						delay.initialize(value);
+					}
 					mTodo.push(delay);
 					enqueued = true;
 				}
@@ -202,20 +206,21 @@ public class ModelBuilder {
 					mDelayed.put(appwalk.getArg(), delay);
 				}
 				mTodo.push(delay);
-			} else
+			} else {
 				args.add(val);
+			}
 			walk = appwalk.getFunc();
 		}
 		// Now, walk is the CCBaseTerm corresponding the the function
 		// If we did not enqueue an argument, we can extend the model.
 		if (!enqueued) {
-			CCBaseTerm base = (CCBaseTerm) walk;
+			final CCBaseTerm base = (CCBaseTerm) walk;
 			if (base.isFunctionSymbol()
 					&& (!mCClosure.isArrayTheory()
 					|| (base.mParentPosition != mCClosure.getSelectNum()
 					&& base.mParentPosition != mCClosure.getStoreNum()
 					&& base.mParentPosition != mCClosure.getDiffNum()))) {
-				FunctionSymbol fs = base.getFunctionSymbol();
+				final FunctionSymbol fs = base.getFunctionSymbol();
 				model.map(fs, args.toArray(), value);
 			}
 			mProduced.put(app, value);
@@ -224,7 +229,7 @@ public class ModelBuilder {
 	
 	private void finishModel(Model model, Theory t) {
 		while (!mTodo.isEmpty()) {
-			Delay d = mTodo.pop();
+			final Delay d = mTodo.pop();
 			if (!mProduced.containsKey(d.getTerm())) {
 				assert d.isInitialized();
 				add(model, d.getTerm(), d.getValue(), t);

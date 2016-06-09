@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -66,6 +66,11 @@ public class AutomatonDebugger<LETTER, STATE> {
 	private final AAutomatonFactory<LETTER, STATE> mFactory;
 	private final ATester<LETTER, STATE> mTester;
 	
+	/**
+	 * @param automaton automaton
+	 * @param factory automaton factory
+	 * @param tester tester
+	 */
 	public AutomatonDebugger(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final AAutomatonFactory<LETTER, STATE> factory,

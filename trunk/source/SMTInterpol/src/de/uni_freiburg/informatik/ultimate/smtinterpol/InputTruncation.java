@@ -35,13 +35,13 @@ public final class InputTruncation {
 	 */
 	public static void main(String[] args) {
 		System.setProperty("smtinterpol.ddfriendly", "on");
-		String infile = args[0];
-		String outfile = args[1];
+		final String infile = args[0];
+		final String outfile = args[1];
 		try {
-			ParseEnvironment pe = new ParseEnvironment(
+			final ParseEnvironment pe = new ParseEnvironment(
 					new LoggingScript(new SMTInterpol(), outfile, true));
 			pe.parseScript(infile);
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}

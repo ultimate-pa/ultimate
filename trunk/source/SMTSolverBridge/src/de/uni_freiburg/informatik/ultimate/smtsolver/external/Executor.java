@@ -37,18 +37,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import java_cup.runtime.Symbol;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import java_cup.runtime.Symbol;
 
 /**
  * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT
@@ -68,14 +67,14 @@ class Executor {
 
 	private final Script mScript;
 	private final String mSolverCmd;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final String mName;
 
 	private static final String sEofErrorMessage = "Received EOF on stdin.";
 
-	Executor(final String solverCommand, final Script script, final Logger logger,
+	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
 					throws IOException {
 		mServices = services;
@@ -88,7 +87,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		// m_Logger = Logger.getRootLogger();
+		// mLogger = ILogger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
 		// TODO:
 		// Let all processes terminate when the toolchain terminates
@@ -100,12 +99,12 @@ class Executor {
 			throw new IllegalStateException(errorMsg);
 		}
 
-		OutputStream stdin = mProcess.getOutputStream();
-		InputStream stdout = mProcess.getInputStream();
+		final OutputStream stdin = mProcess.getOutputStream();
+		final InputStream stdout = mProcess.getInputStream();
 
 		mStdErr = mProcess.getErrorStream();
 
-		MySymbolFactory symfactory = new MySymbolFactory();
+		final MySymbolFactory symfactory = new MySymbolFactory();
 		mLexer = new Lexer(new InputStreamReader(stdout));
 		mLexer.setSymbolFactory(symfactory);
 
@@ -122,7 +121,7 @@ class Executor {
 		try {
 			mWriter.write(in + "\n");
 			mWriter.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			if (mServices.getProgressMonitorService().continueProcessing()) {
 				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 			} else {
@@ -143,14 +142,16 @@ class Executor {
 	}
 
 	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
-		ArrayList<Symbol> result = new ArrayList<Symbol>();
+		final ArrayList<Symbol> result = new ArrayList<Symbol>();
 		int parenLevel = 0;
 		do {
-			Symbol sym = lexer.next_token();
-			if (sym.sym == LexerSymbols.LPAR)
+			final Symbol sym = lexer.next_token();
+			if (sym.sym == LexerSymbols.LPAR) {
 				parenLevel++;
-			if (sym.sym == LexerSymbols.RPAR)
+			}
+			if (sym.sym == LexerSymbols.RPAR) {
 				parenLevel--;
+			}
 			result.add(sym);
 		} while (parenLevel > 0);
 		return result;
@@ -160,12 +161,12 @@ class Executor {
 		try {
 			final List<Symbol> result = parseSexpr(mLexer);
 			if (mLogger.isDebugEnabled()) {
-				for (Symbol s : result) {
+				for (final Symbol s : result) {
 					mLogger.debug(s.toString() + "\n");
 				}
 			}
 			return result;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 		}
 	}
@@ -174,7 +175,7 @@ class Executor {
 		try {
 			mWriter.write("(exit)\n");
 			mWriter.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			/* ignore */
 		}
 		mProcess.forceShutdown();
@@ -190,14 +191,14 @@ class Executor {
 			if (mStdErr.available() > 0) {
 				final StringBuilder sb = new StringBuilder();
 				while (mStdErr.available() > 0) {
-					int i = mStdErr.read();
-					char c = (char) i;
+					final int i = mStdErr.read();
+					final char c = (char) i;
 					sb.append(c);
 				}
 				stderr = sb.toString();
 				mLogger.warn(getLogStringPrefix() + " " + generateStderrMessage(stderr));
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// we don't care what happens on stdErr
 		}
 
@@ -207,16 +208,16 @@ class Executor {
 		parser.setAnswer(answer);
 		try {
 			return parser.parse();
-		} catch (SMTLIBException ex) {
+		} catch (final SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
 				throw new SMTLIBException(getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr),
 						ex);
 			} else {
 				throw ex;
 			}
-		} catch (UnsupportedOperationException ex) {
+		} catch (final UnsupportedOperationException ex) {
 			throw ex;
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			throw new SMTLIBException(
 					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
 		}
@@ -252,7 +253,7 @@ class Executor {
 	}
 
 	public Object parseGetOptionResult() {
-		return (Object) parse(LexerSymbols.GETOPTION).value;
+		return parse(LexerSymbols.GETOPTION).value;
 	}
 
 	public Term parseTerm() {

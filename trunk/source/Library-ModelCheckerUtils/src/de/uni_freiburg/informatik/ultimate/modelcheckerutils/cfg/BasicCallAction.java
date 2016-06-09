@@ -34,15 +34,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  *
  */
 public class BasicCallAction extends AbstractBasicAction implements ICallAction {
-	private final TransFormula m_LocalVarsAssignment;
+	private final TransFormula mLocalVarsAssignment;
 	
 	public BasicCallAction(String preceedingProcedure, String succeedingProcedure, TransFormula localVarsAssignment) {
 		super(preceedingProcedure, succeedingProcedure);
-		m_LocalVarsAssignment = localVarsAssignment;
+		mLocalVarsAssignment = localVarsAssignment;
 	}
 
 	@Override
 	public TransFormula getLocalVarsAssignment() {
-		return m_LocalVarsAssignment;
+		return mLocalVarsAssignment;
 	}
 }

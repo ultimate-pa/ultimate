@@ -47,7 +47,7 @@ public final class EQAnnotation implements IAnnotation {
 
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {
-		Term base = cls.toTerm(theory);
+		final Term base = cls.toTerm(theory);
 		return theory.term("@lemma", theory.annotatedTerm(mAnnots, base));
 	}
 }

@@ -32,15 +32,15 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * @author Markus Lindenmann
@@ -57,10 +57,11 @@ public class BoogieASTUtil {
     public static String getLHSId(final LeftHandSide lhs) {
         LeftHandSide l = lhs;
         while (l instanceof ArrayLHS || l instanceof StructLHS) {
-            if (l instanceof ArrayLHS)
-                l = ((ArrayLHS) l).getArray();
-            else if (l instanceof StructLHS)
-                l = ((StructLHS) l).getStruct();
+            if (l instanceof ArrayLHS) {
+				l = ((ArrayLHS) l).getArray();
+			} else if (l instanceof StructLHS) {
+				l = ((StructLHS) l).getStruct();
+			}
         }
         return ((VariableLHS) l).getIdentifier();
     }
@@ -82,10 +83,11 @@ public class BoogieASTUtil {
         Expression e = expr;
         while (e instanceof ArrayAccessExpression
                 || e instanceof StructAccessExpression) {
-            if (e instanceof ArrayAccessExpression)
-                e = ((ArrayAccessExpression) e).getArray();
-            else if (e instanceof StructAccessExpression)
-                e = ((StructAccessExpression) e).getStruct();
+            if (e instanceof ArrayAccessExpression) {
+				e = ((ArrayAccessExpression) e).getArray();
+			} else if (e instanceof StructAccessExpression) {
+				e = ((StructAccessExpression) e).getStruct();
+			}
         }
         return ((IdentifierExpression) e).getIdentifier();
     }
@@ -100,12 +102,12 @@ public class BoogieASTUtil {
      */
     public static String[] getLHSList(final LeftHandSide lhs) {
         LeftHandSide l = lhs;
-        ArrayList<String> lhsList = new ArrayList<String>();
+        final ArrayList<String> lhsList = new ArrayList<String>();
         while (l instanceof ArrayLHS || l instanceof StructLHS) {
             if (l instanceof ArrayLHS) {
                 l = ((ArrayLHS) l).getArray();
             } else if (l instanceof StructLHS) {
-                StructLHS slhs = (StructLHS) l;
+                final StructLHS slhs = (StructLHS) l;
                 lhsList.add(slhs.getField());
                 l = slhs.getStruct();
             }
@@ -129,19 +131,19 @@ public class BoogieASTUtil {
         assert e instanceof IdentifierExpression
                 || e instanceof StructAccessExpression
                 || e instanceof ArrayAccessExpression;
-        ILocation loc = e.getLocation();
+        final ILocation loc = e.getLocation();
         if (e instanceof IdentifierExpression) {
-            IdentifierExpression ie = (IdentifierExpression) e;
+            final IdentifierExpression ie = (IdentifierExpression) e;
             return new VariableLHS(loc, ie.getType(), ie.getIdentifier(), null);
         }
         if (e instanceof StructAccessExpression) {
-            StructAccessExpression sae = (StructAccessExpression) e;
-            LeftHandSide lhs = getLHSforExpression(sae.getStruct());
+            final StructAccessExpression sae = (StructAccessExpression) e;
+            final LeftHandSide lhs = getLHSforExpression(sae.getStruct());
             return new StructLHS(loc, sae.getType(), lhs, sae.getField());
         }
         if (e instanceof ArrayAccessExpression) {
-            ArrayAccessExpression aae = (ArrayAccessExpression) e;
-            LeftHandSide lhs = getLHSforExpression(aae.getArray());
+            final ArrayAccessExpression aae = (ArrayAccessExpression) e;
+            final LeftHandSide lhs = getLHSforExpression(aae.getArray());
             return new ArrayLHS(loc, aae.getType(), lhs, aae.getIndices());
         }
         throw new IllegalArgumentException(

@@ -35,15 +35,18 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 		super(term);
 	}
 
+	@Override
 	public void walk(NonRecursive walker) {
-		if (mTerm.mFreeVars != null)
+		if (mTerm.mFreeVars != null) {
 			return;
+		}
 		super.walk(walker);
 	}
 
 	@Override
 	public void walk(NonRecursive walker, final AnnotatedTerm annot) {
 		walker.enqueueWalker(new NonRecursive.Walker() {
+			@Override
 			public void walk(NonRecursive walker) {
 				annot.mFreeVars = annot.getSubterm().mFreeVars;
 			}
@@ -54,22 +57,23 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 	static class AppTermWorker implements NonRecursive.Walker {
 		final ApplicationTerm mTerm;
 		public AppTermWorker(ApplicationTerm term) {
-			this.mTerm = term;
+			mTerm = term;
 		}
 
 		@Override
 		public void walk(NonRecursive walker) {
-			Term[] params = mTerm.getParameters();
+			final Term[] params = mTerm.getParameters();
 			if (params.length <= 1) {
-				if (params.length == 1)
+				if (params.length == 1) {
 					mTerm.mFreeVars = params[0].mFreeVars;
-				else
+				} else {
 					mTerm.mFreeVars = ComputeFreeVariables.NOFREEVARS;
+				}
 			} else {
 				int biggestlen = 0;
 				int biggestidx = -1;
 				for (int i = 0; i < params.length; i++) {
-					TermVariable[] free = params[i].mFreeVars;
+					final TermVariable[] free = params[i].mFreeVars;
 					if (free.length > biggestlen) {
 						biggestlen = free.length;
 						biggestidx = i;
@@ -82,20 +86,22 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 				}
 				
 				List<TermVariable> result = null;
-				List<TermVariable> biggestAsList = 
+				final List<TermVariable> biggestAsList = 
 					Arrays.asList(params[biggestidx].getFreeVars());
 				for (int i = 0; i < params.length; i++) {
-					if (i == biggestidx)
+					if (i == biggestidx) {
 						continue;
-					TermVariable[] free = params[i].getFreeVars();
-					for (TermVariable tv : free) {
+					}
+					final TermVariable[] free = params[i].getFreeVars();
+					for (final TermVariable tv : free) {
 						if (!biggestAsList.contains(tv)) {
 							if (result == null) {
 								result = new ArrayList<TermVariable>();
 								result.addAll(biggestAsList);
 							}
-							if (!result.contains(tv))
+							if (!result.contains(tv)) {
 								result.add(tv);
+							}
 						}
 					}
 				}
@@ -108,6 +114,7 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 			}
 		}
 		
+		@Override
 		public String toString() {
 			return "AppTermWalker:" + mTerm.toStringDirect();
 		}
@@ -117,8 +124,9 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 	public void walk(NonRecursive walker, 
 			            final ApplicationTerm term) {
 		walker.enqueueWalker(new AppTermWorker(term));
-		for (Term param : ((ApplicationTerm) mTerm).getParameters())
-			walker.enqueueWalker(new ComputeFreeVariables(param));		
+		for (final Term param : ((ApplicationTerm) mTerm).getParameters()) {
+			walker.enqueueWalker(new ComputeFreeVariables(param));
+		}		
 	}
 
 	@Override
@@ -129,38 +137,44 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 	@Override
 	public void walk(NonRecursive walker, final LetTerm letTerm) {
 		walker.enqueueWalker(new NonRecursive.Walker() {
+			@Override
 			public void walk(NonRecursive walker) {
-				TermVariable[] vars = letTerm.getVariables();
-				Term[] vals = letTerm.getValues();
-				HashSet<TermVariable> free = new HashSet<TermVariable>();
+				final TermVariable[] vars = letTerm.getVariables();
+				final Term[] vals = letTerm.getValues();
+				final HashSet<TermVariable> free = new HashSet<TermVariable>();
 				free.addAll(Arrays.asList(letTerm.getSubTerm().getFreeVars()));
 				free.removeAll(Arrays.asList(vars));
-				for (Term v : vals)
+				for (final Term v : vals) {
 					free.addAll(Arrays.asList(v.getFreeVars()));
-				if (free.isEmpty())
+				}
+				if (free.isEmpty()) {
 					letTerm.mFreeVars = NOFREEVARS;
-				else
+				} else {
 					letTerm.mFreeVars =
 						free.toArray(new TermVariable[free.size()]);
+				}
 			}
 		});
 		walker.enqueueWalker(new ComputeFreeVariables(letTerm.getSubTerm()));
-		for (Term value : letTerm.getValues())
+		for (final Term value : letTerm.getValues()) {
 			walker.enqueueWalker(new ComputeFreeVariables(value));
+		}
 	}
 
 	@Override
 	public void walk(NonRecursive walker, final QuantifiedFormula quant) {
 		walker.enqueueWalker(new NonRecursive.Walker() {
+			@Override
 			public void walk(NonRecursive walker) {
-				HashSet<TermVariable> free = new HashSet<TermVariable>();
+				final HashSet<TermVariable> free = new HashSet<TermVariable>();
 				free.addAll(Arrays.asList(quant.getSubformula().getFreeVars()));
 				free.removeAll(Arrays.asList(quant.getVariables()));
-				if (free.isEmpty())
+				if (free.isEmpty()) {
 					quant.mFreeVars = NOFREEVARS;
-				else
+				} else {
 					quant.mFreeVars =
 						free.toArray(new TermVariable[free.size()]);
+				}
 			}
 		});
 		walker.enqueueWalker(new ComputeFreeVariables(quant.getSubformula()));

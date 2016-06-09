@@ -49,8 +49,8 @@ import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.CDTResultStore;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 
 /**
  * This new View is basically a replacement for the not really handy
@@ -80,26 +80,28 @@ public class ResultDetails extends ViewPart {
 		final String problemsViewId = "org.eclipse.ui.views.ProblemView";
 		viewer = new TextViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		viewer.setEditable(false);
-		ISelectionService ser = (ISelectionService) getSite().getService(ISelectionService.class);
+		final ISelectionService ser = getSite().getService(ISelectionService.class);
 		ser.addSelectionListener(new ISelectionListener() {
+			@Override
 			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 				if (part.getSite().getId().equals(problemsViewId)) {
 					processSelection(selection);
 				}
 			}
 		});
-		ISelection selection = ser.getSelection(problemsViewId);
+		final ISelection selection = ser.getSelection(problemsViewId);
 		processSelection(selection);
 	}
 
 	protected void processSelection(ISelection selection) {
-		if (selection == null || selection.isEmpty())
+		if (selection == null || selection.isEmpty()) {
 			return;
+		}
 		if (selection instanceof IStructuredSelection) {
-			Object firstElement = ((IStructuredSelection) selection).getFirstElement();
+			final Object firstElement = ((IStructuredSelection) selection).getFirstElement();
 			IMarker marker = null;
 			if (firstElement instanceof IAdaptable) {
-				marker = (IMarker) ((IAdaptable) firstElement).getAdapter(IMarker.class);
+				marker = ((IAdaptable) firstElement).getAdapter(IMarker.class);
 			} else if (firstElement instanceof IMarker) {
 				marker = (IMarker) firstElement;
 			}
@@ -110,8 +112,8 @@ public class ResultDetails extends ViewPart {
 	}
 
 	private StringBuilder makeResultViewString(IResult result, int maxLength) {
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
 		sb.append("Short Description:");
 		sb.append(lineSeparator);
 		sb.append(breakLines(result.getShortDescription(), lineSeparator, maxLength));
@@ -143,29 +145,29 @@ public class ResultDetails extends ViewPart {
 	}
 
 	private void queryProviders(IMarker marker) {
-		IResult result = extractResultFromMarker(marker);
+		final IResult result = extractResultFromMarker(marker);
 		if (result != null) {
-			int length = viewer.getControl().getBounds().width;
+			final int length = viewer.getControl().getBounds().width;
 			
-			StringBuilder sb = makeResultViewString(result, length);
-			Document doc = new Document(sb.toString());
+			final StringBuilder sb = makeResultViewString(result, length);
+			final Document doc = new Document(sb.toString());
 			viewer.setDocument(doc);
 			return;
 		}
 		// FIXME: This is the old approach...
 		// First we need the complete Path for getting all Results
-		String path = marker.getResource().getLocation().toOSString();
+		final String path = marker.getResource().getLocation().toOSString();
 
-		int lineNumber = MarkerUtilities.getLineNumber(marker);
-		String id = marker.getAttribute(ICodanProblemMarker.ID, "id");
+		final int lineNumber = MarkerUtilities.getLineNumber(marker);
+		final String id = marker.getAttribute(ICodanProblemMarker.ID, "id");
 
-		String[] parts = id.split(Pattern.quote("."));
-		String resName = parts[parts.length - 1];
-		List<IResult> results = CDTResultStore.getResults(path);
+		final String[] parts = id.split(Pattern.quote("."));
+		final String resName = parts[parts.length - 1];
+		final List<IResult> results = CDTResultStore.getResults(path);
 		IResultWithLocation foundRes = null;
-		for (IResult ires : results) {
+		for (final IResult ires : results) {
 			if (ires instanceof IResultWithLocation) {
-				IResultWithLocation res = (IResultWithLocation) ires;
+				final IResultWithLocation res = (IResultWithLocation) ires;
 				if (res.getLocation().getStartLine() == lineNumber) {
 					if (resName.equals(res.getClass().getSimpleName())) {
 						foundRes = res;
@@ -176,7 +178,7 @@ public class ResultDetails extends ViewPart {
 
 			}
 		}
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (foundRes != null) {
 			sb.append("Result found in " + foundRes.getLocation().getFileName() + " in Line: "
 					+ foundRes.getLocation().getStartLine());
@@ -191,7 +193,7 @@ public class ResultDetails extends ViewPart {
 			sb.append(System.getProperty("line.separator"));
 			sb.append(foundRes.getLongDescription());
 		}
-		Document doc = new Document(sb.toString());
+		final Document doc = new Document(sb.toString());
 		viewer.setDocument(doc);
 	}
 
@@ -204,19 +206,19 @@ public class ResultDetails extends ViewPart {
 		// a1=de.uni_freiburg.informatik.ultimate.result.BenchmarkResult@62303b81
 		// a0=Ultimate Automizer benchmark data
 
-		String args = marker.getAttribute("args", null);
+		final String args = marker.getAttribute("args", null);
 		if (args == null) {
 			return null;
 		}
 
-		String[] components = args.split("\n");
+		final String[] components = args.split("\n");
 		if (components.length <= 2) {
 			return null;
 		}
 		// this can be used to find the maximal length of this strange construct
 		// int length = Integer.parseInt(components[1].split("=")[1]);
 
-		int uid = Integer.parseInt(components[2].split("=")[1].trim());
+		final int uid = Integer.parseInt(components[2].split("=")[1].trim());
 		return CDTResultStore.getHackyResult(uid);
 	}
 

@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -39,28 +39,28 @@ public class SPredicateWithWitnessNode extends SPredicate {
 	 * 
 	 */
 	private static final long serialVersionUID = -3793267934783743767L;
-	private final WitnessNode m_WitnessNode;
-	private final Integer m_StutteringSteps;
+	private final WitnessNode mWitnessNode;
+	private final Integer mStutteringSteps;
 	
 	protected SPredicateWithWitnessNode(ProgramPoint programPoint,
 			int serialNumber, String[] procedures, Term term,
 			Set<BoogieVar> vars, Term closedFormula, WitnessNode witnessNode, Integer stutteringSteps) {
 		super(programPoint, serialNumber, procedures, term, vars, closedFormula);
-		m_WitnessNode = witnessNode;
-		m_StutteringSteps = stutteringSteps;
+		mWitnessNode = witnessNode;
+		mStutteringSteps = stutteringSteps;
 	}
 	
 	@Override
 	public String toString() {
-		String result = super.m_SerialNumber + "#";
+		String result = super.mSerialNumber + "#";
 		result += "(";
-//		if (m_ProgramPoint != null) {
-			result += m_ProgramPoint.getPosition();
+//		if (mProgramPoint != null) {
+			result += mProgramPoint.getPosition();
 //		}
 		result += ",";
-		result += m_WitnessNode.getName();
+		result += mWitnessNode.getName();
 		result += ",";
-		result += m_StutteringSteps;
+		result += mStutteringSteps;
 		result += ")";
 		return result;
 	}

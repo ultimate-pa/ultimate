@@ -25,22 +25,22 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
-import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -54,8 +54,8 @@ public class ResetAndRedoToolChainNewTCAction extends RunToolchainAction impleme
 
 	private static final String LABEL = "Execute new Toolchain on file(s)";
 
-	public ResetAndRedoToolChainNewTCAction(final IWorkbenchWindow window, final ICore icore,
-			final GuiController controller, Logger logger) {
+	public ResetAndRedoToolChainNewTCAction(final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
+			final GuiController controller, ILogger logger) {
 		super(logger, window, icore, controller, ResetAndRedoToolChainNewTCAction.class.getName(), LABEL,
 				IImageKeys.REEXECNEWTC);
 	}
@@ -66,20 +66,20 @@ public class ResetAndRedoToolChainNewTCAction extends RunToolchainAction impleme
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
+	@Override
 	public final void run() {
 		// Execute new toolchain on current file(s)
 
 		// are there any current files?
-		File[] lastInputFiles = getLastInputFiles();
+		final File[] lastInputFiles = getLastInputFiles();
 		if (lastInputFiles == null) {
 			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
 					"You don't have any old input files");
 			return;
 		}
 
-		File prelude = PreludeContribution.getPreludeFile();
-		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, lastInputFiles,
-				prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
+		final BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, lastInputFiles,
+				mLogger);
 		tcj.schedule();
 	}
 

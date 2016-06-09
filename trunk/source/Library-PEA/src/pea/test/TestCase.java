@@ -1,8 +1,17 @@
 package pea.test;
 import java.util.Collections;
 import java.util.Set;
-import pea.*;
-import pea.modelchecking.*;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.CounterTrace;
+import pea.EventDecision;
+import pea.PhaseEventAutomata;
+import pea.Trace2PEACompiler;
+import pea.modelchecking.DOTWriter;
+import pea.modelchecking.J2UPPAALConverter;
+import pea.modelchecking.J2UPPAALWriter;
+import pea.modelchecking.MCTrace;
 
 public class TestCase {
     Trace2PEACompiler compiler = new Trace2PEACompiler();
@@ -13,25 +22,25 @@ public class TestCase {
 
 
     public void runTest1() {
-	CDD A = BooleanDecision.create("A");
-	CDD B = BooleanDecision.create("B");
+	final CDD A = BooleanDecision.create("A");
+	final CDD B = BooleanDecision.create("B");
 	PhaseEventAutomata ctA;
-	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(A, CounterTrace.BOUND_GREATEREQUAL, 4),
 	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_LESS, 6)
 	});
-	MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
+	final MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
 	ctA=compiler.compile("T1", mct); 
 	ctA.dump();
 	
-	J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
+	final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
     j2uppaalWriter.writePEA2UppaalFile("AmiTestT1.xml", ctA);
     }
 
     public void runTest2() {
-	CDD A = BooleanDecision.create("A");
-	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	final CDD A = BooleanDecision.create("A");
+	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(A, CounterTrace.BOUND_GREATEREQUAL, 4),
 	    new CounterTrace.DCPhase(CounterTrace.BOUND_LESS, 6)
@@ -40,9 +49,9 @@ public class TestCase {
     }
 
     public void runTest3() {
-	CDD A = BooleanDecision.create("A");
-	CDD B = BooleanDecision.create("B");
-	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	final CDD A = BooleanDecision.create("A");
+	final CDD B = BooleanDecision.create("B");
+	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(A, CounterTrace.BOUND_LESS, 1),
 	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_LESSEQUAL, 2)
 	});
@@ -54,8 +63,8 @@ public class TestCase {
     
     //Test Automat aus Jochens Diss S. 137ff
     public void runTest4() {
-    	CDD A = BooleanDecision.create("A");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD A = BooleanDecision.create("A");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(A, CounterTrace.BOUND_GREATEREQUAL, 2),
     	    new CounterTrace.DCPhase()
@@ -67,8 +76,8 @@ public class TestCase {
     //Formel true;B && l>=2; notB
     public void runTest5() {
     	PhaseEventAutomata ctA;
-    	CDD B = BooleanDecision.create("B");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD B = BooleanDecision.create("B");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_GREATEREQUAL, 2),
     	    new CounterTrace.DCPhase(B.negate()),
@@ -81,15 +90,15 @@ public class TestCase {
     public void runTestVacuous() {
     	PhaseEventAutomata ctA, ctA2;
     	
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(B.and(A.negate()), CounterTrace.BOUND_GREATER, 5),
     	    new CounterTrace.DCPhase(A.negate(),CounterTrace.BOUND_GREATER, 10),
     	    new CounterTrace.DCPhase()
     	});
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_GREATER, 3),
         	    new CounterTrace.DCPhase()
@@ -100,21 +109,21 @@ public class TestCase {
         j2DOTWriter.write("C:/vacuous/testVacuous_2.dot", ctA2);
         ctA2=ctA2.parallel(ctA);
         j2DOTWriter.write("C:/vacuous/testVacuous_12.dot", ctA2);
-        J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
+        final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile("C:/vacuous/testVacuous_12.xml", ctA2);
         }
     
     public void runTestVacuous2() {
     	PhaseEventAutomata ctA, ctA2;
     	
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_GREATER, 5),
     	    new CounterTrace.DCPhase()
     	});
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(B, CounterTrace.BOUND_GREATEREQUAL, 5),
         	    new CounterTrace.DCPhase(A),
@@ -126,15 +135,15 @@ public class TestCase {
         j2DOTWriter.write("C:/vacuous/testVacuous_4.dot", ctA2);
         ctA2=ctA2.parallel(ctA);
         j2DOTWriter.write("C:/vacuous/testVacuous_34.dot", ctA2);
-        J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
+        final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile("C:/vacuous/testVacuous_34.xml", ctA2);
         }
     
     
     public void runTestSeeping() {
-    	CDD B = BooleanDecision.create("B");
-    	CDD A = BooleanDecision.create("A");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD B = BooleanDecision.create("B");
+    	final CDD A = BooleanDecision.create("A");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(B),
     	    new CounterTrace.DCPhase(),
@@ -143,17 +152,17 @@ public class TestCase {
     	    new CounterTrace.DCPhase(B),
     	    new CounterTrace.DCPhase()
     	});
-    	PhaseEventAutomata ctA = compiler.compile("T5", ct);
-    	 DOTWriter j2uppaalWriter = new DOTWriter("C:/vacuous/AmiTest.dot");
+    	final PhaseEventAutomata ctA = compiler.compile("T5", ct);
+    	 final DOTWriter j2uppaalWriter = new DOTWriter("C:/vacuous/AmiTest.dot");
          j2uppaalWriter.write("C:/vacuous/AmiTest.dot", ctA);
         }
     
   //Test Automat aus Jochens Diss S. 113ff
     //Formel true;B && l>=2; notB
     public void runTest5b() {
-    	CDD B = BooleanDecision.create("B");
+    	final CDD B = BooleanDecision.create("B");
     	PhaseEventAutomata ctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	         new CounterTrace.DCPhase(CDD.TRUE),
     	         new CounterTrace.DCPhase(B, CounterTrace.BOUND_GREATEREQUAL, 2),
     	         new CounterTrace.DCPhase(B.negate()),
@@ -168,8 +177,8 @@ public class TestCase {
   //Test Automat aus Jochens Diss S. 139ff
     //Formel true;event(passed); l<=3; event(passed)
     public void runTest5c() {
-    	CDD passed = EventDecision.create("passed");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD passed = EventDecision.create("passed");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(passed, CDD.TRUE, CounterTrace.BOUND_LESSEQUAL, 3),
     	    new CounterTrace.DCPhase(passed, CDD.TRUE),
@@ -178,15 +187,15 @@ public class TestCase {
     	compiler.compile("T5", ct).dump();
     	
     	//Formel current!= goal; current=goal && l>=2 && forbiddenEvent(Stop)
-    	CDD current_goal = BooleanDecision.create("(current=goal)");
-    	CDD current_NotGoal = current_goal.negate();
+    	final CDD current_goal = BooleanDecision.create("(current=goal)");
+    	final CDD current_NotGoal = current_goal.negate();
     	//CDD stop = EventDecision.create('/', "stop");
     	//Unklar: wie bekomme ich denn die EventDecision ins Set? 
     	//Wenn ich CounterTrace mit einem Set ungleich einem StringSet aufrufe gibts ne exception
     	
-    	Set forbid = Collections.singleton("stop");
+    	final Set forbid = Collections.singleton("stop");
 
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(current_NotGoal),
         	    new CounterTrace.DCPhase(current_goal, CounterTrace.BOUND_GREATEREQUAL, 2, forbid),
@@ -199,10 +208,10 @@ public class TestCase {
   //Test vacuously true anforderungen
     //Formel not(true;P, Q, neg(R) && l>=1; true)
     public void runTest6() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P),
@@ -216,10 +225,10 @@ public class TestCase {
     //Test vacuously true anforderungen
     //Formel not(true;P, Q, neg(R) && l>=1; true)
     public void runTest7() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P.and(Q.negate())),
@@ -233,9 +242,9 @@ public class TestCase {
   //Test vacuously true Anforderungen
     //Formel not(true;P & neg(Q); true) f�r P-->Q
     public void runTest7b() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P.and(Q.negate())),
@@ -248,7 +257,7 @@ public class TestCase {
     //Formel not(true;P; true; neg(Q); true) f�r G(P-->G Q)
     public PhaseEventAutomata runTest7c(CDD P, CDD Q) {
     	PhaseEventAutomata ctA;
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P),
@@ -265,10 +274,10 @@ public class TestCase {
     //Formel not(true;P; l<1; Q; neg(R) & l>1; true) f�r G(P-->X(q --> Xr))
     //vacuous true f�r G(neg(P)) sowie f�r G(P-->Xneg(Q))
     public void runTest7d() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P),
@@ -282,7 +291,7 @@ public class TestCase {
     
   //was passiert bei \neg(CDD.true)
     public void runTestTrue() {
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     			//new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(CDD.FALSE),
     	    new CounterTrace.DCPhase()
@@ -294,9 +303,9 @@ public class TestCase {
     //Formel not(true;P & l<1; Q & l>1; true) f�r G(P-->X(neg(q)))
     //vacuous true f�r G(neg(P)) 
     public void runTest7e() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    //new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE, CounterTrace.BOUND_NONE, 0, java.util.Collections.EMPTY_SET, false),
     	    new CounterTrace.DCPhase(P, Q, CounterTrace.BOUND_GREATER, 1),
@@ -308,11 +317,11 @@ public class TestCase {
     //Formel not(true;event P; event Q; not event R; true) f�r G(P-->X(q-->Xr)))
     //vacuous true f�r G(neg(P)) 
     public void runTest7f() {
-    	CDD P = BooleanDecision.create("P");
-    	CDD Q = BooleanDecision.create("Q");
-    	CDD R = BooleanDecision.create("R");  
+    	final CDD P = BooleanDecision.create("P");
+    	final CDD Q = BooleanDecision.create("Q");
+    	final CDD R = BooleanDecision.create("R");  
     	//Set forbid = Collections.singleton("R");
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(P, CDD.TRUE, CounterTrace.BOUND_LESS, 1),
     	    new CounterTrace.DCPhase(Q, R.negate(), CounterTrace.BOUND_GREATER, 1),
@@ -325,12 +334,12 @@ public class TestCase {
     //Formel not(true;event A & neg(B); B & neg(C); true) f�r G(A-->(neg(B) U C))
     //vacuous true f�r G(neg(P)) 
     public void runTest7g() {
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
-    	CDD C = BooleanDecision.create("C");  
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
+    	final CDD C = BooleanDecision.create("C");  
     	PhaseEventAutomata ctParallel, ct1A, ct2A;
     	
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(A.and(C.negate()), B.negate().and(C.negate())),
     	    new CounterTrace.DCPhase(B.and(C.negate())),
@@ -340,7 +349,7 @@ public class TestCase {
     	ct1A = compiler.compile("T7g", ct); 
     	ct1A.dump();
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(A, B.and(C.negate())),
         	    new CounterTrace.DCPhase()
@@ -357,18 +366,18 @@ public class TestCase {
     //Formel1 not(true;A && neg(B) && neg(C); true) 
     //vacuous true f�r G(neg A), G(C), G(A&&B&&negC)
     public void runTest7h() {
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
-    	CDD C = BooleanDecision.create("C");  
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
+    	final CDD C = BooleanDecision.create("C");  
     	PhaseEventAutomata ctParallel, ct1A, ct2A;
     	
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(A.and(B.negate().and(C.negate()))),
     	    new CounterTrace.DCPhase()
     	});
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(A.and(B.and(C.negate()))),
         	    new CounterTrace.DCPhase(B.and(C.negate())),
@@ -383,7 +392,7 @@ public class TestCase {
         ctParallel = ct1A.parallel(ct2A);
         ctParallel.dump();
         
-        J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
+        final J2UPPAALWriter j2uppaalWriter = new J2UPPAALWriter();
         j2uppaalWriter.writePEA2UppaalFile("AmiTest.xml", ctParallel);
         
         }
@@ -395,14 +404,14 @@ public class TestCase {
     // 1) CE: neg(true; event(IgnitionOn) & neg(MotorOn) & l>10; true)
     // 2) CE: neg(true; event(MotorAn) & l<10; RadioAn; true)
     public void runConsistentEx() {
-    	CDD IgnitionOn = BooleanDecision.create("IgnitionOn");
-    	CDD MotorOn = BooleanDecision.create("MotorOn");
-    	CDD MotorOnEv = EventDecision.create("MotorOnEvent");
-    	CDD RadioOn = BooleanDecision.create("RadioOn");  
+    	final CDD IgnitionOn = BooleanDecision.create("IgnitionOn");
+    	final CDD MotorOn = BooleanDecision.create("MotorOn");
+    	final CDD MotorOnEv = EventDecision.create("MotorOnEvent");
+    	final CDD RadioOn = BooleanDecision.create("RadioOn");  
     	
     	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A;
     	
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(IgnitionOn.and(MotorOn.negate()), MotorOn.negate(), CounterTrace.BOUND_GREATER, 10),
     	    new CounterTrace.DCPhase()
@@ -410,7 +419,7 @@ public class TestCase {
     	ct1A = compiler.compile("TIgnition", ct); 
     	ct1A.dump();
     	
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(MotorOnEv, CDD.TRUE, CounterTrace.BOUND_LESS, 10),
         	    new CounterTrace.DCPhase(RadioOn),
@@ -418,7 +427,7 @@ public class TestCase {
         	});
         ct2A = compiler.compile("TRadio", ct2); ct2A.dump();
         
-        CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+        final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(MotorOnEv, MotorOn.negate()),
         	    new CounterTrace.DCPhase()
@@ -436,12 +445,12 @@ public class TestCase {
     // A --> G(B))
     // F(A)
     public void runInconsistentTest() {
-    	CDD A = BooleanDecision.create("A");
-    	CDD B = BooleanDecision.create("B");
+    	final CDD A = BooleanDecision.create("A");
+    	final CDD B = BooleanDecision.create("B");
     	PhaseEventAutomata ctParallel, ct1A, ct2A, ct3A;
     	
     	//counterexample f�r A--> G(neg(B))
-    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     	    new CounterTrace.DCPhase(),
     	    new CounterTrace.DCPhase(A),
     	    new CounterTrace.DCPhase(),
@@ -451,7 +460,7 @@ public class TestCase {
     	ct1A = compiler.compile("Ta", ct); 
     	ct1A.dump();
     	//counterexample f�r A--> G(B)
-    	CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
+    	final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] {
     			new CounterTrace.DCPhase(),
         	    new CounterTrace.DCPhase(A),
         	    new CounterTrace.DCPhase(),
@@ -460,7 +469,7 @@ public class TestCase {
         	});
         ct2A = compiler.compile("Tb", ct2); ct2A.dump();
         
-        CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
+        final CounterTrace ct3 = new CounterTrace(new CounterTrace.DCPhase[] {
         	    new CounterTrace.DCPhase(A.negate())
         });
         ct3A = compiler.compile("TMEvent", ct3); ct3A.dump();
@@ -471,7 +480,7 @@ public class TestCase {
         }
 
     public void run() {
-    PhaseEventAutomata ctParallel, ct1A, ct2A;	
+    final PhaseEventAutomata ctParallel, ct1A, ct2A;	
 	//runTest1();
 	//runTest2();
 	//runTest3();

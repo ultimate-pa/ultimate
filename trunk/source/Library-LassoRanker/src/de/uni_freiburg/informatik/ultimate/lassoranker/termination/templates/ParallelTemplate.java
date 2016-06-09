@@ -74,27 +74,27 @@ public class ParallelTemplate extends RankingTemplate {
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
 	
-	private Term[] m_deltas;
-	private AffineFunctionGenerator[] m_fgens;
+	private final Term[] mdeltas;
+	private final AffineFunctionGenerator[] mfgens;
 	
 	/**
-	 * @param num_functions number of parallel ranking functions
+	 * @param numfunctions number of parallel ranking functions
 	 */
-	public ParallelTemplate(int num_functions) {
-		assert(num_functions > 1);
-		assert(num_functions <= 30); // reasonable upper size bound
+	public ParallelTemplate(int numfunctions) {
+		assert(numfunctions > 1);
+		assert(numfunctions <= 30); // reasonable upper size bound
 		                             // until the singularity arrives
-		assert((1 << num_functions) > 0); // remember, this template's size is exponential!
-		size = num_functions;
-		m_deltas = new Term[size];
-		m_fgens = new AffineFunctionGenerator[size];
+		assert((1 << numfunctions) > 0); // remember, this template's size is exponential!
+		size = numfunctions;
+		mdeltas = new Term[size];
+		mfgens = new AffineFunctionGenerator[size];
 	}
 	
 	@Override
 	protected void _init() {
 		for (int i = 0; i < size; ++i) {
-			m_deltas[i] = newDelta(s_name_delta + i);
-			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+			mdeltas[i] = newDelta(s_name_delta + i);
+			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_function + i);
 		}
 	}
@@ -106,7 +106,7 @@ public class ParallelTemplate extends RankingTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(size);
 		sb.append("-parallel template:\n   ");
 		for (int i = 0; i < size; ++i) {
@@ -139,13 +139,13 @@ public class ParallelTemplate extends RankingTemplate {
 	public List<List<LinearInequality>> getConstraints(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		checkInitialized();
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
 		// /\_i f_i(x') <= f_i(x)
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -157,12 +157,12 @@ public class ParallelTemplate extends RankingTemplate {
 		// /\ ( \/_i (f_i(x) > 0 /\ f_i(x') < f_i(x) - δ_i ))
 		for (int k = 0; k < (1 << size); ++k) {
 			// This is done in conjunctive normal form
-			List<LinearInequality> disjunction =
+			final List<LinearInequality> disjunction =
 					new ArrayList<LinearInequality>();
 			for (int i = 0; i < size; ++i) {
 				if ((k & (1 << i)) == 0) {
 					// f_i(x) > 0
-					LinearInequality li = m_fgens[i].generate(inVars);
+					final LinearInequality li = mfgens[i].generate(inVars);
 					li.setStrict(true);
 					li.motzkin_coefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -170,11 +170,11 @@ public class ParallelTemplate extends RankingTemplate {
 					disjunction.add(li);
 				} else {
 					// f_i(x') < f_i(x) - δ_i
-					LinearInequality li = m_fgens[i].generate(inVars);
-					LinearInequality li2 = m_fgens[i].generate(outVars);
+					final LinearInequality li = mfgens[i].generate(inVars);
+					final LinearInequality li2 = mfgens[i].generate(outVars);
 					li2.negate();
 					li.add(li2);
-					AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
+					final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
 					li.motzkin_coefficient = sRedAtoms && i == 0 ?
@@ -192,10 +192,10 @@ public class ParallelTemplate extends RankingTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
+		final Collection<Term> list = new ArrayList<Term>();
 		for (int i = 0; i < size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
-			list.add(m_deltas[i]);
+			list.addAll(mfgens[i].getVariables());
+			list.add(mdeltas[i]);
 		}
 		return list;
 	}
@@ -203,21 +203,21 @@ public class ParallelTemplate extends RankingTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction[] fs = new AffineFunction[size];
+		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
+			fs[i] = mfgens[i].extractAffineFunction(val);
 		}
 		return new ParallelRankingFunction(fs);
 	}
 	
 	@Override
 	public List<String> getAnnotations() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is not increasing");
 		}
 		for (int k = 0; k < (1 << size); ++k) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < size; ++i) {
 				if (i > 0) {
 					sb.append(" or ");

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 /**
@@ -45,11 +44,11 @@ public class SpaceExRootNode extends SpaceExNode {
 	 * Serialization ID.
 	 */
 	private static final long serialVersionUID = 1L;
-	private Map<String, ComponentType> mComponents;
-	private Map<String, ComponentType> mSystems;
+	private final Map<String, ComponentType> mComponents;
+	private final Map<String, ComponentType> mSystems;
 
 	public SpaceExRootNode(String math, String version) {
-		this.getPayload().getAnnotations().put("RootNodeAnnotation", new RootNodeAnnotation(math, version));
+		getPayload().getAnnotations().put("RootNodeAnnotation", new RootNodeAnnotation(math, version));
 
 		mComponents = new HashMap<String, ComponentType>();
 		mSystems = new HashMap<String, ComponentType>();
@@ -62,8 +61,8 @@ public class SpaceExRootNode extends SpaceExNode {
 	public void addSystem(ComponentType system) {
 		mSystems.put(system.getId(), system);
 
-		SystemNode systemNode = new SystemNode(system);
-		SpaceExRootEdge componentEdge = new SpaceExRootEdge(this, systemNode);
+		final SystemNode systemNode = new SystemNode(system);
+		final SpaceExRootEdge componentEdge = new SpaceExRootEdge(this, systemNode);
 		addOutgoing(componentEdge);
 
 	}

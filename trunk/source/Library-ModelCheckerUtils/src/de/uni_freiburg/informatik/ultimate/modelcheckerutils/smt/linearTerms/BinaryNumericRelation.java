@@ -65,7 +65,7 @@ public class BinaryNumericRelation extends BinaryRelation {
 	protected RelationSymbol getRelationSymbol(String functionSymbolName,
 			boolean isNegated) throws NoRelationOfThisKindException {
 		RelationSymbol relSymb = null;
-		for (RelationSymbol symb : RelationSymbol.values()) {
+		for (final RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
 				relSymb = isNegated ? negateRelation(symb) : symb;
 				break;

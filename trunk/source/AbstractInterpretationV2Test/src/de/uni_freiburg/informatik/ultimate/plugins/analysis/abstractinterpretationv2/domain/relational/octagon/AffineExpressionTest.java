@@ -25,16 +25,16 @@ public class AffineExpressionTest {
 
 	@Test 
 	public void testAddition() {
-		AffineExpression a = ae("2x + y + 1w + -2");
-		AffineExpression b = ae("-3x + 0.1z + -1w + 0.5");
-		AffineExpression expected = ae("-1x + y + 0.1z + -1.5");
+		final AffineExpression a = ae("2x + y + 1w + -2");
+		final AffineExpression b = ae("-3x + 0.1z + -1w + 0.5");
+		final AffineExpression expected = ae("-1x + y + 0.1z + -1.5");
 		Assert.assertEquals(expected, a.add(b));
 	}
 	
 	@Test 
 	public void testNegation() {
-		AffineExpression a = ae("2x + -0.1y + -2");
-		AffineExpression aNegated = ae("-2x + 0.1y + 2");
+		final AffineExpression a = ae("2x + -0.1y + -2");
+		final AffineExpression aNegated = ae("-2x + 0.1y + 2");
 		Assert.assertEquals(aNegated, a.negate());
 		Assert.assertEquals(a, aNegated.negate());
 	}
@@ -45,9 +45,9 @@ public class AffineExpressionTest {
 		Assert.assertEquals(null, ae("x").multiply(ae("x")));
 		Assert.assertEquals(null, ae("x").multiply(ae("y")));
 
-		String a = "3x + 9y + 6";
-		String b = "0.5";
-		String expected = "1.5x + 4.5y + 3";
+		final String a = "3x + 9y + 6";
+		final String b = "0.5";
+		final String expected = "1.5x + 4.5y + 3";
 		Assert.assertEquals(ae(expected), ae(a).multiply(ae(b)));
 		Assert.assertEquals(ae(expected), ae(b).multiply(ae(a)));
 	}
@@ -71,8 +71,8 @@ public class AffineExpressionTest {
 		
 		assertDivReal("2x + -4.4y + 3.00z + -100", "-4.40y + 3z + 2.000x + -1e2", null);
 
-		String a1 = "2x + -6y + 3.4";
-		String a2 = "4x + -12y + 6.8";
+		final String a1 = "2x + -6y + 3.4";
+		final String a2 = "4x + -12y + 6.8";
 		assertDivReal(a1, a2, null);
 		assertDivReal(a2, a1, null);
 		assertDivReal(a1, "0.5", a2);
@@ -97,8 +97,8 @@ public class AffineExpressionTest {
 
 		assertDivInt("2x + -4y + 3z + -100", "-4y + 2x + 3z + -1e2", null);
 
-		String a1 = "2x + -6y + 3";
-		String a2 = "4x + -12y + 6";
+		final String a1 = "2x + -6y + 3";
+		final String a2 = "4x + -12y + 6";
 		assertDivInt(a1, a2, null);
 		assertDivInt(a2, a1, null);
 		assertDivInt(a2, "2", a1);
@@ -137,16 +137,16 @@ public class AffineExpressionTest {
 		if (expr == null) {
 			return null;
 		}
-		Map<String, BigDecimal> coefficients = new HashMap<>();
+		final Map<String, BigDecimal> coefficients = new HashMap<>();
 		BigDecimal constant = BigDecimal.ZERO;
 
 		expr = expr.replace(" ", "");
 		Matcher m = sCoeffVarRegex.matcher(expr);
 		while (m.find()) {
-			String var = m.group(sVarGroup);
-			String coeffStr = m.group(sNumGroup);
-			BigDecimal coeff = (coeffStr == null) ? BigDecimal.ONE : new BigDecimal(coeffStr);
-			BigDecimal old = coefficients.put(var, coeff);
+			final String var = m.group(sVarGroup);
+			final String coeffStr = m.group(sNumGroup);
+			final BigDecimal coeff = (coeffStr == null) ? BigDecimal.ONE : new BigDecimal(coeffStr);
+			final BigDecimal old = coefficients.put(var, coeff);
 			if (old != null) {
 				throw new IllegalArgumentException("Variable occurred multiple times: " + var);
 			}

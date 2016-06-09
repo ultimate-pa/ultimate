@@ -30,8 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Initializes a logger for the testing framework without having to run through all of the Ultimate classes and
@@ -42,13 +43,13 @@ import org.apache.log4j.PatternLayout;
  */
 public final class LoggerInitializer {
 	
-	public Logger getLogger(String name) {
+	public ILogger getLogger(String name) {
 		LogManager.resetConfiguration();
 		final PatternLayout layout = new PatternLayout("%-5p %d{HH:mm:ss,SSSS} (%C{1}:%L): %m%n");
 		final ConsoleAppender appender = new ConsoleAppender(layout);
 		appender.setName(name);
 		appender.activateOptions();
-		Logger.getRootLogger().addAppender(appender);
-		return Logger.getLogger(name);
+		ILogger.getRootLogger().addAppender(appender);
+		return ILogger.getLogger(name);
 	}
 }

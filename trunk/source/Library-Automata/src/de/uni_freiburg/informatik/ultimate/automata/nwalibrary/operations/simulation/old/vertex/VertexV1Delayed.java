@@ -43,7 +43,7 @@ public class VertexV1Delayed<LETTER,STATE> extends VertexV1<LETTER, STATE> {
     /**
      * The extra bit b.
      */
-    private boolean b;
+    private final boolean b;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -73,7 +73,7 @@ public class VertexV1Delayed<LETTER,STATE> extends VertexV1<LETTER, STATE> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
         sb.append(getQ1()).append("),p:").append(getPriority()).append(",pm:")
                 .append(getPM()).append(">");
@@ -100,9 +100,10 @@ public class VertexV1Delayed<LETTER,STATE> extends VertexV1<LETTER, STATE> {
      * @return state
      */
     public STATE getQ(boolean stateNumber) {
-        if (stateNumber)
-            return getQ1();
-        else
-            return getQ0();
+        if (stateNumber) {
+			return getQ1();
+		} else {
+			return getQ0();
+		}
     }
 }

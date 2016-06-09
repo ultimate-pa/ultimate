@@ -35,12 +35,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 
 /**
  * Analyzes a trace from an inlined boogie program and offers calls/returns to be inserted, before an new inlined call
@@ -59,7 +59,7 @@ public class CallReinserter {
 	 * There is a BackTransValue for every unreturned non-inlined call. The stack height increases after (!) non-inlined
 	 * calls and decreases before non-inlined returns.
 	 */
-	private Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
+	private final Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
 
 	/**
 	 * Needs to be called for every trace element and in the order of the trace to work correct.
@@ -72,16 +72,16 @@ public class CallReinserter {
 	 */
 	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(
 			AtomicTraceElement<BoogieASTNode> curTraceElem, BackTransValue curBackTrans) {
-		List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
-		boolean nonInlinedCall = curTraceElem.hasStepInfo(StepInfo.PROC_CALL);
-		boolean nonInlinedReturn = curTraceElem.hasStepInfo(StepInfo.PROC_RETURN);
+		final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
+		final boolean nonInlinedCall = curTraceElem.hasStepInfo(StepInfo.PROC_CALL);
+		final boolean nonInlinedReturn = curTraceElem.hasStepInfo(StepInfo.PROC_RETURN);
 		assert !(nonInlinedCall && nonInlinedReturn) : "Simultaneous call and return: " + curTraceElem;
 
 		if (nonInlinedReturn && !mPrevBackTranslations.isEmpty()) {
-			BackTransValue prevBackTrans = mPrevBackTranslations.peek();
+			final BackTransValue prevBackTrans = mPrevBackTranslations.peek();
 			if (prevBackTrans != curBackTrans) {
 				mPrevBackTranslations.pop();
-				for (CallStatement cs : prevBackTrans.getOriginalCallStack()) {
+				for (final CallStatement cs : prevBackTrans.getOriginalCallStack()) {
 					recoveredCalls.add(makeAtomicReturn(cs));
 				}
 			} // else
@@ -92,22 +92,22 @@ public class CallReinserter {
 		if (curBackTrans == null) {
 			// goto end
 		} else if (mPrevBackTranslations.isEmpty() || mAfterNonInlinedCall) {
-			Iterator<CallStatement> stackRevIter = curBackTrans.getOriginalCallStack().descendingIterator();
+			final Iterator<CallStatement> stackRevIter = curBackTrans.getOriginalCallStack().descendingIterator();
 			while (stackRevIter.hasNext()) {
 				recoveredCalls.add(makeAtomicCall(stackRevIter.next()));
 			}
 		} else {
-			BackTransValue prevBackTrans = mPrevBackTranslations.pop();
-			Deque<CallStatement> prevStack = prevBackTrans.getOriginalCallStack();
-			Deque<CallStatement> curStack = curBackTrans.getOriginalCallStack();
+			final BackTransValue prevBackTrans = mPrevBackTranslations.pop();
+			final Deque<CallStatement> prevStack = prevBackTrans.getOriginalCallStack();
+			final Deque<CallStatement> curStack = curBackTrans.getOriginalCallStack();
 			if (prevStack != curStack) {
-				Iterator<CallStatement> prevStackRevIter = prevStack.descendingIterator(); // from stack bottom to top
-				Iterator<CallStatement> curStackRevIter = curStack.descendingIterator();
-				List<AtomicTraceElement<BoogieASTNode>> returns = new ArrayList<>();
-				List<AtomicTraceElement<BoogieASTNode>> calls = new ArrayList<>();
+				final Iterator<CallStatement> prevStackRevIter = prevStack.descendingIterator(); // from stack bottom to top
+				final Iterator<CallStatement> curStackRevIter = curStack.descendingIterator();
+				final List<AtomicTraceElement<BoogieASTNode>> returns = new ArrayList<>();
+				final List<AtomicTraceElement<BoogieASTNode>> calls = new ArrayList<>();
 				while (prevStackRevIter.hasNext() && curStackRevIter.hasNext()) {
-					CallStatement prevCS = prevStackRevIter.next();
-					CallStatement curCS = curStackRevIter.next();
+					final CallStatement prevCS = prevStackRevIter.next();
+					final CallStatement curCS = curStackRevIter.next();
 					if (prevCS != curCS) {
 						returns.add(makeAtomicReturn(prevCS));
 						calls.add(makeAtomicCall(curCS));
@@ -149,9 +149,9 @@ public class CallReinserter {
 	 * @return Set of unreturned inlined procedures.
 	 */
 	public Set<String> unreturnedInlinedProcedures() {
-		Set<String> unretInldProcs = new HashSet<>();
-		for (BackTransValue btv : mPrevBackTranslations) {
-			for (CallStatement cs : btv.getOriginalCallStack()) {
+		final Set<String> unretInldProcs = new HashSet<>();
+		for (final BackTransValue btv : mPrevBackTranslations) {
+			for (final CallStatement cs : btv.getOriginalCallStack()) {
 				unretInldProcs.add(cs.getMethodName());
 			}
 			unretInldProcs.add(btv.getInlineEntryProcId());

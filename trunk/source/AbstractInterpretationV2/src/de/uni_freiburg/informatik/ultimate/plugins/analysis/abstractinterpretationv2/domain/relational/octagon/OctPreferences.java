@@ -30,11 +30,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 
+/**
+ * Preferences and default values for the Octagon abstract domain.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class OctPreferences {
 
 	public static enum WideningOperator {
@@ -65,7 +70,7 @@ public class OctPreferences {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	public static List<BaseUltimatePreferenceItem> createPreferences() {
-		List<BaseUltimatePreferenceItem> prf = new ArrayList<>();
+		final List<BaseUltimatePreferenceItem> prf = new ArrayList<>();
 		final UltimatePreferenceItemContainer octagonContainer = new UltimatePreferenceItemContainer("Octagon Domain");
 
 		octagonContainer.addItem(new UltimatePreferenceItem<LogMessageFormatting>(LOG_STRING_FORMAT,

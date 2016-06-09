@@ -26,22 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class CriticalSectionTransformer extends BoogieTransformer {
 	
 	protected SymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
-	public CriticalSectionTransformer(SymbolTable symbolTable, Logger logger) {
+	public CriticalSectionTransformer(SymbolTable symbolTable, ILogger logger) {
 		mSymbolTable = symbolTable;
 		mLogger = logger;
 	}
@@ -49,10 +48,10 @@ public class CriticalSectionTransformer extends BoogieTransformer {
 	public boolean process(IElement root)
 	{
 		if (root instanceof WrapperNode) {
-			Unit unit = (Unit) ((WrapperNode) root).getBacking();
-			Declaration[] declarations = unit.getDeclarations();
+			final Unit unit = (Unit) ((WrapperNode) root).getBacking();
+			final Declaration[] declarations = unit.getDeclarations();
 
-			for (Declaration decl : declarations) {
+			for (final Declaration decl : declarations) {
 				processDeclaration(decl);
 			}
 			return false;

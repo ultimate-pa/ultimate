@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ActualResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ActualResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 
 /**
  * @author Christopher Dillo
@@ -75,26 +75,26 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 	@Override
 	public String getSummaryLog() {
 
-		Map<String, String> fileToLineCount = new HashMap<String, String>();
+		final Map<String, String> fileToLineCount = new HashMap<String, String>();
 		// map: filename -> (LoC, expected, actual, runtime, memory)
-		Map<String, String[]> fileToWermutResult = new HashMap<String, String[]>();
-		Map<String, String[]> fileToAutomizerResult = new HashMap<String, String[]>();
+		final Map<String, String[]> fileToWermutResult = new HashMap<String, String[]>();
+		final Map<String, String[]> fileToAutomizerResult = new HashMap<String, String[]>();
 		
 		// map: actual result tag -> statistics
-		Map<String, ResultStatistics> wermutResultStatistics = new HashMap<String, ResultStatistics>();
-		Map<String, ResultStatistics> automizerResultStatistics = new HashMap<String, ResultStatistics>();
+		final Map<String, ResultStatistics> wermutResultStatistics = new HashMap<String, ResultStatistics>();
+		final Map<String, ResultStatistics> automizerResultStatistics = new HashMap<String, ResultStatistics>();
 		 
 		/* ###### STEP 1 : COLLECT RESULTS FROM ABSTRACT INTERPRETATIO AND AUTOMIZER ###### */
 		
-		for (TestResult result : s_testResultTypes) {
+		for (final TestResult result : s_testResultTypes) {
 			
-			for (Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
-				String[] categoryBlurb = entry.getKey().split(" ## ");
-				String tool = categoryBlurb.length > 0 ? categoryBlurb[0] : "---";
-				ExpectedResultType expectedResult = categoryBlurb.length > 1 ? expectedResultFromTag(categoryBlurb[1]) : null;
-				ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
-				String tagForExpectedResult = expectedResultTag(expectedResult);
-				String tagForActualResult = actualResultTag(actualResult);
+			for (final Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
+				final String[] categoryBlurb = entry.getKey().split(" ## ");
+				final String tool = categoryBlurb.length > 0 ? categoryBlurb[0] : "---";
+				final ExpectedResultType expectedResult = categoryBlurb.length > 1 ? expectedResultFromTag(categoryBlurb[1]) : null;
+				final ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
+				final String tagForExpectedResult = expectedResultTag(expectedResult);
+				final String tagForActualResult = actualResultTag(actualResult);
 				
 				// compare tool to the string Plug-Ins add to IResult for identification
 				Map<String, String[]> fileToResult = null;
@@ -114,26 +114,27 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 						toolResultStatistics.put(tagForActualResult, statistics);
 					}
 					
-					for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
+					for (final Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
 						// filename without path
-						String fullFileName = fileMsgPair.getKey();
-						String[] fileBlurb = fullFileName.split("\\\\");
-						String fileName = fileBlurb[fileBlurb.length-1];
-						if (!fileToLineCount.containsKey(fileName))
+						final String fullFileName = fileMsgPair.getKey();
+						final String[] fileBlurb = fullFileName.split("\\\\");
+						final String fileName = fileBlurb[fileBlurb.length-1];
+						if (!fileToLineCount.containsKey(fileName)) {
 							fileToLineCount.put(fileName, calculateNumberOfLines(fullFileName));
+						}
 						
 						// expected and actual result
-						String[] resultData = new String[SIZE];
+						final String[] resultData = new String[SIZE];
 						resultData[EXP] = tagForExpectedResult;
 						resultData[ACT] = tagForActualResult;
 
 						// runtime, max memory usage
 						resultData[TIM] = "---";
 						resultData[MEM] = "---";
-						String customMessage = fileMsgPair.getValue();
+						final String customMessage = fileMsgPair.getValue();
 						if (customMessage != null && !customMessage.isEmpty()) {
 							// customMessage: expected result, actual result, runtime, max memory usage, original result message
-							String[] message = customMessage.split(" ## ");
+							final String[] message = customMessage.split(" ## ");
 							if (message.length > 3) {
 								resultData[TIM] = message[2];
 								resultData[MEM] = message[3];
@@ -151,8 +152,8 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 		 
 		/* ###### STEP 2 : PRINT TABLE COMPARING RESULTS ###### */
 		
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
 		
 		/*
 		 * Main table: File list comparing abstract interpretation to automizer
@@ -179,10 +180,10 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 			.append("\t \\endhead").append(lineSeparator).append("\t\\linestrut").append(lineSeparator);
 		
 		// list all files in alphabetical order
-		List<String> files = new ArrayList<String>(fileToLineCount.keySet());
+		final List<String> files = new ArrayList<String>(fileToLineCount.keySet());
 		Collections.sort(files);
-		for (String fileName : files) {
-			String lineCount = fileToLineCount.get(fileName);
+		for (final String fileName : files) {
+			final String lineCount = fileToLineCount.get(fileName);
 			String[] wermutResult = fileToWermutResult.get(fileName);
 			String[] automizerResult = fileToAutomizerResult.get(fileName);
 			
@@ -254,18 +255,18 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 			.append(" & \\textbf{ms} & \\textbf{MiB} & \\textbf{\\#} & \\textbf{ms} & \\textbf{MiB} \\\\")
 			.append(lineSeparator).append("\t\\dhline\\linestrut").append(lineSeparator);
 		
-		Map<String, Map<String, ResultStatistics>> toolResultStatisticsMap = new LinkedHashMap<String, Map<String, ResultStatistics>>();
+		final Map<String, Map<String, ResultStatistics>> toolResultStatisticsMap = new LinkedHashMap<String, Map<String, ResultStatistics>>();
 		toolResultStatisticsMap.put("Abstract Interpretation", wermutResultStatistics);
 		toolResultStatisticsMap.put("Automizer", automizerResultStatistics);
-		for (String tool : toolResultStatisticsMap.keySet()) {
+		for (final String tool : toolResultStatisticsMap.keySet()) {
 			sb.append("\t\\linestrut").append(lineSeparator);
 			
 			// actual result tag -> result statistics
-			Map<String, ResultStatistics> toolResultStatistics = toolResultStatisticsMap.get(tool);
+			final Map<String, ResultStatistics> toolResultStatistics = toolResultStatisticsMap.get(tool);
 
-			ResultStatistics cummulative = new ResultStatistics();
-			for (ActualResultType a : s_actualResultTypes) {
-				ResultStatistics statistics = toolResultStatistics.get(actualResultTag(a));
+			final ResultStatistics cummulative = new ResultStatistics();
+			for (final ActualResultType a : s_actualResultTypes) {
+				final ResultStatistics statistics = toolResultStatistics.get(actualResultTag(a));
 				sb.append("\t").append((a == s_actualResultTypes[0]) ? tool : "").append(" & ")
 					.append(actualResultTag(a));
 				if (statistics == null) {
@@ -290,9 +291,9 @@ public class AbstractInterpretationComparisonTestSummary extends AbstractInterpr
 	
 	protected void printResultStatistics(StringBuilder target, ResultStatistics statistics) {
 		long timeSum = 0, timeCount = 0, memSum = 0, memCount = 0;
-		StringBuilder rawData = new StringBuilder();
-		for (ExpectedResultType e : s_expectedResultTypes) {
-			Long[] data = statistics.getData(e);
+		final StringBuilder rawData = new StringBuilder();
+		for (final ExpectedResultType e : s_expectedResultTypes) {
+			final Long[] data = statistics.getData(e);
 			if (data == null) {
 				target.append(" & 0 & --- & ---");
 			} else {

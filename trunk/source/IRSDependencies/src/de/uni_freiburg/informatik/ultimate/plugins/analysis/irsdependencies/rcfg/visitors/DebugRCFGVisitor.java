@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -42,7 +41,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 	private StringBuilder mStringBuilder;
 	public final int mLimit;
 
-	public DebugRCFGVisitor(Logger logger, int limit) {
+	public DebugRCFGVisitor(ILogger logger, int limit) {
 		super(logger);
 		mPathCount = 0;
 		mNodeCount = 0;
@@ -91,16 +90,19 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 		mStringBuilder.append(" --> ");
 	}
 
+	@Override
 	public void endOfTrace() {
 		++mPathCount;
 		mStringBuilder.replace(mStringBuilder.length() - 5, mStringBuilder.length(), "");
 		mStringBuilder.append("\n--\n");
 	}
 
+	@Override
 	public boolean abortCurrentBranch() {
 		return false;
 	}
 
+	@Override
 	public boolean abortAll() {
 		if ((mPathCount > mLimit || mNodeCount > mLimit || mEdgeCount > mLimit)) {
 			mLogger.debug("Aborting debug session because node, path or edge limit was reached");

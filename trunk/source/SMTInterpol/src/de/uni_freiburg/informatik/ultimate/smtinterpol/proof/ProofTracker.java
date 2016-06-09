@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.ConditionChain;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Utils;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -59,26 +59,30 @@ public class ProofTracker implements IProofTracker {
 		public Term toTerm() {
 			// We've never produced the new value, hence we have to produce it
 			// here
-			FunctionSymbol fsym = mOld.getFunction();
-			Term[] params = mOld.getParameters();
-			Theory t = mOld.getTheory();
+			final FunctionSymbol fsym = mOld.getFunction();
+			final Term[] params = mOld.getParameters();
+			final Theory t = mOld.getTheory();
 			Term res;
 			if (fsym.isLeftAssoc()) {
 				res = t.term(fsym, params[0], params[1]);
-				for (int i = 2; i < params.length; ++i)
+				for (int i = 2; i < params.length; ++i) {
 					res = t.term(fsym, res, params[i]);
+				}
 			} else if (fsym.isRightAssoc()) {
 				res = t.term(fsym,
 						params[params.length - 2], params[params.length - 1]);
-				for (int i = params.length - 3; i >= 0; --i) // NOCHECKSTYLE
+				for (int i = params.length - 3; i >= 0; --i) {
 					res = t.term(fsym, params[i], res);
+				}
 			} else if (fsym.isChainable()) {
 				res = t.term(fsym, params[0], params[1]);
-				for (int i = 1; i < params.length - 1; ++i)
+				for (int i = 1; i < params.length - 1; ++i) {
 					res = t.term(t.mAnd, res,
 							t.term(fsym, params[i], params[i + 1]));
-			} else
+				}
+			} else {
 				throw new InternalError("Cannot expand " + fsym);
+			}
 			res = t.annotatedTerm(new Annotation[] {
 				ProofConstants.REWRITEANNOTS[ProofConstants.RW_EXPAND]
 			}, t.term("=", mOld, res));
@@ -98,7 +102,7 @@ public class ProofTracker implements IProofTracker {
 		}
 		@Override
 		public Term toTerm() {
-			Theory t = mOld.getTheory();
+			final Theory t = mOld.getTheory();
 			Term base = t.term("=", mOld, mNew);
 			base = t.annotatedTerm(new Annotation[] {
 				ProofConstants.REWRITEANNOTS[mNum]
@@ -121,15 +125,16 @@ public class ProofTracker implements IProofTracker {
 		}
 		@Override
 		public Term toTerm() {
-			Theory t = mArgs[0].getTheory();
+			final Theory t = mArgs[0].getTheory();
 			Term orig, res;
 			Term[] resArgs = mArgs;
 			switch(mRule) {
 			case ProofConstants.RW_AND_TO_OR:
 				resArgs = new Term[mArgs.length];
 				orig = t.term(t.mAnd, mArgs);
-				for (int i = 0; i < resArgs.length; ++i)
+				for (int i = 0; i < resArgs.length; ++i) {
 					resArgs[i] = t.term(t.mNot, mArgs[i]);
+				}
 				res = t.term(t.mNot, t.term(t.mOr, resArgs));
 				break;
 			case ProofConstants.RW_XOR_TO_DISTINCT:
@@ -139,8 +144,9 @@ public class ProofTracker implements IProofTracker {
 			case ProofConstants.RW_IMP_TO_OR:
 				resArgs = new Term[resArgs.length];
 				orig = t.term(t.mImplies, mArgs);
-				for (int i = 1; i < resArgs.length; ++i)
+				for (int i = 1; i < resArgs.length; ++i) {
 					resArgs[i] = t.term(t.mNot, mArgs[i - 1]);
+				}
 				resArgs[0] = mArgs[mArgs.length - 1];
 				res = t.term(t.mOr, resArgs);
 				break;
@@ -196,8 +202,8 @@ public class ProofTracker implements IProofTracker {
 		}
 		@Override
 		public Term toTerm() {
-			Theory t = mTerm.getTheory();
-			Term res = t.term("=", mTerm, mLitTerm);
+			final Theory t = mTerm.getTheory();
+			final Term res = t.term("=", mTerm, mLitTerm);
 			return t.term("@intern", res);
 		}
 	}
@@ -209,8 +215,9 @@ public class ProofTracker implements IProofTracker {
 	private Map<Term, Term> mLits;
 	
 	private boolean addToLits(Term orig, Term lit) {
-		if (mLits == null)
+		if (mLits == null) {
 			mLits = new HashMap<Term, Term>();
+		}
 		return mLits.put(orig, lit) == null;
 	}
 
@@ -218,8 +225,9 @@ public class ProofTracker implements IProofTracker {
 		assert invNumRewrites();
 		rw.mNext = mFirst.mNext;
 		mFirst.mNext = rw;
-		if (rw.mNext == null)
+		if (rw.mNext == null) {
 			mLast = rw;
+		}
 		++mNumRewrites;
 		assert invNumRewrites();
 	}
@@ -237,15 +245,17 @@ public class ProofTracker implements IProofTracker {
 		rw.mNext = mMarkPos.mNext;
 		mMarkPos.mNext = rw;
 		++mNumRewrites;
-		if (mMarkPos == mLast)
+		if (mMarkPos == mLast) {
 			mLast = rw;
+		}
 		assert invNumRewrites();
 	}
 	
 	private boolean invNumRewrites() {
 		int i = 0;
-		for (Rewrite rw = mFirst.mNext; rw != null; rw = rw.mNext)
+		for (Rewrite rw = mFirst.mNext; rw != null; rw = rw.mNext) {
 			++i;
+		}
 		assert i == mNumRewrites;
 		return i == mNumRewrites;
 	}
@@ -275,26 +285,27 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void equality(Term[] args, Object res, int rule) {
 		Term tres = null;
-		if (res instanceof Term)
+		if (res instanceof Term) {
 			tres = (Term) res;
-		else {
-			Theory t = args[0].getTheory();
+		} else {
+			final Theory t = args[0].getTheory();
 			assert res instanceof Term[];
-			Term[] resArgs = (Term[]) res;
-			if (resArgs.length == 0)
+			final Term[] resArgs = (Term[]) res;
+			if (resArgs.length == 0) {
 				tres = t.mTrue;
-			else if (resArgs.length == 1)
+			} else if (resArgs.length == 1) {
 				tres = rule == ProofConstants.RW_EQ_FALSE 
 					? t.term(t.mNot, resArgs[0]) : resArgs[0];
-			else if (rule == ProofConstants.RW_EQ_TRUE) {
+			} else if (rule == ProofConstants.RW_EQ_TRUE) {
 				// We use inplace algorithms.  So clone the array.
 				tres = t.term(t.mAnd, resArgs.clone());
-			} else if (rule == ProofConstants.RW_EQ_FALSE)
+			} else if (rule == ProofConstants.RW_EQ_FALSE) {
 				tres = t.term(t.mNot, t.term(t.mOr, resArgs));
-			else if (rule == ProofConstants.RW_EQ_SIMP)
+			} else if (rule == ProofConstants.RW_EQ_SIMP) {
 				tres = t.term("=", resArgs);
-			else
+			} else {
 				throw new InternalError("Strange result in equality rewrite");
+			}
 		}
 		append(new ResultRewrite(tres.getTheory().term("=", args), tres, rule));
 	}
@@ -302,14 +313,16 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void distinct(Term[] args, Term res, int rule) {
 		if (res == null) {
-			Theory t = args[0].getTheory();
+			final Theory t = args[0].getTheory();
 			if (rule == ProofConstants.RW_DISTINCT_TRUE) {
-				if (args[0] == t.mTrue)
+				if (args[0] == t.mTrue) {
 					res = t.term(t.mNot, args[1]);
-				else
+				} else {
 					res = t.term(t.mNot, args[0]);
-			} else
+				}
+			} else {
 				throw new InternalError("Result should be given");
+			}
 		}
 		append(new ResultRewrite(
 				res.getTheory().term("distinct", args), res, rule));
@@ -317,7 +330,7 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void negation(Term pos, Term res, int rule) {
-		Theory t = res.getTheory();
+		final Theory t = res.getTheory();
 		append(new ResultRewrite(t.term(t.mNot, pos), res, rule));
 	}
 
@@ -328,7 +341,7 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void ite(Term cond, Term thenTerm, Term elseTerm, Term res, int rule) {
-		Theory t = cond.getTheory();
+		final Theory t = cond.getTheory();
 		if (res == null) {
 			switch(rule) {
 			case ProofConstants.RW_ITE_BOOL_2:
@@ -361,32 +374,35 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void sum(FunctionSymbol fsym, Term[] args, Term res) {
-		Theory t = fsym.getTheory();
-		Term left = SMTAffineTerm.cleanup(t.term(fsym, args));
-		Term right = SMTAffineTerm.cleanup(res);
-		if (left != right)
+		final Theory t = fsym.getTheory();
+		final Term left = SMTAffineTerm.cleanup(t.term(fsym, args));
+		final Term right = SMTAffineTerm.cleanup(res);
+		if (left != right) {
 			append(new ResultRewrite(
 					left, right, ProofConstants.RW_CANONICAL_SUM));
+		}
 	}
 
 	@Override
 	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) {
-		Theory t = orig.getTheory();
+		final Theory t = orig.getTheory();
 		Term right = t.term(
 				"<=", SMTAffineTerm.cleanup(leq),
 				leq.getSort().getName().equals("Int")
 					? t.numeral(BigInteger.ZERO) : t.decimal(BigDecimal.ZERO));
 		if (rule == ProofConstants.RW_LT_TO_LEQ0
-				|| rule == ProofConstants.RW_GT_TO_LEQ0)
+				|| rule == ProofConstants.RW_GT_TO_LEQ0) {
 			right = t.term(t.mNot, right);
-		if (right != orig)
+		}
+		if (right != orig) {
 			append(new ResultRewrite(orig, right, rule));
+		}
 	}
 
 	@Override
 	public void leqSimp(SMTAffineTerm leq, Term res, int rule) {
-		Theory t = res.getTheory();
-		Term left = t.term("<=", SMTAffineTerm.cleanup(leq),
+		final Theory t = res.getTheory();
+		final Term left = t.term("<=", SMTAffineTerm.cleanup(leq),
 				leq.getSort().getName().equals("Int")
 					? t.numeral(BigInteger.ZERO) : t.decimal(BigDecimal.ZERO));
 		append(new ResultRewrite(left, res, rule));
@@ -394,7 +410,7 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {
-		Theory t = orig.getTheory();
+		final Theory t = orig.getTheory();
 		append(new ResultRewrite(t.term(orig.getFunction(), origArgs),
 				t.term(orig.getFunction(), newArgs),
 				ProofConstants.RW_DESUGAR));
@@ -402,34 +418,36 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void divisible(FunctionSymbol divn, Term div, Term res) {
-		Term divisible = res.getTheory().term(divn, SMTAffineTerm.cleanup(div));
+		final Term divisible = res.getTheory().term(divn, SMTAffineTerm.cleanup(div));
 		append(new ResultRewrite(divisible, res, ProofConstants.RW_DIVISIBLE));
 	}
 
 	@Override
 	public Term getRewriteProof(Term asserted) {
 		assert invNumRewrites();
-		Theory t = asserted.getTheory();
+		final Theory t = asserted.getTheory();
 		return getEqProof(t.term("@asserted", asserted));
 	}
 	
 	private Term getEqProof(Term proofPart) {
-		if (mNumRewrites == 0)
+		if (mNumRewrites == 0) {
 			return proofPart;
-		Term[] args = new Term[mNumRewrites + 1];
+		}
+		final Term[] args = new Term[mNumRewrites + 1];
 		args[0] = proofPart;
 		int i = 1;
-		for (Rewrite rw = mFirst.mNext; rw != null; rw = rw.mNext)
+		for (Rewrite rw = mFirst.mNext; rw != null; rw = rw.mNext) {
 			args[i++] = rw.toTerm();
-		Term eq = proofPart.getTheory().term("@eq", args);
+		}
+		final Term eq = proofPart.getTheory().term("@eq", args);
 		return eq;
 	}
 
 	@Override
 	public void distinctBoolEq(Term lhs, Term rhs, boolean firstNegated) {
-		Theory t = lhs.getTheory();
-		Term distinct = t.term("distinct", lhs, rhs);
-		Term res = firstNegated ? t.term("=", t.term(t.mNot, lhs), rhs)
+		final Theory t = lhs.getTheory();
+		final Term distinct = t.term("distinct", lhs, rhs);
+		final Term res = firstNegated ? t.term("=", t.term(t.mNot, lhs), rhs)
 			: t.term("=", lhs, t.term(t.mNot, rhs));
 		append(new ResultRewrite(
 				distinct, res, ProofConstants.RW_DISTINCT_BOOL_EQ));
@@ -439,13 +457,14 @@ public class ProofTracker implements IProofTracker {
 	public void removeConnective(Term[] origArgs, Term result, int rule) {
 		if (rule == ProofConstants.RW_LEQ_TO_LEQ0) {
 			assert(origArgs.length == 2);
-			SMTAffineTerm constant = SMTAffineTerm.create(origArgs[1]);
+			final SMTAffineTerm constant = SMTAffineTerm.create(origArgs[1]);
 			if (constant.isConstant()
 					&& constant.getConstant().equals(Rational.ZERO)) {
-				Term tmp = SMTAffineTerm.cleanup(result);
-				Term tmp2 = SMTAffineTerm.cleanup(origArgs[0]);
-				if (tmp == tmp2)
+				final Term tmp = SMTAffineTerm.cleanup(result);
+				final Term tmp2 = SMTAffineTerm.cleanup(origArgs[0]);
+				if (tmp == tmp2) {
 					return;
+				}
 			}
 		}
 		append(new RemoveConnective(rule, origArgs, result));
@@ -453,50 +472,54 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void quoted(Term orig, Literal quote) {
-		Term t = quote.getSMTFormula(orig.getTheory(), true);
+		final Term t = quote.getSMTFormula(orig.getTheory(), true);
 		append(new InternRewrite(orig, t));
 	}
 
 	@Override
 	public void eq(Term lhs, Term rhs, Term res) {
-		Term orig = res.getTheory().term("=", lhs, rhs);
-		if (orig != res)
+		final Term orig = res.getTheory().term("=", lhs, rhs);
+		if (orig != res) {
 			append(new InternRewrite(orig, res));
+		}
 	}
 
 	@Override
 	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) {
-		Theory t = lhs.getTheory();
-		Term res = SMTAffineTerm.cleanup(eqAtom.getSMTFormula(t, true));
-		Term orig = SMTAffineTerm.cleanup(t.term("=", lhs, rhs));
-		if (orig != res)
+		final Theory t = lhs.getTheory();
+		final Term res = SMTAffineTerm.cleanup(eqAtom.getSMTFormula(t, true));
+		final Term orig = SMTAffineTerm.cleanup(t.term("=", lhs, rhs));
+		if (orig != res) {
 			append(new InternRewrite(orig, res));
+		}
 		
 	}
 
 	@Override
 	public void leq0(SMTAffineTerm sum, Literal lit) {
-		Theory t = sum.getTheory();
-		Term orig = t.term("<=", SMTAffineTerm.cleanup(sum),
+		final Theory t = sum.getTheory();
+		final Term orig = t.term("<=", SMTAffineTerm.cleanup(sum),
 				sum.getSort().getName().equals("Int")
 					? t.numeral(BigInteger.ZERO) : t.decimal(BigDecimal.ZERO));
-		Term res = lit.getSMTFormula(t, true);
-		if (orig != res)
+		final Term res = lit.getSMTFormula(t, true);
+		if (orig != res) {
 			append(new InternRewrite(orig, res));
+		}
 	}
 
 	@Override
 	public void intern(Term term, Literal lit) {
-		Theory t = term.getTheory();
-		Term orig = SMTAffineTerm.cleanup(term);
-		Term res = lit.getSMTFormula(t, true);
-		if (orig != res)
+		final Theory t = term.getTheory();
+		final Term orig = SMTAffineTerm.cleanup(term);
+		final Term res = lit.getSMTFormula(t, true);
+		if (orig != res) {
 			append(new InternRewrite(orig, res));
+		}
 	}
 	
 	@Override
 	public Term split(Term data, Term proof, int splitKind) {
-		Theory t = proof.getTheory();
+		final Theory t = proof.getTheory();
 		Term res;
 		switch (splitKind) {
 		case ProofConstants.SPLIT_NEG_OR:
@@ -510,7 +533,7 @@ public class ProofTracker implements IProofTracker {
 			Term posRes = res;
 			if (Utils.isNegation(data)) {
 				posRes = ((ApplicationTerm) data).getParameters()[0];
-				Term rewrite = t.term("@rewrite", t.annotatedTerm(
+				final Term rewrite = t.term("@rewrite", t.annotatedTerm(
 					new Annotation[] {
 						ProofConstants.REWRITEANNOTS[ProofConstants.RW_NOT_SIMP]
 					}, t.term("=", res, posRes)));
@@ -576,7 +599,7 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public Term auxAxiom(
 			int auxKind, Literal auxLit, Term data, Term base, Object auxData) {
-		Theory t = data.getTheory();
+		final Theory t = data.getTheory();
 		Term axiom;
 		switch (auxKind) {
 		case ProofConstants.AUX_TRUE_NOT_FALSE:
@@ -584,8 +607,8 @@ public class ProofTracker implements IProofTracker {
 			axiom = auxLit.getSMTFormula(t, true);
 			break;
 		case ProofConstants.AUX_OR_POS: {
-			Term[] args = ((ApplicationTerm) data).getParameters();
-			Term[] nargs = new Term[args.length + 1];
+			final Term[] args = ((ApplicationTerm) data).getParameters();
+			final Term[] nargs = new Term[args.length + 1];
 			nargs[0] = t.term(t.mNot, auxLit.getSMTFormula(t, true));
 			System.arraycopy(args, 0, nargs, 1, args.length);
 			axiom = t.term(t.mOr, nargs);
@@ -658,7 +681,7 @@ public class ProofTracker implements IProofTracker {
 			axiom = t.term(t.mOr, data, auxLit.getSMTFormula(t, true));
 			break;
 		case ProofConstants.AUX_TERM_ITE:
-			ConditionChain tmp = (ConditionChain) auxData;
+			final ConditionChain tmp = (ConditionChain) auxData;
 			// Determine size
 			ConditionChain walk = tmp;
 			int size = 1;
@@ -666,14 +689,15 @@ public class ProofTracker implements IProofTracker {
 				walk = walk.getPrevious();
 				++size;
 			}
-			Term[] nparams = new Term[size];
+			final Term[] nparams = new Term[size];
 			walk = tmp;
 			for (int i = size - 2; i >= 0; --i) {
 				nparams[i] = t.term(t.mNot, walk.getTerm());
-				if (Utils.isNegation(walk.getTerm()))
+				if (Utils.isNegation(walk.getTerm())) {
 					negation(walk.getTerm(),
 							Utils.createNotUntracked(walk.getTerm()),
 							ProofConstants.RW_NOT_SIMP);
+				}
 				walk = walk.getPrevious();
 			}
 			nparams[size - 1] = t.term("=", base, data);
@@ -727,8 +751,8 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void mod(Term x, Term y, Term res,
 			int rule) {
-		Theory t = x.getTheory();
-		Term mod = t.term(
+		final Theory t = x.getTheory();
+		final Term mod = t.term(
 				"mod", SMTAffineTerm.cleanup(x), SMTAffineTerm.cleanup(y));
 		append(new ResultRewrite(mod, SMTAffineTerm.cleanup(res), rule));
 	}
@@ -736,16 +760,16 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void div(Term x, Term y, Term res,
 			int rule) {
-		Theory t = x.getTheory();
-		Term mod = t.term(
+		final Theory t = x.getTheory();
+		final Term mod = t.term(
 				"div", SMTAffineTerm.cleanup(x), SMTAffineTerm.cleanup(y));
 		append(new ResultRewrite(mod, SMTAffineTerm.cleanup(res), rule));
 	}
 
 	@Override
 	public void toInt(Term arg, Term res) {
-		Theory t = arg.getTheory();
-		Term toint = t.term("to_int", SMTAffineTerm.cleanup(arg));
+		final Theory t = arg.getTheory();
+		final Term toint = t.term("to_int", SMTAffineTerm.cleanup(arg));
 		append(new ResultRewrite(toint, SMTAffineTerm.cleanup(res),
 				ProofConstants.RW_TO_INT));
 	}
@@ -758,17 +782,17 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void negateLit(Literal lit, Theory theory) {
 		assert lit.getSign() == -1 : "Literal not negated!";
-		Term lhs = theory.term(theory.mNot,
+		final Term lhs = theory.term(theory.mNot,
 				SMTAffineTerm.cleanup(lit.getSMTFormula(theory, true)));
-		Term rhs = SMTAffineTerm.cleanup(
+		final Term rhs = SMTAffineTerm.cleanup(
 				lit.getAtom().getSMTFormula(theory, true));
 		append(new ResultRewrite(lhs, rhs, ProofConstants.RW_NOT_SIMP));
 	}
 
 	@Override
 	public void arrayRewrite(Term[] args, Term result, int rule) {
-		Theory t = result.getTheory();
-		Term input = rule == ProofConstants.RW_STORE_OVER_STORE
+		final Theory t = result.getTheory();
+		final Term input = rule == ProofConstants.RW_STORE_OVER_STORE
 			? t.term("store", args) : t.term("select", args);
 		append(new ResultRewrite(input, result, rule));
 	}
@@ -784,11 +808,12 @@ public class ProofTracker implements IProofTracker {
 				ArrayDeque<FlattenHelper> todo, ArrayList<Term> args) {
 			for (int i = mOffset; i < mArgs.length; ++i) {
 				if (mArgs[i] instanceof ApplicationTerm) {
-					ApplicationTerm tst = (ApplicationTerm) mArgs[i];
+					final ApplicationTerm tst = (ApplicationTerm) mArgs[i];
 					if (Clausifier.shouldFlatten(tst)) {
 						mOffset = i + 1;
-						if (mOffset < mArgs.length)
+						if (mOffset < mArgs.length) {
 							todo.addFirst(this);
+						}
 						todo.addFirst(new FlattenHelper(tst.getParameters(), 0));
 						return;
 					}
@@ -800,19 +825,19 @@ public class ProofTracker implements IProofTracker {
 	
 	@Override
 	public void flatten(Term[] args, boolean simpOr) {
-		Theory t = args[0].getTheory();
-		ArrayDeque<FlattenHelper> toFlatten =
+		final Theory t = args[0].getTheory();
+		final ArrayDeque<FlattenHelper> toFlatten =
 				new ArrayDeque<FlattenHelper>();
 		toFlatten.add(new FlattenHelper(args, 0));
-		ArrayList<Term> newArgs = new ArrayList<Term>();
+		final ArrayList<Term> newArgs = new ArrayList<Term>();
 		while (!toFlatten.isEmpty()) {
-			FlattenHelper fh = toFlatten.poll();
+			final FlattenHelper fh = toFlatten.poll();
 			fh.flatten(toFlatten, newArgs);
 		}
-		ApplicationTerm res = (ApplicationTerm) 
-				t.term(t.mOr, newArgs.toArray(new Term[newArgs.size()]));
-		if (simpOr)
+		final ApplicationTerm res = t.term(t.mOr, newArgs.toArray(new Term[newArgs.size()]));
+		if (simpOr) {
 			orSimpClause(res.getParameters());
+		}
 		insertAtMarkedPos(
 				new ResultRewrite(t.term(t.mOr, args), res,
 						ProofConstants.RW_FLATTEN));
@@ -820,30 +845,33 @@ public class ProofTracker implements IProofTracker {
 	
 	@Override
 	public void orSimpClause(Term[] args) {
-		Theory t = args[0].getTheory();
-		Term[] newArgs = args.clone();
-		LinkedHashSet<Term> clause = new LinkedHashSet<Term>();
+		final Theory t = args[0].getTheory();
+		final Term[] newArgs = args.clone();
+		final LinkedHashSet<Term> clause = new LinkedHashSet<Term>();
 		for (int i = 0; i < newArgs.length; ++i) {
-			Term tmp = SMTAffineTerm.cleanup(newArgs[i]);
+			final Term tmp = SMTAffineTerm.cleanup(newArgs[i]);
 			Term newDisj = mLits.get(tmp);
 			/* This is the case for proxy literals in aux-clauses.  They cannot
 			 * merge since otherwise the term would be infinite because the term
 			 * would be its own proper subterm.
 			 */
-			if (newDisj == null)
+			if (newDisj == null) {
 				newDisj = tmp;
+			}
 			newArgs[i] = newDisj;
-			if (newDisj != t.mFalse)
+			if (newDisj != t.mFalse) {
 				clause.add(newDisj);
+			}
 		}
 		Term res;
-		if (clause.isEmpty())
+		if (clause.isEmpty()) {
 			res = t.mFalse;
-		else if (clause.size() == 1)
+		} else if (clause.size() == 1) {
 			res = clause.iterator().next();
-		else
+		} else {
 			res = t.term(t.mOr, clause.toArray(new Term[clause.size()]));
-		Rewrite rw =
+		}
+		final Rewrite rw =
 				new ResultRewrite(t.term(t.mOr, newArgs), res,
 						ProofConstants.RW_OR_SIMP);
 		append(rw);
@@ -856,8 +884,8 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public Term[] produceAuxAxiom(Literal auxlit, Term... args) {
-		Theory t = args[0].getTheory();
-		Term[] res = new Term[1 + args.length];
+		final Theory t = args[0].getTheory();
+		final Term[] res = new Term[1 + args.length];
 		res[0] = auxlit.getSMTFormula(t, true);
 		System.arraycopy(args, 0, res, 1, args.length);
 		return res;
@@ -887,10 +915,11 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void normalized(ConstantTerm term, SMTAffineTerm res) {
-		Term rhs = SMTAffineTerm.cleanup(res);
-		if (term != rhs)
+		final Term rhs = SMTAffineTerm.cleanup(res);
+		if (term != rhs) {
 			append(new ResultRewrite(
 					term, rhs, ProofConstants.RW_CANONICAL_SUM));
+		}
 	}
 
 	@Override
@@ -906,8 +935,8 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void storeRewrite(ApplicationTerm store, Term result, boolean arrayFirst) {
-		Term array = store.getParameters()[0];
-		Term orig = arrayFirst ? store.getTheory().term("=", array, store)
+		final Term array = store.getParameters()[0];
+		final Term orig = arrayFirst ? store.getTheory().term("=", array, store)
 			: store.getTheory().term("=", store, array);
 		append(new ResultRewrite(
 				orig, result, ProofConstants.RW_STORE_REWRITE));
@@ -915,7 +944,7 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void toReal(Term arg, Term res) {
-		Term orig = arg.getTheory().term(
+		final Term orig = arg.getTheory().term(
 				"to_real", SMTAffineTerm.cleanup(arg));
 		append(new ResultRewrite(orig, SMTAffineTerm.cleanup(res),
 				ProofConstants.RW_TO_REAL));

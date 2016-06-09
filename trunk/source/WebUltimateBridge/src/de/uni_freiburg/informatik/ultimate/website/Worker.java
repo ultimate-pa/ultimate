@@ -28,7 +28,7 @@ public class Worker {
 	/**
 	 * The websites execution button text.
 	 */
-	private String label;
+	private final String label;
 	/**
 	 * The websites user information to be displayed.
 	 */
@@ -78,9 +78,9 @@ public class Worker {
 		this.label             = (label == null) ? getLabel(name) : label;
 		this.description       = (description == null) ? getDescription(name) : description;
 		this.toolchains        = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
-		this.layoutFontsize    = null;
-		this.layoutOrientation = null;
-		this.layoutTransitions = null;
+		layoutFontsize    = null;
+		layoutOrientation = null;
+		layoutTransitions = null;
 		setId(name);
 	}
 
@@ -90,7 +90,9 @@ public class Worker {
 	 * @return the description of the name's matching worker.
 	 */
 	public String getDescription(String name) {
-		if(description != null) return description;
+		if(description != null) {
+			return description;
+		}
 		
 		return "No description yet.";
 	}
@@ -152,7 +154,9 @@ public class Worker {
 	 * @return 
 	 */
 	public void addToolchain(WebToolchain toolchain) {
-		if(toolchains.contains(toolchain)) return;
+		if(toolchains.contains(toolchain)) {
+			return;
+		}
 		toolchains.add(toolchain);
 	}
 
@@ -163,10 +167,11 @@ public class Worker {
 	 */
 	public ArrayList<String> getLanguages() {
 		if (languages.isEmpty()) {
-			for (WebToolchain toolchain : toolchains) {
+			for (final WebToolchain toolchain : toolchains) {
 				SimpleLogger.log("Toolchain " + toolchain.getId() + " has language " + toolchain.getLanguage());
-				if(!languages.contains(toolchain.getLanguage()))
+				if(!languages.contains(toolchain.getLanguage())) {
 					languages.add(toolchain.getLanguage());
+				}
 			}
 		}
 		Collections.sort(languages);
@@ -198,7 +203,7 @@ public class Worker {
 	 * 			the Ultimate name of this worker
 	 */
 	public void setId(String name) {
-		this.id = toKey(name);
+		id = toKey(name);
 	}
 
 	/**
@@ -262,7 +267,7 @@ public class Worker {
 	 * 
 	 */
 	public void setContentURL(String url) {
-		this.contentURL = url;
+		contentURL = url;
 	}
 
 	/**
@@ -270,7 +275,7 @@ public class Worker {
 	 * 
 	 */
 	public void setLogoURL(String url) {
-		this.logoURL = url;
+		logoURL = url;
 	}
 
 	/**
@@ -278,7 +283,7 @@ public class Worker {
 	 * 
 	 */
 	public void setInterfaceLayoutFontsize(String fontsize) {
-		this.layoutFontsize = fontsize;
+		layoutFontsize = fontsize;
 	}
 
 	/**
@@ -286,7 +291,7 @@ public class Worker {
 	 * 
 	 */
 	public void setInterfaceLayoutOrientation(String orientation) {
-		this.layoutOrientation = orientation;
+		layoutOrientation = orientation;
 	}
 
 	/**
@@ -294,7 +299,7 @@ public class Worker {
 	 * 
 	 */
 	public void setInterfaceLayoutTransitions(String transitions) {
-		this.layoutTransitions = transitions;
+		layoutTransitions = transitions;
 	}
 
 	/**

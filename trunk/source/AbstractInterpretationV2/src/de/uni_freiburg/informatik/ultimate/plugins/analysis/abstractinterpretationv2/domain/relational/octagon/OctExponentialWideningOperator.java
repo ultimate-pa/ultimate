@@ -32,17 +32,32 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
+/**
+ * Widening operator for octagons that increases values a binary exponential backoff.
+ * 
+ * @see OctMatrix#widenExponential(OctMatrix, OctValue)
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class OctExponentialWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
 		
 	private final BiFunction<OctMatrix, OctMatrix, OctMatrix> mWideningOperator;
 	
-	public OctExponentialWideningOperator(BigDecimal threshold) {
-		OctValue octThreshold = new OctValue(threshold);
+	/**
+	 * Creates a new exponential widening operator.
+	 * The widening operator will set widened values above the threshold to infinity.
+	 * 
+	 * @param threshold Threshold value (must be smaller than infinity in order to stabilize) 
+	 *
+	 * @see OctMatrix#widenExponential(OctMatrix, OctValue)
+	 */
+	public OctExponentialWideningOperator(final BigDecimal threshold) {
+		final OctValue octThreshold = new OctValue(threshold);
 		mWideningOperator = (m, n) -> m.widenExponential(n, octThreshold);
 	}
 
 	@Override
-	public OctDomainState apply(OctDomainState first, OctDomainState second) {
+	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, mWideningOperator);
 	}
 }

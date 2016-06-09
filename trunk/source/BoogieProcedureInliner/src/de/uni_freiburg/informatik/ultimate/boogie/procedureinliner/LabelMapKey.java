@@ -34,9 +34,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
  */
 public class LabelMapKey {
 
-	private String mLabelId;
-	private String mProcedureId;
-	private int mCallNumber;
+	private final String mLabelId;
+	private final String mProcedureId;
+	private final int mCallNumber;
 	
 	/**
 	 * Creates a new key for a label of the procedure, used inside the entry point of inlining.
@@ -91,25 +91,33 @@ public class LabelMapKey {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		LabelMapKey other = (LabelMapKey) obj;
-		if (mCallNumber != other.mCallNumber)
+		}
+		final LabelMapKey other = (LabelMapKey) obj;
+		if (mCallNumber != other.mCallNumber) {
 			return false;
+		}
 		if (mLabelId == null) {
-			if (other.mLabelId != null)
+			if (other.mLabelId != null) {
 				return false;
-		} else if (!mLabelId.equals(other.mLabelId))
+			}
+		} else if (!mLabelId.equals(other.mLabelId)) {
 			return false;
+		}
 		if (mProcedureId == null) {
-			if (other.mProcedureId != null)
+			if (other.mProcedureId != null) {
 				return false;
-		} else if (!mProcedureId.equals(other.mProcedureId))
+			}
+		} else if (!mProcedureId.equals(other.mProcedureId)) {
 			return false;
+		}
 		return true;
 	}
 

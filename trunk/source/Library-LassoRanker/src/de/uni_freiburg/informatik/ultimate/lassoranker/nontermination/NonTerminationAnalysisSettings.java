@@ -81,10 +81,10 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 * Copy constructor copies everything
 	 */
 	public NonTerminationAnalysisSettings(NonTerminationAnalysisSettings other) {
-		this.analysis = other.analysis;
-		this.allowBounded = other.allowBounded;
-		this.number_of_gevs = other.number_of_gevs;
-		this.nilpotent_components = other.nilpotent_components;
+		analysis = other.analysis;
+		allowBounded = other.allowBounded;
+		number_of_gevs = other.number_of_gevs;
+		nilpotent_components = other.nilpotent_components;
 	}
 	
 	/**
@@ -92,22 +92,23 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 * Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		assert this.number_of_gevs >= 0;
+		assert number_of_gevs >= 0;
 	}
 	
 	/**
 	 * Build a string description of the current preferences
 	 */
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination analysis: ");
-		sb.append(this.analysis);
+		sb.append(analysis);
 		sb.append("\nAllow bounded executions: ");
-		sb.append(this.allowBounded);
+		sb.append(allowBounded);
 		sb.append("\nNumber of generalized eigenvectors: ");
-		sb.append(this.number_of_gevs);
+		sb.append(number_of_gevs);
 		sb.append("\nNilpotent components: ");
-		sb.append(this.nilpotent_components);
+		sb.append(nilpotent_components);
 		return sb.toString();
 	}
 }

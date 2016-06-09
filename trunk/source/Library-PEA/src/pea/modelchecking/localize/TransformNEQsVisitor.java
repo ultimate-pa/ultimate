@@ -61,23 +61,23 @@ public class TransformNEQsVisitor implements
      */
     @Override
     public Term visitTerm(Term zedObject) {
-        Object[] children = zedObject.getChildren();
-        Object[] newChildren = new Object[children.length];
+        final Object[] children = zedObject.getChildren();
+        final Object[] newChildren = new Object[children.length];
         for (int i = 0; i < children.length; i++) {;
-            Object child = children[i];
+            final Object child = children[i];
             if( child instanceof MemPred) {
-                MemPred pred = (MemPred)child;
+                final MemPred pred = (MemPred)child;
                 if(pred.getRightExpr() instanceof RefExpr) {
-                    RefExpr refExpr = (RefExpr)pred.getRightExpr();
-                    ZName name = refExpr.getZName();
+                    final RefExpr refExpr = (RefExpr)pred.getRightExpr();
+                    final ZName name = refExpr.getZName();
                     if(name.getOperatorName().getWord().equals(Z_NEQ_OPERATOR)) {
                         
-                        ZName newRefName = factory.createZName(
+                        final ZName newRefName = factory.createZName(
                                 Z_EQUALS_OPERATOR,
                                 name.getStrokeList());
-                        RefExpr newRefExpr = 
+                        final RefExpr newRefExpr = 
                             factory.createRefExpr(newRefName, refExpr.getZExprList(), refExpr.getMixfix());
-                        Pred newMemPred = factory.createMemPred(pred.getLeftExpr(), newRefExpr, pred.getMixfix());
+                        final Pred newMemPred = factory.createMemPred(pred.getLeftExpr(), newRefExpr, pred.getMixfix());
                         
                         newChildren[i] = factory.createNegPred((Pred) newMemPred.accept(this));
                         continue;

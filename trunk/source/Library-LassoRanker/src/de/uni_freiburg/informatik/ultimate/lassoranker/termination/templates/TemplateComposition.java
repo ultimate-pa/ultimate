@@ -53,16 +53,16 @@ public final class TemplateComposition {
 	 */
 	static<T> List<List<T>> distribute(
 			List<List<List<List<T>>>> constraints) {
-		List<List<T>> conjunction =
+		final List<List<T>> conjunction =
 				new ArrayList<List<T>>();
-		for (List<List<List<T>>> i : constraints) {
-			int[] f = new int[i.size()];
+		for (final List<List<List<T>>> i : constraints) {
+			final int[] f = new int[i.size()];
 			for (int j = 0; j < f.length; ++j) {
 				assert !i.get(j).isEmpty();
 				f[j] = 0;
 			}
 			while (true) {
-				List<T> disjuction =
+				final List<T> disjuction =
 						new ArrayList<T>();
 				for (int j = 0; j < f.length; ++j) {
 					disjuction.addAll(i.get(j).get(f[j]));
@@ -94,8 +94,8 @@ public final class TemplateComposition {
 	 * @param constraints the constraints
 	 */
 	static void resetMotzkin(List<List<LinearInequality>> constraints) {
-		for (List<LinearInequality> disjunction : constraints) {
-			for (LinearInequality li : disjunction) {
+		for (final List<LinearInequality> disjunction : constraints) {
+			for (final LinearInequality li : disjunction) {
 				li.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
 			}
 //			if (sRedAtoms && disjunction.size() > 0) {
@@ -110,8 +110,8 @@ public final class TemplateComposition {
 	 */
 	static int computeDegree(List<List<LinearInequality>> constraints) {
 		int degree = 0;
-		for (List<LinearInequality> disjunction : constraints) {
-			for (LinearInequality li : disjunction) {
+		for (final List<LinearInequality> disjunction : constraints) {
+			for (final LinearInequality li : disjunction) {
 				if (!li.motzkin_coefficient.isFixed()) {
 					++degree;
 				}

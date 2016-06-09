@@ -28,10 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
+
+import org.junit.Test;
 
 /**
  * Test class for {@link LinearConstraint}s.

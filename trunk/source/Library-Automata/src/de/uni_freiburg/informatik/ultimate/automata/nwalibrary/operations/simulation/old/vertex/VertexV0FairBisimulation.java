@@ -89,7 +89,7 @@ public class VertexV0FairBisimulation<LETTER,STATE> extends VertexV0Delayed<LETT
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<").append(isB1()).append(",").append(isB2()).append(",(");
         sb.append(getQ0()).append(",").append(getQ1()).append("),p:");
         sb.append(getPriority()).append(",pm:").append(getPM());
@@ -137,9 +137,10 @@ public class VertexV0FairBisimulation<LETTER,STATE> extends VertexV0Delayed<LETT
      * @return state
      */
     public STATE getQ(boolean stateNumber) {
-        if (stateNumber)
-            return getQ1();
-        else
-            return getQ0();
+        if (stateNumber) {
+			return getQ1();
+		} else {
+			return getQ0();
+		}
     }
 }

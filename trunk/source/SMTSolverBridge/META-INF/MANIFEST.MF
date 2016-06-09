@@ -5,7 +5,8 @@ Bundle-SymbolicName: SMTSolverBridge
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.smtsolver.external
-Require-Bundle: JavaCup,
+Require-Bundle: Library-UltimateCore,
+ JavaCup,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-log4j,

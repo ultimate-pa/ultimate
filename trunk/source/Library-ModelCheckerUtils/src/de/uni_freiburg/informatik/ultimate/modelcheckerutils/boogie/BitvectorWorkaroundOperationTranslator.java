@@ -32,13 +32,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 
 /**
  * Assists in the translation process in Expression2Term by covering the cases 
@@ -69,19 +69,19 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 		} else if (op == BinaryExpression.Operator.COMPNEQ) {
 		    throw new UnsupportedOperationException();
 		} else if (op == BinaryExpression.Operator.LOGICAND) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "and";
 			} else {
 			    return "bvand";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICOR) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "or";
 			} else {
 			    return "bvor";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "=>";
 			} else {
 			    throw new AssertionError("LOGICIMPLIES of this type not allowed");
@@ -90,7 +90,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 			return "=";
 		} else if (op == BinaryExpression.Operator.ARITHDIV) {
 			if (type1 instanceof PrimitiveType) {
-				PrimitiveType primType = (PrimitiveType) type1;
+				final PrimitiveType primType = (PrimitiveType) type1;
 				if (primType.getTypeCode() == PrimitiveType.INT) {
 					return "div";
 				} else if (primType.getTypeCode() == PrimitiveType.REAL) {
@@ -119,22 +119,23 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	@Override
 	public String opTranslation(UnaryExpression.Operator op, IType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
-			if (type.equals(PrimitiveType.boolType)) {
+			if (type.equals(PrimitiveType.TYPE_BOOL)) {
 				return "not";
 			} else {
 				throw new AssertionError("LOGICNEG of this type not allowed");
 			}
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
 			return "bvneg";
-		} else
+		} else {
 			throw new AssertionError("Unsupported unary expression " + op);
+		}
 	}
 
 	@Override
 	public String funcApplication(String funcIdentifier, IType[] argumentTypes) {
 		if (argumentTypes.length == 2 
-				&& argumentTypes[0].equals(PrimitiveType.intType) 
-				&& argumentTypes[1].equals(PrimitiveType.intType)) {
+				&& argumentTypes[0].equals(PrimitiveType.TYPE_INT) 
+				&& argumentTypes[1].equals(PrimitiveType.TYPE_INT)) {
 			if (funcIdentifier.equals("~bitwiseAnd")) {
 				return "bvand";
 			} else if (funcIdentifier.equals("~bitwiseOr")) {
@@ -144,17 +145,17 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 			} else if (funcIdentifier.equals("~shiftRight")) {
 				return "bvashr";
 			} else {
-				return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+				return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 			}
 		} else {
-			return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+			return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 		}
 	}
 	
 	@Override
 	public Term integerTranslation(IntegerLiteral exp) {
-		BigInteger[] indices = { BigInteger.valueOf(32) };
+		final BigInteger[] indices = { BigInteger.valueOf(32) };
 		
-		return m_Script.term("bv" + ((IntegerLiteral) exp).getValue(), indices, null);
+		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 }

@@ -30,12 +30,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.converter.MinModelConverter;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -64,18 +63,13 @@ public class MinModelConversionObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
 		return false;
 	}
 
 	@Override
 	public boolean process(IElement root) {
-		RootNode rootNode = (RootNode) root;
+		final RootNode rootNode = (RootNode) root;
 		mRoot = new MinModelConverter(mServices).startConversion(rootNode);
 		return false;
 	}

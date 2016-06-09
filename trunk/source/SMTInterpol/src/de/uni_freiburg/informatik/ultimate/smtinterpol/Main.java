@@ -43,11 +43,12 @@ public final class Main {
 	static {
 		sVersionInfo = new Properties();
 		try {
-			InputStream is = 
+			final InputStream is = 
 					Main.class.getResourceAsStream("Version.properties");
-			if (is != null)
+			if (is != null) {
 				sVersionInfo.load(is);
-		} catch (IOException ex) {
+			}
+		} catch (final IOException ex) {
 			/* ignore */
 		}
 	}
@@ -59,7 +60,9 @@ public final class Main {
 	public static final String getVersion() {
 		String version = sVersionInfo.getProperty("version", "unknown version");
 		if (Config.COMPETITION)
+		 {
 			version += "-comp"; // NOPMD
+		}
 		return version;
 	}
 	
@@ -82,10 +85,11 @@ public final class Main {
 	}
 	
 	private static void version() {
-		String date = sVersionInfo.getProperty("build.date");
+		final String date = sVersionInfo.getProperty("build.date");
 		System.err.println("SMTInterpol " + getVersion());
-		if (date != null)
+		if (date != null) {
 			System.err.println("  built on " + date);
+		}
 	}
 	
 	/**
@@ -94,7 +98,7 @@ public final class Main {
 	public static void main(String[] param) throws Exception {
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
-		ArrayList<String> options = new ArrayList<String>();
+		final ArrayList<String> options = new ArrayList<String>();
 		int paramctr = 0;
 		while (paramctr < param.length
 				&& param[paramctr].startsWith("-")) {
@@ -108,7 +112,7 @@ public final class Main {
 			} else if (param[paramctr].equals("-script")
 					&& paramctr + 1 < param.length) {
 				paramctr++;
-				Class<?> scriptClass = Class.forName(param[paramctr]);
+				final Class<?> scriptClass = Class.forName(param[paramctr]);
 				solver = (Script) scriptClass.newInstance();
 			} else if (param[paramctr].equals("-no-success")) {
 				options.add("print-success=false");
@@ -150,16 +154,18 @@ public final class Main {
 			++paramctr;
 		}
 		String filename = null;
-		if (paramctr < param.length)
+		if (paramctr < param.length) {
 			filename = param[paramctr++];
+		}
 		if (paramctr != param.length) {
 			usage();
 			return;
 		}
-		if (solver == null)
+		if (solver == null) {
 			solver = new SMTInterpol();
-		for (String opt : options) {
-			int eq = opt.indexOf('=');
+		}
+		for (final String opt : options) {
+			final int eq = opt.indexOf('=');
 			String name;
 			Object value;
 			if (eq == -1) {
@@ -171,15 +177,15 @@ public final class Main {
 			}
 			try {
 				solver.setOption(":" + name, value);
-			} catch (UnsupportedOperationException ex) {
+			} catch (final UnsupportedOperationException ex) {
 				System.err.println("Unknown option :" + name + ".");
 				return;
-			} catch (SMTLIBException ex) {
+			} catch (final SMTLIBException ex) {
 				System.err.println(ex.getMessage());
 				return;
 			}
 		}
-		int exitCode = parser.run(solver, filename);
+		final int exitCode = parser.run(solver, filename);
 		System.exit(exitCode);
 	}
 

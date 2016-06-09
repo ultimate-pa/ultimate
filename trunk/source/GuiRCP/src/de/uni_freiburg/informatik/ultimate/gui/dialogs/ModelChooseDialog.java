@@ -72,7 +72,7 @@ public class ModelChooseDialog extends Dialog {
 			String title) {
 		super(parent, style);
 		this.items = items;
-		this.dialogName = title;
+		dialogName = title;
 		result = new ArrayList<String>();
 	}
 
@@ -92,10 +92,11 @@ public class ModelChooseDialog extends Dialog {
 		createContents();
 		shell.open();
 		shell.layout();
-		Display display = getParent().getDisplay();
+		final Display display = getParent().getDisplay();
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
+			if (!display.readAndDispatch()) {
 				display.sleep();
+			}
 		}
 		return result;
 	}
@@ -133,12 +134,13 @@ public class ModelChooseDialog extends Dialog {
 //			}
 //		});
 		list.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
-		for (String item : items) {
+		for (final String item : items) {
 			list.add(item);
 		}
 
 		final Button okButton = new Button(shell, SWT.NONE);
 		okButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				result = Arrays.asList(list.getSelection());
 				shell.dispose();
@@ -152,6 +154,7 @@ public class ModelChooseDialog extends Dialog {
 
 		final Button cancelButton = new Button(shell, SWT.NONE);
 		cancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				result = Collections.emptyList();
 				shell.dispose();

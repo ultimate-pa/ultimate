@@ -33,10 +33,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -56,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * UltimateChecker class, implements the model checker Ultimate.
@@ -71,26 +70,27 @@ public class UltimateChecker extends CodeChecker {
 	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
 	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
 
-	public UltimateChecker(IElement root, SmtManager m_smtManager, RootNode m_originalRoot, ImpRootNode m_graphRoot,
-			GraphWriter m_graphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
-		super(root, m_smtManager, m_originalRoot, m_graphRoot,
-				m_graphWriter, edgeChecker, predicateUnifier, logger);
+	public UltimateChecker(IElement root, SmtManager msmtManager, RootNode moriginalRoot, ImpRootNode mgraphRoot,
+			GraphWriter mgraphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+		super(root, msmtManager, moriginalRoot, mgraphRoot,
+				mgraphWriter, edgeChecker, predicateUnifier, logger);
 	}
 
 	/**
 	 * Given an error trace with the corresponding interpolants, then it
 	 * modifies the graph accordingly.
 	 */
+	@Override
 	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot) {
 
 		// Debug The Error Trace and the corresponding list of interpolants.
-		AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
-		ArrayList<AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
+		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
+		final ArrayList<AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
 		Collections.addAll(errorTraceDBG, nodes);
 		mLogger.debug(String.format("Error: %s\n", errorTraceDBG));
 
-		ArrayList<IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
+		final ArrayList<IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
 		Collections.addAll(interpolantsDBG, interpolants);
 		mLogger.debug(String.format("Inters: %s\n", interpolantsDBG));
 		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
@@ -106,24 +106,25 @@ public class UltimateChecker extends CodeChecker {
 	private void splitNode(AnnotatedProgramPoint oldNode,
 			IPredicate predicate) {
 		// make two new nodes
-		AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(),
+		final AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(),
 				predicate));
-		AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(),
+		final AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(),
 				negatePredicateNoPU(predicate)));
 
 		// connect predecessors of old node to new nodes, disconnect them from
 		// old node
-		AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[] {});
-		for (AppEdge oldInEdge : oldInEdges) {
-			AnnotatedProgramPoint source = oldInEdge.getSource();
-			CodeBlock statement = oldInEdge.getStatement();
+		final AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[] {});
+		for (final AppEdge oldInEdge : oldInEdges) {
+			final AnnotatedProgramPoint source = oldInEdge.getSource();
+			final CodeBlock statement = oldInEdge.getStatement();
 
 			// deal with self loops elsewhere
-			if (source.equals(oldNode))
+			if (source.equals(oldNode)) {
 				continue;
+			}
 
 			if (oldInEdge instanceof AppHyperEdge) {
-				AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
+				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
 				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
 				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
 			} else {
@@ -136,17 +137,18 @@ public class UltimateChecker extends CodeChecker {
 
 		// connect successors of old node to new nodes, disconnect them from old
 		// node
-		AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[] {});
-		for (AppEdge oldOutEdge : oldOutEdges) {
-			AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			CodeBlock statement = oldOutEdge.getStatement();
+		final AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[] {});
+		for (final AppEdge oldOutEdge : oldOutEdges) {
+			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
+			final CodeBlock statement = oldOutEdge.getStatement();
 
 			// deal with self loops elsewhere
-			if (target.equals(oldNode))
+			if (target.equals(oldNode)) {
 				continue;
+			}
 
 			if (oldOutEdge instanceof AppHyperEdge) {
-				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
 				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
 				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
 			} else {
@@ -158,16 +160,17 @@ public class UltimateChecker extends CodeChecker {
 		}
 
 		// deal with self loops
-		for (AppEdge oldOutEdge : oldOutEdges) {
-			AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			CodeBlock statement = oldOutEdge.getStatement();
+		for (final AppEdge oldOutEdge : oldOutEdges) {
+			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
+			final CodeBlock statement = oldOutEdge.getStatement();
 
 			// already dealt with non self loops and disconnected those edges
-			if (target == null)
+			if (target == null) {
 				continue;
+			}
 
 			if (oldOutEdge instanceof AppHyperEdge) {
-				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
 				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
 				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
 				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
@@ -183,11 +186,11 @@ public class UltimateChecker extends CodeChecker {
 		}
 
 		// duplicate outgoing hyperedges
-		AppHyperEdge[] oldOutHypEdges = oldNode.getOutgoingHyperEdges().toArray(new AppHyperEdge[] {});
-		for (AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
-			AnnotatedProgramPoint source = oldOutHypEdge.getSource();
-			AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
-			Return statement = (Return) oldOutHypEdge.getStatement();
+		final AppHyperEdge[] oldOutHypEdges = oldNode.getOutgoingHyperEdges().toArray(new AppHyperEdge[] {});
+		for (final AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
+			final AnnotatedProgramPoint source = oldOutHypEdge.getSource();
+			final AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
+			final Return statement = (Return) oldOutHypEdge.getStatement();
 
 			connectOutgoingReturnIfSat(source, newNode1, statement, target);
 			connectOutgoingReturnIfSat(source, newNode2, statement, target);
@@ -201,8 +204,8 @@ public class UltimateChecker extends CodeChecker {
 			AnnotatedProgramPoint procedureRoot,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
-		this._satTriples = satTriples;
-		this._unsatTriples = unsatTriples;
+		_satTriples = satTriples;
+		_unsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
@@ -213,26 +216,33 @@ public class UltimateChecker extends CodeChecker {
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
-		this._satQuadruples = satQuadruples;
-		this._unsatQuadruples = unsatQuadruples;
+		_satQuadruples = satQuadruples;
+		_unsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
 
 	private void makeConnections() {
-		for (Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2 : _pre2stm2post_toConnectIfSat
-				.entrySet())
-			for (Entry<CodeBlock, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet())
-				if (isSatEdge(pre2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate()))
+		for (final Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2 : _pre2stm2post_toConnectIfSat
+				.entrySet()) {
+			for (final Entry<CodeBlock, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet()) {
+				if (isSatEdge(pre2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate())) {
 					pre2.getKey().connectOutgoing(stm2.getKey(), stm2.getValue());
+				}
+			}
+		}
 
-		for (Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2 : _pre2hier2stm2post_toConnectIfSat
-				.entrySet())
-			for (Entry<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>> hier2 : pre2.getValue()
-					.entrySet())
-				for (Entry<Return, AnnotatedProgramPoint> stm2 : hier2.getValue().entrySet())
+		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2 : _pre2hier2stm2post_toConnectIfSat
+				.entrySet()) {
+			for (final Entry<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>> hier2 : pre2.getValue()
+					.entrySet()) {
+				for (final Entry<Return, AnnotatedProgramPoint> stm2 : hier2.getValue().entrySet()) {
 					if (isSatRetEdge(pre2.getKey().getPredicate(), hier2.getKey().getPredicate(), stm2.getKey(), stm2
-							.getValue().getPredicate()))
+							.getValue().getPredicate())) {
 						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());
+					}
+				}
+			}
+		}
 	}
 
 	protected boolean connectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement, AnnotatedProgramPoint target) {
@@ -265,8 +275,9 @@ public class UltimateChecker extends CodeChecker {
 	 * @return
 	 */
 	protected boolean isSatEdge(IPredicate preCondition, CodeBlock statement, IPredicate postCondition) {
-		if (statement instanceof DummyCodeBlock)
+		if (statement instanceof DummyCodeBlock) {
 			return false;
+		}
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
 			if (_satTriples.get(preCondition, statement, postCondition) == IsContained.IsContained) {
@@ -280,17 +291,20 @@ public class UltimateChecker extends CodeChecker {
 		}
 
 		boolean result = false;
-		if (statement instanceof Call)
+		if (statement instanceof Call) {
 			//result is true if pre /\ stm /\ post is sat or unknown, false if unsat 
 			result = _edgeChecker.checkCall(preCondition, (ICallAction) statement, negatePredicateNoPU(postCondition)) != Validity.VALID;
-		else
+		} else {
 			result = _edgeChecker.checkInternal(preCondition, (IInternalAction) statement, negatePredicateNoPU(postCondition)) != Validity.VALID;
+		}
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
-			if (result)
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+			if (result) {
 				_satTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
-			else
+			} else {
 				_unsatTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
+			}
+		}
 
 		return result;
 	}
@@ -317,14 +331,16 @@ public class UltimateChecker extends CodeChecker {
 			}
 		}
 
-		boolean result = _edgeChecker.checkReturn(preCondition, hier, (Return) statement,
+		final boolean result = _edgeChecker.checkReturn(preCondition, hier, statement,
 				negatePredicateNoPU(postCondition)) != Validity.VALID;
 
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
-			if (result)
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+			if (result) {
 				_satQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
-			else
+			} else {
 				_unsatQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
+			}
+		}
 
 		return result;
 	}

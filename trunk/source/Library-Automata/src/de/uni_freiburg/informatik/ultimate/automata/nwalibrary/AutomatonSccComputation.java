@@ -31,8 +31,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -41,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
-import de.uni_freiburg.informatik.ultimate.util.IteratorConcatenation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IteratorConcatenation;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -64,10 +63,10 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class AutomatonSccComputation<LETTER, STATE> {
 	
 	
-	private final INestedWordAutomaton<LETTER, STATE> m_NestedWordAutomaton;
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
-	private final DefaultSccComputation<STATE> m_SccComputation;
+	private final INestedWordAutomaton<LETTER, STATE> mNestedWordAutomaton;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	private final DefaultSccComputation<STATE> mSccComputation;
 	
 	
 	/**
@@ -80,11 +79,11 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
 			AutomataLibraryServices services, Set<STATE> stateSubset, Set<STATE> startNodes) {
 		super();
-		m_NestedWordAutomaton = nestedWordAutomatonReachableStates;
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_SccComputation = new DefaultSccComputation<STATE>(m_Logger, 
-				new InSumCaSuccessorProvider(m_NestedWordAutomaton, stateSubset), 
+		mNestedWordAutomaton = nestedWordAutomatonReachableStates;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mSccComputation = new DefaultSccComputation<STATE>(mLogger, 
+				new InSumCaSuccessorProvider(mNestedWordAutomaton, stateSubset), 
 				stateSubset.size(), startNodes);
 	}
 
@@ -94,7 +93,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 * @return
 	 */
 	public Collection<StronglyConnectedComponent<STATE>> getBalls() {
-		return m_SccComputation.getBalls();
+		return mSccComputation.getBalls();
 	}
 
 
@@ -111,13 +110,13 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 */
 	private class InSumCaSuccessorProvider implements ISuccessorProvider<STATE> {
 		
-		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> m_TransitionFilter;
+		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 
 		public InSumCaSuccessorProvider(
 				INestedWordAutomaton<LETTER, STATE> nestedWordAutomatonReachableStates,
 				Set<STATE> stateSubset) {
 			super();
-			m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(stateSubset);
+			mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(stateSubset);
 		}
 		private <E extends OutgoingTransitionlet<LETTER, STATE>> Iterator<STATE> getStateContainerIterator(final Iterator<E> it) {
 			return new Iterator<STATE>() {
@@ -144,21 +143,21 @@ public class AutomatonSccComputation<LETTER, STATE> {
 		@Override
 		public IteratorConcatenation<STATE> getSuccessors(final STATE state) {
 			
-			Iterator<STATE> internalTransitionsIterator = 
+			final Iterator<STATE> internalTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
-							m_NestedWordAutomaton.internalSuccessors(state), m_TransitionFilter.getInternalSuccessorPredicate()).iterator());
+							mNestedWordAutomaton.internalSuccessors(state), mTransitionFilter.getInternalSuccessorPredicate()).iterator());
 			
-			Iterator<STATE> returnSummaryTransitionsIterator = 
+			final Iterator<STATE> returnSummaryTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-							m_NestedWordAutomaton.returnSummarySuccessor(state), m_TransitionFilter.getReturnSummaryPredicate()).iterator());
+							mNestedWordAutomaton.returnSummarySuccessor(state), mTransitionFilter.getReturnSummaryPredicate()).iterator());
 			
 			
-			Iterator<STATE> callTransitionsIterator = 
+			final Iterator<STATE> callTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
-							m_NestedWordAutomaton.callSuccessors(state), m_TransitionFilter.getCallSuccessorPredicate()).iterator());
+							mNestedWordAutomaton.callSuccessors(state), mTransitionFilter.getCallSuccessorPredicate()).iterator());
 
 			
-			Iterator<STATE>[] iterators = (Iterator<STATE>[]) 
+			final Iterator<STATE>[] iterators = (Iterator<STATE>[]) 
 					new Iterator<?>[] { internalTransitionsIterator, returnSummaryTransitionsIterator, callTransitionsIterator };
 			return new IteratorConcatenation<STATE>(Arrays.asList(iterators));
 		}

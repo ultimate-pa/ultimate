@@ -32,16 +32,16 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 
 /**
  * Assists in the translation process in Expression2Term by covering the cases 
@@ -52,12 +52,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
  */
 public class DefaultOperationTranslator implements IOperationTranslator {
 	
-	protected final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
-	protected final Script m_Script;
+	protected final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	protected final Script mScript;
 	
 	public DefaultOperationTranslator(Boogie2SmtSymbolTable symbolTable, Script script) {
-		m_Boogie2SmtSymbolTable = symbolTable;
-		m_Script = script;
+		mBoogie2SmtSymbolTable = symbolTable;
+		mScript = script;
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 				return "=";
 			} else if (op == BinaryExpression.Operator.ARITHDIV) {
 				if (type1 instanceof PrimitiveType) {
-					PrimitiveType primType = (PrimitiveType) type1;
+					final PrimitiveType primType = (PrimitiveType) type1;
 					if (primType.getTypeCode() == PrimitiveType.INT) {
 						return "div";
 					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
@@ -116,34 +116,35 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 			return "not";
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
 			return "-";
-		} else
+		} else {
 			throw new AssertionError("Unsupported unary expression " + op);
+		}
 	}
 
 	@Override
 	public String funcApplication(String funcIdentifier, IType[] argumentTypes) {
-		return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+		return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 	}
 
 	@Override
 	public Term booleanTranslation(BooleanLiteral exp) {
-		return ((BooleanLiteral) exp).getValue() ? m_Script.term("true") : m_Script.term("false");
+		return exp.getValue() ? mScript.term("true") : mScript.term("false");
 	}
 
 	@Override
 	public Term bitvecTranslation(BitvecLiteral exp) {
-		BigInteger[] indices = { BigInteger.valueOf(((BitvecLiteral) exp).getLength()) };
+		final BigInteger[] indices = { BigInteger.valueOf(exp.getLength()) };
 		
-		return m_Script.term("bv" + ((BitvecLiteral) exp).getValue(), indices, null);
+		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 
 	@Override
 	public Term integerTranslation(IntegerLiteral exp) {
-		return m_Script.numeral(((IntegerLiteral) exp).getValue());
+		return mScript.numeral(exp.getValue());
 	}
 
 	@Override
 	public Term realTranslation(RealLiteral exp) {
-		return m_Script.decimal(((RealLiteral) exp).getValue());
+		return mScript.decimal(exp.getValue());
 	}
 }

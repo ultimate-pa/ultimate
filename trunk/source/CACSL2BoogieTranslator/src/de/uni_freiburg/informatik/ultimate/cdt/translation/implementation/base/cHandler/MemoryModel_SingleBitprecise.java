@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
@@ -40,27 +41,26 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	
-	private final HeapDataArray m_DataArray;
-	private final int m_Resolution;
+	private final HeapDataArray mDataArray;
+	private final int mResolution;
 	
 	public MemoryModel_SingleBitprecise(int memoryModelResolution, TypeSizes typeSizes, TypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, GENERALPRIMITIVE.INTTYPE, memoryModelResolution);
+		final ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, GENERALPRIMITIVE.INTTYPE, memoryModelResolution);
 		
-        m_Resolution = memoryModelResolution;
-		m_DataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
+        mResolution = memoryModelResolution;
+		mDataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
 	}
        	
 	@Override
@@ -69,30 +69,30 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 			throw new UnsupportedOperationException("Floating types are not yet supported in "
 						+ this.getClass().getSimpleName());
 		}
-		return m_DataArray.getName() + m_TypeSizes.getSize(primitive);
+		return mDataArray.getName() + mTypeSizes.getSize(primitive);
 
 	}
 
 
 	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
-		return m_DataArray;
+		return mDataArray;
 	}
 	
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
 		}
-		List<ReadWriteDefinition> result = new ArrayList<>();
-		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+		final List<ReadWriteDefinition> result = new ArrayList<>();
+		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;
@@ -100,11 +100,11 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return m_TypeSizes.getSizeOfPointer();
+		return mTypeSizes.getSizeOfPointer();
 	}
 
 	public int getResolution() {
-		return m_Resolution;
+		return mResolution;
 	}
 
 

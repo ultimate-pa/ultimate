@@ -52,20 +52,22 @@ public class MatrixEntry {
 	 * @param value the coefficient in the matrix.
 	 */
 	public void insertRow(LinVar nb, BigInteger value) {
-		assert this.mRow.mHeadEntry == this;
-		assert this.mRow == this.mColumn;
-		assert nb != this.mRow;
+		assert mRow.mHeadEntry == this;
+		assert mRow == mColumn;
+		assert nb != mRow;
 		assert(!value.equals(BigInteger.ZERO));
-		MatrixEntry ptr = this.mNextInRow;
-		int poscmp = Integer.MAX_VALUE - this.mColumn.mMatrixpos;
-		while (ptr.mColumn.mMatrixpos + poscmp < nb.mMatrixpos + poscmp)
+		MatrixEntry ptr = mNextInRow;
+		final int poscmp = Integer.MAX_VALUE - mColumn.mMatrixpos;
+		while (ptr.mColumn.mMatrixpos + poscmp < nb.mMatrixpos + poscmp) {
 			ptr = ptr.mNextInRow;
+		}
 		if (ptr.mColumn == nb) {
 			assert ptr != this;
 			/* Add to existing entry */
 			ptr.mCoeff = ptr.mCoeff.add(value);
-			if (ptr.mCoeff.equals(BigInteger.ZERO))
+			if (ptr.mCoeff.equals(BigInteger.ZERO)) {
 				ptr.removeFromMatrix();
+			}
 		} else {
 			ptr.insertBefore(nb, value);
 		}
@@ -81,16 +83,16 @@ public class MatrixEntry {
 		assert !value.equals(BigInteger.ZERO);
 		
 		/* Create new entry before this */
-		MatrixEntry newEntry = new MatrixEntry();
+		final MatrixEntry newEntry = new MatrixEntry();
 		newEntry.mColumn = col;
-		newEntry.mRow = this.mRow;
+		newEntry.mRow = mRow;
 		newEntry.mCoeff = value;
 		newEntry.mNextInRow = this;
-		newEntry.mPrevInRow = this.mPrevInRow;
+		newEntry.mPrevInRow = mPrevInRow;
 		newEntry.mNextInCol = col.mHeadEntry.mNextInCol;
 		newEntry.mPrevInCol = col.mHeadEntry;
-		this.mPrevInRow.mNextInRow = newEntry;
-		this.mPrevInRow = newEntry;
+		mPrevInRow.mNextInRow = newEntry;
+		mPrevInRow = newEntry;
 		col.mHeadEntry.mNextInCol.mPrevInCol = newEntry;
 		col.mHeadEntry.mNextInCol = newEntry;
 		mRow.mChainlength++;
@@ -126,23 +128,23 @@ public class MatrixEntry {
 	 * @param other  The other row to add to this row.
 	 */
 	public void add(MatrixEntry other) {
-		assert (this.mColumn == other.mColumn);
-		BigInteger gcd = Rational.gcd(this.mCoeff, other.mCoeff);
+		assert (mColumn == other.mColumn);
+		BigInteger gcd = Rational.gcd(mCoeff, other.mCoeff);
 		BigInteger tmul = other.mCoeff.divide(gcd);
-		BigInteger omul = this.mCoeff.divide(gcd);
+		BigInteger omul = mCoeff.divide(gcd);
 		// make sure we multiply this by a positive number.
 		if (tmul.signum() < 0) {
 			tmul = tmul.negate();
 		} else {
 			omul = omul.negate();
 		}
-		assert(this.mCoeff.multiply(tmul).add(
+		assert(mCoeff.multiply(tmul).add(
 				other.mCoeff.multiply(omul)).signum() == 0);
-		this.mRow.mulUpperLower(Rational.valueOf(tmul, BigInteger.ONE));
+		mRow.mulUpperLower(Rational.valueOf(tmul, BigInteger.ONE));
 
 		// add this to matrixpos to reorder columns, such that this
 		// column is the largest.
-		int poscmp = Integer.MAX_VALUE - this.mColumn.mMatrixpos;
+		final int poscmp = Integer.MAX_VALUE - mColumn.mMatrixpos;
 		
 		MatrixEntry trow = mNextInRow;
 		MatrixEntry orow = other.mNextInRow;
@@ -154,10 +156,10 @@ public class MatrixEntry {
 				gcd = Rational.gcd(gcd, trow.mCoeff);
 				trow = trow.mNextInRow;
 			}
-			BigInteger ocoeff = orow.mCoeff.multiply(omul);
+			final BigInteger ocoeff = orow.mCoeff.multiply(omul);
 			assert(!ocoeff.equals(BigInteger.ZERO));
 			if (trow.mColumn == orow.mColumn) {
-				BigInteger oldval = trow.mCoeff.multiply(tmul);
+				final BigInteger oldval = trow.mCoeff.multiply(tmul);
 				trow.mCoeff = oldval.add(ocoeff);
 				mRow.updateUpperLowerClear(oldval, trow.mColumn);
 				if (trow.mCoeff.equals(BigInteger.ZERO)) {
@@ -183,14 +185,14 @@ public class MatrixEntry {
 
 		gcd = gcd.abs();
 		if (!gcd.equals(BigInteger.ONE)) {
-			for (trow = this.mNextInRow; trow != this; trow = trow.mNextInRow) {
+			for (trow = mNextInRow; trow != this; trow = trow.mNextInRow) {
 				assert trow.mCoeff.remainder(gcd).equals(BigInteger.ZERO);
 				trow.mCoeff = trow.mCoeff.divide(gcd);
 			}
-			this.mRow.mulUpperLower(Rational.valueOf(BigInteger.ONE, gcd));
+			mRow.mulUpperLower(Rational.valueOf(BigInteger.ONE, gcd));
 		}
 		/* Finally remove this entry */
-		this.removeFromMatrix();
+		removeFromMatrix();
 		mColumn.mChainlength++;
 	}
 	
@@ -214,7 +216,7 @@ public class MatrixEntry {
 	}
 
 	public String rowToString() {
-		StringBuilder sb = new StringBuilder("[");
+		final StringBuilder sb = new StringBuilder("[");
 		sb.append(mCoeff).append("*(").append(mColumn).append(')');
 		for (MatrixEntry ptr = mNextInRow; 
 			ptr != this; ptr = ptr.mNextInRow) {
@@ -225,7 +227,7 @@ public class MatrixEntry {
 	}
 	
 	public String colToString() {
-		StringBuilder sb = new StringBuilder("[");
+		final StringBuilder sb = new StringBuilder("[");
 		String comma = "";
 		for (MatrixEntry ptr = mNextInCol; 
 			ptr != this; ptr = ptr.mNextInCol) {
@@ -236,11 +238,14 @@ public class MatrixEntry {
 		return sb.append(']').toString();
 	}
 	
+	@Override
 	public String toString() {
-		if (mNextInRow == null)
+		if (mNextInRow == null) {
 			return mColumn + ":" + colToString();
-		if (mRow == mColumn)
+		}
+		if (mRow == mColumn) {
 			return rowToString();
+		}
 		return "[" + mRow + "/" + mColumn + "]->" + mCoeff;
 	}
 }

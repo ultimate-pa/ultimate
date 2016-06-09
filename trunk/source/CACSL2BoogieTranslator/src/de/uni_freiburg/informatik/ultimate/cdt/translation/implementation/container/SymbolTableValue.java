@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 
 /**
  * @author Markus Lindenmann
@@ -83,7 +83,7 @@ public class SymbolTableValue {
 //     */
 //    private final boolean isStatic;
     
-    private final IASTNode m_DeclarationNode;
+    private final IASTNode mDeclarationNode;
 
     /**
      * Constructor.
@@ -105,15 +105,15 @@ public class SymbolTableValue {
             boolean isGlobal, IASTNode declNode) {
 //            , boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
-        this.boogieName = bId;
+        boogieName = bId;
         assert cdecl != null;
-        this.cDecl = cdecl;
+        cDecl = cdecl;
         this.boogieDecl = boogieDecl;
-        this.isGlobalVar = isGlobal;
+        isGlobalVar = isGlobal;
 //        this.storageClass = sc;
 //        this.cvar = cvar;
 //        this.isStatic = isStatic;
-        m_DeclarationNode = declNode;
+        mDeclarationNode = declNode;
     }
 
     /**
@@ -153,7 +153,7 @@ public class SymbolTableValue {
      * @return the C variable description.
      */
     public CType getCVariable() {
-        return this.cDecl.getType();
+        return cDecl.getType();
     }
     
 //    public boolean isStatic() {
@@ -165,7 +165,7 @@ public class SymbolTableValue {
 //    }
 
 	public IASTNode getDeclarationNode() {
-		return m_DeclarationNode;
+		return mDeclarationNode;
 	}
     
     

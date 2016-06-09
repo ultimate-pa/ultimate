@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 
 public class AlternatingAutomatonAST extends AutomatonAST{
@@ -45,7 +45,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	
 	public AlternatingAutomatonAST(ILocation loc, String name){
 		super(loc);
-		m_Name = name;
+		mName = name;
 	}
 	
 	public void setAlphabet(List<String> alphabet){
@@ -98,8 +98,8 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	
 	@Override
 	public String toString(){
-		StringBuilder builder = new StringBuilder();
-		builder.append("AlternatingAutomaton(" + m_Name + "): + [");
+		final StringBuilder builder = new StringBuilder();
+		builder.append("AlternatingAutomaton(" + mName + "): + [");
 		builder.append(" #int_alph: ");
 		builder.append(alphabet.size());
 		builder.append(" #States: ");

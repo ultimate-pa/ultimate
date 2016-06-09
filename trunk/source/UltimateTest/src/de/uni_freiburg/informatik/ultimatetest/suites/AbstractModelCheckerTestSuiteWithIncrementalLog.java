@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimatetest.suites;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 
 /**
  * 

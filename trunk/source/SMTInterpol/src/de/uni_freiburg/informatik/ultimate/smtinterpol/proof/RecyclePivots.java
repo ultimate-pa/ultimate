@@ -99,19 +99,20 @@ public class RecyclePivots {
 		@Override
 		public void work() {
 			if (seen(mCls)) {
-				Set<Literal> oldSafes = mSafeLits.get(mCls);
-				if (mSafes == null)
+				final Set<Literal> oldSafes = mSafeLits.get(mCls);
+				if (mSafes == null) {
 					mSafes = oldSafes;
-				else if (oldSafes != null)
+				} else if (oldSafes != null) {
 					mSafes.retainAll(oldSafes);
+				}
 				
 				// Clause has been seen for the last time.
-				ProofNode pn = mCls.getProof();
+				final ProofNode pn = mCls.getProof();
 				// We can skip leaf nodes since they cannot be regularized
 				if (!pn.isLeaf()) {
 					Set<Literal> delLits = null;
-					ResolutionNode rn = (ResolutionNode) pn;
-					Antecedent[] antes = rn.getAntecedents();
+					final ResolutionNode rn = (ResolutionNode) pn;
+					final Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i) {
 						HashSet<Literal> newSafes = null;
 						if (mSafes == null) {
@@ -119,8 +120,9 @@ public class RecyclePivots {
 						} else if (mSafes.contains(antes[i].mPivot.negate())) {
 							// negation of pivot is safe =>
 							// delete antecedent clause
-							if (delLits == null)
+							if (delLits == null) {
 								delLits = new HashSet<Literal>();
+							}
 							delLits.add(antes[i].mPivot);
 							// visit antecedent with null since we do not use it.
 						} else 	if (!antes[i].mAntecedent.getProof().isLeaf()) {
@@ -139,21 +141,25 @@ public class RecyclePivots {
 						if (mSafes != null 
 							&& mSafes.contains(antes[i].mPivot)) {
 							// pivot is safe => delete antecedent
-							if (delLits == null)
+							if (delLits == null) {
 								delLits = new HashSet<Literal>();
+							}
 							delLits.add(antes[i].mPivot.negate());
 							mSafes = null;
 						}							
-						if (mSafes != null)
+						if (mSafes != null) {
 							mSafes.add(antes[i].mPivot.negate());
+						}
 					}
-					if (delLits != null)
+					if (delLits != null) {
 						mDeleted.put(mCls, delLits);
+					}
 					// Handle primary
 					if (!rn.getPrimary().getProof().isLeaf()) {
 						HashSet<Literal> newSafes = null;
-						if (mSafes != null)
+						if (mSafes != null) {
 							newSafes = new HashSet<Literal>(mSafes);
+						}
 						mTodo.push(new SetAndExpand(rn.getPrimary(), newSafes));
 					}
 				}
@@ -161,11 +167,12 @@ public class RecyclePivots {
 				// There are still parts left where we can reach this clause.
 				// Compute intersection of safe literals for the paths seen so
 				// far
-				Set<Literal> oldSafes = mSafeLits.get(mCls);
-				if (oldSafes == null)
+				final Set<Literal> oldSafes = mSafeLits.get(mCls);
+				if (oldSafes == null) {
 					mSafeLits.put(mCls, mSafes);
-				else
+				} else {
 					oldSafes.retainAll(mSafes);
+				}
 			}
 		}
 	}
@@ -192,9 +199,10 @@ public class RecyclePivots {
 		mSafeLits = new HashMap<Object, Set<Literal>>();
 		mDeleted = new HashMap<Clause, Set<Literal>>();
 		mSeen = new HashMap<Clause, Integer>();
-		Set<Literal> safe = new HashSet<Literal>();
-		for (int i = 0; i < proof.getSize(); ++i)
+		final Set<Literal> safe = new HashSet<Literal>();
+		for (int i = 0; i < proof.getSize(); ++i) {
 			safe.add(proof.getLiteral(i));
+		}
 		mTodo.push(new SetAndExpand(proof, safe));
 		run();
 		return mDeleted;
@@ -204,7 +212,7 @@ public class RecyclePivots {
 	 */
 	private void run() {
 		while (!mTodo.isEmpty()) {
-			Worker w = mTodo.pop();
+			final Worker w = mTodo.pop();
 			w.work();
 		}
 	}
@@ -216,10 +224,10 @@ public class RecyclePivots {
 	 * @return Is this clause reached for the last time?
 	 */
 	private boolean seen(Clause cls) {
-		Integer cnt = mSeen.get(cls);
-		int newcnt = cnt == null ? 1 : cnt + 1;
+		final Integer cnt = mSeen.get(cls);
+		final int newcnt = cnt == null ? 1 : cnt + 1;
 		mSeen.put(cls, newcnt);
-		int total = mCounts.get(cls);
+		final int total = mCounts.get(cls);
 		assert (newcnt <= total);
 		return total == newcnt;
 	}

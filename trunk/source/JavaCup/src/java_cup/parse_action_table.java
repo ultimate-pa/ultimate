@@ -42,11 +42,11 @@ public class parse_action_table {
   public parse_action_table(Grammar grammar)
     {
       /* determine how many states we are working with */
-      int _num_states = grammar.lalr_states().size();
-      int _num_terminals = grammar.num_terminals();
+      final int _numstates = grammar.lalr_states().size();
+      final int _numterminals = grammar.numterminals();
 
       /* allocate the array and fill it in with empty rows */
-      table = new int[_num_states][_num_terminals+1];
+      table = new int[_numstates][_numterminals+1];
     }
 
   /*-----------------------------------------------------------*/
@@ -93,11 +93,15 @@ public class parse_action_table {
   public static String toString(int code)
     {
       if (code == ERROR)
-	return "ERROR";
-      else if (isShift(code))
-	return "SHIFT("+index(code)+")";
-      else
-	return "REDUCE("+index(code)+")";
+	{
+	    return "ERROR";
+	  } else if (isShift(code))
+	{
+	    return "SHIFT("+index(code)+")";
+	  } else
+	{
+	    return "REDUCE("+index(code)+")";
+	  }
     }
   
   /**
@@ -114,58 +118,70 @@ public class parse_action_table {
    */
   public short[] compress(int[] base_table)
     {
-      int[] default_actions = new int[table.length];
-      TreeSet<CombRow> rows = new TreeSet<CombRow>();
+      final int[] default_actions = new int[table.length];
+      final TreeSet<CombRow> rows = new TreeSet<CombRow>();
       for (int i = 0; i < table.length; i++)
 	{
-	  int[] row = table[i];
+	  final int[] row = table[i];
 	  default_actions[i] = row[row.length-1];
 	  int len = 0;
-	  for (int j = 0; j < row.length-1; j++) 
-	    if (row[j] != default_actions[i]) 
-	      len++;
+	  for (int j = 0; j < row.length-1; j++)
+	    {
+		if (row[j] != default_actions[i])
+		  {
+		  len++;
+		}
+	      }
 	  if (len == 0)
-	    continue;
+	    {
+		continue;
+	      }
 
-	  int[] comb = new int[len];
+	  final int[] comb = new int[len];
 	  len = 0;
 	  for (int j = 0; j < row.length-1; j++)
-	    if (row[j] != default_actions[i])
-	      comb[len++] = j;
+	    {
+		if (row[j] != default_actions[i])
+		  {
+		  comb[len++] = j;
+		}
+	      }
 	  rows.add(new CombRow(i, comb));
 	}
       
-      BitSet used = new BitSet();
+      final BitSet used = new BitSet();
       int combsize = 0;
-      for (CombRow row : rows) 
+      for (final CombRow row : rows) 
 	{
 	  row.fitInComb(used);
-	  int lastidx = row.base + table[row.index].length; 
+	  final int lastidx = row.base + table[row.index].length; 
 	  if (lastidx > combsize)
-	    combsize = lastidx;
+	    {
+		combsize = lastidx;
+	      }
 	}
 	
-      int _num_states = table.length;
-      short[] compressed = new short[_num_states + 2*(combsize)];
+      final int _numstates = table.length;
+      final short[] compressed = new short[_numstates + 2*(combsize)];
       /* Fill default actions */
-      for (int i = 0; i < _num_states; i++)
+      for (int i = 0; i < _numstates; i++)
 	{
-	  base_table[i] = (short) _num_states;
+	  base_table[i] = (short) _numstates;
 	  compressed[i] = (short) default_actions[i];
 	}
       /* Mark entries in comb as invalid */
       for (int i = 0; i < combsize; i++)
 	{
-	  compressed[_num_states+2*i] = (short) _num_states;
-	  compressed[_num_states+2*i+1] = 1;
+	  compressed[_numstates+2*i] = (short) _numstates;
+	  compressed[_numstates+2*i+1] = 1;
 	}
-      for (CombRow row : rows)
+      for (final CombRow row : rows)
 	{
-	  int base = table.length + 2 * row.base;
+	  final int base = table.length + 2 * row.base;
 	  base_table[row.index] = base;
 	  for (int j = 0; j < row.comb.length; j++)
 	    {
-	      int t = row.comb[j];
+	      final int t = row.comb[j];
 	      compressed[base+2*t] = (short) row.index;
 	      compressed[base+2*t+1] = (short) table[row.index][t];
 	    }
@@ -176,9 +192,10 @@ public class parse_action_table {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder();
+      final StringBuilder result = new StringBuilder();
       int cnt;
 
       result.append("-------- ACTION_TABLE --------\n");
@@ -186,7 +203,7 @@ public class parse_action_table {
 	{
 	  result.append("From state #").append(row).append("\n");
 	  cnt = 0;
-	  int default_act = table[row][table[row].length-1];
+	  final int default_act = table[row][table[row].length-1];
 	  result.append(" [default:").append(toString(default_act))
 	  	.append("]\n");
 	  for (int col = 0; col < table[row].length; col++)
@@ -207,7 +224,10 @@ public class parse_action_table {
 		}
 	    }
           /* finish the line if we haven't just done that */
-	  if (cnt != 0) result.append("\n");
+	  if (cnt != 0)
+	    {
+		result.append("\n");
+	      }
 	}
       result.append("------------------------------");
 

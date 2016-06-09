@@ -18,27 +18,28 @@ public class ReqToPEA {
     		Symbol goal = parser.parse();
     		PatternType[] patterns = (PatternType[]) goal.value;
     		return patterns;
-    	} catch (Exception ex) {
+    	} catch (final Exception ex) {
     		ex.printStackTrace();
     		return new PatternType[0];
     	}
     }
     
 	public PhaseEventAutomata[] genPEA(PatternType[] patterns){
-		List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+		final List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
 		
 		PatternToPEA peaTrans=new PatternToPEA();
 		for(PatternType pat : patterns)
 		{
 			// ignore patterns with syntax errors
-			if (pat == null)
+			if (pat == null) {
 				continue;
+			}
 			pat.setPeaTransformator( peaTrans );
-			PhaseEventAutomata pea=pat.transformToPea();
+			final PhaseEventAutomata pea=pat.transformToPea();
 			peaList.add(pea);
 		}
 		
-		PhaseEventAutomata[] peaArray = peaList.toArray(new PhaseEventAutomata[peaList.size()]);
+		final PhaseEventAutomata[] peaArray = peaList.toArray(new PhaseEventAutomata[peaList.size()]);
 	    return peaArray;	
 	}
 
@@ -55,14 +56,15 @@ public class ReqToPEA {
 			}
 			else
 			{	
-				PhaseEventAutomata pea2 = pat.transformToPea();
-				if (pea2 == null)
+				final PhaseEventAutomata pea2 = pat.transformToPea();
+				if (pea2 == null) {
 					continue;					
+				}					
 				pea=pea.parallel( pea2 );
 			
 			}								
 		}			
-		J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
+		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile(xmlFilePath, pea);									
 	}
 }

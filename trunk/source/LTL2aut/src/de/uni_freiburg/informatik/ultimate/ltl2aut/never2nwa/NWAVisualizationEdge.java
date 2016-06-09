@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 
 final class NWAVisualizationEdge<NWAVertex, NWAEdge>
 		extends
@@ -16,18 +16,23 @@ final class NWAVisualizationEdge<NWAVertex, NWAEdge>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		NWAVisualizationEdge other = (NWAVisualizationEdge) obj;
+		}
+		final NWAVisualizationEdge other = (NWAVisualizationEdge) obj;
 		if (mNWAEdge == null) {
-			if (other.mNWAEdge != null)
+			if (other.mNWAEdge != null) {
 				return false;
-		} else if (!mNWAEdge.equals(other.mNWAEdge))
+			}
+		} else if (!mNWAEdge.equals(other.mNWAEdge)) {
 			return false;
+		}
 		return true;
 	}
 

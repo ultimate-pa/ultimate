@@ -33,7 +33,7 @@ import java.util.Iterator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 public class SCC implements Iterable<RCFGNode> {
-	private HashSet<RCFGNode> mVertices;
+	private final HashSet<RCFGNode> mVertices;
 
 	public SCC() {
 		mVertices = new HashSet<>();
@@ -69,10 +69,11 @@ public class SCC implements Iterable<RCFGNode> {
 		return mVertices.contains(node);
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		for (RCFGNode node : mVertices) {
+		for (final RCFGNode node : mVertices) {
 			sb.append(node).append(" ");
 		}
 		if (!isEmpty()) {

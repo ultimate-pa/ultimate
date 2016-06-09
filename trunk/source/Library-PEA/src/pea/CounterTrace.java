@@ -26,7 +26,9 @@
  */
 package pea;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 
 import net.sourceforge.czt.z.util.ZString;
 
@@ -144,21 +146,22 @@ public class CounterTrace {
 	 * @param predicate The predicate to set.
 	 */
 	public void setInvariant(CDD predicate) {
-		this.invariant = predicate;
+		invariant = predicate;
 	}
 
         public String toString(boolean useUnicode) {
-            String AND = useUnicode ? ZString.AND : "/\\";
-            String NOEVENT = useUnicode ? "\u229F" : "[-]";
-            String GEQ = useUnicode ? ZString.GEQ : ">=";
-            String LEQ = useUnicode ? ZString.LEQ : "<=";
-            String LCEIL = useUnicode ? "\u23A1" : "[";
-            String RCEIL = useUnicode ? "\u23A4" : "]";
-            String ELL = useUnicode ? "\u2113" : "L";
+            final String AND = useUnicode ? ZString.AND : "/\\";
+            final String NOEVENT = useUnicode ? "\u229F" : "[-]";
+            final String GEQ = useUnicode ? ZString.GEQ : ">=";
+            final String LEQ = useUnicode ? ZString.LEQ : "<=";
+            final String LCEIL = useUnicode ? "\u23A1" : "[";
+            final String RCEIL = useUnicode ? "\u23A4" : "]";
+            final String ELL = useUnicode ? "\u2113" : "L";
 
-            StringBuilder sb = new StringBuilder();
-            if (entryEvents != CDD.TRUE)
-                sb.append(entryEvents).append(" ; ");
+            final StringBuilder sb = new StringBuilder();
+            if (entryEvents != CDD.TRUE) {
+				sb.append(entryEvents).append(" ; ");
+			}
 
             if(invariant == CDD.TRUE && allowEmpty){
                 sb.append(invariant);
@@ -166,9 +169,10 @@ public class CounterTrace {
                 sb.append(LCEIL).append(invariant).append(RCEIL);
             }
             
-            for (Iterator it = forbid.iterator(); it.hasNext(); )
-                sb.append(' ').append(AND).append(' ').append(NOEVENT)
+            for (final Iterator it = forbid.iterator(); it.hasNext(); ) {
+				sb.append(' ').append(AND).append(' ').append(NOEVENT)
                     .append(' ').append(it.next());
+			}
 
             if (boundType != BOUND_NONE) {
                 sb.append(' ').append(AND).append(' ').append(ELL);
@@ -246,8 +250,9 @@ public class CounterTrace {
         System.err.print(phases.length + ":  ! ( ");
         for (int i = 0; i < phases.length; i++) {
             phases[i].dump();
-            if(i<phases.length-1)
-                System.err.print(" ; ");
+            if(i<phases.length-1) {
+				System.err.print(" ; ");
+			}
         }
         System.err.println(" )");
     }

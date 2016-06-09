@@ -55,24 +55,24 @@ public class CommandShowKeyHelp extends AbstractHandler {
 	 * Opens a help window.
 	 */
 	public void openKeyHelp() {
-		URL loc = Platform.getBundle(Activator.PLUGIN_ID).getEntry("data/KeyHelp.html");
+		final URL loc = Platform.getBundle(Activator.PLUGIN_ID).getEntry("data/KeyHelp.html");
 		String s = "Help file not found.";
 
 		try {
-			InputStream is = loc.openStream();
-			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			final InputStream is = loc.openStream();
+			final BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			s = "";
 			String temp = in.readLine();
 			while (temp != null) {
 				s += temp;
 				temp = in.readLine();
 			}
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			e1.printStackTrace(System.err);
 		}
 
-		JFrame hf = new JFrame("Key Help");
-		JLabel label = new JLabel(s, SwingConstants.CENTER);
+		final JFrame hf = new JFrame("Key Help");
+		final JLabel label = new JLabel(s, SwingConstants.CENTER);
 
 		hf.getContentPane().add(label);
 		hf.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

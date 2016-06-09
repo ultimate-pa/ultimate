@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.cookiefy;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 
 /**
  * general helper methods
@@ -50,7 +50,7 @@ public class Helper {
 	 */
 	static Statement[] concatStatements(Statement[] stmtArray1,
 			Statement[] stmtArray2) {
-		Statement[] result = new Statement[stmtArray1.length
+		final Statement[] result = new Statement[stmtArray1.length
 				+ stmtArray2.length];
 
 		System.arraycopy(stmtArray1, 0, result, 0, stmtArray1.length);
@@ -73,14 +73,14 @@ public class Helper {
 	 */
 	static void addVarListToArrayList(List<VarList> al, VarList vl,
 			String prefix) {
-		for (String identifier : vl.getIdentifiers()) {
+		for (final String identifier : vl.getIdentifiers()) {
 			al.add(new VarList(LocationProvider.getLocation(),
 					new String[] { prefix + identifier }, vl.getType()));
 		}
 	}
 
 	static void addVarListToIdentifierList(List<Expression> al, VarList vl) {
-		for (String identifier : vl.getIdentifiers()) {
+		for (final String identifier : vl.getIdentifiers()) {
 			al.add(new IdentifierExpression(LocationProvider.getLocation(),
 					identifier));
 		}
@@ -95,7 +95,7 @@ public class Helper {
 	 * @return
 	 */
 	static Procedure ExtendProcedure(Procedure p, Specification[] specs) {
-		Specification[] newSpecs = new Specification[p.getSpecification().length
+		final Specification[] newSpecs = new Specification[p.getSpecification().length
 				+ specs.length];
 
 		System.arraycopy(p.getSpecification(), 0, newSpecs, 0,

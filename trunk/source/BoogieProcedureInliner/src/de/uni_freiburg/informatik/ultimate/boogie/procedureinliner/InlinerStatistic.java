@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
  */
 public class InlinerStatistic {
 
-	private Map<String, CallGraphNode> mCallGraph;
+	private final Map<String, CallGraphNode> mCallGraph;
 	private int mCallsInlined = 0;
 	private int mStatementsFlattened = 0;
 
@@ -64,7 +64,7 @@ public class InlinerStatistic {
 	
 	public int numberOfCallGraphEdges() {
 		int edges = 0;
-		for (CallGraphNode node : mCallGraph.values()) {
+		for (final CallGraphNode node : mCallGraph.values()) {
 			edges += node.getOutgoingEdgeLabels().size();
 		}
 		return edges;
@@ -72,8 +72,8 @@ public class InlinerStatistic {
 	
 	public int numberOfCallGraphEdgesWithInlineFlag() {
 		int flaggedEdges = 0;
-		for (CallGraphNode node : mCallGraph.values()) {
-			for (CallGraphEdgeLabel edgeLabel : node.getOutgoingEdgeLabels()) {
+		for (final CallGraphNode node : mCallGraph.values()) {
+			for (final CallGraphEdgeLabel edgeLabel : node.getOutgoingEdgeLabels()) {
 				if (edgeLabel.getInlineFlag()) {
 					++flaggedEdges;
 				}

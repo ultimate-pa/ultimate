@@ -76,7 +76,7 @@ public class UltimateCCheckerHelp extends AbstractCodanProblemDetailsProvider {
 		 * ProblemDetailsView (Codan), further step would be to present a new
 		 * view or a new approach how to visualize Ultimate-Results.
 		 */
-		StringBuffer sb = new StringBuffer();
+		final StringBuffer sb = new StringBuffer();
 		sb.append("<a>SHORT DESCRIPTION:</a>");
 		sb.append(System.getProperty("line.separator"));
 		sb.append(getProblemArgument(0));

@@ -55,24 +55,28 @@ public class FunctionSymbol {
 		mIndices = i;
 		mParamSort = params;
 		mReturnSort = result;
-		this.mFlags = flags;
-		this.mDefinition = definition;
-		this.mDefinitionVars = definitionVars;
+		mFlags = flags;
+		mDefinition = definition;
+		mDefinitionVars = definitionVars;
 		if (isLeftAssoc() 
-				&& (params.length != 2 || !params[0].equalsSort(result)))
+				&& (params.length != 2 || !params[0].equalsSort(result))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for left-associative symbol");
+		}
 		if (isRightAssoc() 
-				&& (params.length != 2 || !params[1].equalsSort(result)))
+				&& (params.length != 2 || !params[1].equalsSort(result))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for right-associative symbol");
+		}
 		if ((isChainable() || isPairwise())
 				&& (params.length != 2 || !params[0].equalsSort(params[1])
-                   	|| !result.equalsSort(getTheory().getBooleanSort())))
+                   	|| !result.equalsSort(getTheory().getBooleanSort()))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for chainable symbol");
+		}
 	}
 	
+	@Override
 	public int hashCode() {
 		return mName.hashCode();
 	}
@@ -113,6 +117,7 @@ public class FunctionSymbol {
 	/**
 	 * @deprecated use getParamterSorts().length 
 	 */
+	@Deprecated
 	public int getParameterCount() {
 		return mParamSort.length;
 	}
@@ -120,6 +125,7 @@ public class FunctionSymbol {
 	/**
 	 * @deprecated use getParamterSorts()[i] 
 	 */
+	@Deprecated
 	public Sort getParameterSort(int i) {
 		return mParamSort[i];
 	}
@@ -163,15 +169,16 @@ public class FunctionSymbol {
 	}
 	
 	private final void checkSort(Term arg, Sort sort, boolean mixRealInt) {
-		Sort argSort = arg.getSort();
+		final Sort argSort = arg.getSort();
 		if (!sort.equalsSort(argSort)) {
-			if (argSort.toString().equals(sort.toString()))
+			if (argSort.toString().equals(sort.toString())) {
 				throw new SMTLIBException(
 						"Argument " + arg + " comes from wrong theory.");
-			else if (!mixRealInt || !argSort.getName().equals("Int"))
+			} else if (!mixRealInt || !argSort.getName().equals("Int")) {
 				throw new SMTLIBException(
 						"Argument " + arg + " has type " + argSort
 						+ " but function " + mName + " expects " + sort);
+			}
 		}
 	}
 	
@@ -185,24 +192,27 @@ public class FunctionSymbol {
 		if (getTheory().getLogic() != null && getTheory().getLogic().isIRA()
 			&& mParamSort.length == 2
 			&& mParamSort[0] == mParamSort[1]
-			&& mParamSort[0] == getTheory().getSort("Real"))
+			&& mParamSort[0] == getTheory().getSort("Real")) {
 			mixRealInt = true;
+		}
 		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
 			// All arguments should have the same type.
-			if (params.length < 2)
+			if (params.length < 2) {
 				throw new SMTLIBException(
 					"Function " + mName + " expects at least two arguments.");
+			}
 			checkSort(params[0], mParamSort[0], mixRealInt);
 			checkSort(params[params.length - 1], mParamSort[1], mixRealInt);
-			Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
+			final Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
 				checkSort(params[i], otherSort, mixRealInt);
 			}
 		} else {
-			if (params.length != mParamSort.length)
+			if (params.length != mParamSort.length) {
 				throw new SMTLIBException(
 					"Function " + mName + " expects " + mParamSort.length
 						+ " arguments.");
+			}
 			for (int i = 0; i < mParamSort.length; i++) {
 				checkSort(params[i], mParamSort[i], mixRealInt);
 			}
@@ -219,32 +229,39 @@ public class FunctionSymbol {
 		if (getTheory().getLogic().isIRA()
 			&& mParamSort.length == 2
 			&& mParamSort[0] == mParamSort[1]
-			&& mParamSort[0].getName().equals("Real"))
+			&& mParamSort[0].getName().equals("Real")) {
 			mixRealInt = true;
+		}
 		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
 			assert (mParamSort.length == 2);
-			if (params.length < 2)
+			if (params.length < 2) {
 				return false;
+			}
 			if (!params[0].equalsSort(mParamSort[0])
-				&& (!mixRealInt || params[0] != getTheory().getSort("Int")))
+				&& (!mixRealInt || params[0] != getTheory().getSort("Int"))) {
 				return false;
+			}
 			if (!params[params.length - 1].equalsSort(mParamSort[1])
 				&& (!mixRealInt || params[params.length - 1]
-						!= getTheory().getSort("Int")))
+						!= getTheory().getSort("Int"))) {
 				return false;
-			Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
+			}
+			final Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
 				if (!params[i].equalsSort(otherSort)
-					&& (!mixRealInt || params[i] != getTheory().getSort("Int")))
+					&& (!mixRealInt || params[i] != getTheory().getSort("Int"))) {
 					return false;
+				}
 			}
 		} else {
-			if (params.length != mParamSort.length)
+			if (params.length != mParamSort.length) {
 				return false;
+			}
 			for (int i = 0; i < mParamSort.length; i++) {
 				if (!params[i].equalsSort(mParamSort[i])
-					&& (!mixRealInt || params[i] != getTheory().getSort("Int")))
+					&& (!mixRealInt || params[i] != getTheory().getSort("Int"))) {
 					return false;
+				}
 			}
 		}
 		return true;
@@ -256,20 +273,21 @@ public class FunctionSymbol {
 	 * <pre>(name paramsort1 ... paramsortn returnsort)</pre>
 	 * where name is the (possibly indexed and quoted) function name.
 	 */
+	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		String name = PrintTerm.quoteIdentifier(mName);
+		final StringBuffer sb = new StringBuffer();
+		final String name = PrintTerm.quoteIdentifier(mName);
 		sb.append('(');
-		if (mIndices == null)
+		if (mIndices == null) {
 			sb.append(name);
-		else {
+		} else {
 			sb.append("(_ ").append(name);
-			for (BigInteger i : mIndices) {
+			for (final BigInteger i : mIndices) {
 				sb.append(' ').append(i);
 			}
 			sb.append(')');
 		}
-		for (Sort s : mParamSort) {
+		for (final Sort s : mParamSort) {
 			sb.append(' ').append(s);
 		}
 		sb.append(' ').append(mReturnSort);
@@ -326,22 +344,27 @@ public class FunctionSymbol {
 	 * @return the string representation.
 	 */
 	public String getApplicationString() {
-		String name = PrintTerm.quoteIdentifier(mName);
-		if (mIndices == null && !isReturnOverload())
+		final String name = PrintTerm.quoteIdentifier(mName);
+		if (mIndices == null && !isReturnOverload()) {
 			return name;
-		StringBuffer sb = new StringBuffer();
-		if (isReturnOverload())
+		}
+		final StringBuffer sb = new StringBuffer();
+		if (isReturnOverload()) {
 			sb.append("(as ");
-		if (mIndices != null)
+		}
+		if (mIndices != null) {
 			sb.append("(_ ");
+		}
 		sb.append(name);
 		if (mIndices != null) {
-			for (BigInteger i : mIndices)
+			for (final BigInteger i : mIndices) {
 				sb.append(' ').append(i);
+			}
 			sb.append(')');
 		}
-		if (isReturnOverload())
+		if (isReturnOverload()) {
 			sb.append(' ').append(getReturnSort()).append(')');
+		}
 		return sb.toString();
 	}
 	/**

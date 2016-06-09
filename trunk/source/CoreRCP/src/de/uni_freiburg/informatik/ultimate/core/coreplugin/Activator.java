@@ -31,16 +31,18 @@ import org.eclipse.core.runtime.Plugin;
 
 /**
  * The activator class controls the plug-in life cycle.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class Activator extends Plugin {
 
 	/**
-	 * Unique Plugin ID. Similar to the one in plugin.xml
+	 * Unique Plugin ID. Has to be identical with Bundle-SymbolicName in MANIFEST.MF.
 	 */
 	public static final String PLUGIN_ID = "UltimateCore";
 
 	/**
-	 * String s_PLUGIN_NAME
+	 * Plugin name is the human-readable name of this plugin.
 	 */
 	public static String PLUGIN_NAME = "UltimateCore";
 }

@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -41,7 +41,7 @@ public class TermcompTests extends
 		AbstractBuchiAutomizerTestSuite {
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 		"examples/termination/termcomp2015/C/",
 		"examples/termination/termcomp2015/C_Integer/Stroeder_15",
 		"examples/termination/termcomp2015/C_Integer/Ton_Chanh_15",
@@ -63,12 +63,12 @@ public class TermcompTests extends
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"buchiAutomizer/termcomp2015_Tests.epf",
 	};
 	
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"AutomizerAndBuchiAutomizerCWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
@@ -79,9 +79,9 @@ public class TermcompTests extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}

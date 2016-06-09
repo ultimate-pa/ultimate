@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * @author Jan Leike
  */
 public class DNF extends TransitionPreprocessor {
-	private final IUltimateServiceProvider m_Services;
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	private final IUltimateServiceProvider mServices;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 	
 	public static final String s_Description = 
 			"Transform into disjunctive normal form";
@@ -58,8 +58,8 @@ public class DNF extends TransitionPreprocessor {
 	public DNF(IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super();
-		m_Services = services;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
+		mServices = services;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 	
 	@Override
@@ -70,15 +70,15 @@ public class DNF extends TransitionPreprocessor {
 	@Override
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
-		Term old_term = oldTF.getFormula();
-		Term new_term = newTF.getFormula();
+		final Term old_term = oldTF.getFormula();
+		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
 				script.term("distinct", old_term, new_term));
 	}
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Dnf dnf = new Dnf(script, m_Services, m_FreshTermVariableConstructor);
+		final Dnf dnf = new Dnf(script, mServices, mFreshTermVariableConstructor);
 		tf.setFormula(dnf.transform(tf.getFormula()));
 		return tf;
 	}

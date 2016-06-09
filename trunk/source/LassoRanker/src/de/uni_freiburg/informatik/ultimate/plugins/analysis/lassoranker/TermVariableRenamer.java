@@ -32,12 +32,12 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 
@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  * @author Matthias Heizmann
  */
 public class TermVariableRenamer {
-	private final Script m_Script;
+	private final Script mScript;
 	
 	public TermVariableRenamer(Script script) {
-		m_Script = script;
+		mScript = script;
 	}
 	
 	/**
@@ -64,21 +64,21 @@ public class TermVariableRenamer {
 	 */
 	public TransFormula renameVars(TransFormula transFormula, String prefix) {
 		Term formula = transFormula.getFormula();
-		Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
-		Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
+		final Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
+		final Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
 		
-		Map<BoogieVar, TermVariable> newInVars = 
+		final Map<BoogieVar, TermVariable> newInVars = 
 				new LinkedHashMap<BoogieVar, TermVariable>();
-		Map<BoogieVar, TermVariable> newOutVars = 
+		final Map<BoogieVar, TermVariable> newOutVars = 
 				new LinkedHashMap<BoogieVar, TermVariable>();
 		
-		Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
-		Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
-		Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
+		final Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
 		
-		for (BoogieVar var : inVars.keySet()) {
-			TermVariable inVar = inVars.get(var);
-			TermVariable outVar = outVars.get(var);
+		for (final BoogieVar var : inVars.keySet()) {
+			final TermVariable inVar = inVars.get(var);
+			final TermVariable outVar = outVars.get(var);
 			if (inVar == outVar) {
 				commonInOutVar.add(var);
 			}
@@ -86,9 +86,9 @@ public class TermVariableRenamer {
 				hasInOnlyVar.add(var);
 			}
 		}
-		for (BoogieVar var : outVars.keySet()) {
-			TermVariable outVar = outVars.get(var);
-			TermVariable inVar = inVars.get(var);
+		for (final BoogieVar var : outVars.keySet()) {
+			final TermVariable outVar = outVars.get(var);
+			final TermVariable inVar = inVars.get(var);
 			if (inVar != outVar) {
 				hasOutOnlyVar.add(var);
 			}
@@ -119,18 +119,18 @@ public class TermVariableRenamer {
 						Map<BoogieVar, TermVariable> variableMapping, 
 						Map<BoogieVar, TermVariable> newVariableMapping, 
 						String prefix) {
-		TermVariable[] vars = new TermVariable[boogieVars.size()];
-		TermVariable[] newVars= new TermVariable[boogieVars.size()];
+		final TermVariable[] vars = new TermVariable[boogieVars.size()];
+		final TermVariable[] newVars= new TermVariable[boogieVars.size()];
 		int i=0;
-		for (BoogieVar var : boogieVars) {
+		for (final BoogieVar var : boogieVars) {
 			vars[i] = variableMapping.get(var);
 			newVars[i] = getNewTermVariable(var, vars[i], prefix);
 			newVariableMapping.put(var,newVars[i]);
 			i++;
 		}
 		try {
-			formula = m_Script.let(vars, newVars, formula);
-		} catch (SMTLIBException e) {
+			formula = mScript.let(vars, newVars, formula);
+		} catch (final SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -141,8 +141,8 @@ public class TermVariableRenamer {
 	private TermVariable getNewTermVariable(BoogieVar var, TermVariable tv, String prefix) {
 		TermVariable result = null;
 		try {
-			result =  m_Script.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
-		} catch (SMTLIBException e) {
+			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
+		} catch (final SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

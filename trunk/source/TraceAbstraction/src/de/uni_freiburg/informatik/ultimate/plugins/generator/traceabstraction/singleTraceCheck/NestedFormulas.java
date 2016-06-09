@@ -31,7 +31,6 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Class that represents a sequence of formulas (of type F) along a trace (given
@@ -56,59 +55,59 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public abstract class NestedFormulas<TF, SF> {
 	
-	private final NestedWord<? extends IAction> m_NestedWord;
-	private SF m_Precondition;
-	private SF m_Postcondition;
-	private final SortedMap<Integer, SF> m_PendingContexts;
+	private final NestedWord<? extends IAction> mNestedWord;
+	private SF mPrecondition;
+	private SF mPostcondition;
+	private final SortedMap<Integer, SF> mPendingContexts;
 	
 	public final NestedWord<? extends IAction> getTrace() {
-		return m_NestedWord;
+		return mNestedWord;
 	}
 	
 	public NestedFormulas(NestedWord<? extends IAction> nestedWord,
 			SortedMap<Integer, SF> pendingContexts) {
-		m_NestedWord = nestedWord;
+		mNestedWord = nestedWord;
 		assert pendingContexts != null;
-		m_PendingContexts = pendingContexts;
+		mPendingContexts = pendingContexts;
 	}
 	
 	public final SF getPrecondition() {
-		return m_Precondition;
+		return mPrecondition;
 	}
 	
 	public void setPrecondition(SF sf) {
-		assert m_Precondition == null : "already set";
-		m_Precondition = sf;
+		assert mPrecondition == null : "already set";
+		mPrecondition = sf;
 	}
 	
 	public final SF getPostcondition() {
-		return m_Postcondition;
+		return mPostcondition;
 	}
 	
 	public void setPostcondition(SF sf) {
-		assert m_Postcondition == null : "already set";
-		m_Postcondition = sf;
+		assert mPostcondition == null : "already set";
+		mPostcondition = sf;
 	}
 	
 	public SF getPendingContext(int i) {
-		assert m_NestedWord.isPendingReturn(i) : "no pending return";
-		return m_PendingContexts.get(i);
+		assert mNestedWord.isPendingReturn(i) : "no pending return";
+		return mPendingContexts.get(i);
 	}
 	
 	public void setPendingContext(int i, SF sf) {
-		assert !m_PendingContexts.containsKey(i) : "already set";
-		assert m_NestedWord.isPendingReturn(i) : "no pending return";
-		m_PendingContexts.put(i, sf);
+		assert !mPendingContexts.containsKey(i) : "already set";
+		assert mNestedWord.isPendingReturn(i) : "no pending return";
+		mPendingContexts.put(i, sf);
 	}
 	
 	public final Set<Integer> callPositions() {
-		return m_NestedWord.getCallPositions();
+		return mNestedWord.getCallPositions();
 	}
 	
 	
 	public final TF getFormulaFromNonCallPos(int i) {
-		assert i>=0 && i<m_NestedWord.length() : "out of range";
-		assert !m_NestedWord.isCallPosition(i) : "call position";
+		assert i>=0 && i<mNestedWord.length() : "out of range";
+		assert !mNestedWord.isCallPosition(i) : "call position";
 		return getFormulaFromValidNonCallPos(i);
 	}
 	
@@ -117,10 +116,10 @@ public abstract class NestedFormulas<TF, SF> {
 	
 	
 	public TF getLocalVarAssignment(int i) {
-		assert i>=0 && i<m_NestedWord.length() : "out of range";
-		assert callPositions().contains(i) || m_NestedWord.isPendingReturn(i) : 
+		assert i>=0 && i<mNestedWord.length() : "out of range";
+		assert callPositions().contains(i) || mNestedWord.isPendingReturn(i) : 
 			"neither call nor pending return position";
-		assert m_NestedWord.isCallPosition(i) || m_NestedWord.isPendingReturn(i) : 
+		assert mNestedWord.isCallPosition(i) || mNestedWord.isPendingReturn(i) : 
 			"neither call nor pending return position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
@@ -128,19 +127,19 @@ public abstract class NestedFormulas<TF, SF> {
 	protected abstract TF getLocalVarAssignmentFromValidPos(int i);
 	
 	public TF getGlobalVarAssignment(int i) {
-		assert i>=0 && i<m_NestedWord.length() : "out of range";
+		assert i>=0 && i<mNestedWord.length() : "out of range";
 		assert callPositions().contains(i) : "no call position";
-		assert m_NestedWord.isCallPosition(i) : "no call position";
+		assert mNestedWord.isCallPosition(i) : "no call position";
 		return getGlobalVarAssignmentFromValidPos(i);
 	}
 	
 	protected abstract TF getGlobalVarAssignmentFromValidPos(int i);
 	
 	public TF getOldVarAssignment(int i) {
-		assert i>=0 && i<m_NestedWord.length() : "out of range";
-		assert callPositions().contains(i) || m_NestedWord.isPendingReturn(i) : 
+		assert i>=0 && i<mNestedWord.length() : "out of range";
+		assert callPositions().contains(i) || mNestedWord.isPendingReturn(i) : 
 			"neither call nor pending return position";
-		assert m_NestedWord.isCallPosition(i) || m_NestedWord.isPendingReturn(i) : 
+		assert mNestedWord.isCallPosition(i) || mNestedWord.isPendingReturn(i) : 
 			"neither call nor pending return position";
 		return getOldVarAssignmentFromValidPos(i);
 	}

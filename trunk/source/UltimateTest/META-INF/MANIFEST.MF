@@ -5,15 +5,17 @@ Bundle-SymbolicName: UltimateTest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
+ Library-UltimateTest,
  org.junit,
  Library-UltimateUtil,
  UltimateCore,
+ Library-BoogieAST,
  CDTParser,
- Library-junit-helper,
- Library-UltimateTest,
  Library-LassoRanker,
  BoogiePreprocessor,
+ Library-ModelCheckerUtils;bundle-version="0.0.1",
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,

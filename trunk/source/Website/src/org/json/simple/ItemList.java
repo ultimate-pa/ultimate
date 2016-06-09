@@ -36,18 +36,19 @@ public class ItemList {
 	}
 	
 	public List getItems(){
-		return this.items;
+		return items;
 	}
 	
 	public String[] getArray(){
-		return (String[])this.items.toArray();
+		return (String[])items.toArray();
 	}
 	
 	public void split(String s,String sp,List append,boolean isMultiToken){
-		if(s==null || sp==null)
+		if(s==null || sp==null) {
 			return;
+		}
 		if(isMultiToken){
-			StringTokenizer tokens=new StringTokenizer(s,sp);
+			final StringTokenizer tokens=new StringTokenizer(s,sp);
 			while(tokens.hasMoreTokens()){
 				append.add(tokens.nextToken().trim());
 			}
@@ -58,15 +59,17 @@ public class ItemList {
 	}
 	
 	public void split(String s,String sp,List append){
-		if(s==null || sp==null)
+		if(s==null || sp==null) {
 			return;
+		}
 		int pos=0;
 		int prevPos=0;
 		do{
 			prevPos=pos;
 			pos=s.indexOf(sp,pos);
-			if(pos==-1)
+			if(pos==-1) {
 				break;
+			}
 			append.add(s.substring(prevPos,pos).trim());
 			pos+=sp.length();
 		}while(pos!=-1);
@@ -78,14 +81,16 @@ public class ItemList {
 	}
 	
 	public void add(int i,String item){
-		if(item==null)
+		if(item==null) {
 			return;
+		}
 		items.add(i,item.trim());
 	}
 
 	public void add(String item){
-		if(item==null)
+		if(item==null) {
 			return;
+		}
 		items.add(item.trim());
 	}
 	
@@ -117,17 +122,18 @@ public class ItemList {
 		return items.size();
 	}
 
+	@Override
 	public String toString(){
 		return toString(sp);
 	}
 	
 	public String toString(String sp){
-		StringBuffer sb=new StringBuffer();
+		final StringBuffer sb=new StringBuffer();
 		
 		for(int i=0;i<items.size();i++){
-			if(i==0)
+			if(i==0) {
 				sb.append(items.get(i));
-			else{
+			} else{
 				sb.append(sp);
 				sb.append(items.get(i));
 			}

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -53,7 +53,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
-		SignDomainState newState = currentState.copy();
+		final SignDomainState newState = currentState.copy();
 
 		return newState;
 	}
@@ -64,7 +64,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
-		SignDomainValue newValue;
+		final SignDomainValue newValue;
 
 		switch (value.getValue()) {
 		case NEGATIVE:
@@ -85,7 +85,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
-		SignDomainValue newValue;
+		final SignDomainValue newValue;
 
 		switch (value.getValue()) {
 		case NEGATIVE:

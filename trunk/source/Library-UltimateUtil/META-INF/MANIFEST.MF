@@ -4,9 +4,10 @@ Bundle-Name: Library-UltimateUtil
 Bundle-SymbolicName: Library-UltimateUtil
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: Library-log4j
+Require-Bundle: Library-UltimateModel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
- de.uni_freiburg.informatik.ultimate.util.relation,
  de.uni_freiburg.informatik.ultimate.util.scc,
- de.uni_freiburg.informatik.ultimate.util.statistics
+ de.uni_freiburg.informatik.ultimate.util.statistics,
+ de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
+ de.uni_freiburg.informatik.ultimate.util.datastructures

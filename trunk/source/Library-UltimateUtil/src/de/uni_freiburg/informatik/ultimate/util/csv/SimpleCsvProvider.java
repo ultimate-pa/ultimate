@@ -39,8 +39,8 @@ import java.util.List;
 public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 	private List<String> mColumnTitles;
-	private List<String> mRowTitles;
-	private List<List<T>> mTable;
+	private final List<String> mRowTitles;
+	private final List<List<T>> mTable;
 
 	public SimpleCsvProvider(List<String> columnTitles) {
 		mColumnTitles = columnTitles;
@@ -55,8 +55,8 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 	@Override
 	public List<List<T>> getTable() {
-		List<List<T>> rtr = new ArrayList<>();
-		for (List<T> x : mTable) {
+		final List<List<T>> rtr = new ArrayList<>();
+		for (final List<T> x : mTable) {
 			rtr.add(new ArrayList<>(x));
 		}
 		return rtr;
@@ -79,13 +79,13 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		String separator = ",";
-		String lineSeparator = System.getProperty("line.separator");
+		final StringBuilder sb = new StringBuilder();
+		final String separator = ",";
+		final String lineSeparator = System.getProperty("line.separator");
 
 		// get longest string
 		int maxLength = 0;
-		for (String rowTitle : mRowTitles) {
+		for (final String rowTitle : mRowTitles) {
 			if (rowTitle == null) {
 				continue;
 			}
@@ -97,13 +97,13 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 			sb.append(" ");
 		}
 
-		for (String s : mColumnTitles) {
+		for (final String s : mColumnTitles) {
 			sb.append(s).append(separator);
 		}
 		sb.replace(sb.length() - 2, sb.length(), "").append(lineSeparator);
 
 		for (int i = 0; i < mTable.size(); ++i) {
-			List<T> row = mTable.get(i);
+			final List<T> row = mTable.get(i);
 			String rowTitle = mRowTitles.get(i);
 
 			if (rowTitle == null) {
@@ -116,8 +116,8 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 				sb.append(" ");
 			}
 			sb.append(rowTitle).append(separator);
-			for (T value : row) {
-				String cellString = String.valueOf(value);
+			for (final T value : row) {
+				final String cellString = String.valueOf(value);
 				checkForSeparators(cellString, separator, lineSeparator);
 				sb.append(cellString).append(", ");
 			}
@@ -133,20 +133,20 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 			sb = new StringBuilder();
 		}
 
-		String lineSeparator = System.getProperty("line.separator");
+		final String lineSeparator = System.getProperty("line.separator");
 		String separator = ",";
 		if (cellSeparator != null && !cellSeparator.isEmpty()) {
 			separator = cellSeparator;
 		}
 
 		sb.append(separator);
-		for (String s : mColumnTitles) {
+		for (final String s : mColumnTitles) {
 			sb.append(s).append(separator);
 		}
 		sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
 
 		for (int i = 0; i < mTable.size(); ++i) {
-			List<T> row = mTable.get(i);
+			final List<T> row = mTable.get(i);
 			String rowTitle = mRowTitles.get(i);
 
 			if (rowTitle == null) {
@@ -155,7 +155,7 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 			checkForSeparators(rowTitle, separator, lineSeparator);
 			sb.append(rowTitle).append(separator);
-			for (T value : row) {
+			for (final T value : row) {
 				String cellString = String.valueOf(value);
 				cellString = cellString.replace(lineSeparator, "").replace(separator, "");
 				checkForSeparators(cellString, separator, lineSeparator);
@@ -198,8 +198,8 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 
 	@Override
 	public void renameColumnTitle(String oldName, String newName) {
-		ArrayList<String> names = new ArrayList<>();
-		for (String title : getColumnTitles()) {
+		final ArrayList<String> names = new ArrayList<>();
+		for (final String title : getColumnTitles()) {
 			if (title.equals(oldName)) {
 				names.add(newName);
 			} else {

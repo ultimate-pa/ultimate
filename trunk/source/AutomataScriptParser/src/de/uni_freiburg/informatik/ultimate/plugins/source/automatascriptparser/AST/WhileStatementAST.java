@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -58,10 +58,10 @@ public class WhileStatementAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		StringBuilder builder = new StringBuilder("while(");
-		if (m_children.size() == 2) {
-			builder.append(m_children.get(0).getAsString() + ") {\n");
-			builder.append(m_children.get(1).getAsString());
+		final StringBuilder builder = new StringBuilder("while(");
+		if (mchildren.size() == 2) {
+			builder.append(mchildren.get(0).getAsString() + ") {\n");
+			builder.append(mchildren.get(1).getAsString());
 		}
 		builder.append("}");
 		return builder.toString();

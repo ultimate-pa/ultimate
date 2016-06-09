@@ -1,0 +1,31 @@
+// Simple example that shows that quotienting must visit all states for adding
+// return transitions, i.e., blocks are not independent of their representative
+// when considering return transitions.
+
+print(numberOfStates(nwa));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+print(minimizeSevpaSize);
+assert(minimizeSevpaSize == 5);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+print(shrinkNwaSize);
+assert(shrinkNwaSize == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "q3" "q4"},
+	initialStates = {"q0"},
+	finalStates = {"q4"},
+	callTransitions = {
+		("q0" "c" "q1")
+		("q1" "c" "q0")
+	},
+	internalTransitions = {
+		("q1" "a" "q2")
+	},
+	returnTransitions = {
+		("q2" "q0" "r" "q3")
+		("q3" "q1" "r" "q4")
+	}
+);

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> implements IAnnotationProvider<T> {
 
@@ -45,6 +45,7 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 		mKeys.add(sDefaultKey);
 	}
 
+	@Override
 	public T getAnnotation(IElement element) {
 		return getAnnotation(element, sDefaultKey);
 	}
@@ -69,9 +70,9 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 
 	@Override
 	public List<T> getAllAnnotations(IElement element) {
-		List<T> rtr = new ArrayList<>();
-		for (String key : mKeys) {
-			T annot = getAnnotation(element, key);
+		final List<T> rtr = new ArrayList<>();
+		for (final String key : mKeys) {
+			final T annot = getAnnotation(element, key);
 			if (annot != null) {
 				rtr.add(annot);
 			}
@@ -80,8 +81,8 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 	}
 
 	private class HashKey {
-		private IElement element;
-		private String uniqueId;
+		private final IElement element;
+		private final String uniqueId;
 
 		private HashKey(IElement elem, String key) {
 			element = elem;
@@ -100,24 +101,31 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			HashKey other = (HashKey) obj;
+			}
+			final HashKey other = (HashKey) obj;
 
 			if (element == null) {
-				if (other.element != null)
+				if (other.element != null) {
 					return false;
-			} else if (!element.equals(other.element))
+				}
+			} else if (!element.equals(other.element)) {
 				return false;
+			}
 			if (uniqueId == null) {
-				if (other.uniqueId != null)
+				if (other.uniqueId != null) {
 					return false;
-			} else if (!uniqueId.equals(other.uniqueId))
+				}
+			} else if (!uniqueId.equals(other.uniqueId)) {
 				return false;
+			}
 			return true;
 		}
 

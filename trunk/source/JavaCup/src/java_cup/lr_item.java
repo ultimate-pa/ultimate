@@ -43,12 +43,12 @@ public class lr_item implements Comparable<lr_item> {
    */
   private lr_item(production prod, int pos)
     {
-      assert prod != null: "Attempt to create an lr_item_core with a null production";
+      assert prod != null: "Attempt to create an lr_itemcore with a null production";
 
       the_production = prod;
 
       assert pos >= 0 && pos <= the_production.rhs_length():
-	  "Attempt to create an lr_item_core with a bad dot position";
+	  "Attempt to create an lr_itemcore with a bad dot position";
 
       dot_pos = pos;
     } 
@@ -101,14 +101,17 @@ public class lr_item implements Comparable<lr_item> {
 
       /* if it exists and is a non terminal, return it */
       if (sym instanceof non_terminal)
-	return (non_terminal)sym;
-      else
-	return null;
+	{
+	    return (non_terminal)sym;
+	  } else
+	{
+	    return null;
+	  }
     }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-  /** Get the lr_item_core that results from shifting the dot one 
+  /** Get the lr_itemcore that results from shifting the dot one 
    *  position to the right. 
    */
   public lr_item shift_item()
@@ -117,7 +120,9 @@ public class lr_item implements Comparable<lr_item> {
 	  "Attempt to shift past end of an lr_item";
 
       if (_shifted == null)
-	_shifted = new lr_item(the_production, dot_pos+1);
+	{
+	    _shifted = new lr_item(the_production, dot_pos+1);
+	  }
       return _shifted;
     }
 
@@ -127,18 +132,22 @@ public class lr_item implements Comparable<lr_item> {
    * Compare two items.  They are compared by index of production_rule first.
    * If productions are the same, they are compared by dot position.
    */
+  @Override
   public int compareTo(lr_item item)
     {
       if (the_production != item.the_production)
-	return the_production.index() - item.the_production.index();
+	{
+	    return the_production.index() - item.the_production.index();
+	  }
       return dot_pos - item.dot_pos;
     }
 
   /** Convert to a string.
    */
+  @Override
   public String toString()
     {
-      StringBuilder result = new StringBuilder();
+      final StringBuilder result = new StringBuilder();
       result.append(the_production.lhs().name());
       result.append(" ::= ");
 
@@ -146,7 +155,9 @@ public class lr_item implements Comparable<lr_item> {
 	{
 	  /* do we need the dot before this one? */
 	  if (i == dot_pos)
-	    result.append("(*) ");
+	    {
+		result.append("(*) ");
+	      }
 	  
 	  /* print the name of the part */
 	  result.append(the_production.rhs(i).the_symbol.name())
@@ -155,7 +166,9 @@ public class lr_item implements Comparable<lr_item> {
 
       /* put the dot after if needed */
       if (dot_pos == the_production.rhs_length())
-	result.append("(*) ");
+	{
+	    result.append("(*) ");
+	  }
 
       return result.toString();
     }
@@ -170,12 +183,12 @@ public class lr_item implements Comparable<lr_item> {
   public terminal_set calc_lookahead(Grammar grammar) 
     {
       /* start with an empty result */
-      terminal_set result = new terminal_set(grammar);
+      final terminal_set result = new terminal_set(grammar);
 
       /* consider all nullable symbols after the one to the right of the dot */
       for (int pos = dot_pos; pos < the_production.rhs_length(); pos++) 
   	{
-  	   symbol sym = the_production.rhs(pos).the_symbol;
+  	   final symbol sym = the_production.rhs(pos).the_symbol;
 
   	   /* if its a terminal add it in and we are done */
   	   if (!sym.is_non_term())
@@ -185,13 +198,15 @@ public class lr_item implements Comparable<lr_item> {
   	     }
   	   else
   	     {
-  	       non_terminal nt = (non_terminal) sym;
+  	       final non_terminal nt = (non_terminal) sym;
   	       /* otherwise add in first set of the non terminal */
   	       result.add(nt.first_set());
 
   	       /* if its nullable we continue adding, if not, we are done */
   	       if (!nt.nullable())
-  		 break;
+		{
+		    break;
+		  }
   	     }
   	}
       return result;
@@ -211,13 +226,19 @@ public class lr_item implements Comparable<lr_item> {
       /* walk down the rhs and bail if we get a non-nullable symbol */
       for (int pos = dot_pos; pos < the_production.rhs_length(); pos++)
   	{
-  	  symbol sym = the_production.rhs(pos).the_symbol;
+  	  final symbol sym = the_production.rhs(pos).the_symbol;
 
   	  /* if its a terminal we fail */
-  	  if (!sym.is_non_term()) return false;
+  	  if (!sym.is_non_term())
+	    {
+		return false;
+	      }
 
   	  /* if its not nullable we fail */
-  	  if (!((non_terminal)sym).nullable()) return false;
+  	  if (!((non_terminal)sym).nullable())
+	    {
+		return false;
+	      }
   	}
 
       /* if we get here its all nullable */

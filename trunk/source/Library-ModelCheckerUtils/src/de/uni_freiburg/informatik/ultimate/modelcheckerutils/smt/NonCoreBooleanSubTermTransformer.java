@@ -40,19 +40,19 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  */
 public abstract class NonCoreBooleanSubTermTransformer {
 	
-	private NonCoreBooleanSubtermTransformerHelper m_TransformerHelper;
+	private NonCoreBooleanSubtermTransformerHelper mTransformerHelper;
 	
 	public Term transform(Term term) {
 		if (!term.getSort().getName().equals("Bool")) {
 			throw new IllegalArgumentException("Input term of sort Bool");
 		}
-		m_TransformerHelper = new NonCoreBooleanSubtermTransformerHelper();
-		Term result = m_TransformerHelper.transform(term);
+		mTransformerHelper = new NonCoreBooleanSubtermTransformerHelper();
+		final Term result = mTransformerHelper.transform(term);
 		return result;
 	}
 
 	private static boolean hasBooleanParams(Term[] parameters) {
-		for (Term term : parameters) {
+		for (final Term term : parameters) {
 			if (!term.getSort().getName().equals("Bool")) {
 				return false;
 			}
@@ -62,6 +62,8 @@ public abstract class NonCoreBooleanSubTermTransformer {
 
 	private static boolean isCoreBooleanConnective(String fun) {
 		if (fun.equals("=")) {
+			return true;
+		} else if (fun.equals("not")) {
 			return true;
 		} else if (fun.equals("and")) {
 			return true;
@@ -81,7 +83,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 	}
 	
 	public static boolean isCoreBoolean(ApplicationTerm appTerm) {
-		String funName = appTerm.getFunction().getName();
+		final String funName = appTerm.getFunction().getName();
 		return isCoreBooleanConnective(funName) && 
 				hasBooleanParams(appTerm.getParameters());
 
@@ -94,11 +96,11 @@ public abstract class NonCoreBooleanSubTermTransformer {
 		protected void convert(Term term) {
 			assert term.getSort().getName().equals("Bool") : "not Bool";
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (isCoreBoolean(appTerm)) {
 					super.convert(term);
 				} else {
-					Term transformed = transformNonCoreBooleanSubterm(term);
+					final Term transformed = transformNonCoreBooleanSubterm(term);
 					setResult(transformed);
 					return;
 				}

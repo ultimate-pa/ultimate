@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A placeholder type represents a type bounded by some outer type parameters, 
@@ -47,7 +47,7 @@ public class PlaceholderType extends BoogieType {
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = 3301828910886451978L;
-	private int depth;
+	private final int depth;
 
 	public PlaceholderType(int depth) {
 		this.depth = depth;
@@ -62,8 +62,9 @@ public class PlaceholderType extends BoogieType {
 	}
 
 	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int deltaDepth, BoogieType[] substType) {
-		int relDepth = depth - deltaDepth;
+		final int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
 			/* Placeholder matches some inner scope*/
 			return this;
@@ -73,10 +74,12 @@ public class PlaceholderType extends BoogieType {
 			/* This should only happen if error type was involved when computing
 			 * substitution.
 			 */
-			if (subst == null)
-				return errorType;
-			if (deltaDepth > 0)
+			if (subst == null) {
+				return TYPE_ERROR;
+			}
+			if (deltaDepth > 0) {
 				subst = subst.incrementPlaceholders(0, deltaDepth);
+			}
 			return subst;
 		} else {
 			/* Placeholder matches some outer scope; but this scope moves */
@@ -85,8 +88,9 @@ public class PlaceholderType extends BoogieType {
 	}
 
 	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int deltaDepth, int incDepth) {
-		int relDepth = depth - deltaDepth;
+		final int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
 			/* Placeholder matches some inner scope*/
 			return this;
@@ -97,22 +101,27 @@ public class PlaceholderType extends BoogieType {
 	}
 
 	//@Override
+	@Override
 	protected boolean unify(int deltaDepth, BoogieType other, BoogieType[] substitution) {
-		if (other == errorType)
+		if (other == TYPE_ERROR) {
 			return true;
-		int relDepth = depth - deltaDepth;
+		}
+		final int relDepth = depth - deltaDepth;
 		if (relDepth < 0 || relDepth >= substitution.length) {
 			/* This placeholder is not substituted */
-			if (!(other instanceof PlaceholderType))
+			if (!(other instanceof PlaceholderType)) {
 				return false;
-			PlaceholderType type = (PlaceholderType) other;
+			}
+			final PlaceholderType type = (PlaceholderType) other;
 			return (type.depth == (relDepth < 0 ? depth : depth - substitution.length));
 		} else {
 			/* Check freedom of inner bounded variable */
-			if (other.hasPlaceholder(0, deltaDepth-1))
+			if (other.hasPlaceholder(0, deltaDepth-1)) {
 				return false;
-			if (deltaDepth != 0)
+			}
+			if (deltaDepth != 0) {
 				other = other.incrementPlaceholders(0, -deltaDepth);
+			}
 			/* Substitute this placeholder */
 			if (substitution[relDepth] == null) {
 				substitution[relDepth] = other;
@@ -122,16 +131,19 @@ public class PlaceholderType extends BoogieType {
 		}
 	}
 	
+	@Override
 	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
 		return depth >= minDepth && depth <= maxDepth;
 	}
 
 	//@Override
+	@Override
 	protected boolean isUnifiableTo(int deltaDepth, BoogieType other, 
 									ArrayList<BoogieType> substitution) {
 		/* fast path first */
-		if (other == this || other == errorType)
+		if (other == this || other == TYPE_ERROR) {
 			return true;
+		}
 		
 		int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
@@ -139,12 +151,13 @@ public class PlaceholderType extends BoogieType {
 			return false;
 		} else {
 			/* Get the real types */
-			BoogieType[] subst = 
+			final BoogieType[] subst = 
 				substitution.toArray(new BoogieType[substitution.size()]);
-			BoogieType me = substitutePlaceholders(deltaDepth, subst);
+			final BoogieType me = substitutePlaceholders(deltaDepth, subst);
 			other = other.substitutePlaceholders(deltaDepth, subst);
-			if (me == other)
+			if (me == other) {
 				return true;
+			}
 			if (!(me instanceof PlaceholderType)) {
 				/* we are no longer a placeholder type, let the unification
 				 * process continue;
@@ -154,28 +167,34 @@ public class PlaceholderType extends BoogieType {
 			/* We are a currently unsubstituted placeholder */
 			relDepth = ((PlaceholderType) me).depth - deltaDepth;
 			/* Inner placeholders cannot be substituted */
-			if (relDepth < 0)
+			if (relDepth < 0) {
 				return false;
+			}
 			
 			/* Check that other is free of inner bounded variable */
-			if (other.hasPlaceholder(0, deltaDepth-1))
+			if (other.hasPlaceholder(0, deltaDepth-1)) {
 				return false;
+			}
 
 			/* Bring other to the right depth */
-			if (deltaDepth != 0)
+			if (deltaDepth != 0) {
 				other = other.incrementPlaceholders(0, -deltaDepth);
+			}
 		
 			/* Occur check */
-			if (other.hasPlaceholder(relDepth, relDepth))
+			if (other.hasPlaceholder(relDepth, relDepth)) {
 				return false;
+			}
 
-			while (relDepth >= substitution.size())
+			while (relDepth >= substitution.size()) {
 				substitution.add(null);
+			}
 			substitution.set(relDepth, other);
 			return true;
 		}
 	}
 
+	@Override
 	public BoogieType getUnderlyingType() {
 		return this;
 	}
@@ -187,22 +206,25 @@ public class PlaceholderType extends BoogieType {
 	 * @param needParentheses true if parentheses should be set for constructed types
 	 * @return a string representation of this type.
 	 */
+	@Override
 	protected String toString(int depth, boolean needParentheses) {
-		int paramNumber = depth - this.depth - 1;
+		final int paramNumber = depth - this.depth - 1;
 		
-		if (paramNumber >= 0)
+		if (paramNumber >= 0) {
 			return "$"+paramNumber;
-		else
+		} else {
 			return "$_"+(-paramNumber);
+		}
 	}
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			NamedType(loc, this, toString(depth, false), new ASTType[0]);
 	}
 	
 	//@Override
+	@Override
 	public boolean isFinite() {
 		return true;
 	}

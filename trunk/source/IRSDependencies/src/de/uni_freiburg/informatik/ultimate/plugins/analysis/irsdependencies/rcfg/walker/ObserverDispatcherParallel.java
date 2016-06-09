@@ -28,24 +28,24 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcf
 
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class ObserverDispatcherParallel extends ObserverDispatcher
 {
-	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortCurrent;
-	private HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortAll;
+	private final HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortCurrent;
+	private final HashMap<SimpleRCFGVisitor, Boolean> mVisitorStateAbortAll;
 
-	public ObserverDispatcherParallel(Logger logger)
+	public ObserverDispatcherParallel(ILogger logger)
 	{
 		super(logger);
 		mVisitorStateAbortCurrent = new HashMap<>();
 		mVisitorStateAbortAll = new HashMap<>();
 	}
 
+	@Override
 	public void run(RCFGNode node)
 	{
 		if (!(node instanceof RootNode)) {
@@ -53,21 +53,22 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 			return;
 		}
 
-		for (SimpleRCFGVisitor visitor : mObservers) {
+		for (final SimpleRCFGVisitor visitor : mObservers) {
 			mVisitorStateAbortCurrent.put(visitor, true);
 			visitor.init(null, 0, 1);
 		}
 
 		mWalker.startFrom((RootNode) node);
 		
-		for (SimpleRCFGVisitor visitor : mObservers) {
+		for (final SimpleRCFGVisitor visitor : mObservers) {
 			visitor.finish();
 		}
 	}
 
+	@Override
 	protected void callObservers(IRCFGVisitorDispatcher dispatcher)
 	{
-		for (SimpleRCFGVisitor visitor : mObservers) {
+		for (final SimpleRCFGVisitor visitor : mObservers) {
 			if (mVisitorStateAbortCurrent.get(visitor)) {
 				dispatcher.dispatch(visitor);
 				if (visitor.abortCurrentBranch()) {
@@ -84,7 +85,7 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 	public boolean abortCurrentBranch()
 	{
 		boolean rtr = false;
-		for(boolean vis : mVisitorStateAbortCurrent.values()){
+		for(final boolean vis : mVisitorStateAbortCurrent.values()){
 			rtr = rtr || vis;
 		}
 		return rtr;
@@ -94,7 +95,7 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 	public boolean abortAll()
 	{
 		boolean rtr = false;
-		for(boolean vis : mVisitorStateAbortAll.values()){
+		for(final boolean vis : mVisitorStateAbortAll.values()){
 			rtr = rtr || vis;
 		}
 		return rtr;

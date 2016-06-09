@@ -69,7 +69,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		 * (up, down) that visits a final state at infinitely often. 
 		 */
 		REACH_FINAL_INFTY(2),
-		REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
+		REACHABLE_FROmFINAL_WITHOUT_CALL(4),
 		/**
 		 * The DoubleDecker (up,down) cannot reach a final state 
 		 * (REACH_FINAL_ONCE does not hold), but is still reachable, if dead 
@@ -96,16 +96,17 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 
-	protected final STATE m_State;
-	protected final int m_SerialNumber;
-	protected ReachProp m_ReachProp;
-	protected final Map<STATE, Integer> m_DownStates;
-	protected Set<STATE> m_UnpropagatedDownStates;
-	protected final boolean m_CanHaveOutgoingReturn;
+	protected final STATE mState;
+	protected final int mSerialNumber;
+	protected ReachProp mReachProp;
+	protected final Map<STATE, Integer> mDownStates;
+	protected Set<STATE> mUnpropagatedDownStates;
+	protected final boolean mCanHaveOutgoingReturn;
 
+	@Override
 	public String toString() {
 //		StringBuilder sb = new StringBuilder();
-//		sb.append(m_State.toString());
+//		sb.append(mState.toString());
 //		sb.append(System.getProperty("line.separator"));
 //		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors()) {
 //			sb.append(trans).append("  ");
@@ -131,44 +132,44 @@ public abstract class StateContainer<LETTER, STATE> {
 //			sb.append(trans).append("  ");
 //		}
 //		sb.append(System.getProperty("line.separator"));
-//		sb.append(m_DownStates.toString());
+//		sb.append(mDownStates.toString());
 //		sb.append(System.getProperty("line.separator"));
 //		return sb.toString();
-		return m_State.toString();
+		return mState.toString();
 	}
 
 	public StateContainer(STATE state, int serialNumber, 
 			HashMap<STATE, Integer> downStates, boolean canHaveOutgoingReturn) {
-		m_State = state;
-		m_SerialNumber = serialNumber;
-		m_DownStates = downStates;
-		m_ReachProp = ReachProp.REACHABLE;
-		m_CanHaveOutgoingReturn = canHaveOutgoingReturn;
+		mState = state;
+		mSerialNumber = serialNumber;
+		mDownStates = downStates;
+		mReachProp = ReachProp.REACHABLE;
+		mCanHaveOutgoingReturn = canHaveOutgoingReturn;
 	}
 	
 	public int getSerialNumber() {
-		return m_SerialNumber;
+		return mSerialNumber;
 	}
 
 	public ReachProp getReachProp() {
-		return m_ReachProp;
+		return mReachProp;
 	}
 
 	public void setReachProp(ReachProp reachProp) {
-		m_ReachProp = reachProp;
+		mReachProp = reachProp;
 	}
 
 	protected  Map<STATE, Integer> getDownStates() {
-		return m_DownStates;
+		return mDownStates;
 	}
 
 	@Override
 	public int hashCode() {
-		return m_State.hashCode();
+		return mState.hashCode();
 	}
 
 	protected STATE getState() {
-		return m_State;
+		return mState;
 	}
 	
 	/**
@@ -178,13 +179,13 @@ public abstract class StateContainer<LETTER, STATE> {
 	 *  DownStateProps
 	 */
 	boolean addReachableDownState(STATE down) {
-		assert !m_DownStates.containsKey(down) || m_DownStates.get(down) == 0;
-		Integer oldValue = m_DownStates.put(down, 0);
+		assert !mDownStates.containsKey(down) || mDownStates.get(down) == 0;
+		final Integer oldValue = mDownStates.put(down, 0);
 		if (oldValue == null) {
-			if (m_UnpropagatedDownStates == null) {
-				m_UnpropagatedDownStates = new HashSet<STATE>();
+			if (mUnpropagatedDownStates == null) {
+				mUnpropagatedDownStates = new HashSet<STATE>();
 			}
-			m_UnpropagatedDownStates.add(down);
+			mUnpropagatedDownStates.add(down);
 			return true;
 		} else {
 			return false;
@@ -196,15 +197,15 @@ public abstract class StateContainer<LETTER, STATE> {
 	 * modified (not already set).
 	 */
 	boolean setDownProp(STATE down, DownStateProp prop) {
-		int currentProps = m_DownStates.get(down);
+		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			// property not yet set
-			int newProps = currentProps | prop.getBitCode();
-			m_DownStates.put(down,newProps);
-			if (m_UnpropagatedDownStates == null) {
-				m_UnpropagatedDownStates = new HashSet<STATE>();
+			final int newProps = currentProps | prop.getBitCode();
+			mDownStates.put(down,newProps);
+			if (mUnpropagatedDownStates == null) {
+				mUnpropagatedDownStates = new HashSet<STATE>();
 			}
-			m_UnpropagatedDownStates.add(down);
+			mUnpropagatedDownStates.add(down);
 			return true;
 
 		} else {
@@ -215,7 +216,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 	boolean hasDownProp(STATE down, DownStateProp prop) {
-		int currentProps = m_DownStates.get(down);
+		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			return false;
 		} else {
@@ -226,15 +227,15 @@ public abstract class StateContainer<LETTER, STATE> {
 	
 	
 	Set<STATE> getUnpropagatedDownStates() {
-		return m_UnpropagatedDownStates;
+		return mUnpropagatedDownStates;
 	}
 	
 	void eraseUnpropagatedDownStates() {
-		m_UnpropagatedDownStates = null;
+		mUnpropagatedDownStates = null;
 	}
 
 	protected boolean containsInternalTransition(LETTER letter, STATE succ) {
-		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(letter)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}
@@ -243,7 +244,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsCallTransition(LETTER letter, STATE succ) {
-		for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(letter)) {
+		for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}
@@ -252,7 +253,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsReturnTransition(STATE hier, LETTER letter, STATE succ) {
-		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}

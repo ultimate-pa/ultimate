@@ -34,12 +34,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.EventDecision;
 import pea.PEANet;
@@ -90,8 +90,8 @@ import pea.Transition;
  */
 public class Compiler {
 
-    public static final String TESTFORM_FILE_ARG = "-tf";
-    public static final String MCFORM_FILE_ARG = "-mc";
+    public static final String TESTFORmFILE_ARG = "-tf";
+    public static final String MCFORmFILE_ARG = "-mc";
     public static final String PEA_ARG = "-pea";
     public static final String PEANET_ARG = "-net";
     public static final String PARALLEL_ARG = "-parallel";
@@ -106,7 +106,7 @@ public class Compiler {
     private String peaNetPrefix = "peaNet";
     private String peaPrefix = "pea";
 
-    private Logger logger = null;
+    private ILogger logger = null;
 
     private boolean parallel = false;
     
@@ -130,20 +130,20 @@ public class Compiler {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public Compiler(String loggerName, boolean useZDecision) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(Compiler.DEFAULT_LOGGER);
+            logger = ILogger.getLogger(Compiler.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.mcFormCompiler = new TestForm2MCFormCompiler();
-        this.traceConverter = new MCTraceXML2JConverter(useZDecision);
-        this.traceCompiler = new Trace2PEACompiler();
-        this.peaConverter = new PEAJ2XMLConverter();
+        mcFormCompiler = new TestForm2MCFormCompiler();
+        traceConverter = new MCTraceXML2JConverter(useZDecision);
+        traceCompiler = new Trace2PEACompiler();
+        peaConverter = new PEAJ2XMLConverter();
         new XMLWriter();
     }
 
@@ -167,7 +167,7 @@ public class Compiler {
      * @return The name
      */
     private String getFreshPEAName() {
-        String result = this.peaPrefix + peaCounter;
+        final String result = peaPrefix + peaCounter;
         peaCounter++;
         return result;
     }
@@ -179,7 +179,7 @@ public class Compiler {
      * @return The name
      */
     private String getFreshPEANetName() {
-        String result = this.peaNetPrefix + peaNetCounter;
+        final String result = peaNetPrefix + peaNetCounter;
         peaNetCounter++;
         return result;
     }
@@ -255,38 +255,39 @@ public class Compiler {
      */
     public ArrayList<PEATestAutomaton[]> compile(String file, String mcFile) throws Exception {
 
-    	ArrayList<PEATestAutomaton[]> resultList = new ArrayList<PEATestAutomaton[]>();
+    	final ArrayList<PEATestAutomaton[]> resultList = new ArrayList<PEATestAutomaton[]>();
     	syncEvents = new HashSet<String>();
     	
     	PEATestAutomaton[] peas = null; 
-     	String fileParent = new File(file).getParent();
+     	final String fileParent = new File(file).getParent();
 
-        long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
 
-        Document document = mcFormCompiler.compile(file, mcFile);
-        long durNormalForm = System.currentTimeMillis() - startTime;
+        final Document document = mcFormCompiler.compile(file, mcFile);
+        final long durNormalForm = System.currentTimeMillis() - startTime;
 
-        NodeList mcFormNodes = document
-                .getElementsByTagName(XMLTags.MCFORM_TAG);
-        int mcFormsCount = mcFormNodes.getLength();
+        final NodeList mcFormNodes = document
+                .getElementsByTagName(XMLTags.MCFORmTAG);
+        final int mcFormsCount = mcFormNodes.getLength();
         for (int i = 0; i < mcFormsCount; i++) {
-            MCTrace[] traces = traceConverter.convert((Element) mcFormNodes
+            final MCTrace[] traces = traceConverter.convert((Element) mcFormNodes
                     .item(i));
             peas = new PEATestAutomaton[traces.length];
             @SuppressWarnings("unchecked")
+			final
                 HashMap<Transition,PhaseSet> t2p[] =
                     (HashMap<Transition,PhaseSet>[]) new HashMap<?,?>[traces.length];
             trans2phases = t2p;
             for (int j = 0; j < traces.length; j++) {
-                peas[j] = this.traceCompiler.compile(this.getFreshPEAName(),
+                peas[j] = traceCompiler.compile(getFreshPEAName(),
                         traces[j]);
                 trans2phases[j] =
                     traceCompiler.getTrans2Phases(traces[j].getTrace().getPhases());
                 collectSyncEvents(traceCompiler.getEntrySync());
                 collectSyncEvents(traceCompiler.getExitSync());
             }
-            String actNetName = this.getFreshPEANetName();
-            if(this.parallel) {
+            final String actNetName = getFreshPEANetName();
+            if(parallel) {
                 PEATestAutomaton result = peas[0];
                 for(int k=1; k<peas.length; k++) {
                     result = result.parallel(peas[k]);
@@ -295,30 +296,31 @@ public class Compiler {
 		if(fileParent != null){
 		    parallelFile = fileParent;
 		    parallelFile += "/" + actNetName + "_par.xml";
-		}else
-		    parallelFile = actNetName + "_par.xml";
-                PEANet temp = new PEANet();
+		} else {
+			parallelFile = actNetName + "_par.xml";
+		}
+                final PEANet temp = new PEANet();
                 temp.addPEA(result);
 		peaConverter.convert(temp,parallelFile);
             }
             String peaNetFile = fileParent != null ? fileParent + "/" : "";
             peaNetFile += actNetName + ".xml";
             
-            List<PEATestAutomaton> tempList = Arrays.asList(peas); 
-            ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(tempList);
-            PEANet peaNet = new PEANet();
+            final List<PEATestAutomaton> tempList = Arrays.asList(peas); 
+            final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(tempList);
+            final PEANet peaNet = new PEANet();
             peaNet.setPeas(peaList);
             
             peaConverter.convert(peaNet,peaNetFile);
             resultList.add(peas);
         }
 
-        this.logger.info("Duration Compilation NormalForm = " + durNormalForm
+        logger.info("Duration Compilation NormalForm = " + durNormalForm
                 + "(ms)");
-        long durPEAs = System.currentTimeMillis() - startTime - durNormalForm;
-        this.logger.info("Duration Compilation PEAS       = " + durPEAs
+        final long durPEAs = System.currentTimeMillis() - startTime - durNormalForm;
+        logger.info("Duration Compilation PEAS       = " + durPEAs
                 + "(ms)");
-        this.logger.info("Duration Compilation            = "
+        logger.info("Duration Compilation            = "
                 + (durPEAs + durNormalForm) + "(ms)");
         return resultList;
     }
@@ -331,8 +333,9 @@ public class Compiler {
      *          The CDD to be processed.
      */
     private void collectSyncEvents(CDD events) {
-        if(events == null || events == CDD.TRUE || events == CDD.FALSE)
-            return;
+        if(events == null || events == CDD.TRUE || events == CDD.FALSE) {
+			return;
+		}
         if(events.getDecision() instanceof EventDecision){
             syncEvents.add(((EventDecision) events.getDecision()).getEvent());
         }
@@ -402,9 +405,9 @@ public class Compiler {
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals(Compiler.LOG_CONFIG_FILE_ARG)) {
                 logConfigFile = args[++i];
-            } else if (args[i].equals(Compiler.TESTFORM_FILE_ARG)) {
+            } else if (args[i].equals(Compiler.TESTFORmFILE_ARG)) {
                 testFormFile = args[++i];
-            } else if (args[i].equals(Compiler.MCFORM_FILE_ARG)) {
+            } else if (args[i].equals(Compiler.MCFORmFILE_ARG)) {
                 mcFormFile = args[++i];
             } else if (args[i].equals(Compiler.PEA_ARG)) {
                 pea = args[++i];
@@ -425,7 +428,7 @@ public class Compiler {
         Compiler compiler = null;
         try {
             compiler = new Compiler(false);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Compiler could not be initialised");
             e.printStackTrace();
         }
@@ -448,7 +451,7 @@ public class Compiler {
             try {
                 compiler.compile(testFormFile, mcFormFile);
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("Compilation failed. Please consult "
                         + "log file and error message for further details.");
                 e.printStackTrace();
@@ -462,9 +465,9 @@ public class Compiler {
      */
     private static void printUse() {
         System.out.println("Usage: java Compiler ["
-                + Compiler.TESTFORM_FILE_ARG
+                + Compiler.TESTFORmFILE_ARG
                 + " <File of test formula to compile>]\n"
-                + "                     [" + Compiler.MCFORM_FILE_ARG
+                + "                     [" + Compiler.MCFORmFILE_ARG
                 + " <File of compiled formula in model checkable form>]\n"
                 + "                     [" + Compiler.PEA_ARG
                 + " <Prefix for peas in peaNet files>]\n"
@@ -474,7 +477,7 @@ public class Compiler {
                 + " <true, if parallel composition needs to be computed>]\n" + "                     ["
                 + Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n"
                 + "                     [" + Compiler.HELP_ARG + "]");
-        System.out.println("Argument " + Compiler.TESTFORM_FILE_ARG
+        System.out.println("Argument " + Compiler.TESTFORmFILE_ARG
                 + " required");
     }
 }

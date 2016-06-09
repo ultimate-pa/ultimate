@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -47,19 +47,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class PredicateFactoryForInterpolantConsolidation extends PredicateFactoryForInterpolantAutomata {
 	
-	private Map<IPredicate, Set<IPredicate>> m_LocationsToSetOfPredicates;
-	private Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> m_IntersectedPredicateToArgumentPredicates;
-	private Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> m_ArgumentPredicatesToIntersectedPredicate;
+	private final Map<IPredicate, Set<IPredicate>> mLocationsToSetOfPredicates;
+	private final Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> mIntersectedPredicateToArgumentPredicates;
+	private final Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> mArgumentPredicatesToIntersectedPredicate;
 	public PredicateFactoryForInterpolantConsolidation(SmtManager smtManager,
 			TAPreferences taPrefs) {
 		super(smtManager, taPrefs);
-		m_LocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
-		m_IntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
-		m_ArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();
+		mLocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
+		mIntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
+		mArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();
 	}
 
 	public Map<IPredicate, Set<IPredicate>> getLocationsToSetOfPredicates() {
-		return m_LocationsToSetOfPredicates;
+		return mLocationsToSetOfPredicates;
 	}
 	
 	/**
@@ -67,16 +67,16 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	 * @param badPredicates - a set of states from the difference automaton
 	 */
 	public void removeBadPredicates(Set<IPredicate> badPredicates) {
-		for (IPredicate p : badPredicates) {
-			AbstractMap.SimpleEntry<IPredicate, IPredicate> argumentPredicates = m_IntersectedPredicateToArgumentPredicates.get(p);
-			Set<IPredicate> consolidatePredicates = m_LocationsToSetOfPredicates.get(argumentPredicates.getKey());
+		for (final IPredicate p : badPredicates) {
+			final AbstractMap.SimpleEntry<IPredicate, IPredicate> argumentPredicates = mIntersectedPredicateToArgumentPredicates.get(p);
+			final Set<IPredicate> consolidatePredicates = mLocationsToSetOfPredicates.get(argumentPredicates.getKey());
 			consolidatePredicates.remove(argumentPredicates.getValue());
 		}
 	}
 	
 	public IPredicate getIntersectedPredicate(IPredicate argumentPredicate1, IPredicate argumentPredicate2) {
-		AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(argumentPredicate1, argumentPredicate2);
-		return m_ArgumentPredicatesToIntersectedPredicate.get(predicateArguments);
+		final AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(argumentPredicate1, argumentPredicate2);
+		return mArgumentPredicatesToIntersectedPredicate.get(predicateArguments);
 	}
 	
 	@Override
@@ -84,48 +84,49 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		// 1. Do the intersection
 		assert (p1 instanceof ISLPredicate);
 		
-		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
+		final ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 		
-		TermVarsProc tvp = super.m_SmtManager.getPredicateFactory().and(p1, p2);
-		IPredicate result = super.m_SmtManager.getPredicateFactory().newSPredicate(pp, tvp);
+		final Term conjunction = super.mSmtManager.getPredicateFactory().and(p1, p2);
+		final IPredicate result = super.mSmtManager.getPredicateFactory().newSPredicate(pp, conjunction);
 		
-		if (m_IntersectedPredicateToArgumentPredicates.containsKey(result)) {
+		if (mIntersectedPredicateToArgumentPredicates.containsKey(result)) {
 			throw new AssertionError("States of difference automaton are not unique!");
 		}
-		AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(p1, p2);
-		m_IntersectedPredicateToArgumentPredicates.put(result, predicateArguments);
-		m_ArgumentPredicatesToIntersectedPredicate.put(predicateArguments, result);
+		final AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(p1, p2);
+		mIntersectedPredicateToArgumentPredicates.put(result, predicateArguments);
+		mArgumentPredicatesToIntersectedPredicate.put(predicateArguments, result);
 		
 		// 2. Store the predicates in the map
-		if (m_LocationsToSetOfPredicates.containsKey(p1)) {
-			Set<IPredicate> predicates = m_LocationsToSetOfPredicates.get(p1);
+		if (mLocationsToSetOfPredicates.containsKey(p1)) {
+			final Set<IPredicate> predicates = mLocationsToSetOfPredicates.get(p1);
 			predicates.add(p2);
 		} else {
-			Set<IPredicate> predicatesForThisLocation = new HashSet<IPredicate>();
+			final Set<IPredicate> predicatesForThisLocation = new HashSet<IPredicate>();
 			predicatesForThisLocation.add(p2);
-			m_LocationsToSetOfPredicates.put(p1, predicatesForThisLocation);
+			mLocationsToSetOfPredicates.put(p1, predicatesForThisLocation);
 		}
 		return result;
 	}
 
 	public void removeConsolidatedPredicatesOnDifferentLevels(Map<IPredicate, Integer> stateToLevel) {
-		int maxLevel = Collections.max(stateToLevel.values());
-		for (IPredicate loc : m_LocationsToSetOfPredicates.keySet()) {
-			Set<IPredicate> consolidatedPreds = m_LocationsToSetOfPredicates.get(loc);
+		final int maxLevel = Collections.max(stateToLevel.values());
+		for (final IPredicate loc : mLocationsToSetOfPredicates.keySet()) {
+			final Set<IPredicate> consolidatedPreds = mLocationsToSetOfPredicates.get(loc);
 			if (!consolidatedPreds.isEmpty()) {
 				Set<IPredicate> predsToRemove = new HashSet<IPredicate>();
-				int[] levelOccurrencesOfPredicates = new int[maxLevel];
-				for (IPredicate p : consolidatedPreds) {
-					IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
-					int lvlOfState = stateToLevel.get(diffAutomatonState);
+				final int[] levelOccurrencesOfPredicates = new int[maxLevel];
+				for (final IPredicate p : consolidatedPreds) {
+					final IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
+					final int lvlOfState = stateToLevel.get(diffAutomatonState);
 					levelOccurrencesOfPredicates[lvlOfState-1]++;
 				}
-				int lvlThatOccursMost = getIndexOfMaxValue(levelOccurrencesOfPredicates);
-				if (levelOccurrencesOfPredicates[lvlThatOccursMost-1] <= 1) predsToRemove = consolidatedPreds;
-				else {
-					for (IPredicate p : consolidatedPreds) {
-						IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
-						int lvlOfState = stateToLevel.get(diffAutomatonState);
+				final int lvlThatOccursMost = getIndexOfMaxValue(levelOccurrencesOfPredicates);
+				if (levelOccurrencesOfPredicates[lvlThatOccursMost-1] <= 1) {
+					predsToRemove = consolidatedPreds;
+				} else {
+					for (final IPredicate p : consolidatedPreds) {
+						final IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
+						final int lvlOfState = stateToLevel.get(diffAutomatonState);
 						if (lvlOfState != lvlThatOccursMost) {
 							predsToRemove.add(p);
 						}
@@ -140,7 +141,9 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	private int getIndexOfMaxValue(int[] levelOccurrencesOfPredicates) {
 		int indexOfMaxValue = 0;
 		for (int i = 1; i < levelOccurrencesOfPredicates.length; i++) {
-			if (levelOccurrencesOfPredicates[i] > levelOccurrencesOfPredicates[indexOfMaxValue]) indexOfMaxValue = i;
+			if (levelOccurrencesOfPredicates[i] > levelOccurrencesOfPredicates[indexOfMaxValue]) {
+				indexOfMaxValue = i;
+			}
 		}
 		return indexOfMaxValue;
 	}

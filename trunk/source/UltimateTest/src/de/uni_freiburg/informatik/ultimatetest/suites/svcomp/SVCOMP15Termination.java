@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimatetest.suites.svcomp;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.TerminationAnalysisTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestResultDecider;
 
 /**
  * 
@@ -54,7 +54,7 @@ public class SVCOMP15Termination extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("Termination-crafted", "BuchiAutomizerCWithBlockEncoding.xml",

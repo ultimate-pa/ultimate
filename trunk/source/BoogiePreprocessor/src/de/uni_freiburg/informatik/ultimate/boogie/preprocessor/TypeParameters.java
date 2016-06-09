@@ -32,9 +32,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
 public class TypeParameters {
-	private String[]     identifiers;
-	private boolean      preserveOrder;
-	private int[]        placeHolders;
+	private final String[]     identifiers;
+	private final boolean      preserveOrder;
+	private final int[]        placeHolders;
 	private int[]        order;
 	private int          numUsed;
 	
@@ -47,10 +47,12 @@ public class TypeParameters {
 		this.preserveOrder = preserveOrder;
 		numUsed = 0;
 		placeHolders = new int[identifiers.length];
-		for (int i = 0; i < placeHolders.length; i++)
+		for (int i = 0; i < placeHolders.length; i++) {
 			placeHolders[i] = -1;
-		if (preserveOrder)
+		}
+		if (preserveOrder) {
 			order = new int[identifiers.length];
+		}
 	}
 	
 	public BoogieType findType(String name, int increment, boolean markUsed) {
@@ -58,11 +60,13 @@ public class TypeParameters {
 			if (identifiers[i].equals(name)) {
 				if (placeHolders[i] < 0) {
 					/* We cannot know which place holder (if any) will be taken*/
-					if (!markUsed)
-						return BoogieType.errorType;
+					if (!markUsed) {
+						return BoogieType.TYPE_ERROR;
+					}
 					placeHolders[i] = preserveOrder ? i : numUsed;
-					if (preserveOrder)
+					if (preserveOrder) {
 						order[numUsed] = i;
+					}
 					numUsed++;
 				}
 				return BoogieType.createPlaceholderType

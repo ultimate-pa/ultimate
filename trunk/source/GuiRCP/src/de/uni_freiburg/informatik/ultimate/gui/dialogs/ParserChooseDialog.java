@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -40,6 +38,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 
 public class ParserChooseDialog extends Dialog {
 
@@ -78,10 +78,11 @@ public class ParserChooseDialog extends Dialog {
 		createContents();
 		shell.open();
 		shell.layout();
-		Display display = getParent().getDisplay();
+		final Display display = getParent().getDisplay();
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
+			if (!display.readAndDispatch()) {
 				display.sleep();
+			}
 		}
 		return result;
 	}
@@ -99,18 +100,20 @@ public class ParserChooseDialog extends Dialog {
 
 		combo = new Combo(shell, SWT.READ_ONLY | SWT.SIMPLE);
 		combo.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				int i = combo.getSelectionIndex();
+				final int i = combo.getSelectionIndex();
 				if (i != -1) {
-				String key = combo.getItem(i);
-				if (key != null)
+				final String key = combo.getItem(i);
+				if (key != null) {
 					result = ( ISource ) combo.getData(key);
+				}
 				}
 			}
 		});
 		combo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
-		for ( ISource parser : parsers) {
-			String key = parser.getPluginName();
+		for ( final ISource parser : parsers) {
+			final String key = parser.getPluginName();
 			combo.add(key);
 			combo.setData(key, parser);
 		}
@@ -119,6 +122,7 @@ public class ParserChooseDialog extends Dialog {
 		
 		final Button okButton = new Button(shell, SWT.NONE);
 		okButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				shell.dispose();
 			}
@@ -130,6 +134,7 @@ public class ParserChooseDialog extends Dialog {
 
 		final Button cancelButton = new Button(shell, SWT.NONE);
 		cancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				result = null;
 				shell.dispose();

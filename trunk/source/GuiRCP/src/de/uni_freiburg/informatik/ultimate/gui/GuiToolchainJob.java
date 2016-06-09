@@ -28,29 +28,29 @@ package de.uni_freiburg.informatik.ultimate.gui;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
 
-	public GuiToolchainJob(String name, ICore core, GuiController controller, File[] inputFiles,
-			PreludeProvider preludefile, Logger logger) {
-		super(name, core, controller, logger, inputFiles, preludefile);
+	public GuiToolchainJob(String name, ICore<ToolchainListType> core, GuiController controller, File[] inputFiles,
+			ILogger logger) {
+		super(name, core, controller, logger, inputFiles);
 	}
 
-	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, IToolchain toolchain) {
+	public GuiToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, IToolchain<ToolchainListType> toolchain) {
 		super(name, core, controller, logger, toolchain);
 	}
 
-	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
-			File[] inputFiles, PreludeProvider prelude) {
-		super(name, core, controller, logger, data, inputFiles, prelude);
+	public GuiToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, IToolchainData<ToolchainListType> data, File[] inputFiles) {
+		super(name, core, controller, logger, data, inputFiles);
 	}
 
 	@Override
@@ -58,8 +58,8 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 		// save the current toolchain to the controller instead of releasing it
 		// directly; the controller will save one toolchain and release the last
 		// if it is overwritten
-		
-		//if the current toolchain has no toolchain data, it is broken and should be released immediatly 
+
+		// if the current toolchain has no toolchain data, it is broken and should be released immediatly
 		if (mToolchain.getCurrentToolchainData() == null) {
 			super.releaseToolchain();
 		} else {

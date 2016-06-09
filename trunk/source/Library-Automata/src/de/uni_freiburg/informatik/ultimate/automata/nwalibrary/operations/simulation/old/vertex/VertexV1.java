@@ -43,7 +43,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
     /**
      * The priority of this vertex.
      */
-    private int priority;
+    private final int priority;
     /**
      * The progressMeasure for Jurdzinski lifting function.
      */
@@ -87,7 +87,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<(").append(getQ0()).append(",").append(getQ1());
         sb.append("),p:").append(getPriority()).append(",pm:");
         sb.append(getPM()).append(">");

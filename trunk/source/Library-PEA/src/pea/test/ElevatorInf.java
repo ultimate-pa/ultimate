@@ -1,9 +1,19 @@
 package pea.test;
-import pea.*;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import org.apache.log4j.PropertyConfigurator;
+
+import pea.BooleanDecision;
+import pea.CDD;
+import pea.CounterTrace;
+import pea.EventDecision;
+import pea.PEATestAutomaton;
+import pea.Phase;
+import pea.PhaseEventAutomata;
+import pea.Trace2PEACompiler;
 import pea.modelchecking.PEA2ARMCConverter;
 import pea.modelchecking.SimplifyPEAs;
-import java.util.*;
-import org.apache.log4j.PropertyConfigurator;
 
 /**
  * Class to create an automaton from a counter example trace.
@@ -18,13 +28,13 @@ public class ElevatorInf {
     }
 
     public static void main(String[] param) {
-	CDD cgless = 
+	final CDD cgless = 
 	    BooleanDecision.create("current <= goal - 1");
-	CDD cgleq = 
+	final CDD cgleq = 
 	    BooleanDecision.create("current <= goal");
-	CDD cggeq = 
+	final CDD cggeq = 
 	    BooleanDecision.create("goal <= current");
-	CDD cggreater = 
+	final CDD cggreater = 
 	    BooleanDecision.create("goal <= current - 1");
 
 	PropertyConfigurator.configure
@@ -35,12 +45,12 @@ public class ElevatorInf {
 	    .or(cgless.negate().and(cgleq).and(cggeq).and(cggreater.negate()))
 	    .or(cgless.negate().and(cgleq.negate()).and(cggeq).and(cggreater));
 	stateInv = stateInv.and(BooleanDecision.create("Min <= Max"));
-	CDD transInv = BooleanDecision.create("Min = Min'")
+	final CDD transInv = BooleanDecision.create("Min = Min'")
 	    .and(BooleanDecision.create("Max = Max'"));
 	    
-	Phase invP = new Phase("inv", stateInv);
+	final Phase invP = new Phase("inv", stateInv);
 	invP.addTransition(invP, transInv, new String[0]);
-	ElevatorInf elev = new ElevatorInf();
+	final ElevatorInf elev = new ElevatorInf();
 
 	elev.buildZPart();
 	elev.buildCSPPart();
@@ -49,18 +59,18 @@ public class ElevatorInf {
 	//elev.csppart.dump();
 	//elev.zpart.dump();
 	//elev.dcpart.dump();
-	PhaseEventAutomata pea = 
+	final PhaseEventAutomata pea = 
 	    elev.csppart.parallel(elev.zpart); //.parallel(elev.dcpart);
 
-	Phase good = new Phase("ok", CDD.TRUE);
-	Phase bad = new Phase("FINAL", CDD.TRUE);
+	final Phase good = new Phase("ok", CDD.TRUE);
+	final Phase bad = new Phase("FINAL", CDD.TRUE);
 	good.addTransition(good, CDD.TRUE, new String[0]);
 	good.addTransition(bad, /*BooleanDecision.create("Min <= current")*/
 			   CDD.TRUE
 			   .and(BooleanDecision.create("current <= Max"))
 			   .negate(), new String[0]);
 	bad.addTransition(bad, CDD.TRUE, new String[0]);
-	PEATestAutomaton tester = 
+	final PEATestAutomaton tester = 
 	    new PEATestAutomaton("tester",
 				   new Phase[] { good, bad },
 				   new Phase[] { good },new ArrayList<String>(),
@@ -70,7 +80,7 @@ public class ElevatorInf {
 						  new Phase[] {invP}, 
 						  new Phase[] {invP}));
 	//all = all.parallel(tester);
-	SimplifyPEAs simplifier = new SimplifyPEAs();
+	final SimplifyPEAs simplifier = new SimplifyPEAs();
 	simplifier.removeAllEvents(all);
 	all = simplifier.mergeFinalLocations(all, "FINAL");
 	simplifier.mergeTransitions(all);
@@ -78,9 +88,9 @@ public class ElevatorInf {
 // 	elev.csppart.parallel(elev.zpart).dump();
 	all.dump();
 
-	PEA2ARMCConverter pea2armcFast = new PEA2ARMCConverter();
-	ArrayList<String> addVars = new ArrayList<String>();
-	ArrayList<String> addTypes = new ArrayList<String>();
+	final PEA2ARMCConverter pea2armcFast = new PEA2ARMCConverter();
+	final ArrayList<String> addVars = new ArrayList<String>();
+	final ArrayList<String> addTypes = new ArrayList<String>();
 	addVars.add("current");
 	addVars.add("goal");
 	addVars.add("dir");
@@ -111,19 +121,19 @@ public class ElevatorInf {
     }
 
     public void buildZPart() {
-	CDD nnewgoal = EventDecision.create('/', "newgoal");
-	CDD nstart   = EventDecision.create('/', "start");
-	CDD npassed  = EventDecision.create('/', "passed");
-	CDD nstop    = EventDecision.create('/', "stop");
-	CDD xicurrent = BooleanDecision.create("current' = current");
-	CDD xigoal    = BooleanDecision.create("goal' = goal");
-	CDD xidir     = BooleanDecision.create("dir' = dir");
-	CDD stutter = nnewgoal.and(nstart).and(npassed).and(nstop)
+	final CDD nnewgoal = EventDecision.create('/', "newgoal");
+	final CDD nstart   = EventDecision.create('/', "start");
+	final CDD npassed  = EventDecision.create('/', "passed");
+	final CDD nstop    = EventDecision.create('/', "stop");
+	final CDD xicurrent = BooleanDecision.create("current' = current");
+	final CDD xigoal    = BooleanDecision.create("goal' = goal");
+	final CDD xidir     = BooleanDecision.create("dir' = dir");
+	final CDD stutter = nnewgoal.and(nstart).and(npassed).and(nstop)
 	    .and(xicurrent).and(xigoal).and(xidir);
-	Phase zstate = new Phase("z", CDD.TRUE);
-	Phase istate = new Phase("zi", 
+	final Phase zstate = new Phase("z", CDD.TRUE);
+	final Phase istate = new Phase("zi", 
 				 BooleanDecision.create("Min = current"));
-	String[] noresets = new String[0];
+	final String[] noresets = new String[0];
 	istate.addTransition(zstate, stutter, noresets);
 	zstate.addTransition(zstate, stutter, noresets);
 	zstate.addTransition(zstate, nnewgoal.negate()
@@ -161,8 +171,8 @@ public class ElevatorInf {
     }
 
     public void buildCSPPart() {
-	String[] noresets = new String[0];
-	Phase[] p = new Phase[] { 
+	final String[] noresets = new String[0];
+	final Phase[] p = new Phase[] { 
 	    new Phase("c0", CDD.TRUE, CDD.TRUE),
 	    new Phase("c1", CDD.TRUE, CDD.TRUE),
 	    new Phase("c2", CDD.TRUE, CDD.TRUE),
@@ -204,10 +214,10 @@ public class ElevatorInf {
     }
 
     public void buildDCPart() {
-	CDD passed = EventDecision.create("passed");
-	CDD cgeq = BooleanDecision.create("current <= goal")
+	final CDD passed = EventDecision.create("passed");
+	final CDD cgeq = BooleanDecision.create("current <= goal")
 	    .and(BooleanDecision.create("goal <= current"));
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
+	final Trace2PEACompiler compiler = new Trace2PEACompiler();
 	PhaseEventAutomata dc1, dc2;
 	dc1 = compiler.compile("passed_not_too_fast", 
 			     new CounterTrace(new CounterTrace.DCPhase[] {

@@ -7,9 +7,9 @@
 	<packaging>pom</packaging>
 	<url>https://ultimate.informatik.uni-freiburg.de</url>
 	<scm>
-		<connection>scm:git:https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</connection>
-		<developerConnection>scm:git:https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</developerConnection>
-		<url>https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</url>
+		<connection>scm:git:https://github.com/ultimate-pa/ultimate.git</connection>
+		<developerConnection>scm:git:https://github.com/ultimate-pa/ultimate.git</developerConnection>
+		<url>https://github.com/ultimate-pa/ultimate/tree/dev</url>
 	</scm>
 
 	<properties>
@@ -32,8 +32,9 @@
 		<acslastDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast</acslastDir>
 		<astbuilderDir>${workspaceDir}/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder</astbuilderDir>
 		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
-		<boogieastDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/model/boogie/ast</boogieastDir>
-		<toolchainDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</toolchainDir>
+		<boogieastDir>${workspaceDir}/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast</boogieastDir>
+		<toolchainDir>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain</toolchainDir>
+		<spaceexDir>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser</spaceexDir>
 		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
 		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
 		<smtlib2Dir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
@@ -53,12 +54,71 @@
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<!-- sonar.dynamicAnalysis is deprecated and the reuseReports behavior 
-			is the new default -->
-		<!-- <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis> -->
 		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
 		<!-- we currently do not use integration tests -->
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
+
+		<!-- Exclude completely from any sonar analysis (including coverage) -->
+		<sonar.exclusions>
+			src/jdd/**,
+			src/net/sf/javabdd/**,
+			src/java_cup/**,
+			src/srParse/ReqLexer.java,
+			src/srParse/ReqParser.java,
+			src/srParse/ReqSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/*.java,
+			src/de/uni_freiburg/informatik/ultimate/acsl/parser/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/acsl/parser/Scanner.java,
+			src/de/uni_freiburg/informatik/ultimate/acsl/parser/sym.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/parser.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/sym.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/Node.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/Parameter.java,
+			src/de/uni_freiburg/informatik/ultimate/astbuilder/Grammar.java,
+			src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser/sym.java,
+			src/de/uni_freiburg/informatik/ultimate/boogie/ast/*.java,
+			src/de/uni_freiburg/informatik/ultimate/boogie/parser/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/boogie/parser/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/boogie/parser/LexerSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/LexerAP.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/SymbolsAP.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/Symbols.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/ParserAP.java,
+			src/de/uni_freiburg/informatik/ultimate/ltl2aut/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/LexerSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/LexerSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java,
+			src/de/uni_freiburg/informatik/ultimate/smtsolver/external/LexerSymbols.java,
+			src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Parser.java,
+			src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated/*.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/DropmodelType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ModelIdOnlyType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ObjectFactory.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/PluginType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SerializeType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+		</sonar.exclusions>
+
+		<!-- Exclude from sonar duplication analysis -->
+		<sonar.cpd.exclusions></sonar.cpd.exclusions>
+
+		<!-- Exclude from sonar issue analysis -->
+		<!-- Format is: <ruleregexp>;<filepathregexp>,<ruleregexp>;<filepathregexp>,... -->
+		<!-- E.g.: *;**/* -->
+		<sonar.issue.ignore.multicriteria></sonar.issue.ignore.multicriteria>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
@@ -250,6 +310,14 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
 		<module>../WitnessPrinter</module>
+		<module>../Library-BoogieAST</module>
+		<module>../Library-JavaBDD</module>
+		<module>../Library-UltimateCore</module>
+		<module>../Library-UltimateModel</module>
+		<module>../SmtParser</module>
+		<module>../SyntaxChecker</module>
+		<module>../HeapSeparator</module>
+		<module>../HornClauseGraphBuilder</module>
 		<module>../PEATestTransofrmer</module>
 	</modules>
 
@@ -316,7 +384,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
@@ -397,7 +464,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
@@ -483,7 +549,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
@@ -550,7 +615,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->

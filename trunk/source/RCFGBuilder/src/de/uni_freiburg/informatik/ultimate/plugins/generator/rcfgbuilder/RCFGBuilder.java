@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
@@ -48,22 +48,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  */
 public class RCFGBuilder implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
-	private RCFGBuilderObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private RCFGBuilderObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -83,13 +80,13 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new RCFGBuilderObserver(mServices, mStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new RCFGBuilderObserver(mServices, mStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -98,13 +95,13 @@ public class RCFGBuilder implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, mInputDefinition.getFileNames());
 
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return mObserver.getRoot();
 	}
 
 	@Override
@@ -113,7 +110,7 @@ public class RCFGBuilder implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new RcfgPreferenceInitializer();
 	}
 

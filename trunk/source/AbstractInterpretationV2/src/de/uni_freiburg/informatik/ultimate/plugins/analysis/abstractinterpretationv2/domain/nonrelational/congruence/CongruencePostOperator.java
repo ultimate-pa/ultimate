@@ -33,21 +33,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
@@ -64,15 +63,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  */
 public class CongruencePostOperator implements IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final CongruenceDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 
-	public CongruencePostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
+	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
+			final CongruenceDomainStatementProcessor statementProcessor) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new CongruenceDomainStatementProcessor(mLogger, symbolTable);
+		mStatementProcessor = statementProcessor;
 		mSymbolTable = symbolTable;
 	}
 
@@ -113,14 +113,14 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 	@Override
 	public List<CongruenceDomainState> apply(final CongruenceDomainState stateBeforeLeaving,
-	        final CongruenceDomainState stateAfterLeaving, final CodeBlock transition) {
+			final CongruenceDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			final CallStatement callStatement = (CallStatement) call.getCallStatement();
+			final CallStatement callStatement = call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
 
 			// If there are no arguments, we don't need to rewrite states.
@@ -144,7 +144,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			}
 
 			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-			        idents.toArray(new LeftHandSide[idents.size()]), args);
+					idents.toArray(new LeftHandSide[idents.size()]), args);
 
 			final CongruenceDomainState interimState = stateBeforeLeaving.addVariables(paramVariables);
 
@@ -167,7 +167,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 			if (args.length != paramIdentifiers.size()) {
 				throw new UnsupportedOperationException(
-				        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+						"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
 			}
 
 			for (final CongruenceDomainState resultState : result) {
@@ -192,7 +192,8 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					} else {
 						if (mLogger.isDebugEnabled()) {
-							mLogger.warn("The IBoogieVar type " + type.getIType() + " cannot be handled. Assuming normal variable type.");
+							mLogger.warn("The IBoogieVar type " + type.getIType()
+									+ " cannot be handled. Assuming normal variable type.");
 						}
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					}
@@ -207,12 +208,12 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			final CallStatement correspondingCall = ret.getCallStatement();
 
 			final List<CongruenceDomainValue> vals = getOutParamValues(correspondingCall.getMethodName(),
-			        stateBeforeLeaving);
+					stateBeforeLeaving);
 			final VariableLHS[] lhs = correspondingCall.getLhs();
 
 			if (vals.size() != lhs.length) {
 				throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
-				        + ") is different from the function's number of return variables (" + vals.size() + ").");
+						+ ") is different from the function's number of return variables (" + vals.size() + ").");
 			}
 
 			final List<String> updateVarNames = new ArrayList<>();
@@ -221,14 +222,14 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			}
 
 			final CongruenceDomainState returnState = stateAfterLeaving.setValues(
-			        updateVarNames.toArray(new String[updateVarNames.size()]),
-			        vals.toArray(new CongruenceDomainValue[vals.size()]));
+					updateVarNames.toArray(new String[updateVarNames.size()]),
+					vals.toArray(new CongruenceDomainValue[vals.size()]));
 
 			returnList.add(returnState);
 			return returnList;
 		} else {
 			throw new UnsupportedOperationException(
-			        "CongruenceDomain does not support context switches other than Call and Return (yet)");
+					"CongruenceDomain does not support context switches other than Call and Return (yet)");
 		}
 	}
 
@@ -276,12 +277,12 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 	private Procedure getProcedure(final String procedureName) {
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
-		        .filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
-		        .filter(proc -> proc.getBody() != null).findFirst().get();
+				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
+				.filter(proc -> proc.getBody() != null).findFirst().get();
 	}
 
 	private List<CongruenceDomainValue> getOutParamValues(final String procedureName,
-	        final CongruenceDomainState stateBeforeLeaving) {
+			final CongruenceDomainState stateBeforeLeaving) {
 		// functions are already inlined and if there are procedure and implementation declaration for a proc, we know
 		// that we only get the implementation from the FXPE
 		final Procedure procedure = getProcedure(procedureName);

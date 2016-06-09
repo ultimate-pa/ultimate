@@ -30,8 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.reporting.OldTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.reporting.OldTestSummary;
 
 /**
  * @author Christopher Dillo

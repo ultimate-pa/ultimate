@@ -28,15 +28,15 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.LTLCheckerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.LTLCheckerTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 public class LTLChecker extends AbstractEvalTestSuite {
 
@@ -206,8 +206,8 @@ public class LTLChecker extends AbstractEvalTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String toolchain : TOOLCHAINS) {
-			for (String setting : SETTINGS) {
+		for (final String toolchain : TOOLCHAINS) {
+			for (final String setting : SETTINGS) {
 				addTestCase(toolchain, "ltlAutomizer/" + setting, INPUT);
 			}
 		}

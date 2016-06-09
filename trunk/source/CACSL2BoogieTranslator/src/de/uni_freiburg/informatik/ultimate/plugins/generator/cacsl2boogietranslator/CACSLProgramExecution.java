@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.ViolationWitnessGenerator;
 
 /**
@@ -49,11 +49,11 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	private final ProgramState<IASTExpression> mInitialState;
 	private final List<ProgramState<IASTExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
-			final Collection<ProgramState<IASTExpression>> programStates, final Logger logger) {
+			final Collection<ProgramState<IASTExpression>> programStates, final ILogger logger) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size();
@@ -95,7 +95,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 	@Override
 	public String toString() {
-		ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
+		final ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
 				new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}

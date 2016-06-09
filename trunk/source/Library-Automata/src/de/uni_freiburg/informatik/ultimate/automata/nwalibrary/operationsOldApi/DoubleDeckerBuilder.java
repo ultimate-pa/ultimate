@@ -31,16 +31,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE> 
 														implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
-	Set<STATE> m_SuccessorsConstructedIn = new HashSet<STATE>();
-	Set<STATE> m_SuccessorsConstructedCa = new HashSet<STATE>();
-//	Set<STATE> m_SuccessorsConstructedRe = new HashSet<STATE>();
+	Set<STATE> mSuccessorsConstructedIn = new HashSet<STATE>();
+	Set<STATE> mSuccessorsConstructedCa = new HashSet<STATE>();
+//	Set<STATE> mSuccessorsConstructedRe = new HashSet<STATE>();
 	
 	public DoubleDeckerBuilder(AutomataLibraryServices services) {
 		super(services);
@@ -49,18 +49,18 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE up = doubleDecker.getUp();
-		if (m_SuccessorsConstructedIn.contains(up)) {
-			HashSet<STATE> succs = new HashSet<STATE>();
-			for (LETTER letter : m_TraversedNwa.lettersInternal(up)) {
-				for (STATE succ : m_TraversedNwa.succInternal(up, letter)) {
+		final STATE up = doubleDecker.getUp();
+		if (mSuccessorsConstructedIn.contains(up)) {
+			final HashSet<STATE> succs = new HashSet<STATE>();
+			for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
+				for (final STATE succ : mTraversedNwa.succInternal(up, letter)) {
 					succs.add(succ);
 				}
 			}
 			return succs;
 		}
 		else {
-			m_SuccessorsConstructedIn.add(up);
+			mSuccessorsConstructedIn.add(up);
 			return buildInternalSuccessors(doubleDecker);
 		}
 	}
@@ -68,18 +68,18 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
-		STATE up = doubleDecker.getUp();
-		if (m_SuccessorsConstructedCa.contains(up)) {
-			HashSet<STATE> succs = new HashSet<STATE>();
-			for (LETTER letter : m_TraversedNwa.lettersCall(up)) {
-				for (STATE succ : m_TraversedNwa.succCall(up, letter)) {
+		final STATE up = doubleDecker.getUp();
+		if (mSuccessorsConstructedCa.contains(up)) {
+			final HashSet<STATE> succs = new HashSet<STATE>();
+			for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
+				for (final STATE succ : mTraversedNwa.succCall(up, letter)) {
 					succs.add(succ);
 				}
 			}
 			return succs;
 		}
 		else {
-			m_SuccessorsConstructedCa.add(up);
+			mSuccessorsConstructedCa.add(up);
 			return buildCallSuccessors(doubleDecker);
 		}
 	}
@@ -90,11 +90,11 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	protected Collection<STATE> visitAndGetReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
 //		STATE up = doubleDecker.getUp();
-//		if (m_SuccessorsConstructedRe.contains(up)) {
-//			return m_TraversedNwa.succReturn(up);
+//		if (mSuccessorsConstructedRe.contains(up)) {
+//			return mTraversedNwa.succReturn(up);
 //		}
 //		else {
-//			m_SuccessorsConstructedRe.add(up);
+//			mSuccessorsConstructedRe.add(up);
 			return buildReturnSuccessors(doubleDecker);
 //		}
 	}
@@ -109,8 +109,9 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	protected abstract Collection<STATE> buildReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker);
 	
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
-		return m_TraversedNwa;
+	@Override
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+		return mTraversedNwa;
 	}
 
 }

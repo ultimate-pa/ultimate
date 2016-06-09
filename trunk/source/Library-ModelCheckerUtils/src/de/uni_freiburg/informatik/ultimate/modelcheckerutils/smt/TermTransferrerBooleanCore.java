@@ -37,34 +37,34 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 
 public class TermTransferrerBooleanCore extends TermTransferrer {
 	
-	private final Term m_AuxiliaryTerm;
-	private final String m_FreshTermPrefix = "FBV_";
-	private int m_FreshTermCounter;
-	private final ConstructionCache<Term, Term> m_ConstructionCache;
+	private final Term mAuxiliaryTerm;
+	private final String mFreshTermPrefix = "FBV_";
+	private int mFreshTermCounter;
+	private final ConstructionCache<Term, Term> mConstructionCache;
 
 	public TermTransferrerBooleanCore(Script script) {
 		super(script);
-		m_AuxiliaryTerm = constructAuxiliaryTerm();
-		m_FreshTermCounter = 0;
-		IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
+		mAuxiliaryTerm = constructAuxiliaryTerm();
+		mFreshTermCounter = 0;
+		final IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
 			
 			@Override
 			public Term constructValue(Term key) {
-				String name = m_FreshTermPrefix + m_FreshTermCounter;
-				m_FreshTermCounter++;
-				m_Script.declareFun(name, new Sort[0], m_Script.sort("Bool"));
-				Term value = m_Script.term(name);
-				m_BacktransferMapping.put(value, key);
+				final String name = mFreshTermPrefix + mFreshTermCounter;
+				mFreshTermCounter++;
+				mScript.declareFun(name, new Sort[0], mScript.sort("Bool"));
+				final Term value = mScript.term(name);
+				mBacktransferMapping.put(value, key);
 				return value;
 			}
 		};
-		m_ConstructionCache = new ConstructionCache<Term, Term>(valueComputation );
+		mConstructionCache = new ConstructionCache<Term, Term>(valueComputation );
 	}
 	
 	public Term constructAuxiliaryTerm() {
-		String name = this.getClass().getCanonicalName() + "_AUX";
-		m_Script.declareFun(name, new Sort[0], m_Script.sort("Bool"));
-		return m_Script.term(name);
+		final String name = this.getClass().getCanonicalName() + "_AUX";
+		mScript.declareFun(name, new Sort[0], mScript.sort("Bool"));
+		return mScript.term(name);
 	}
 
 	@Override
@@ -72,15 +72,15 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 		if (term.getSort().getName().equals("Bool")) {
 			super.convert(term);
 		} else {
-			setResult(m_AuxiliaryTerm);
+			setResult(mAuxiliaryTerm);
 		}
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		
-		if (Arrays.asList(newArgs).contains(m_AuxiliaryTerm)) {
-			Term result = m_ConstructionCache.getOrConstuct(appTerm);
+		if (Arrays.asList(newArgs).contains(mAuxiliaryTerm)) {
+			final Term result = mConstructionCache.getOrConstuct(appTerm);
 			setResult(result);
 		} else {
 			super.convertApplicationTerm(appTerm, newArgs);

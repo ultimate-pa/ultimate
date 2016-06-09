@@ -4,8 +4,10 @@ Bundle-Name: Boogie Modifies Set Annotator
 Bundle-SymbolicName: BoogieModSetAnnotator;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator.Activator
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
  Library-UltimateUtil,
+ Library-BoogieAST,
  UltimateCore,
  BoogieParser,
  BoogiePreprocessor

@@ -33,8 +33,9 @@ public class action_production extends production {
       this.indexOfAction = indexOfAction;
     }
   
-  private int indexOfAction;
+  private final int indexOfAction;
   
+  @Override
   public int rhs_stackdepth()
     {
       return indexOfAction;
@@ -42,7 +43,7 @@ public class action_production extends production {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** The production we were taken out of. */
-  private production _base_production;
+  private final production _base_production;
 
   /** The production we were taken out of. */
   public production base_production() {return _base_production;}

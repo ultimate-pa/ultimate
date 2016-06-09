@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class Literal {
 	
 	public enum Polarity { POSITIVE, NEGATIVE };
-	private final Term m_Atom;
-	private final Polarity m_Polarity;
+	private final Term mAtom;
+	private final Polarity mPolarity;
 	
 	/**
 	 * Convert a Boolean term into this representation. If the input Term is
@@ -69,26 +69,26 @@ public class Literal {
 			
 		} while (withoutNegation != null);
 		if (removedNegationSymbols % 2 == 0) {
-			m_Polarity = Polarity.POSITIVE;
+			mPolarity = Polarity.POSITIVE;
 		} else {
-			m_Polarity = Polarity.NEGATIVE;
+			mPolarity = Polarity.NEGATIVE;
 		}
-		m_Atom = input;
+		mAtom = input;
 	}
 	
 	public Term getAtom() {
-		return m_Atom;
+		return mAtom;
 	}
 
 	public Polarity getPolarity() {
-		return m_Polarity;
+		return mPolarity;
 	}
 	
 	public Term toTerm(Script script) {
-		if (m_Polarity == Polarity.POSITIVE) {
-			return m_Atom;
+		if (mPolarity == Polarity.POSITIVE) {
+			return mAtom;
 		} else {
-			return script.term("not", m_Atom);
+			return script.term("not", mAtom);
 		}
 	}
 
@@ -99,7 +99,7 @@ public class Literal {
 	 */
 	public static Term getParameterOfNotTerm(Term term) {
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("not")) {
 				assert appTerm.getParameters().length == 1;
 				return appTerm.getParameters()[0];

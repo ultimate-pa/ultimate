@@ -36,7 +36,7 @@ public class AA_Accept<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	public AA_Accept(AlternatingAutomaton<LETTER,STATE> alternatingAutomaton, Word<LETTER> word) throws AutomataLibraryException{
 		isAccepted = alternatingAutomaton.accepts(word);
 	}
-	private boolean isAccepted;
+	private final boolean isAccepted;
 	
 	@Override
 	public String operationName(){

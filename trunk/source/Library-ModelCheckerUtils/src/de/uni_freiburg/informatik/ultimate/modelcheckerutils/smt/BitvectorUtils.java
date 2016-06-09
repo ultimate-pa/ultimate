@@ -94,13 +94,13 @@ public class BitvectorUtils {
 		if (term instanceof ApplicationTerm) {
 			if (term.getSort().getName().equals("BitVec")) {
 				if (term.getSort().getIndices().length == 1) {
-					ApplicationTerm appTerm = (ApplicationTerm) term;
-					FunctionSymbol symb = appTerm.getFunction();
+					final ApplicationTerm appTerm = (ApplicationTerm) term;
+					final FunctionSymbol symb = appTerm.getFunction();
 					if (isBitvectorConstant(symb)) {
 						assert (symb.getName().startsWith("bv"));
-						String valueString = symb.getName().substring(2);
-						BigInteger value = new BigInteger(valueString);
-						BigInteger index = term.getSort().getIndices()[0];
+						final String valueString = symb.getName().substring(2);
+						final BigInteger value = new BigInteger(valueString);
+						final BigInteger index = term.getSort().getIndices()[0];
 						return new BitvectorConstant(value, index);
 					}
 				}
@@ -113,22 +113,22 @@ public class BitvectorUtils {
 	 * @return Term that represents bitvector (value % 2^index)
 	 */
 	public static Term constructTerm(Script script, BigInteger value, Sort sort) {
-		BigInteger index = sort.getIndices()[0];
+		final BigInteger index = sort.getIndices()[0];
 		return constructTerm(script, new BitvectorConstant(value, index));
 	}
 	
 	public static Term constructTerm(Script script, BitvectorConstant bitvec) {
-		String funcname = "bv" + bitvec.getValue().toString();
+		final String funcname = "bv" + bitvec.getValue().toString();
 		return script.term(funcname, new BigInteger[]{bitvec.getIndex()}, null, new Term[0]);
 	}
 	
 	public static boolean allTermsAreBitvectorConstants(Term[] terms) {
-		for (Term term : terms) {
+		for (final Term term : terms) {
 			if (!term.getSort().getName().equals("BitVec")) {
 				return false;
 			} else {
 				if (term instanceof ApplicationTerm) {
-					ApplicationTerm appTerm = (ApplicationTerm) term;
+					final ApplicationTerm appTerm = (ApplicationTerm) term;
 					if (isBitvectorConstant(appTerm.getFunction())) {
 						continue;
 					} else {
@@ -145,7 +145,7 @@ public class BitvectorUtils {
 	public static Term termWithLocalSimplification(Script script, 
 			String funcname, BigInteger[] indices, Term... params) {
 		final Term result;
-		SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
+		final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
 		switch (bvop) {
 		case zero_extend:
 			result = new Zero_extend().simplifiedResult(script, funcname, indices, params);
@@ -261,7 +261,7 @@ public class BitvectorUtils {
 			assert getFunctionName().equals(funcname) : "wrong function name";
 			assert getNumberOfIndices() == 0 && indices == null || getNumberOfIndices() == indices.length : "wrong number of indices";
 			assert getNumberOfParams() == params.length : "wrong number of params";
-			BitvectorConstant[] bvs = new BitvectorConstant[params.length];
+			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
 			boolean allConstant = true;
 			for (int i=0; i<params.length; i++) {
 				bvs[i] = constructBitvectorConstant(params[i]);
@@ -309,7 +309,7 @@ public class BitvectorUtils {
 
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			BitvectorConstant bv = BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
+			final BitvectorConstant bv = BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
 			return constructTerm(script, bv);
 		}
 		
@@ -334,7 +334,7 @@ public class BitvectorUtils {
 
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			BitvectorConstant bv = BitvectorConstant.zero_extend(bvs[0], indices[0]);
+			final BitvectorConstant bv = BitvectorConstant.zero_extend(bvs[0], indices[0]);
 			return constructTerm(script, bv);
 		}
 		
@@ -357,41 +357,41 @@ public class BitvectorUtils {
 	
 	private static class RegularBitvectorOperation_BitvectorResult extends RegularBitvectorOperation {
 		
-		private final String m_Name;
-		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> m_Function;
+		private final String mName;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mFunction;
 		public RegularBitvectorOperation_BitvectorResult(String name,
 				Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> function) {
 			super();
-			m_Name = name;
-			m_Function = function;
+			mName = name;
+			mFunction = function;
 		}
 		@Override
 		public String getFunctionName() {
-			return m_Name;
+			return mName;
 		}
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			return constructTerm(script, m_Function.apply(bvs[0]).apply(bvs[1]));
+			return constructTerm(script, mFunction.apply(bvs[0]).apply(bvs[1]));
 		}
 	}
 	
 	private static class RegularBitvectorOperation_BooleanResult extends RegularBitvectorOperation {
 		
-		private final String m_Name;
-		private final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> m_Function;
+		private final String mName;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> mFunction;
 		public RegularBitvectorOperation_BooleanResult(String name,
 				Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> function) {
 			super();
-			m_Name = name;
-			m_Function = function;
+			mName = name;
+			mFunction = function;
 		}
 		@Override
 		public String getFunctionName() {
-			return m_Name;
+			return mName;
 		}
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			return script.term(String.valueOf(m_Function.apply(bvs[0]).apply(bvs[1])));
+			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
 		}
 	}
 	

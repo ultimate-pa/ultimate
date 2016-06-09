@@ -81,8 +81,8 @@ public class RewriteBooleans extends RewriteTermVariables {
 	
 	@Override
 	protected Term constructReplacementTerm(TermVariable tv) {
-		Term one = m_Script.numeral(BigInteger.ONE);
-		Term repTerm = m_Script.term(">=", tv, one);
+		final Term one = mScript.numeral(BigInteger.ONE);
+		final Term repTerm = mScript.term(">=", tv, one);
 		return repTerm;
 	}
 
@@ -98,11 +98,11 @@ public class RewriteBooleans extends RewriteTermVariables {
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(RankVar oldRankVar) {
-		Term booleanTerm = oldRankVar.getDefinition();
+		final Term booleanTerm = oldRankVar.getDefinition();
 		assert booleanTerm.getSort().getName().equals("Bool");
-		Term one = m_Script.numeral(BigInteger.ONE);
-		Term zero = m_Script.numeral(BigInteger.ZERO);
-		return m_Script.term("ite", booleanTerm, one, zero);
+		final Term one = mScript.numeral(BigInteger.ONE);
+		final Term zero = mScript.numeral(BigInteger.ZERO);
+		return mScript.term("ite", booleanTerm, one, zero);
 	}
 	
 

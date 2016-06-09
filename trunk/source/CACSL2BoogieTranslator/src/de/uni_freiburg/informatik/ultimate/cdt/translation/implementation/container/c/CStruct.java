@@ -62,7 +62,8 @@ public class CStruct extends CType {
     private String toStringCached = null;
 
     //@Override
-    public boolean isIncomplete() {
+    @Override
+	public boolean isIncomplete() {
 //		return isIncomplete;
     	return !incompleteName.isEmpty();
 //    	return incompleteName.equals("");
@@ -88,7 +89,7 @@ public class CStruct extends CType {
         this.fNames = fNames;
         this.fTypes = fTypes;
 //        this.isIncomplete = false;
-        this.incompleteName = "";
+        incompleteName = "";
     }
     
     public CStruct(String name) { //boolean isIncomplete) {
@@ -96,10 +97,10 @@ public class CStruct extends CType {
 //        if (!isIncomplete) {
 //        	throw new AssertionError("use different constructor for non-incomplete types");
 //        }
-        this.fNames = new String[0];
-        this.fTypes = new CType[0];
+        fNames = new String[0];
+        fTypes = new CType[0];
 //        this.isIncomplete = isIncomplete;
-        this.incompleteName = name;
+        incompleteName = name;
     }
 
     /**
@@ -119,8 +120,8 @@ public class CStruct extends CType {
      * @return the field type.
      */
     public CType getFieldType(String id) {
-    	assert !this.isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-        int idx = Arrays.asList(fNames).indexOf(id);
+    	assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
+        final int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id
                     + "' not in struct!");
@@ -149,15 +150,15 @@ public class CStruct extends CType {
     @Override
     public String toString() {
 //    	if (isIncomplete) {
-    	String structOrUnionPrefix = this instanceof CUnion ? "UNION#" : "STRUCT#";
+    	final String structOrUnionPrefix = this instanceof CUnion ? "UNION#" : "STRUCT#";
     	
     	
-    	if (this.isIncomplete()) {
+    	if (isIncomplete()) {
     		return structOrUnionPrefix + "~incomplete~" + incompleteName;
     	} else if (toStringCached != null) { 
     		return toStringCached;
     	}else {
-    		StringBuilder id = new StringBuilder(structOrUnionPrefix);
+    		final StringBuilder id = new StringBuilder(structOrUnionPrefix);
     		for (int i = 0; i < getFieldCount(); i++) {
     			id.append("?");
     			id.append(fNames[i]);
@@ -172,17 +173,18 @@ public class CStruct extends CType {
     
     @Override
     public boolean equals(Object o) {
-    	if (super.equals(o)) //to break a mutual recursion with CPointer -- TODO: is that a general solution??
-    		return true;
+    	if (super.equals(o)) {
+			return true;
+		}
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = ((CType)o).getUnderlyingType();
         if (!(oType instanceof CStruct)) {
             return false;
         }
         
-        CStruct oStruct = (CStruct)oType;
+        final CStruct oStruct = (CStruct)oType;
         if (fNames.length != oStruct.fNames.length) {
             return false;
         }
@@ -219,20 +221,22 @@ public class CStruct extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == PRIMITIVE.VOID)
+				((CPrimitive) o).getType() == PRIMITIVE.VOID) {
 			return true;
+		}
 
-		if (((Object) this).equals(o)) //to break a mutual recursion with CPointer -- TODO: is that a general solution??
-    		return true;
+		if (((Object) this).equals(o)) {
+			return true;
+		}
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = ((CType)o).getUnderlyingType();
+        final CType oType = o.getUnderlyingType();
         if (!(oType instanceof CStruct)) {
             return false;
         }
         
-        CStruct oStruct = (CStruct)oType;
+        final CStruct oStruct = (CStruct)oType;
         if (fNames.length != oStruct.fNames.length) {
             return false;
         }

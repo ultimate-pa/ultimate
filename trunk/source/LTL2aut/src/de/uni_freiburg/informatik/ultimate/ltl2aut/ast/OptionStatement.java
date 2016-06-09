@@ -40,14 +40,15 @@ public class OptionStatement extends AstNode {
 		this.addOutgoing(child);
 	}
 	
+	@Override
 	public String toString()
 	{
-		return ":: (" + condition.toString() + ")-> " + this.getOutgoingNodes().get(0)+ "\n";
+		return ":: (" + condition.toString() + ")-> " + getOutgoingNodes().get(0)+ "\n";
 	}
 	
 	public AstNode getCondition()
 	{
-		return this.condition;
+		return condition;
 	}
 	
 

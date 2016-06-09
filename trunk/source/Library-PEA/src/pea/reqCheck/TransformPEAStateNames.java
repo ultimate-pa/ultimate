@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 
-
 import pea.Phase;
 import pea.PhaseEventAutomata;
 
@@ -17,13 +16,13 @@ public class TransformPEAStateNames {
 	
 	
 	public Vector<String[]> buildTable(PhaseEventAutomata pea){
-		Vector<String[]> nameTable = new Vector();
-		Phase[] phases = pea.getPhases();
+		final Vector<String[]> nameTable = new Vector();
+		final Phase[] phases = pea.getPhases();
 		for (int i=0; i<phases.length;i++){
-			Phase phase = phases[i];
-			String oldName = phase.getName();
-			String newName = "st"+i;
-			String[] nameAssignment = addNameAssignment(oldName, newName);
+			final Phase phase = phases[i];
+			final String oldName = phase.getName();
+			final String newName = "st"+i;
+			final String[] nameAssignment = addNameAssignment(oldName, newName);
 			nameTable.add(nameAssignment);	
 			
 		}
@@ -36,8 +35,8 @@ public class TransformPEAStateNames {
 		      //use buffering, reading one line at a time
 		      //FileReader always assumes default encoding is OK!
 		    		
-		      BufferedReader input =  new BufferedReader(new FileReader(fileInput));
-		      BufferedWriter writer =	new BufferedWriter(new FileWriter(fileOutput));
+		      final BufferedReader input =  new BufferedReader(new FileReader(fileInput));
+		      final BufferedWriter writer =	new BufferedWriter(new FileWriter(fileOutput));
 		      
 		      try {
 		        String line = null; //not declared within while loop
@@ -50,9 +49,9 @@ public class TransformPEAStateNames {
 		        while (( line = input.readLine()) != null){
 		        	String lineString = line.toString();
 		        	for (int i=0; i<nameTable.size(); i++){
-		    			String[] nameAssignment = nameTable.elementAt(i);
-		    			String oldName = getOldName(nameAssignment);
-		    			String newName = getNewName(nameAssignment);    			
+		    			final String[] nameAssignment = nameTable.elementAt(i);
+		    			final String oldName = getOldName(nameAssignment);
+		    			final String newName = getNewName(nameAssignment);    			
 		    			
 		    			if ((lineString.contains("\""+oldName+"\"")) || (lineString.contains(">"+oldName+"<"))){
 		    				lineString = lineString.replace(oldName, newName);
@@ -69,7 +68,7 @@ public class TransformPEAStateNames {
 		        System.out.println(fileInput+" successfully transformed to "+ fileOutput);
 		      }
 		    }
-		    catch (IOException ex){
+		    catch (final IOException ex){
 		      ex.printStackTrace();
 		    }
 
@@ -79,34 +78,34 @@ public class TransformPEAStateNames {
 	}
 	
 	private String[] addNameAssignment(String oldName, String newName){
-		String[] nameAssignment = new String[2];
+		final String[] nameAssignment = new String[2];
 		nameAssignment[0] = oldName;
 		nameAssignment[1] = newName;
 		return nameAssignment;
 	}
 	
 	private String getOldName(String[] nameAssignment){
-		String oldName = nameAssignment[0];
+		final String oldName = nameAssignment[0];
 		return oldName;
 	}
 	
 	private String getNewName(String[] nameAssignment){
-		String newName = nameAssignment[1];
+		final String newName = nameAssignment[1];
 		return newName;
 	}
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		TestPatternToPEA patternToPEA = new TestPatternToPEA();
+		final TestPatternToPEA patternToPEA = new TestPatternToPEA();
 		
-		PhaseEventAutomata pea = patternToPEA.vacuousTest2();
-		PhaseEventAutomata pea2 = patternToPEA.vacuousTest2();
-		TransformPEAStateNames transformer = new TransformPEAStateNames();
-		Vector<String[]> nameTable = transformer.buildTable(pea);
+		final PhaseEventAutomata pea = patternToPEA.vacuousTest2();
+		final PhaseEventAutomata pea2 = patternToPEA.vacuousTest2();
+		final TransformPEAStateNames transformer = new TransformPEAStateNames();
+		final Vector<String[]> nameTable = transformer.buildTable(pea);
 		transformer.transform(nameTable, "C:/vacuous/vac2_12.xml", "C:/vacuous/vac2_12neu.xml");
 		
-		String test ="st0_X_st0 && st0";
-		String t = "st0";
+		final String test ="st0_X_st0 && st0";
+		final String t = "st0";
 		System.out.println(test.contains(t));
 		System.out.println(test.replace(t, "stA"));
 		

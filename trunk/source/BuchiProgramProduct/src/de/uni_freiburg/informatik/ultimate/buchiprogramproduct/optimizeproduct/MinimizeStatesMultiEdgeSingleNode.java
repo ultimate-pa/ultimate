@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -75,8 +75,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 		// a precondition is that there is only one predecessor and one
 		// successor, so this is enough to get it
-		ProgramPoint pred = (ProgramPoint) target.getIncomingEdges().get(0).getSource();
-		ProgramPoint succ = (ProgramPoint) target.getOutgoingEdges().get(0).getTarget();
+		final ProgramPoint pred = (ProgramPoint) target.getIncomingEdges().get(0).getSource();
+		final ProgramPoint succ = (ProgramPoint) target.getOutgoingEdges().get(0).getTarget();
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
@@ -96,30 +96,30 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 			mLogger.debug("    will remove " + target.getPosition());
 		}
 
-		List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
-		List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
+		final List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
+		final List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
 
-		for (RCFGEdge predEdge : predEdges) {
+		for (final RCFGEdge predEdge : predEdges) {
 			predEdge.disconnectSource();
 			predEdge.disconnectTarget();
 		}
 
-		for (RCFGEdge succEdge : succEdges) {
+		for (final RCFGEdge succEdge : succEdges) {
 			succEdge.disconnectSource();
 			succEdge.disconnectTarget();
 		}
 
 		int newEdges = 0;
-		for (RCFGEdge predEdge : predEdges) {
-			CodeBlock predCB = (CodeBlock) predEdge;
+		for (final RCFGEdge predEdge : predEdges) {
+			final CodeBlock predCB = (CodeBlock) predEdge;
 			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("    already infeasible: " + predCB);
 				}
 				continue;
 			}
-			for (RCFGEdge succEdge : succEdges) {
-				CodeBlock succCB = (CodeBlock) succEdge;
+			for (final RCFGEdge succEdge : succEdges) {
+				final CodeBlock succCB = (CodeBlock) succEdge;
 
 				if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 					if (mLogger.isDebugEnabled()) {
@@ -128,7 +128,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 					continue;
 				}
 
-				SequentialComposition sc = mCbf.constructSequentialComposition(
+				final SequentialComposition sc = mCbf.constructSequentialComposition(
 						pred, succ, false, false, 
 						Arrays.asList(new CodeBlock[] { predCB,	succCB }));
 				assert sc.getTarget() != null;

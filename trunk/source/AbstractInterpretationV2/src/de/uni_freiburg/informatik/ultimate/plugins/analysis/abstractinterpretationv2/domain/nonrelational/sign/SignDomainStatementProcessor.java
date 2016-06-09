@@ -33,23 +33,23 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -134,7 +134,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 			for (final IEvaluationResult<Values> res : result) {
 				final SignDomainState retState = mCurrentNewState.copy();
-				final SignDomainValue newValue = new SignDomainValue((Values) res.getValue());
+				final SignDomainValue newValue = new SignDomainValue(res.getValue());
 				retState.setValue(varname, newValue);
 				mNewState.add(retState);
 			}
@@ -152,10 +152,10 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		mExpressionEvaluator = new ExpressionEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>();
 
-		Expression formula = statement.getFormula();
+		final Expression formula = statement.getFormula();
 
 		if (formula instanceof BooleanLiteral) {
-			BooleanLiteral binform = (BooleanLiteral) formula;
+			final BooleanLiteral binform = (BooleanLiteral) formula;
 			if (!binform.getValue()) {
 				final SignDomainState ret = mCurrentNewState.copy();
 				ret.setToBottom();
@@ -205,7 +205,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		final String booleanValue = expr.getValue() ? "True" : "False";
 
-		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
+		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
 
 		mExpressionEvaluator.addEvaluator(booleanExpressionEvaluator);
@@ -213,7 +213,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(RealLiteral expr) {
-		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
+		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
@@ -222,7 +222,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(IntegerLiteral expr) {
 
-		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
+		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
@@ -231,7 +231,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(UnaryExpression expr) {
 
-		SignUnaryExpressionEvaluator unaryExpressionEvaluator = (SignUnaryExpressionEvaluator) mEvaluatorFactory
+		final SignUnaryExpressionEvaluator unaryExpressionEvaluator = (SignUnaryExpressionEvaluator) mEvaluatorFactory
 		        .createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
 
 		unaryExpressionEvaluator.setOperator(expr.getOperator());

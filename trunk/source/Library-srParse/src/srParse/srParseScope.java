@@ -1,11 +1,13 @@
 package srParse;
 
 
+import pea.BooleanDecision;
 import pea.CDD;
 
 
 public abstract class srParseScope {
 
+	@Override
 	public abstract String toString();
 	
 	//note that q is always first, and r always second var in pattern (in contrast to dokumentation)

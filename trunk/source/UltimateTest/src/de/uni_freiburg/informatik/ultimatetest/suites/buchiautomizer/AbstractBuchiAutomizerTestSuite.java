@@ -26,22 +26,25 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer;
 
+
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.TerminationAnalysisTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
@@ -49,7 +52,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -60,30 +62,33 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
 				new ColumnDefinition(
-						"Overall time", "runtime",
+						CegarLoopStatisticsDefinitions.OverallTime.toString(), "runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),	
 //				new ColumnDefinition(
 //						"Peak memory consumption (bytes)", "Mem{-}ory",
 //						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
 				new ColumnDefinition(
-						"Overall iterations", "iter{-}ations",
+						CegarLoopStatisticsDefinitions.OverallIterations.toString(), "iter{-}ations",
 						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 				
-				new ColumnDefinition("Automata difference", "adiff time", 
+				new ColumnDefinition(
+						CegarLoopStatisticsDefinitions.AutomataDifference.toString(), "adiff time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				
 				new ColumnDefinition("Dead end removal time", "dead end time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("Minimization time", "mnmz time", 
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.StatesRemovedByMinimization.toString(), "mnmz states", 
+						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
@@ -93,8 +98,6 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 				new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				
-				new ColumnDefinition("States removed by minization", "mnmz states", 
-						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("NonLiveStateRemoval", "non live time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("BuchiClosure", "bc time", 

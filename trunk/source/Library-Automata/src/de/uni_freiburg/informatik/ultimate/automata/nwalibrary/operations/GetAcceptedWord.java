@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -35,33 +33,34 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	NestedWord<LETTER> m_AcceptedWord;
+	INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	NestedWord<LETTER> mAcceptedWord;
 
 	public GetAcceptedWord(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(m_Services, operand);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");
 		} else {
-			m_AcceptedWord = isEmpty.getNestedRun().getWord();
+			mAcceptedWord = isEmpty.getNestedRun().getWord();
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public NestedWord<LETTER> getResult() throws AutomataLibraryException {
-		return m_AcceptedWord;
+		return mAcceptedWord;
 	}
 
 	@Override
@@ -72,13 +71,13 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found word of length "
-				+ m_AcceptedWord.length();
+				+ mAcceptedWord.length();
 	}
 
 	@Override

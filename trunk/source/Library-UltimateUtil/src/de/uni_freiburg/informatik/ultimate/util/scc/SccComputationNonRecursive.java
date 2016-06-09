@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Non-recursive implementation of {@link SccComputation}.
@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComponent<NODE>> extends SccComputation<NODE, COMP> {
 	
 	public SccComputationNonRecursive(
-			Logger logger,
+			ILogger logger,
 			ISuccessorProvider<NODE> successorProvider,
 			IStronglyConnectedComponentFactory<NODE, COMP> sccFac,
 			int numberOfAllNodes, Set<NODE> startNodes) {
@@ -51,13 +51,13 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	
 	@Override
 	protected void strongconnect(NODE v) {
-		Stack<TodoStackElement> todoStack = new Stack<>();
+		final Stack<TodoStackElement> todoStack = new Stack<>();
 		todoStack.push(new TodoStackElement(v, null));
 		while (!todoStack.isEmpty()) {
-			TodoStackElement todoStackElement = todoStack.pop();
+			final TodoStackElement todoStackElement = todoStack.pop();
 			switch (todoStackElement.getTask()) {
 			case INDEX:
-				if (m_Indices.containsKey(todoStackElement.getNode())) {
+				if (mIndices.containsKey(todoStackElement.getNode())) {
 					// do nothing
 				} else {
 					doIndex(todoStackElement.getNode());
@@ -81,24 +81,24 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 
 
 	private void doSetLowlink(NODE node, NODE predecessor) {
-		if (m_LowLinks.get(node).equals(m_Indices.get(node))) {
+		if (mLowLinks.get(node).equals(mIndices.get(node))) {
 			establishNewComponent(node);
 		}
 		if (predecessor == null) {
 			// node is first element, do nothing
 		} else {
-			updateLowlink(predecessor, m_LowLinks.get(node));
+			updateLowlink(predecessor, mLowLinks.get(node));
 		}
 	}
 
 
 	private void doGetSuccessors(NODE node, Stack<TodoStackElement> todoStack) {
-		Iterator<NODE> it = m_SuccessorProvider.getSuccessors(node);
+		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(node);
 		while(it.hasNext()) {
-			NODE succ = it.next();
-			if (m_Indices.containsKey(succ)) {
-				if (m_NoScc.contains(succ)) {
-					updateLowlink(node, m_Indices.get(succ));
+			final NODE succ = it.next();
+			if (mIndices.containsKey(succ)) {
+				if (mNoScc.contains(succ)) {
+					updateLowlink(node, mIndices.get(succ));
 				}
 			} else {
 				todoStack.push(new TodoStackElement(succ, node));
@@ -108,34 +108,34 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 
 
 	private void doIndex(NODE node) {
-		assert (!m_Indices.containsKey(node));
-		assert (!m_LowLinks.containsKey(node));
-		m_Indices.put(node, m_Index);
-		m_LowLinks.put(node, m_Index);
-		m_Index++;
-		m_NoScc.push(node);
+		assert (!mIndices.containsKey(node));
+		assert (!mLowLinks.containsKey(node));
+		mIndices.put(node, mIndex);
+		mLowLinks.put(node, mIndex);
+		mIndex++;
+		mNoScc.push(node);
 	}
 
 
 	enum NextTask { INDEX, GET_SUCCESSORS, SET_LOWLINK };
 	private class TodoStackElement {
 		
-		private final NODE m_Node;
-		private NextTask m_Task;
-		private final NODE m_Predecessor;
+		private final NODE mNode;
+		private NextTask mTask;
+		private final NODE mPredecessor;
 		public TodoStackElement(NODE node, NODE predecessor) {
 			super();
-			m_Node = node;
-			m_Task = NextTask.INDEX;
-			m_Predecessor = predecessor;
+			mNode = node;
+			mTask = NextTask.INDEX;
+			mPredecessor = predecessor;
 		}
 		public void reportTaskAccomplished() {
-			switch (m_Task) {
+			switch (mTask) {
 			case INDEX:
-				m_Task = NextTask.GET_SUCCESSORS;
+				mTask = NextTask.GET_SUCCESSORS;
 				break;
 			case GET_SUCCESSORS:
-				m_Task = NextTask.SET_LOWLINK;
+				mTask = NextTask.SET_LOWLINK;
 				break;
 			case SET_LOWLINK:
 				throw new IllegalStateException("SET_LOWLINK is last task");
@@ -144,18 +144,18 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 			}
 		}
 		public NODE getNode() {
-			return m_Node;
+			return mNode;
 		}
 		public NextTask getTask() {
-			return m_Task;
+			return mTask;
 		}
 		public NODE getPredecessor() {
-			return m_Predecessor;
+			return mPredecessor;
 		}
 		@Override
 		public String toString() {
-			return "TodoStackElement [m_Node=" + m_Node + ", m_Task=" + m_Task
-					+ ", m_Predecessor=" + m_Predecessor + "]";
+			return "TodoStackElement [mNode=" + mNode + ", mTask=" + mTask
+					+ ", mPredecessor=" + mPredecessor + "]";
 		}
 		
 	}

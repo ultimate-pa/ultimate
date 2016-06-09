@@ -49,10 +49,10 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 		Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<Condition<S, C>> m_Conditions;
+	private final Set<Condition<S, C>> mConditions;
 
 	public ConditionMarking(Set<Condition<S, C>> conditions) {
-		m_Conditions = conditions;
+		mConditions = conditions;
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @return
 	 */
 	public boolean contains(Condition<S, C> p) {
-		return m_Conditions.contains(p);
+		return mConditions.contains(p);
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
 	public boolean containsAll(Collection<?> c) {
-		return m_Conditions.containsAll(c);
+		return mConditions.containsAll(c);
 	}
 
 	/**
@@ -77,15 +77,16 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @see java.util.Set#isEmpty()
 	 */
 	public boolean isEmpty() {
-		return m_Conditions.isEmpty();
+		return mConditions.isEmpty();
 	}
 
 	/**
 	 * @return
 	 * @see java.util.Set#iterator()
 	 */
+	@Override
 	public Iterator<Condition<S, C>> iterator() {
-		return m_Conditions.iterator();
+		return mConditions.iterator();
 	}
 
 	/**
@@ -93,7 +94,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @see java.util.Set#size()
 	 */
 	public int size() {
-		return m_Conditions.size();
+		return mConditions.size();
 	}
 
 	/*
@@ -104,18 +105,23 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		ConditionMarking<S, C> other = (ConditionMarking<S, C>) obj;
-		if (m_Conditions == null) {
-			if (other.m_Conditions != null)
+		}
+		final ConditionMarking<S, C> other = (ConditionMarking<S, C>) obj;
+		if (mConditions == null) {
+			if (other.mConditions != null) {
 				return false;
-		} else if (!m_Conditions.equals(other.m_Conditions))
+			}
+		} else if (!mConditions.equals(other.mConditions)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -129,7 +135,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_Conditions == null) ? 0 : m_Conditions.hashCode());
+				+ ((mConditions == null) ? 0 : mConditions.hashCode());
 		return result;
 	}
 
@@ -138,7 +144,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @return true, if the marking enables the specified transition.
 	 */
 	public boolean isEventEnabled(Event<S, C> event) {
-		return m_Conditions.containsAll(event.getPredecessorConditions());
+		return mConditions.containsAll(event.getPredecessorConditions());
 	}
 
 	/**
@@ -147,7 +153,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @param other
 	 */
 	public void add(ConditionMarking<S, C> other) {
-		m_Conditions.addAll(other.m_Conditions);
+		mConditions.addAll(other.mConditions);
 	}
 	
 	/**
@@ -156,7 +162,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @param other
 	 */
 	public void addTo(Set<Condition<S, C>> other) {
-		other.addAll(m_Conditions);
+		other.addAll(mConditions);
 	}
 
 	/**
@@ -168,8 +174,8 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 */
 	public ConditionMarking<S, C> fireEvent(Event<S, C> event) {
 		assert(isEventEnabled(event));
-		HashSet<Condition<S, C>> resultSet = new HashSet<Condition<S, C>>(
-				m_Conditions);
+		final HashSet<Condition<S, C>> resultSet = new HashSet<Condition<S, C>>(
+				mConditions);
 		resultSet.removeAll(event.getPredecessorConditions());
 		resultSet.addAll(event.getSuccessorConditions());
 		return new ConditionMarking<S, C>(resultSet);
@@ -182,15 +188,17 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @return true if the
 	 */
 	public boolean undoEvent(Event<S, C> event) {
-		if (!m_Conditions.containsAll(event.getSuccessorConditions()))
+		if (!mConditions.containsAll(event.getSuccessorConditions())) {
 			return false;
-		m_Conditions.removeAll(event.getSuccessorConditions());
-		m_Conditions.addAll(event.getPredecessorConditions());
+		}
+		mConditions.removeAll(event.getSuccessorConditions());
+		mConditions.addAll(event.getPredecessorConditions());
 		return true;
 	}
 
+	@Override
 	public String toString() {
-		return this.m_Conditions.toString();
+		return this.mConditions.toString();
 	}
 
 	/**
@@ -200,8 +208,8 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * @return
 	 */
 	public Marking<S, C> getMarking() {
-		HashSet<Place<S, C>> mark = new HashSet<Place<S, C>>();
-		for (Condition<S, C> c : m_Conditions) {
+		final HashSet<Place<S, C>> mark = new HashSet<Place<S, C>>();
+		for (final Condition<S, C> c : mConditions) {
 			assert !mark.contains(c.getPlace()) : "Petri Net not one safe!";
 			mark.add(c.getPlace());
 		}

@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ISideEffectHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * @author Markus Lindenmann
@@ -52,17 +52,17 @@ public class SideEffectHandler implements ISideEffectHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
-        String msg = "SideEffectHandler: Not yet implemented: "
+        final String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = LocationFactory.createCLocation(node);
+        final ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
     public Result visit(Dispatcher main, ACSLNode node) {
-        String msg = "SideEffectHandler: Not yet implemented: "
+        final String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = LocationFactory.createACSLLocation(node);
+        final ILocation loc = LocationFactory.createACSLLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 }

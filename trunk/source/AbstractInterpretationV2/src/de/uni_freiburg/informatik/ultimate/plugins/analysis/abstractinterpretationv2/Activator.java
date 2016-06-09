@@ -28,15 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
-import org.eclipse.core.runtime.Plugin;
-
 /**
  * The activator class controls the plug-in life cycle.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class Activator extends Plugin {
+public class Activator {
 
 	public static final String PLUGIN_ID = AbstractInterpretation.class.getPackage().getName();
 

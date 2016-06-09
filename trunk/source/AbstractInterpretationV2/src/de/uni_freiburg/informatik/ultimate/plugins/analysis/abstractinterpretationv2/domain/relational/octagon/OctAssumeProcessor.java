@@ -31,19 +31,19 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Part of the {@link OctPostOperator}, specialized for the {@link AssumeStatement}.
@@ -147,7 +147,7 @@ public class OctAssumeProcessor {
 			}
 
 		} else if (expr instanceof IfThenElseExpression) {
-			IfThenElseExpression ie = (IfThenElseExpression) expr;
+			final IfThenElseExpression ie = (IfThenElseExpression) expr;
 			// isNegated refers to the then and else part of the IfThenElseExpressions -- condition is not affected
 			final Expression condition = ie.getCondition();
 			final Expression notCondition = mPostOp.getExprTransformer().logicNegCached(condition);
@@ -249,9 +249,9 @@ public class OctAssumeProcessor {
 	private List<OctDomainState> processNumericRelation(final BinaryExpression binExpr, final boolean isNegated,
 			final List<OctDomainState> oldStates) {
 
-		List<OctDomainState> newStates = new ArrayList<>();
-		IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(binExpr);
-		for (Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
+		final List<OctDomainState> newStates = new ArrayList<>();
+		final IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(binExpr);
+		for (final Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
 			newStates.addAll(
 					processNumericRelationWithoutIfs((BinaryExpression) leaf.getFirst(), isNegated, leaf.getSecond()));
 		}
@@ -279,7 +279,7 @@ public class OctAssumeProcessor {
 			return oldStates; // safe over-approximation
 		}
 		assert left.getType().equals(right.getType());
-		boolean intRelation = TypeUtil.isNumericInt(left.getType());
+		final boolean intRelation = TypeUtil.isNumericInt(left.getType());
 		boolean strictRelInt = false;
 		switch (relOp) {
 		case COMPEQ:
@@ -395,8 +395,8 @@ public class OctAssumeProcessor {
 			return oldStates;
 
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
-			OctValue cOct = new OctValue(c);
-			OctValue cOctNeg = new OctValue(c.negate());
+			final OctValue cOct = new OctValue(c);
+			final OctValue cOctNeg = new OctValue(c.negate());
 			oldStates.forEach(state ->
 					state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, cOct));
 			oldStates.forEach(state ->
@@ -455,7 +455,7 @@ public class OctAssumeProcessor {
 			return oldStates;
 
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
-			OctValue cOct = new OctValue(c);
+			final OctValue cOct = new OctValue(c);
 			oldStates.forEach(state ->
 					state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, cOct));
 			return oldStates;

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 
 public class CLocation extends CACSLLocation {
 
@@ -85,7 +85,7 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mNode != null) {
 			sb.append("C: ");
 			sb.append(mNode.getRawSignature());

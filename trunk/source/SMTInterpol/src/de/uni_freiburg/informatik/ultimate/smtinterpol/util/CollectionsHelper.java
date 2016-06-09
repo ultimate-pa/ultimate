@@ -36,9 +36,10 @@ public final class CollectionsHelper {
 	 * contained in <code>c2</code>.
 	 */
 	public static <E> boolean containsAny(Collection<E> c1,Collection<E> c2) {
-		for (E elem : c1) {
-			if (c2.contains(elem))
+		for (final E elem : c1) {
+			if (c2.contains(elem)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -51,16 +52,17 @@ public final class CollectionsHelper {
 	 * contained in <code>c2</code>.
 	 */
 	public static <E> boolean containsAny(E[] c1,Collection<E> c2) {
-		for (E elem : c1) {
-			if (c2.contains(elem))
+		for (final E elem : c1) {
+			if (c2.contains(elem)) {
 				return true;
+			}
 		}
 		return false;
 	}
 	public static <E> Collection<E> asymmetricDifference(E[] c1,
 			Collection<E> c2) {
-		Set<E> result = new HashSet<E>();
-		for (E elem : c1) {
+		final Set<E> result = new HashSet<E>();
+		for (final E elem : c1) {
 			if (!c2.contains(elem)) {
 				result.add(elem);
 			}

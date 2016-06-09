@@ -3,8 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: AutomataScriptInterpreter
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator
 Require-Bundle: UltimateCore,
+ Library-UltimateCore, 
  Library-log4j,
  de.uni_freiburg.informatik.ultimate.automata,
  AutomataScriptParser

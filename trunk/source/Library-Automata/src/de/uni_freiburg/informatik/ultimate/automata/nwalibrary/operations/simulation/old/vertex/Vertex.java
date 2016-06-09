@@ -43,11 +43,11 @@ public class Vertex<LETTER,STATE> {
     /**
      * The label of the first Buchi automaton state.
      */
-    private STATE q0;
+    private final STATE q0;
     /**
      * The label of the second Buchi automaton state.
      */
-    private STATE q1;
+    private final STATE q1;
 	
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -73,7 +73,7 @@ public class Vertex<LETTER,STATE> {
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("<(").append(getQ0()).append(",").append(getQ1());
         sb.append(")>");
         return sb.toString();

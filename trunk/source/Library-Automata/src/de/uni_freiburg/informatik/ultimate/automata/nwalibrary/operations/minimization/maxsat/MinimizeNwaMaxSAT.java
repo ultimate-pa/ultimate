@@ -30,45 +30,44 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class MinimizeNwaMaxSAT<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	private final AutomataLibraryServices m_services;
-	private final INestedWordAutomaton<LETTER, STATE> m_operand;
+	private final AutomataLibraryServices mservices;
+	private final INestedWordAutomaton<LETTER, STATE> moperand;
 
-	private final NestedWordAutomaton<LETTER, STATE> m_result;
+	private final NestedWordAutomaton<LETTER, STATE> mresult;
 
 	public MinimizeNwaMaxSAT(
 			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> automaton) {
 
-		m_services = services;
-		m_operand = automaton;
+		mservices = services;
+		moperand = automaton;
 
-		Logger logger = services.getLoggingService().getLogger(operationName());
-		Logger convertLog = services.getLoggingService().getLogger("Converter");
-		Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
-		Logger solveLog = services.getLoggingService().getLogger("Solver");
+		final ILogger logger = services.getLoggingService().getLogger(operationName());
+		final ILogger convertLog = services.getLoggingService().getLogger("Converter");
+		final ILogger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
+		final ILogger solveLog = services.getLoggingService().getLogger("Solver");
 
 		logger.info(startMessage());
 
 		convertLog.info("starting conversion");
-		Converter<LETTER, STATE> converter = new Converter<LETTER, STATE>(services, stateFactory, automaton);
-		NWA nwa = converter.getNWA();
+		final Converter<LETTER, STATE> converter = new Converter<LETTER, STATE>(services, stateFactory, automaton);
+		final NWA nwa = converter.getNWA();
 		// it shouldn't be like this, but...
-		ArrayList<Hist> history = converter.computeHistoryStates();
+		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(
 				"finished conversion. "
 				+ Integer.toString(nwa.numStates) + " states, "
@@ -81,18 +80,18 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		);
 
 		generateLog.info("starting clauses generation");
-		Horn3Array clauses = Generator.generateClauses(nwa, history);
+		final Horn3Array clauses = Generator.generateClauses(nwa, history);
 		generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
 		solveLog.info("starting Solver");
-		char[] assignments = new Solver(clauses).solve();
+		final char[] assignments = new Solver(clauses).solve();
 		solveLog.info("finished Solver");
 
 		generateLog.info("making equivalence classes from assignments");
-		Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
+		final Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
 		generateLog.info("finished making equivalence classes");
 
-		m_result = converter.constructMerged(eqCls);
+		mresult = converter.constructMerged(eqCls);
 		convertLog.info("constructed minimized automaton");
 
 		logger.info(exitMessage());
@@ -115,16 +114,16 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 
 	@Override
 	public NestedWordAutomaton<LETTER, STATE> getResult() {
-		return m_result;
+		return mresult;
 	}
 
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		if (checkInclusion(m_operand, getResult(), stateFactory)
-			&& checkInclusion(getResult(), m_operand, stateFactory))
-				return true;
-		else {
-			ResultChecker.writeToFileIfPreferred(m_services, operationName() + " failed", "language equality check failed", m_operand);
+		if (checkInclusion(moperand, getResult(), stateFactory)
+			&& checkInclusion(getResult(), moperand, stateFactory)) {
+			return true;
+		} else {
+			ResultChecker.writeToFileIfPreferred(mservices, operationName() + " failed", "language equality check failed", moperand);
 			return false;
 		}
 	 }
@@ -148,9 +147,9 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(m_services,
-				ResultChecker.getOldApiNwa(m_services, subset),
-				ResultChecker.getOldApiNwa(m_services, superset),
+		return ResultChecker.nwaLanguageInclusion(mservices,
+				ResultChecker.getOldApiNwa(mservices, subset),
+				ResultChecker.getOldApiNwa(mservices, superset),
 				stateFactory) == null;
 	}
 }

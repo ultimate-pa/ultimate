@@ -32,22 +32,20 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import pea_to_boogie.Activator;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
-import srParse.srParsePattern;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import srParse.pattern.PatternType;
 
 public class PeaToBoogie implements ISource {
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	List<String> mFileNames = new ArrayList<String>();
 
 	@Override
@@ -81,17 +79,17 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
-		Translator translator = new Translator();
-		String inputPath = file.getAbsolutePath();
+		final Translator translator = new Translator();
+		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<String>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
-		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
-		//TODO: Add options to this cruel program 
-		BitSet vacuityChecks = new BitSet(patterns.length);
+		final PatternType[] patterns = new ReqToPEA().genPatterns(inputPath);
+		// TODO: Add options to this cruel program
+		final BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
-		
-		int combinationNum = Math.min(patterns.length, 2); // TODO preference
+
+		final int combinationNum = Math.min(patterns.length, 2); // TODO preference
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
 		translator.setInputFilePath(inputPath);
@@ -107,8 +105,8 @@ public class PeaToBoogie implements ISource {
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
-		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+		} catch (final Exception ex) {
+			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -119,7 +117,7 @@ public class PeaToBoogie implements ISource {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 
@@ -136,6 +134,6 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void finish() {
-		
+
 	}
 }

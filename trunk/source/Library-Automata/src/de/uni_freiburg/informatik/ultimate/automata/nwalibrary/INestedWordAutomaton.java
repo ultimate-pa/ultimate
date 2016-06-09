@@ -55,6 +55,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	/**
 	 * Returns the set of initial states. 
 	 */
+	@Override
 	public Set<STATE> getInitialStates();
 	
 	/**

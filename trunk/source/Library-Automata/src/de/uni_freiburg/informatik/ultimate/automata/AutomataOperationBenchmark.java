@@ -44,24 +44,24 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  */
 public class AutomataOperationBenchmark implements ICsvProviderProvider<Object> {
 	
-	private final LinkedHashMap<String, Object> m_KeyValueMap = new LinkedHashMap<>();
+	private final LinkedHashMap<String, Object> mKeyValueMap = new LinkedHashMap<>();
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		List<String> columnTitles = new ArrayList<>(m_KeyValueMap.size());
-		List<Object> firstRow = new ArrayList<>(m_KeyValueMap.size());
-		for (Entry<String, Object> entry : m_KeyValueMap.entrySet()) {
+		final List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
+		final List<Object> firstRow = new ArrayList<>(mKeyValueMap.size());
+		for (final Entry<String, Object> entry : mKeyValueMap.entrySet()) {
 			columnTitles.add(entry.getKey());
 			firstRow.add(entry.getValue());
 			
 		}
-		SimpleCsvProvider<Object> result = new SimpleCsvProvider<>(columnTitles);
+		final SimpleCsvProvider<Object> result = new SimpleCsvProvider<>(columnTitles);
 		result.addRow(firstRow);
 		return result;
 	}
 	
 	public Object addKeyValuePair(String key, Object value) {
-		return m_KeyValueMap.put(key, value);
+		return mKeyValueMap.put(key, value);
 	}
 
 }

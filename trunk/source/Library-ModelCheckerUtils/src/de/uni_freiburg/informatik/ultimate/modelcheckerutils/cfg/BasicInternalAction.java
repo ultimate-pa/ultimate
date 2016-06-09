@@ -34,15 +34,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  *
  */
 public class BasicInternalAction extends AbstractBasicAction implements IInternalAction {
-	private final TransFormula m_TransFormula;
+	private final TransFormula mTransFormula;
 	
 	public BasicInternalAction(String preceedingProcedure, String succeedingProcedure, TransFormula transFormula) {
 		super(preceedingProcedure, succeedingProcedure);
-		m_TransFormula = transFormula;
+		mTransFormula = transFormula;
 	}
 
 	@Override
 	public TransFormula getTransformula() {
-		return m_TransFormula;
+		return mTransFormula;
 	}
 }

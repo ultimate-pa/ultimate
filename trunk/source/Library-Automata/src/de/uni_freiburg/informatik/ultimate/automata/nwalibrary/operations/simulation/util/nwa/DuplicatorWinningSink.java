@@ -45,15 +45,15 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	/**
 	 * The duplicator vertex of this sink.
 	 */
-	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> m_DuplicatorSink;
+	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> mDuplicatorSink;
 	/**
 	 * The entry vertex of this sink.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SinkEntry;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSinkEntry;
 	/**
 	 * The spoiler vertex of this sink.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SpoilerSink;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSpoilerSink;
 
 	/**
 	 * Creates a new sink which starts at <tt>sinkEntry</tt>.
@@ -62,10 +62,11 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	 *            The vertex where the sink starts
 	 */
 	public DuplicatorWinningSink(final SpoilerDoubleDeckerVertex<LETTER, STATE> sinkEntry) {
-		m_SinkEntry = sinkEntry;
-		m_DuplicatorSink = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				ETransitionType.SINK, this);
-		m_SpoilerSink = new SpoilerDoubleDeckerVertex<LETTER, STATE>(0, false, null, null, this);
+		mSinkEntry = sinkEntry;
+		mDuplicatorSink = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
+				new VertexDownState<STATE>(null, null), ETransitionType.SINK, this);
+		mSpoilerSink = new SpoilerDoubleDeckerVertex<LETTER, STATE>(0, false, null, null,
+				new VertexDownState<STATE>(null, null), this);
 	}
 
 	/**
@@ -74,7 +75,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	 * @return The entry vertex of this sink.
 	 */
 	public DuplicatorDoubleDeckerVertex<LETTER, STATE> getDuplicatorSink() {
-		return m_DuplicatorSink;
+		return mDuplicatorSink;
 	}
 
 	/**
@@ -83,7 +84,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	 * @return The entry vertex of this sink.
 	 */
 	public SpoilerDoubleDeckerVertex<LETTER, STATE> getSinkEntry() {
-		return m_SinkEntry;
+		return mSinkEntry;
 	}
 
 	/**
@@ -92,7 +93,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> {
 	 * @return The entry vertex of this sink.
 	 */
 	public SpoilerDoubleDeckerVertex<LETTER, STATE> getSpoilerSink() {
-		return m_SpoilerSink;
+		return mSpoilerSink;
 	}
 
 }

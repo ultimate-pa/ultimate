@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -45,24 +45,24 @@ public class PetriNetMarkingListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -2876076623803821394L;
-	private IdentifierListAST m_markings;
+	private IdentifierListAST mmarkings;
 	
 	public PetriNetMarkingListAST(ILocation loc) {
 		super(loc);
-		m_markings = new IdentifierListAST(loc);
+		mmarkings = new IdentifierListAST(loc);
 	}
 	
 	public PetriNetMarkingListAST(ILocation loc, IdentifierListAST idlist) {
 		this(loc);
-		m_markings = idlist;
+		mmarkings = idlist;
 	}
 
 	public List<String> getMarkings() {
-		return m_markings.getIdentifierList();
+		return mmarkings.getIdentifierList();
 	}
 	
 	public boolean containsPlace(String place) {
-		return m_markings.getIdentifierList().contains(place);
+		return mmarkings.getIdentifierList().contains(place);
 	}
 
 }

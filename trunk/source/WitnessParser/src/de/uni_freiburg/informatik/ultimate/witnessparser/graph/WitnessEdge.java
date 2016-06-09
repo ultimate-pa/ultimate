@@ -27,8 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEdge,WitnessNode, WitnessEdge> {
 
@@ -60,7 +60,7 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (mName != null) {
 			sb.append("[" + mName + "] ");
 		}

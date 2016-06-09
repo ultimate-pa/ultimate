@@ -67,24 +67,24 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	private static final String s_name_delta = "delta_";
 	private static final String s_name_function = "rank_";
 	
-	private Term[] m_deltas;
-	private AffineFunctionGenerator[] m_fgens;
+	private final Term[] mdeltas;
+	private final AffineFunctionGenerator[] mfgens;
 	
 	/**
-	 * @param num_phases number of phases in the multiphase template
+	 * @param numphases number of phases in the multiphase template
 	 */
-	public MultiphaseTemplate(int num_phases) {
-		assert(num_phases > 1);
-		size = num_phases;
-		m_deltas = new Term[size];
-		m_fgens = new AffineFunctionGenerator[size];
+	public MultiphaseTemplate(int numphases) {
+		assert(numphases > 1);
+		size = numphases;
+		mdeltas = new Term[size];
+		mfgens = new AffineFunctionGenerator[size];
 	}
 	
 	@Override
 	protected void _init() {
 		for (int i = 0; i < size; ++i) {
-			m_deltas[i] = newDelta(s_name_delta + getInstanceNumber() + "_" + i);
-			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+			mdeltas[i] = newDelta(s_name_delta + getInstanceNumber() + "_" + i);
+			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
@@ -96,7 +96,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(size);
 		sb.append("-phase template:\n   ");
 		for (int i = 0; i < size; ++i) {
@@ -124,10 +124,10 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
+		final Collection<Term> list = new ArrayList<Term>();
 		for (int i = 0; i < size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
-			list.add(m_deltas[i]);
+			list.addAll(mfgens[i].getVariables());
+			list.add(mdeltas[i]);
 		}
 		return list;
 	}
@@ -135,9 +135,9 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction[] fs = new AffineFunction[size];
+		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
+			fs[i] = mfgens[i].extractAffineFunction(val);
 		}
 		return new MultiphaseRankingFunction(fs);
 	}
@@ -151,17 +151,17 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ_0
 		// /\ /\_{i>0} ( f_i(x') < f_i(x) - δ_i \/ f_{i-1}(x) > 0 )
 		for (int i = 0; i < size; ++i) {
-			List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+			final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
+			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ?
@@ -169,7 +169,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
-				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
+				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
 				li3.motzkin_coefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -186,13 +186,13 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		List<List<LinearInequality>> conjunction =
+		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') ≤ f_0(x) /\ /\_{i>0} ( f_i(x') ≤ f_i(x) \/ f_{i-1}(x) > 0 )
 		for (int i = 0; i < size; ++i) {
-			List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+			final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+			final LinearInequality li = mfgens[i].generate(inVars);
+			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
@@ -201,7 +201,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
-				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
+				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
 				li3.motzkin_coefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -217,9 +217,9 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	public List<List<LinearInequality>> getConstraintsBounded(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
 		// \/_i f_i(x) > 0
-		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+		final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
+			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
 			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
@@ -231,7 +231,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsDec() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is decreasing in phase " + i);
 		}
@@ -240,7 +240,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<String> getAnnotationsNonInc() {
-		List<String> annotations = new ArrayList<String>();
+		final List<String> annotations = new ArrayList<String>();
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is nonincreasing in phase " + i);
 		}

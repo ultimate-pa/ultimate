@@ -49,7 +49,7 @@ public final class Sort {
 	final SortSymbol mSymbol;
 	/**
 	 * The arguments of the sort symbol.  This is null if the sort symbol 
-	 * has no arguments, otherwise it is an array with m_Symbol.m_numParams
+	 * has no arguments, otherwise it is an array with mSymbol.mnumParams
 	 * elements.
 	 */
 	final Sort[]     mArgs;
@@ -64,7 +64,7 @@ public final class Sort {
 	 * Otherwise it is this for a real sort and the real sort as which the
 	 * sort is defined in all other cases.
 	 */
-	//@ invariant m_RealSort == null || m_RealSort.getRealSort() == m_RealSort
+	//@ invariant mRealSort == null || mRealSort.getRealSort() == mRealSort
 	Sort       mRealSort;
 	
 	private int mHash;
@@ -77,8 +77,9 @@ public final class Sort {
 		mIndices = indices;
 		mArgs = args;
 		mHash = HashUtils.hashJenkins(mSymbol.hashCode(), (Object[]) mArgs);
-		if (mIndices != null)
+		if (mIndices != null) {
 			mHash = HashUtils.hashJenkins(mHash, (Object[]) mIndices);
+		}
 	}
 	
 	/**
@@ -94,13 +95,15 @@ public final class Sort {
 	 * @return the name.
 	 */
 	public String getIndexedName() {
-		String name = PrintTerm.quoteIdentifier(mSymbol.getName());
-		if (mIndices == null)
+		final String name = PrintTerm.quoteIdentifier(mSymbol.getName());
+		if (mIndices == null) {
 			return name;
-		StringBuilder sb = new StringBuilder();
+		}
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(_ ").append(name);
-		for (BigInteger i : mIndices)
+		for (final BigInteger i : mIndices) {
 			sb.append(' ').append(i);
+		}
 		sb.append(')');
 		return sb.toString();
 	}
@@ -141,18 +144,20 @@ public final class Sort {
 				} else {
 					Sort[] newArgs = mArgs;
 					for (int i = 0; i < newArgs.length; i++) {
-						Sort realArg = mArgs[i].getRealSort();
+						final Sort realArg = mArgs[i].getRealSort();
 						if (realArg != mArgs[i]) {
-							if (newArgs == mArgs)
+							if (newArgs == mArgs) {
 								newArgs = mArgs.clone();
+							}
 							newArgs[i] = realArg;
 						}
 					}
-					if (newArgs == mArgs)
+					if (newArgs == mArgs) {
 						mRealSort = this;
-					else
+					} else {
 						mRealSort =
 							mSymbol.getSort(mIndices, newArgs).getRealSort();
+					}
 				}
 			} else {
 				mRealSort = 
@@ -163,8 +168,9 @@ public final class Sort {
 	}
 	
 	boolean equalsSort(Sort other) {
-		if (this == other)
+		if (this == other) {
 			return true;
+		}
 		return getRealSort() == other.getRealSort();
 	}
 	
@@ -181,18 +187,21 @@ public final class Sort {
 	 */
     boolean unifySort(HashMap<Sort,Sort> unifier, Sort concrete) {
     	assert concrete.getRealSort() == concrete;
-		Sort last = unifier.get(this);
-		if (last != null)
+		final Sort last = unifier.get(this);
+		if (last != null) {
 			return last == concrete;
+		}
 		
 		if (!mSymbol.isParametric()) {
-			Sort me = getRealSort();
-			if (me.mSymbol != concrete.mSymbol)
+			final Sort me = getRealSort();
+			if (me.mSymbol != concrete.mSymbol) {
 				return false;
+			}
 
 			for (int i = 0; i < me.mArgs.length; i++) {
-				if (!me.mArgs[i].unifySort(unifier, concrete.mArgs[i]))
+				if (!me.mArgs[i].unifySort(unifier, concrete.mArgs[i])) {
 					return false;
+				}
 			}
 		}
 		unifier.put(this, concrete);
@@ -207,17 +216,19 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
     Sort mapSort(Sort[] substitution) {
-		if (mSymbol.isParametric())
+		if (mSymbol.isParametric()) {
 			return substitution[mSymbol.mNumParams];
-		if (mArgs.length == 0)
+		}
+		if (mArgs.length == 0) {
 			return this;
+		}
     	if (mArgs.length == 1) {
-    		Sort arg = mArgs[0].mapSort(substitution);
+    		final Sort arg = mArgs[0].mapSort(substitution);
     		return mSymbol.getSort(mIndices, new Sort[] { arg });
     	}
     	
     	// For more than two arguments create a cache to avoid exponential blow
-    	HashMap<Sort, Sort> cachedMappings = new HashMap<Sort,Sort>();
+    	final HashMap<Sort, Sort> cachedMappings = new HashMap<Sort,Sort>();
     	return mapSort(substitution, cachedMappings);
     }
     
@@ -231,15 +242,17 @@ public final class Sort {
 	 * @return The substituted sort.
 	 */
     Sort mapSort(Sort[] substitution, HashMap<Sort, Sort> cachedMappings) {
-		if (mSymbol.isParametric())
+		if (mSymbol.isParametric()) {
 			return substitution[mSymbol.mNumParams];
+		}
     	Sort result = cachedMappings.get(this);
-    	if (result != null)
-    		return result;
-    	if (mArgs.length == 0) 
-    		result = this;
-    	else {
-			Sort[] newArgs = new Sort[mArgs.length];
+    	if (result != null) {
+			return result;
+		}
+    	if (mArgs.length == 0) {
+			result = this;
+		} else {
+			final Sort[] newArgs = new Sort[mArgs.length];
 			for (int i = 0; i < mArgs.length; i++) {
 				newArgs[i] = mArgs[i].mapSort(substitution, cachedMappings);
 			}
@@ -264,32 +277,34 @@ public final class Sort {
 	 * This returns the SMTLIB string represenation of this sort.
 	 * @return the SMTLIB string representation.     
 	 */
+	@Override
 	public String toString() {
-		if (mArgs.length == 0)
+		if (mArgs.length == 0) {
 			return getIndexedName();
-		StringBuilder sb = new StringBuilder();
+		}
+		final StringBuilder sb = new StringBuilder();
 		new PrintTerm().append(sb, this);
 		return sb.toString();
 	}
 	
 	/**
 	 * Convert a sort to a string in a stack based fashion.
-	 * @param m_Todo The stack where to put the strings and sub sorts.
+	 * @param mTodo The stack where to put the strings and sub sorts.
 	 * @see PrintTerm
 	 */
-	void toStringHelper(ArrayDeque<Object> m_Todo) {
-		String name = getIndexedName();
-		Sort[] args = getArguments();
+	void toStringHelper(ArrayDeque<Object> mTodo) {
+		final String name = getIndexedName();
+		final Sort[] args = getArguments();
 		if (args.length == 0) {
-			m_Todo.addLast(name);
+			mTodo.addLast(name);
 		} else {
-			m_Todo.addLast(")");
+			mTodo.addLast(")");
 			for (int i = args.length - 1; i >= 0; i--) {
-				m_Todo.addLast(args[i]);
-				m_Todo.addLast(" ");
+				mTodo.addLast(args[i]);
+				mTodo.addLast(" ");
 			}
-			m_Todo.addLast(name);
-			m_Todo.addLast("(");
+			mTodo.addLast(name);
+			mTodo.addLast("(");
 		}
 	}
 	
@@ -323,6 +338,7 @@ public final class Sort {
 		return mSymbol.isIntern();
 	}
 	
+	@Override
 	public int hashCode() {
 		return mHash;
 	}

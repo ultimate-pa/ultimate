@@ -24,7 +24,11 @@ package de.uni_freiburg.informatik.ultimate.logic;
  */
 public enum Logics {
 	CORE(0),// Pure Boolean logic
+	ALL       (Features.QU + Features.NA + Features.IA + Features.RA + 
+			   Features.BV + Features.UF + Features.AX + Features.FP),
 	QF_BV     (Features.BV),
+	QF_FP     (Features.UF + Features.FP),
+	QF_BVFP   (Features.UF + Features.BV + Features.FP),
 	QF_IDL    (Features.DL + Features.IA),
 	QF_RDL    (Features.DL + Features.RA),
 	QF_LIA    (Features.LA + Features.IA),
@@ -48,24 +52,24 @@ public enum Logics {
 	QF_AUFLIRA(Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 
 	BV        (Features.QU + Features.BV),
+	FP        (Features.QU + Features.UF + Features.FP),
+	BVFP      (Features.QU + Features.UF + Features.BV + Features.FP),
 	LIA       (Features.QU + Features.LA + Features.IA),
 	LRA       (Features.QU + Features.LA + Features.RA),
 	NIA       (Features.QU + Features.NA + Features.IA),
 	NRA       (Features.QU + Features.NA + Features.RA),
 	UF        (Features.QU + Features.UF),
 	UFBV      (Features.QU + Features.UF + Features.BV),
-	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
 	UFIDL     (Features.QU + Features.UF + Features.DL + Features.IA),
 	UFLIA     (Features.QU + Features.UF + Features.LA + Features.IA),
 	UFLRA     (Features.QU + Features.LA + Features.RA),
 	UFNIA     (Features.QU + Features.NA + Features.IA),
+	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
 	ALIA      (Features.QU + Features.AX + Features.LA + Features.IA),
 	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
 	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
 	
-	FP        (Features.QU + Features.UF + Features.FP),
-	QF_FP     (Features.UF + Features.FP),
 	; //NOCHECKSTYLE
 	
 	static class Features {
@@ -94,7 +98,7 @@ public enum Logics {
 	private final int mFeatures;
 	
 	private Logics(int features) {
-		this.mFeatures = features;
+		mFeatures = features;
 	}
 
 	/**

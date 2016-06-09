@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
@@ -91,8 +91,8 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 		}
 
 		boolean rtr = false;
-		for (ScopedBoogieVar key : other.mDefs.keySet()) {
-			for (IndexedStatement stmt : other.mDefs.get(key)) {
+		for (final ScopedBoogieVar key : other.mDefs.keySet()) {
+			for (final IndexedStatement stmt : other.mDefs.get(key)) {
 				rtr = addDef(key, stmt.getStatement(), stmt.getKey()) || rtr;
 			}
 		}
@@ -101,7 +101,7 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 
 	@Override
 	public ReachDefStatementAnnotation clone() {
-		ReachDefStatementAnnotation rtr = new ReachDefStatementAnnotation();
+		final ReachDefStatementAnnotation rtr = new ReachDefStatementAnnotation();
 		rtr.mDefs = copy(mDefs);
 		rtr.mUse = copy(mUse);
 

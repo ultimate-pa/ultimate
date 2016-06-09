@@ -30,23 +30,22 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
- * Main class for the translation from Boogie to SMT. Constructs other Objects
- * needed for this translation.
+ * Main class for the translation from Boogie to SMT. Constructs other Objects needed for this translation.
  * 
  * @author Matthias Heizmann
  * 
@@ -54,75 +53,75 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 public class Boogie2SMT {
 
 	/**
-	 * if set to true array access returns arbitrary values array store returns
-	 * arbitrary arrays
+	 * if set to true array access returns arbitrary values array store returns arbitrary arrays
 	 */
-	private final boolean m_BlackHoleArrays;
+	private final boolean mBlackHoleArrays;
 
-	private final BoogieDeclarations m_BoogieDeclarations;
-	private Script m_Script;
+	private final BoogieDeclarations mBoogieDeclarations;
+	private final Script mScript;
 
-	private final TypeSortTranslator m_TypeSortTranslator;
-	private final IOperationTranslator m_OperationTranslator;
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
-	private final VariableManager m_VariableManager;
-	private final Expression2Term m_Expression2Term;
-	private final Term2Expression m_Term2Expression;
+	private final TypeSortTranslator mTypeSortTranslator;
+	private final IOperationTranslator mOperationTranslator;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final VariableManager mVariableManager;
+	private final Expression2Term mExpression2Term;
+	private final Term2Expression mTerm2Expression;
 
-	private final Statements2TransFormula m_Statements2TransFormula;
+	private final Statements2TransFormula mStatements2TransFormula;
 
-	private final ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
+	private final ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
 
-	private final Collection<Term> m_Axioms;
+	private final Collection<Term> mAxioms;
 
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
-	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, 
-			boolean blackHoleArrays, boolean bitvectorInsteadOfInt,
-			IUltimateServiceProvider services) {
+	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays,
+			boolean bitvectorInsteadOfInt, IUltimateServiceProvider services) {
 		mServices = services;
-		m_BlackHoleArrays = blackHoleArrays;
-		m_BoogieDeclarations = boogieDeclarations;
-		m_Script = script;
-		m_VariableManager = new VariableManager(m_Script, mServices);
+		mBlackHoleArrays = blackHoleArrays;
+		mBoogieDeclarations = boogieDeclarations;
+		mScript = script;
+		mVariableManager = new VariableManager(mScript, mServices);
 
 		if (bitvectorInsteadOfInt) {
-			m_TypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(), m_Script, 
-					m_BlackHoleArrays, mServices);
-			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
-			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-			m_OperationTranslator = new BitvectorWorkaroundOperationTranslator(m_Boogie2SmtSymbolTable, m_Script);
-			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, m_OperationTranslator, m_VariableManager);
+			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
+					mScript, mBlackHoleArrays, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript);
+			mExpression2Term = new Expression2Term(mServices, mScript, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mVariableManager);
 		} else {
-			m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
-					m_BlackHoleArrays, mServices);
-			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
+			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript,
+					mBlackHoleArrays, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
-			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-			m_OperationTranslator = new DefaultOperationTranslator(m_Boogie2SmtSymbolTable, m_Script);
-			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, m_OperationTranslator, m_VariableManager);
+			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript);
+			mExpression2Term = new Expression2Term(mServices, mScript, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mVariableManager);
 		}
 
-		m_Axioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
-		for (Axiom decl : boogieDeclarations.getAxioms()) {
-			Term term = this.declareAxiom(decl, m_Expression2Term);
-			m_Axioms.add(term);
+		mAxioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
+		for (final Axiom decl : boogieDeclarations.getAxioms()) {
+			final Term term = declareAxiom(decl, mExpression2Term);
+			mAxioms.add(term);
 		}
-		m_Statements2TransFormula = new Statements2TransFormula(this, mServices, m_Expression2Term);
-		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
+		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
+		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable);
 
 	}
 
 	public VariableManager getVariableManager() {
-		return m_VariableManager;
+		return mVariableManager;
 	}
 
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 
 	public Term2Expression getTerm2Expression() {
-		return m_Term2Expression;
+		return mTerm2Expression;
 	}
 
 	static String quoteId(String id) {
@@ -131,55 +130,53 @@ public class Boogie2SMT {
 	}
 
 	public Boogie2SmtSymbolTable getBoogie2SmtSymbolTable() {
-		return m_Boogie2SmtSymbolTable;
+		return mBoogie2SmtSymbolTable;
 	}
 
 	public Statements2TransFormula getStatements2TransFormula() {
-		return m_Statements2TransFormula;
+		return mStatements2TransFormula;
 	}
 
 	public BoogieDeclarations getBoogieDeclarations() {
-		return m_BoogieDeclarations;
+		return mBoogieDeclarations;
 	}
 
 	public TypeSortTranslator getTypeSortTranslator() {
-		return m_TypeSortTranslator;
+		return mTypeSortTranslator;
 	}
 
 	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
-		return m_ConstOnlyIdentifierTranslator;
+		return mConstOnlyIdentifierTranslator;
 	}
 
 	public Collection<Term> getAxioms() {
-		return m_Axioms;
+		return mAxioms;
 	}
 
 	private Term declareAxiom(Axiom ax, Expression2Term expression2term) {
-		IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
-		Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm(); 
-		m_Script.assertTerm(term);
+		final IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
+		final Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
+		mScript.assertTerm(term);
 		return term;
 	}
 
 	public static void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription,
 			IUltimateServiceProvider services) {
-		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
-				Activator.PLUGIN_NAME, services.getBacktranslationService(), longDescription);
-		services.getResultService().reportResult(Activator.PLUGIN_NAME, result);
+		final UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
+				ModelCheckerUtils.PLUGIN_ID, services.getBacktranslationService(), longDescription);
+		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
 		services.getProgressMonitorService().cancelToolchain();
 	}
 
 	/**
-	 * Use with caution! Construct auxiliary variables only if you need then in
-	 * the whole verification process. Construct auxiliary variables only if the
-	 * assertion stack of the script is at the lowest level. Auxiliary variables
-	 * are not supported in any backtranslation.
+	 * Use with caution! Construct auxiliary variables only if you need then in the whole verification process.
+	 * Construct auxiliary variables only if the assertion stack of the script is at the lowest level. Auxiliary
+	 * variables are not supported in any backtranslation.
 	 */
 	public BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
 			VarList varList) {
 
-		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType,
-				varList);
+		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
 	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
@@ -190,7 +187,7 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			Term result = m_Boogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
+			final Term result = mBoogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
 			if (result == null) {
 				throw new AssertionError();
 			}

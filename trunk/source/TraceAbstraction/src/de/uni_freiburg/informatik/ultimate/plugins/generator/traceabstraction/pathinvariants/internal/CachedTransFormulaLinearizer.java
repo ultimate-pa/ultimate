@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
@@ -66,12 +66,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class CachedTransFormulaLinearizer {
 
-	private final IUltimateServiceProvider m_Services;
-	private final IToolchainStorage m_Storage;
-	private final Term[] m_Axioms;
-	private final ReplacementVarFactory m_ReplacementVarFactory;
-	private final SmtManager m_SmtManager;
-	private final Map<TransFormula, LinearTransition> m_Cache;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
+	private final Term[] mAxioms;
+	private final ReplacementVarFactory mReplacementVarFactory;
+	private final SmtManager mSmtManager;
+	private final Map<TransFormula, LinearTransition> mCache;
 
 
 	/**
@@ -88,15 +88,15 @@ public class CachedTransFormulaLinearizer {
 	public CachedTransFormulaLinearizer(IUltimateServiceProvider services,
 			SmtManager smtManager, IToolchainStorage storage) {
 		super();
-		m_Services = services;
-		m_Storage = storage;
-		m_SmtManager = smtManager;
-		m_ReplacementVarFactory = new ReplacementVarFactory(m_SmtManager
+		mServices = services;
+		mStorage = storage;
+		mSmtManager = smtManager;
+		mReplacementVarFactory = new ReplacementVarFactory(mSmtManager
 				.getBoogie2Smt().getVariableManager());
-		Collection<Term> axioms = m_SmtManager.getBoogie2Smt().getAxioms();
-		m_Axioms = axioms.toArray(new Term[axioms.size()]);
+		final Collection<Term> axioms = mSmtManager.getBoogie2Smt().getAxioms();
+		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
-		m_Cache = new HashMap<TransFormula, LinearTransition>();
+		mCache = new HashMap<TransFormula, LinearTransition>();
 	}
 
 	/**
@@ -120,10 +120,10 @@ public class CachedTransFormulaLinearizer {
 	 * @return transformed transformula
 	 */
 	public LinearTransition linearize(final TransFormula tf) {
-		LinearTransition result = m_Cache.get(tf);
+		LinearTransition result = mCache.get(tf);
 		if (result == null) {
 			result = makeLinear(tf);
-			m_Cache.put(tf, result);
+			mCache.put(tf, result);
 		}
 		return result;
 	}
@@ -149,19 +149,19 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private LinearTransition makeLinear(TransFormula tf) {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
-				m_ReplacementVarFactory);
+				mReplacementVarFactory);
 
-		for (TransitionPreprocessor tpp : getPreprocessors()) {
+		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
-				tflr = tpp.process(m_SmtManager.getScript(), tflr);
-			} catch (TermException e) {
+				tflr = tpp.process(mSmtManager.getScript(), tflr);
+			} catch (final TermException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		LinearTransition lt;
 		try {
 			lt = LinearTransition.fromTransFormulaLR(tflr, NlaHandling.EXCEPTION);
-		} catch (TermException e) {
+		} catch (final TermException e) {
 			throw new RuntimeException(e);
 		}
 		return lt;
@@ -174,16 +174,16 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreprocessor[] getPreprocessors() {
 		return new TransitionPreprocessor[] {
-				new MatchInOutVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
-				new AddAxioms(m_ReplacementVarFactory, m_Axioms),
-				new RewriteDivision(m_ReplacementVarFactory),
-				new RewriteBooleans(m_ReplacementVarFactory, m_SmtManager.getScript()), 
+				new MatchInOutVars(mSmtManager.getBoogie2Smt().getVariableManager()),
+				new AddAxioms(mReplacementVarFactory, mAxioms),
+				new RewriteDivision(mReplacementVarFactory),
+				new RewriteBooleans(mReplacementVarFactory, mSmtManager.getScript()), 
 				new RewriteIte(),
-				new RewriteUserDefinedTypes(m_ReplacementVarFactory, m_SmtManager.getScript()),
+				new RewriteUserDefinedTypes(mReplacementVarFactory, mSmtManager.getScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(m_Services, m_Storage),
-				new DNF(m_Services, m_SmtManager.getVariableManager()), 
-				new SimplifyPreprocessor(m_Services, m_Storage),
+				new SimplifyPreprocessor(mServices, mStorage),
+				new DNF(mServices, mSmtManager.getVariableManager()), 
+				new SimplifyPreprocessor(mServices, mStorage),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
 				new RewriteStrictInequalities(), };

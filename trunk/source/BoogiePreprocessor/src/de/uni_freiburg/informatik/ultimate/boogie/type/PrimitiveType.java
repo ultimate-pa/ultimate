@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class PrimitiveType extends BoogieType {
 	/**
@@ -53,35 +53,42 @@ public class PrimitiveType extends BoogieType {
 	}
 
 	//@Override
+	@Override
 	public BoogieType getUnderlyingType() {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
 		return false;
 	}
 
 	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other,
 			ArrayList<BoogieType> subst) {
-		if (other instanceof PlaceholderType)
+		if (other instanceof PlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
-		return this == errorType || other == errorType || this == other;
+		}
+		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int depth,
 			BoogieType[] substType) {
 		return this;
 	}
 
 	//@Override
+	@Override
 	protected String toString(int depth, boolean needParentheses) {
 		switch (type) {
 		case INT:
@@ -100,20 +107,22 @@ public class PrimitiveType extends BoogieType {
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			PrimitiveType(loc, this, toString(depth, false));
 	}
 	
 	//@Override
+	@Override
 	protected boolean unify(int depth, BoogieType other,
 			BoogieType[] substitution) {
-		return this == errorType || other == errorType || this == other;
+		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	public int getTypeCode() {
 		return type;
 	}
 
+	@Override
 	public boolean isFinite() {
 		/* Everything except INT may be finite */
 		return type != INT;

@@ -43,7 +43,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
@@ -54,7 +54,7 @@ public class CommandExportAsSVG extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
-		IEditorInput ei = HandlerUtil.getActiveEditorInput(event);
+		final IEditorInput ei = HandlerUtil.getActiveEditorInput(event);
 		if (ei instanceof JungEditorInput) {
 			exportAsSVG((JungEditorInput) ei);
 		}
@@ -66,29 +66,29 @@ public class CommandExportAsSVG extends AbstractHandler {
 	 */
 	public void exportAsSVG(JungEditorInput editorInput) {
 		assert editorInput != null;
-		String svgFilePath = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		final String svgFilePath = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(JungPreferenceValues.LABEL_PATH);
 
-		JFileChooser chooser = new JFileChooser();
+		final JFileChooser chooser = new JFileChooser();
 		chooser.setSelectedFile(new File(svgFilePath + "/default.svg"));
 		chooser.showSaveDialog(null);
 
-		String filename = chooser.getSelectedFile().getPath();
+		final String filename = chooser.getSelectedFile().getPath();
 
-		DOMImplementation impl = GenericDOMImplementation.getDOMImplementation();
-		String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
-		Document doc = impl.createDocument(svgNS, "svg", null);
+		final DOMImplementation impl = GenericDOMImplementation.getDOMImplementation();
+		final String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
+		final Document doc = impl.createDocument(svgNS, "svg", null);
 
-		SVGGraphics2D g = new SVGGraphics2D(doc);
-		VisualizationViewer<?, ?> vv = editorInput.getViewer();
+		final SVGGraphics2D g = new SVGGraphics2D(doc);
+		final VisualizationViewer<?, ?> vv = editorInput.getViewer();
 		vv.setDoubleBuffered(false);
 		vv.paint(g);
 		vv.setDoubleBuffered(true);
 
 		try {
-			FileWriter fileWriter = new FileWriter(filename);
+			final FileWriter fileWriter = new FileWriter(filename);
 			g.stream(fileWriter);
-		} catch (IOException ioEx) {
+		} catch (final IOException ioEx) {
 			ioEx.printStackTrace();
 		}
 	}

@@ -31,47 +31,47 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.equinox.app.IApplication;
 
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
  * {@link CDTController} is one of the distinct controllers of Ultimate. It
  * starts the Core from a different host (another RCP instance, namely Eclipse
- * CDT), but uses one {@link ICore} instance for multiple executions of
+ * CDT), but uses one {@link ICore<ToolchainListType>} instance for multiple executions of
  * Ultimate.
  * 
  * @author dietsch
  */
-public class CDTController implements IController {
+public class CDTController implements IController<ToolchainListType> {
 
-	private Logger mLogger;
-	private UltimateCChecker mChecker;
+	private ILogger mLogger;
+	private final UltimateCChecker mChecker;
 
-	private ICore mUltimate;
+	private ICore<ToolchainListType> mCore;
 	private UltimateThread mUltimateThread;
 	private ManualReleaseToolchainJob mCurrentJob;
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mUltimateReady;
-	private ToolchainData mToolchainData;
+	private IToolchainData<ToolchainListType> mToolchainData;
 
 	public CDTController(UltimateCChecker currentChecker) throws Exception {
 		mChecker = currentChecker;
@@ -81,12 +81,12 @@ public class CDTController implements IController {
 	}
 
 	@Override
-	public int init(ICore core, ILoggingService loggingService) {
+	public int init(ICore<ToolchainListType> core) {
 		// we use init() only to create the preference pages and safe a core
 		// reference
-		mLogger = loggingService.getControllerLogger();
+		mLogger = core.getCoreLoggingService().getControllerLogger();
 		new UltimatePreferencePageFactory(core).createPreferencePages();
-		mUltimate = core;
+		mCore = core;
 		// now we wait for the exit command
 		mUltimateReady.release();
 		mUltimateExit.acquireUninterruptibly();
@@ -96,11 +96,11 @@ public class CDTController implements IController {
 	public void runToolchain(String toolchainPath, IASTTranslationUnit ast) throws Exception {
 		initUltimateThread();
 		mLogger.info("Using toolchain " + toolchainPath);
-		mToolchainData = new ToolchainData(toolchainPath);
+		mToolchainData = mCore.createToolchainData(toolchainPath);
 		mChecker.setServices(mToolchainData.getServices());
 		mChecker.setStorage(mToolchainData.getStorage());
 
-		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mUltimate, this, new WrapperNode(null, ast),
+		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mCore, this, new WrapperNode(null, ast),
 				new ModelType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
 		mCurrentJob.setUser(true);
 		mCurrentJob.schedule();
@@ -114,7 +114,7 @@ public class CDTController implements IController {
 			mUltimateReady.acquireUninterruptibly();
 		} else if (!mUltimateThread.isRunning()) {
 			// can only happen if there was an exception
-			Exception ex = mUltimateThread.getInnerException();
+			final Exception ex = mUltimateThread.getInnerException();
 			complete();
 			close();
 			throw ex;
@@ -131,14 +131,14 @@ public class CDTController implements IController {
 	}
 
 	@Override
-	public ToolchainData selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
 		return mToolchainData;
 	}
 
 	@Override
 	public List<String> selectModel(List<String> modelNames) {
-		ArrayList<String> returnList = new ArrayList<String>();
-		for (String model : modelNames) {
+		final ArrayList<String> returnList = new ArrayList<String>();
+		for (final String model : modelNames) {
 			if (model
 					.contains(de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator.PLUGIN_ID)) {
 				returnList.add(model);
@@ -183,33 +183,33 @@ public class CDTController implements IController {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		// cdt uses the codan preference handling
 		return null;
 	}
 
 	private class UltimateThread {
 
-		private final IController mController;
+		private final IController<ToolchainListType> mController;
 		private Exception mUltimateException;
 		private boolean mIsRunning;
 
-		private UltimateThread(IController controller) {
+		private UltimateThread(IController<ToolchainListType> controller) {
 			mController = controller;
 		}
 
 		public void startUltimate() {
-			Thread t = new Thread(new Runnable() {
+			final Thread t = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					mIsRunning = true;
 					// initialize ultimate core in its own thread, which then
 					// delegates control to init and should stay there until
 					// close() is called
-					UltimateCore core = new UltimateCore();
+					final UltimateCore core = new UltimateCore();
 					try {
-						core.start(mController, true);
-					} catch (Exception e) {
+						core.startManually(mController);
+					} catch (final Exception e) {
 						mUltimateException = e;
 					}
 					mIsRunning = false;
@@ -229,15 +229,15 @@ public class CDTController implements IController {
 
 	private class ManualReleaseToolchainJob extends ExternalParserToolchainJob {
 
-		private IToolchain mCurrentChain;
+		private IToolchain<ToolchainListType> mCurrentChain;
 
-		public ManualReleaseToolchainJob(String name, ICore core, IController controller, IElement ast,
-				ModelType outputDefinition, Logger logger) {
+		public ManualReleaseToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, IElement ast,
+				ModelType outputDefinition, ILogger logger) {
 			super(name, core, controller, ast, outputDefinition, logger);
 		}
 
 		@Override
-		protected void releaseToolchain(IToolchain chain) {
+		protected void releaseToolchain(IToolchain<ToolchainListType> chain) {
 			if (mCurrentChain != null && mCurrentChain != chain) {
 				// ensure that no chain is unreleased
 				super.releaseToolchain(mCurrentChain);

@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -42,22 +42,66 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 10;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 10;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
-		/*** Category 6. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
+//			/*** Category 1. Arrays ***/
+//			new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/reducercommutativity/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//
+//
+//			/*** Category 2. Bit Vectors ***/
+//			new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/bitvector-loops/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//
+//
+//			/*** Category 3. Heap Data Structures ***/
+//			new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//
+//
+//			/*** Category 5. Control Flow and Integer Variables ***/
+//			new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".i" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i"}, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//
+//			new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//
+//			
+			/*** Category 6. Termination ***/
+			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] m_CurrentBugs = {
+	private static final String[] mCurrentBugs = {
 	};
 
 	/**
@@ -75,7 +119,7 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"buchiAutomizer/minimization/Delayed.epf",
 		"buchiAutomizer/minimization/FairWithSCC.epf",
 		"buchiAutomizer/minimization/FairWithoutSCC.epf",
@@ -83,12 +127,15 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 		"buchiAutomizer/minimization/MinimzeSevpa.epf",
 		"buchiAutomizer/minimization/None.epf",
 		"buchiAutomizer/minimization/ShrinkNwa.epf",
+		"buchiAutomizer/minimization/MinimizeNwaMaxSat2.epf",
+//		"buchiAutomizer/minimization/MinimizeNwaMaxSat.epf",
 	};
 	
 	
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerCWithBlockEncoding.xml",
 	};
 
 	
@@ -97,10 +144,10 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCase(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs);
+				addTestCase(toolchain, setting, mCurrentBugs, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

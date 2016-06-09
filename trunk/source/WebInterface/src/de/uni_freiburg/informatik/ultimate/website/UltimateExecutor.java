@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 
@@ -42,13 +42,13 @@ public class UltimateExecutor {
 		File toolchainFile = null;
 
 		try {
-			String taskId = getCheckedArgument(internalRequest, "taskID");
-			String tcId = getCheckedArgument(internalRequest, "tcID");
-			String code = getCheckedArgument(internalRequest, "code");
+			final String taskId = getCheckedArgument(internalRequest, "taskID");
+			final String tcId = getCheckedArgument(internalRequest, "tcID");
+			final String code = getCheckedArgument(internalRequest, "code");
 
 			mLogger.log("Preparing to execute Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
-			WebToolchain tc = getToolchain(taskId, tcId);
+			final WebToolchain tc = getToolchain(taskId, tcId);
 			if (tc == null) {
 				throw new IllegalArgumentException("Invalid task or toolchain ID. taskID=" + taskId + ", toolchainID="
 						+ tcId);
@@ -58,7 +58,7 @@ public class UltimateExecutor {
 			applyUserSettings(internalRequest, tcId, tc);
 
 			// create temporary files to run ultimate on
-			String timestamp = CoreUtil.getCurrentDateTimeAsString();
+			final String timestamp = CoreUtil.getCurrentDateTimeAsString();
 			inputFile = writeTemporaryFile(timestamp + "_input", code, getFileExtension(taskId));
 			settingsFile = writeTemporaryFile(timestamp + "_settings", tc.getSettingFileContent(), ".epf");
 			toolchainFile = writeTemporaryFile(timestamp + "_toolchain", tc.getToolchainXML(), ".xml");
@@ -69,21 +69,21 @@ public class UltimateExecutor {
 			mLogger.log("Written temporary files to " + inputFile.getParent() + " with timestamp " + timestamp);
 
 			// run ultimate
-			long timeout = Math.min(tc.getTimeout(), sTimeoutUpperBound);
+			final long timeout = Math.min(tc.getTimeout(), sTimeoutUpperBound);
 			runUltimate(json, inputFile, settingsFile, toolchainFile, timeout);
 			mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			e.printStackTrace();
 			json = new JSONObject();
 			json.put("error", "Invalid request! error code UI04");
 			mLogger.logDebug("This was an invalid request! " + e.getMessage());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			json = new JSONObject();
 			json.put("error", "Internal server error (IO)!");
 			mLogger.logDebug("There was an IO Exception:" + e.getMessage());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.logDebug("There was an Exception: " + e.getClass().getSimpleName());
 			mLogger.logDebug(e.toString());
 			json.put("error", "Internal server error (Generic)!");
@@ -97,7 +97,7 @@ public class UltimateExecutor {
 	}
 
 	private String getCheckedArgument(Request internalRequest, String paramId) {
-		String[] rtr = internalRequest.get(paramId);
+		final String[] rtr = internalRequest.get(paramId);
 
 		if (rtr == null) {
 			throw new IllegalArgumentException("The parameter \"" + paramId + "\" was not supplied");
@@ -123,9 +123,9 @@ public class UltimateExecutor {
 			throws JSONException {
 		try {
 			mLogger.logDebug("ULTIMATE Application started");
-			UltimateWebController uwc = new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
+			final UltimateWebController uwc = new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
 			uwc.runUltimate(json);
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 			t.printStackTrace();
 			final String message = "failed to run ULTIMATE" + System.getProperty("line.separator") + t.toString()
 					+ System.getProperty("line.separator") + t.getMessage();
@@ -138,16 +138,19 @@ public class UltimateExecutor {
 
 	private void postProcessTemporaryFiles(File settingsFile, File tcFile, File codeFile) {
 		// if (logRun) {
-		File logDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "log" + File.separator);
+		final File logDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "log" + File.separator);
 		if (!logDir.exists()) {
 			logDir.mkdir();
 		}
 		System.out.println("Moving input, setting and toolchain file to " + logDir.getAbsoluteFile());
-		if (codeFile != null)
+		if (codeFile != null) {
 			codeFile.renameTo(new File(logDir, codeFile.getName()));
-		if (settingsFile != null)
+		}
+		if (settingsFile != null) {
 			settingsFile.renameTo(new File(logDir, settingsFile.getName()));
+		}
 		if (tcFile != null)
+		 {
 			tcFile.renameTo(new File(logDir, tcFile.getName()));
 		// } else {
 		// if (codeFile != null)
@@ -157,18 +160,19 @@ public class UltimateExecutor {
 		// if (tcFile != null)
 		// tcFile.delete();
 		// }
+		}
 	}
 
 	private File writeTemporaryFile(String name, String content, String fileExtension) throws IOException {
-		File codeFile = File.createTempFile(name, fileExtension);
-		BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
+		final File codeFile = File.createTempFile(name, fileExtension);
+		final BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
 		out.write(content);
 		out.close();
 		return codeFile;
 	}
 
 	private String getFileExtension(String taskId) {
-		TaskNames taskName = TaskNames.valueOf(taskId);
+		final TaskNames taskName = TaskNames.valueOf(taskId);
 		String fileExtension;
 
 		switch (taskName) {
@@ -196,8 +200,8 @@ public class UltimateExecutor {
 	}
 
 	private void applyUserSettings(Request internalRequest, String toolchainId, WebToolchain toolchain) {
-		for (Setting setting : toolchain.getUserModifiableSettings()) {
-			String sid = toolchainId + "_" + setting.getSettingIdentifier();
+		for (final Setting setting : toolchain.getUserModifiableSettings()) {
+			final String sid = toolchainId + "_" + setting.getSettingIdentifier();
 			if (!internalRequest.containsKey(sid)) {
 				continue;
 			}
@@ -226,12 +230,12 @@ public class UltimateExecutor {
 
 	private WebToolchain getToolchain(String taskId, String tcId) {
 		// get user settings for this toolchain
-		ArrayList<WebToolchain> tcs = Tasks.getActiveToolchains().get(taskId);
+		final ArrayList<WebToolchain> tcs = Tasks.getActiveToolchains().get(taskId);
 		if (tcs == null) {
 			return null;
 		}
 		WebToolchain tc = null;
-		for (WebToolchain currentTC : tcs) {
+		for (final WebToolchain currentTC : tcs) {
 			if (currentTC.getId().equals(tcId)) {
 				tc = currentTC;
 				break;

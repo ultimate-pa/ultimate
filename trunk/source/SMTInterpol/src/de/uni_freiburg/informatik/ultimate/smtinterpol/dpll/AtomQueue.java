@@ -36,12 +36,15 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 	public Iterator<DPLLAtom> iterator() {
 		return new Iterator<DPLLAtom>() {
 			int mPos = 0;
+			@Override
 			public boolean hasNext() {
 				return mPos < mSize;
 			}
+			@Override
 			public DPLLAtom next() {
 				return mAtoms[mPos++];
 			}
+			@Override
 			public void remove() {
 				AtomQueue.this.remove(mAtoms[mPos - 1]);
 			}
@@ -75,10 +78,11 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 				assert mAtoms[i].mDecideStatus == null;
 			}
 		}
-		if (atom.mAtomQueueIndex != -1)
+		if (atom.mAtomQueueIndex != -1) {
 			return false;
+		}
 		if (mSize >= mAtoms.length) {
-			DPLLAtom[] newAtoms = new DPLLAtom[2 * mSize];
+			final DPLLAtom[] newAtoms = new DPLLAtom[2 * mSize];
 			System.arraycopy(mAtoms, 0, newAtoms, 0, mSize);
 			mAtoms = newAtoms;
 		}
@@ -95,15 +99,16 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 
 	@Override
 	public DPLLAtom poll() {
-		DPLLAtom atom = mAtoms[0];
+		final DPLLAtom atom = mAtoms[0];
 		remove(atom);
 		return atom;
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		if (!(o instanceof DPLLAtom))
+		if (!(o instanceof DPLLAtom)) {
 			return false;
+		}
 		assert (((DPLLAtom) o).mAtomQueueIndex == -1
 				|| mAtoms[((DPLLAtom) o).mAtomQueueIndex] == o);
 		return (((DPLLAtom) o).mAtomQueueIndex != -1);
@@ -111,17 +116,19 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 	
 	@Override
 	public boolean remove(Object o) {
-		if (!(o instanceof DPLLAtom))
+		if (!(o instanceof DPLLAtom)) {
 			return false;
+		}
 		if (Config.EXPENSIVE_ASSERTS) {
 			for (int i = 0; i < mSize; i++) {
 				assert mAtoms[i].mAtomQueueIndex == i;
 				assert mAtoms[i].mDecideStatus == null || mAtoms[i] == o;
 			}
 		}
-		DPLLAtom atom = (DPLLAtom) o;
-		if (atom.mAtomQueueIndex == -1)
+		final DPLLAtom atom = (DPLLAtom) o;
+		if (atom.mAtomQueueIndex == -1) {
 			return false;
+		}
 		assert mAtoms[atom.mAtomQueueIndex] == atom;
 		
 		// remove the element
@@ -131,8 +138,9 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 		// Move children of pos downwards to make a free spot on a leaf.
 		while (2 * pos + 2 < mSize) {
 			int child = 2 * pos + 1;
-			if (mAtoms[child].compareActivityTo(mAtoms[child + 1]) > 0)
+			if (mAtoms[child].compareActivityTo(mAtoms[child + 1]) > 0) {
 				child++;
+			}
 			mAtoms[pos] = mAtoms[child];
 			mAtoms[pos].mAtomQueueIndex = pos;
 			pos = child;

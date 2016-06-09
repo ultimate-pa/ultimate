@@ -33,51 +33,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -85,15 +82,15 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
-	private final Logger m_Logger;
-	private final IUltimateServiceProvider m_Services;
-	private final IToolchainStorage m_ToolchainStorage;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mToolchainStorage;
 
 	public TraceAbstractionStarter(IUltimateServiceProvider services, IToolchainStorage storage, RootNode rcfgRootNode,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
-		m_Services = services;
-		m_ToolchainStorage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mServices = services;
+		mToolchainStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 
@@ -101,13 +98,13 @@ public class TraceAbstractionStarter {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
-	private IElement m_RootOfNewModel = null;
-	private Result m_OverallResult;
-	private IElement m_Artifact;
+	private IElement mRootOfNewModel = null;
+	private Result mOverallResult;
+	private IElement mArtifact;
 
 	private void runCegarLoops(RootNode rcfgRootNode, NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
-		RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
-		TAPreferences taPrefs = new TAPreferences();
+		final RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
+		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
@@ -116,36 +113,36 @@ public class TraceAbstractionStarter {
 		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
 		System.out.println(settings);
 
-		SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), m_Services, interpolationModeSwitchNeeded(),
+		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
+				rootAnnot.getModGlobVarManager(), mServices, interpolationModeSwitchNeeded(),
 				rootAnnot.getManagedScript());
-		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
+		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 
-		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
-		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
+		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		m_OverallResult = Result.SAFE;
-		m_Artifact = null;
+		mOverallResult = Result.SAFE;
+		mArtifact = null;
 
 		if (taPrefs.allErrorLocsAtOnce()) {
-			String name = "AllErrorsAtOnce";
+			final String name = "AllErrorsAtOnce";
 			iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton);
 		} else {
-			for (ProgramPoint errorLoc : errNodesOfAllProc) {
-				String name = errorLoc.getPosition();
-				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
+			for (final ProgramPoint errorLoc : errNodesOfAllProc) {
+				final String name = errorLoc.getPosition();
+				final ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
-				m_Services.getProgressMonitorService().setSubtask(errorLoc.toString());
+				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton);
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
-		if (m_OverallResult == Result.SAFE) {
+		if (mOverallResult == Result.SAFE) {
 			final String longDescription;
 			if (errNodesOfAllProc.isEmpty()) {
 				longDescription = "We were not able to verify any"
@@ -153,19 +150,19 @@ public class TraceAbstractionStarter {
 			} else {
 				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
 			}
-			AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME,
+			final AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME,
 					longDescription);
 			reportResult(result);
 		}
 
-		m_Logger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
-		m_Logger.debug("Overall result: " + m_OverallResult);
-		m_Logger.debug("Continue processing: " + m_Services.getProgressMonitorService().continueProcessing());
-		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT
-				&& m_Services.getProgressMonitorService().continueProcessing()) {
-			assert (smtManager.cfgInductive(rcfgRootNode));
+		mLogger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
+		mLogger.debug("Overall result: " + mOverallResult);
+		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
+		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
+				&& mServices.getProgressMonitorService().continueProcessing()) {
+			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive());
 
-			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
+			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
 
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
@@ -173,13 +170,13 @@ public class TraceAbstractionStarter {
 			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
-			for (ProgramPoint locNode : locsForLoopLocations) {
+			for (final ProgramPoint locNode : locsForLoopLocations) {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
 					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
 					final InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
-							Activator.s_PLUGIN_NAME, locNode, backTranslatorService, expr);
+							Activator.PLUGIN_NAME, locNode, backTranslatorService, expr);
 					reportResult(invResult);
 
 					if (!formula.equals(trueterm)) {
@@ -200,7 +197,7 @@ public class TraceAbstractionStarter {
 					final Term formula = hoare.getFormula();
 					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
 					final ProcedureContractResult<RcfgElement, Expression> result = new ProcedureContractResult<RcfgElement, Expression>(
-							Activator.s_PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
+							Activator.PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
 
 					reportResult(result);
 					// TODO: Add setting that controls the generation of those witness invariants; for now, just
@@ -213,7 +210,7 @@ public class TraceAbstractionStarter {
 			}
 		}
 		reportBenchmark(traceAbstractionBenchmark);
-		switch (m_OverallResult) {
+		switch (mOverallResult) {
 		case SAFE:
 			// s_Logger.warn("Program is correct");
 			// ResultNotifier.programCorrect();
@@ -223,35 +220,35 @@ public class TraceAbstractionStarter {
 			// ResultNotifier.programIncorrect();
 			break;
 		case TIMEOUT:
-			m_Logger.warn("Timeout");
+			mLogger.warn("Timeout");
 			// ResultNotifier
 			// .programUnknown("Timeout");
 			break;
 		case UNKNOWN:
-			m_Logger.warn("Unable to decide correctness. Please check the following counterexample manually.");
+			mLogger.warn("Unable to decide correctness. Please check the following counterexample manually.");
 			// ResultNotifier.programUnknown("Program might be incorrect, check"
 			// + " conterexample.");
 			break;
 		}
 
-		m_RootOfNewModel = m_Artifact;
+		mRootOfNewModel = mArtifact;
 	}
 
 	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
-		for (ProgramPoint err : errNodesOfAllProc) {
-			BoogieASTNode boogieASTNode = ((ProgramPoint) err).getBoogieASTNode();
-			IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
+		for (final ProgramPoint err : errNodesOfAllProc) {
+			final BoogieASTNode boogieASTNode = err.getBoogieASTNode();
+			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
-				Check check = (Check) annot;
+				final Check check = (Check) annot;
 				if (check.getSpec() == Spec.WITNESS_INVARIANT) {
 					numberOfCheckedInvariants++;
 				}
 			}
 		}
 		if (numberOfCheckedInvariants > 0) {
-			m_Logger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
-			m_Logger.info("WitnessConsidered=" + numberOfCheckedInvariants);
+			mLogger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
+			mLogger.info("WitnessConsidered=" + numberOfCheckedInvariants);
 		}
 	}
 
@@ -259,29 +256,29 @@ public class TraceAbstractionStarter {
 			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
-		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
+		final LanguageOperation languageOperation = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				basicCegarLoop = new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
-						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 				// abstractCegarLoop = new CegarLoopSequentialWithBackedges(name,
 				// root, smtManager, timingStatistics,taPrefs, errorLocs);
 			} else {
 				basicCegarLoop = new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
+						taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 			}
 		} else {
 			basicCegarLoop = new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs,
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage,
+					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
 					languageOperation);
 		}
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
-		Result result = basicCegarLoop.iterate();
+		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
-		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
-		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
 		switch (result) {
@@ -289,47 +286,47 @@ public class TraceAbstractionStarter {
 			reportPositiveResults(errorLocs);
 			break;
 		case UNSAFE: {
-			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
+			final RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 			reportCounterexampleResult(pe);
-			m_OverallResult = result;
+			mOverallResult = result;
 			break;
 		}
 		case TIMEOUT:
 			reportTimeoutResult(errorLocs, basicCegarLoop.getToolchainCancelledException());
-			if (m_OverallResult != Result.UNSAFE) {
-				m_OverallResult = result;
+			if (mOverallResult != Result.UNSAFE) {
+				mOverallResult = result;
 			}
 			break;
 		case UNKNOWN: {
-			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
+			final RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
-			if (m_OverallResult != Result.UNSAFE) {
-				m_OverallResult = result;
+			if (mOverallResult != Result.UNSAFE) {
+				mOverallResult = result;
 			}
 			break;
 		}
 		}
-		if (taPrefs.computeHoareAnnotation() && m_OverallResult == Result.SAFE) {
-			m_Logger.debug("Computing Hoare annotation of CFG");
+		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
+			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 			writeHoareAnnotationToLogger(root);
 		} else {
-			m_Logger.debug("Ommiting computation of Hoare annotation");
+			mLogger.debug("Ommiting computation of Hoare annotation");
 
 		}
-		m_Artifact = basicCegarLoop.getArtifact();
+		mArtifact = basicCegarLoop.getArtifact();
 	}
 
 	private void writeHoareAnnotationToLogger(RootNode root) {
-		for (Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints()
+		for (final Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints()
 				.entrySet()) {
-			for (ProgramPoint pp : proc2label2pp.getValue().values()) {
-				HoareAnnotation hoare = getHoareAnnotation(pp);
+			for (final ProgramPoint pp : proc2label2pp.getValue().values()) {
+				final HoareAnnotation hoare = getHoareAnnotation(pp);
 				if (hoare == null) {
-					m_Logger.info("For program point  " + prettyPrintProgramPoint(pp)
+					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
 							+ "  no Hoare annotation was computed.");
 				} else {
-					m_Logger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
+					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
 							+ hoare.getFormula());
 				}
 			}
@@ -337,9 +334,9 @@ public class TraceAbstractionStarter {
 	}
 
 	private static String prettyPrintProgramPoint(ProgramPoint pp) {
-		int startLine = pp.getPayload().getLocation().getStartLine();
-		int endLine = pp.getPayload().getLocation().getStartLine();
-		StringBuilder sb = new StringBuilder();
+		final int startLine = pp.getPayload().getLocation().getStartLine();
+		final int endLine = pp.getPayload().getLocation().getStartLine();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(pp);
 		if (startLine == endLine) {
 			sb.append("(line " + startLine + ")");
@@ -350,9 +347,9 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
-			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
-					m_Services.getBacktranslationService());
+		for (final ProgramPoint errorLoc : errorLocs) {
+			final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
+					mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
 	}
@@ -363,13 +360,13 @@ public class TraceAbstractionStarter {
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs,
 			ToolchainCanceledException toolchainCanceledException) {
-		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
+		for (final ProgramPoint errorIpp : errorLocs) {
+			final ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
@@ -377,23 +374,23 @@ public class TraceAbstractionStarter {
 			if (toolchainCanceledException != null) {
 				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
 			}
-			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
 	}
 
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
-		ProgramPoint errorPP = getErrorPP(pe);
-		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
+		final ProgramPoint errorPP = getErrorPP(pe);
+		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
-		String shortDescription = "Ultimate Automizer benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		final String shortDescription = "Ultimate Automizer benchmark data";
+		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -404,14 +401,14 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportResult(IResult res) {
-		m_Services.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
-		return m_RootOfNewModel;
+		return mRootOfNewModel;
 	}
 
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
@@ -419,14 +416,14 @@ public class TraceAbstractionStarter {
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
-		int lastPosition = rcfgProgramExecution.getLength() - 1;
-		RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		final int lastPosition = rcfgProgramExecution.getLength() - 1;
+		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}
 
 	private boolean interpolationModeSwitchNeeded() {
-		SolverMode solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final SolverMode solver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;

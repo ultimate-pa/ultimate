@@ -33,10 +33,11 @@ public class InterpolationInfo {
 	
 	private void grow(int minsize) {
 		int newsize = 2 * mPartitions.length;
-		if (newsize < minsize)
+		if (newsize < minsize) {
 			newsize = minsize + 1;
-		Term[] newPartitions = new Term[newsize];
-		int[] newStartOfSubTrees = new int[newsize];
+		}
+		final Term[] newPartitions = new Term[newsize];
+		final int[] newStartOfSubTrees = new int[newsize];
 		System.arraycopy(mPartitions, 0, newPartitions, 0, mSize);
 		System.arraycopy(mStartOfSubTrees, 0, newStartOfSubTrees, 0, mSize);
 		mPartitions = newPartitions;
@@ -48,25 +49,28 @@ public class InterpolationInfo {
 	}
 	
 	public void addParent(Term partition) {
-		if (mSize + 1 >= mPartitions.length)
+		if (mSize + 1 >= mPartitions.length) {
 			grow(mSize + 1);
+		}
 		mPartitions[mSize] = partition;
 		mStartOfSubTrees[mSize] = 0;
 		mSize++;
 	}
 	
 	public void addSibling(InterpolationInfo sibling) {
-		if (mSize + sibling.mSize >= mPartitions.length)
+		if (mSize + sibling.mSize >= mPartitions.length) {
 			grow(mSize + sibling.mSize);
+		}
 		System.arraycopy(sibling.mPartitions, 0, mPartitions, mSize, sibling.mSize);
-		for (int i = 0; i < sibling.mSize; i++)
+		for (int i = 0; i < sibling.mSize; i++) {
 			mStartOfSubTrees[mSize + i] = mSize + sibling.mStartOfSubTrees[i];
+		}
 		mSize += sibling.mSize;
 	}
 	
 	public Term[] getPartition() {
 		if (mPartitions.length != mSize) {
-			Term[] newPartitions = new Term[mSize];
+			final Term[] newPartitions = new Term[mSize];
 			System.arraycopy(mPartitions, 0, newPartitions, 0, mSize);
 			return newPartitions;
 		}
@@ -75,7 +79,7 @@ public class InterpolationInfo {
 
 	public int[] getTreeStructure() {
 		if (mStartOfSubTrees.length != mSize) {
-			int[] newStartOfSubtrees = new int[mSize];
+			final int[] newStartOfSubtrees = new int[mSize];
 			System.arraycopy(mStartOfSubTrees, 0, newStartOfSubtrees, 0, mSize);
 			return newStartOfSubtrees;
 		}

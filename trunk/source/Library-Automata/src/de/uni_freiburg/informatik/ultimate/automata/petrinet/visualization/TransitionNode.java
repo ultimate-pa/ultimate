@@ -30,9 +30,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a PetriNet transition.
@@ -46,14 +46,14 @@ public class TransitionNode extends PetriNetVisualizationNode {
 	public TransitionNode(Transition<?,?> transition) {
 		super(transition.getSymbol().toString());
 		
-		IPayload payload = this.getPayload(); 
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload(); 
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("hashCode",transition.hashCode());
-		Map<String,IAnnotations> annotations = payload.getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
+		final Map<String,IAnnotations> annotations = payload.getAnnotations();
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 		
 		if (transition.getSymbol() instanceof IAnnotations) {
-			thisPluginsAnnotations.put("Symbol", (IAnnotations) transition.getSymbol());
+			thisPluginsAnnotations.put("Symbol", transition.getSymbol());
 
 		}
 	}

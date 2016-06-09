@@ -39,61 +39,61 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable,
 		Comparable<Transition<S, C>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
-	private final int m_HashCode;
-	private final S m_Symbol;
-	private final Collection<Place<S, C>> m_Predecessors;
-	private final Collection<Place<S, C>> m_Successors;
+	private final int mHashCode;
+	private final S mSymbol;
+	private final Collection<Place<S, C>> mPredecessors;
+	private final Collection<Place<S, C>> mSuccessors;
 
-	private final int m_TotalOrderID;
+	private final int mTotalOrderID;
 
 	public Transition(S symbol, Collection<Place<S, C>> predecessors,
 			Collection<Place<S, C>> successors, int totalOrderID) {
-		m_Symbol = symbol;
-		m_Predecessors = Collections
+		mSymbol = symbol;
+		mPredecessors = Collections
 				.unmodifiableList((List<Place<S, C>>) predecessors);
-		m_Successors = Collections
+		mSuccessors = Collections
 				.unmodifiableList((List<Place<S, C>>) successors);
-		m_HashCode = computeHashCode();
-		m_TotalOrderID = totalOrderID;
+		mHashCode = computeHashCode();
+		mTotalOrderID = totalOrderID;
 	}
 
 	@Override
 	public S getSymbol() {
-		return m_Symbol;
+		return mSymbol;
 	}
 
 	@Override
 	public Collection<Place<S, C>> getPredecessors() {
-		return m_Predecessors;
+		return mPredecessors;
 	}
 
 	@Override
 	public Collection<Place<S, C>> getSuccessors() {
-		return m_Successors;
+		return mSuccessors;
 	}
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 
 	public int computeHashCode() {
-		return 13 * m_Predecessors.hashCode() + 7 * m_Successors.hashCode() + 3
-				* m_Symbol.hashCode();
+		return 13 * mPredecessors.hashCode() + 7 * mSuccessors.hashCode() + 3
+				* mSymbol.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return m_Symbol.toString()+"["+m_TotalOrderID+"]";
+		return mSymbol.toString()+"["+mTotalOrderID+"]";
 	}
 
 	public int getTotalOrderID() {
-		return m_TotalOrderID;
+		return mTotalOrderID;
 	}
 
 	@Override
 	public int compareTo(Transition<S, C> o) {
-		return m_TotalOrderID - o.m_TotalOrderID;
+		return mTotalOrderID - o.mTotalOrderID;
 	}
 
 }

@@ -26,41 +26,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -74,16 +73,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 public class UseDefVisitor extends SimpleRCFGVisitor {
 
-	public UseDefVisitor(Logger logger) {
+	public UseDefVisitor(ILogger logger) {
 		super(logger);
 	}
 
 	@Override
 	public void pre(RCFGEdge edge) {
 		super.pre(edge);
-		UseDefSequence annot = new UseDefSequence();
+		final UseDefSequence annot = new UseDefSequence();
 		if (edge instanceof StatementSequence) {
-			for (Statement s : ((StatementSequence) edge).getStatements()) {
+			for (final Statement s : ((StatementSequence) edge).getStatements()) {
 				annot.Sequence.add(processStatement(s));
 			}
 		} else if (edge instanceof Call) {
@@ -124,11 +123,11 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 	private UseDefSet processStatement(Statement stmt) {
 		UseDefSet uds = new UseDefSet();
 		if (stmt instanceof AssignmentStatement) {
-			AssignmentStatement assign = (AssignmentStatement) stmt;
-			for (LeftHandSide lhs : assign.getLhs()) {
+			final AssignmentStatement assign = (AssignmentStatement) stmt;
+			for (final LeftHandSide lhs : assign.getLhs()) {
 				uds = uds.merge(processLeftHandSide(lhs));
 			}
-			for (Expression rhs : assign.getRhs()) {
+			for (final Expression rhs : assign.getRhs()) {
 				uds = uds.merge(processExpression(rhs));
 			}
 			return uds;
@@ -142,11 +141,11 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (stmt instanceof CallStatement) {
-			CallStatement call = (CallStatement) stmt;
-			for (VariableLHS id : call.getLhs()) {
+			final CallStatement call = (CallStatement) stmt;
+			for (final VariableLHS id : call.getLhs()) {
 				uds.Def.add(id.toString());
 			}
-			for (Expression exp : call.getArguments()) {
+			for (final Expression exp : call.getArguments()) {
 				uds = uds.merge(processExpression(exp));
 			}
 			return uds;
@@ -155,21 +154,21 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (stmt instanceof HavocStatement) {
-			for (VariableLHS id : ((HavocStatement) stmt).getIdentifiers()) {
+			for (final VariableLHS id : ((HavocStatement) stmt).getIdentifiers()) {
 				uds.Def.add(id.toString());
 			}
 			return uds;
 
 		} else if (stmt instanceof IfStatement) {
 
-			IfStatement ifstmt = (IfStatement) stmt;
+			final IfStatement ifstmt = (IfStatement) stmt;
 			mLogger.debug("IfStatement in edge?");
 
 			uds = processExpression(ifstmt.getCondition());
-			for (Statement s : ifstmt.getThenPart()) {
+			for (final Statement s : ifstmt.getThenPart()) {
 				uds = uds.merge(processStatement(s));
 			}
-			for (Statement s : ifstmt.getElsePart()) {
+			for (final Statement s : ifstmt.getElsePart()) {
 				uds = uds.merge(processStatement(s));
 			}
 
@@ -180,10 +179,10 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		} else if (stmt instanceof ReturnStatement) {
 			return uds;
 		} else if (stmt instanceof WhileStatement) {
-			WhileStatement wstmt = (WhileStatement) stmt;
+			final WhileStatement wstmt = (WhileStatement) stmt;
 			mLogger.debug("WhileStatement in edge?");
 			uds = processExpression(wstmt.getCondition());
-			for (Statement s : wstmt.getBody()) {
+			for (final Statement s : wstmt.getBody()) {
 				uds = uds.merge(processStatement(s));
 			}
 
@@ -197,16 +196,16 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 	private UseDefSet processExpression(Expression exp) {
 		UseDefSet uds = new UseDefSet();
 		if (exp instanceof ArrayAccessExpression) {
-			ArrayAccessExpression aaexp = (ArrayAccessExpression) exp;
+			final ArrayAccessExpression aaexp = (ArrayAccessExpression) exp;
 			uds = uds.merge(processExpression(aaexp.getArray()));
-			for (Expression e : aaexp.getIndices()) {
+			for (final Expression e : aaexp.getIndices()) {
 				uds = uds.merge(processExpression(e));
 			}
 			return uds;
 		} else if (exp instanceof ArrayStoreExpression) {
 
 		} else if (exp instanceof BinaryExpression) {
-			BinaryExpression bexp = (BinaryExpression) exp;
+			final BinaryExpression bexp = (BinaryExpression) exp;
 			return processExpression(bexp.getLeft()).merge(
 					processExpression(bexp.getRight()));
 
@@ -219,7 +218,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (exp instanceof FunctionApplication) {
-			for (Expression argument : ((FunctionApplication) exp)
+			for (final Expression argument : ((FunctionApplication) exp)
 					.getArguments()) {
 				uds = uds.merge(processExpression(argument));
 			}
@@ -230,7 +229,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (exp instanceof IfThenElseExpression) {
-			IfThenElseExpression ifexp = (IfThenElseExpression) exp;
+			final IfThenElseExpression ifexp = (IfThenElseExpression) exp;
 			uds = uds.merge(processExpression(ifexp.getCondition()));
 			uds = uds.merge(processExpression(ifexp.getThenPart()));
 			uds = uds.merge(processExpression(ifexp.getElsePart()));
@@ -264,7 +263,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 	}
 
 	private UseDefSet processLeftHandSide(LeftHandSide lhs) {
-		UseDefSet uds = new UseDefSet();
+		final UseDefSet uds = new UseDefSet();
 		if (lhs instanceof ArrayLHS) {
 
 		} else if (lhs instanceof StructLHS) {

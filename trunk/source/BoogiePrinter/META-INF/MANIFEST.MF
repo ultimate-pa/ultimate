@@ -3,10 +3,11 @@ Bundle-ManifestVersion: 2
 Bundle-Name: BoogiePrinter Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.printer;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.printer.Activator
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
+ Library-BoogieAST,
  UltimateCore,
  BoogieParser
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.boogie.printer
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

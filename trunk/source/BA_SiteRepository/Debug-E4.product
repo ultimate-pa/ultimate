@@ -37,10 +37,6 @@
       <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7</windows>
    </vm>
 
-
-   <plugins>
-   </plugins>
-
    <features>
       <feature id="BA_FeatureUltimateDebug" version="0.0.1"/>
       <feature id="BA_FeatureDependenciesDebugE4" version="0.0.1"/>

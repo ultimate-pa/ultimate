@@ -26,10 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
@@ -43,6 +44,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
  * @author Jan Leike
  */
 public class PreferencesInitializer extends UltimatePreferenceInitializer {
+
+	public PreferencesInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 	/*
 	 * Default values for GUI-only preferences
 	 */
@@ -76,9 +81,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Allow bounded nonterminating executions";
 	public static final String LABEL_termination_analysis =
 			"Termination analysis";
-	public static final String LABEL_num_strict_invariants =
+	public static final String LABEL_numstrict_invariants =
 			"Number of strict supporting invariants";
-	public static final String LABEL_num_non_strict_invariants =
+	public static final String LABEL_numnon_strict_invariants =
 			"Number of non-strict supporting invariants";
 	public static final String LABEL_nondecreasing_invariants =
 			"Only non-decreasing invariants";
@@ -126,10 +131,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		// Get default preferences and settings
-		LassoRankerPreferences preferences = new LassoRankerPreferences();
-		TerminationAnalysisSettings termination_settings =
+		final LassoRankerPreferences preferences = new LassoRankerPreferences();
+		final TerminationAnalysisSettings termination_settings =
 				new TerminationAnalysisSettings();
-		NonTerminationAnalysisSettings nontermination_settings =
+		final NonTerminationAnalysisSettings nontermination_settings =
 				new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<Boolean>(
@@ -159,12 +164,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_num_strict_invariants,
-						termination_settings.num_strict_invariants,
+						LABEL_numstrict_invariants,
+						termination_settings.numstrict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_num_non_strict_invariants,
-						termination_settings.num_non_strict_invariants,
+						LABEL_numnon_strict_invariants,
+						termination_settings.numnon_strict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_nondecreasing_invariants,
@@ -256,12 +261,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/**
 	 * @return the (global) LassoRanker preferences from the GUI
 	 */
-	public static LassoRankerPreferences getLassoRankerPreferences() {
+	public static LassoRankerPreferences getLassoRankerPreferences(final IUltimateServiceProvider services) {
 		// Get default preferences
-		LassoRankerPreferences preferences = new LassoRankerPreferences();
+		final LassoRankerPreferences preferences = new LassoRankerPreferences();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		preferences.enable_partitioneer = store.getBoolean(
 				LABEL_enable_partitioneer
 		);
@@ -289,20 +294,20 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/**
 	 * @return the (local) termination analysis settings from the GUI
 	 */
-	public static TerminationAnalysisSettings getTerminationAnalysisSettings() {
+	public static TerminationAnalysisSettings getTerminationAnalysisSettings(final IUltimateServiceProvider services) {
 		// Get default preferences
-		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
+		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_termination_analysis,
 						AnalysisType.class);
-		settings.num_strict_invariants = store.getInt(
-				LABEL_num_strict_invariants
+		settings.numstrict_invariants = store.getInt(
+				LABEL_numstrict_invariants
 		);
-		settings.num_non_strict_invariants = store.getInt(
-				LABEL_num_non_strict_invariants
+		settings.numnon_strict_invariants = store.getInt(
+				LABEL_numnon_strict_invariants
 		);
 		settings.nondecreasing_invariants = store.getBoolean(
 				LABEL_nondecreasing_invariants
@@ -320,13 +325,13 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * @return the (local) nontermination analysis settings from the GUI
 	 */
 	public static NonTerminationAnalysisSettings
-			getNonTerminationAnalysisSettings() {
+			getNonTerminationAnalysisSettings(final IUltimateServiceProvider services) {
 		// Get default preferences
-		NonTerminationAnalysisSettings settings =
+		final NonTerminationAnalysisSettings settings =
 				new NonTerminationAnalysisSettings();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final IPreferenceProvider store =
+				services.getPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);
@@ -334,15 +339,5 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		settings.nilpotent_components = store.getBoolean(LABEL_nontermination_nilpotent_components);
 		settings.allowBounded = store.getBoolean(LABEL_nontermination_bounded_executions);
 		return settings;
-	}
-	
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-	
-	@Override
-	public String getPreferencePageTitle() {
-		return Activator.s_PLUGIN_NAME;
 	}
 }

@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Para
 
 public abstract class ParameterType {
 
-	private ParamTypes mType;
+	private final ParamTypes mType;
 	
 	private boolean mLocal;
-	private String mName;
+	private final String mName;
 	
 	public ParameterType(ParamTypes type, ParamType param) {
 		mType = type;

@@ -39,9 +39,9 @@ import java.util.Set;
  *
  */
 public class HelpIncremental implements Runnable {
-	private MinimizeDfaAmrParallel<?, ?> m_incrementalAlgorithm;
-	private HashSet<Integer> m_array1;
-	private HashSet<Integer> m_array2;
+	private final MinimizeDfaAmrParallel<?, ?> mincrementalAlgorithm;
+	private final HashSet<Integer> marray1;
+	private final HashSet<Integer> marray2;
 
 	/**
 	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we
@@ -54,20 +54,20 @@ public class HelpIncremental implements Runnable {
 	 */
 	public HelpIncremental(MinimizeDfaAmrParallel<?, ?> incremental,
 			HashSet<Integer> array1, HashSet<Integer> array2) {
-		m_incrementalAlgorithm = incremental;
-		m_array1 = array1;
-		m_array2 = array2;
+		mincrementalAlgorithm = incremental;
+		marray1 = array1;
+		marray2 = array2;
 	}
 
 	@Override
 	public void run() {
-		Set<Tuple> neq = m_incrementalAlgorithm.getNeq();
-		for (Iterator<Integer> iter1 = m_array1.iterator(); iter1.hasNext();) {
-			int i = iter1.next();
-			for (Iterator<Integer> iter2 = m_array2.iterator(); iter2.hasNext();) {
-				// Write into m_neq
+		final Set<Tuple> neq = mincrementalAlgorithm.getNeq();
+		for (final Iterator<Integer> iter1 = marray1.iterator(); iter1.hasNext();) {
+			final int i = iter1.next();
+			for (final Iterator<Integer> iter2 = marray2.iterator(); iter2.hasNext();) {
+				// Write into mneq
 
-				int j = iter2.next();
+				final int j = iter2.next();
 
 				Tuple tuple;
 				if (i < j) {
@@ -76,7 +76,7 @@ public class HelpIncremental implements Runnable {
 					tuple = new Tuple(j, i);
 				}
 				if (!neq.contains(tuple)) {
-					((Set<Tuple>) neq).add(tuple);
+					neq.add(tuple);
 				}
 			}
 		}

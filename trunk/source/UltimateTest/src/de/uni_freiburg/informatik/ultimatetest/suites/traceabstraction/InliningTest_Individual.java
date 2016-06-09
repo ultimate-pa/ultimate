@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  *  Represents a subset from {@link InliningTest}, which is currently investigated.
@@ -75,7 +75,7 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String file : sFiles) {
+		for (final String file : sFiles) {
 			if (file.matches(".*\\.bpl$")) {
 				if (sTraceAbstractionBoogie) {
 					addTestCase(

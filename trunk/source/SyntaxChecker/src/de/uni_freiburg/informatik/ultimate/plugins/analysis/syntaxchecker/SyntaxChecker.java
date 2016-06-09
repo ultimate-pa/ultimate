@@ -33,22 +33,20 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Use external tool to do a syntax check.
@@ -57,13 +55,13 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Seve
  */
 public class SyntaxChecker implements IAnalysis {
 	protected String[] mFileTypes;
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 	
-	private final FilenameExtractionObserver m_FilenameExtractionObserver = 
+	private final FilenameExtractionObserver mFilenameExtractionObserver = 
 			new FilenameExtractionObserver();
 	
 	@Override
@@ -91,7 +89,7 @@ public class SyntaxChecker implements IAnalysis {
 	}
 	@Override
 	public List<IObserver> getObservers() {
-		return Arrays.asList((new IObserver[]{ m_FilenameExtractionObserver }));
+		return Arrays.asList((new IObserver[]{ mFilenameExtractionObserver }));
 	}
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
@@ -111,17 +109,17 @@ public class SyntaxChecker implements IAnalysis {
 	public void finish() {
 		try {
 			doSyntaxCheck();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			throw new AssertionError(e);
 		}
 	}
 	private void doSyntaxCheck() throws IOException {
-		final String toolCommandError = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final String toolCommandError = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
-		final String filename = m_FilenameExtractionObserver.getFilename();
+		final String filename = mFilenameExtractionObserver.getFilename();
 		
-		final boolean removeFilename = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final boolean removeFilename = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
 		
 		final String outputError = callSytaxCheckerAndReturnStderrOutput(toolCommandError, filename);
@@ -137,10 +135,10 @@ public class SyntaxChecker implements IAnalysis {
 		}
 
 		
-		final boolean doSyntaxWarningCheck = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final boolean doSyntaxWarningCheck = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
-			final String toolCommandWarnings = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+			final String toolCommandWarnings = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 			final String outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
 			if (outputWarnings == null) {
@@ -148,8 +146,8 @@ public class SyntaxChecker implements IAnalysis {
 			} else {
 				final String longMessage = generateLongDescription(toolCommandError, outputWarnings, filename,
 						removeFilename);
-				String shortDescription = "Syntax checker warnings";
-				Severity severity = Severity.WARNING;
+				final String shortDescription = "Syntax checker warnings";
+				final Severity severity = Severity.WARNING;
 				final GenericResult res = new GenericResult(Activator.PLUGIN_ID, shortDescription, longMessage, severity);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			}
@@ -214,7 +212,7 @@ public class SyntaxChecker implements IAnalysis {
 		return getClass().getPackage().getName();
 	}
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 	
@@ -224,7 +222,7 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public String getFileName() {
-		return m_FilenameExtractionObserver.getFilename();
+		return mFilenameExtractionObserver.getFilename();
 	}
 
 	@Override

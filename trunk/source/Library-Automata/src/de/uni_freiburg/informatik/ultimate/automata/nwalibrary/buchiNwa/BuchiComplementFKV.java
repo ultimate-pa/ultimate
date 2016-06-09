@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 	
 
@@ -54,22 +53,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
 	 * rank of 2 is suffient, see paper of Seth Forgaty.
 	 */
-	private final int m_UserDefinedMaxRank;
+	private final int mUserDefinedMaxRank;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
-	private final StateFactory<STATE> m_StateFactory;
-	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
-	private final BuchiComplementFKVNwa<LETTER, STATE> m_Complemented;
-	private final FkvOptimization m_Optimization;	
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
+	private final StateFactory<STATE> mStateFactory;
+	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
+	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
+	private final FkvOptimization mOptimization;	
 	
 	
 	
@@ -81,24 +80,24 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " with optimization " + m_Optimization 
-				+ ". Operand " +	m_Operand.sizeInformation();
+		return "Start " + operationName() + " with optimization " + mOptimization 
+				+ ". Operand " +	mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " with optimization " + m_Optimization 
+		return "Finished " + operationName() + " with optimization " + mOptimization 
 				+ ". Operand " + 
-				m_Operand.sizeInformation() + " Result " + 
-				m_Result.sizeInformation() + 
-				m_Complemented.getPowersetStates() + " powerset states" +
-				m_Complemented.getRankStates() + " rank states" +
-			" the highest rank that occured is " + m_Complemented.getHighesRank();
+				mOperand.sizeInformation() + " Result " + 
+				mResult.sizeInformation() + 
+				mComplemented.getPowersetStates() + " powerset states" +
+				mComplemented.getRankStates() + " rank states" +
+			" the highest rank that occured is " + mComplemented.getHighesRank();
 	}
 	
 	public int getHighestRank() {
-		return m_Complemented.getHighesRank();
+		return mComplemented.getHighesRank();
 	}
 
 	public BuchiComplementFKV(AutomataLibraryServices services,
@@ -106,17 +105,17 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> input,
 			String optimization,
 			int userDefinedMaxRank) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.m_StateFactory = input.getStateFactory();
-		this.m_Operand = input;
-		this.m_UserDefinedMaxRank = userDefinedMaxRank;
-		this.m_Optimization = FkvOptimization.valueOf(optimization);
-		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.mStateFactory = input.getStateFactory();
+		this.mOperand = input;
+		this.mUserDefinedMaxRank = userDefinedMaxRank;
+		this.mOptimization = FkvOptimization.valueOf(optimization);
+		mLogger.info(startMessage());
+		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input,mStateDeterminizer,mStateFactory, mOptimization, mUserDefinedMaxRank);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
+		mLogger.info(exitMessage());
 	}
 	
 	public BuchiComplementFKV(AutomataLibraryServices services,
@@ -128,17 +127,17 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	public BuchiComplementFKV(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> input, IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_StateDeterminizer = stateDeterminizier;
-		this.m_StateFactory = input.getStateFactory();
-		this.m_Operand = input;
-		this.m_UserDefinedMaxRank = Integer.MAX_VALUE;
-		this.m_Optimization = FkvOptimization.HeiMat2;
-		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mStateDeterminizer = stateDeterminizier;
+		this.mStateFactory = input.getStateFactory();
+		this.mOperand = input;
+		this.mUserDefinedMaxRank = Integer.MAX_VALUE;
+		this.mOptimization = FkvOptimization.HeiMat2;
+		mLogger.info(startMessage());
+		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input,mStateDeterminizer,mStateFactory, mOptimization, mUserDefinedMaxRank);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -149,62 +148,62 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		boolean underApproximationOfComplement = false;
+		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
-		m_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Services, m_Operand);
-		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
-		boolean operandEmpty = operandEmptiness.getResult();
+		mLogger.info("Start testing correctness of " + operationName());
+		final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
+				ResultChecker.getOldApiNwa(mServices, mOperand);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
+		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
-		boolean resultEmpty = resultEmptiness.getResult();
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, operandOldApi)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, operandOldApi)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		
 
-		for (NestedLassoWord<LETTER> nlw : lassoWords) {
+		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
 			if (!thistime) {
 				thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
@@ -214,10 +213,10 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		}
 
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "FailedRes", "", m_Result);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "FailedRes", "", mResult);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
@@ -225,8 +224,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand , 
 			boolean underApproximationOfComplement) throws AutomataLibraryException {
-		boolean op = (new BuchiAccepts<LETTER, STATE>(m_Services, operand, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
+		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		boolean correct;
 		if (underApproximationOfComplement) {
 			correct = !res || op;
@@ -240,7 +239,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 }

@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.provider;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import org.eclipse.jface.viewers.LabelProvider;
+
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.gui.misc.Entry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.GroupEntry;
-
-import org.eclipse.jface.viewers.LabelProvider;
 
 /**
  * @author dietsch

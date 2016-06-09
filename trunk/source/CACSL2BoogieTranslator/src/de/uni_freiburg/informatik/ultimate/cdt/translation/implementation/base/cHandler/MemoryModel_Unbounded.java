@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
@@ -39,28 +40,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class MemoryModel_Unbounded extends AMemoryModel {
 	
-	private final HeapDataArray m_IntegerArray;
-	private final HeapDataArray m_FloatingArray;
+	private final HeapDataArray mIntegerArray;
+	private final HeapDataArray mFloatingArray;
 	
 	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
-		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		/*
 		 * In our Lindenmann-Hoenicke memory model, we use an array for all
 		 * integer data on the heap. This method returns the CType that we use to
 		 * represents this data.
 		 */
-        ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
         		new CPrimitive(PRIMITIVE.INT));
         
     	/*
@@ -68,11 +68,11 @@ public class MemoryModel_Unbounded extends AMemoryModel {
     	 * floating type data on the heap. This method returns the CType that we 
     	 * use to represent this data.
     	 */
-        ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
         		new CPrimitive(PRIMITIVE.FLOAT));
         
-       	m_IntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
-       	m_FloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
+       	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
+       	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
 	}
 	
 	@Override
@@ -83,9 +83,9 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
 		if (primitive.isIntegertype()) {
-			return m_IntegerArray;
+			return mIntegerArray;
 		} else if(primitive.isFloatingtype()) {
-			return m_FloatingArray;
+			return mFloatingArray;
 		} else {
 			throw new AssertionError();
 		}
@@ -96,17 +96,17 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = 0;
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
 		}
-		List<ReadWriteDefinition> result = new ArrayList<>();
-		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+		final List<ReadWriteDefinition> result = new ArrayList<>();
+		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;

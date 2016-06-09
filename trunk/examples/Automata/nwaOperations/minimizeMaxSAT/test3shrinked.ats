@@ -12,7 +12,7 @@ print(numberOfStates(nwa));
 print(numberOfStates(shrinkNwa(nwa)));
 print(numberOfStates(minimizeSevpa(nwa)));
 print(numberOfStates(minimizeNwaMaxSAT(nwa)));
-print((minimizeNwaMaxSAT(nwa)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa)));
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = {c0 c1 },

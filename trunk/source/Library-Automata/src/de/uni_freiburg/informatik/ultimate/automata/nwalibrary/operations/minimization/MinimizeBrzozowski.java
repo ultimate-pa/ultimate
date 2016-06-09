@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -65,13 +65,13 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * NOTE: All intermediate results are also stored here.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> m_result;
+	private final INestedWordAutomaton<LETTER, STATE> mresult;
 	
 	/**
 	 * Constructor.
 	 * 
 	 * @param operand input (finite, possibly nondeterministic) automaton
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
 	public MinimizeBrzozowski(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
@@ -82,8 +82,8 @@ public class MinimizeBrzozowski<LETTER, STATE>
 		assert super.checkForFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
 		
-		m_result = minimize();
-		s_logger.info(exitMessage());
+		mresult = minimize();
+		mLogger.info(exitMessage());
 	}
 	
 	/**
@@ -91,11 +91,11 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * results in the minimal DFA.
 	 * 
 	 * @return the minimal DFA
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, STATE> automaton = m_operand;
+		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
 			automaton = reverse(automaton);
@@ -119,8 +119,8 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 */
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<LETTER, STATE>(m_Services, 
+		final NestedWordAutomaton<LETTER, STATE> reversed =
+				new NestedWordAutomaton<LETTER, STATE>(mServices, 
 						automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(),
@@ -148,15 +148,15 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * @param automaton automaton
 	 * @return the determinized automaton
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
-			return new Determinize<LETTER, STATE>(m_Services, m_StateFactory, automaton).getResult();
+			return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
 		}
 		// this case cannot occur
-		catch (AutomataLibraryException e) {
+		catch (final AutomataLibraryException e) {
 			e.printStackTrace();
 			return automaton;
 		}
@@ -164,6 +164,6 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return m_result;
+		return mresult;
 	}
 }

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> implements IAnnotationProvider<T> {
 
@@ -47,6 +47,7 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 		mKeys.add(sDefaultKey);
 	}
 
+	@Override
 	public T getAnnotation(IElement element) {
 		return getAnnotation(element, sDefaultKey);
 	}
@@ -66,7 +67,7 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 		if (!element.getPayload().hasAnnotation()) {
 			return null;
 		}
-		String key = sAnnotationName + " " + uniqueId;
+		final String key = sAnnotationName + " " + uniqueId;
 		if (mAnnotationSuffix == null) {
 			return (T) element.getPayload().getAnnotations().get(key);
 		} else {
@@ -78,7 +79,7 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 	public void annotate(IElement node, T annotation, String uniqueId) {
 		assert uniqueId != null && !uniqueId.isEmpty();
 		mKeys.add(uniqueId);
-		String key = sAnnotationName + " " + uniqueId;
+		final String key = sAnnotationName + " " + uniqueId;
 		if (mAnnotationSuffix == null) {
 			node.getPayload().getAnnotations().put(key, annotation);
 		} else {
@@ -88,9 +89,9 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 
 	@Override
 	public List<T> getAllAnnotations(IElement element) {
-		List<T> rtr = new ArrayList<>();
-		for(String key : mKeys){
-			T annot = getAnnotation(element, key);
+		final List<T> rtr = new ArrayList<>();
+		for(final String key : mKeys){
+			final T annot = getAnnotation(element, key);
 			if(annot != null){
 				rtr.add(annot);
 			}

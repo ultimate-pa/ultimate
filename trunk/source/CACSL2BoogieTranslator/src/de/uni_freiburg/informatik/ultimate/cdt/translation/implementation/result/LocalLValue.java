@@ -27,10 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 
 public class LocalLValue extends LRValue {
 
@@ -64,6 +64,7 @@ public class LocalLValue extends LRValue {
 		return lhs;
 	}
 
+	@Override
 	public Expression getValue() {
 		return CHandler.convertLHSToExpression(lhs);
 	}

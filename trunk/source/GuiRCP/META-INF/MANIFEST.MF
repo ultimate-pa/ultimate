@@ -5,9 +5,11 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: 
  org.eclipse.ui;visibility:=reexport,
+ Library-UltimateModel,
+ Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-SMTLIB,
- UltimateCore,
  GUIGeneratedPreferencePages,
  GUILoggingWindow
 Export-Package: 
@@ -32,4 +34,4 @@ Export-Package:
    org.eclipse.jface.viewers,
    org.eclipse.ui.part,
    org.eclipse.swt.widgets"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

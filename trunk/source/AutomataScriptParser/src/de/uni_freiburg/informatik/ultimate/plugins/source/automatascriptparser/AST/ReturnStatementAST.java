@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 public class ReturnStatementAST extends AtsASTNode {
@@ -39,8 +39,8 @@ public class ReturnStatementAST extends AtsASTNode {
 
 	public ReturnStatementAST(ILocation loc, AtsASTNode expr) {
 		super(loc);
-		m_returnType = expr.getReturnType();
-		m_expectingType = Object.class;
+		mreturnType = expr.getReturnType();
+		mexpectingType = Object.class;
 	}
 
 	public ReturnStatementAST(ILocation loc) {

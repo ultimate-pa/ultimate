@@ -43,11 +43,11 @@ public class ZTerm {
 
     public ZTerm(Term term, SectionInfo info) {
         this.term = term;
-        this.sectionInfo = info;
+        sectionInfo = info;
     }
 
     public SectionInfo cloneSectionInfo() {
-        return (SectionInfo) ((SectionManager) sectionInfo).clone();
+        return ((SectionManager) sectionInfo).clone();
     }
     
     public SectionInfo resetSectionInfo() {

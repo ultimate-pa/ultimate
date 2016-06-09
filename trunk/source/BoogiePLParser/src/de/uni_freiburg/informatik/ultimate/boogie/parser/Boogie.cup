@@ -1,18 +1,21 @@
 /* CUP specification for BoogiePL */
 
 package de.uni_freiburg.informatik.ultimate.boogie.parser;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java_cup.runtime.Symbol;
+
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+
 
 parser Parser;
 option symbols = LexerSymbols;
@@ -45,9 +48,9 @@ parser code {:
             position = mFilename + ":EOF";
         }
 		
-		mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID).error(position + ": syntax error");
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new SyntaxErrorResult(Activator.s_PLUGIN_ID, loc, String.valueOf(sym)));
+		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).error(position + ": syntax error");
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new SyntaxErrorResult(Activator.PLUGIN_ID, loc, String.valueOf(sym)));
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 :}

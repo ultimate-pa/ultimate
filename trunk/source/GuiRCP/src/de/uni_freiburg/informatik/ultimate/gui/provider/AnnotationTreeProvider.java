@@ -38,6 +38,15 @@ import java.util.Map;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ITree;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.gui.misc.Entry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.GroupEntry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.TreeViewEntry;
@@ -46,15 +55,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 
 /**
  * @author dietsch
@@ -141,14 +141,14 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		rtr.add(elementGroup);
 
 		if (elem.hasPayload()) {
-			IPayload payload = elem.getPayload();
+			final IPayload payload = elem.getPayload();
 
 			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
 			rtr.add(payloadGroup);
 
 			final ILocation loc = payload.getLocation();
 			if (loc != null) {
-				GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
+				final GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
 				rtr.add(location);
 				location.addEntry(new Entry("Source Info", payload.getLocation().toString(), location));
 				location.addEntry(new Entry("Filename", payload.getLocation().getFileName(), location));
@@ -209,9 +209,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			}
 			try {
 				field.setAccessible(true);
-				Object value = field.get(inspectionTarget);
+				final Object value = field.get(inspectionTarget);
 				elementGroup.addEntry(new Entry(field.getName(), String.valueOf(value), elementGroup));
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				ex.printStackTrace();
 				// we ignore all exceptions during retrieval
 			}
@@ -219,7 +219,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 	}
 
 	private Field[] getFields(final Object inspectionTarget) {
-		List<Field> rtr = new ArrayList<>();
+		final List<Field> rtr = new ArrayList<>();
 
 		Class<?> clazz = inspectionTarget.getClass();
 		while (clazz != null) {
@@ -233,8 +233,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 	@SuppressWarnings("unchecked")
 	private TreeViewEntry convertEntry(String name, Object value, GroupEntry parent) {
 		if (value instanceof AnnotatedTerm) {
-			AnnotatedTerm form = (AnnotatedTerm) value;
-			GroupEntry group = new GroupEntry(name + " - annotation", parent);
+			final AnnotatedTerm form = (AnnotatedTerm) value;
+			final GroupEntry group = new GroupEntry(name + " - annotation", parent);
 			for (int i = 0; i < form.getAnnotations().length; i++) {
 				group.addEntry(convertEntry(String.valueOf(i), form.getAnnotations()[i], group));
 			}
@@ -242,25 +242,25 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			return group;
 		}
 		if (value instanceof ApplicationTerm) {
-			ApplicationTerm form = (ApplicationTerm) value;
-			GroupEntry group = new GroupEntry(name + " - " + form.getFunction(), parent);
+			final ApplicationTerm form = (ApplicationTerm) value;
+			final GroupEntry group = new GroupEntry(name + " - " + form.getFunction(), parent);
 			for (int i = 0; i < form.getParameters().length; i++) {
 				group.addEntry(convertEntry(String.valueOf(i), form.getParameters()[i], group));
 			}
 			return group;
 		}
 		if (value instanceof LetTerm) {
-			LetTerm form = (LetTerm) value;
-			GroupEntry group = new GroupEntry(name + " - let", parent);
+			final LetTerm form = (LetTerm) value;
+			final GroupEntry group = new GroupEntry(name + " - let", parent);
 			group.addEntry(convertEntry(Arrays.toString(form.getVariables()), form.getValues(), group));
 			group.addEntry(convertEntry("subform", form.getSubTerm(), group));
 			return group;
 		}
 		if (value instanceof QuantifiedFormula) {
-			QuantifiedFormula form = (QuantifiedFormula) value;
-			String quant = form.getQuantifier() == QuantifiedFormula.FORALL ? "forall" : "exists";
-			GroupEntry group = new GroupEntry(name + " - " + quant, parent);
-			for (TermVariable v : form.getVariables()) {
+			final QuantifiedFormula form = (QuantifiedFormula) value;
+			final String quant = form.getQuantifier() == QuantifiedFormula.FORALL ? "forall" : "exists";
+			final GroupEntry group = new GroupEntry(name + " - " + quant, parent);
+			for (final TermVariable v : form.getVariables()) {
 				group.addEntry(convertEntry("var", v, group));
 			}
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
@@ -270,8 +270,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			return convertITreeEntry(String.valueOf(value), (ITree) value, parent);
 		}
 		if (value instanceof IAnnotations) {
-			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
-			GroupEntry group = new GroupEntry(name, parent);
+			final Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
+			final GroupEntry group = new GroupEntry(name, parent);
 			for (final java.util.Map.Entry<String, Object> attrib : mapping.entrySet()) {
 				group.addEntry(convertEntry(attrib.getKey(), mapping.get(attrib.getKey()), group));
 			}
@@ -279,24 +279,24 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		}
 
 		if (value instanceof Map) {
-			GroupEntry group = new GroupEntry(name, parent);
-			for (Map.Entry<Object, Object> e : ((Map<Object, Object>) value).entrySet()) {
+			final GroupEntry group = new GroupEntry(name, parent);
+			for (final Map.Entry<Object, Object> e : ((Map<Object, Object>) value).entrySet()) {
 				group.addEntry(convertEntry(e.getKey().toString(), e.getValue(), group));
 			}
 			return group;
 		}
 		if (value instanceof Collection) {
-			GroupEntry group = new GroupEntry(name, parent);
+			final GroupEntry group = new GroupEntry(name, parent);
 			int cnt = 0;
-			for (Object o : (Collection<?>) value) {
+			for (final Object o : (Collection<?>) value) {
 				cnt++;
 				group.addEntry(convertEntry(String.valueOf(cnt), o, group));
 			}
 			return group;
 		}
 		if (value instanceof Object[]) {
-			GroupEntry group = new GroupEntry(name, parent);
-			Object[] arr = (Object[]) value;
+			final GroupEntry group = new GroupEntry(name, parent);
+			final Object[] arr = (Object[]) value;
 			for (int i = 0; i < arr.length; i++) {
 				group.addEntry(convertEntry(String.valueOf(i), arr[i], group));
 			}
@@ -307,10 +307,10 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 	}
 
 	private TreeViewEntry convertITreeEntry(String name, ITree value, GroupEntry parent) {
-		List<IWalkable> children = value.getSuccessors();
+		final List<IWalkable> children = value.getSuccessors();
 		if (children != null && !children.isEmpty()) {
-			GroupEntry group = new GroupEntry(name, parent);
-			for (IWalkable child : children) {
+			final GroupEntry group = new GroupEntry(name, parent);
+			for (final IWalkable child : children) {
 				if (child instanceof ITree) {
 					group.addEntry(convertITreeEntry(child.toString(), (ITree) child, group));
 				}

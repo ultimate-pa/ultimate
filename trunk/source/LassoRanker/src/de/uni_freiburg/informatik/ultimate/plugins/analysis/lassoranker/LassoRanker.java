@@ -31,13 +31,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * Main class of Plug-In LassoRanker
@@ -47,11 +47,8 @@ import de.uni_freiburg.informatik.ultimate.model.ModelType;
  */
 public class LassoRanker implements IAnalysis {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
-	
-	private LassoRankerObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private LassoRankerObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -60,7 +57,7 @@ public class LassoRanker implements IAnalysis {
 	 */
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	/**
@@ -68,7 +65,7 @@ public class LassoRanker implements IAnalysis {
 	 */
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	/**
@@ -91,22 +88,24 @@ public class LassoRanker implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	//@Override
+	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new LassoRankerObserver(mServices, mStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new LassoRankerObserver(mServices, mStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 	
+	@Override
 	public ModelType getOutputDefinition() {
 		/* 
 		 * TODO This generated method body only assumes a standard case.
 		 * Adapt it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID,
+				mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 	
 	@Override
@@ -116,7 +115,7 @@ public class LassoRanker implements IAnalysis {
 	
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferencesInitializer();
 	}
 

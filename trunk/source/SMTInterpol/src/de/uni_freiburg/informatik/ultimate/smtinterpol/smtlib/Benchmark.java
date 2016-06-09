@@ -50,8 +50,9 @@ public class Benchmark {
 	}
 	
 	public void note(String s) {
-		if ("Interpolation Problem starts here".equals(s))
+		if ("Interpolation Problem starts here".equals(s)) {
 			++mFormulaNum;
+		}
 	}
 
 	private final void mapFuns() {
@@ -69,12 +70,12 @@ public class Benchmark {
 	}
 	
 	private final String translateFunName(String funname) {
-		String res = mFunNameTranslator.get(funname);
+		final String res = mFunNameTranslator.get(funname);
 		return res == null ? funname : res;
 	}
 	
 	public void setLogic(String logic) {
-		Logics l = Logics.valueOf(logic);
+		final Logics l = Logics.valueOf(logic);
 		mScript.setLogic(l);
 		switch (l) {
 		case QF_AX:
@@ -86,7 +87,7 @@ public class Benchmark {
 			break;
 		case AUFLIRA:
 		case AUFNIRA:
-			Sort array1 = mScript.sort("Array", mScript.sort("Int"),
+			final Sort array1 = mScript.sort("Array", mScript.sort("Int"),
 					mScript.sort("Real"));
 			mSortTranslator.put("Array1", array1);
 			mSortTranslator.put("Array2", mScript.sort("Array", 
@@ -135,8 +136,9 @@ public class Benchmark {
 		return mScript.term(translateFunName(name), params);
 	}
 	public Term annotateTerm(Term t, Annotation... annots) {
-		if (annots.length > 0)
+		if (annots.length > 0) {
 			t = mScript.annotate(t, annots);
+		}
 		return t;
 	}
 	public Term quantifier(int quantor, TermVariable[] vars, Term body, 
@@ -147,9 +149,10 @@ public class Benchmark {
 		return mScript.let(new TermVariable[]{var}, new Term[]{value}, body);
 	}
 	public Sort sort(String name) {
-		Sort res = mSortTranslator.get(name);
-		if (res != null)
+		final Sort res = mSortTranslator.get(name);
+		if (res != null) {
 			return res;
+		}
 		return mScript.sort(name);
 	}
 	public TermVariable variable(String name, Sort sort) {
@@ -159,9 +162,10 @@ public class Benchmark {
 		return mScript.sort("Bool");
 	}
 	public void assertTerm(Term t) {
-		if (mFormulaNum >= 0)
+		if (mFormulaNum >= 0) {
 			t = mScript.annotate(t,
 					new Annotation(":named", "IP_" + mFormulaNum++));
+		}
 		mScript.assertTerm(t);
 	}
 	public Term numeral(String num) {
@@ -171,13 +175,15 @@ public class Benchmark {
 		return mScript.decimal(decimal);
 	}
 	public Term[] check() { // NOPMD
-		LBool res = mScript.checkSat();
-		if (!(mScript instanceof LoggingScript))
+		final LBool res = mScript.checkSat();
+		if (!(mScript instanceof LoggingScript)) {
 			System.out.println(res);
+		}
 		if (mFormulaNum > 1) {
-			Term[] partition = new Term[mFormulaNum];
-			for (int i = 0; i < mFormulaNum; ++i)
+			final Term[] partition = new Term[mFormulaNum];
+			for (int i = 0; i < mFormulaNum; ++i) {
 				partition[i] = mScript.term("IP_" + i);
+			}
 			return mScript.getInterpolants(partition);
 		}
 		return null;

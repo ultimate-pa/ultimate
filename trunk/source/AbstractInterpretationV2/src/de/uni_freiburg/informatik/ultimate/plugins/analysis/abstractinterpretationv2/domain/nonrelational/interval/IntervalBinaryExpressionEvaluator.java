@@ -33,26 +33,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class IntervalBinaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelStates;
 
@@ -61,12 +57,11 @@ public class IntervalBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
+	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type,final int maxParallelStates) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
-		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		mMaxParallelStates = maxParallelStates;
 	}
 
 	@Override

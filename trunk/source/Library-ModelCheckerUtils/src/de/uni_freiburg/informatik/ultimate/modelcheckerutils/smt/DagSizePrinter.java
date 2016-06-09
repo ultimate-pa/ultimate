@@ -40,15 +40,15 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  */
 public class DagSizePrinter {
 	
-	private final Term m_Term;
+	private final Term mTerm;
 	
 	public DagSizePrinter(Term term) {
-		m_Term = term;
+		mTerm = term;
 	}
 	
 	@Override
 	public String toString() {
-		return String.valueOf((new DAGSize()).size(m_Term));
+		return String.valueOf((new DAGSize()).size(mTerm));
 	}
 
 }

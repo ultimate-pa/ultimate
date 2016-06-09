@@ -27,17 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -49,30 +48,30 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
-	NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
-	AcceptingComponentsAnalysis<LETTER, STATE> m_Sccs;
-	final Boolean m_Result;
+	private final AutomataLibraryServices mServices;
+	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
+	NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
+	final Boolean mResult;
 	
 	public BuchiIsEmpty(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Nwa = nwa;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNwa = nwa;
+		mLogger.info(startMessage());
 		try {
-			if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
-				m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
+			if (mNwa instanceof NestedWordAutomatonReachableStates) {
+				mReach = (NestedWordAutomatonReachableStates<LETTER, STATE>) mNwa;
 			} else {
-				m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Nwa);
+				mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mNwa);
 			}
-			m_Sccs = m_Reach.getOrComputeAcceptingComponents();
-			m_Result = m_Sccs.buchiIsEmpty();
-		} catch (OperationCanceledException oce) {
-			throw new OperationCanceledException(getClass());
+			mSccs = mReach.getOrComputeAcceptingComponents();
+			mResult = mSccs.buchiIsEmpty();
+		} catch (final AutomataOperationCanceledException oce) {
+			throw new AutomataOperationCanceledException(getClass());
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	@Override
@@ -83,30 +82,30 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 			return "Start " + operationName() + ". Operand " + 
-			m_Nwa.sizeInformation();	
+			mNwa.sizeInformation();	
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result is " + m_Result; 
+		return "Finished " + operationName() + " Result is " + mResult; 
 	}
 
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 	
 
-	private final Logger m_Logger;
+	private final ILogger mLogger;
 	
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
-		if (m_Result) {
-			m_Logger.info("There is no accepting nested lasso run");
+		if (mResult) {
+			mLogger.info("There is no accepting nested lasso run");
 			return null;
 		} else {
-			m_Logger.info("Starting construction of run");
-			return m_Reach.getOrComputeAcceptingComponents().getNestedLassoRun();
+			mLogger.info("Starting construction of run");
+			return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 		}
 	}
 

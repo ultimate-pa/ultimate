@@ -68,6 +68,7 @@ public class NameHandler implements INameHandler {
 	/**
 	 * @deprecated is not supported in this handler! Do not use!
 	 */
+	@Deprecated
 	@Override
 	public Result visit(Dispatcher main, IASTNode node) {
 		throw new UnsupportedOperationException("Implementation Error: Use C handler for " + node.getClass());
@@ -76,6 +77,7 @@ public class NameHandler implements INameHandler {
 	/**
 	 * @deprecated is not supported in this handler! Do not use!
 	 */
+	@Deprecated
 	@Override
 	public Result visit(Dispatcher main, ACSLNode node) {
 		throw new UnsupportedOperationException("Implementation error: Use ACSL handler for " + node.getClass());
@@ -83,7 +85,9 @@ public class NameHandler implements INameHandler {
 
 	@Override
 	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap, CType cType) {
-		if (cId.isEmpty()) cId = getGloballyUniqueIdentifier("unnamed");
+		if (cId.isEmpty()) {
+			cId = getGloballyUniqueIdentifier("unnamed");
+		}
 		final String boogieId;
 		{
 			// special case struct field identifier
@@ -107,8 +111,9 @@ public class NameHandler implements INameHandler {
 		// addressoffed)
 		// with a "#"
 		String onHeapStr = "";
-		if (isOnHeap)
+		if (isOnHeap) {
 			onHeapStr = "#";
+		}
 		// add tilde to identifier and the compound counter if variable is not
 		// used in the lowest compound nesting level (compCnt==0)
 		if (compCnt > 0) {

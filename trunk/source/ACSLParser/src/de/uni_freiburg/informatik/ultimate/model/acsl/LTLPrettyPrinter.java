@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.model.acsl;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 
 /**
  * Preliminary ACSL LTL extension pretty printer

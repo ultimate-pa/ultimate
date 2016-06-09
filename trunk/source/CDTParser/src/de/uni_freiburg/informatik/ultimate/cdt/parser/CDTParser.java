@@ -41,8 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
@@ -59,14 +57,15 @@ import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFact
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann
@@ -79,27 +78,27 @@ public class CDTParser implements ISource {
 	/**
 	 * Supported file types.
 	 */
-	protected String[] m_FileTypes;
+	protected String[] mFileTypes;
 	/**
 	 * The logger instance.
 	 */
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	/**
 	 * List of file names.
 	 */
-	protected List<String> m_FileNames;
+	protected List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 
 	/**
 	 * Public constructor of this parser.
 	 */
 	public CDTParser() {
-		m_FileTypes = new String[] { "c", "i" };
+		mFileTypes = new String[] { "c", "i" };
 	}
 
 	@Override
 	public void init() {
-		m_FileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<String>();
 	}
 
 	@Override
@@ -114,7 +113,7 @@ public class CDTParser implements ISource {
 
 	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -124,7 +123,7 @@ public class CDTParser implements ISource {
 
 	@Override
 	public boolean parseable(File file) {
-		for (String s : getFileTypes()) {
+		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
 			}
@@ -140,12 +139,12 @@ public class CDTParser implements ISource {
 	@Override
 	public IElement parseAST(File file) throws Exception {
 
-		IParserLogService log = new DefaultLogService();
+		final IParserLogService log = new DefaultLogService();
 
-		FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());
+		final FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());
 
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		String path = prefs.getString(PreferenceInitializer.INCLUDE_PATHS);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final String path = prefs.getString(PreferenceInitializer.INCLUDE_PATHS);
 		String[] includePaths;
 		IncludeFileContentProvider includeProvider;
 		if (!path.equals("")) {
@@ -163,11 +162,11 @@ public class CDTParser implements ISource {
 			includeProvider = IncludeFileContentProvider.getEmptyFilesProvider();
 		}
 
-		Map<String, String> definedSymbols = new HashMap<String, String>();
-		IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
+		final Map<String, String> definedSymbols = new HashMap<String, String>();
+		final IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
 
-		GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration.getInstance();
-		CPreprocessor cprep = new CPreprocessor(fContent, info, ParserLanguage.C, log, config, includeProvider);
+		final GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration.getInstance();
+		final CPreprocessor cprep = new CPreprocessor(fContent, info, ParserLanguage.C, log, config, includeProvider);
 
 		// Here we our defined macros to the preproccessor
 		// Map<String, String> macroMap = defineUserMacros();
@@ -176,8 +175,8 @@ public class CDTParser implements ISource {
 		// cprep.addMacroDefinition(key.toCharArray(), value.toCharArray());
 		// }
 
-		GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration.getInstance();
-		GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, p_config);
+		final GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration.getInstance();
+		final GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, p_config);
 
 		// The following methods was introduced in CDT8. Before there was the
 		// following method that took a boolean parameter
@@ -186,21 +185,21 @@ public class CDTParser implements ISource {
 		// If there are no problems you may delete this comment.
 		parser.setMaximumTrivialExpressionsInAggregateInitializers(Integer.MAX_VALUE);
 
-		IASTTranslationUnit translationUnit = parser.parse();
+		final IASTTranslationUnit translationUnit = parser.parse();
 		return new WrapperNode(null, translationUnit);
 	}
 
 	@Override
 	public String[] getFileTypes() {
-		return m_FileTypes;
+		return mFileTypes;
 	}
 
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, this.m_FileNames);
-		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, ex.getMessage());
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
+		} catch (final Exception ex) {
+			mLogger.fatal(ex.getMessage());
 			return null;
 		}
 	}
@@ -211,7 +210,7 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

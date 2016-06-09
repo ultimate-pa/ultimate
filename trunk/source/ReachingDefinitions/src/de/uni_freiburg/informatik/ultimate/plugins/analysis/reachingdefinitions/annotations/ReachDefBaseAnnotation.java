@@ -28,8 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.HashMap;
 import java.util.HashSet;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
@@ -66,15 +67,15 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 			return "Empty";
 		}
 
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 
-		for (ScopedBoogieVar s : map.keySet()) {
+		for (final ScopedBoogieVar s : map.keySet()) {
 			sb.append(s.getIdentifier()).append(": {");
-			HashSet<IndexedStatement> set = map.get(s);
+			final HashSet<IndexedStatement> set = map.get(s);
 			if (set.isEmpty()) {
 				continue;
 			}
-			for (IndexedStatement stmt : map.get(s)) {
+			for (final IndexedStatement stmt : map.get(s)) {
 				if (stmt.getKey() != null) {
 					sb.append(stmt.getKey()).append(" ");
 				}
@@ -104,19 +105,19 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 			return false;
 		}
 
-		ReachDefBaseAnnotation arg0 = (ReachDefBaseAnnotation) arg;
+		final ReachDefBaseAnnotation arg0 = (ReachDefBaseAnnotation) arg;
 		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
 	}
 
 	private boolean compareMap(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mine,
 			HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> theirs) {
 		if (mine != null && theirs != null) {
-			for (ScopedBoogieVar key : mine.keySet()) {
-				HashSet<IndexedStatement> myStmts = mine.get(key);
-				HashSet<IndexedStatement> theirStmts = theirs.get(key);
+			for (final ScopedBoogieVar key : mine.keySet()) {
+				final HashSet<IndexedStatement> myStmts = mine.get(key);
+				final HashSet<IndexedStatement> theirStmts = theirs.get(key);
 
 				if (myStmts != null && theirStmts != null && myStmts.size() == theirStmts.size()) {
-					for (IndexedStatement myStmt : myStmts) {
+					for (final IndexedStatement myStmt : myStmts) {
 						if (!theirStmts.contains(myStmt)) {
 							return false;
 						}
@@ -148,14 +149,14 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		if (other == null) {
 			return null;
 		}
-		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> newmap = new HashMap<>();
-		for (ScopedBoogieVar key : other.keySet()) {
-			HashSet<IndexedStatement> otherset = other.get(key);
+		final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> newmap = new HashMap<>();
+		for (final ScopedBoogieVar key : other.keySet()) {
+			final HashSet<IndexedStatement> otherset = other.get(key);
 			if (otherset == null) {
 				continue;
 			}
-			HashSet<IndexedStatement> newset = new HashSet<>();
-			for (IndexedStatement stmt : otherset) {
+			final HashSet<IndexedStatement> newset = new HashSet<>();
+			for (final IndexedStatement stmt : otherset) {
 				newset.add(stmt);
 			}
 			newmap.put(key, newset);

@@ -33,7 +33,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -70,54 +69,60 @@ public class ParseEnvironment {
         if (o instanceof Object[]) {
         	if (Config.RESULTS_ONE_PER_LINE && level > 0) {
         		sb.append(System.getProperty("line.separator"));
-        		for (int i = 0; i < level; ++i)
-        			sb.append(' ');
+        		for (int i = 0; i < level; ++i) {
+					sb.append(' ');
+				}
         	}
             sb.append('(');
-            Object[] array = (Object[])o;
+            final Object[] array = (Object[])o;
             boolean subarray = false;
             String sep = "";
-            for (Object el : array) {
+            for (final Object el : array) {
                 sb.append(sep);
                 subarray |= convertSexp(sb, el, level + Config.INDENTATION);
                 sep = " ";
             }
             if (subarray && Config.RESULTS_ONE_PER_LINE) {
         		sb.append(System.getProperty("line.separator"));
-        		for (int i = 0; i < level; ++i)
-        			sb.append(' ');
+        		for (int i = 0; i < level; ++i) {
+					sb.append(' ');
+				}
         	}
             sb.append(')');
             return true;
-        } else
-            sb.append(o);
+        } else {
+			sb.append(o);
+		}
         return false;
 	}
 	
 	public void parseScript(String filename) throws SMTLIBException {
-		File oldcwd = mCwd;
+		final File oldcwd = mCwd;
 		Reader reader = null;
+		boolean closeReader = false;
 		try {
 			if (filename.equals("<stdin>")) {
 				reader = new InputStreamReader(System.in);
 			} else {
 				File script = new File(filename);
-				if (!script.isAbsolute())
+				if (!script.isAbsolute()) {
 					script = new File(mCwd, filename);
+				}
 				mCwd = script.getParentFile();
 				try {
 					reader = new FileReader(script);
-				} catch (FileNotFoundException ex) {
+					closeReader = true;
+				} catch (final FileNotFoundException ex) {
 					throw new SMTLIBException("File not found: " + filename);
 				}
 			}
 			parseStream(reader, filename);
 		} finally {
 			mCwd = oldcwd;
-			if (reader != null) {
+			if (closeReader) {
 				try {
 					reader.close();
-				} catch (IOException ex) {
+				} catch (final IOException ex) {
 					
 				}
 			}
@@ -126,29 +131,29 @@ public class ParseEnvironment {
 	
 	public void parseStream(Reader reader, String streamname)
 	    throws SMTLIBException {
-		MySymbolFactory symfactory = new MySymbolFactory();
-		Lexer lexer = new Lexer(reader);
+		final MySymbolFactory symfactory = new MySymbolFactory();
+		final Lexer lexer = new Lexer(reader);
 		lexer.setSymbolFactory(symfactory);
-		Parser parser = new Parser(lexer, symfactory);
+		final Parser parser = new Parser(lexer, symfactory);
 		parser.setFileName(streamname);
 		parser.setParseEnvironment(this);
 		try {
 			parser.parse();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			Logger.getRootLogger().error("Unexpected Exception", ex);
 			throw new SMTLIBException(ex);
 		}
 	}
 	
 	public void include(String filename) throws SMTLIBException {
-		ExitHook oldexit = mExitHook;
+		final ExitHook oldexit = mExitHook;
 		mExitHook = new ExitHook() {
 			@Override
 			public void exitHook() {
 				/* ignore exit */
 			}
 		};
-		File oldcwd = mCwd;
+		final File oldcwd = mCwd;
 		parseScript(filename);
 		mCwd = oldcwd;
 		mExitHook = oldexit;
@@ -166,17 +171,18 @@ public class ParseEnvironment {
 		mOut.print(message);
 		mOut.println("\")");
 		mOut.flush();
-		if (!mContinueOnError)
+		if (!mContinueOnError) {
 			System.exit(1);
+		}
 	}
 	
 	public void printValues(Map<Term, Term> values) {
-		PrintTerm pt = new PrintTerm();
+		final PrintTerm pt = new PrintTerm();
 		mOut.print('(');
 		String sep = "";
-		String itemSep = Config.RESULTS_ONE_PER_LINE 
+		final String itemSep = Config.RESULTS_ONE_PER_LINE 
 				? System.getProperty("line.separator") + " " : " "; 
-		for (Map.Entry<Term, Term> me : values.entrySet()) {
+		for (final Map.Entry<Term, Term> me : values.entrySet()) {
 			mOut.print(sep);
 			mOut.print('(');
 			pt.append(mOut, me.getKey());
@@ -203,22 +209,24 @@ public class ParseEnvironment {
 			}
 		}
 		if (response instanceof Object[]) {
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			convertSexp(sb, response, 0);
 			mOut.println(sb.toString());
 		} else if (response instanceof Iterable) {
-			Iterable<?> it = (Iterable<?>) response;
+			final Iterable<?> it = (Iterable<?>) response;
 			mOut.print("(");
-			for (Object o : it)
+			for (final Object o : it) {
 				printResponse(o);
+			}
 			mOut.println(")");
-		} else
+		} else {
 			mOut.println(response);
+		}
 		mOut.flush();
 	}
 	
 	public void printInfoResponse(String info, Object response) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append('(').append(info).append(' ');
 		convertSexp(sb, response, 0);
 		mOut.println(sb.append(')').toString());
@@ -233,13 +241,13 @@ public class ParseEnvironment {
 	 * @param response The response to print.
 	 */
 	public void printTermResponse(Term[] response) {
-		StringBuilder sb = new StringBuilder();
-		PrintTerm pt = new PrintTerm();
+		final StringBuilder sb = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
 		sb.append('(');
         String sep = "";
-        String itemSep = Config.RESULTS_ONE_PER_LINE 
+        final String itemSep = Config.RESULTS_ONE_PER_LINE 
         		? System.getProperty("line.separator") + " " : " ";
-        for (Term t : response) {
+        for (final Term t : response) {
             sb.append(sep);
             pt.append(sb, t);
             sep = itemSep;
@@ -253,53 +261,59 @@ public class ParseEnvironment {
 		if (mExitHook == null) {
 			mScript.exit();
 			Runtime.getRuntime().exit(0);
-		} else
+		} else {
 			mExitHook.exitHook();
+		}
 	}
 	
 	public PrintWriter createChannel(String file) throws IOException {
-		if (file.equals("stdout"))
+		if (file.equals("stdout")) {
 			return new PrintWriter(System.out);
-		else if (file.equals("stderr"))
+		} else if (file.equals("stderr")) {
 			return new PrintWriter(System.err);
-		else
+		} else {
 			return new PrintWriter(new FileWriter(file));
+		}
 	}
 	
 	public void setOption(String opt, Object value) throws SMTLIBException {
 		if (opt.equals(":regular-output-channel")) {
 			try {
 				mOut = new PrintWriter(createChannel((String) value));
-			} catch (IOException ex) {
+			} catch (final IOException ex) {
 				throw new SMTLIBException(ex);
 			}
 		} else if (opt.equals(":print-success")) {
-			if (value instanceof Boolean)
+			if (value instanceof Boolean) {
 				mPrintSuccess = (Boolean) value;
-			else if (value instanceof String)
+			} else if (value instanceof String) {
 				mPrintSuccess = Boolean.valueOf((String) value);
+			}
 		} else if (opt.equals(":print-terms-cse")) {
-			if (value instanceof Boolean)
+			if (value instanceof Boolean) {
 				mPrintTermCSE = (Boolean) value;
-			else if (value instanceof String)
+			} else if (value instanceof String) {
 				mPrintTermCSE = Boolean.valueOf((String) value);
+			}
 		}
 		mScript.setOption(opt, value);
 	}
 	
 	public void setInfo(String info, Object value) {
 		if (info.equals(":error-behavior")) {
-			if ("immediate-exit".equals(value))
+			if ("immediate-exit".equals(value)) {
 				mContinueOnError = false;
-			else if ("continued-execution".equals(value))
+			} else if ("continued-execution".equals(value)) {
 				mContinueOnError = true;
+			}
 		}
 		mScript.setInfo(info, value);
 	}
 	
 	public Object getInfo(String info) {
-		if (info.equals(":error-behavior"))
+		if (info.equals(":error-behavior")) {
 			return mContinueOnError ? "continued-execution" : "immediate-exit";
+		}
 		return mScript.getInfo(info);
 	}
 
@@ -308,16 +322,17 @@ public class ParseEnvironment {
 	}
 	
 	public void startTiming() {
-		if (mTiming == null)
+		if (mTiming == null) {
 			mTiming = new ArrayDeque<Long>();
+		}
 		mOut.print('(');
 		mTiming.push(System.nanoTime());
 	}
 	
 	public void endTiming() {
-		long old = mTiming.pop();
-		long duration = System.nanoTime() - old;
-		double secs = duration / 1000000000.0; // NOCHECKSTYLE
+		final long old = mTiming.pop();
+		final long duration = System.nanoTime() - old;
+		final double secs = duration / 1000000000.0; // NOCHECKSTYLE
 		mOut.printf((Locale) null, " :time %.3f)", secs);
 		mOut.println();
 		mOut.flush();

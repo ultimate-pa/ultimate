@@ -36,17 +36,19 @@ public class FiniteSortInterpretation implements SortInterpretation {
 	
 	@Override
 	public Term toSMTLIB(Theory t, Sort sort) {
-		TermVariable var = t.createTermVariable("@v", sort);
-		Term[] disj = new Term[mSize];
-		for (int i = 0; i < mSize; ++i)
+		final TermVariable var = t.createTermVariable("@v", sort);
+		final Term[] disj = new Term[mSize];
+		for (int i = 0; i < mSize; ++i) {
 			disj[i] = t.equals(var, genModelTerm(i, t, sort));
+		}
 		return t.forall(new TermVariable[] {var}, t.or(disj));
 	}
 	
 	@Override
 	public int ensureCapacity(int numValues) {
-		if (mSize < numValues)
+		if (mSize < numValues) {
 			mSize = numValues;
+		}
 		return mSize;
 	}
 
@@ -57,8 +59,9 @@ public class FiniteSortInterpretation implements SortInterpretation {
 
 	@Override
 	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mSize)
+		if (idx < 0 || idx >= mSize) {
 			throw new IndexOutOfBoundsException();
+		}
 		return genModelTerm(idx, t, s);
 	}
 

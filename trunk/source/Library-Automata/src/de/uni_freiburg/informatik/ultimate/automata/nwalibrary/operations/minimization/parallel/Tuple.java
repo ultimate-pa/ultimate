@@ -37,11 +37,11 @@ public final class Tuple {
 	/**
 	 * The first integer.
 	 */
-	final int m_first;
+	final int mfirst;
 	/**
 	 * The second integer.
 	 */
-	final int m_second;
+	final int msecond;
 	public IPredicate x;
 	public IPredicate y;
 
@@ -55,12 +55,13 @@ public final class Tuple {
 	 */
 	public Tuple(final int first, final int second) {
 		assert (first < second) : "The first entry must be the smaller one";
-		m_first = first;
-		m_second = second;
+		mfirst = first;
+		msecond = second;
 	}
 
+	@Override
 	public int hashCode() {
-		return m_first + 17 * m_second;
+		return mfirst + 17 * msecond;
 	}
 
 	@Override
@@ -69,16 +70,16 @@ public final class Tuple {
 			return false;
 		}
 		final Tuple o = (Tuple) other;
-		return (o.m_first == this.m_first) && (o.m_second == this.m_second);
+		return (o.mfirst == mfirst) && (o.msecond == msecond);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("(");
-		builder.append(m_first);
+		builder.append(mfirst);
 		builder.append(", ");
-		builder.append(m_second);
+		builder.append(msecond);
 		builder.append(")");
 		return builder.toString();
 	}

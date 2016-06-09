@@ -36,20 +36,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
 	
-	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
-	private final boolean m_WithBranchEncoders;
+	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final boolean mWithBranchEncoders;
 	
 	
 	
 	public ModifiableGlobalVariableManager getModifiableGlobalVariableManager() {
-		return m_ModifiableGlobalVariableManager;
+		return mModifiableGlobalVariableManager;
 	}
 
 	public DefaultTransFormulas(NestedWord<? extends IAction> nestedWord, 
@@ -60,22 +57,22 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 		super(nestedWord, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_WithBranchEncoders = withBranchEncoders;
+		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
+		mWithBranchEncoders = withBranchEncoders;
 	}
 	
 	public boolean hasBranchEncoders() {
-		return m_WithBranchEncoders;
+		return mWithBranchEncoders;
 	}
 	
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
 		if (super.getTrace().isReturnPosition(i)) {
-			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
 		} else {
-			IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
-			if (m_WithBranchEncoders) {
+			final IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
+			if (mWithBranchEncoders) {
 				return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
 			} else {
 				return cb.getTransformula();
@@ -85,21 +82,21 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 
 	@Override
 	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
-		ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
+		final ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
 		return cb.getLocalVarsAssignment();
 	}
 
 	@Override
 	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
-		String calledProcedure = getCalledProcedure(i);
-		return m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
+		final String calledProcedure = getCalledProcedure(i);
+		return mModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
 
 	}
 
 	@Override
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {		
-		String calledProcedure = getCalledProcedure(i);
-		return m_ModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
+		final String calledProcedure = getCalledProcedure(i);
+		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}
 	
 	/**
@@ -107,10 +104,10 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	 */
 	private String getCalledProcedure(int i) {
 		if (super.getTrace().isCallPosition(i)) {
-			ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
+			final ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
 			return call.getSucceedingProcedure();
 		} else if (super.getTrace().isPendingReturn(i)) {
-			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getPreceedingProcedure();
 		} else {
 			throw new UnsupportedOperationException("only available for call and pending return");

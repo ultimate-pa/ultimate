@@ -30,8 +30,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a OcurrenceNet event.
@@ -46,18 +46,18 @@ public class EventNode<S,C> extends PetriNetVisualizationNode {
 	public EventNode(Event<S,C> event) {
 		super(event.getTransition().getSymbol().toString());
 		
-		DefaultAnnotations annot = new DefaultAnnotations();
+		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("Transition",event.getTransition());
 		annot.put("Companion", event.getCompanion());
 		annot.put("Ancestors", event.getAncestors());
 		annot.put("ByLocalConfigurationRepresentedMarking",event.getMark());
 	
-		Map<String,IAnnotations> annotations =  getPayload().getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, annot);
+		final Map<String,IAnnotations> annotations =  getPayload().getAnnotations();
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
-		S symbol = event.getTransition().getSymbol();
+		final S symbol = event.getTransition().getSymbol();
 		if (symbol instanceof IAnnotations) {
-			annot.put("Symbol", (IAnnotations) symbol);
+			annot.put("Symbol", symbol);
 
 		}
 		

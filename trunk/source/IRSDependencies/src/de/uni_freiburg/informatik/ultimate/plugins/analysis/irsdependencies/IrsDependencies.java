@@ -29,20 +29,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetectorObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer.Mode;
 
 public class IrsDependencies implements IAnalysis {
 
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 
@@ -75,21 +76,21 @@ public class IrsDependencies implements IAnalysis {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
-		IRSDependenciesPreferenceInitializer.Mode mode = IRSDependenciesPreferenceInitializer.getMode();
+		final IRSDependenciesPreferenceInitializer.Mode mode = new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(IRSDependenciesPreferenceInitializer.MODE, Mode.class);
 
 		switch (mode) {
 		case Default:
 			setInputDefinitionModeDefault(graphType);
 			break;
 		default:
-			String errorMsg = "Unknown mode: " + mode;
+			final String errorMsg = "Unknown mode: " + mode;
 			mLogger.fatal(errorMsg);
 			throw new IllegalArgumentException(errorMsg);
 		}
 	}
 
 	private void setInputDefinitionModeDefault(ModelType graphType) {
-		String creator = graphType.getCreator();
+		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mLogger.info("Preparing to process RCFG...");
@@ -127,7 +128,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new IRSDependenciesPreferenceInitializer();
 	}
 

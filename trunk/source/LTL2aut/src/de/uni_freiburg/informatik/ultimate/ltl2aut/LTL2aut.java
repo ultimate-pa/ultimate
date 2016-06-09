@@ -31,16 +31,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
 public class LTL2aut implements IGenerator {
 
@@ -75,7 +75,7 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<String>();
 		filenames.add("Hardcoded");
 
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, filenames);
@@ -116,7 +116,7 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new LTL2autObserver(mServices, mStorage);
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (mProcess && !mSkip) {
 			observers.add(mObserver);
 		}
@@ -129,7 +129,7 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
@@ -142,7 +142,7 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
 	}

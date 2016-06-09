@@ -57,16 +57,16 @@ public class XMLWriter {
      * @return The xml representation of <code>node</code> as string
      */
     private String traverse(Node node, int depth) {
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         if (node.getNodeType() == Node.DOCUMENT_NODE) {
             sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	    sb.append("\n<!DOCTYPE nta PUBLIC \"-//Uppaal Team//DTD Flat System 1.0//EN\" \"http://www.docs.uu.se/docs/rtmv/uppaal/xml/flat-1_0.dtd\">");
             for (int i = 0; i < node.getChildNodes().getLength(); i++) {
-                sb.append(this.traverse(node.getChildNodes().item(i), 0));
+                sb.append(traverse(node.getChildNodes().item(i), 0));
             }
         }
         if (node.getNodeName().equals(XMLTags.Z_TAG)) {
-            String temp = " " + node.getTextContent();
+            final String temp = " " + node.getTextContent();
             sb.append(temp);
         } else if (node.getNodeType() == Node.ELEMENT_NODE) {
             sb.append("\n");
@@ -75,23 +75,22 @@ public class XMLWriter {
             }
             sb.append("<" + node.getNodeName());
 
-            NamedNodeMap attributes = node.getAttributes();
-            int attributeCount = attributes.getLength();
+            final NamedNodeMap attributes = node.getAttributes();
+            final int attributeCount = attributes.getLength();
 
             for (int i = 0; i < attributeCount; i++) {
-                sb.append(this.traverse(attributes.item(i), depth + 1));
+                sb.append(traverse(attributes.item(i), depth + 1));
             }
 
-            NodeList children = node.getChildNodes();
-            int childCount = children.getLength();
+            final NodeList children = node.getChildNodes();
+            final int childCount = children.getLength();
 
             if (childCount > 0) {
                 sb.append(">");
-                boolean onlyTextChildren = this
-                        .elementOnlyHasTextChildren((Element) node);
+                final boolean onlyTextChildren = elementOnlyHasTextChildren((Element) node);
 
                 for (int i = 0; i < childCount; i++) {
-                    sb.append(this.traverse(children.item(i), depth + 1));
+                    sb.append(traverse(children.item(i), depth + 1));
                 }
                 if (!onlyTextChildren) {
                     sb.append("\n");
@@ -104,7 +103,7 @@ public class XMLWriter {
                 sb.append("/>");
             }
         } else if (node.getNodeType() == Node.TEXT_NODE) {
-            if (this.containsData((Text) node)) {
+            if (containsData((Text) node)) {
                 sb.append(node.getNodeValue());
             }
         } else if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
@@ -124,7 +123,7 @@ public class XMLWriter {
      *         digit, <code>false</code> otherwise
      */
     private boolean containsData(Text text) {
-        String data = text.getData();
+        final String data = text.getData();
         for (int i = 0; i < data.length(); i++) {
             if (Character.isLetter(data.charAt(i))
                     || Character.isDigit(data.charAt(i))) {
@@ -145,10 +144,10 @@ public class XMLWriter {
      */
     private boolean elementOnlyHasTextChildren(Element node) {
         boolean result = false;
-        NodeList children = node.getChildNodes();
-        int childCount = children.getLength();
+        final NodeList children = node.getChildNodes();
+        final int childCount = children.getLength();
         for (int i = 0; i < childCount; i++) {
-            int nodeType = children.item(i).getNodeType();
+            final int nodeType = children.item(i).getNodeType();
             if (nodeType == Node.TEXT_NODE) {
                 result = true;
             }
@@ -174,13 +173,13 @@ public class XMLWriter {
      */
     public void writeXMLDocumentToFile(Document document, String fileName)
             throws IOException {
-        FileWriter writer = new FileWriter(fileName);
-        writer.write(this.traverse(document, 0));
+        final FileWriter writer = new FileWriter(fileName);
+        writer.write(traverse(document, 0));
         writer.flush();
         writer.close();
     }
     
     public String writeXMLDocumentToString(Element element){
-    	return this.traverse(element, 0);
+    	return traverse(element, 0);
     }
 }

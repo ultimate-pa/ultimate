@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -36,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper: <br>
@@ -51,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
-	private BuchiComplementAutomatonSVW<LETTER,STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+	private final BuchiComplementAutomatonSVW<LETTER,STATE> mResult;
 
 	
 	@Override
@@ -66,36 +65,36 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " +
-				m_Operand.sizeInformation();
+				mOperand.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + 
-				m_Result.sizeInformation();
+				mResult.sizeInformation();
 	}
 		
 	public BuchiComplementSVW(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		m_Result = new BuchiComplementAutomatonSVW<LETTER, STATE>(m_Services, operand);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		mResult = new BuchiComplementAutomatonSVW<LETTER, STATE>(mServices, operand);
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
 			throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		return ResultChecker.buchiComplement(m_Services, m_Operand, m_Result);
+		return ResultChecker.buchiComplement(mServices, mOperand, mResult);
 	}
 	
 }

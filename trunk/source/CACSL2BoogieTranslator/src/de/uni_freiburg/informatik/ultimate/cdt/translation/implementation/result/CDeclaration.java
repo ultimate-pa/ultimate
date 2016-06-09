@@ -31,7 +31,6 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 
 public class CDeclaration {
 	CType  mType;
@@ -41,7 +40,7 @@ public class CDeclaration {
 
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
-	private CStorageClass m_storageClass;
+	private CStorageClass mstorageClass;
 
 //	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
 //		mType = type;
@@ -69,7 +68,7 @@ public class CDeclaration {
 		assert cAstInitializer == null || initializer == null;
 		mIsOnHeap = onHeap;//TODO actually make use of this flag
 		mIsInitializerTranslated = false;
-		m_storageClass = storageClass;
+		mstorageClass = storageClass;
 	}
 	
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
@@ -98,8 +97,9 @@ public class CDeclaration {
 		return mName;
 	}
 	public ExpressionResult getInitializer() {
-		if (!mIsInitializerTranslated)
+		if (!mIsInitializerTranslated) {
 			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
+		}
 		return mInitializer;
 	}
 	
@@ -112,6 +112,7 @@ public class CDeclaration {
 		return mIsOnHeap;
 	}
 	
+	@Override
 	public String toString() {
 		return "" + mType + " " + mName + " = " + mInitializer;
 	}
@@ -133,14 +134,14 @@ public class CDeclaration {
 	}
 	
 	public boolean isStatic() {
-    	return m_storageClass == CStorageClass.STATIC;
+    	return mstorageClass == CStorageClass.STATIC;
     }
 
     public boolean isExtern() {
-    	return m_storageClass == CStorageClass.EXTERN;
+    	return mstorageClass == CStorageClass.EXTERN;
     }
 
 	public void setStorageClass(CStorageClass storageClass) {
-		m_storageClass = storageClass;
+		mstorageClass = storageClass;
 	}
 }

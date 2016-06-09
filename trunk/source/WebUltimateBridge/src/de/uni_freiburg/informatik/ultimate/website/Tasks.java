@@ -9,16 +9,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
 
 /**
@@ -96,7 +96,7 @@ public class Tasks {
 			initWorkers();
 		}
 		SimpleLogger.log("returning " + sWorkers.size() + " workers");
-		for (Entry<String, Worker> entry : sWorkers.entrySet()) {
+		for (final Entry<String, Worker> entry : sWorkers.entrySet()) {
 			SimpleLogger.log("Woker name " + entry.getKey() + " " + entry.getValue());
 		}
 		return sWorkers;
@@ -111,7 +111,7 @@ public class Tasks {
 	 */
 	public static final String getSyntaxHighlightingMode(String taskName) {
 		try {
-			TaskNames name = TaskNames.valueOf(taskName);
+			final TaskNames name = TaskNames.valueOf(taskName);
 			// TODO : check if the js file exists...
 			switch (name) {
 			// case AUTOMATA_SCRIPT:
@@ -133,7 +133,7 @@ public class Tasks {
 			default:
 				return "text";
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			return "text";
 		}
 	}
@@ -212,8 +212,8 @@ public class Tasks {
 	 * Adds toolchains automatically to worker array
 	 */
 	private static void completeInitWorker() {
-		for (Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
-			for (WebToolchain toolchain : tcPair.getValue()) {
+		for (final Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
+			for (final WebToolchain toolchain : tcPair.getValue()) {
 				if (!sWorkers.containsKey(Worker.toKey(toolchain.getName()))) {
 					SimpleLogger.log("Worker for toolchain " + toolchain.getName() + " missing! Adding a worker via a very strange workaround");
 					sWorkers.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
@@ -224,7 +224,7 @@ public class Tasks {
 		}
 		SimpleLogger.log("Finished initializing workers");
 		SimpleLogger.log("The following " + sWorkers.size() + " workers are present:");
-		for (Entry<String, Worker> worker : sWorkers.entrySet()) {
+		for (final Entry<String, Worker> worker : sWorkers.entrySet()) {
 			SimpleLogger.log(worker.getKey());
 		}
 	}
@@ -250,25 +250,25 @@ public class Tasks {
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");
-		for (Entry<TaskNames, String> entry : sTaskStrings.entrySet()) {
+		for (final Entry<TaskNames, String> entry : sTaskStrings.entrySet()) {
 			SimpleLogger.log(entry.getKey());
 		}
 	}
 
 	private static void initToolchains() {
 		SimpleLogger.log("Initializing toolchains...");
-		for (Class<?> toolchainType : sToolchainTypes) {
+		for (final Class<?> toolchainType : sToolchainTypes) {
 			WebToolchain tc;
 			try {
 				tc = (WebToolchain) toolchainType.getConstructor().newInstance((Object[]) null);
-				for (TaskNames taskName : tc.getTaskName()) {
+				for (final TaskNames taskName : tc.getTaskName()) {
 					if (!sActiveToolchains.containsKey(taskName.toString())) {
 						sActiveToolchains.put(taskName.toString(), new ArrayList<WebToolchain>());
 						SimpleLogger.log("Added toolchain " + tc.getId() + " to task " + taskName.toString());
 					}
 					sActiveToolchains.get(taskName.toString()).add(tc);
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				SimpleLogger.log("An exception occured during initialization of toolchain "
 						+ toolchainType.getCanonicalName());
 				SimpleLogger.log(e.getCause());

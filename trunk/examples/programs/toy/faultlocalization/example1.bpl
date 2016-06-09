@@ -1,10 +1,10 @@
-//#Safe
-//author: nutz@informatik.uni-freiburg.de
+//#Unsafe
+//author: Numair Mansur (numair.mansur@gmail.com)
 procedure foo()
 {
   var y: int;
   var x: int;
-  
+  x := 0;
   y := 0;
   if(y==0) 
   {

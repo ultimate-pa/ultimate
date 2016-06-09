@@ -39,10 +39,10 @@ public class BoogieSymbolFactory implements SymbolFactory {
  			// Grrr, the constructor is protected, but 
  			// at least the field is writeable...
  			super(id);
- 			this.parse_state = state;
+ 			parse_state = state;
  			this.name = name;
- 			this.lcolumn = -1;
- 			this.rcolumn = -1;
+ 			lcolumn = -1;
+ 			rcolumn = -1;
  		}
  		
  		public BoogieSymbol(String name, int id, 
@@ -57,35 +57,39 @@ public class BoogieSymbolFactory implements SymbolFactory {
 		public BoogieSymbol(String name, int id, Symbol left, Symbol right, Object o) {
 			super(id, left, right, o);
 			this.name = name;
-			if (left instanceof BoogieSymbol)
+			if (left instanceof BoogieSymbol) {
 				lcolumn = ((BoogieSymbol) left).lcolumn;
-			else
+			} else {
 				lcolumn = 0;
-			if (right instanceof BoogieSymbol)
+			}
+			if (right instanceof BoogieSymbol) {
 				rcolumn = ((BoogieSymbol) right).rcolumn;
-			else
+			} else {
 				rcolumn = 0;
+			}
 		}
 		
 		public int getLeftColumn() {
-			return this.lcolumn;
+			return lcolumn;
 		}
 		
 		public int getRightColumn() {
-			return this.rcolumn;
+			return rcolumn;
 		}
 		
 		public String getLocation() {
-			if (lcolumn >= 0)
+			if (lcolumn >= 0) {
 				return ""+left+":"+lcolumn;
-			else
+			} else {
 				return ""+left;
+			}
 		}
 
 		public String getName() {
 			return name;
 		}
 		
+		@Override
 		public String toString() {
 			return "("+name+" "+left+":"+lcolumn+"-"+right+":"+rcolumn+")";
 		}
@@ -98,20 +102,25 @@ public class BoogieSymbolFactory implements SymbolFactory {
     public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol){
         return new BoogieSymbol(name,id,lline,lcol,rline,rcol, null);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
+    @Override
+	public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
         return new BoogieSymbol(name,id,left,right,value);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
+    @Override
+	public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
         return new BoogieSymbol(name,id,left,right,null);
     }
-    public Symbol newSymbol(String name, int id){
+    @Override
+	public Symbol newSymbol(String name, int id){
         return new BoogieSymbol(name,id,-1,-1,-1,-1,null);
     }
-    public Symbol newSymbol(String name, int id, Object value){
+    @Override
+	public Symbol newSymbol(String name, int id, Object value){
         return new BoogieSymbol(name,id,-1,-1,-1,-1,value);
     }
-    public Symbol startSymbol(String name, int id, int state){
-        BoogieSymbol s = new BoogieSymbol(name,id, state);
+    @Override
+	public Symbol startSymbol(String name, int id, int state){
+        final BoogieSymbol s = new BoogieSymbol(name,id, state);
         return s;
     }
 }

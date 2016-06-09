@@ -41,39 +41,39 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
  * @param <LETTER> Type of the Objects that can be used as letters.
  */
 public class InCaReAlphabet<LETTER> {
-	private final Set<LETTER> m_InternalAlphabet;
-	private final Set<LETTER> m_CallAlphabet;
-	private final Set<LETTER> m_ReturnAlphabet;
+	private final Set<LETTER> mInternalAlphabet;
+	private final Set<LETTER> mCallAlphabet;
+	private final Set<LETTER> mReturnAlphabet;
 	public InCaReAlphabet(Set<LETTER> internalAlphabet,
 			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet) {
 		super();
-		m_InternalAlphabet = internalAlphabet;
-		m_CallAlphabet = callAlphabet;
-		m_ReturnAlphabet = returnAlphabet;
+		mInternalAlphabet = internalAlphabet;
+		mCallAlphabet = callAlphabet;
+		mReturnAlphabet = returnAlphabet;
 	}
 	
 	public InCaReAlphabet(IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INestedWordAutomaton) {
-			INestedWordAutomaton<LETTER, ?> nwa = 
+			final INestedWordAutomaton<LETTER, ?> nwa = 
 					(INestedWordAutomaton<LETTER, ?>) automaton;
-			m_InternalAlphabet = nwa.getInternalAlphabet();
-			m_CallAlphabet = nwa.getCallAlphabet();
-			m_ReturnAlphabet = nwa.getReturnAlphabet();
+			mInternalAlphabet = nwa.getInternalAlphabet();
+			mCallAlphabet = nwa.getCallAlphabet();
+			mReturnAlphabet = nwa.getReturnAlphabet();
 		} else {
-			m_InternalAlphabet = automaton.getAlphabet();
-			m_CallAlphabet = Collections.emptySet();
-			m_ReturnAlphabet = Collections.emptySet();
+			mInternalAlphabet = automaton.getAlphabet();
+			mCallAlphabet = Collections.emptySet();
+			mReturnAlphabet = Collections.emptySet();
 		}
 	}
 	
 	public Set<LETTER> getInternalAlphabet() {
-		return m_InternalAlphabet;
+		return mInternalAlphabet;
 	}
 	public Set<LETTER> getCallAlphabet() {
-		return m_CallAlphabet;
+		return mCallAlphabet;
 	}
 	public Set<LETTER> getReturnAlphabet() {
-		return m_ReturnAlphabet;
+		return mReturnAlphabet;
 	}
 	
 	

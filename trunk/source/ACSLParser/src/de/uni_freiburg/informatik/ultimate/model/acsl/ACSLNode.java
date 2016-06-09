@@ -56,7 +56,7 @@ public abstract class ACSLNode {
 	/**
 	 * The list of children.
 	 */
-	private List<Object> children = new ArrayList<Object>();
+	private final List<Object> children = new ArrayList<Object>();
 	/**
 	 * File Name.
 	 */

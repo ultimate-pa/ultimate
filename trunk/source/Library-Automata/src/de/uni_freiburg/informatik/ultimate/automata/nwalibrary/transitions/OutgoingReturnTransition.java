@@ -39,29 +39,32 @@ import java.text.MessageFormat;
  */
 public class OutgoingReturnTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
 	
-	private final STATE m_HierPred;
-	private final LETTER m_Letter; 
-	private final STATE m_Succ;
+	private final STATE mHierPred;
+	private final LETTER mLetter; 
+	private final STATE mSucc;
 
 	
 	public OutgoingReturnTransition(STATE hierPred, LETTER letter, STATE succ) {
-		m_HierPred = hierPred;
-		m_Letter = letter;
-		m_Succ = succ;
+		mHierPred = hierPred;
+		mLetter = letter;
+		mSucc = succ;
 	}
 	
 	public STATE getHierPred() {
-		return m_HierPred;
+		return mHierPred;
 	}
 	
+	@Override
 	public LETTER getLetter() {
-		return m_Letter;
+		return mLetter;
 	}
 	
+	@Override
 	public STATE getSucc() {
-		return m_Succ;
+		return mSucc;
 	}
 
+	@Override
 	public String toString() {
 		return MessageFormat.format("( _ , {0} , {1} , {2} )", getHierPred(), getLetter(), getSucc());
 	}

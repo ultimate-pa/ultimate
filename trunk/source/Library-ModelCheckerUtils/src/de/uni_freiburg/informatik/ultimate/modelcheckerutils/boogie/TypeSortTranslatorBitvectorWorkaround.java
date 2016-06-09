@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 
 /**
  * Translate integers to bit vectors, otherwise call TypeSortTranslator.
@@ -51,10 +51,11 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 		super(declarations, script, blackHoleArrays, services);
 	}
 
+	@Override
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
-		if (boogieType.equals(PrimitiveType.intType)) {
-			BigInteger[] sortIndices = { BigInteger.valueOf(32) };
-			return m_Script.sort("BitVec", sortIndices);
+		if (boogieType.equals(PrimitiveType.TYPE_INT)) {
+			final BigInteger[] sortIndices = { BigInteger.valueOf(32) };
+			return mScript.sort("BitVec", sortIndices);
 		} else {
 			return super.constructSort(boogieType, BoogieASTNode);
 		}

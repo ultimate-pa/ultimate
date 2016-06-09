@@ -49,7 +49,7 @@ public class UseDefSet {
 	}
 
 	UseDefSet merge(UseDefSet set) {
-		if (this.isEmpty()) {
+		if (isEmpty()) {
 			return new UseDefSet(set);
 		}
 
@@ -57,7 +57,7 @@ public class UseDefSet {
 			return new UseDefSet(this);
 		}
 
-		UseDefSet rtr = new UseDefSet();
+		final UseDefSet rtr = new UseDefSet();
 		rtr.Use.addAll(Use);
 		rtr.Use.addAll(set.Use);
 		rtr.Def.addAll(Def);

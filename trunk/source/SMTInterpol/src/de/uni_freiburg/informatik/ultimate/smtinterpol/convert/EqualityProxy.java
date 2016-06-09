@@ -36,6 +36,7 @@ public class EqualityProxy {
 		private TrueEqualityProxy() {
 			super(null, null, null);
 		}
+		@Override
 		public DPLLAtom getLiteral() {
 			throw new InternalError("Should never be called");
 		}
@@ -48,6 +49,7 @@ public class EqualityProxy {
 		private FalseEqualityProxy() {
 			super(null, null, null);
 		}
+		@Override
 		public DPLLAtom getLiteral() {
 			throw new InternalError("Should never be called");
 		}
@@ -85,7 +87,7 @@ public class EqualityProxy {
 
 	public LAEquality createLAEquality() {
 		/* create la part */
-		MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+		final MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
 		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
 		return mClausifier.getLASolver().createEquality(
 		        mClausifier.getStackLevel(), at);
@@ -110,12 +112,12 @@ public class EqualityProxy {
 			mEqAtom = laeq = createLAEquality();
 			mClausifier.addToUndoTrail(new RemoveAtom());
 		} else if (mEqAtom instanceof CCEquality) {
-			CCEquality eq = (CCEquality) mEqAtom;
+			final CCEquality eq = (CCEquality) mEqAtom;
 			laeq = eq.getLASharedData();
 			if (laeq == null) {
-				MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
+				final MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
 				at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
-				Rational normFactor = at.getGCD().inverse();
+				final Rational normFactor = at.getGCD().inverse();
 				laeq = createLAEquality();
 				laeq.addDependentAtom(eq);
 				eq.setLASharedData(laeq, normFactor);
@@ -123,18 +125,20 @@ public class EqualityProxy {
 		} else {
 			laeq = (LAEquality) mEqAtom;
 		}
-		for (CCEquality eq : laeq.getDependentEqualities()) {
+		for (final CCEquality eq : laeq.getDependentEqualities()) {
 			assert (eq.getLASharedData() == laeq);
-			if (eq.getLhs() == lhs.mCCterm && eq.getRhs() == rhs.mCCterm)
+			if (eq.getLhs() == lhs.mCCterm && eq.getRhs() == rhs.mCCterm) {
 				return eq;
-			if (eq.getRhs() == lhs.mCCterm && eq.getLhs() == rhs.mCCterm)
+			}
+			if (eq.getRhs() == lhs.mCCterm && eq.getLhs() == rhs.mCCterm) {
 				return eq;
+			}
 		}
-		CCEquality eq = mClausifier.getCClosure().createCCEquality(
+		final CCEquality eq = mClausifier.getCClosure().createCCEquality(
 		        mClausifier.getStackLevel(), lhs.mCCterm, rhs.mCCterm);
-		MutableAffinTerm at = mClausifier.createMutableAffinTerm(lhs);
+		final MutableAffinTerm at = mClausifier.createMutableAffinTerm(lhs);
 		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(rhs));
-		Rational normFactor = at.getGCD().inverse();
+		final Rational normFactor = at.getGCD().inverse();
 		laeq.addDependentAtom(eq);
 		eq.setLASharedData(laeq, normFactor);
 		return eq;
@@ -149,13 +153,15 @@ public class EqualityProxy {
 			 * already in linear arithmetic.
 			 */
 			if (mClausifier.getCClosure() == null 
-					|| mLhs.mOffset != null && mRhs.mOffset == null)
+					|| mLhs.mOffset != null && mRhs.mOffset == null) {
 				//m_Clausifier.createMutableAffinTerm(mRhs);
 				mRhs.shareWithLinAr();
+			}
 			if (mClausifier.getCClosure() == null 
-					|| mLhs.mOffset == null && mRhs.mOffset != null)
+					|| mLhs.mOffset == null && mRhs.mOffset != null) {
 				//m_Clausifier.createMutableAffinTerm(mLhs);
 				mLhs.shareWithLinAr();
+			}
 		}
 		
 		if (mLhs.getSort() != mRhs.getSort()) {
@@ -172,7 +178,7 @@ public class EqualityProxy {
 		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
 				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
 			/* let them share congruence closure */
-			CCTermBuilder cc = mClausifier.new CCTermBuilder();
+			final CCTermBuilder cc = mClausifier.new CCTermBuilder();
 			cc.convert(mLhs.getTerm());
 			cc.convert(mRhs.getTerm());
 		}
@@ -190,15 +196,17 @@ public class EqualityProxy {
 	public DPLLAtom getLiteral() {
 		if (mEqAtom == null) {
 			mEqAtom = createAtom();
-			if (mClausifier.getLogger().isDebugEnabled())
+			if (mClausifier.getLogger().isDebugEnabled()) {
 				mClausifier.getLogger().debug("Created Equality: " + mEqAtom);
+			}
 		}
 		return mEqAtom;
 	}
 	
+	@Override
 	public String toString() {
-		PrintTerm pt = new PrintTerm();
-		StringBuilder sb = new StringBuilder();
+		final PrintTerm pt = new PrintTerm();
+		final StringBuilder sb = new StringBuilder();
 		pt.append(sb, mLhs.getRealTerm());
 		sb.append(" == ");
 		pt.append(sb, mRhs.getRealTerm());

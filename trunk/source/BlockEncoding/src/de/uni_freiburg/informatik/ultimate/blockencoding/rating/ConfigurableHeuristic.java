@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.Disjunct
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveStatementsRating;
-import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.UsedVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.UsedVariablesRating;
 
 /**
  * Basically this "heuristic" takes the values, which are specified on the

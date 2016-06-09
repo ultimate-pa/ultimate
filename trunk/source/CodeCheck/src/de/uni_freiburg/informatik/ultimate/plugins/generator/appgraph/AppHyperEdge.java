@@ -48,8 +48,8 @@ public class AppHyperEdge extends AppEdge {
 
 	@Override
 	public void disconnect() {
-		this.hier.getOutgoingHyperEdges().remove(this);
-		this.hier = null;
+		hier.getOutgoingHyperEdges().remove(this);
+		hier = null;
 		super.disconnect();
 	}
 }

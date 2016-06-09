@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -30,12 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;
@@ -56,13 +55,19 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private final ATester<LETTER, STATE> mTester;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersLoop;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersEnd;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
+	/**
+	 * @param services Ultimate services
+	 * @param tester tester
+	 * @param shrinkersLoop rules to be appplied iteratively
+	 * @param shrinkersEnd rules to be applied once in the end
+	 */
 	public AutomatonDeltaDebuggerObserver(
 			final IUltimateServiceProvider services,
 			final ATester<LETTER, STATE> tester,
-			List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
-			List<AShrinker<?, LETTER, STATE>> shrinkersEnd) {
+			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
+			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd) {
 		mServices = services;
 		mTester = tester;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -72,7 +77,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (!(root instanceof AutomataTestFileAST)) {
 			return true;
 		}
@@ -91,8 +96,8 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 			}
 		}
 		if (automaton == null) {
-			mLogger.info(
-					"The input file did not contain any nested word automaton (type INestedWordAutomaton).");
+			mLogger.info("The input file did not contain any nested word " +
+					"automaton (type INestedWordAutomaton).");
 			return true;
 		}
 		deltaDebug(automaton);
@@ -111,16 +116,16 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		final AAutomatonFactory<LETTER, STATE> automatonFactory =
 				new NestedWordAutomatonFactory<LETTER, STATE>(automaton,
 						mServices);
-						
-		// delta debugger
+		
+		// construct delta debugger
 		final AutomatonDebugger<LETTER, STATE> debugger =
 				new AutomatonDebugger<LETTER, STATE>(automaton,
 						automatonFactory, mTester);
-						
+		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =
 				debugger.shrink(mShrinkersLoop, mShrinkersEnd);
-				
+		
 		// print result
 		mLogger.info(
 				"The automaton debugger terminated, resulting in the following automaton:");

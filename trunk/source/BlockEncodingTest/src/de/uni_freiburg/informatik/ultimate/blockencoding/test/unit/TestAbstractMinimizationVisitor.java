@@ -30,9 +30,6 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import junit.framework.TestCase;
 
 /**
  * The purpose of this class, is to test the initialization of the Minimized
@@ -65,31 +64,32 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	/**
 	 * the object under test.
 	 */
-	private PrintEdgeVisitor rcfgVisitor;
+	private PrintEdgeVisitor mRcfgVisitor;
 
 	/**
 	 * Base node of the RCFG to test.
 	 */
-	private RCFGNode rcfgNode;
+	private RCFGNode mRcfgNode;
 
-	private Logger s_Logger;
+	private ILogger mLogger;
 
-	private HashSet<RCFGNode> visitedOrigNodes;
+	private HashSet<RCFGNode> mVisitedOrigNodes;
 
-	private HashSet<MinimizedNode> visitedMinNodes;
+	private HashSet<MinimizedNode> mVisitedMinNodes;
 
 
+	@Override
 	@Before
 	protected void setUp() throws Exception {
-		rcfgNode = RCFGStore.getRCFG();
-		s_Logger = ExecuteUnitTestObserver.getLogger();
-		rcfgVisitor = new PrintEdgeVisitor(s_Logger);
-		visitedOrigNodes = new HashSet<RCFGNode>();
-		visitedMinNodes = new HashSet<MinimizedNode>();
+		mRcfgNode = RCFGStore.getRCFG();
+		mLogger = ExecuteUnitTestObserver.getLogger();
+		mRcfgVisitor = new PrintEdgeVisitor(mLogger);
+		mVisitedOrigNodes = new HashSet<RCFGNode>();
+		mVisitedMinNodes = new HashSet<MinimizedNode>();
 		// output the start node
-		RootNode rootNode = (RootNode) rcfgNode;
+		final RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
-		for (String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
+		for (final String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
 			if (key.equals("ULTIMATE.init") || key.equals("ULTIMATE.start")) {
 				continue;
 			}
@@ -97,23 +97,23 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 					.getPayload().getLocation().getFileName();
 			break;
 		}
-		s_Logger.error("Start Test on File: " + fileName);
+		mLogger.error("Start Test on File: " + fileName);
 	}
 
 	@Test
 	public void testInitializationForGivenRCFG() {
-		s_Logger.info("Start Testing the intialization of MinModel");
-		assertTrue(rcfgNode instanceof RootNode);
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		mLogger.info("Start Testing the intialization of MinModel");
+		assertTrue(mRcfgNode instanceof RootNode);
+		for (final RCFGEdge edge : mRcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
-			MinimizedNode minEntryNode = new MinimizedNode(methodEntryNode);
+			final ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
+			final MinimizedNode minEntryNode = new MinimizedNode(methodEntryNode);
 			assertEquals(minEntryNode.getOriginalNode(), methodEntryNode);
 			assertNull(minEntryNode.getOutgoingEdges());
 			assertNull(minEntryNode.getIncomingEdges());
 			// run the visitor which initializes the model
-			rcfgVisitor.visitNode(minEntryNode);
+			mRcfgVisitor.visitNode(minEntryNode);
 			assertNotNull(minEntryNode.getOutgoingEdges());
 			assertNotNull(minEntryNode.getIncomingEdges());
 			// now we compare the original and the initialized graph
@@ -123,17 +123,17 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 
 	private void compareOriginalAndMinimizedGraph(ProgramPoint originalNode,
 			MinimizedNode minNode) {
-		if (visitedMinNodes.contains(minNode)
-				&& visitedOrigNodes.contains(originalNode)) {
+		if (mVisitedMinNodes.contains(minNode)
+				&& mVisitedOrigNodes.contains(originalNode)) {
 			return;
 		}
 		assertEquals(minNode.getOriginalNode(), originalNode);
-		ArrayList<MinimizedNode> minNodeList = new ArrayList<MinimizedNode>();
-		ArrayList<ProgramPoint> origNodeList = new ArrayList<ProgramPoint>();
+		final ArrayList<MinimizedNode> minNodeList = new ArrayList<MinimizedNode>();
+		final ArrayList<ProgramPoint> origNodeList = new ArrayList<ProgramPoint>();
 		for (int i = 0; i < minNode.getOutgoingEdges().size(); i++) {
-			IMinimizedEdge minEdge = minNode.getOutgoingEdges().get(i);
+			final IMinimizedEdge minEdge = minNode.getOutgoingEdges().get(i);
 			assertTrue(minEdge.isBasicEdge());
-			RCFGEdge originalEdge = originalNode.getOutgoingEdges().get(i);
+			final RCFGEdge originalEdge = originalNode.getOutgoingEdges().get(i);
 			assertEquals(((BasicEdge) minEdge).getOriginalEdge(), originalEdge);
 			assertTrue(originalEdge.getTarget() instanceof ProgramPoint);
 			if (originalEdge instanceof Call || originalEdge instanceof Return) {
@@ -144,8 +144,8 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		for (int i = 0; i < minNodeList.size(); i++) {
 			compareOriginalAndMinimizedGraph(origNodeList.get(i),
 					minNodeList.get(i));
-			visitedMinNodes.add(minNodeList.get(i));
-			visitedOrigNodes.add(origNodeList.get(i));
+			mVisitedMinNodes.add(minNodeList.get(i));
+			mVisitedOrigNodes.add(origNodeList.get(i));
 		}
 	}
 

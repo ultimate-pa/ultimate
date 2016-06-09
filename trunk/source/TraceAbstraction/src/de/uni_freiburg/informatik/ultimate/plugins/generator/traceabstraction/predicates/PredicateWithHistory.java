@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 public class PredicateWithHistory extends SPredicate {
@@ -40,14 +40,14 @@ public class PredicateWithHistory extends SPredicate {
 	 * 
 	 */
 	private static final long serialVersionUID = 4545005036147569544L;
-	private final Map<Integer,Term> m_History;
+	private final Map<Integer,Term> mHistory;
 	
 
 	protected PredicateWithHistory(ProgramPoint programPoint, int serialNumber, 
 			String[] procedures, Term formula,
 			Set<BoogieVar> vars, Term closedFormula, Map<Integer,Term> history) {
 		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);
-		this.m_History = history;
+		mHistory = history;
 	}
 
 	/**
@@ -65,22 +65,23 @@ public class PredicateWithHistory extends SPredicate {
 	
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "History")
-			return m_History;
-		else 
+		if (field == "History") {
+			return mHistory;
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 	
 	public Map<Integer,Term> getCopyOfHistory() {
-		Map<Integer,Term> result = new HashMap<Integer,Term>();
-		for (Integer i : m_History.keySet()) {
-			result.put(i, m_History.get(i));
+		final Map<Integer,Term> result = new HashMap<Integer,Term>();
+		for (final Integer i : mHistory.keySet()) {
+			result.put(i, mHistory.get(i));
 		}
 		return result;
 	}
 	
 //	public void setHistory(Map<Integer,Term> history) {
-//		m_History = history;
+//		mHistory = history;
 //	}
 
 }

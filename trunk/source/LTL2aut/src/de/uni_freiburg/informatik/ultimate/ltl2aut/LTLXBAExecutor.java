@@ -35,15 +35,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * This class handles the communication of with the external tool for
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitial
 
 public class LTLXBAExecutor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
@@ -76,13 +76,13 @@ public class LTLXBAExecutor {
 	 * @throws Exception
 	 */
 	public AstNode ltl2Ast(String ltlFormula) throws Exception {
-		String toolOutput = execLTLXBA(ltlFormula.trim());
+		final String toolOutput = execLTLXBA(ltlFormula.trim());
 		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
-		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
+		final InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
 		try {
 			return (AstNode) new Parser(new Lexer(file)).parse().value;
-		} catch (Exception ex) {
-			StringBuilder sb = new StringBuilder();
+		} catch (final Exception ex) {
+			final StringBuilder sb = new StringBuilder();
 			sb.append("Exception during parsing of LTLXBA output:");
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(ex.getMessage());
@@ -105,34 +105,34 @@ public class LTLXBAExecutor {
 	 * @return whole return string of the called tool
 	 */
 	private String execLTLXBA(String ltlFormula) throws IOException, InterruptedException {
-		String[] command = getCommand(ltlFormula);
-		MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
-		String rtr = convertStreamToString(process.getInputStream());
+		final String[] command = getCommand(ltlFormula);
+		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
+		final String rtr = convertStreamToString(process.getInputStream());
 		process.waitfor();
 		return rtr;
 	}
 
 	private static String convertStreamToString(InputStream is) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		StringBuilder out = new StringBuilder();
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		final StringBuilder out = new StringBuilder();
 		String line;
 		try {
 			while ((line = reader.readLine()) != null) {
 				out.append(line).append(CoreUtil.getPlatformLineSeparator());
 			}
 			reader.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 		}
 		return out.toString();
 	}
 
 	private String[] getCommand(String ltlFormula) {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		ltlFormula = prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula);
 		ltlFormula = ltlFormula.replaceAll("\\(", " ( ");
 		ltlFormula = ltlFormula.replaceAll("\\)", " ) ");
 		ltlFormula = ltlFormula.replaceAll("\\s+", " ");
-		List<String> rtr = new ArrayList<>();
+		final List<String> rtr = new ArrayList<>();
 		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));
 		rtr.add("-f");
 		rtr.add(ltlFormula);

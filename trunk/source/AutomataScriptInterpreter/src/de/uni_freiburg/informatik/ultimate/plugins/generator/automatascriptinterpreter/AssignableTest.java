@@ -44,16 +44,16 @@ public class AssignableTest {
 	 * A map from primitive types to reference types.
 	 * e.g. (int -> Integer)
 	 */
-	private static Map<Class<?>, Class<?>> m_primitiveToClassTypes;
+	private static Map<Class<?>, Class<?>> sPrimitiveToClassTypes;
 	
 	public static void initPrimitiveTypes() {
-		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
+		sPrimitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
 		/* 
 		 * In automata script test files, currently only two primitive types
 		 * are in use, namely int and boolean.
 		 */
-		m_primitiveToClassTypes.put(int.class, Integer.class);
-		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
+		sPrimitiveToClassTypes.put(int.class, Integer.class);
+		sPrimitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
 	
@@ -69,11 +69,11 @@ public class AssignableTest {
 		Class<?> leftWithoutPrimitive = left;
 		Class<?> rightWithoutPrimitive = right;
 		boolean result;
-		if (m_primitiveToClassTypes.containsKey(left)) {
-			leftWithoutPrimitive = m_primitiveToClassTypes.get(left);
+		if (sPrimitiveToClassTypes.containsKey(left)) {
+			leftWithoutPrimitive = sPrimitiveToClassTypes.get(left);
 		}
-		if (m_primitiveToClassTypes.containsKey(right)) {
-			rightWithoutPrimitive = m_primitiveToClassTypes.get(right);
+		if (sPrimitiveToClassTypes.containsKey(right)) {
+			rightWithoutPrimitive = sPrimitiveToClassTypes.get(right);
 		}
 		if (leftWithoutPrimitive != null && rightWithoutPrimitive != null) {
 			result = leftWithoutPrimitive.isAssignableFrom(rightWithoutPrimitive);

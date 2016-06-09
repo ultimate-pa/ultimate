@@ -38,8 +38,8 @@ public class BooleanExpression{
 		this.alpha = alpha;
 		this.beta = beta;
 	}
-	private BitSet alpha;
-	private BitSet beta;
+	private final BitSet alpha;
+	private final BitSet beta;
 	private BooleanExpression nextConjunctExpression;
 	
 	public void addConjunction(BooleanExpression booleanExpression){
@@ -64,7 +64,7 @@ public class BooleanExpression{
 	}
 	
 	public boolean getResult(BitSet bitVector){
-		BitSet result = (BitSet) bitVector.clone();
+		final BitSet result = (BitSet) bitVector.clone();
 		result.and(alpha);
 		result.xor(beta);
 		if(result.isEmpty()){
@@ -77,15 +77,17 @@ public class BooleanExpression{
 	}
 	
 	public BooleanExpression cloneShifted(Map<Integer,Integer> shiftMap, int newSize){
-		BitSet shiftedAlpha = new BitSet(newSize);
-		BitSet shiftedBeta = new BitSet(newSize);
-		for (Entry<Integer, Integer> entry : shiftMap.entrySet()) {
-			if (alpha.get(entry.getKey()))
+		final BitSet shiftedAlpha = new BitSet(newSize);
+		final BitSet shiftedBeta = new BitSet(newSize);
+		for (final Entry<Integer, Integer> entry : shiftMap.entrySet()) {
+			if (alpha.get(entry.getKey())) {
 				shiftedAlpha.set(entry.getValue());
-			if (beta.get(entry.getKey()))
+			}
+			if (beta.get(entry.getKey())) {
 				shiftedBeta.set(entry.getValue());
+			}
 		}	
-		BooleanExpression result = new BooleanExpression(shiftedAlpha, shiftedBeta);
+		final BooleanExpression result = new BooleanExpression(shiftedAlpha, shiftedBeta);
 		if(nextConjunctExpression != null){
 			result.nextConjunctExpression = nextConjunctExpression.cloneShifted(shiftMap, newSize);
 		}	

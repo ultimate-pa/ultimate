@@ -28,12 +28,12 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.EventDecision;
@@ -56,7 +56,7 @@ public class FormulaXML2JConverter {
 
     private static final String DEFAULT_LOGGER = "FormulaXML2JConverter";
 
-    private Logger logger = null;
+    private ILogger logger = null;
     
     // Flag to choose whether booleanDecision or ZDecision should be generated from a formula 
     protected boolean useZDecision = false;
@@ -70,15 +70,15 @@ public class FormulaXML2JConverter {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public FormulaXML2JConverter(String loggerName, boolean useZDecision) {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            logger = ILogger
                     .getLogger(FormulaXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
         this.useZDecision = useZDecision;
     }
@@ -104,15 +104,15 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     public CDD convert(Element formulaNode) {
-        Element[] formulaContent = this.getFormulaOperands(formulaNode);
+        final Element[] formulaContent = getFormulaOperands(formulaNode);
         if (formulaContent.length != 1) {
             throw new RuntimeException(
                     "Formulae with child count != 1 are not allowed");
         }
 
-        this.logger.info("Trying to build CDD");
-        CDD result = this.createFormulaCDD(formulaContent[0]);
-        this.logger.info("Building CDD successful");
+        logger.info("Trying to build CDD");
+        final CDD result = createFormulaCDD(formulaContent[0]);
+        logger.info("Building CDD successful");
 
         return result;
     }
@@ -148,17 +148,17 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private CDD createFormulaCDD(Element formula) {
-        String formulaName = formula.getNodeName();
+        final String formulaName = formula.getNodeName();
         if (formulaName.equals(XMLTags.BOOLEANEXPRESSION_TAG)) {
             return /*useZDecision ? this.createZDecision(formula) 
-                                : */ this.createBooleanDecision(formula);
+                                : */ createBooleanDecision(formula);
         } else if (formulaName.equals(XMLTags.RANGEEXPRESSION_TAG)) {
-            return this.createRangeDecision(formula);
+            return createRangeDecision(formula);
         } else if (formulaName.equals(XMLTags.EVENTEXPRESSION_TAG)) {
-            return this.createEventDecision(formula);
+            return createEventDecision(formula);
         } else if (formulaName.equals(XMLTags.FORMULATREE_TAG)) {
-            Element[] children = this.getFormulaOperands(formula);
-            String operator = formula.getAttribute(XMLTags.OPERATOR_TAG);
+            final Element[] children = getFormulaOperands(formula);
+            final String operator = formula.getAttribute(XMLTags.OPERATOR_TAG);
             if (operator.equals(XMLTags.NOT_CONST)) {
                 if (children.length != 1) {
                     throw new RuntimeException(
@@ -166,7 +166,7 @@ public class FormulaXML2JConverter {
                                     + " for formula trees with \""
                                     + XMLTags.NOT_CONST + "\"-operator ");
                 }
-                CDD negatedFormula = this.createFormulaCDD(children[0])
+                final CDD negatedFormula = createFormulaCDD(children[0])
                         .negate();
                 return negatedFormula;
             } else if (operator.equals(XMLTags.OR_CONST)) {
@@ -177,7 +177,7 @@ public class FormulaXML2JConverter {
                 CDD orFormula = CDD.FALSE;
                 for (int i = 0; i < children.length; i++) {
                     orFormula = orFormula
-                            .or(this.createFormulaCDD(children[i]));
+                            .or(createFormulaCDD(children[i]));
                 }
                 return orFormula;
             } else if (operator.equals(XMLTags.AND_CONST)) {
@@ -187,8 +187,7 @@ public class FormulaXML2JConverter {
                 }
                 CDD andFormula = CDD.TRUE;
                 for (int i = 0; i < children.length; i++) {
-                    andFormula = andFormula.and(this
-                            .createFormulaCDD(children[i]));
+                    andFormula = andFormula.and(createFormulaCDD(children[i]));
                 }
                 return andFormula;
             }
@@ -219,12 +218,12 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private Element[] getFormulaOperands(Element formula) {
-        ArrayList<Element> result = new ArrayList<Element>();
-        NodeList children = formula.getChildNodes();
-        int childrenCount = children.getLength();
+        final ArrayList<Element> result = new ArrayList<Element>();
+        final NodeList children = formula.getChildNodes();
+        final int childrenCount = children.getLength();
         for (int i = 0; i < childrenCount; i++) {
-            Node actChild = children.item(i);
-            String actChildName = actChild.getNodeName();
+            final Node actChild = children.item(i);
+            final String actChildName = actChild.getNodeName();
             if (actChildName.equals(XMLTags.RANGEEXPRESSION_TAG)
                     || actChildName.equals(XMLTags.BOOLEANEXPRESSION_TAG)
                     || actChildName.equals(XMLTags.EVENTEXPRESSION_TAG)
@@ -233,7 +232,7 @@ public class FormulaXML2JConverter {
             }
         }
 
-        int resultSize = result.size();
+        final int resultSize = result.size();
         if (resultSize == 0) {
             throw new RuntimeException(
                     "A formula with 0 operands is not allowed.");
@@ -302,7 +301,7 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private CDD createBooleanDecision(Element booleanExpressionNode) {
-        String expression = booleanExpressionNode
+        final String expression = booleanExpressionNode
                 .getAttribute(XMLTags.EXPRESSION_TAG);
         if (expression.equals("")) {
             throw new RuntimeException("Empty expressions are not allowed");
@@ -331,7 +330,7 @@ public class FormulaXML2JConverter {
             }else if(expression.contains(Operator.EQUALS.toString())){
                 return RelationDecision.create(expression.split(Operator.EQUALS.toString()),Operator.EQUALS);
             }
-        }catch (IllegalArgumentException e) {
+        }catch (final IllegalArgumentException e) {
             throw new IllegalArgumentException("Found wrong number of operands in "
                     + expression);
         }
@@ -410,20 +409,20 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private CDD createRangeDecision(Element rangeExpressionNode) {
-        String variable = rangeExpressionNode
+        final String variable = rangeExpressionNode
                 .getAttribute(XMLTags.VARIABLE_TAG);
         if (variable.equals("")) {
             throw new RuntimeException("Range expressions with empty "
                     + "variables are not allowed");
         }
 
-        String operatorString = rangeExpressionNode
+        final String operatorString = rangeExpressionNode
                 .getAttribute(XMLTags.OPERATOR_TAG);
-        int operator = this.getOperator(operatorString);
+        final int operator = getOperator(operatorString);
 
-        String boundString = rangeExpressionNode
+        final String boundString = rangeExpressionNode
                 .getAttribute(XMLTags.BOUND_TAG);
-        double bound = (new Double(boundString)).doubleValue();
+        final double bound = (new Double(boundString)).doubleValue();
 
         return RangeDecision.create(variable, operator, (int) bound);
     }
@@ -445,7 +444,7 @@ public class FormulaXML2JConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private CDD createEventDecision(Element eventNode) {
-        String eventName = eventNode.getAttribute(XMLTags.NAME_Tag);
+        final String eventName = eventNode.getAttribute(XMLTags.NAME_Tag);
         if (eventName.equals("")) {
             throw new RuntimeException("Empty name attributes are not allowed");
         }

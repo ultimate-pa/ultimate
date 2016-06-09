@@ -51,6 +51,7 @@ public class lalr_transition {
   /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
       return "transition on " + on_symbol.name() + " to state ["

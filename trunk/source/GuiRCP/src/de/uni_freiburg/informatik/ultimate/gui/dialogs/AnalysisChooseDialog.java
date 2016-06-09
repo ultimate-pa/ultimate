@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
 import java.io.File;
@@ -36,7 +37,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -56,92 +56,87 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainFileValidator;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
+/**
+ * 
+ * @author Jürgen Christ
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class AnalysisChooseDialog extends Dialog {
 
 	private Table mRresultTable;
 	private Table mTable;
-	private ArrayList<ITool> mResult;
+	private List<ITool> mResult;
 	private String mToolchainFile;
-
 	private Shell mShell;
 
 	private final List<ITool> mTools;
 	private final List<ITool> mPrevious;
-	private final Logger mLogger;
+	private final ILogger mLogger;
+	private final ICore<ToolchainListType> mCore;
 
-	/**
-	 * Create the dialog
-	 * 
-	 * @param parent
-	 * @param style
-	 */
-	public AnalysisChooseDialog(Logger logger, Shell parent, int style, List<ITool> tools, List<ITool> previous) {
+	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final int style, final List<ITool> tools,
+			final List<ITool> previous, final ICore<ToolchainListType> core) {
 		super(parent, style);
 		mTools = tools;
 		mPrevious = previous;
 		mLogger = logger;
+		mCore = core;
 		mToolchainFile = null;
 		mResult = null;
 	}
 
-	/**
-	 * Create the dialog
-	 * 
-	 * @param parent
-	 */
-	public AnalysisChooseDialog(Logger logger, Shell parent, List<ITool> tools, List<ITool> previous) {
-		this(logger, parent, SWT.NONE, tools, previous);
+	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final List<ITool> tools,
+			final List<ITool> previous, final ICore<ToolchainListType> core) {
+		this(logger, parent, SWT.NONE, tools, previous, core);
 	}
 
-	/**
-	 * Open the dialog
-	 * 
-	 * @return the result
-	 * @throws JAXBException
-	 * @throws FileNotFoundException
-	 * @throws SAXException
-	 */
-	public ToolchainData open() throws FileNotFoundException, JAXBException, SAXException {
-		ToolchainData result_chain;
+	public IToolchainData<ToolchainListType> open() throws FileNotFoundException, JAXBException, SAXException {
 		createContents();
 		mShell.layout();
 		mShell.setSize(mShell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 		mShell.open();
-		Display display = getParent().getDisplay();
+		final Display display = getParent().getDisplay();
 		while (!mShell.isDisposed()) {
-			if (!display.readAndDispatch())
+			if (!display.readAndDispatch()) {
 				display.sleep();
+			}
 		}
 
+		final IToolchainData<ToolchainListType> resultChain;
 		if (mToolchainFile != null) {
 			mLogger.info("Reading toolchain file from " + mToolchainFile);
-			result_chain = new ToolchainData(mToolchainFile);
+			resultChain = mCore.createToolchainData(mToolchainFile);
 		} else if (mResult != null) {
 			// convert selection into a toolchain
-			result_chain = new ToolchainData();
-			for (ITool t : mResult) {
-				result_chain.addPlugin(t.getPluginID());
+			resultChain = mCore.createToolchainData();
+			for (final ITool t : mResult) {
+				resultChain.addPlugin(t.getPluginID());
 			}
-			//save this toolchain in a tempfile for redo actions 
-			String tDir = System.getProperty("java.io.tmpdir");
-			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
-			result_chain.writeToFile(tmpToolchain.getAbsolutePath());
-			new UltimatePreferenceStore(GuiController.sPLUGINID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
+			// save this toolchain in a tempfile for redo actions
+			final String tDir = System.getProperty("java.io.tmpdir");
+			final File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
+			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
+			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
 
 		} else {
-			result_chain = null;
+			resultChain = null;
 		}
 
-		return result_chain;
+		return resultChain;
 	}
 
 	/**
@@ -158,6 +153,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		mTable = new Table(mShell, SWT.FULL_SELECTION | SWT.BORDER | SWT.HIDE_SELECTION);
 		mTable.addMouseListener(new MouseAdapter() {
+			@Override
 			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.RIGHT);
 			}
@@ -178,7 +174,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		});
 
-		for (IToolchainPlugin analysis : mTools) {
+		for (final IToolchainPlugin analysis : mTools) {
 			final TableItem analysisTableItem = new TableItem(mTable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -190,12 +186,14 @@ public class AnalysisChooseDialog extends Dialog {
 
 		mRresultTable = new Table(mShell, SWT.BORDER);
 		mRresultTable.addMouseListener(new MouseAdapter() {
+			@Override
 			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.LEFT);
 			}
 		});
 		// a listener that should provide keyboard shortcuts for fast reordering
 		mRresultTable.addKeyListener(new KeyAdapter() {
+			@Override
 			public void keyPressed(final KeyEvent e) {
 				if (e.stateMask == SWT.SHIFT) {
 					switch (e.keyCode) {
@@ -221,7 +219,7 @@ public class AnalysisChooseDialog extends Dialog {
 		newColumnTableColumn_1.setText("Current Toolchain");
 		newColumnTableColumn_1.setResizable(true);
 
-		for (IToolchainPlugin analysis : mPrevious) {
+		for (final IToolchainPlugin analysis : mPrevious) {
 			final TableItem analysisTableItem = new TableItem(mRresultTable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
@@ -230,6 +228,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button addButton = new Button(mShell, SWT.NONE);
 		addButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.RIGHT);
 			}
@@ -238,6 +237,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button removeButton = new Button(mShell, SWT.NONE);
 		removeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.LEFT);
 			}
@@ -246,6 +246,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button upbutton = new Button(mShell, SWT.ARROW | SWT.UP);
 		upbutton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.UP);
 			}
@@ -255,6 +256,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button downbutton = new Button(mShell, SWT.ARROW | SWT.DOWN);
 		downbutton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.DOWN);
 			}
@@ -265,9 +267,10 @@ public class AnalysisChooseDialog extends Dialog {
 		final Button okButton = new Button(mShell, SWT.NONE);
 		// gets all items from the resulttable and puts them in the resultset ..
 		okButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				mResult = new ArrayList<ITool>();
-				for (TableItem item : mRresultTable.getItems()) {
+				for (final TableItem item : mRresultTable.getItems()) {
 					mResult.add((ITool) item.getData());
 				}
 				if (mResult.isEmpty()) {
@@ -284,14 +287,15 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button xmlButton = new Button(mShell, SWT.NONE);
 		xmlButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 
-				UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.sPLUGINID);
-				String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
+				final IPreferenceProvider prefs = mCore.getPreferenceProvider(GuiController.PLUGIN_ID);
+				final String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 
-				String[] extensions = new String[1];
+				final String[] extensions = new String[1];
 				extensions[0] = "*.xml";
-				FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
+				final FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
 				fd.setText("Choose XML Toolchain");
 				fd.setFilterExtensions(extensions);
 				fd.setFileName(filterpath);
@@ -309,6 +313,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button cancelButton = new Button(mShell, SWT.NONE);
 		cancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				mShell.dispose();
 			}
@@ -323,15 +328,14 @@ public class AnalysisChooseDialog extends Dialog {
 	 * function for the listeners... will move the items appropriate
 	 * 
 	 * @param swtDirection
-	 *            the SWT.Direction constant SWT.UP will move an item up in the
-	 *            resulttable SWT.DOWN will move an item down in the resulttable
-	 *            SWT.LEFT will remove an item from the resulttable SWT.RIGHT
-	 *            will add an item to the resulttable
+	 *            the SWT.Direction constant SWT.UP will move an item up in the resulttable SWT.DOWN will move an item
+	 *            down in the resulttable SWT.LEFT will remove an item from the resulttable SWT.RIGHT will add an item
+	 *            to the resulttable
 	 */
 	private void moveItem(int swtDirection) {
 		// get currently selected items
-		int ri = mRresultTable.getSelectionIndex();
-		int li = mTable.getSelectionIndex();
+		final int ri = mRresultTable.getSelectionIndex();
+		final int li = mTable.getSelectionIndex();
 		TableItem rightside = null;
 		TableItem leftside = null;
 		if (ri != -1) {
@@ -359,12 +363,12 @@ public class AnalysisChooseDialog extends Dialog {
 		case SWT.DOWN:
 			if (rightside != null) {
 				// compute with which item we should switch
-				int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
+				final int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
 				if (ri != -1 && otherindex >= 0 && otherindex < mRresultTable.getItemCount()) {
-					TableItem oldItem = mRresultTable.getItem(ri);
-					Object data = oldItem.getData();
+					final TableItem oldItem = mRresultTable.getItem(ri);
+					final Object data = oldItem.getData();
 					oldItem.dispose();
-					TableItem newItem = new TableItem(mRresultTable, SWT.NONE, otherindex);
+					final TableItem newItem = new TableItem(mRresultTable, SWT.NONE, otherindex);
 					newItem.setData(data);
 					setCaption(newItem);
 					mRresultTable.select(otherindex);
@@ -379,7 +383,7 @@ public class AnalysisChooseDialog extends Dialog {
 	}
 
 	private static void setCaption(TableItem item) {
-		IToolchainPlugin isp = (IToolchainPlugin) item.getData();
+		final IToolchainPlugin isp = (IToolchainPlugin) item.getData();
 		item.setText(isp.getPluginName() + "   id: " + isp.getPluginID());
 	}
 

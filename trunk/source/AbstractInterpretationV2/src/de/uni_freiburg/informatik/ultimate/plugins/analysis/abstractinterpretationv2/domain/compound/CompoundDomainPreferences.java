@@ -30,10 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 
 /**
  * Preferences for the compound domain.
@@ -87,7 +87,7 @@ public class CompoundDomainPreferences {
 	}
 
 	private static List<UltimatePreferenceItem<?>> addAbstractDomains() {
-		List<UltimatePreferenceItem<?>> abstractDomains = new ArrayList<>();
+		final List<UltimatePreferenceItem<?>> abstractDomains = new ArrayList<>();
 
 		abstractDomains.add(new UltimatePreferenceItem<Boolean>(LABEL_USE_EMPTY_DOMAIN, DEF_USE_EMPTY_DOMAIN,
 		        PreferenceType.Boolean));

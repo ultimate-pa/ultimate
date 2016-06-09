@@ -37,7 +37,7 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 		LoggingScriptForNonIncrementalBenchmarks {
 	
 
-	private LinkedList<ArrayList<ISmtCommand>> m_CommandStackAtLastGetUnsatCore;
+	private LinkedList<ArrayList<ISmtCommand>> mCommandStackAtLastGetUnsatCore;
 
 	public LoggingScriptForUnsatCoreBenchmarks(Script script,
 			String baseFilename, String directory) {
@@ -47,15 +47,15 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		Term[] result = super.getUnsatCore();
-		m_CommandStackAtLastGetUnsatCore = deepCopyOfCommandStack();
+		final Term[] result = super.getUnsatCore();
+		mCommandStackAtLastGetUnsatCore = deepCopyOfCommandStack();
 		return result;
 	}
 
 	@Override
 	public void exit() {
-		if (m_CommandStackAtLastGetUnsatCore != null) {
-			writeCommandStackToFile(constructFile("_UnsatCore"), m_CommandStackAtLastGetUnsatCore);
+		if (mCommandStackAtLastGetUnsatCore != null) {
+			writeCommandStackToFile(constructFile("_UnsatCore"), mCommandStackAtLastGetUnsatCore);
 		}
 		super.exit();
 	}

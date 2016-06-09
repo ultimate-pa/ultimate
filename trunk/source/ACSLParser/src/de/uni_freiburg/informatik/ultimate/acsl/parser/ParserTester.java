@@ -45,7 +45,7 @@ public class ParserTester {
 	 * @param args string arguments.
 	 */
 	public static void main(String[] args) {
-		StringBuffer buf = new StringBuffer();
+		final StringBuffer buf = new StringBuffer();
 		buf.append("gstart ");
 		buf.append("requires add[1] >= 0 ;");
 		buf.append("assigns \\nothing;");
@@ -58,9 +58,9 @@ public class ParserTester {
 		
 		System.out.println(buf.toString());
 		try {
-			ACSLNode node = Parser.parseComment(buf.toString(), 0, 0);
+			final ACSLNode node = Parser.parseComment(buf.toString(), 0, 0);
 			System.out.println(node);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 	}

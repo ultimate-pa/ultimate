@@ -22,4 +22,5 @@
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS" value="full,incremental,auto,"/>
 <booleanAttribute key="org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED" value="true"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut/}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l &quot;${workspace_loc}/ant-ltl2aut.log&quot;"/>
 </launchConfiguration>

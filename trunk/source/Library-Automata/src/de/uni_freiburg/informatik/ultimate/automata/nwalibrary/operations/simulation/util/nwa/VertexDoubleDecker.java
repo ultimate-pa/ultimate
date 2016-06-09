@@ -39,11 +39,11 @@ public final class VertexDoubleDecker<STATE> {
 	/**
 	 * Vertex down state of this double decker.
 	 */
-	private final VertexDownState<STATE> m_VertexDownState;
+	private final VertexDownState<STATE> mVertexDownState;
 	/**
 	 * Vertex up state of this double decker.
 	 */
-	private final VertexUpState<STATE> m_VertexUpState;
+	private final VertexUpState<STATE> mVertexUpState;
 
 	/**
 	 * Creates a new vertex double decker with given up and down states.
@@ -72,8 +72,8 @@ public final class VertexDoubleDecker<STATE> {
 	 *            Vertex down state for this element
 	 */
 	public VertexDoubleDecker(final VertexUpState<STATE> vertexUpState, final VertexDownState<STATE> vertexDownState) {
-		m_VertexUpState = vertexUpState;
-		m_VertexDownState = vertexDownState;
+		mVertexUpState = vertexUpState;
+		mVertexDownState = vertexDownState;
 	}
 
 	/*
@@ -92,19 +92,19 @@ public final class VertexDoubleDecker<STATE> {
 		if (!(obj instanceof VertexDoubleDecker)) {
 			return false;
 		}
-		VertexDoubleDecker<?> other = (VertexDoubleDecker<?>) obj;
-		if (m_VertexDownState == null) {
-			if (other.m_VertexDownState != null) {
+		final VertexDoubleDecker<?> other = (VertexDoubleDecker<?>) obj;
+		if (mVertexDownState == null) {
+			if (other.mVertexDownState != null) {
 				return false;
 			}
-		} else if (!m_VertexDownState.equals(other.m_VertexDownState)) {
+		} else if (!mVertexDownState.equals(other.mVertexDownState)) {
 			return false;
 		}
-		if (m_VertexUpState == null) {
-			if (other.m_VertexUpState != null) {
+		if (mVertexUpState == null) {
+			if (other.mVertexUpState != null) {
 				return false;
 			}
-		} else if (!m_VertexUpState.equals(other.m_VertexUpState)) {
+		} else if (!mVertexUpState.equals(other.mVertexUpState)) {
 			return false;
 		}
 		return true;
@@ -116,7 +116,7 @@ public final class VertexDoubleDecker<STATE> {
 	 * @return The vertex down state.
 	 */
 	public VertexDownState<STATE> getVertexDownState() {
-		return m_VertexDownState;
+		return mVertexDownState;
 	}
 
 	/**
@@ -125,7 +125,7 @@ public final class VertexDoubleDecker<STATE> {
 	 * @return The vertex up state.
 	 */
 	public VertexUpState<STATE> getVertexUpState() {
-		return m_VertexUpState;
+		return mVertexUpState;
 	}
 
 	/*
@@ -137,8 +137,8 @@ public final class VertexDoubleDecker<STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_VertexDownState == null) ? 0 : m_VertexDownState.hashCode());
-		result = prime * result + ((m_VertexUpState == null) ? 0 : m_VertexUpState.hashCode());
+		result = prime * result + ((mVertexDownState == null) ? 0 : mVertexDownState.hashCode());
+		result = prime * result + ((mVertexUpState == null) ? 0 : mVertexUpState.hashCode());
 		return result;
 	}
 
@@ -149,6 +149,6 @@ public final class VertexDoubleDecker<STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "VertexDoubleDecker [vertexDownState=" + m_VertexDownState + ", vertexUpState=" + m_VertexUpState + "]";
+		return "VertexDoubleDecker [vertexDownState=" + mVertexDownState + ", vertexUpState=" + mVertexUpState + "]";
 	}
 }

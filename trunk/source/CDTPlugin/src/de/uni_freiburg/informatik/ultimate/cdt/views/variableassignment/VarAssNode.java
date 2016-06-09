@@ -39,8 +39,8 @@ import java.util.List;
  */
 public class VarAssNode {
 	
-	private String name;
-	private String value;
+	private final String name;
+	private final String value;
 	private List<VarAssNode> children;
 	private VarAssNode parent;
 	

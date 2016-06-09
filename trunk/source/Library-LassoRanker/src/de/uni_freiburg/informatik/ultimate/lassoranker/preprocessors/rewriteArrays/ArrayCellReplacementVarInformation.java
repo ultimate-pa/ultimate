@@ -48,87 +48,87 @@ public class ArrayCellReplacementVarInformation {
 	/**
 	 * Array that occurs in the formula
 	 */
-	private final TermVariable m_ArrayInstance;
+	private final TermVariable mArrayInstance;
 	/**
 	 * Representative of the BoogieVar for the corresponding array.
 	 */
-	private final TermVariable m_ArrayRepresentative;
+	private final TermVariable mArrayRepresentative;
 	/**
 	 * Index as it occurs in the formula.
 	 */
-	private final ArrayIndex m_Index;
+	private final ArrayIndex mIndex;
 	/**
 	 * Index in which each TermVariable is translated to the representative
 	 * of the corresponding BoogieVar.
 	 */
-	private final ArrayIndex m_IndexRepresentative;
-	private final VarType m_VarType;
+	private final ArrayIndex mIndexRepresentative;
+	private final VarType mVarType;
 	
 	/**
 	 * TransFormula in which arrayInstance and index occurred.
 	 */
-	private final TransFormulaLR m_TransFormulaLR;
+	private final TransFormulaLR mTransFormulaLR;
 	
-	private ReplacementVar m_ReplacementVar;
+	private ReplacementVar mReplacementVar;
 	
 	
 	public ArrayCellReplacementVarInformation(TermVariable arrayInstance,
 			TermVariable arrayRepresentative, ArrayIndex index,
 			ArrayIndex indexRepresentative, VarType varType, TransFormulaLR transFormulaLR) {
 		super();
-		m_ArrayInstance = arrayInstance;
-		m_ArrayRepresentative = arrayRepresentative;
-		m_Index = index;
-		m_IndexRepresentative = indexRepresentative;
-		m_VarType = varType;
-		m_TransFormulaLR = transFormulaLR;
+		mArrayInstance = arrayInstance;
+		mArrayRepresentative = arrayRepresentative;
+		mIndex = index;
+		mIndexRepresentative = indexRepresentative;
+		mVarType = varType;
+		mTransFormulaLR = transFormulaLR;
 	}
 
 
 	public TermVariable getArrayInstance() {
-		return m_ArrayInstance;
+		return mArrayInstance;
 	}
 
 
 	public TermVariable getArrayRepresentative() {
-		return m_ArrayRepresentative;
+		return mArrayRepresentative;
 	}
 
 
 	public ArrayIndex getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 
 	public ArrayIndex getIndexRepresentative() {
-		return m_IndexRepresentative;
+		return mIndexRepresentative;
 	}
 
 
 	public VarType getVarType() {
-		return m_VarType;
+		return mVarType;
 	}
 
 
 	public ReplacementVar getReplacementVar() {
-		return m_ReplacementVar;
+		return mReplacementVar;
 	}
 
 
 	public void setReplacementVar(ReplacementVar replacementVar) {
-		m_ReplacementVar = replacementVar;
+		mReplacementVar = replacementVar;
 	}
 	
 	
 	public Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex() {
-		Map<TermVariable, RankVar> result = new HashMap<TermVariable, RankVar>();
-		for (Term entry : m_Index) {
-			for (TermVariable tv : entry.getFreeVars()) {
-				RankVar inVar = m_TransFormulaLR.getInVarsReverseMapping().get(tv);
+		final Map<TermVariable, RankVar> result = new HashMap<TermVariable, RankVar>();
+		for (final Term entry : mIndex) {
+			for (final TermVariable tv : entry.getFreeVars()) {
+				final RankVar inVar = mTransFormulaLR.getInVarsReverseMapping().get(tv);
 				if (inVar != null) {
 					result.put(tv, inVar);
 				} else {
-					RankVar outVar = m_TransFormulaLR.getOutVarsReverseMapping().get(tv);
+					final RankVar outVar = mTransFormulaLR.getOutVarsReverseMapping().get(tv);
 					if (outVar != null) {
 						result.put(tv, outVar);
 					} else {
@@ -141,9 +141,9 @@ public class ArrayCellReplacementVarInformation {
 	}
 	
 	public RankVar getArrayRankVar() {
-		RankVar result = m_TransFormulaLR.getInVarsReverseMapping().get(m_ArrayInstance);
+		RankVar result = mTransFormulaLR.getInVarsReverseMapping().get(mArrayInstance);
 		if (result == null) {
-			result = m_TransFormulaLR.getOutVarsReverseMapping().get(m_ArrayInstance);
+			result = mTransFormulaLR.getOutVarsReverseMapping().get(mArrayInstance);
 		}
 		if (result == null) {
 			throw new AssertionError("unknown array cell");

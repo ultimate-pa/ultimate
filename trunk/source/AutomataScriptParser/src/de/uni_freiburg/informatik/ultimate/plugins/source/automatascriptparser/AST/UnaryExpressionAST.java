@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -45,32 +45,32 @@ public class UnaryExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 1809386058471685881L;
-	private UnaryOperatorAST m_operator;
+	private UnaryOperatorAST moperator;
 	
 	public UnaryExpressionAST(ILocation loc) {
 		super(loc);
-		m_returnType = Integer.class;
-		m_expectingType = m_returnType;
+		mreturnType = Integer.class;
+		mexpectingType = mreturnType;
 	}
 	
 	public UnaryExpressionAST(ILocation loc, VariableExpressionAST expr) {
 		super(loc);
-		m_returnType = Integer.class;
-		m_expectingType = m_returnType;
+		mreturnType = Integer.class;
+		mexpectingType = mreturnType;
 		addOutgoingNode(expr);
 	}
 	
 	public UnaryOperatorAST getOperator() {
-		return m_operator;
+		return moperator;
 	}
 
 	public void setOperator(UnaryOperatorAST operator) {
-		this.m_operator = operator;
+		moperator = operator;
 	}
 
 	@Override
 	public String toString() {
-		return "UnaryExpression [" + operatorToString(m_operator) + "]";
+		return "UnaryExpression [" + operatorToString(moperator) + "]";
 	}
 	
 	private String operatorToString(UnaryOperatorAST uo) {
@@ -84,15 +84,15 @@ public class UnaryExpressionAST extends AtsASTNode {
 	}
 
 	public String getOperatorAsString() {
-		return operatorToString(m_operator);
+		return operatorToString(moperator);
 	}
 	@Override
 	public String getAsString() {
-		switch (m_operator) {
-		case EXPR_PLUSPLUS: return m_children.get(0).getAsString() + "++";
-		case EXPR_MINUSMINUS: return m_children.get(0).getAsString() + "--";
-		case PLUSPLUS_EXPR: return "++" + m_children.get(0).getAsString();
-		case MINUSMINUS_EXPR: return "--" + m_children.get(0).getAsString();
+		switch (moperator) {
+		case EXPR_PLUSPLUS: return mchildren.get(0).getAsString() + "++";
+		case EXPR_MINUSMINUS: return mchildren.get(0).getAsString() + "--";
+		case PLUSPLUS_EXPR: return "++" + mchildren.get(0).getAsString();
+		case MINUSMINUS_EXPR: return "--" + mchildren.get(0).getAsString();
 		default: return "";
 		}
 	}

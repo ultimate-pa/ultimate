@@ -38,32 +38,39 @@ public class PolymorphicFunctionSymbol extends FunctionSymbolFactory {
 		mFlags      = flags;
 	}
 
+	@Override
 	public int getFlags(BigInteger[] indices, Sort[] paramSorts, Sort result) {
 		return mFlags;
 	}
 
+	@Override
 	public Sort getResultSort(
 			BigInteger[] indices, Sort[] paramSorts, Sort result) {
-		if (indices != null)
+		if (indices != null) {
 			return null;
-		if (paramSorts.length != mParamSorts.length)
+		}
+		if (paramSorts.length != mParamSorts.length) {
 			return null;
-		HashMap<Sort,Sort> unifier = new HashMap<Sort, Sort>();
+		}
+		final HashMap<Sort,Sort> unifier = new HashMap<Sort, Sort>();
 		for (int i = 0; i < paramSorts.length; i++) {
-			if (!mParamSorts[i].unifySort(unifier, paramSorts[i]))
+			if (!mParamSorts[i].unifySort(unifier, paramSorts[i])) {
 				return null;
+			}
 		}
 		if (result != null) { // NOPMD
-			if (!mResultSort.unifySort(unifier, result.getRealSort()))
+			if (!mResultSort.unifySort(unifier, result.getRealSort())) {
 				return null;
+			}
 			return result;
 		} else {
-			Sort[] mapping = new Sort[mTypeParams.length];
+			final Sort[] mapping = new Sort[mTypeParams.length];
 			for (int i = 0; i < mTypeParams.length; i++) {
 				mapping[i] = unifier.get(mTypeParams[i]);
 				// check if there are still unresolved type parameters.
-				if (mapping[i] == null)
+				if (mapping[i] == null) {
 					return null;
+				}
 			}
 			return mResultSort.mapSort(mapping);
 		}

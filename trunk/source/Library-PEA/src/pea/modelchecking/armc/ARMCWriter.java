@@ -43,8 +43,9 @@ import pea.PEATestAutomaton;
 import pea.Phase;
 import pea.RangeDecision;
 import pea.RelationDecision;
-import pea.modelchecking.TCSWriter;
+import pea.modelchecking.PEA2TCSConverter;
 import pea.modelchecking.PEA2TCSConverter.TransitionConstraint;
+import pea.modelchecking.TCSWriter;
 
 /**
  * ARMCWriter is a TCSWriter to write ARMC output. It is used by PEA2TCSConverter
@@ -169,14 +170,14 @@ public class ARMCWriter extends TCSWriter {
     @Override
     public void write() {
         try {
-            this.writer = new FileWriter(fileName);
+            writer = new FileWriter(fileName);
             init();
             writePreamble();
             writeInitialTransitions();
             writeTransitions();
-            this.writer.flush();
-            this.writer.close();
-        } catch (IOException e) {
+            writer.flush();
+            writer.close();
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -187,7 +188,7 @@ public class ARMCWriter extends TCSWriter {
      *          exception thrown by the output file writer
      */
     protected void writePreamble() throws IOException {
-        this.writer
+        writer
             .write("% Preamble:\n\n"
                         + ":- multifile r/5,implicit_updates/0,var2names/2,preds/2,cube_size/1,start/1,error/1,refinement/1.\n"
                         + "refinement(inter).\ncube_size(1).\n"
@@ -200,10 +201,10 @@ public class ARMCWriter extends TCSWriter {
         /* Build varList and primedVarList 
          * TODO: Handle declarations in ARMC export
          * */
-        StringBuilder varListBuilder = new StringBuilder();
-        StringBuilder primedVarListBuilder = new StringBuilder();
-        for (Iterator i = converter.getVariables().keySet().iterator(); i.hasNext();) {
-            String variable = (String) i.next();
+        final StringBuilder varListBuilder = new StringBuilder();
+        final StringBuilder primedVarListBuilder = new StringBuilder();
+        for (final Iterator i = converter.getVariables().keySet().iterator(); i.hasNext();) {
+            final String variable = (String) i.next();
             varListBuilder.append(ARMCString.ARMC_US + variable);
             primedVarListBuilder.append(ARMCString.ARMC_US + variable + ARMCString.ARMC_PRIME);
             if(i.hasNext()){
@@ -214,27 +215,28 @@ public class ARMCWriter extends TCSWriter {
         varList = varListBuilder.toString();
         primedVarList = primedVarListBuilder.toString();
         
-        this.writer.write("preds(p(_, data(");
-        this.writer.write(varList);
-        this.writer.write(")), []).\n\n");
+        writer.write("preds(p(_, data(");
+        writer.write(varList);
+        writer.write(")), []).\n\n");
 
         // Write Var2Names lists
-        this.writer.write("var2names(p(_, data(" +
+        writer.write("var2names(p(_, data(" +
                 varList
                 + ")),\n   [");
-        for (Iterator i = converter.getVariables().keySet().iterator(); i.hasNext();) {
-            String var = (String) i.next();
-            this.writer.write("(" + ARMCString.ARMC_US + var + ", '" + var + "')");
-            if(i.hasNext())
-                this.writer.write(",\n    ");
+        for (final Iterator i = converter.getVariables().keySet().iterator(); i.hasNext();) {
+            final String var = (String) i.next();
+            writer.write("(" + ARMCString.ARMC_US + var + ", '" + var + "')");
+            if(i.hasNext()) {
+				writer.write(",\n    ");
+			}
         }
         writer.write("]).\n\n\n\n");
 
         // Rename phases if necessary
-        Phase[] phases = converter.getPEA().getPhases();
-        Set<Phase> finalPhases = new HashSet<Phase>(
+        final Phase[] phases = converter.getPEA().getPhases();
+        final Set<Phase> finalPhases = new HashSet<Phase>(
                 Arrays.asList(((PEATestAutomaton)converter.getPEA()).getFinalPhases()));
-        if (this.rename) {
+        if (rename) {
             int stateCounter = phases.length;
             for (int i = 0; i < phases.length; i++) {
                 if (!finalPhases.contains(phases[i])) {
@@ -333,11 +335,11 @@ public class ARMCWriter extends TCSWriter {
         primedWriter.close();
         unPrimedWriter.close();
 
-        this.writer.write("[");
-        this.writer.write(unPrimedWriter.toString());
-        this.writer.write("],[");
-        this.writer.write(primedWriter.toString());
-        this.writer.write("]");
+        writer.write("[");
+        writer.write(unPrimedWriter.toString());
+        writer.write("],[");
+        writer.write(primedWriter.toString());
+        writer.write("]");
     }
 
     
@@ -358,10 +360,11 @@ public class ARMCWriter extends TCSWriter {
         if(decision instanceof BooleanDecision
                 && ((BooleanDecision)decision).getVar().contains(BooleanDecision.PRIME)){
 
-            if(firstPrimedConstraint)
-                firstPrimedConstraint = false;
-            else
-                primedWriter.write(", ");
+            if(firstPrimedConstraint) {
+				firstPrimedConstraint = false;
+			} else {
+				primedWriter.write(", ");
+			}
             
             writeDecision(decision, child, primedWriter);
         
@@ -377,19 +380,21 @@ public class ARMCWriter extends TCSWriter {
         }else if  (decision instanceof RangeDecision
                 && ((RangeDecision)decision).getVar().contains(RangeDecision.PRIME)){
 
-            if(firstPrimedConstraint)
-                firstPrimedConstraint = false;
-            else
-                primedWriter.write(", ");
+            if(firstPrimedConstraint) {
+				firstPrimedConstraint = false;
+			} else {
+				primedWriter.write(", ");
+			}
         
             writeDecision(decision, child, primedWriter);
 
         }else{
             
-            if(firstUnPrimedConstraint)
-                firstUnPrimedConstraint = false;
-            else
-                unPrimedWriter.write(", ");
+            if(firstUnPrimedConstraint) {
+				firstUnPrimedConstraint = false;
+			} else {
+				unPrimedWriter.write(", ");
+			}
             
             writeDecision(decision, child, unPrimedWriter);
         }
@@ -409,8 +414,8 @@ public class ARMCWriter extends TCSWriter {
      */
     protected void writeTransitionPrefix(String source, String dest)
     throws IOException {
-        this.writer.write("r(p(pc(" + source + "),data(" + varList + ")),");
-        this.writer.write("p(pc(" + dest + "),data(" + primedVarList + ")), ");
+        writer.write("r(p(pc(" + source + "),data(" + varList + ")),");
+        writer.write("p(pc(" + dest + "),data(" + primedVarList + ")), ");
     }
     
 
@@ -421,7 +426,7 @@ public class ARMCWriter extends TCSWriter {
      *          thrown if writing of output file fails 
      */
     protected void writeTransitionSuffix() throws IOException {
-        this.writer.write("," + (this.transCounter ++) + ").\n");
+        writer.write("," + (transCounter ++) + ").\n");
     }
     
 
@@ -458,11 +463,11 @@ public class ARMCWriter extends TCSWriter {
         }
         
         if(dec instanceof RangeDecision){
-            String variable = ((RangeDecision)dec).getVar().replace(RangeDecision.PRIME,
+            final String variable = ((RangeDecision)dec).getVar().replace(RangeDecision.PRIME,
                     ARMCString.ARMC_PRIME);
             writer.append(ARMCString.ARMC_US + variable);
 
-            int[] limits = ((RangeDecision)dec).getLimits();
+            final int[] limits = ((RangeDecision)dec).getLimits();
             if (i == 0) {
                 if ((limits[0] & 1) == 0) {
                     writer.append(" < ");
@@ -519,7 +524,7 @@ public class ARMCWriter extends TCSWriter {
                 toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "_$1$2");
                 writer.append(toWrite);
             } else if(dec instanceof EventDecision){
-                String event = ((EventDecision)dec).getEvent();
+                final String event = ((EventDecision)dec).getEvent();
                 writer.append(event+" > "+event+"'");
 //            } else if (dec instanceof ZDecision) {
 //                String toWrite = ((ZDecision)dec).getPredicate();
@@ -542,9 +547,10 @@ public class ARMCWriter extends TCSWriter {
                 toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", ARMCString.ARMC_US + "$1$2");
                 toWrite = toWrite.replace(RelationDecision.Operator.PRIME.toString(),
                         ARMCString.ARMC_PRIME);
-                if(toWrite.contains(RelationDecision.Operator.NEQ.toString()))
-                    throw new RuntimeException("ARMC export: negated expressions not supported: " + 
+                if(toWrite.contains(RelationDecision.Operator.NEQ.toString())) {
+					throw new RuntimeException("ARMC export: negated expressions not supported: " + 
                             toWrite);
+				}
                 writer.append(toWrite);
             }else if(dec instanceof BooleanDecision){
                 String toWrite = ((BooleanDecision)dec).toString(i);                       
@@ -552,7 +558,7 @@ public class ARMCWriter extends TCSWriter {
                 toWrite = toWrite.replace(BooleanDecision.PRIME, ARMCString.ARMC_PRIME);
                 writer.append(toWrite);
             } else if(dec instanceof EventDecision){
-                String event = ((EventDecision)dec).getEvent();
+                final String event = ((EventDecision)dec).getEvent();
                 writer.append(event+" = "+event+"'");                  
 //            } else if (dec instanceof ZDecision) {
 //                String toWrite = ((ZDecision)dec).getPredicate();

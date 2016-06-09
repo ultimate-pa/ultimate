@@ -31,10 +31,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -62,13 +61,13 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 	private boolean mFixpointReached;
 	private RCFGNode mCurrentSourceNode;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final ScopedBoogieVarBuilder mVarBuilder;
 
 	public ReachDefRCFGVisitor(IAnnotationProvider<ReachDefEdgeAnnotation> provider,
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, Logger logger, ScopedBoogieVarBuilder builder) {
+			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, ILogger logger, ScopedBoogieVarBuilder builder) {
 		mLogger = logger;
 		mEdgeProvider = provider;
 		mStatementProvider = stmtProvider;
@@ -112,7 +111,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 			mCurrentSourceNode = edge.getSource();
 		}
 
-		for (Statement s : edge.getStatements()) {
+		for (final Statement s : edge.getStatements()) {
 			ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(s);
 			if (annot == null) {
 				annot = new ReachDefStatementAnnotation();
@@ -121,17 +120,17 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 				// fixpoint
 				somethingChanged = true;
 			}
-			ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
+			final ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
 			try {
-				boolean gen = generator.annotate(s,edge.getTransitionFormula());
+				final boolean gen = generator.annotate(s,edge.getTransitionFormula());
 				if (mLogger.isDebugEnabled()) {
-					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
+					final String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Def: " + annot.getDefAsString());
 				}
 
 				somethingChanged = gen || somethingChanged;
-			} catch (Throwable e) {
+			} catch (final Throwable e) {
 				// Fail fast after fatal error
 				mLogger.fatal("Fatal error occured", e);
 				mFixpointReached = true;
@@ -167,12 +166,12 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		Collection<ReachDefStatementAnnotation> predecessors;
 
-		int currentIndex = currentSeq.getStatements().indexOf(currentStmt);
+		final int currentIndex = currentSeq.getStatements().indexOf(currentStmt);
 		if (currentIndex != 0) {
 			// its not the first statement, so we only need the straight line
 			// predecessor
 			predecessors = new ArrayList<>();
-			predecessors.add((ReachDefStatementAnnotation) mStatementProvider.getAnnotation(currentSeq.getStatements()
+			predecessors.add(mStatementProvider.getAnnotation(currentSeq.getStatements()
 					.get(currentIndex - 1)));
 		} else {
 			// it is the first statement, we only need loop predecessors

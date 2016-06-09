@@ -33,16 +33,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class TraceAbstractionTestSummary extends NewTestSummary {
 	
@@ -53,12 +54,12 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	/**
 	 * A map from file names to benchmark results.
 	 */
-	private Map<UltimateRunDefinition, Collection<ICsvProvider<?>>> m_TraceAbstractionBenchmarks;
+	private final Map<UltimateRunDefinition, Collection<ICsvProvider<?>>> mTraceAbstractionBenchmarks;
 
 	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mCount = 0;
-		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<ICsvProvider<?>>>();
+		mTraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<ICsvProvider<?>>>();
 	}
 
 	@Override
@@ -78,7 +79,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 		if (resultService != null) {
 			addTraceAbstractionBenchmarks(ultimateRunDefinition,
-					CoreUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
+					ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
 		}
 
 	}
@@ -86,11 +87,11 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	@SuppressWarnings("rawtypes")
 	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition,
 			Collection<BenchmarkResult> benchmarkResults) {
-		assert !m_TraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
+		assert !mTraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
 
 		if (benchmarkResults != null && !benchmarkResults.isEmpty()) {
-			ArrayList<ICsvProvider<?>> providers = new ArrayList<>(benchmarkResults.size());
-			for (BenchmarkResult result : benchmarkResults) {
+			final ArrayList<ICsvProvider<?>> providers = new ArrayList<>(benchmarkResults.size());
+			for (final BenchmarkResult result : benchmarkResults) {
 				// exclude the extensive ultimate benchmark object
 				if (result.getBenchmark().getClass() == Benchmark.class) {
 					continue;
@@ -98,7 +99,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 				providers.add(result.getBenchmark().createCvsProvider());
 			}
 			if (!providers.isEmpty()) {
-				m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
+				mTraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
 			}
 		}
 	}
@@ -106,25 +107,25 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		int total = 0;
 		mCount = 0;
 
 		sb.append("################# ").append("Trace Abstraction Test Summary").append(" #################")
 				.append(CoreUtil.getPlatformLineSeparator());
 
-		PartitionedResults results = partitionResults(mResults.entrySet());
+		final PartitionedResults results = partitionResults(mResults.entrySet());
 
 		sb.append(getSummaryLog(results.Success, "SUCCESSFUL TESTS"));
-		int success = mCount;
+		final int success = mCount;
 		total = total + mCount;
 		mCount = 0;
 		sb.append(getSummaryLog(results.Unknown, "UNKNOWN TESTS"));
-		int unknown = mCount;
+		final int unknown = mCount;
 		total = total + mCount;
 		mCount = 0;
 		sb.append(getSummaryLog(results.Failure, "FAILED TESTS"));
-		int fail = mCount;
+		final int fail = mCount;
 		total = total + mCount;
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("====== SUMMARY for ").append("Trace Abstraction").append(" ======")
@@ -138,12 +139,12 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	}
 
 	private String getSummaryLog(Collection<Entry<UltimateRunDefinition, ExtendedResult>> results, String title) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("====== ").append(title).append(" =====").append(CoreUtil.getPlatformLineSeparator());
 
 		// group by category
-		HashMap<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> resultsByCategory = new HashMap<>();
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
+		final HashMap<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> resultsByCategory = new HashMap<>();
+		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> coll = resultsByCategory
 					.get(entry.getValue().getCategory());
 			if (coll == null) {
@@ -153,24 +154,24 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			coll.add(entry);
 		}
 
-		for (Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : resultsByCategory
+		for (final Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : resultsByCategory
 				.entrySet()) {
 			sb.append("\t").append(entry.getKey()).append(CoreUtil.getPlatformLineSeparator());
 
-			String indent = "\t\t\t";
-			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
+			final String indent = "\t\t\t";
+			for (final Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
 				sb.append("\t\t").append(currentResult.getKey()).append(CoreUtil.getPlatformLineSeparator());
 				// Add Result Message
 				sb.append(indent).append(currentResult.getValue().getMessage()).append(CoreUtil.getPlatformLineSeparator());
 				if (mShowBenchmarkResults) {
 					// Add TraceAbstraction benchmarks
-					Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult
+					final Collection<ICsvProvider<?>> benchmarkProviders = mTraceAbstractionBenchmarks.get(currentResult
 							.getKey());
 					if (benchmarkProviders == null) {
 						sb.append(indent).append("No benchmark results available.")
 						.append(CoreUtil.getPlatformLineSeparator());
 					} else {
-						for (ICsvProvider<?> benchmarkProvider : benchmarkProviders) {
+						for (final ICsvProvider<?> benchmarkProvider : benchmarkProviders) {
 							appendProvider(sb, indent, benchmarkProvider);
 						}
 					}
@@ -195,7 +196,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 		}
 
 		sb.append(ident);
-		for (String s : provider.getColumnTitles()) {
+		for (final String s : provider.getColumnTitles()) {
 			sb.append(s);
 			sb.append(", ");
 		}
@@ -207,16 +208,16 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			return;
 		}
 
-		List<String> rowHeaders = provider.getRowHeaders();
+		final List<String> rowHeaders = provider.getRowHeaders();
 		int i = 0;
-		for (List<?> row : provider.getTable()) {
+		for (final List<?> row : provider.getTable()) {
 			sb.append(ident);
 			if (rowHeaders != null && i < rowHeaders.size()) {
-				String rowHeader = rowHeaders.get(i);
+				final String rowHeader = rowHeaders.get(i);
 				sb.append(rowHeader);
 				sb.append(", ");
 			}
-			for (Object cell : row) {
+			for (final Object cell : row) {
 				sb.append(cell);
 				sb.append(", ");
 			}

@@ -31,13 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -56,7 +54,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPDomainState, Code
 
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VPDomainStatementProcessor mStatementProcessor;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Default constructor.
@@ -84,7 +82,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPDomainState, Code
 		// assert !oldstate.isBottom();
 		assert transition != null;
 
-		List<VPDomainState> currentStates = new ArrayList<>();
+		final List<VPDomainState> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		
 		transition.getTransitionFormula();

@@ -1,13 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType; 
-
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_ID);
+	}
+
 	public static enum PatternTransformerTypes { 
 		None, ClosedWorld, SimplePositiveTest, 
 		};
@@ -22,22 +26,25 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final PatternTransformerTypes DEF_TRANSFORMER = PatternTransformerTypes.None;
 
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+		return new BaseUltimatePreferenceItem[] {
 				new UltimatePreferenceItem<PatternTransformerTypes>(LABEL_TRANSFORMER, DEF_TRANSFORMER, PreferenceType.Combo
 						,PatternTransformerTypes.values()),
 				};
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return Activator.PLUGIN_ID;
-	}
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

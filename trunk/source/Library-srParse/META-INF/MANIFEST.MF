@@ -13,5 +13,8 @@ Export-Package: srParse;
  srParse.pattern
 Require-Bundle: Library-PEA,
  JavaCup,
- UltimateCore
+ ASTBuilder,
+ JavaCup,
+ UltimateCore,
+ Library-BoogieAST
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -37,18 +35,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
-	private final Logger m_Logger;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
-	private final TotalizeNwa<LETTER, STATE> m_Totalized;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
-	private final StateFactory<STATE> m_StateFactory;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
+	private final TotalizeNwa<LETTER, STATE> mTotalized;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private final StateFactory<STATE> mStateFactory;
 	
 	
 	@Override
@@ -60,50 +59,50 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result.sizeInformation();
+				mResult.sizeInformation();
 	}
 	
 	
 	public Totalize(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_StateFactory = input.getStateFactory();
-		this.m_Operand = input;
-		m_Logger.info(startMessage());
-		m_Totalized = new TotalizeNwa<LETTER, STATE>(input, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Totalized);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mStateFactory = input.getStateFactory();
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mTotalized = new TotalizeNwa<LETTER, STATE>(input, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mTotalized);
+		mLogger.info(exitMessage());
 	}
 	
 
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
-			m_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
+			mLogger.info("Start testing correctness of " + operationName());
+			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// should recognize same language imput
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, operandOldApi, m_Result, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, operandOldApi, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, operandOldApi, mResult, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, operandOldApi, sf) == null);
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

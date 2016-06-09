@@ -34,8 +34,8 @@ public class TestCase<LETTER>{
 		this.word = word;
 		this.isAccepted = isAccepted;
 	}
-	private Word<LETTER> word;
-	private boolean isAccepted;
+	private final Word<LETTER> word;
+	private final boolean isAccepted;
 	
 	public static <LETTER> void test(AlternatingAutomaton<LETTER, String> automaton, TestCase<LETTER>[] testCases){
 		for(int i=0;i<testCases.length;i++){

@@ -30,14 +30,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,66 +47,65 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class WitnessLocationMatcher {
 
-	private final IUltimateServiceProvider m_Services;
-	private final Set<WitnessEdge> m_PureAnnotationEdges = new HashSet<WitnessEdge>();
-	private final HashRelation<Integer, WitnessEdge> m_LineNumber2WitnessLetter = new HashRelation<>();
-	private final HashRelation<ILocation, WitnessEdge> m_SingleLineLocation2WitnessLetters = new HashRelation<>();
-	private final HashRelation<WitnessEdge, ILocation> m_WitnessLetters2SingleLineLocations = new HashRelation<>();
-	private final Set<ILocation> m_MultiLineLocations = new HashSet<ILocation>();
-	private final Logger m_Logger;
-	private ArrayList<WitnessEdge> m_UnmatchedWitnessLetters;
+	private final IUltimateServiceProvider mServices;
+	private final Set<WitnessEdge> mPureAnnotationEdges = new HashSet<WitnessEdge>();
+	private final HashRelation<Integer, WitnessEdge> mLineNumber2WitnessLetter = new HashRelation<>();
+	private final HashRelation<ILocation, WitnessEdge> mSingleLineLocation2WitnessLetters = new HashRelation<>();
+	private final HashRelation<WitnessEdge, ILocation> mWitnessLetters2SingleLineLocations = new HashRelation<>();
+	private final Set<ILocation> mMultiLineLocations = new HashSet<ILocation>();
+	private final ILogger mLogger;
+	private final ArrayList<WitnessEdge> mUnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		partitionEdges(witnessAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getCallAlphabet());
 		matchLocations(controlFlowAutomaton.getReturnAlphabet());
-		m_UnmatchedWitnessLetters = new ArrayList<WitnessEdge>(witnessAutomaton.getInternalAlphabet());
-		m_UnmatchedWitnessLetters.removeAll(m_WitnessLetters2SingleLineLocations.getDomain());
-//		for (WitnessEdge witnessLetter : m_UnmatchedWitnessLetters) {
-//			m_Logger.info("Unmatched witness edge: " + witnessLetter);
+		mUnmatchedWitnessLetters = new ArrayList<WitnessEdge>(witnessAutomaton.getInternalAlphabet());
+		mUnmatchedWitnessLetters.removeAll(mWitnessLetters2SingleLineLocations.getDomain());
+//		for (WitnessEdge witnessLetter : mUnmatchedWitnessLetters) {
+//			mLogger.info("Unmatched witness edge: " + witnessLetter);
 //		}
-		m_Logger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
-		m_Logger.info(m_PureAnnotationEdges.size() + " pure annotation edges");
-		m_Logger.info(m_UnmatchedWitnessLetters.size() + " unmatched witness edges");
-		m_Logger.info(m_WitnessLetters2SingleLineLocations.getDomain().size() + " matched witness edges");
-		m_Logger.info(m_SingleLineLocation2WitnessLetters.getDomain().size() + " single line locations");
-		m_Logger.info(m_MultiLineLocations.size() + " multi line locations");
+		mLogger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
+		mLogger.info(mPureAnnotationEdges.size() + " pure annotation edges");
+		mLogger.info(mUnmatchedWitnessLetters.size() + " unmatched witness edges");
+		mLogger.info(mWitnessLetters2SingleLineLocations.getDomain().size() + " matched witness edges");
+		mLogger.info(mSingleLineLocation2WitnessLetters.getDomain().size() + " single line locations");
+		mLogger.info(mMultiLineLocations.size() + " multi line locations");
 	}
 
 	public boolean isMatchedWitnessEdge(WitnessEdge wal) {
-		return m_WitnessLetters2SingleLineLocations.getDomain().contains(wal);
+		return mWitnessLetters2SingleLineLocations.getDomain().contains(wal);
 	}
 	
 	public boolean isCompatible(ILocation loc, WitnessEdge wal) {
-		return m_SingleLineLocation2WitnessLetters.containsPair(loc, wal);
+		return mSingleLineLocation2WitnessLetters.containsPair(loc, wal);
 	}
 	
 	public Set<ILocation> getCorrespondingLocations(WitnessEdge wal) {
-		return m_WitnessLetters2SingleLineLocations.getImage(wal);
+		return mWitnessLetters2SingleLineLocations.getImage(wal);
 	}
 
 	private void partitionEdges(Set<WitnessEdge> internalAlphabet) {
-		for (WitnessEdge we : internalAlphabet) {
-			int startline = we.getLocation().getStartLine();
-			m_LineNumber2WitnessLetter.addPair(startline, we);
+		for (final WitnessEdge we : internalAlphabet) {
+			final int startline = we.getLocation().getStartLine();
+			mLineNumber2WitnessLetter.addPair(startline, we);
 		}
 	}
 	
 	private void matchLocations(Set<CodeBlock> internalAlphabet) {
-		for (CodeBlock cb : internalAlphabet) {
+		for (final CodeBlock cb : internalAlphabet) {
 			matchLocations(cb);
 		}
 		
@@ -116,25 +114,25 @@ public class WitnessLocationMatcher {
 	
 	private void matchLocations(CodeBlock cb) {
 		if (cb instanceof Call) {
-			Call call = (Call) cb;
+			final Call call = (Call) cb;
 			matchLocations(call);
 		} else if (cb instanceof InterproceduralSequentialComposition) {
-			InterproceduralSequentialComposition isc = (InterproceduralSequentialComposition) cb;
+			final InterproceduralSequentialComposition isc = (InterproceduralSequentialComposition) cb;
 			matchLocations(isc);
 		} else if (cb instanceof ParallelComposition) {
-			ParallelComposition pc = (ParallelComposition) cb;
+			final ParallelComposition pc = (ParallelComposition) cb;
 			matchLocations(pc);
 		} else if (cb instanceof Return) {
-			Return ret = (Return) cb;
+			final Return ret = (Return) cb;
 			matchLocations(ret);
 		} else if (cb instanceof SequentialComposition) {
-			SequentialComposition sc = (SequentialComposition) cb;
+			final SequentialComposition sc = (SequentialComposition) cb;
 			matchLocations(sc);
 		} else if (cb instanceof StatementSequence) {
-			StatementSequence ss = (StatementSequence) cb;
+			final StatementSequence ss = (StatementSequence) cb;
 			matchLocations(ss);
 		} else if (cb instanceof Summary) {
-			Summary sum = (Summary) cb;
+			final Summary sum = (Summary) cb;
 			matchLocations(sum.getCallStatement());
 		} else {
 			throw new AssertionError("unknown type of CodeBlock");
@@ -147,7 +145,7 @@ public class WitnessLocationMatcher {
 	}
 	
 	private void matchLocations(InterproceduralSequentialComposition isc) {
-		for (CodeBlock cb : isc.getCodeBlocks()) {
+		for (final CodeBlock cb : isc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
@@ -155,7 +153,7 @@ public class WitnessLocationMatcher {
 
 
 	private void matchLocations(ParallelComposition pc) {
-		for (CodeBlock cb : pc.getCodeBlocks()) {
+		for (final CodeBlock cb : pc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
@@ -165,13 +163,13 @@ public class WitnessLocationMatcher {
 	}
 	
 	private void matchLocations(SequentialComposition sc) {
-		for (CodeBlock cb : sc.getCodeBlocks()) {
+		for (final CodeBlock cb : sc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
 	
 	private void matchLocations(StatementSequence ss) {
-		for (Statement st : ss.getStatements()) {
+		for (final Statement st : ss.getStatements()) {
 			matchLocations(st);
 		}
 	}
@@ -190,15 +188,15 @@ public class WitnessLocationMatcher {
 
 	private void matchLocations(ILocation location) {
 		if (location.getStartLine() == location.getEndLine()) {
-			Set<WitnessEdge> witnessLetters = m_LineNumber2WitnessLetter.getImage(location.getStartLine());
+			final Set<WitnessEdge> witnessLetters = mLineNumber2WitnessLetter.getImage(location.getStartLine());
 			if (witnessLetters != null) {
-				for (WitnessEdge wal : witnessLetters) {
-					m_SingleLineLocation2WitnessLetters.addPair(location, wal);
-					m_WitnessLetters2SingleLineLocations.addPair(wal, location);
+				for (final WitnessEdge wal : witnessLetters) {
+					mSingleLineLocation2WitnessLetters.addPair(location, wal);
+					mWitnessLetters2SingleLineLocations.addPair(wal, location);
 				}
 			}
 		} else {
-			m_MultiLineLocations.add(location);
+			mMultiLineLocations.add(location);
 		}
 	}
 	

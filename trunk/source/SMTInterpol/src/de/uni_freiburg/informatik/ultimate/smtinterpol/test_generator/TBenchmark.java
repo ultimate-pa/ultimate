@@ -52,21 +52,25 @@ public class TBenchmark extends SMTInterpol {
 		setOption(":print-success", false);
 	}
 
+	@Override
 	public void push(int n) throws SMTLIBException {
 		super.push(n);
 		mGenerator.addPush(n);
 	}
 	
+	@Override
 	public void pop(int n) throws SMTLIBException {
 		super.pop(n);
 		mGenerator.addPop(n);
 	}
 		
+	@Override
 	public LBool checkSat() throws SMTLIBException {
 		generate();
 		return LBool.UNKNOWN;
 	}
 
+	@Override
 	public void setLogic(String logic)
 	    throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(Logics.valueOf(logic));
@@ -75,7 +79,7 @@ public class TBenchmark extends SMTInterpol {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		LBool result = super.assertTerm(term);
+		final LBool result = super.assertTerm(term);
 		return result;
 	}
 
@@ -113,11 +117,14 @@ public class TBenchmark extends SMTInterpol {
 	}
 	
 	public void generate() throws SMTLIBException {
-    	Term[] assertions = this.getAssertions();
-    	SimpleList<Clause> clauses = this.getEngine().getClauses();
-    	ArrayList<Clause> clauseList = new ArrayList<Clause>();
-    	for (Clause c: clauses) clauseList.add(c);
+    	final Term[] assertions = getAssertions();
+    	final SimpleList<Clause> clauses = getEngine().getClauses();
+    	final ArrayList<Clause> clauseList = new ArrayList<Clause>();
+    	for (final Clause c: clauses)
+		 {
+			clauseList.add(c);
 //    	Map<TermVariable, Term> shared = this.getConverter().getAuxVariables();
 //    	generator.generate(this.getTheory(), assertions, clauseList, shared);
+		}
 	}
 }

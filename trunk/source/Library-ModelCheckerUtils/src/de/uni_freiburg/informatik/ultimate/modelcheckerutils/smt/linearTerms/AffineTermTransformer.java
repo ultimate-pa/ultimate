@@ -49,28 +49,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  */
 public class AffineTermTransformer extends TermTransformer {
-	private final Script m_Script;
+	private final Script mScript;
 
 	public AffineTermTransformer(Script script) {
-		m_Script = script;
+		mScript = script;
 	}
 
 	@Override
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
-			TermVariable tv = (TermVariable) term;
+			final TermVariable tv = (TermVariable) term;
 			if (tv.getSort().isNumericSort() || BitvectorUtils.isBitvectorSort(tv.getSort())) {
-				AffineTerm result = new AffineTerm(tv);
+				final AffineTerm result = new AffineTerm(tv);
 				setResult(result);
 				return;
 			}
 		} else if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			String funName = appTerm.getFunction().getName();
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final String funName = appTerm.getFunction().getName();
 			if (BitvectorUtils.isBitvectorConstant(appTerm.getFunction())) {
-				BitvectorConstant bv = BitvectorUtils.constructBitvectorConstant(appTerm);
-				Rational rational = Rational.valueOf(bv.getValue(), BigInteger.ONE);
-				AffineTerm result = new AffineTerm(appTerm.getSort(), rational);
+				final BitvectorConstant bv = BitvectorUtils.constructBitvectorConstant(appTerm);
+				final Rational rational = Rational.valueOf(bv.getValue(), BigInteger.ONE);
+				final AffineTerm result = new AffineTerm(appTerm.getSort(), rational);
 				setResult(result);
 				return;
 			}
@@ -78,17 +78,17 @@ public class AffineTermTransformer extends TermTransformer {
 				super.convert(term);
 				return;
 			} else if (funName.equals("to_real")) {
-				AffineTerm result = convertToReal(appTerm);
+				final AffineTerm result = convertToReal(appTerm);
 				setResult(result);
 				return;
 			} else if (funName.equals("select")) {
-				AffineTerm result = new AffineTerm(appTerm);
+				final AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
 			} else if (funName.equals("mod")) {
 				final AffineTerm result;
-				Term simplified = SmtUtils.termWithLocalSimplification(
-						m_Script, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
+				final Term simplified = SmtUtils.termWithLocalSimplification(
+						mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
 				if (simplified instanceof ApplicationTerm) {
 					result = new AffineTerm((ApplicationTerm) simplified);
 				} else if (simplified instanceof ConstantTerm) {
@@ -102,7 +102,7 @@ public class AffineTermTransformer extends TermTransformer {
 				return;
 			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
 				// appTerm is a constant (0-ary function)
-				AffineTerm result = new AffineTerm(appTerm);
+				final AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
 			} else {
@@ -110,13 +110,13 @@ public class AffineTermTransformer extends TermTransformer {
 				return;
 			}
 		} else if (term instanceof ConstantTerm) {
-			ConstantTerm constTerm = (ConstantTerm) term;
+			final ConstantTerm constTerm = (ConstantTerm) term;
 			if (constTerm.getSort().isNumericSort()) {
-				AffineTerm result = convertConstantNumericTerm(constTerm);
+				final AffineTerm result = convertConstantNumericTerm(constTerm);
 				setResult(result);
 				return;
 			} else {
-				AffineTerm errorTerm = new AffineTerm(); 
+				final AffineTerm errorTerm = new AffineTerm(); 
 				setResult(errorTerm);
 				return;
 			}
@@ -129,8 +129,8 @@ public class AffineTermTransformer extends TermTransformer {
 	 * 
 	 */
 	private AffineTerm convertConstantNumericTerm(ConstantTerm constTerm) {
-		Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
-		AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
+		final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
+		final AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
 		return result;
 	}
 
@@ -143,7 +143,7 @@ public class AffineTermTransformer extends TermTransformer {
 		if (!term.getFunction().getName().equals("to_real")) {
 			throw new IllegalArgumentException("no to_real term");
 		}
-		final Term[] params = ((ApplicationTerm) term).getParameters();
+		final Term[] params = term.getParameters();
 		if (params.length > 1) {
 			throw new UnsupportedOperationException();
 		}
@@ -171,7 +171,7 @@ public class AffineTermTransformer extends TermTransformer {
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
+		final AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
 		for (int i = 0; i < affineArgs.length; i++) {
 			if (newArgs[i] instanceof AffineTerm) {
 				affineArgs[i] = (AffineTerm) newArgs[i];
@@ -190,19 +190,19 @@ public class AffineTermTransformer extends TermTransformer {
 		// return;
 		// }
 		if (appTerm.getParameters().length == 0) {
-			AffineTerm result = new AffineTerm(appTerm);
+			final AffineTerm result = new AffineTerm(appTerm);
 			setResult(result);
 			return;
 		}
-		String funName = appTerm.getFunction().getName();
+		final String funName = appTerm.getFunction().getName();
 		if (funName.equals("*") || funName.equals("bvmul")) {
 			// the result is the product of at most one affineTerm and one
 			// multiplier (that may be obtained from a product of constants)
 			AffineTerm affineTerm = null;
 			Rational multiplier = Rational.ONE;
-			Sort sort = appTerm.getSort();
-			for (Term termArg : affineArgs) {
-				AffineTerm affineArg = (AffineTerm) termArg;
+			final Sort sort = appTerm.getSort();
+			for (final Term termArg : affineArgs) {
+				final AffineTerm affineArg = (AffineTerm) termArg;
 				// assert affineArg.getSort() == sort;
 				if (affineArg.isConstant()) {
 					multiplier = multiplier.mul(affineArg.getConstant());
@@ -224,17 +224,17 @@ public class AffineTermTransformer extends TermTransformer {
 			setResult(result);
 			return;
 		} else if (funName.equals("+") || funName.equals("bvadd")) {
-			AffineTerm result = new AffineTerm(affineArgs);
+			final AffineTerm result = new AffineTerm(affineArgs);
 			setResult(result);
 			return;
 		} else if (funName.equals("-") || funName.equals("bvsub")) {
 			AffineTerm result;
 			if (affineArgs.length == 1) {
 				// unary minus
-				AffineTerm param = affineArgs[0];
+				final AffineTerm param = affineArgs[0];
 				result = new AffineTerm(param, Rational.MONE);
 			} else {
-				AffineTerm[] resAffineArgs = new AffineTerm[affineArgs.length];
+				final AffineTerm[] resAffineArgs = new AffineTerm[affineArgs.length];
 				resAffineArgs[0] = affineArgs[0];
 				for (int i = 1; i < resAffineArgs.length; i++) {
 					resAffineArgs[i] = new AffineTerm(affineArgs[i], Rational.MONE);
@@ -264,7 +264,7 @@ public class AffineTermTransformer extends TermTransformer {
 					return;
 				}
 			}
-			Sort sort = appTerm.getSort();
+			final Sort sort = appTerm.getSort();
 			AffineTerm result;
 			if (affineTerm == null) {
 				result = new AffineTerm(sort, multiplier);
@@ -292,11 +292,11 @@ public class AffineTermTransformer extends TermTransformer {
 	public static Rational decimalToRational(BigDecimal d) {
 		Rational rat;
 		if (d.scale() <= 0) {
-			BigInteger num = d.toBigInteger();
+			final BigInteger num = d.toBigInteger();
 			rat = Rational.valueOf(num, BigInteger.ONE);
 		} else {
-			BigInteger num = d.unscaledValue();
-			BigInteger denom = BigInteger.TEN.pow(d.scale());
+			final BigInteger num = d.unscaledValue();
+			final BigInteger denom = BigInteger.TEN.pow(d.scale());
 			rat = Rational.valueOf(num, denom);
 		}
 		return rat;

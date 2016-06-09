@@ -104,7 +104,7 @@ public class Clause extends SimpleListable<Clause> {
 				mHead = c;
 				mHeadIndex = index;
 			} else {
-				Clause t = mTail;
+				final Clause t = mTail;
 				if (mTailIndex == 0) {
 					assert t.mNextFirstWatch == null;
 					t.mNextFirstWatch = c;
@@ -125,7 +125,7 @@ public class Clause extends SimpleListable<Clause> {
 		}
 
 		public Clause removeFirst() {
-			Clause c = mHead;
+			final Clause c = mHead;
 			if (mHeadIndex == 0) {
 				mHead = c.mNextFirstWatch;
 				mHeadIndex = c.mNextIsSecond & 1;
@@ -146,8 +146,9 @@ public class Clause extends SimpleListable<Clause> {
 		}
 
 		public void moveAll(WatchList src) {
-			if (src.mHead == null)
+			if (src.mHead == null) {
 				return;
+			}
 
 			append(src.mHead, src.mHeadIndex);
 			mSize += src.mSize - 1;
@@ -190,47 +191,53 @@ public class Clause extends SimpleListable<Clause> {
 	}
 
 	public Clause(Literal[] literals) {
-		this.mLiterals = literals;
+		mLiterals = literals;
 		mStacklevel = computeStackLevel();
 	}
 
 	public Clause(Literal[] literals, ProofNode proof) {
-		this.mLiterals = literals;
-		this.mProof = proof;
+		mLiterals = literals;
+		mProof = proof;
 		mStacklevel = computeStackLevel();
 	}
 
 	public Clause(Literal[] literals, int stacklevel) {
-		this.mLiterals = literals;
-		this.mStacklevel = Math.max(stacklevel, computeStackLevel());
+		mLiterals = literals;
+		mStacklevel = Math.max(stacklevel, computeStackLevel());
 	}
 
 	public Clause(Literal[] literals, ResolutionNode proof, int stacklevel) {
-		this.mLiterals = literals;
-		this.mProof = proof;
-		this.mStacklevel = Math.max(stacklevel, computeStackLevel());
+		mLiterals = literals;
+		mProof = proof;
+		mStacklevel = Math.max(stacklevel, computeStackLevel());
 	}
 
 	private final int computeStackLevel() {
 		int sl = 0;
-		for (Literal lit : mLiterals)
-			if (lit.getAtom().mAssertionstacklevel > sl)
+		for (final Literal lit : mLiterals) {
+			if (lit.getAtom().mAssertionstacklevel > sl) {
 				sl = lit.getAtom().mAssertionstacklevel;
+			}
+		}
 		return sl;
 	}
 
+	@Override
 	public String toString() {
 		return Arrays.toString(mLiterals);
 	}
 	
 	public String toSMTLIB(Theory smtTheory) {
-		if (mLiterals.length == 0)
+		if (mLiterals.length == 0) {
 			return "false";
-		if (mLiterals.length == 1)
+		}
+		if (mLiterals.length == 1) {
 			return mLiterals[0].getSMTFormula(smtTheory, true).toString();
-		StringBuilder sb = new StringBuilder("(or");
-		for (Literal l : mLiterals)
+		}
+		final StringBuilder sb = new StringBuilder("(or");
+		for (final Literal l : mLiterals) {
 			sb.append(' ').append(l.getSMTFormula(smtTheory, true));
+		}
 		sb.append(')');
 		return sb.toString();
 	}
@@ -239,14 +246,16 @@ public class Clause extends SimpleListable<Clause> {
 		mActivity = Double.POSITIVE_INFINITY;
 	}
 
+	@Override
 	public boolean equals(Object o) {
-		if (o instanceof Clause)
+		if (o instanceof Clause) {
 			return Arrays.equals(mLiterals, ((Clause) o).mLiterals);
+		}
 		return false;
 	}
 
 	public void setProof(ProofNode proof) {
-		this.mProof = proof;
+		mProof = proof;
 	}
 
 	public ProofNode getProof() {
@@ -268,30 +277,36 @@ public class Clause extends SimpleListable<Clause> {
 	 * @return true, if the clause contains the literal with the same polarity.
 	 */
 	public boolean contains(Literal lit) {
-		for (Literal l : mLiterals) {
-			if (l == lit)
+		for (final Literal l : mLiterals) {
+			if (l == lit) {
 				return true;
+			}
 		}
 		return false;
 	}
 	
+	@Override
 	public int hashCode() {
 		if (mHash == 0) {
 			mHash = HashUtils.hashJenkins(0, (Object[]) mLiterals);
-			if (mHash == 0)
+			if (mHash == 0) {
 				mHash = 0xbadc0ded;
+			}
 		}
 		return mHash;
 	}
 	
 	public Term toTerm(Theory theory) {
-		if (mLiterals.length == 0)
+		if (mLiterals.length == 0) {
 			return theory.mFalse;
-		if (mLiterals.length == 1)
+		}
+		if (mLiterals.length == 1) {
 			return mLiterals[0].getSMTFormula(theory, true);
-		Term[] args = new Term[mLiterals.length];
-		for (int i = 0; i < mLiterals.length; ++i) 
+		}
+		final Term[] args = new Term[mLiterals.length];
+		for (int i = 0; i < mLiterals.length; ++i) {
 			args[i] = mLiterals[i].getSMTFormula(theory, true);
+		}
 		return theory.term("or", args);
 	}
 	

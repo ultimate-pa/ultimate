@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
 
 final class NWAVisualizationNode<NWAVertex, NWAEdge>
 		extends
@@ -22,18 +22,23 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		NWAVisualizationNode other = (NWAVisualizationNode) obj;
+		}
+		final NWAVisualizationNode other = (NWAVisualizationNode) obj;
 		if (mBacking == null) {
-			if (other.mBacking != null)
+			if (other.mBacking != null) {
 				return false;
-		} else if (!mBacking.equals(other.mBacking))
+			}
+		} else if (!mBacking.equals(other.mBacking)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -52,15 +57,15 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 	@Override
 	public List<NWAVisualizationEdge<NWAVertex, NWAEdge>> getOutgoingEdges() {
 		if (!mInitialized) {
-			for (OutgoingCallTransition<NWAEdge, NWAVertex> succ : mVisNWA.callSuccessors(mBacking)) {
+			for (final OutgoingCallTransition<NWAEdge, NWAVertex> succ : mVisNWA.callSuccessors(mBacking)) {
 				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
 						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
 			}
-			for (OutgoingInternalTransition<NWAEdge, NWAVertex> succ : mVisNWA.internalSuccessors(mBacking)) {
+			for (final OutgoingInternalTransition<NWAEdge, NWAVertex> succ : mVisNWA.internalSuccessors(mBacking)) {
 				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
 						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
 			}
-			for (OutgoingReturnTransition<NWAEdge, NWAVertex> succ : mVisNWA.returnSuccessors(mBacking)) {
+			for (final OutgoingReturnTransition<NWAEdge, NWAVertex> succ : mVisNWA.returnSuccessors(mBacking)) {
 				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
 						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
 			}
@@ -69,6 +74,7 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 		return super.getOutgoingEdges();
 	}
 
+	@Override
 	public String toString() {
 		if (mBacking != null) {
 			return mBacking.toString();

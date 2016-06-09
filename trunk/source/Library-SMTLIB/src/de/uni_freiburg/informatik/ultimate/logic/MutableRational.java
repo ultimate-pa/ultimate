@@ -77,8 +77,9 @@ public class MutableRational implements Comparable<MutableRational> {
 	
 	public void setValue(long newnum, long newdenom) {
 		long gcd2 = Rational.gcd(Math.abs(newnum), Math.abs(newdenom));
-		if (newdenom < 0)
+		if (newdenom < 0) {
 			gcd2 = -gcd2;
+		}
 		if (gcd2 != 0) {
 			newnum /= gcd2;
 			newdenom /= gcd2;
@@ -97,7 +98,7 @@ public class MutableRational implements Comparable<MutableRational> {
 	
 	private void normalize() {
 		if (mBignum == null) {
-			int norm = Rational.gcd(mNum, mDenom);
+			final int norm = Rational.gcd(mNum, mDenom);
 			if (norm != 0 && norm != 1) {
 				mNum /= norm;
 				mDenom /= norm;
@@ -109,8 +110,9 @@ public class MutableRational implements Comparable<MutableRational> {
 		} else {
 			if (!mBigdenom.equals(BigInteger.ONE)) {
 				BigInteger norm = Rational.gcd(mBignum, mBigdenom).abs();
-				if (mBigdenom.signum() < 0)
+				if (mBigdenom.signum() < 0) {
 					norm = norm.negate();
+				}
 				if (!norm.equals(BigInteger.ZERO)
 					&& !norm.equals(BigInteger.ONE)) {
 					mBignum = mBignum.divide(norm);
@@ -127,8 +129,9 @@ public class MutableRational implements Comparable<MutableRational> {
 
 	public MutableRational add(Rational other) {
 		/* fast path */
-		if (other == Rational.ZERO)
+		if (other == Rational.ZERO) {
 			return this;
+		}
 		if (mBignum == null && !(other instanceof Rational.BigRational)) {
 			if (mDenom == other.mDenom) {
 				/* handle gcd = 0 correctly 
@@ -136,39 +139,40 @@ public class MutableRational implements Comparable<MutableRational> {
 				 * otherwise it gives NAN.
 				 */
 				if (mDenom == 0) {
-					if (mNum != other.mNum)
+					if (mNum != other.mNum) {
 						mNum = 0;
+					}
 				} else {
 					/* a common, very simple case, e.g. for integers */
 					setValue((long) mNum + other.mNum, mDenom);
 				}
 			} else {
-				int gcd = Rational.gcd(mDenom, other.mDenom);
-				long denomgcd = (long) (mDenom / gcd); 
-				long otherdenomgcd = (long) (other.mDenom / gcd); 
-				long newdenom = denomgcd * other.mDenom;
-				long newnum = otherdenomgcd * mNum + denomgcd * other.mNum;
+				final int gcd = Rational.gcd(mDenom, other.mDenom);
+				final long denomgcd = mDenom / gcd; 
+				final long otherdenomgcd = other.mDenom / gcd; 
+				final long newdenom = denomgcd * other.mDenom;
+				final long newnum = otherdenomgcd * mNum + denomgcd * other.mNum;
 				setValue(newnum, newdenom);
 			}
 			return this;
 		}
 
-		if (this.mBignum == null && this.mNum == 0 && this.mDenom == 1) {
+		if (mBignum == null && mNum == 0 && mDenom == 1) {
 			/* This is zero; set result to other */
 			mBignum = other.numerator();
 			mBigdenom = other.denominator();
 			return this;
 		}
 		
-		BigInteger tdenom = denominator();
-		BigInteger odenom = other.denominator();
+		final BigInteger tdenom = denominator();
+		final BigInteger odenom = other.denominator();
 		if (tdenom.equals(odenom)) {
 			mBignum = numerator().add(other.numerator());
 			mBigdenom = tdenom; 
 		} else {
-			BigInteger gcd = Rational.gcd(tdenom, odenom);
-			BigInteger tdenomgcd = tdenom.divide(gcd);
-			BigInteger odenomgcd = odenom.divide(gcd);
+			final BigInteger gcd = Rational.gcd(tdenom, odenom);
+			final BigInteger tdenomgcd = tdenom.divide(gcd);
+			final BigInteger odenomgcd = odenom.divide(gcd);
 			mBignum = numerator().multiply(odenomgcd)
 				.add(other.numerator().multiply(tdenomgcd));
 			mBigdenom = tdenom.multiply(odenomgcd);
@@ -179,12 +183,14 @@ public class MutableRational implements Comparable<MutableRational> {
 	
 	public MutableRational negate() {
 		if (mBignum == null) {
-			if (mNum == Integer.MIN_VALUE)
+			if (mNum == Integer.MIN_VALUE) {
 				setValue(-(long)Integer.MIN_VALUE, mDenom);
-			else
+			} else {
 				mNum = -mNum;
-		} else
+			}
+		} else {
 			mBignum = mBignum.negate();
+		}
 		return this;
 	}
 	
@@ -194,13 +200,15 @@ public class MutableRational implements Comparable<MutableRational> {
 	
 	public MutableRational mul(Rational other) {
 		/* fast path */
-		if (other == Rational.ONE)
+		if (other == Rational.ONE) {
 			return this;
-		if (other == Rational.MONE)
-			return this.negate();
+		}
+		if (other == Rational.MONE) {
+			return negate();
+		}
 		if (mBignum == null && !(other instanceof Rational.BigRational)) {
-			long newnum = (long)mNum * other.mNum;
-			long newdenom = (long)mDenom * other.mDenom;
+			final long newnum = (long)mNum * other.mNum;
+			final long newdenom = (long)mDenom * other.mDenom;
 			setValue(newnum, newdenom);
 			return this;
 		}
@@ -213,20 +221,25 @@ public class MutableRational implements Comparable<MutableRational> {
 	
 	public MutableRational div(Rational other) {
 		/* fast path */
-		if (other == Rational.ZERO)
+		if (other == Rational.ZERO) {
 			throw new ArithmeticException("Division by ZERO");
-		if (mBignum == null && mNum == 0)
+		}
+		if (mBignum == null && mNum == 0) {
 			return this;
-		if (other == Rational.ONE)
+		}
+		if (other == Rational.ONE) {
 			return this;
-		if (other == Rational.MONE)
-			return this.negate();
+		}
+		if (other == Rational.MONE) {
+			return negate();
+		}
 		if (mBignum == null && !(other instanceof Rational.BigRational)) {
 			long newnum = (long)mNum * other.mDenom;
-			long newdenom = (long)mDenom * other.mNum;
+			final long newdenom = (long)mDenom * other.mNum;
 			// +-inf : -c = -+inf
-			if (newdenom == 0 && other.mNum < 0)
+			if (newdenom == 0 && other.mNum < 0) {
 				newnum = -newnum;
+			}
 			setValue(newnum, newdenom);
 			return this;
 		}
@@ -234,8 +247,9 @@ public class MutableRational implements Comparable<MutableRational> {
 		mBigdenom = denominator().multiply(other.numerator());
 		// +-inf : -c = -+inf
 		if (mBigdenom.equals(BigInteger.ZERO)
-				&& other.numerator().signum() == -1)
+				&& other.numerator().signum() == -1) {
 			mBignum = mBignum.negate();
+		}
 		normalize();
 		return this;
 	}
@@ -244,7 +258,7 @@ public class MutableRational implements Comparable<MutableRational> {
 		if (mBignum == null) {
 			setValue(mDenom, mNum);
 		} else {
-			BigInteger tmp = mBigdenom;
+			final BigInteger tmp = mBigdenom;
 			if (mBignum.signum() < 0) {
 				mBigdenom = mBignum.negate();
 				mBignum = tmp.negate();
@@ -283,34 +297,37 @@ public class MutableRational implements Comparable<MutableRational> {
 		/* fast path */
 		if (mBignum == null && o.mBignum == null) {
 			/* handle infinities and nan */
-			if (o.mDenom == mDenom)
+			if (o.mDenom == mDenom) {
 				return mNum < o.mNum ? -1 : mNum == o.mNum ? 0 : 1;
-			long valt = (long)mNum * o.mDenom;
-			long valo = (long)o.mNum * mDenom;
+			}
+			final long valt = (long)mNum * o.mDenom;
+			final long valo = (long)o.mNum * mDenom;
 			return valt < valo ? -1 : valt == valo ? 0 : 1; 
 		}
-		BigInteger valthis = numerator().multiply(o.denominator());
-		BigInteger valo = o.numerator().multiply(denominator());
+		final BigInteger valthis = numerator().multiply(o.denominator());
+		final BigInteger valo = o.numerator().multiply(denominator());
 		return valthis.compareTo(valo);
 	}
 	public int compareTo(Rational o) {
 		/* fast path */
 		if (mBignum == null && !(o instanceof BigRational)) {
 			/* handle infinities and nan */
-			if (o.mDenom == mDenom)
+			if (o.mDenom == mDenom) {
 				return mNum < o.mNum ? -1 : mNum == o.mNum ? 0 : 1;
-			long valt = (long)mNum * o.mDenom;
-			long valo = (long)o.mNum * mDenom;
+			}
+			final long valt = (long)mNum * o.mDenom;
+			final long valo = (long)o.mNum * mDenom;
 			return valt < valo ? -1 : valt == valo ? 0 : 1; 
 		}
-		BigInteger valthis = numerator().multiply(o.denominator());
-		BigInteger valo = o.numerator().multiply(denominator());
+		final BigInteger valthis = numerator().multiply(o.denominator());
+		final BigInteger valo = o.numerator().multiply(denominator());
 		return valthis.compareTo(valo);
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Rational) {
-			Rational r = (Rational) o;
+			final Rational r = (Rational) o;
 			// Works thanks to normalization!!!
 			return mBignum == null
 				? !(r instanceof Rational.BigRational)
@@ -319,7 +336,7 @@ public class MutableRational implements Comparable<MutableRational> {
 					&& mBigdenom.equals(r.denominator());
 		}
 		if (o instanceof MutableRational) {
-			MutableRational r = (MutableRational) o;
+			final MutableRational r = (MutableRational) o;
 			// Works thanks to normalization!!!
 			return mBignum == null
 				? r.mBignum == null && mNum == r.mNum && mDenom == r.mDenom
@@ -335,24 +352,30 @@ public class MutableRational implements Comparable<MutableRational> {
 		return mBigdenom == null ? BigInteger.valueOf(mDenom) : mBigdenom;
 	}
 	
+	@Override
 	public int hashCode() {
-		if (mBignum == null)
+		if (mBignum == null) {
 			return mNum * 257 + mDenom;
-		else
+		} else {
 			return mBignum.hashCode() * 257 + mBigdenom.hashCode();
+		}
 	}
 	
+	@Override
 	public String toString() {
 		/* fast path */
 		if (mBignum == null) {
-			if (mDenom == 0)
+			if (mDenom == 0) {
 				return mNum > 0 ? "inf" : mNum == 0 ? "nan" : "-inf";
-			if (mDenom == 1)
+			}
+			if (mDenom == 1) {
 				return String.valueOf(mNum);
+			}
 			return mNum + "/" + mDenom;
 		} else {
-			if (mBigdenom.equals(BigInteger.ONE))
+			if (mBigdenom.equals(BigInteger.ONE)) {
 				return mBignum.toString();
+			}
 			return mBignum + "/" + mBigdenom;
 		}
 	}
@@ -367,14 +390,16 @@ public class MutableRational implements Comparable<MutableRational> {
 				? mDenom <= 1 : mBigdenom.equals(BigInteger.ONE);
 	}
 	public Rational toRational() {
-		if (mBignum == null)
+		if (mBignum == null) {
 			return Rational.valueOf(mNum, mDenom);
+		}
 		return Rational.valueOf(numerator(), denominator());
 	}
 
 	public int signum() {
-		if (mBignum == null)
+		if (mBignum == null) {
 			return mNum < 0 ? -1 : mNum == 0 ? 0 : 1;
+		}
 		return mBignum.signum();
 	}
 }

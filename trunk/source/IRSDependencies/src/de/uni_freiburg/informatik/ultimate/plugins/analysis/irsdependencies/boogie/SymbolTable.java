@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 public class SymbolTable
 {
@@ -50,7 +50,7 @@ public class SymbolTable
 					"Procedure name is equal to global scope identifier "
 							+ sGlobalScopeIdentifier);
 		}
-		CompleteBoogieVar var = new CompleteBoogieVar(identifier, procedure,
+		final CompleteBoogieVar var = new CompleteBoogieVar(identifier, procedure,
 				type);
 		HashMap<String, CompleteBoogieVar> scope;
 		if (mScopes.containsKey(procedure)) {
@@ -65,7 +65,7 @@ public class SymbolTable
 
 	void addGlobalVariable(String identifier, IType type)
 	{
-		CompleteBoogieVar var = new CompleteBoogieVar(identifier, null, type);
+		final CompleteBoogieVar var = new CompleteBoogieVar(identifier, null, type);
 		HashMap<String, CompleteBoogieVar> scope;
 		if (mScopes.containsKey(sGlobalScopeIdentifier)) {
 			scope = mScopes.get(sGlobalScopeIdentifier);
@@ -109,7 +109,7 @@ public class SymbolTable
 	}
 	
 	public List<CompleteBoogieVar> getVariables(String procedureName){
-		List<CompleteBoogieVar> rtrList = new LinkedList<CompleteBoogieVar>();
+		final List<CompleteBoogieVar> rtrList = new LinkedList<CompleteBoogieVar>();
 		HashMap<String, CompleteBoogieVar> scope;
 		if (mScopes.containsKey(sGlobalScopeIdentifier)) {
 			scope = mScopes.get(sGlobalScopeIdentifier);
@@ -119,7 +119,7 @@ public class SymbolTable
 		if(procedureName !=null){
 			if (mScopes.containsKey(procedureName)) {
 				scope = mScopes.get(procedureName);
-				for(CompleteBoogieVar var : scope.values()){
+				for(final CompleteBoogieVar var : scope.values()){
 					for(int i=rtrList.size()-1;i>=0;--i){
 						if(var.getIdentifier().equals(rtrList.get(i).getIdentifier())){
 							rtrList.remove(i);
@@ -136,9 +136,9 @@ public class SymbolTable
 	@Override
 	public String toString()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("\n");
-		for (Entry<String, HashMap<String, CompleteBoogieVar>> entry : mScopes
+		for (final Entry<String, HashMap<String, CompleteBoogieVar>> entry : mScopes
 				.entrySet()) {
 			if (entry.getKey().equals(sGlobalScopeIdentifier)) {
 				sb.append("Global:\n");
@@ -149,7 +149,7 @@ public class SymbolTable
 				sb.append(":\n");
 			}
 
-			for (Entry<String, CompleteBoogieVar> innerEntry : entry.getValue()
+			for (final Entry<String, CompleteBoogieVar> innerEntry : entry.getValue()
 					.entrySet()) {
 				sb.append("Name is \"");
 				sb.append(innerEntry.getKey());

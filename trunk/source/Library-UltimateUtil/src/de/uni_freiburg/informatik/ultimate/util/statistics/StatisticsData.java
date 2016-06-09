@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
  * @author Matthias Heizmann
  */
 public class StatisticsData implements IStatisticsDataProvider {
-	private final Map<String, Object> m_Key2Value = new HashMap<String, Object>();
-	private IStatisticsType m_BenchmarkType;
+	private final Map<String, Object> mKey2Value = new HashMap<String, Object>();
+	private IStatisticsType mBenchmarkType;
 	
 	/**
 	 * Aggregate the benchmark data of this object and another 
@@ -49,19 +49,19 @@ public class StatisticsData implements IStatisticsDataProvider {
 	 * Both objects have to have the same IBenchmarkType.
 	 */
 	public void aggregateBenchmarkData(IStatisticsDataProvider benchmarkDataProvider) {
-		if (m_BenchmarkType == null) {
-			assert m_Key2Value.isEmpty() : "may not contain data if type is not known";
-			m_BenchmarkType = benchmarkDataProvider.getBenchmarkType();
-			if (m_BenchmarkType == null) {
+		if (mBenchmarkType == null) {
+			assert mKey2Value.isEmpty() : "may not contain data if type is not known";
+			mBenchmarkType = benchmarkDataProvider.getBenchmarkType();
+			if (mBenchmarkType == null) {
 				return;
 			}
-			for (String key : m_BenchmarkType.getKeys()) {
-				Object value = benchmarkDataProvider.getValue(key);
+			for (final String key : mBenchmarkType.getKeys()) {
+				final Object value = benchmarkDataProvider.getValue(key);
 				// TODO: maybe we want to allow null values
 				if (value == null) {
 					throw new AssertionError("no value for " + key + " provided");
 				}
-				m_Key2Value.put(key, value);
+				mKey2Value.put(key, value);
 			}
 		} else {
 			if (benchmarkDataProvider.getBenchmarkType() == null) {
@@ -69,14 +69,14 @@ public class StatisticsData implements IStatisticsDataProvider {
 			}
 			//TODO: maybe we want to allow different types and only the keys
 			// have to be the same...
-			if (m_BenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
+			if (mBenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
 				throw new AssertionError("incompatible benchmarks");
 			}
-			for (String key : m_BenchmarkType.getKeys()) {
-				Object valueThis = m_Key2Value.get(key);
-				Object valueOther = benchmarkDataProvider.getValue(key);
-				Object aggregatedValue = m_BenchmarkType.aggregate(key, valueThis, valueOther);
-				m_Key2Value.put(key, aggregatedValue);
+			for (final String key : mBenchmarkType.getKeys()) {
+				final Object valueThis = mKey2Value.get(key);
+				final Object valueOther = benchmarkDataProvider.getValue(key);
+				final Object aggregatedValue = mBenchmarkType.aggregate(key, valueThis, valueOther);
+				mKey2Value.put(key, aggregatedValue);
 			}
 		}
 	}
@@ -86,7 +86,7 @@ public class StatisticsData implements IStatisticsDataProvider {
 	 */
 	@Override
 	public Object getValue(String key) {
-		Object data = m_Key2Value.get(key);
+		final Object data = mKey2Value.get(key);
 		if (data == null) {
 			throw new IllegalArgumentException("No value for " + key + " available");
 		}
@@ -95,29 +95,29 @@ public class StatisticsData implements IStatisticsDataProvider {
 	
 	@Override
 	public String toString() {
-		if (m_BenchmarkType == null) {
+		if (mBenchmarkType == null) {
 			return "No data available";
 		} else {
-			return m_BenchmarkType.prettyprintBenchmarkData(this);
+			return mBenchmarkType.prettyprintBenchmarkData(this);
 		}
 	}
 
 	@Override
 	public Collection<String> getKeys() {
-		if (m_BenchmarkType == null) {
+		if (mBenchmarkType == null) {
 			throw new AssertionError("BenchmarkData not yet initialized");
 		} else {
-			return m_BenchmarkType.getKeys();
+			return mBenchmarkType.getKeys();
 		}
 	}
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return m_BenchmarkType;
+		return mBenchmarkType;
 	}
 	
 	public boolean isEmpty() {
-		return m_Key2Value.isEmpty();
+		return mKey2Value.isEmpty();
 	}
 	
 	/**
@@ -130,25 +130,25 @@ public class StatisticsData implements IStatisticsDataProvider {
 	 * the original data.
 	 */
 	public LinkedHashMap<String, Object> getFlattenedKeyValueMap() {
-		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		for(String key : getKeys()) {
-			Object value = getValue(key);
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		for(final String key : getKeys()) {
+			final Object value = getValue(key);
 			if (value instanceof IStatisticsDataProvider) {
 				if (value instanceof StatisticsData) {
 					if (((StatisticsData) value).isEmpty()) {
 						// do nothing
 					} else {
-						LinkedHashMap<String, Object> FlattenedKeyValueMap = 
+						final LinkedHashMap<String, Object> FlattenedKeyValueMap = 
 								((StatisticsData) value).getFlattenedKeyValueMap();
-						for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
-							String composedKey = key + "_" + entry.getKey();
+						for (final Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
+							final String composedKey = key + "_" + entry.getKey();
 							result.put(composedKey, entry.getValue());
 						}
 					}
 				} else {
-					for (String subKey : ((IStatisticsDataProvider) value).getKeys()) {
-						Object subValue = ((IStatisticsDataProvider) value).getValue(subKey);
-						String composedKey = key + "_" + subKey;
+					for (final String subKey : ((IStatisticsDataProvider) value).getKeys()) {
+						final Object subValue = ((IStatisticsDataProvider) value).getValue(subKey);
+						final String composedKey = key + "_" + subKey;
 						result.put(composedKey, subValue);
 					}
 				}
@@ -161,7 +161,7 @@ public class StatisticsData implements IStatisticsDataProvider {
 	
 	
 	public ICsvProvider<Object> createCvsProvider() {
-		LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
+		final LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
 		return CsvUtils.constructCvsProviderFromMap(flatKeyValueMap);
 	}
 }

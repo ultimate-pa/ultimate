@@ -95,6 +95,7 @@ public class CongruencePath {
 			}
 		}
 
+		@Override
 		public String toString() {
 			return mTermsOnPath.toString();
 		}
@@ -105,7 +106,7 @@ public class CongruencePath {
 	final Set<Literal> mAllLiterals;
 
 	public CongruencePath(CClosure closure) {
-		this.mClosure = closure;
+		mClosure = closure;
 		mVisited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
 		mAllLiterals = new HashSet<Literal>();
 		mAllPaths = new ArrayDeque<SubPath>();
@@ -147,16 +148,18 @@ public class CongruencePath {
 	private void computeCCPath(CCAppTerm start, CCAppTerm end) {
 		while (true) {
 			/* Compute path and interpolation info for func and arg */
-			SubPath path = computePath(start.mArg, end.mArg);
-			if (path != null)
+			final SubPath path = computePath(start.mArg, end.mArg);
+			if (path != null) {
 				mAllPaths.addFirst(path);
+			}
 
 			/* We do not have explicit edges between partial function
 			 * applications.  Hence start.func and end.func must be equal 
 			 * or congruent.
 			 */
-			if (start.mFunc == end.mFunc)
+			if (start.mFunc == end.mFunc) {
 				break;
+			}
 			
 			start = (CCAppTerm) start.mFunc;
 			end = (CCAppTerm) end.mFunc;
@@ -184,7 +187,7 @@ public class CongruencePath {
 	 *   Without proof production, this returns null.
 	 */
 	private SubPath computePathTo(CCTerm t, CCTerm end) {
-		SubPath path = 
+		final SubPath path = 
 				new SubPath(t, mClosure.mEngine.isProofGenerationEnabled()); 
 		CCTerm startCongruence = t;
 		while (t != end) {
@@ -227,12 +230,14 @@ public class CongruencePath {
 	 */
 	public SubPath computePath(CCTerm left, CCTerm right) {
 		/* check for and ignore trivial paths */
-		if (left == right)
+		if (left == right) {
 			return null;
+		}
 		
-		SymmetricPair<CCTerm> key = new SymmetricPair<CCTerm>(left, right);
-		if (mVisited.containsKey(key))
+		final SymmetricPair<CCTerm> key = new SymmetricPair<CCTerm>(left, right);
+		if (mVisited.containsKey(key)) {
 			return mVisited.get(key);
+		}
 
 		int leftDepth = computeDepth(left);
 		int rightDepth = computeDepth(right);
@@ -240,68 +245,77 @@ public class CongruencePath {
 		CCTerm rr = right;
 		CCTerm llWithReason = ll, rrWithReason = rr;
 		while (leftDepth > rightDepth) {
-			if (ll.mOldRep.mReasonLiteral != null)
+			if (ll.mOldRep.mReasonLiteral != null) {
 				llWithReason = ll.mEqualEdge;
+			}
 			ll = ll.mEqualEdge;
 			leftDepth--;
 		}
 		while (rightDepth > leftDepth) {
-			if (rr.mOldRep.mReasonLiteral != null)
+			if (rr.mOldRep.mReasonLiteral != null) {
 				rrWithReason = rr.mEqualEdge;
+			}
 			rr = rr.mEqualEdge;
 			rightDepth--;
 		}
 		while (ll != rr) {
-			if (ll.mOldRep.mReasonLiteral != null)
+			if (ll.mOldRep.mReasonLiteral != null) {
 				llWithReason = ll.mEqualEdge;
-			if (rr.mOldRep.mReasonLiteral != null)
+			}
+			if (rr.mOldRep.mReasonLiteral != null) {
 				rrWithReason = rr.mEqualEdge;
+			}
 			ll = ll.mEqualEdge;
 			rr = rr.mEqualEdge;
 		}
 		assert (ll != null);
-		SubPath path = computePathTo(left, llWithReason);
+		final SubPath path = computePathTo(left, llWithReason);
 		if (llWithReason != rrWithReason) {
 			computeCCPath((CCAppTerm)llWithReason, (CCAppTerm)rrWithReason);
 			path.addEntry(rrWithReason, null);
 		}
-		SubPath pathBack = computePathTo(right, rrWithReason);
+		final SubPath pathBack = computePathTo(right, rrWithReason);
 		path.addSubPath(pathBack);
 		mVisited.put(key, path);
 		return path;
 	}
 	
 	public Clause computeCycle(CCEquality eq, boolean produceProofs) {
-		SubPath path = computePath(eq.getLhs(), eq.getRhs());
+		final SubPath path = computePath(eq.getLhs(), eq.getRhs());
 		mAllPaths.addFirst(path);
-		Literal[] cycle = new Literal[mAllLiterals.size() + 1];
+		final Literal[] cycle = new Literal[mAllLiterals.size() + 1];
 		int i = 0;
 		cycle[i++] = eq;
-		for (Literal l: mAllLiterals)
+		for (final Literal l: mAllLiterals) {
 			cycle[i++] = l.negate();
-		Clause c = new Clause(cycle);
-		if (produceProofs)
+		}
+		final Clause c = new Clause(cycle);
+		if (produceProofs) {
 			c.setProof(new LeafNode(LeafNode.THEORY_CC, createAnnotation(eq)));
+		}
 		return c;
 	}
 	
 	public Clause computeCycle(CCTerm lconstant, CCTerm rconstant, boolean produceProofs) {
 		mClosure.mEngine.getLogger().debug("computeCycle for Constants");
-		SubPath path = computePath(lconstant, rconstant);
+		final SubPath path = computePath(lconstant, rconstant);
 		mAllPaths.addFirst(path);
-		Literal[] cycle = new Literal[mAllLiterals.size()];
+		final Literal[] cycle = new Literal[mAllLiterals.size()];
 		int i = 0;
-		for (Literal l: mAllLiterals)
+		for (final Literal l: mAllLiterals) {
 			cycle[i++] = l.negate();
-		Clause c = new Clause(cycle);
-		if (produceProofs)
+		}
+		final Clause c = new Clause(cycle);
+		if (produceProofs) {
 			c.setProof(new LeafNode(
 					LeafNode.THEORY_CC, createAnnotation(null)));
+		}
 		return c;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CongruencePath[");
 		sb.append(mAllLiterals.toString());
 		sb.append(']');

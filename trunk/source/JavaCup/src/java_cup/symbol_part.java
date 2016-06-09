@@ -47,12 +47,16 @@ public class symbol_part extends production_part {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Convert to a string. */
+  @Override
   public String toString()
     {
       if (label == null)
-	return the_symbol.name();
-      else
-	return the_symbol.name() + ":" + label;
+	{
+	    return the_symbol.name();
+	  } else
+	{
+	    return the_symbol.name() + ":" + label;
+	  }
     }
 
   /*-----------------------------------------------------------*/

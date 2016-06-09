@@ -34,17 +34,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -70,7 +69,7 @@ public class LineCoverageCalculator {
 
 	private final IUltimateServiceProvider mServices;
 	private final LineCoverageCalculator mRelative;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final Set<Integer> mLinenumbers;
 
 	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton) {
@@ -81,7 +80,7 @@ public class LineCoverageCalculator {
 			LineCoverageCalculator relative) {
 		mServices = services;
 		mRelative = relative;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mLinenumbers = calculateLineNumbers(automaton);
 	}
@@ -104,8 +103,8 @@ public class LineCoverageCalculator {
 	}
 
 	private void reportResult(int current, int total, String description) {
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new BenchmarkResult<>(Activator.s_PLUGIN_ID, description, new LineCoverageResult(total, current)));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new BenchmarkResult<>(Activator.PLUGIN_ID, description, new LineCoverageResult(total, current)));
 	}
 
 	private int getLineCount() {
@@ -142,7 +141,7 @@ public class LineCoverageCalculator {
 		if (stmt instanceof AssumeStatement) {
 			return ((AssumeStatement) stmt).getFormula().getLocation();
 		} else if (stmt instanceof CallStatement) {
-			CallStatement call = (CallStatement) stmt;
+			final CallStatement call = (CallStatement) stmt;
 			if (call.getLocation().getStartLine() == call.getLocation().getEndLine()) {
 				return call.getLocation();
 			}
@@ -165,13 +164,13 @@ public class LineCoverageCalculator {
 	}
 
 	private Set<CodeBlock> getCodeblocks(IAutomaton<CodeBlock, IPredicate> automaton) {
-		Set<CodeBlock> rtr = new HashSet<>();
+		final Set<CodeBlock> rtr = new HashSet<>();
 		if (automaton instanceof INestedWordAutomaton<?, ?>) {
-			INestedWordAutomaton<CodeBlock, IPredicate> nwa = ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton);
-			Deque<IPredicate> open = new ArrayDeque<>();
+			final INestedWordAutomaton<CodeBlock, IPredicate> nwa = ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton);
+			final Deque<IPredicate> open = new ArrayDeque<>();
 			open.addAll(nwa.getInitialStates());
 			while (!open.isEmpty()) {
-				IPredicate current = open.removeFirst();
+				final IPredicate current = open.removeFirst();
 				addCodeblock(rtr, open, nwa.callSuccessors(current));
 				addCodeblock(rtr, open, nwa.internalSuccessors(current));
 				addCodeblock(rtr, open, nwa.returnSuccessors(current));
@@ -183,7 +182,7 @@ public class LineCoverageCalculator {
 
 	private <T extends OutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
 			Deque<IPredicate> open, Iterable<T> iter) {
-		for (OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
+		for (final OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
 			if (rtr.add(trans.getLetter())) {
 				open.addFirst(trans.getSucc());
 			}

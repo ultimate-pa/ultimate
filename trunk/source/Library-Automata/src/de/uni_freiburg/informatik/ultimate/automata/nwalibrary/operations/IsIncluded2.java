@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -36,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -50,18 +49,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.increm
  */
 public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_B1;
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_B2;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
 	
-	private final InclusionViaDifference<LETTER, STATE> m_InclusionViaDifference;
+	private final InclusionViaDifference<LETTER, STATE> mInclusionViaDifference;
 	
-	private final Boolean m_Result;
-	private final NestedRun<LETTER, STATE> m_Counterexample;
+	private final Boolean mResult;
+	private final NestedRun<LETTER, STATE> mCounterexample;
 	
 	
 	public IsIncluded2(AutomataLibraryServices services,
@@ -69,19 +68,19 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			INestedWordAutomatonSimple<LETTER, STATE> b_1,
 			INestedWordAutomatonSimple<LETTER, STATE> b_2) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_A = a;
-		m_B1 = b_1;
-		m_B2 = b_2;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mA = a;
+		mB1 = b_1;
+		mB2 = b_2;
 		// workaround until Matthias implemented this
-		m_Logger.info(startMessage());
-		m_InclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, a);
-		m_InclusionViaDifference.addSubtrahend(m_B1);
-		m_InclusionViaDifference.addSubtrahend(m_B2);
-		m_Counterexample = m_InclusionViaDifference.getCounterexample();
-		m_Result = (m_Counterexample == null);
-		m_Logger.info(exitMessage());
+		mLogger.info(startMessage());
+		mInclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, a);
+		mInclusionViaDifference.addSubtrahend(mB1);
+		mInclusionViaDifference.addSubtrahend(mB2);
+		mCounterexample = mInclusionViaDifference.getCounterexample();
+		mResult = (mCounterexample == null);
+		mLogger.info(exitMessage());
 	}
 
 	@Override
@@ -92,24 +91,24 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 			return "Start " + operationName() + ". Operand A " + 
-					m_A.sizeInformation() + ". Operand B_1 " + 
-					m_B1.sizeInformation() + ". Operand B_2 " + 
-					m_B2.sizeInformation();
+					mA.sizeInformation() + ". Operand B_1 " + 
+					mB1.sizeInformation() + ". Operand B_2 " + 
+					mB2.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is " 
-				+ (m_Result ? "" : "not ") + "included";
+				+ (mResult ? "" : "not ") + "included";
 	}
 
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	public NestedRun<LETTER, STATE> getCounterexample() {
-		return m_Counterexample;
+		return mCounterexample;
 	}
 
 	@Override

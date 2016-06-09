@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="de.uni_freiburg.informatik.ultimate.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="de.uni_freiburg.informatik.ultimate.core.model" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="de.uni_freiburg.informatik.ultimate.core" id="de.uni_freiburg.informatik.ultimate.ep.astgenerator" name="AST-Generator Extension Point"/>
+         <meta.schema plugin="de.uni_freiburg.informatik.ultimate.core.model" id="de.uni_freiburg.informatik.ultimate.ep.astgenerator" name="AST-Generator Extension Point"/>
       </appinfo>
       <documentation>
          Extension point for AST-Generators.
@@ -56,7 +56,7 @@ AST-Generator plugins are called for creating an abstract syntax tree (AST).
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn=":de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator"/>
+                  <meta.attribute kind="java" basedOn=":de.uni_freiburg.informatik.ultimate.core.model.IGenerator"/>
                </appinfo>
             </annotation>
          </attribute>

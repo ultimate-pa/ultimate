@@ -36,45 +36,46 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 public class Condition<S, C> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
-	static int s_SerialNumberCounter = 0;
+	private static int sSerialNumberCounter = 0;
 	
-	private final Event<S, C> m_Predecessor;
-	private final Collection<Event<S, C>> m_Successors;
-	private final Place<S, C> m_Place;
+	private final Event<S, C> mPredecessor;
+	private final Collection<Event<S, C>> mSuccessors;
+	private final Place<S, C> mPlace;
 	
-	private final int m_SerialNumber = s_SerialNumberCounter++;
+	private final int mSerialNumber = sSerialNumberCounter++;
 
 	public Condition(Event<S, C> predecessor, Place<S, C> place) {
-		this.m_Predecessor = predecessor;
-		this.m_Successors = new HashSet<Event<S, C>>();
-		this.m_Place = place;
+		this.mPredecessor = predecessor;
+		this.mSuccessors = new HashSet<Event<S, C>>();
+		this.mPlace = place;
 	}
 
 	public void addSuccesssor(Event<S, C> e) {
-		m_Successors.add(e);
+		mSuccessors.add(e);
 	}
 
 	public Collection<Event<S, C>> getSuccessorEvents() {
-		return m_Successors;
+		return mSuccessors;
 	}
 
 	public Event<S, C> getPredecessorEvent() {
-		return m_Predecessor;
+		return mPredecessor;
 	}
 
 	public Place<S, C> getPlace() {
-		return m_Place;
+		return mPlace;
 	}
 	
+	@Override
 	public String toString() {
-		return "c" + m_SerialNumber +  ":CorrespPlace: " + m_Place.toString(); 
+		return "c" + mSerialNumber +  ":CorrespPlace: " + mPlace.toString(); 
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + m_SerialNumber;
+		result = prime * result + mSerialNumber;
 		return result;
 	}
 }

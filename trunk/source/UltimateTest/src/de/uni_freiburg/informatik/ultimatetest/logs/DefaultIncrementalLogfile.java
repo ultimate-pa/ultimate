@@ -24,20 +24,20 @@
  * licensors of the ULTIMATE Test Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.logs;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class DefaultIncrementalLogfile implements IIncrementalLog {
 
@@ -64,20 +64,20 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition urd) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString());
+	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
 		sb.append(urd);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString());
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
+		writeToFile(sb.toString(), testlogger);
 	}
 
 	@Override
-	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result,
-			String resultCategory, String resultMessage, IUltimateServiceProvider services) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString());
+	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
+			String resultMessage, IUltimateServiceProvider services, ILogger testlogger) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
 		sb.append(result);
 		sb.append(" for ");
@@ -86,11 +86,11 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		sb.append(resultCategory);
 		sb.append(": ");
 		sb.append(resultMessage);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString());
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
+		writeToFile(sb.toString(), testlogger);
 	}
 
-	protected void writeToFile(String logmessage) {
+	protected void writeToFile(String logmessage, ILogger log) {
 		if (logmessage == null || logmessage.isEmpty()) {
 			return;
 		}
@@ -102,18 +102,13 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		}
 
 		try {
-			FileWriter fw = new FileWriter(mLogFile, true);
-
-			Logger log = Logger.getLogger(getUltimateTestSuiteClass());
-			if (log.getAllAppenders().hasMoreElements()) {
-				Logger.getLogger(getUltimateTestSuiteClass()).info(
-						"Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
-								+ " to " + mLogFile.getAbsolutePath());
-			}
+			final FileWriter fw = new FileWriter(mLogFile, true);
+			log.info("Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
+					+ " to " + mLogFile.getAbsolutePath());
 			fw.append(logmessage);
 			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (final IOException e) {
+			log.fatal("Could not write " + getDescriptiveLogName() + " to file", e);
 		}
 	}
 }

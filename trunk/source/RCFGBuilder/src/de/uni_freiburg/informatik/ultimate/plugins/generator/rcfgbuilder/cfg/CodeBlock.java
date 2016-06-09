@@ -27,9 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -55,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * 
  * In an ULTIMATE graph a CodeBlock is an edge as well as an annotation of this edge.
  * 
- * m_TransitionFormula stores a TransitionFormula that describes the effect of this InternalEdge. (TODO: Add this
+ * mTransitionFormula stores a TransitionFormula that describes the effect of this InternalEdge. (TODO: Add this
  * information later, as additional annotation)
  * 
- * m_OccurenceInCounterexamples is used to store in a CEGAR based verification process how often this CodeBlock occurred
+ * mOccurenceInCounterexamples is used to store in a CEGAR based verification process how often this CodeBlock occurred
  * in a counterexample. (TODO: Store this information somewhere in the model checker)
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -72,22 +71,22 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
-	private final int m_Serialnumber;
+	private final int mSerialnumber;
 
-	protected TransFormula m_TransitionFormula;
-	protected TransFormula m_TransitionFormulaWithBranchEncoders;
+	protected TransFormula mTransitionFormula;
+	protected TransFormula mTransitionFormulaWithBranchEncoders;
 
-	protected RCFGEdgeAnnotation m_Annotation;
+	protected RCFGEdgeAnnotation mAnnotation;
 
-	int m_OccurenceInCounterexamples = 0;
+	int mOccurenceInCounterexamples = 0;
 
-	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
+	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
-		m_Serialnumber = serialNumber;
+		mSerialnumber = serialNumber;
 		mLogger = logger;
-		m_Annotation = new RCFGEdgeAnnotation(this) {
+		mAnnotation = new RCFGEdgeAnnotation(this) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -101,7 +100,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 				return CodeBlock.this.getFieldNames();
 			}
 		};
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
 	}
@@ -111,11 +110,11 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
-	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
+	public CodeBlock(ProgramPoint source, ProgramPoint target, ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
-		m_Serialnumber = -1;
+		mSerialnumber = -1;
 		mLogger = logger;
-		m_Annotation = new RCFGEdgeAnnotation(this) {
+		mAnnotation = new RCFGEdgeAnnotation(this) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -129,16 +128,16 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 				return CodeBlock.this.getFieldNames();
 			}
 		};
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
 	}
 
 	protected Object getFieldValue(String field) {
 		if (field == "TransitionFormula") {
-			return m_TransitionFormula;
+			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
-			return m_OccurenceInCounterexamples;
+			return mOccurenceInCounterexamples;
 		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
@@ -152,28 +151,28 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
 	public TransFormula getTransitionFormula() {
-		return m_TransitionFormula;
+		return mTransitionFormula;
 	}
 
 	public TransFormula getTransitionFormulaWithBranchEncoders() {
-		return m_TransitionFormulaWithBranchEncoders;
+		return mTransitionFormulaWithBranchEncoders;
 	}
 
 	public void setTransitionFormula(TransFormula transFormula) {
-		m_TransitionFormula = transFormula;
-		m_TransitionFormulaWithBranchEncoders = transFormula;
+		mTransitionFormula = transFormula;
+		mTransitionFormulaWithBranchEncoders = transFormula;
 	}
 
 	public int getOccurenceInCounterexamples() {
-		return m_OccurenceInCounterexamples;
+		return mOccurenceInCounterexamples;
 	}
 
 	public void reportOccurenceInCounterexample() {
-		m_OccurenceInCounterexamples++;
+		mOccurenceInCounterexamples++;
 	}
 
 	public int getSerialNumer() {
-		return m_Serialnumber;
+		return mSerialnumber;
 	}
 
 	@Override
@@ -203,8 +202,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * Returns the procedure in that the system was before executing this CodeBlock. E.g., if CodeBlock is a call, the
 	 * result is the name of the caller, if CodeBlock is a return the result is the callee (from which we return).
 	 */
+	@Override
 	public String getPreceedingProcedure() {
-		ProgramPoint pp = (ProgramPoint) getSource();
+		final ProgramPoint pp = (ProgramPoint) getSource();
 		return pp.getProcedure();
 	}
 
@@ -212,8 +212,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * Returns the procedure in that the system will be after executing the CodeBlock. E.g., if CodeBlock is a call, the
 	 * result is the name of the callee, if CodeBlock is a return the result is the caller (to which we return).
 	 */
+	@Override
 	public String getSucceedingProcedure() {
-		ProgramPoint pp = (ProgramPoint) getTarget();
+		final ProgramPoint pp = (ProgramPoint) getTarget();
 		return pp.getProcedure();
 	}
 

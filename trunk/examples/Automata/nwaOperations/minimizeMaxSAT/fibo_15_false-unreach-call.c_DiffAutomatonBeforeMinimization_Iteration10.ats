@@ -139,3 +139,4 @@ NestedWordAutomaton nwa = (
 print(numberOfStates(minimizeSevpa(removeDeadEnds(nwa))));
 print(numberOfStates(shrinkNwa(removeDeadEnds(nwa))));
 print(numberOfStates(minimizeNwaMaxSat(removeDeadEnds(nwa))));
+print(numberOfStates(minimizeNwaMaxSat2(removeDeadEnds(nwa))));

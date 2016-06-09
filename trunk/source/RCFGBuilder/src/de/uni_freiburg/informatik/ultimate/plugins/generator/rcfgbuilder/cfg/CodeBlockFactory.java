@@ -28,137 +28,119 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
- * Factory for the construction of CodeBlocks.
- * Every CodeBlock has to be constructed via this factory, because
- * every CodeBlock need a unique serial number.
- * Every control flow graph has to provide one CodeBlockFactory
+ * Factory for the construction of CodeBlocks. Every CodeBlock has to be constructed via this factory, because every
+ * CodeBlock need a unique serial number. Every control flow graph has to provide one CodeBlockFactory
  * 
  * @author Matthias Heizmann
  *
  */
 public class CodeBlockFactory implements IStorable {
-	
-	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
-	private final Boogie2SMT m_Boogie2smt;
-	private final ModifiableGlobalVariableManager m_MgvManager;
-	
+
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final Boogie2SMT mBoogie2smt;
+	private final ModifiableGlobalVariableManager mMgvManager;
+
 	public final static String s_CodeBlockFactoryKeyInToolchainStorage = "CodeBlockFactory";
-	
-	private int m_SerialNumberCounter = 0;	
-	
-	public CodeBlockFactory(IUltimateServiceProvider services,
-			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager mgvManager) {
+
+	private int mSerialNumberCounter = 0;
+
+	public CodeBlockFactory(IUltimateServiceProvider services, Boogie2SMT boogie2smt,
+			ModifiableGlobalVariableManager mgvManager) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_Boogie2smt = boogie2smt;
-		m_MgvManager = mgvManager;
-	}
-	
-	public Call constructCall(ProgramPoint source, ProgramPoint target, 
-			CallStatement call) {
-		return new Call(m_SerialNumberCounter++, source, target, call, m_Logger);
-	}
-	
-	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(ProgramPoint source, ProgramPoint target, 
-			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
-		return new InterproceduralSequentialComposition(m_SerialNumberCounter++, source, target, 
-				m_Boogie2smt, m_MgvManager, simplify, extPqe, codeBlocks, m_Logger, m_Services);
-	}
-	
-	public GotoEdge constructGotoEdge(ProgramPoint source, ProgramPoint target) {
-		return new GotoEdge(m_SerialNumberCounter++, source, target, m_Logger);
-	}
-	
-	public ParallelComposition constructParallelComposition(ProgramPoint source, ProgramPoint target, 
-			List<CodeBlock> codeBlocks) {
-		return new ParallelComposition(m_SerialNumberCounter++, source, target, 
-				m_Boogie2smt, m_Services, codeBlocks);
-	}
-	
-	public Return constructReturn(
-			ProgramPoint source, ProgramPoint target, Call correspondingCall) {
-		return new Return(m_SerialNumberCounter++, source, target, 
-				correspondingCall, m_Logger);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mBoogie2smt = boogie2smt;
+		mMgvManager = mgvManager;
 	}
 
-	public SequentialComposition constructSequentialComposition(ProgramPoint source, ProgramPoint target, 
+	public Call constructCall(ProgramPoint source, ProgramPoint target, CallStatement call) {
+		return new Call(mSerialNumberCounter++, source, target, call, mLogger);
+	}
+
+	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(ProgramPoint source,
+			ProgramPoint target, boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
+		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt,
+				mMgvManager, simplify, extPqe, codeBlocks, mLogger, mServices);
+	}
+
+	public GotoEdge constructGotoEdge(ProgramPoint source, ProgramPoint target) {
+		return new GotoEdge(mSerialNumberCounter++, source, target, mLogger);
+	}
+
+	public ParallelComposition constructParallelComposition(ProgramPoint source, ProgramPoint target,
+			List<CodeBlock> codeBlocks) {
+		return new ParallelComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mServices, codeBlocks);
+	}
+
+	public Return constructReturn(ProgramPoint source, ProgramPoint target, Call correspondingCall) {
+		return new Return(mSerialNumberCounter++, source, target, correspondingCall, mLogger);
+	}
+
+	public SequentialComposition constructSequentialComposition(ProgramPoint source, ProgramPoint target,
 			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
-		return new SequentialComposition(m_SerialNumberCounter++, source, target, 
-				m_Boogie2smt, m_MgvManager, simplify, extPqe, m_Services, codeBlocks);
+		return new SequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mMgvManager, simplify,
+				extPqe, mServices, codeBlocks);
 	}
-	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
-			Statement st) {
-		return new StatementSequence(m_SerialNumberCounter++, source, target, 
-				st, m_Logger);
+
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st) {
+		return new StatementSequence(mSerialNumberCounter++, source, target, st, mLogger);
 	}
-	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
-			Statement st, Origin origin) {
-		return new StatementSequence(m_SerialNumberCounter++, source, target, 
-				st, origin, m_Logger);
+
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st,
+			Origin origin) {
+		return new StatementSequence(mSerialNumberCounter++, source, target, st, origin, mLogger);
 	}
-	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
-			List<Statement> stmts, Origin origin) {
-		return new StatementSequence(m_SerialNumberCounter++, source, target, 
-				stmts, origin, m_Logger);
+
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, List<Statement> stmts,
+			Origin origin) {
+		return new StatementSequence(mSerialNumberCounter++, source, target, stmts, origin, mLogger);
 	}
-	
-	public Summary constructSummary(ProgramPoint source, ProgramPoint target, 
-			CallStatement st, boolean calledProcedureHasImplementation) {
-		return new Summary(m_SerialNumberCounter++, source, target, 
-				st, calledProcedureHasImplementation, m_Logger);
+
+	public Summary constructSummary(ProgramPoint source, ProgramPoint target, CallStatement st,
+			boolean calledProcedureHasImplementation) {
+		return new Summary(mSerialNumberCounter++, source, target, st, calledProcedureHasImplementation, mLogger);
 	}
-	
-	
-	
-	
+
 	public CodeBlock copyCodeBlock(CodeBlock codeBlock, ProgramPoint source, ProgramPoint target) {
 		if (codeBlock instanceof Call) {
-			Call copy = this.constructCall(source, target, ((Call) codeBlock).getCallStatement());
+			final Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof Return) {
-			Return copy = this.constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
+			final Return copy = constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof StatementSequence) {
-			List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
-			Origin origin = ((StatementSequence) codeBlock).getOrigin();
-			StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
+			final List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
+			final Origin origin = ((StatementSequence) codeBlock).getOrigin();
+			final StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof Summary) {
-			CallStatement callStatement = ((Summary) codeBlock).getCallStatement();
-			boolean calledProcedureHasImplementation = ((Summary) codeBlock).calledProcedureHasImplementation();
-			Summary copy = this.constructSummary(source, target, callStatement, calledProcedureHasImplementation);
+			final CallStatement callStatement = ((Summary) codeBlock).getCallStatement();
+			final boolean calledProcedureHasImplementation = ((Summary) codeBlock).calledProcedureHasImplementation();
+			final Summary copy = constructSummary(source, target, callStatement, calledProcedureHasImplementation);
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof GotoEdge) {
-			GotoEdge copy = this.constructGotoEdge(source, target);
+			final GotoEdge copy = constructGotoEdge(source, target);
 			return copy;
 		} else {
 			throw new UnsupportedOperationException("unsupported kind of CodeBlock");
 		}
 	}
-
-
-
 
 	@Override
 	public void destroy() {

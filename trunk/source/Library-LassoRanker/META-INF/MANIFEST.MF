@@ -4,13 +4,15 @@ Bundle-Name: Library-LassoRanker
 Bundle-SymbolicName: Library-LassoRanker
 Bundle-Version: 0.9.5
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
-Require-Bundle: Library-log4j,
- Library-UltimateUtil;bundle-version="0.0.1",
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
+ Library-UltimateUtil,
+ Library-BoogieAST,
  UltimateCore,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
  SMTInterpol;resolution:=optional,
- SMTSolverBridge;bundle-version="0.0.1"
+ SMTSolverBridge
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,

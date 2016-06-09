@@ -35,14 +35,14 @@ import java.util.function.Function;
  *
  */
 public class BitvectorConstant {
-	private final BigInteger m_Value;
-	private final BigInteger m_Index;
+	private final BigInteger mValue;
+	private final BigInteger mIndex;
 	
 	
 	public BitvectorConstant(BigInteger value, BigInteger index) {
 		super();
-		m_Value = computeUnifiedValue(value, index);
-		m_Index = index;
+		mValue = computeUnifiedValue(value, index);
+		mIndex = index;
 	}
 	
 	
@@ -54,41 +54,48 @@ public class BitvectorConstant {
 	}
 
 	public BigInteger getValue() {
-		return m_Value;
+		return mValue;
 	}
 
 	public BigInteger getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_Index == null) ? 0 : m_Index.hashCode());
-		result = prime * result + ((m_Value == null) ? 0 : m_Value.hashCode());
+		result = prime * result + ((mIndex == null) ? 0 : mIndex.hashCode());
+		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BitvectorConstant other = (BitvectorConstant) obj;
-		if (m_Index == null) {
-			if (other.m_Index != null)
+		}
+		final BitvectorConstant other = (BitvectorConstant) obj;
+		if (mIndex == null) {
+			if (other.mIndex != null) {
 				return false;
-		} else if (!m_Index.equals(other.m_Index))
+			}
+		} else if (!mIndex.equals(other.mIndex)) {
 			return false;
-		if (m_Value == null) {
-			if (other.m_Value != null)
+		}
+		if (mValue == null) {
+			if (other.mValue != null) {
 				return false;
-		} else if (!m_Value.equals(other.m_Value))
+			}
+		} else if (!mValue.equals(other.mValue)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -97,7 +104,7 @@ public class BitvectorConstant {
 	 */
 	@Override
 	public String toString() {
-		return "(_ bv" + m_Value + " " + m_Index + ")";
+		return "(_ bv" + mValue + " " + mIndex + ")";
 	}
 	
 	
@@ -223,8 +230,8 @@ public class BitvectorConstant {
 
 
 	public static BitvectorConstant extract(BitvectorConstant bv, int upperIndex, int lowerIndex) {
-		String binaryString = bvToBinaryString(bv);
-		int resultIndex = upperIndex + 1 - lowerIndex;
+		final String binaryString = bvToBinaryString(bv);
+		final int resultIndex = upperIndex + 1 - lowerIndex;
 		final String extractedBinaryString;
 		if (resultIndex < binaryString.length()) {
 			extractedBinaryString = binaryString.substring(
@@ -232,7 +239,7 @@ public class BitvectorConstant {
 		} else {
 			extractedBinaryString = binaryString;
 		}
-		BigInteger extractedValue = binaryStringToBv(extractedBinaryString);
+		final BigInteger extractedValue = binaryStringToBv(extractedBinaryString);
 		return new BitvectorConstant(extractedValue, BigInteger.valueOf(resultIndex));
 	}
 
@@ -247,9 +254,9 @@ public class BitvectorConstant {
 	}
 	
 	private static String bvToFullBinaryString(BitvectorConstant bv) {
-		String withoutZeros = bv.getValue().toString(2);
-		StringBuilder sb = new StringBuilder();
-		int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
+		final String withoutZeros = bv.getValue().toString(2);
+		final StringBuilder sb = new StringBuilder();
+		final int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
 		for (int i=0; i<missingZeros; i++) {
 			sb.append("0");
 		}
@@ -264,11 +271,11 @@ public class BitvectorConstant {
 	}
 	
 	public static BigInteger toSignedInt(BigInteger bvValue, BigInteger bvIndex) {
-		BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
+		final BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
 		if (bvValue.compareTo(firstNegative) < 0) {
 			return bvValue;
 		} else {
-			BigInteger biggestUnsigned = new BigInteger("2").pow(bvIndex.intValueExact());
+			final BigInteger biggestUnsigned = new BigInteger("2").pow(bvIndex.intValueExact());
 			return bvValue.subtract(biggestUnsigned);
 		}
 	}

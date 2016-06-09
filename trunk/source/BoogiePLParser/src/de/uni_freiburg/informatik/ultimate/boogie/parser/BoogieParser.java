@@ -33,21 +33,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This is the main Boogie 2 parser class that creates the lexer and parser to
@@ -61,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
  */
 public class BoogieParser implements ISource {
 	protected String[] mFileTypes;
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
@@ -74,8 +71,9 @@ public class BoogieParser implements ISource {
 	/**
 	 * This method is required by IUltimatePlugin
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#getPluginID()
+	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#getPluginID()
 	 */
+	@Override
 	public String getPluginID() {
 		return getClass().getPackage().getName();
 	}
@@ -87,8 +85,9 @@ public class BoogieParser implements ISource {
 	 * @param param
 	 *            is ignored
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#init()
+	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#init()
 	 */
+	@Override
 	public void init() {
 		mFileNames = new ArrayList<String>();
 	}
@@ -99,6 +98,7 @@ public class BoogieParser implements ISource {
 	 * @return the name of the plugin
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#getPluginName()
 	 */
+	@Override
 	public String getPluginName() {
 		return "Boogie PL CUP Parser";
 	}
@@ -140,11 +140,12 @@ public class BoogieParser implements ISource {
 	 * @return the tree
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File[])
 	 */
+	@Override
 	public IElement parseAST(File[] files) throws IOException {
 		final WrapperNode dirRoot = new WrapperNode(null, null);
 
-		for (File f : files) {
-			Unit node = parseFile(f);
+		for (final File f : files) {
+			final Unit node = parseFile(f);
 			dirRoot.addOutgoing(new WrapperNode(dirRoot, node));
 		}
 		return dirRoot;
@@ -159,6 +160,7 @@ public class BoogieParser implements ISource {
 	 * @return the tree
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File)
 	 */
+	@Override
 	public IElement parseAST(File file) throws IOException {
 		if (file.isDirectory()) {
 			return parseAST(file.listFiles());
@@ -182,8 +184,9 @@ public class BoogieParser implements ISource {
 	 * @return true if parseable
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseable(java.io.File[])
 	 */
+	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -199,10 +202,12 @@ public class BoogieParser implements ISource {
 	 * @return true if parseable
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseable(java.io.File)
 	 */
+	@Override
 	public boolean parseable(File file) {
-		for (String s : getFileTypes()) {
-			if (file.getName().endsWith(s))
+		for (final String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -210,6 +215,7 @@ public class BoogieParser implements ISource {
 	/**
 	 * get all supported file types of this parser
 	 */
+	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
@@ -220,11 +226,12 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutputDefinition#
 	 * getOutputDefinition()
 	 */
+	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, this.mFileNames);
-		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
+		} catch (final Exception ex) {
+			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -238,7 +245,7 @@ public class BoogieParser implements ISource {
 	 * @return an INode containing the AST
 	 */
 	private Unit reflectiveParse(String fileName) throws IOException {
-		BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
+		final BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
 		Lexer lexer;
 		Parser parser;
 		Unit mainFile;
@@ -249,18 +256,18 @@ public class BoogieParser implements ISource {
 		parser.setFileName(fileName);
 		try {
 			mainFile = (Unit) parser.parse().value;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.fatal("syntax error: ", e);
 			// TODO: Declare to throw a parser exception
 			throw new RuntimeException(e);
 		}
 		if (mPreludeUnit != null) {
-			Declaration[] prel = mPreludeUnit.getDeclarations();
-			Declaration[] main = mainFile.getDeclarations();
-			Declaration[] allDecls = new Declaration[prel.length + main.length];
+			final Declaration[] prel = mPreludeUnit.getDeclarations();
+			final Declaration[] main = mainFile.getDeclarations();
+			final Declaration[] allDecls = new Declaration[prel.length + main.length];
 			System.arraycopy(prel, 0, allDecls, 0, prel.length);
 			System.arraycopy(main, 0, allDecls, prel.length, main.length);
-			ILocation dummyLocation = new BoogieLocation(parser.mFilename, -1, -1, -1, -1, false);
+			final ILocation dummyLocation = new BoogieLocation(parser.mFilename, -1, -1, -1, -1, false);
 			mainFile = new Unit(dummyLocation, allDecls);
 		}
 		return mainFile;
@@ -269,23 +276,24 @@ public class BoogieParser implements ISource {
 	@Override
 	public void setPreludeFile(File prelude) {
 		mPreludeUnit = null;
-		if (prelude == null)
+		if (prelude == null) {
 			return;
+		}
 		try {
-			BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
-			Lexer lexer = new Lexer(new FileInputStream(prelude));
+			final BoogieSymbolFactory symFactory = new BoogieSymbolFactory();
+			final Lexer lexer = new Lexer(new FileInputStream(prelude));
 			lexer.setSymbolFactory(symFactory);
-			Parser parser = new Parser(lexer, symFactory);
+			final Parser parser = new Parser(lexer, symFactory);
 			parser.setFileName(prelude.getPath());
 			mPreludeUnit = (Unit) parser.parse().value;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			mLogger.fatal("syntax error: ", e);
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 
@@ -297,7 +305,7 @@ public class BoogieParser implements ISource {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

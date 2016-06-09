@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class ReplacementVar extends RankVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 	
-	private final String m_name;
-	private final Term m_definition;
+	private final String mname;
+	private final Term mdefinition;
 	
 	/**
 	 * @param name a globally unique name
@@ -47,25 +47,26 @@ public class ReplacementVar extends RankVar {
 	 *                   the term it replaces
 	 */
 	public ReplacementVar(String name, Term definition) {
-		m_name = name;
-		m_definition = definition;
+		mname = name;
+		mdefinition = definition;
 	}
 	
 	/**
 	 * @return the definition of this replacement variable, i.e., the term it
 	 *         replaces
 	 */
+	@Override
 	public Term getDefinition() {
-		return m_definition;
+		return mdefinition;
 	}
 	
 	@Override
 	public String getGloballyUniqueId() {
-		return m_name;
+		return mname;
 	}
 	
 	@Override
 	public String toString() {
-		return m_name;
+		return mname;
 	}
 }

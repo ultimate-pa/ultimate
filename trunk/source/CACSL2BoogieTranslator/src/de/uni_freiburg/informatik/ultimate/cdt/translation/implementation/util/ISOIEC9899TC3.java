@@ -32,27 +32,29 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * This class holds methods, that help translating constants.
@@ -92,13 +94,13 @@ public final class ISOIEC9899TC3 {
 		DECIMAL(10), 
 		HEXADECIMAL(16);
 		
-		private final int m_Base;
+		private final int mBase;
 		IntegerConstantType(int base) {
-			m_Base = base;
+			mBase = base;
 		}
 		
 		public int getBase() {
-			return m_Base;
+			return mBase;
 		}
 	}
 
@@ -118,7 +120,7 @@ public final class ISOIEC9899TC3 {
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
 			val = val.substring(1, val.length());
-			String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
+			final String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
 			dispatch.warn(loc, msg);
 		}
 		if (!val.startsWith("'") || !val.endsWith("'")) {
@@ -131,7 +133,7 @@ public final class ISOIEC9899TC3 {
 			case '\"':
 			case '?':
 			case '\\':
-				value = (int) val.charAt(2);
+				value = val.charAt(2);
 				break;
 			case 'a':
 				value = 7;
@@ -170,10 +172,11 @@ public final class ISOIEC9899TC3 {
 			default:
 				throw new UnsupportedOperationException();
 			}
-		} else if (val.length() == 3)
-			value = (int) val.charAt(1);
-		else
+		} else if (val.length() == 3) {
+			value = val.charAt(1);
+		} else {
 			throw new UnsupportedOperationException();
+		}
 		return String.valueOf(value);
 	}
 
@@ -191,73 +194,222 @@ public final class ISOIEC9899TC3 {
 	public static final RValue handleFloatConstant(String val, ILocation loc,
 			boolean bitvectorTranslation, 
 			TypeSizes typeSizeConstants,
-			FunctionDeclarations functionDeclarations) {
+			FunctionDeclarations functionDeclarations,
+			Expression roundingMode) {
 		if (bitvectorTranslation) {
-			//TODO bitprecise Float translation
 			String value = val;
 			String floatType = null;
 			int exponentLength = 0;
 			int significantLength = 0;
-			int exponentValue = 0;
-			final Expression sign;
-			final Expression significant;
-			final Expression exponent;			
-			double floatVal = Double.valueOf(value);
+			if (roundingMode != null) {
+				if (!(roundingMode instanceof IdentifierExpression)) {
+					throw new IllegalArgumentException("not a rounding Mode");
+				}
+			}
 
 			// if there is a float-suffix: throw it away
-			for (String s : SUFFIXES_FLOAT) {
+			for (final String s : SUFFIXES_FLOAT) {
 				if (val.endsWith(s)) {
 					value = val.substring(0, val.length() - s.length());
 					floatType = s;
 				}
 			}
 			
-			// set sign bit if value is negative make it positive
-			if (floatVal < 0) {
-				sign = new BitvecLiteral(loc, Integer.toString(1) , 1);
-				floatVal = floatVal * -1.0;
-			} else {
-				sign = new BitvecLiteral(loc, Integer.toString(0) , 1);
+
+			
+			// convert literal in hex form to decimal form
+			if (value.startsWith("0x") || value.startsWith("0X")) {
+				value = value.substring(2);
+				int suffixLength = -1;
+				String hexExponentValue = null;
+				
+				// extract exponent value of the hex literal
+				if (value.contains("p")) {
+					hexExponentValue = value.substring(value.indexOf("p") + 1);
+					value = value.substring(0, value.indexOf("p"));
+				}
+				
+				if (value.contains(".")) {
+					final int dotPosition = value.indexOf(".");
+					suffixLength = value.substring(dotPosition + 1).length();
+					value = value.substring(0, dotPosition) + value.substring(dotPosition + 1);
+				}
+				BigInteger hexValueToDecimalValue = new BigInteger(value, 16);
+				BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
+				
+				if (hexExponentValue != null) {
+					int hexExponent = Integer.valueOf(hexExponentValue);
+					if (hexExponent > 0) {
+						for (int i = 0; i < hexExponent; i++) {
+							hexValueBigDecimal = hexValueBigDecimal.multiply(new BigDecimal("2"));
+						}
+					} else if (hexExponent < 0) {
+						for (int i = 0; i > hexExponent; i--) {
+							hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal("2"));
+						}
+					}
+				}
+				
+				if (suffixLength != -1) {
+					hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal(Math.pow(16, suffixLength)));
+				}
+				value = hexValueBigDecimal.toString();
+			} else if (value.contains("e")) {				
+				// if value contains e calculate the number according to it
+				final int eLocatation = value.indexOf("e");
+				final String floatString = value.substring(0, eLocatation);
+				String exponentString = value.substring(eLocatation + 1, value.length());
+				BigDecimal base = new BigDecimal(floatString);
+				if (exponentString.startsWith("0")) {
+					while (exponentString.startsWith("0")) {
+						exponentString = exponentString.substring(1);
+					}	
+				} else if (exponentString.startsWith("+") || exponentString.startsWith("-")) {
+					if (exponentString.substring(1, 2).equals("0")) {
+						while (exponentString.substring(1, 2).equals("0")) {
+							exponentString = exponentString.substring(0,1) + exponentString.substring(2, exponentString.length());
+						}
+					}
+				}
+				
+				int exponentValue = Integer.valueOf(exponentString);
+				if (exponentValue < 0) {
+					while (exponentValue < 0) {
+						base = base.multiply(new BigDecimal("0.1"));
+						exponentValue++;
+					}
+				} else {
+					while (exponentValue > 0) {
+						base = base.multiply(new BigDecimal("10"));
+						exponentValue--;						
+					}
+				}
+				value = base.toString();
 			}
+			
+			final BigDecimal floatVal = new BigDecimal(value);
 			
 			// Set floatIndices depending on the value of the val
 			final CType resultType;
 			if (floatType == null || floatType.equals("d") || floatType.equals("D")) {
 				exponentLength = 11;
-				significantLength = 52;
+				significantLength = 53;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
 			} else if (floatType.equals("f") || floatType.equals("F")) {
 				exponentLength = 8;
-				significantLength = 23;
+				significantLength = 24;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
 			} else if (floatType.equals("l") || floatType.equals("L")) {
 				exponentLength = 15;
-				significantLength = 112;
+				significantLength = 113;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
-				// TODO evaluate exception type
 				throw new IllegalArgumentException("not a float type");
 			}
 			
-			// TODO find out how to work this with NaN
+			final Expression[] arguments;
+			final String functionName;
+			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(exponentLength));
+			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(significantLength));
+			final Expression[] indices;
+			final Attribute[] attributes;
 			
-			// calculate exponent value and value of the significant
-			while (floatVal > 2.0) {
-				floatVal = floatVal / 2.0;
-				exponentValue++;
+			if (value.equals("NAN") || value.equals("nan")) {
+				functionName = "NaN";
+				arguments = new Expression[]{eb, sb};
+			} else if (value.equals("INFINITY")) {
+				indices = new Expression[]{eb, sb};
+				if (exponentLength == 8) {
+					functionName = "infinityFloat";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
+				} else if (exponentLength == 11) {
+					functionName = "infinityDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
+				} else if (exponentLength == 15) {
+					functionName = "infinityLongDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				arguments = new Expression[]{};
+			} else if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
+				indices = new Expression[]{eb, sb};
+				if (exponentLength == 8) {
+					functionName = "zeroFloat";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
+				} else if (exponentLength == 11) {
+					functionName = "zeroDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
+				} else if (exponentLength == 15) {
+					functionName = "zeroLongDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				arguments = new Expression[] {};
+			} else {
+				if (resultType.toString().equals("FLOAT")){
+					functionName = "declareFloat";
+				} else if (resultType.toString().equals("DOUBLE")) {
+					functionName = "declareDouble";
+				} else if (resultType.toString().equals("LONGDOUBLE")) {
+					functionName = "declareLongDouble";
+				} else {
+					throw new IllegalArgumentException();
+				}
+				final Expression realValue = new RealLiteral(loc, floatVal.toString());
+				arguments = new Expression[] {roundingMode, realValue};
+				
+				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
+				 * before it can be used
+				 * 
+				 * final BigDecimal twoPointZero = new BigDecimal("2.0");
+				 * // calculate exponent value and value of the significant
+				 * while (floatVal.compareTo(twoPointZero) == 1) {
+				 *  	floatVal = floatVal.divide(twoPointZero);
+				 *  	exponentValue++;
+				 * }
+				 * String floatValString = floatVal.toString();
+				 * if (floatValString.contains(".")) {
+				 *  	floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
+				 * }
+				 * if (resultType.toString().equals("FLOAT")){
+				 * 	functionName = "declareFloat";
+				 * } else if (resultType.toString().equals("DOUBLE")) {
+				 *  	functionName = "declareDouble";
+				 * } else if (resultType.toString().equals("LONGDOUBLE")) {
+				 *  	functionName = "declareLongDouble";
+				 * } else {
+				 *  	throw new IllegalArgumentException();
+				 * }
+				 * exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+				 * significant = new BitvecLiteral(loc, floatValString, significantLength);
+				 * arguments = new Expression[]{sign, exponent, significant};
+				 */
 			}
-			exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-			significant = new BitvecLiteral(loc, Double.toString(floatVal), significantLength);
-			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "fp", new Expression[]{sign, exponent, significant});
+			
+			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
 			return new RValue(func, resultType);
 			
 		} else {
 			String value = val;
 			// if there is a float-suffix: throw it away
-			for (String s : SUFFIXES_FLOAT) {
+			for (final String s : SUFFIXES_FLOAT) {
 				if (val.endsWith(s)) {
 					value = val.substring(0, val.length() - s.length());
-					String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
+					final String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
 			}
@@ -271,8 +423,8 @@ public final class ISOIEC9899TC3 {
 					Double.valueOf(value); //using double for good measure..
 				}
 				return new RValue(new RealLiteral(loc, value), new CPrimitive(PRIMITIVE.FLOAT));
-			} catch (NumberFormatException nfe) {
-				String msg = "Unable to translate float!";
+			} catch (final NumberFormatException nfe) {
+				final String msg = "Unable to translate float!";
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
@@ -305,8 +457,8 @@ public final class ISOIEC9899TC3 {
 					loc, bitvectorTranslation, typeSizeConstants, cType,
 					ic.getValue());
 			return new RValue(resultLiteral, cType);
-		} catch (NumberFormatException nfe) {
-			String msg = "Unable to translate int!";
+		} catch (final NumberFormatException nfe) {
+			final String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
@@ -317,63 +469,71 @@ public final class ISOIEC9899TC3 {
 			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
-			int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
+			final int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
 			if (value.signum() == -1) {
-				long maxValue = (long) Math.pow(2, bitlength);
+				final long maxValue = (long) Math.pow(2, bitlength);
 				value = value.add(BigInteger.valueOf(maxValue));
 			}
-			resultLiteral = new BitvecLiteral(loc, value.toString(), bitlength);
+			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
+			resultLiteral = new BitvecLiteral(loc, valueInRange.toString(), bitlength);
 		} else {
 			resultLiteral = new IntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
 	}
 	
+	/**
+	 * @return the result of value % 2^bitlength
+	 */
+	public static BigInteger constructBitvectorInRange(BigInteger value, int bitlength) {
+		return value.mod(new BigInteger("2").pow(bitlength));
+	}
+	
 	private static class IntegerConstant {
 		
-		private final IntegerConstantType m_IntegerConstantType;
-		private final String m_Suffix;
-		private final BigInteger m_Value;
+		private final IntegerConstantType mIntegerConstantType;
+		private final String mSuffix;
+		private final BigInteger mValue;
 		public IntegerConstant(String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
-			for (String s : SUFFIXES_INT) {
+			for (final String s : SUFFIXES_INT) {
 				if (valueWithPrefixAndSuffix.endsWith(s)) {
 					valueWithPrefix = valueWithPrefixAndSuffix.substring(0, valueWithPrefixAndSuffix.length() - s.length());
 					suffix = s;
 					break;
 				}
 			}
-			m_Suffix = suffix;
+			mSuffix = suffix;
 			final String valueAsString;
 			if (valueWithPrefix.startsWith(HEX_L0X) || valueWithPrefix.startsWith(HEX_U0X)) {
 				// val is a hexadecimal-constant
 				valueAsString = valueWithPrefix.substring(2);
-				m_IntegerConstantType = IntegerConstantType.HEXADECIMAL;
+				mIntegerConstantType = IntegerConstantType.HEXADECIMAL;
 			} else if (valueWithPrefix.startsWith(OCT_0)) {
 				valueAsString = valueWithPrefix;
-				m_IntegerConstantType = IntegerConstantType.OCTAL;
+				mIntegerConstantType = IntegerConstantType.OCTAL;
 			} else {
 				valueAsString = valueWithPrefix;
-				m_IntegerConstantType = IntegerConstantType.DECIMAL;
+				mIntegerConstantType = IntegerConstantType.DECIMAL;
 			}
-			m_Value = new BigInteger(valueAsString, m_IntegerConstantType.getBase());
+			mValue = new BigInteger(valueAsString, mIntegerConstantType.getBase());
 		}
 		
 		public BigInteger getValue() {
-			return m_Value;
+			return mValue;
 		}
 		public IntegerConstantType getIntegerConstantType() {
-			return m_IntegerConstantType;
+			return mIntegerConstantType;
 		}
 		public boolean hasUnsignedSuffix() {
-			return m_Suffix.contains("u") || m_Suffix.contains("U"); 
+			return mSuffix.contains("u") || mSuffix.contains("U"); 
 		}
 		public boolean hasLongLongSuffix() {
-			return m_Suffix.contains("ll") || m_Suffix.contains("LL"); 
+			return mSuffix.contains("ll") || mSuffix.contains("LL"); 
 		}
 		public boolean hasLongSuffix() {
-			return !hasLongLongSuffix() && (m_Suffix.contains("l") || m_Suffix.contains("L")); 
+			return !hasLongLongSuffix() && (mSuffix.contains("l") || mSuffix.contains("L")); 
 		}
 	}
 	
@@ -415,10 +575,10 @@ public final class ISOIEC9899TC3 {
 	}
 	
 	private static CPrimitive determineCType(IntegerConstant ic, TypeSizes typeSizes) {
-		PRIMITIVE[] primitives = getPossibleTypes(ic);
-		for (PRIMITIVE primitive : primitives) {
-			CPrimitive cPrimitive = new CPrimitive(primitive);
-			BigInteger maxValue = typeSizes.getMaxValueOfPrimitiveType(cPrimitive);
+		final PRIMITIVE[] primitives = getPossibleTypes(ic);
+		for (final PRIMITIVE primitive : primitives) {
+			final CPrimitive cPrimitive = new CPrimitive(primitive);
+			final BigInteger maxValue = typeSizes.getMaxValueOfPrimitiveType(cPrimitive);
 			if (ic.getValue().compareTo(maxValue) <= 0) {
 				return cPrimitive;
 			}

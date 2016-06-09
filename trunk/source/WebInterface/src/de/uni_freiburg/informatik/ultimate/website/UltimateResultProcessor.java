@@ -8,41 +8,41 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity;
-import de.uni_freiburg.informatik.ultimate.result.model.InvariantResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class UltimateResultProcessor {
 
 	public static void processUltimateResults(IUltimateServiceProvider services, JSONObject json) throws JSONException {
 		// get Result from Ultimate
-		Map<String, List<IResult>> results = services.getResultService().getResults();
+		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
-		ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
-		for (List<IResult> rList : results.values()) {
-			for (IResult r : rList) {
+		final ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
+		for (final List<IResult> rList : results.values()) {
+			for (final IResult r : rList) {
 				SimpleLogger.log("processing result " + r.getShortDescription());
 				String type = "UNDEF";
-				UltimateResult packagedResult = new UltimateResult();
+				final UltimateResult packagedResult = new UltimateResult();
 				if (r instanceof ExceptionOrErrorResult) {
 					type = "ExceptionOrError";
 					packagedResult.logLvl = "error";
@@ -89,7 +89,7 @@ public class UltimateResultProcessor {
 					type = "positive";
 					packagedResult.logLvl = "info";
 				} else if (r instanceof IResultWithSeverity) {
-					IResultWithSeverity rws = (IResultWithSeverity) r;
+					final IResultWithSeverity rws = (IResultWithSeverity) r;
 					if (rws.getSeverity().equals(Severity.ERROR)) {
 						type = "error";
 						packagedResult.logLvl = "error";
@@ -108,7 +108,7 @@ public class UltimateResultProcessor {
 				}
 				// TODO : Add new "Out of resource" result here ...
 				if (r instanceof IResultWithLocation) {
-					ILocation loc = ((IResultWithLocation) r).getLocation();
+					final ILocation loc = ((IResultWithLocation) r).getLocation();
 					if (((IResultWithLocation) r).getLocation() == null) {
 						throw new IllegalArgumentException("Location is null");
 					}

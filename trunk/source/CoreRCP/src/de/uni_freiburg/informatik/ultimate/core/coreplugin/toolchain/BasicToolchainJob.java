@@ -29,21 +29,24 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public abstract class BasicToolchainJob extends Job {
 
@@ -66,20 +69,19 @@ public abstract class BasicToolchainJob extends Job {
 		/**
 		 * Run old toolchain on new input files
 		 */
-		@Deprecated
-		KEEP_Toolchain,
+		@Deprecated KEEP_Toolchain,
 	}
 
 	protected ChainMode mJobMode;
-	protected ICore mCore;
-	protected IController mController;
-	protected Logger mLogger;
-	protected ToolchainData mChain;
-	protected PreludeProvider mPreludeFile;
+	protected ICore<ToolchainListType> mCore;
+	protected IController<ToolchainListType> mController;
+	protected ILogger mLogger;
+	protected IToolchainData<ToolchainListType> mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(String name, ICore core, IController controller, Logger logger) {
+	public BasicToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger) {
 		super(name);
 		assert logger != null;
 		mCore = core;
@@ -97,26 +99,26 @@ public abstract class BasicToolchainJob extends Job {
 			return;
 		}
 		mLogger.info(" --- Results ---");
-		for (Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
+		for (final Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
 			mLogger.info(String.format(" * Results from %s:", entry.getKey()));
 
-			for (IResult result : entry.getValue()) {
-				StringBuilder sb = new StringBuilder();
+			for (final IResult result : entry.getValue()) {
+				final StringBuilder sb = new StringBuilder();
 
 				sb.append("  - ");
 				sb.append(result.getClass().getSimpleName());
 				if (result instanceof IResultWithLocation) {
 					sb.append(" [Line: ");
-					ILocation loc = ((IResultWithLocation) result).getLocation();
+					final ILocation loc = ((IResultWithLocation) result).getLocation();
 					sb.append(loc.getStartLine()).append("]");
 				}
 				sb.append(": ");
 				sb.append(result.getShortDescription());
 				mLogger.info(sb.toString());
 
-				boolean appendCompleteLongDescription = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				final boolean appendCompleteLongDescription = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 						.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
-				String[] s = result.getLongDescription().split("\n");
+				final String[] s = result.getLongDescription().split("\n");
 				if (appendCompleteLongDescription) {
 					mLogger.info(String.format("    %s", result.getLongDescription()));
 				} else {
@@ -133,8 +135,8 @@ public abstract class BasicToolchainJob extends Job {
 	private void setTimeout() {
 		long realDeadline = 0;
 
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
 
 		// first , check if we have a deadline set by the executor
 		if (mDeadline != -1) {
@@ -157,8 +159,8 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	/**
-	 * Set a deadline in ms after which the toolchain should stop. All values
-	 * smaller than 0 will be ignored. 0 disables all timeouts.
+	 * Set a deadline in ms after which the toolchain should stop. All values smaller than 0 will be ignored. 0 disables
+	 * all timeouts.
 	 * 
 	 * @param deadline
 	 *            The deadline in ms
@@ -192,5 +194,16 @@ public abstract class BasicToolchainJob extends Job {
 	protected abstract IStatus rerunToolchain(IProgressMonitor monitor);
 
 	protected abstract IStatus runToolchainDefault(IProgressMonitor monitor);
-	
+
+	protected IStatus convert(final ReturnCode result) {
+		switch (result) {
+		case Ok:
+			return Status.OK_STATUS;
+		case Cancel:
+			return Status.CANCEL_STATUS;
+		case Error:
+		default:
+			return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
+		}
+	}
 }

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 
 public class SystemNode extends SpaceExNode {
 
-	private List<String> mBinds;
+	private final List<String> mBinds;
 	
 	public SystemNode(ComponentType component) {
 		setName(component.getId());

@@ -30,10 +30,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  */
 public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final CodeBlock mPredecessor;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
@@ -59,7 +58,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	private final int mKey;
 
 	public ReachDefTraceVisitor(IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, Logger logger,
+			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, ILogger logger,
 			ScopedBoogieVarBuilder builder, int index) {
 		mLogger = logger;
 		mPredecessor = predecessor;
@@ -70,7 +69,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	}
 
 	public void process(CodeBlock current) {
-		String key = String.valueOf(mKey);
+		final String key = String.valueOf(mKey);
 		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(current, key);
 		if (annot == null) {
 			annot = new ReachDefEdgeAnnotation(current, mStatementProvider, key);
@@ -81,8 +80,8 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		List<Statement> stmts = new ArrayList<>();
-		for (CodeBlock cb : c.getCodeBlocks()) {
+		final List<Statement> stmts = new ArrayList<>();
+		for (final CodeBlock cb : c.getCodeBlocks()) {
 			if (cb instanceof StatementSequence) {
 				stmts.addAll(((StatementSequence) cb).getStatements());
 			} else {
@@ -101,22 +100,22 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	}
 
 	private void processEdge(CodeBlock edge, List<Statement> stmts) {
-		String key = String.valueOf(mKey);
-		for (Statement stmt : stmts) {
+		final String key = String.valueOf(mKey);
+		for (final Statement stmt : stmts) {
 			ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(stmt, key);
 			if (annot == null) {
 				annot = new ReachDefStatementAnnotation();
 				mStatementProvider.annotate(stmt, annot, key);
 			}
-			ReachDefBoogieAnnotator generator = createBoogieAnnotator(stmts, stmt, annot);
+			final ReachDefBoogieAnnotator generator = createBoogieAnnotator(stmts, stmt, annot);
 			try {
 				generator.annotate(stmt, edge.getTransitionFormula());
 				if (mLogger.isDebugEnabled()) {
-					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(stmt);
+					final String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(stmt);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Def: " + annot.getDefAsString());
 				}
-			} catch (Throwable e) {
+			} catch (final Throwable e) {
 				// Fail fast after fatal error
 				mLogger.fatal("Fatal error occured", e);
 				return;
@@ -129,21 +128,21 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 
 		Collection<ReachDefStatementAnnotation> predecessors;
 
-		int currentIndex = stmts.indexOf(currentStmt);
+		final int currentIndex = stmts.indexOf(currentStmt);
 		predecessors = new ArrayList<>();
 
 		if (currentIndex != 0) {
 			// its not the first statement, so we only need the straight line
 			// predecessor
-			String key = String.valueOf(mKey);
-			ReachDefStatementAnnotation annot = (ReachDefStatementAnnotation) mStatementProvider.getAnnotation(
+			final String key = String.valueOf(mKey);
+			final ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(
 					stmts.get(currentIndex - 1), key);
 			predecessors.add(annot);
 		} else if (mPredecessor != null) {
 			// it is the first statement, we only need one predecessor
 			// from the trace and only if this is not the first codeblock
-			String key = String.valueOf(mKey - 1);
-			ReachDefTracePredecessorGenerator generator = new ReachDefTracePredecessorGenerator(mStatementProvider, key);
+			final String key = String.valueOf(mKey - 1);
+			final ReachDefTracePredecessorGenerator generator = new ReachDefTracePredecessorGenerator(mStatementProvider, key);
 			predecessors = generator.process(mPredecessor);
 		}
 

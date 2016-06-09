@@ -4,16 +4,20 @@ Bundle-Name: Library-UltimateTest
 Bundle-SymbolicName: Library-UltimateTest
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: UltimateCore,
+Export-Package: de.uni_freiburg.informatik.ultimate.test,
+ de.uni_freiburg.informatik.ultimate.test.decider,
+ de.uni_freiburg.informatik.ultimate.test.junitextension,
+ de.uni_freiburg.informatik.ultimate.test.junitextension.categories,
+ de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory,
+ de.uni_freiburg.informatik.ultimate.test.mocks,
+ de.uni_freiburg.informatik.ultimate.test.reporting,
+ de.uni_freiburg.informatik.ultimate.test.util
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-UltimateUtil,
- Library-junit-helper,
  Library-log4j,
  org.junit
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners
-Export-Package: de.uni_freiburg.informatik.ultimatetest,
- de.uni_freiburg.informatik.ultimatetest.decider,
- de.uni_freiburg.informatik.ultimatetest.reporting,
- de.uni_freiburg.informatik.ultimatetest.util

@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+                      "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+	<head>
+		<title>JavaBDD - High-Performance Java Binary Decision Diagram library</title>
+		<meta http-equiv="Content-Type" content="text/html">
+	</head>
+	<body>
+		<h1>JavaBDD - Java Binary Decision Diagram library<A href="http://sourceforge.net/projects/javabdd">
+				<IMG src="http://sourceforge.net/sflogo.php?group_id=72725&amp;type=5" width="71" height="21" border="0" alt="SourceForge.net Logo"></A></h1>
+		<ul>
+			<li>
+				<a href="#Project description">Project description</a>
+			<li>
+				<a href="#Download">Download</a>
+			<li>
+				<a href="#Compiling">Compiling</a>
+			<li>
+				<a href="#Installation">Installation</a>
+			<li>
+				<a href="#Performance">Performance</a>
+			<li>
+				<a href="#History">History</a>
+			<li>
+				<a href="#Acknowledgements">Acknowledgements</a>
+			<li>
+				<a href="#Links">Links</a>
+			<li>
+				<a href="#Contact">Contact</a>
+			<li>
+				<a href="#Copyright">Copyright</a>
+			<li>
+				<a href="javadoc/index.html">Javadoc documentation</a></li>
+		</ul>
+		<h2><a name="Project description"></a>Project description</h2>
+		<p>JavaBDD is a Java library for manipulating BDDs (Binary Decision Diagrams). 
+			Binary decision diagrams are widely used in model checking, formal 
+			verification, optimizing circuit diagrams, etc. For an excellent overview of 
+			the BDD data structure, see this set of <a href="http://www.itu.dk/people/hra/notes-index.html">
+				lecture notes</a> by Henrik Reif Andersen.</p>
+		<p>The JavaBDD API is based on that of the popular <a href="http://www.itu.dk/research/buddy/">
+				BuDDy</a> package, a BDD package written in C by Jørn Lind-Nielsen. 
+			However, JavaBDD's API is designed to be object-oriented. The ugly C function 
+			interface and reference counting schemes have been hidden underneath a uniform, 
+			object-oriented interface.</p>
+		<p>JavaBDD includes a 100% Java implementation. It can also interface with two 
+			popular BDD libraries written in C via a JNI interface: <a href="http://www.itu.dk/research/buddy/">
+				BuDDy</a> and <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>.
+		</p>
+		<p>JavaBDD is designed for high performance applications, so it also exposes many 
+			of the lower level options of the BDD library, like cache sizes and advanced 
+			variable reordering.</p>
+		<h2><a name="Download"></a>Download</h2>
+		<p>The latest version is <b>0.6</b>.</p>
+		<ul>
+			<li>
+				Win32 binary: <a href="http://prdownloads.sourceforge.net/javabdd/javabdd_0.6.zip?download">
+					javabdd_0.6.zip</a>
+			<li>
+				Linux binary: <a href="http://prdownloads.sourceforge.net/javabdd/javabdd_0.6.tar.gz?download">
+					javabdd_0.6.tar.gz</a>
+			<li>
+				Source only: <a href="http://prdownloads.sourceforge.net/javabdd/javabdd_src_0.6.tar.gz?download">
+					javabdd_src_0.6.tar.gz</a></li>
+		</ul>
+		<h2><a name="Compiling"></a>Compiling</h2>
+		<p>It is easiest to download one of the pre-built binaries. If you want to build it 
+			yourself with the interface to BuDDy and/or CUDD, you will also need the BuDDy 
+			(and/or CUDD) source code, available from the <a href="http://www.itu.dk/research/buddy/">
+				BuDDy homepage</a> (and/or the <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">
+				CUDD homepage</a>).</p>
+		<p>Grab the JavaBDD source code from CVS. To build JavaBDD on Windows, you will 
+			need cygwin or mingw installed. The Makefile assumes that you have the BuDDy 
+			source code in buddy22/src. It will automatically identify the path to the JDK, 
+			as long as you have it installed in the default location (C:/j2sdk* on Windows, 
+			/usr/java/j2sdk* on Linux). Finally, do a <tt>"make"</tt> and everything should 
+			work. Other make targets are "examples", "javadoc", "jar", and "test".</p>
+		<p>CUDD uses the Makefile.cudd makefile. To build, do a "make -f Makefile.cudd". 
+			The CUDD makefile contains the same targets as the normal BuDDy makefile.</p>
+		<p>If you manage to successfully compile JavaBDD for another system, please 
+			contribute your Makefile and/or any source patches.</p>
+		<h2><a name="Installation"></a>Installation</h2>
+		<p>Download the binary archive for your system and extract the files. It you want 
+			to use the native BuDDy library, put the "buddy.dll" (on Windows) or 
+			"libbuddy.so" (on Unix) somewhere in your library path, or in the directory you 
+			will execute from. (JavaBDD will automatically search the current directory for 
+			the native library, so there is no need to specify the current directory in the 
+			"java.library.path" system property.) Add the JavaBDD jar file to your Java 
+			class path if you want to compile and/or run with JavaBDD.</p>
+		<p>The JavaBDD jar file contains a simple example that solves an NxN queens 
+			problem. You can run this example by simply typing:</p>
+		<p><tt>java -jar javabdd_0.6.jar</tt> <i>N</i></p>
+		<p>where <i>N</i> is the size of the board (e.g. 8).</p>
+		<h2><a name="Performance"></a>Performance Comparison</h2>
+		<p>Here are the timings of solving the 12x12 NQueens problem on my home machine 
+			(2.4GHz P4, WinXP, Sun JDK 1.4.2). This test simply does simple logic 
+			operations. It primarily tests the speed of node creation and BDD garbage 
+			collection. The command line I used to test was:</p>
+		<p><tt>java -ms320m -mx320m -Dbdd=<i>package</i> -jar javabdd_0.6.jar</tt> <i>N</i></p>
+		<table border="2">
+			<tr>
+				<td>
+					Package
+				</td>
+				<td>
+					Time
+				</td>
+				<td>
+					Peak Memory Usage
+				</td>
+			</tr>
+			<tr>
+				<td>
+					buddy
+				</td>
+				<td>
+					74s
+				</td>
+				<td>
+					150mb
+				</td>
+			</tr>
+			<tr>
+				<td>
+					cudd
+				</td>
+				<td>
+					111s
+				</td>
+				<td>
+					171mb
+				</td>
+			</tr>
+			<tr>
+				<td>
+					java -server
+				</td>
+				<td>
+					158s
+				</td>
+				<td>
+					320mb
+				</td>
+			</tr>
+			<tr>
+				<td>
+					java -client
+				</td>
+				<td>
+					171s
+				</td>
+				<td>
+					295mb
+				</td>
+			</tr>
+		</table>
+		<p>Don't make any assumptions from these results about the relative efficiency of C 
+			and Java. The Java source code is a direct translation of the C source code, 
+			and therefore there are many, many inefficiencies that would not be present if 
+			it had been implemented from scratch in Java. At best, you could use this 
+			information as an example of the type of performance you will see if you 
+			directly translate a performance library written in C into Java.</p>
+		<h2><a name="History"></a>History</h2>
+		<p><i>Version 0.6 - October 31, 2003</i></p>
+		<ul>
+			<li>
+			Fixed security problems by adding better null and type checking.  It should
+			no longer be possible to crash the VM by passing in unexpected values.
+			<li>
+			Updated API:&nbsp;applyWith(), etc.&nbsp;methods return the&nbsp;'this' 
+			pointer, for easier nested operations.
+			<li>
+			Addition of typed BDD factory, for type checking of BDD code.
+			<li>
+				Code cleanups. JNI interface was made a few percent faster by moving
+				object allocations into Java code.</li>
+		</ul>
+		<p><i>Version 0.5 - August 4, 2003</i></p>
+		<ul>
+			<li>
+			Major update. Added a 100% Java implementation of the BDD factory, so the 
+			native library is no longer necessary.
+			<li>
+			Java implementation of variable domains. Domains can be up to 2^64 in size!
+			<li>
+			Java implementation of bit vectors, along with the associated operations (add, 
+			subtract, multiply, divide, etc.)
+			<li>
+			Fixes and extensions to the CUDD interface. Now CUDD can run all of the test 
+			cases correctly.
+			<li>
+				More small refinements to the API.</li>
+		</ul>
+		<p><i>Version 0.4 - June 18, 2003</i></p>
+		<ul>
+			<li>
+			Added an interface to the CUDD library. Only basic operations have been 
+			implemented and tested. Many features (like variable domains) have not been 
+			implemented/ported yet.
+			<li>
+			Improved the support for printing of BDDs. Now you can specify an interface 
+			that will convert the domain indices/members into meaningful strings.
+			<li>
+				Some small updates to the API. Notably, scanSet() now takes a BDDDomain object, 
+				rather than a domain number.</li>
+		</ul>
+		<p><i>Version 0.3 - February 21, 2003</i></p>
+		<ul>
+			<li>
+			Many bugs fixed.
+			<li>
+				Most functionality has been tested, so this version should be moreorless stable 
+				and useable.</li>
+		</ul>
+		<p><i>Version 0.2 - February 1, 2003</i></p>
+		<ul>
+			<li>
+			Still largely untested. Proceed at your own risk.
+			<li>
+			Added support for variable domains.
+			<li>
+			Added support for variable pairings.
+			<li>
+			Added support for defining variable orderings.
+			<li>
+				Fixed some LinkageError exceptions.</li>
+		</ul>
+		<p><i>Version 0.1 - January 30, 2003</i></p>
+		<ul>
+			<li>
+				Initial release. Largely untested.</li>
+		</ul>
+		<h2><a name="Acknowledgements"></a>Acknowledgements</h2>
+		<ul>
+			<li>
+				<a href="http://www.itu.dk/people/jln">Jørn Lind-Nielsen</a>, the author of 
+			BuDDy, for an outstanding package.
+			<li>
+				<a href="http://vlsi.colorado.edu/~fabio/">Fabio Somenzi</a>, the author of 
+			CUDD.
+			<li>
+				<a href="http://www.chl.chalmers.se/~vahidi/index.shtml">Arash Vahidi</a>, 
+				author of <a href="http://www.chl.chalmers.se/~vahidi/bdd/bdd.html">JBDD</a>, a 
+				precursor to JavaBDD.</li>
+		</ul>
+		<h2><a name="Links"></a>Links</h2>
+		<ul>
+			<li>
+				Lecture notes by Henrik Reif Andersen: <a href="http://www.itu.dk/people/hra/notes-index.html">
+					An Introduction to Binary Decision Diagrams</a>.
+			<li>
+				The <a href="http://www.itu.dk/research/buddy/">BuDDy</a>
+			homepage, a popular BDD library written in C.
+			<li>
+				<a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>, another 
+				BDD library written in C.</li>
+		</ul>
+		<h2><a name="Contact"></a>Contact</h2>
+		<p>Send your reactions to <a href="mailto:joewhaley@sourceforge.net">joewhaley at 
+				sourceforge.net</a>.</p>
+		<p>For technical issues, you can use the tools on the Sourceforge <a href="http://sourceforge.net/projects/javabdd/">
+				Project summary page</a>.</p>
+		<h2><a name="Copyright"></a>Copyright</h2>
+		<p>Copyright notice for JavaBDD:</p>
+		<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;Copyright (C) 2003&nbsp; John Whaley (jwhaley at 
+				alum.mit.edu) </tt>
+		</p>
+		<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;This library is free software; you can redistribute it 
+				and/or<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;modify it under the terms of the GNU Library General 
+				Public<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;License as published by the Free Software Foundation; 
+				either<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;version 2 of the License, or (at your option) any later 
+				version.</tt></p>
+		<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;This library is distributed in the hope that it will be 
+				useful,<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;but WITHOUT ANY WARRANTY; without even the implied 
+				warranty of<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+				PURPOSE.&nbsp; See the GNU<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;Library General Public License for more details.</tt></p>
+		<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;You should have received a copy of the GNU Library 
+				General Public<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;License along with this library; if not, write to the 
+				Free Software<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;Foundation, Inc., 59 Temple Place, Suite 330, Boston, 
+				MA&nbsp; 02111-1307&nbsp; USA</tt></p>
+		<p>Copyright notice for BuDDy:</p>
+		<pre>
+==========================================================================
+                              *** BuDDy ***
+                         Binary Decision Diagrams
+                           Library Package v2.2
+--------------------------------------------------------------------------
+               Copyright (C) 1996-2002 by Jorn Lind-Nielsen
+                            All rights reserved
+
+    Permission is hereby granted, without written agreement and without
+    license or royalty fees, to use, reproduce, prepare derivative
+    works, distribute, and display this software and its documentation
+    for any purpose, provided that (1) the above copyright notice and
+    the following two paragraphs appear in all copies of the source code
+    and (2) redistributions, including without limitation binaries,
+    reproduce these notices in the supporting documentation. Substantial
+    modifications to this software may be copyrighted by their authors
+    and need not follow the licensing terms described here, provided
+    that the new terms are clearly indicated in all files where they apply.
+
+    IN NO EVENT SHALL JORN LIND-NIELSEN, OR DISTRIBUTORS OF THIS
+    SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
+    INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS
+    SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE AUTHORS OR ANY OF THE
+    ABOVE PARTIES HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+    JORN LIND-NIELSEN SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+    BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+    FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+    ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO
+    OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+    MODIFICATIONS.
+</pre>
+		<hr width="100%">
+		<A href="http://sourceforge.net/projects/javabdd"><IMG src="http://sf.net/sflogo.php?group_id=72725&amp;type=5" width="210" height="62" border="0" alt="SourceForge.net Logo"></A>
+		<font size="-1">Last updated on October 31, 2003.</font></body>
+</html>

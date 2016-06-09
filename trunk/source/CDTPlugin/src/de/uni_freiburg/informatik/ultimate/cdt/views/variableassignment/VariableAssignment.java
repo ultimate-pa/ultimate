@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.test.TestValuation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace.LocationTrace;
 import de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace.TraceNode;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 
 /**
  * @author Stefan Wissert
@@ -76,16 +76,16 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 	 */
 	@Override
 	public void createPartControl(Composite parent) {
-		Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
-		TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
+		final TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
 		variableTree.setLinesVisible(true);
 		column1.setAlignment(SWT.LEFT);
 		column1.setText("Variable-Name");
 		column1.setWidth(130);
-		TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
+		final TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
 		column2.setAlignment(SWT.LEFT);
 		column2.setText("Assignment");
 		column2.setWidth(130);
@@ -113,11 +113,11 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		if (selection instanceof ITreeSelection && part instanceof ResultList) {
-			Object first = ((ITreeSelection) selection).getFirstElement();
+			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof CounterExampleResult) {
-				IEditorPart edPart = getSite().getPage().getActiveEditor();
+				final IEditorPart edPart = getSite().getPage().getActiveEditor();
 				actualAllowedInput = edPart.getTitle();
-				CounterExampleResult res = (CounterExampleResult) first;
+				final CounterExampleResult res = (CounterExampleResult) first;
 
 				if (res.getProgramExecution() != null) {
 					// TODO: Implement this right with IProgramExecution and known values for generic 
@@ -128,19 +128,20 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 			}
 			viewer.getTree().removeAll();
 		} else if (selection instanceof ITreeSelection && part instanceof LocationTrace) {
-			Object first = ((ITreeSelection) selection).getFirstElement();
-			if (first != null)
+			final Object first = ((ITreeSelection) selection).getFirstElement();
+			if (first != null) {
 				viewer.setInput(((TraceNode) first).getOriginalIndex());
+			}
 		} else if (selection instanceof ITextSelection && part instanceof EditorPart) {
-			String text = ((EditorPart) part).getTitle();
+			final String text = ((EditorPart) part).getTitle();
 			if (!text.equals(actualAllowedInput)) {
 				viewer.getTree().removeAll();
 			}
 		} else if (selection instanceof ITreeSelection && part instanceof CommonNavigator) {
-			CommonNavigator navi = (CommonNavigator) part;
+			final CommonNavigator navi = (CommonNavigator) part;
 			if (navi.isLinkingEnabled()) {
 				if (((ITreeSelection) selection).getFirstElement() != null) {
-					String text = ((ITreeSelection) selection).getFirstElement().toString();
+					final String text = ((ITreeSelection) selection).getFirstElement().toString();
 					if (!text.equals(actualAllowedInput)) {
 						viewer.getTree().removeAll();
 					}

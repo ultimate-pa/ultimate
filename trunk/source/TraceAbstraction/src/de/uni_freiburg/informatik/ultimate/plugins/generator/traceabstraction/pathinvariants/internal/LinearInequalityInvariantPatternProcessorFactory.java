@@ -29,12 +29,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -51,7 +53,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final PredicateUnifier predUnifier;
 	protected final SmtManager smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
-	private final boolean m_UseNonlinearConstraints = true;
+	private final boolean mUseNonlinearConstraints;
+	private final Settings mSolverSettings;
 
 	/**
 	 * Constructs a new factory for
@@ -72,12 +75,14 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final ILinearInequalityInvariantPatternStrategy strategy) {
+			final ILinearInequalityInvariantPatternStrategy strategy, boolean useNonlinerConstraints, Settings solverSettings) {
 		this.services = services;
 		this.storage = storage;
 		this.predUnifier = predUnifier;
 		this.smtManager = smtManager;
 		this.strategy = strategy;
+		mUseNonlinearConstraints = useNonlinerConstraints;
+		mSolverSettings = solverSettings;
 	}
 
 	/**
@@ -89,7 +94,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
 				storage, predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
-				postcondition, strategy, m_UseNonlinearConstraints);
+				postcondition, strategy, mUseNonlinearConstraints);
 	}
 
 	/**
@@ -98,8 +103,15 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
-		Script script = SolverBuilder.buildScript(services, storage,
-				produceSolverSettings());
+		final Logics logic;
+		if (mUseNonlinearConstraints) {
+			logic = Logics.QF_NRA;
+		} else {
+			logic = Logics.QF_LRA;
+		}
+		Script script = SolverBuilder.buildAndInitializeSolver(services, storage, 
+				SolverMode.External_DefaultMode, mSolverSettings, 
+				false, false, logic.toString(), "InvariantSynthesis"); 
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
 	}
@@ -110,12 +122,13 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * 
 	 * @return SMT solver settings to use
 	 */
-	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = false;
-		String pathOfDumpedScript = ".";
-		String baseNameOfDumpedScript = "contraintSolving";
+	@Deprecated
+	private Settings produceSolverSettings() {
+		final boolean dumpSmtScriptToFile = false;
+		final String pathOfDumpedScript = ".";
+		final String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;
-		if (m_UseNonlinearConstraints) {
+		if (mUseNonlinearConstraints) {
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
 		} else {
 			solverCommand = "yices-smt2 --incremental";

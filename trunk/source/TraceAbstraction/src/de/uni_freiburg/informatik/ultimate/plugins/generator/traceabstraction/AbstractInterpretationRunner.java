@@ -4,19 +4,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -24,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class AbstractInterpretationRunner {
 
-	private final CegarLoopBenchmarkGenerator mCegarLoopBenchmark;
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final RootNode mRoot;
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
@@ -45,10 +45,10 @@ public class AbstractInterpretationRunner {
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
-			final CegarLoopBenchmarkGenerator benchmark, final RootNode root) {
+			final CegarLoopStatisticsGenerator benchmark, final RootNode root) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRoot = root;
 		mAbsIntResult = null;
 		mSkipIteration = false;
@@ -70,7 +70,7 @@ public class AbstractInterpretationRunner {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 
-		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mAbsIntResult = null;
 
@@ -104,7 +104,7 @@ public class AbstractInterpretationRunner {
 				mCegarLoopBenchmark.announceStrongAbsInt();
 			}
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
 
@@ -132,14 +132,14 @@ public class AbstractInterpretationRunner {
 			return null;
 		}
 
-		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton");
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
 					mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
 			return aiInterpolAutomaton;
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
 
@@ -148,7 +148,7 @@ public class AbstractInterpretationRunner {
 			final RefineFunction refineFun) throws AutomataLibraryException {
 		mLogger.info("Refining with AI automaton anyways");
 		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = constructInterpolantAutomaton(
-				predUnifier, smtManager, (INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, cex);
+				predUnifier, smtManager, abstraction, cex);
 		refine(predUnifier, aiInterpolAutomaton, cex, refineFun);
 	}
 
@@ -169,15 +169,15 @@ public class AbstractInterpretationRunner {
 			return false;
 		}
 
-		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Refining with AI automaton");
-			boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
+			final boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
 			assert hasAiProgress(aiResult, aiInterpolAutomaton, currentCex) : "No progress during AI refinement";
 			mLogger.info("Finished additional refinement with AI automaton. Did we make progress: " + aiResult);
 			return !mAbsIntResult.hasReachedError();
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
 
@@ -217,7 +217,7 @@ public class AbstractInterpretationRunner {
 	@FunctionalInterface
 	public interface RefineFunction {
 		boolean refine(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, PredicateUnifier unifier)
-				throws AssertionError, OperationCanceledException, AutomataLibraryException;
+				throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
 	}
 
 }

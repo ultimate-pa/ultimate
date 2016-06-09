@@ -30,8 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -49,17 +48,18 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 	protected Queue<RCFGEdge> mRemainingEdges;
 	protected HashSet<RCFGEdge> mProcessedEdges;
 
-	public RCFGWalkerBreadthFirst(ObserverDispatcher dispatcher, Logger logger)
+	public RCFGWalkerBreadthFirst(ObserverDispatcher dispatcher, ILogger logger)
 	{
 		super(dispatcher, logger);
 		mRemainingEdges = new LinkedList<>();
 		mProcessedEdges = new HashSet<>();
 	}
 
+	@Override
 	public void startFrom(RootNode node)
 	{
 		level(node);
-		for (RCFGEdge edge : node.getOutgoingEdges()) {
+		for (final RCFGEdge edge : node.getOutgoingEdges()) {
 			mRemainingEdges.add(edge);
 		}
 		processMethods();
@@ -72,18 +72,18 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 				return;
 			}
 			
-			RCFGEdge currentEdge = mRemainingEdges.poll();
+			final RCFGEdge currentEdge = mRemainingEdges.poll();
 			level(currentEdge);
 			mProcessedEdges.add(currentEdge);
 
-			RCFGNode currentNode = currentEdge.getTarget();
+			final RCFGNode currentNode = currentEdge.getTarget();
 			level(currentNode);
 			
 			if(mDispatcher.abortCurrentBranch()){
 				continue;
 			}
 
-			for (RCFGEdge nextEdge : currentNode.getOutgoingEdges()) {
+			for (final RCFGEdge nextEdge : currentNode.getOutgoingEdges()) {
 				if (!mProcessedEdges.contains(nextEdge)) {
 					mRemainingEdges.add(nextEdge);
 				}

@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**
  * 
@@ -43,6 +43,10 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
  * 
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "DS Invariant AST Transformer");
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -57,16 +61,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						VALUE_TRIMWRAP_DEFAULT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_LEAVEPROCEDURES,
 						VALUE_LEAVEPROCEDURES, PreferenceType.Boolean), };
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "DS Invariant AST Transformer";
 	}
 
 	/*

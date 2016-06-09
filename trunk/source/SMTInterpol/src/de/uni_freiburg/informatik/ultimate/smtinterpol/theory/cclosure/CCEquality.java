@@ -44,9 +44,9 @@ public class CCEquality extends DPLLAtom {
 	
 	CCEquality(int assertionstacklevel, CCTerm c1, CCTerm c2) {
 		super(HashUtils.hashJenkins(c1.hashCode(), c2), assertionstacklevel);
-		this.mLhs = c1;
-		this.mRhs = c2;
-		this.mEntry = new Entry();
+		mLhs = c1;
+		mRhs = c2;
+		mEntry = new Entry();
 	}	
 	
 	public CCTerm getLhs() {
@@ -84,13 +84,15 @@ public class CCEquality extends DPLLAtom {
 		mLAFactor = null;
 	}
 	
+	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		Term lhs = mLhs.toSMTTerm(smtTheory, quoted);
-		Term rhs = mRhs.toSMTTerm(smtTheory, quoted);
-		Term res = Coercion.buildEq(lhs, rhs);
+		final Term lhs = mLhs.toSMTTerm(smtTheory, quoted);
+		final Term rhs = mRhs.toSMTTerm(smtTheory, quoted);
+		final Term res = Coercion.buildEq(lhs, rhs);
 		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}
 
+	@Override
 	public String toString() {
 		return mLhs + " == " + mRhs;
 	}

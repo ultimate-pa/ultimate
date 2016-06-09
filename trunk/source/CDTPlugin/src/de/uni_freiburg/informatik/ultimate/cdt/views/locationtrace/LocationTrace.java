@@ -67,9 +67,9 @@ import org.osgi.framework.Bundle;
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * This is the LocationStack, where we try to list up all Locations which are in
@@ -99,7 +99,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * This list stores the current markers, which we use to highlight the
 	 * counterexample in the editor.
 	 */
-	private List<IMarker> displayedMarkerList = new ArrayList<IMarker>();
+	private final List<IMarker> displayedMarkerList = new ArrayList<IMarker>();
 
 	private LocationTraceContentProvider contProv;
 
@@ -116,20 +116,20 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 */
 	@Override
 	public void createPartControl(Composite parent) {
-		Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
+		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
-		TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
+		final TreeColumn column1 = new TreeColumn(variableTree, SWT.LEFT);
 		column1.setAlignment(SWT.LEFT);
 		column1.setText("Nr.");
 		column1.setWidth(60);
-		TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
+		final TreeColumn column2 = new TreeColumn(variableTree, SWT.RIGHT);
 		column2.setAlignment(SWT.LEFT);
 		column2.setText("Iteration");
 		column2.setWidth(60);
-		TreeColumn column3 = new TreeColumn(variableTree, SWT.RIGHT);
+		final TreeColumn column3 = new TreeColumn(variableTree, SWT.RIGHT);
 		column3.setAlignment(SWT.LEFT);
 		column3.setText("Location");
 		column3.setWidth(120);
@@ -161,9 +161,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		if (selection instanceof ITreeSelection && part instanceof ResultList) {
-			Object first = ((ITreeSelection) selection).getFirstElement();
+			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof IResult) {
-				IEditorPart edPart = getSite().getPage().getActiveEditor();
+				final IEditorPart edPart = getSite().getPage().getActiveEditor();
 				actualAllowedInput = edPart.getTitle();
 				viewer.setInput(first);
 				clearMarkedLocationsInEditor();
@@ -175,27 +175,27 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 			}
 		} else if (selection instanceof ITreeSelection
 				&& part instanceof LocationTrace) {
-			Object first = ((ITreeSelection) selection).getFirstElement();
+			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof TraceNode) {
-				TraceNode tn = (TraceNode) first;
-				ILocation loc = (ILocation) tn.getLocation();
-				IEditorPart editorPart = getSite().getPage().getActiveEditor();
+				final TraceNode tn = (TraceNode) first;
+				final ILocation loc = tn.getLocation();
+				final IEditorPart editorPart = getSite().getPage().getActiveEditor();
 				markLine(editorPart,
 						getLineInformation(editorPart, loc.getStartLine()));
 			}
 		} else if (selection instanceof ITextSelection
 				&& part instanceof EditorPart) {
-			String text = ((EditorPart) part).getTitle();
+			final String text = ((EditorPart) part).getTitle();
 			if (!text.equals(actualAllowedInput)) {
 				viewer.getTree().removeAll();
 				clearMarkedLocationsInEditor();
 			}
 		} else if (selection instanceof ITreeSelection
 				&& part instanceof CommonNavigator) {
-			CommonNavigator navi = (CommonNavigator) part;
+			final CommonNavigator navi = (CommonNavigator) part;
 			if (navi.isLinkingEnabled()) {
 				if (((ITreeSelection) selection).getFirstElement() != null) {
-					String text = ((ITreeSelection) selection)
+					final String text = ((ITreeSelection) selection)
 							.getFirstElement().toString();
 					if (!text.equals(actualAllowedInput)) {
 						viewer.getTree().removeAll();
@@ -222,7 +222,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 		if (!(editorPart instanceof ITextEditor)) {
 			return;
 		}
-		ITextEditor editor = (ITextEditor) editorPart;
+		final ITextEditor editor = (ITextEditor) editorPart;
 		if (lineInfo != null) {
 			editor.selectAndReveal(lineInfo.getOffset(), lineInfo.getLength());
 		}
@@ -244,12 +244,12 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 			IEditorPart editorPart) {
 		if (res instanceof CounterExampleResult
 				&& input instanceof IFileEditorInput) {
-			for (ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
+			for (final ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
 				if (loc instanceof LocationFactory) {
 					try {
-						IRegion lineInfo = getLineInformation(editorPart,
+						final IRegion lineInfo = getLineInformation(editorPart,
 								loc.getStartLine());
-						IMarker marker = ((IFileEditorInput) input)
+						final IMarker marker = ((IFileEditorInput) input)
 								.getFile()
 								.createMarker(
 										"de.uni_freiburg.informatik.ultimate.cdt.marker.locationmarker");
@@ -260,7 +260,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 						marker.setAttribute(IMarker.CHAR_END,
 								lineInfo.getOffset() + lineInfo.getLength());
 						displayedMarkerList.add(marker);
-					} catch (CoreException e) {
+					} catch (final CoreException e) {
 						e.printStackTrace();
 					}
 				}
@@ -275,10 +275,10 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * changes.
 	 */
 	private void clearMarkedLocationsInEditor() {
-		for (IMarker marker : this.displayedMarkerList) {
+		for (final IMarker marker : displayedMarkerList) {
 			try {
 				marker.delete();
-			} catch (CoreException e) {
+			} catch (final CoreException e) {
 				e.printStackTrace();
 			}
 		}
@@ -298,8 +298,8 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 		if (!(editorPart instanceof ITextEditor) || lineNumber <= 0) {
 			return null;
 		}
-		ITextEditor editor = (ITextEditor) editorPart;
-		IDocument document = editor.getDocumentProvider().getDocument(
+		final ITextEditor editor = (ITextEditor) editorPart;
+		final IDocument document = editor.getDocumentProvider().getDocument(
 				editor.getEditorInput());
 		if (document != null) {
 			IRegion lineInfo = null;
@@ -307,7 +307,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 				// line count internaly starts with 0, and not with 1 like in
 				// GUI
 				lineInfo = document.getLineInformation(lineNumber - 1);
-			} catch (BadLocationException e) {
+			} catch (final BadLocationException e) {
 				// ignored because line number may not really exist in document,
 				// we guess this...
 			}
@@ -323,6 +323,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	private void createActions() {
 		// Forward
 		stepForward = new Action("Forward") {
+			@Override
 			public void run() {
 				moveSelection(false);
 			}
@@ -330,6 +331,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 		stepForward.setImageDescriptor(getImageDescriptor("forward.PNG"));
 		// Backward
 		stepBackward = new Action("Backward") {
+			@Override
 			public void run() {
 				moveSelection(true);
 			}
@@ -346,8 +348,8 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 *            decides if we go back or for
 	 */
 	private void moveSelection(boolean back) {
-		ITreeSelection selection = (ITreeSelection) viewer.getSelection();
-		Object[] items = contProv.getElements(selection.getFirstElement());
+		final ITreeSelection selection = (ITreeSelection) viewer.getSelection();
+		final Object[] items = contProv.getElements(selection.getFirstElement());
 		Object forward = null;
 		Object backward = null;
 		int position = -1;
@@ -380,7 +382,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * Create toolbar.
 	 */
 	private void createToolbar() {
-		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+		final IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
 		mgr.add(stepBackward);
 		mgr.add(stepForward);
 	}
@@ -389,9 +391,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * Returns the image descriptor with the given relative path.
 	 */
 	private ImageDescriptor getImageDescriptor(String relativePath) {
-		String iconPath = "icons/";
-		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-		URL url = FileLocator.find(bundle, new Path(iconPath + relativePath),
+		final String iconPath = "icons/";
+		final Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+		final URL url = FileLocator.find(bundle, new Path(iconPath + relativePath),
 				null);
 		return ImageDescriptor.createFromURL(url);
 	}

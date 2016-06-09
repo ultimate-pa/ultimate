@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -32,13 +32,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class TypedLetter<LETTER> {
-	public final LETTER mLetter;
-	public final ELetterType mType;
+public final class TypedLetter<LETTER> {
+	private final LETTER mLetter;
+	private final ELetterType mType;
 	
+	/**
+	 * @param letter letter
+	 * @param type letter type
+	 */
 	public TypedLetter(final LETTER letter, final ELetterType type) {
 		this.mLetter = letter;
 		this.mType = type;
+	}
+	
+	public LETTER getLetter() {
+		return mLetter;
+	}
+	
+	public ELetterType getType() {
+		return mType;
 	}
 	
 	@Override
@@ -56,13 +68,12 @@ public class TypedLetter<LETTER> {
 		return mLetter.hashCode() + mType.hashCode();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof TypedLetter)) {
+		if ((o == null) || (this.getClass() != o.getClass())) {
 			return false;
 		}
-		final TypedLetter<LETTER> other = (TypedLetter<LETTER>) o;
+		final TypedLetter<?> other = (TypedLetter<?>) o;
 		return (other.mLetter.equals(this.mLetter)) &&
 				(other.mType == this.mType);
 	}

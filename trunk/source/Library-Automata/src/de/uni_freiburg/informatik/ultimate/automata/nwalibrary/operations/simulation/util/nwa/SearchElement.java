@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Element for a breadth-first search that computes the priority of a given
@@ -41,20 +44,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  */
 public final class SearchElement<LETTER, STATE> {
 	/**
-	 * Creates a new search element with a given vertex and a vertex which
-	 * specifies the down state.
+	 * Computes and returns the summarize edge which corresponds to a double
+	 * decker, given by a vertex and its down state. If the double decker does
+	 * not directly corresponds to an edge, it assumes that the double decker
+	 * corresponds to the previous summarize edge.
 	 * 
 	 * @param vertex
-	 *            Vertex for the search element
-	 * @param downStateVertex
-	 *            Vertex that specifies the down state. The down state is (q0,
-	 *            q1).
-	 * @return The corresponding created search element.
+	 *            Vertex to compute its corresponding summarize edge
+	 * @param downState
+	 *            Down state of the vertex to compute its corresponding
+	 *            summarize edge
+	 * @param previousEdge
+	 *            Summarize edge the predecessor of this double decker
+	 *            corresponded to, <tt>null</tt> if there is no.
+	 * @return The summarize edge corresponding to the given double decker,
+	 *         <tt>previousEdge</tt> if there is no.
 	 */
-	public static <LETTER, STATE> SearchElement<LETTER, STATE> createRootSearchElement(
-			final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> downStateVertex) {
-		return new SearchElement<LETTER, STATE>(vertex,
-				new VertexDownState<STATE>(downStateVertex.getQ0(), downStateVertex.getQ1()));
+	public static <LETTER, STATE> SummarizeEdge<LETTER, STATE> computeSummarizeEdge(final Vertex<LETTER, STATE> vertex,
+			final VertexDownState<STATE> downState, final SummarizeEdge<LETTER, STATE> previousEdge,
+			final Map<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge) {
+		SummarizeEdge<LETTER, STATE> correspondingSummarizeEdge = invokerToSummarizeEdge
+				.get(new Pair<>(vertex, downState));
+		if (correspondingSummarizeEdge == null) {
+			correspondingSummarizeEdge = previousEdge;
+		}
+		return correspondingSummarizeEdge;
 	}
 
 	/**
@@ -68,23 +82,27 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public static <LETTER, STATE> VertexDoubleDecker<STATE> extractVertexDoubleDecker(
 			final SearchElement<LETTER, STATE> searchElement) {
-		Vertex<LETTER, STATE> vertex = searchElement.getVertex();
-		VertexUpState<STATE> upState = new VertexUpState<STATE>(vertex.getQ0(), vertex.getQ1());
+		final Vertex<LETTER, STATE> vertex = searchElement.getVertex();
+		final VertexUpState<STATE> upState = new VertexUpState<STATE>(vertex.getQ0(), vertex.getQ1());
 		return new VertexDoubleDecker<>(upState, searchElement.getDownState());
 	}
 
 	/**
 	 * The down state of this element.
 	 */
-	private final VertexDownState<STATE> m_DownState;
+	private final VertexDownState<STATE> mDownState;
 	/**
 	 * Vertex down state that was used right before this search element.
 	 */
-	private final VertexDownState<STATE> m_History;
+	private final VertexDownState<STATE> mHistory;
+	/**
+	 * Summarize edge this element corresponds to.
+	 */
+	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
 	 * The vertex of this element.
 	 */
-	private final Vertex<LETTER, STATE> m_Vertex;
+	private final Vertex<LETTER, STATE> mVertex;
 
 	/**
 	 * Creates a new search element with a given vertex and a down state.
@@ -96,12 +114,13 @@ public final class SearchElement<LETTER, STATE> {
 	 *            Down state for this element
 	 */
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState) {
-		this(vertex, downState, null);
+		this(vertex, downState, null, null);
 	}
 
 	/**
-	 * Creates a new search element with a given vertex, a down state and a
-	 * history element. Together they form a double decker vertex.
+	 * Creates a new search element with a given vertex, a down state, a history
+	 * element and the corresponding summarize edge. Together they form a double
+	 * decker vertex.
 	 * 
 	 * @param vertex
 	 *            Vertex for this element
@@ -110,12 +129,15 @@ public final class SearchElement<LETTER, STATE> {
 	 * @param history
 	 *            Vertex down state that was used right before this search
 	 *            element
+	 * @param summarizeEdge
+	 *            Summarize edge this element corresponds to
 	 */
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState,
-			final VertexDownState<STATE> history) {
-		m_Vertex = vertex;
-		m_DownState = downState;
-		m_History = history;
+			final VertexDownState<STATE> history, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+		mVertex = vertex;
+		mDownState = downState;
+		mHistory = history;
+		mSummarizeEdge = summarizeEdge;
 	}
 
 	/*
@@ -134,19 +156,19 @@ public final class SearchElement<LETTER, STATE> {
 		if (!(obj instanceof SearchElement)) {
 			return false;
 		}
-		SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
-		if (m_DownState == null) {
-			if (other.m_DownState != null) {
+		final SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
+		if (mDownState == null) {
+			if (other.mDownState != null) {
 				return false;
 			}
-		} else if (!m_DownState.equals(other.m_DownState)) {
+		} else if (!mDownState.equals(other.mDownState)) {
 			return false;
 		}
-		if (m_Vertex == null) {
-			if (other.m_Vertex != null) {
+		if (mVertex == null) {
+			if (other.mVertex != null) {
 				return false;
 			}
-		} else if (!m_Vertex.equals(other.m_Vertex)) {
+		} else if (!mVertex.equals(other.mVertex)) {
 			return false;
 		}
 		return true;
@@ -158,7 +180,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * @return The down state
 	 */
 	public VertexDownState<STATE> getDownState() {
-		return m_DownState;
+		return mDownState;
 	}
 
 	/**
@@ -169,7 +191,17 @@ public final class SearchElement<LETTER, STATE> {
 	 *         element.
 	 */
 	public VertexDownState<STATE> getHistory() {
-		return m_History;
+		return mHistory;
+	}
+
+	/**
+	 * Gets the summarize edge this element corresponds to.
+	 * 
+	 * @return The summarize edge this element corresponds to or <tt>null</tt>
+	 *         if not set.
+	 */
+	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
+		return mSummarizeEdge;
 	}
 
 	/**
@@ -178,7 +210,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * @return The vertex
 	 */
 	public Vertex<LETTER, STATE> getVertex() {
-		return m_Vertex;
+		return mVertex;
 	}
 
 	/*
@@ -190,8 +222,8 @@ public final class SearchElement<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_DownState == null) ? 0 : m_DownState.hashCode());
-		result = prime * result + ((m_Vertex == null) ? 0 : m_Vertex.hashCode());
+		result = prime * result + ((mDownState == null) ? 0 : mDownState.hashCode());
+		result = prime * result + ((mVertex == null) ? 0 : mVertex.hashCode());
 		return result;
 	}
 
@@ -202,6 +234,6 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "SearchElement [m_DownState=" + m_DownState + ", m_Vertex=" + m_Vertex + "]";
+		return "SearchElement [mDownState=" + mDownState + ", mVertex=" + mVertex + "]";
 	}
 }

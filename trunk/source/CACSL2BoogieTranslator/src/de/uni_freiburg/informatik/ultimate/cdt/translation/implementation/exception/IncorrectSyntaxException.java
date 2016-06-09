@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * @author Markus Lindenmann, Matthias Heizmann
@@ -39,7 +39,7 @@ public class IncorrectSyntaxException extends RuntimeException {
 	 */
 	private static final long serialVersionUID = -1309056833732436476L;
 	
-	private final ILocation m_Location;
+	private final ILocation mLocation;
 
 	/**
 	 * Constructs an IncorrectSyntaxException with the specified detail
@@ -50,10 +50,10 @@ public class IncorrectSyntaxException extends RuntimeException {
 	 */
 	public IncorrectSyntaxException(ILocation location, String msg) {
 		super(msg);
-		m_Location = location;
+		mLocation = location;
 	}
 	
 	public ILocation getLocation() {
-		return m_Location;
+		return mLocation;
 	}
 }

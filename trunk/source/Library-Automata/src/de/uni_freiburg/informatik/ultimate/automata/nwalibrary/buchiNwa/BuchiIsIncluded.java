@@ -26,14 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is 
@@ -46,37 +45,37 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand1;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand2;
 
-	private final Boolean m_Result;
+	private final Boolean mResult;
 
-	private final NestedLassoRun<LETTER, STATE> m_Counterexample;
+	private final NestedLassoRun<LETTER, STATE> mCounterexample;
 
 	public BuchiIsIncluded(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand1 = nwa1;
-		m_Operand2 = nwa2;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand1 = nwa1;
+		mOperand2 = nwa2;
+		mLogger.info(startMessage());
 
-		INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
-				m_Services, stateFactory, m_Operand2)).getResult();
-		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
-				m_Services, m_Operand1, sndComplement, true)).getResult();
-		BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
-				m_Services, (INestedWordAutomatonOldApi<LETTER, STATE>) difference);
+		final INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
+				mServices, stateFactory, mOperand2)).getResult();
+		final INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
+				mServices, mOperand1, sndComplement, true)).getResult();
+		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
+				mServices, difference);
 
-		m_Result = emptinessCheck.getResult();
-		m_Counterexample = emptinessCheck.getAcceptingNestedLassoRun();
-		m_Logger.info(exitMessage());
+		mResult = emptinessCheck.getResult();
+		mCounterexample = emptinessCheck.getAcceptingNestedLassoRun();
+		mLogger.info(exitMessage());
 	}
 
 	@Override
@@ -87,23 +86,23 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand1 "
-				+ m_Operand1.sizeInformation() + ". Operand2 "
-				+ m_Operand2.sizeInformation();
+				+ mOperand1.sizeInformation() + ". Operand2 "
+				+ mOperand2.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is "
-				+ (m_Result ? "" : "not ") + "included";
+				+ (mResult ? "" : "not ") + "included";
 	}
 
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	public NestedLassoRun<LETTER, STATE> getCounterexample() {
-		return m_Counterexample;
+		return mCounterexample;
 	}
 
 	@Override

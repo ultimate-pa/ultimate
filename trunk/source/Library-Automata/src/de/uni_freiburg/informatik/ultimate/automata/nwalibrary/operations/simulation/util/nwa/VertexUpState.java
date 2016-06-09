@@ -40,11 +40,11 @@ public final class VertexUpState<STATE> {
 	/**
 	 * Left up state of the vertex.
 	 */
-	private final STATE m_LeftUpState;
+	private final STATE mLeftUpState;
 	/**
 	 * Right up state of the vertex.
 	 */
-	private final STATE m_RightUpState;
+	private final STATE mRightUpState;
 
 	/**
 	 * Creates a new vertex up state with two given up states.
@@ -55,8 +55,8 @@ public final class VertexUpState<STATE> {
 	 *            Right up state of the vertex
 	 */
 	public VertexUpState(final STATE leftUpState, final STATE rightUpState) {
-		m_LeftUpState = leftUpState;
-		m_RightUpState = rightUpState;
+		mLeftUpState = leftUpState;
+		mRightUpState = rightUpState;
 	}
 
 	/*
@@ -75,19 +75,19 @@ public final class VertexUpState<STATE> {
 		if (!(obj instanceof VertexUpState)) {
 			return false;
 		}
-		VertexUpState<?> other = (VertexUpState<?>) obj;
-		if (m_LeftUpState == null) {
-			if (other.m_LeftUpState != null) {
+		final VertexUpState<?> other = (VertexUpState<?>) obj;
+		if (mLeftUpState == null) {
+			if (other.mLeftUpState != null) {
 				return false;
 			}
-		} else if (!m_LeftUpState.equals(other.m_LeftUpState)) {
+		} else if (!mLeftUpState.equals(other.mLeftUpState)) {
 			return false;
 		}
-		if (m_RightUpState == null) {
-			if (other.m_RightUpState != null) {
+		if (mRightUpState == null) {
+			if (other.mRightUpState != null) {
 				return false;
 			}
-		} else if (!m_RightUpState.equals(other.m_RightUpState)) {
+		} else if (!mRightUpState.equals(other.mRightUpState)) {
 			return false;
 		}
 		return true;
@@ -99,7 +99,7 @@ public final class VertexUpState<STATE> {
 	 * @return The left up state
 	 */
 	public STATE getLeftUpState() {
-		return m_LeftUpState;
+		return mLeftUpState;
 	}
 
 	/**
@@ -108,7 +108,7 @@ public final class VertexUpState<STATE> {
 	 * @return The right up state
 	 */
 	public STATE getRightUpState() {
-		return m_RightUpState;
+		return mRightUpState;
 	}
 
 	/*
@@ -120,8 +120,8 @@ public final class VertexUpState<STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_LeftUpState == null) ? 0 : m_LeftUpState.hashCode());
-		result = prime * result + ((m_RightUpState == null) ? 0 : m_RightUpState.hashCode());
+		result = prime * result + ((mLeftUpState == null) ? 0 : mLeftUpState.hashCode());
+		result = prime * result + ((mRightUpState == null) ? 0 : mRightUpState.hashCode());
 		return result;
 	}
 
@@ -132,6 +132,6 @@ public final class VertexUpState<STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "[" + m_LeftUpState + "," + m_RightUpState + "]";
+		return "[" + mLeftUpState + "," + mRightUpState + "]";
 	}
 }

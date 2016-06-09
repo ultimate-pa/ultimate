@@ -127,7 +127,7 @@ public abstract class CType {
 	 */
 	public boolean isRealFloatingType() {
 		if (this instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) this;
+			final CPrimitive cPrimitive = (CPrimitive) this;
 			return cPrimitive.getType() == PRIMITIVE.FLOAT || 
 					cPrimitive.getType() == PRIMITIVE.DOUBLE || 
 					cPrimitive.getType() == PRIMITIVE.LONGDOUBLE;
@@ -142,7 +142,7 @@ public abstract class CType {
 	 */
 	public boolean isComplexType() {
 		if (this instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) this;
+			final CPrimitive cPrimitive = (CPrimitive) this;
 			return cPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT|| 
 					cPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE || 
 					cPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE;
@@ -168,7 +168,7 @@ public abstract class CType {
 	 * definition 6.2.5.17 in the C11 standard.
 	 */
 	public boolean isRealType() {
-		return this.isIntegerType() || this.isRealFloatingType();
+		return isIntegerType() || isRealFloatingType();
 	}
 	
 	/**
@@ -176,7 +176,7 @@ public abstract class CType {
 	 * definition 6.2.5.18 in the C11 standard.
 	 */
 	public boolean isArithmeticType() {
-		return this.isIntegerType() || this.isFloatingType();
+		return isIntegerType() || isFloatingType();
 	}
 	
 	/**

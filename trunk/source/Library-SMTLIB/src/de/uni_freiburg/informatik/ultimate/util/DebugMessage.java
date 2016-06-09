@@ -52,25 +52,27 @@ public class DebugMessage {
 		}
 		
 	}
-	private static final TermDirectFormat TERM_FORMAT = new TermDirectFormat();
-	private boolean mTermDirect;
-	private String mMsg;
-	private Object[] mParams;
+	private static final TermDirectFormat TERmFORMAT = new TermDirectFormat();
+	private final boolean mTermDirect;
+	private final String mMsg;
+	private final Object[] mParams;
 	public DebugMessage(String msg, Object... params) {
 		this(false, msg, params);
 	}
 	public DebugMessage(boolean termDirect, String msg, Object... params) {
-		this.mTermDirect = termDirect;
-		this.mMsg = msg;
-		this.mParams = params;
+		mTermDirect = termDirect;
+		mMsg = msg;
+		mParams = params;
 	}
+	@Override
 	public String toString() {
-		MessageFormat mf = new MessageFormat(mMsg);
+		final MessageFormat mf = new MessageFormat(mMsg);
 		if (mTermDirect) {
-			for (int i = 0; i < mParams.length; ++i)
+			for (int i = 0; i < mParams.length; ++i) {
 				if (mParams[i] instanceof Term) {
-					mf.setFormatByArgumentIndex(i, TERM_FORMAT);
+					mf.setFormatByArgumentIndex(i, TERmFORMAT);
 				}
+			}
 		}
 		return mf.format(mParams, new StringBuffer(), null).toString();
 	}

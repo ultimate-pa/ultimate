@@ -34,13 +34,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Helper class holding preprocessed input program information
@@ -49,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  *
  */
 public class Program {
-	private final Logger mLogger;
-	private Unit m_Unit;
+	private final ILogger mLogger;
+	private Unit mUnit;
 	
 	public Map<String, Procedure> Procedures;
 	public List<VariableDeclaration> Globals;
@@ -60,7 +59,7 @@ public class Program {
 	 * Constructs a new program
 	 * @param logger 
 	 */
-	public Program(Logger logger) {
+	public Program(ILogger logger) {
 		mLogger = logger;
 		Procedures = new LinkedHashMap<String, Procedure>();
 		Globals = new LinkedList<VariableDeclaration>();
@@ -73,13 +72,13 @@ public class Program {
 	 * @param unit
 	 * @param logger 
 	 */
-	public Program(Unit unit, Logger logger) {
+	public Program(Unit unit, ILogger logger) {
 		this(logger);
-		this.m_Unit = unit;
+		mUnit = unit;
 
-		for (Declaration decl : unit.getDeclarations()) {
+		for (final Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Procedure) {
-				Procedure p = (Procedure)decl;
+				final Procedure p = (Procedure)decl;
 				Procedures.put(p.getIdentifier(), p);
 			} else 
 			if (decl instanceof VariableDeclaration) {
@@ -104,7 +103,7 @@ public class Program {
 	 * @param procedures
 	 */
 	public void addProcedures(Iterable<Procedure> procedures) {
-		for (Procedure p : procedures) {
+		for (final Procedure p : procedures) {
 			Procedures.put(p.getIdentifier(), p);
 		}
 	}
@@ -114,17 +113,17 @@ public class Program {
 	 * @return
 	 */
 	public Unit toUnit() {
-		List<Declaration> decls = new ArrayList<Declaration>();
+		final List<Declaration> decls = new ArrayList<Declaration>();
 		
-		for (TypeDeclaration var : Types) {
+		for (final TypeDeclaration var : Types) {
 			decls.add(var);
 		}
 		
-		for (VariableDeclaration var : Globals) {
+		for (final VariableDeclaration var : Globals) {
 			decls.add(var);
 		}
 		
-		for (Procedure p : Procedures.values()) {
+		for (final Procedure p : Procedures.values()) {
 			decls.add(p);
 		}
 		

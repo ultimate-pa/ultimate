@@ -28,26 +28,32 @@ public class CCBaseTerm extends CCTerm {
 	
 	public CCBaseTerm(boolean isFunc, int parentPos, Object symb, SharedTerm term) {
 		super(isFunc, parentPos, term, symb.hashCode());
-		this.mSymbol = symb;
+		mSymbol = symb;
 	}
 
+	@Override
 	public Term toSMTTerm(Theory t, boolean useAuxVars) {
 		assert !mIsFunc;
 		if (mSymbol instanceof SharedTerm)
+		 {
 			return ((SharedTerm) mSymbol).getRealTerm();// TODO auxvar stuff
+		}
 		if (mSymbol instanceof FunctionSymbol) {
-			FunctionSymbol func = (FunctionSymbol) mSymbol;
+			final FunctionSymbol func = (FunctionSymbol) mSymbol;
 			assert func.getParameterSorts().length == 0;
 			return t.term(func);
-		} else if (mSymbol instanceof String)
+		} else if (mSymbol instanceof String) {
 			return t.term((String) mSymbol);
-		else
+		} else {
 			throw new InternalError("Unknown symbol in CCBaseTerm: " + mSymbol);
+		}
 	}
 
+	@Override
 	public String toString() {
-		if (mSymbol instanceof FunctionSymbol)
+		if (mSymbol instanceof FunctionSymbol) {
 			return ((FunctionSymbol)mSymbol).getName();
+		}
 		return mSymbol.toString();
 	}
 

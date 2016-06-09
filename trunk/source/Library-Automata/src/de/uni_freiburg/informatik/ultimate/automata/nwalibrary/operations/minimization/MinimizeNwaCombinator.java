@@ -64,6 +64,8 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	private final Object mCurrent;
 	
 	/**
+	 * AutomataScript constructor
+	 * 
 	 * @param services services
 	 * @param stateFactory state factory
 	 * @param operand input automaton
@@ -73,34 +75,42 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		this(services, stateFactory, operand, null, 0);
+		this(services, stateFactory, operand, null, false, 0);
 	}
 	
 	/**
+	 * constructor with default pattern
+	 * 
 	 * @param services services
 	 * @param stateFactory state factory
 	 * @param operand input automaton
 	 * @param partition pre-defined partition of states
+	 * @param addMapOldState2newState add map old state 2 new state?
+	 * @param iteration index in the pattern
 	 * @throws AutomataLibraryException thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
+			final boolean addMapOldState2newState,
 			final int iteration)
 					throws AutomataLibraryException {
-		this(services, stateFactory, operand, partition, new EMinimizations[] {
-				EMinimizations.None, EMinimizations.MinimizeSevpa,
-				EMinimizations.None, EMinimizations.MinimizeSevpa,
-				EMinimizations.None, EMinimizations.ShrinkNwa }, iteration);
+		this(services, stateFactory, operand, partition, addMapOldState2newState,
+				new EMinimizations[] {
+					EMinimizations.None, EMinimizations.MinimizeSevpa,
+					EMinimizations.None, EMinimizations.MinimizeSevpa,
+					EMinimizations.None, EMinimizations.ShrinkNwa }, iteration);
 	}
 	
 	/**
-	 * /**
+	 * constructor with user-defined pattern
+	 * 
 	 * @param services services
 	 * @param stateFactory state factory
 	 * @param operand input automaton
 	 * @param partition pre-defined partition of states
+	 * @param addMapOldState2newState add map old state 2 new state?
 	 * @param pattern minimization methods pattern
 	 * @param iteration index in the pattern
 	 * @throws AutomataLibraryException thrown by minimization methods
@@ -109,6 +119,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
+			final boolean addMapOldState2newState,
 			final EMinimizations[] pattern, final int iteration)
 					throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeNwaCombinator", operand);
@@ -117,13 +128,13 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 		switch (mPattern[mCounter]) {
 			case MinimizeSevpa:
 				mCurrent = new MinimizeSevpa<LETTER, STATE>(services, operand,
-						partition, stateFactory);
+						partition, stateFactory, addMapOldState2newState);
 				break;
 				
 			case ShrinkNwa:
 				mCurrent = new ShrinkNwa<LETTER, STATE>(services, stateFactory,
-						operand, partition, true, false, false, 200, false, 0,
-						false, false);
+						operand, partition, addMapOldState2newState, false,
+						false, 200, false, 0, false, false);
 				break;
 				
 			case None:

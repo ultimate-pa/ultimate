@@ -49,14 +49,14 @@ public class FunctionLineVisitor extends ASTVisitor {
 	/**
 	 * Map startline numbers of a block to end line numbers.
 	 */
-	private HashMap<Integer, Integer> lineRange;
+	private final HashMap<Integer, Integer> lineRange;
 
 	/**
 	 * Standard Constructor.
 	 */
 	public FunctionLineVisitor() {
-		this.lineRange = new HashMap<Integer, Integer>();
-		this.shouldVisitDeclarations = true;
+		lineRange = new HashMap<Integer, Integer>();
+		shouldVisitDeclarations = true;
 	}
 
 	/*
@@ -69,10 +69,10 @@ public class FunctionLineVisitor extends ASTVisitor {
 	@Override
 	public int visit(IASTDeclaration declaration) {
 		if (declaration instanceof IASTFunctionDefinition) {
-			IASTFunctionDefinition funcDef = (IASTFunctionDefinition) declaration;
-			int start = funcDef.getFileLocation().getStartingLineNumber();
-			int end = funcDef.getFileLocation().getEndingLineNumber();
-			this.lineRange.put(start, end);
+			final IASTFunctionDefinition funcDef = (IASTFunctionDefinition) declaration;
+			final int start = funcDef.getFileLocation().getStartingLineNumber();
+			final int end = funcDef.getFileLocation().getEndingLineNumber();
+			lineRange.put(start, end);
 		}
 		return PROCESS_CONTINUE;
 	}

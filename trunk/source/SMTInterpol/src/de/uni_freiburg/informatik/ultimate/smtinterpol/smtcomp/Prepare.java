@@ -37,26 +37,26 @@ public class Prepare implements ExitHook {
 		int fileStartIdx = 0;
 		if (args[0].equals("--track")) {
 			fileStartIdx = 2;
-			if (args[0].equals("main"))
+			if (args[0].equals("main")) {
 				track = Track.MAIN;
-			else if (args[1].equals("app"))
+			} else if (args[1].equals("app")) {
 				track = Track.APPLICATION;
-			else if (args[1].equals("core"))
+			} else if (args[1].equals("core")) {
 				track = Track.UNSAT_CORE;
-			else if (args[1].equals("proof"))
+			} else if (args[1].equals("proof")) {
 				track = Track.PROOF_GEN;
-			else {
+			} else {
 				System.out.println(
 				    "USAGE: Prepare [--track <main | app | core | proof>] <files>");
 				return;
 			}
 		}
-		Prepare exit = new Prepare();
+		final Prepare exit = new Prepare();
 		while (fileStartIdx < args.length) {
-			StringBuilder target = new StringBuilder(args[fileStartIdx]);
+			final StringBuilder target = new StringBuilder(args[fileStartIdx]);
 			// Insert .prep before .smt2
 			target.insert(target.length() - 5, ".prep");// NOCHECKSTYLE
-			ParseEnvironment pe = new ParseEnvironment(exit.mScript =
+			final ParseEnvironment pe = new ParseEnvironment(exit.mScript =
 					new PrepareScript(track, target.toString()), exit);
 			pe.parseScript(args[fileStartIdx]);
 			++fileStartIdx;

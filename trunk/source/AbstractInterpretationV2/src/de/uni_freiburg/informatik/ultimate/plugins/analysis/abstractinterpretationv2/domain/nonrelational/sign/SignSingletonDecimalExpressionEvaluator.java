@@ -51,7 +51,7 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 		BigDecimal number;
 		try {
 			number = new BigDecimal(value);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new UnsupportedOperationException(
 			        "The value \"" + value + "\" cannot be transformed to a decimal number.");
 		}

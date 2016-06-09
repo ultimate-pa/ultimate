@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Rajdeep extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	
 
 	
-	private static final String[] m_InputFiles = {
+	private static final String[] mInputFiles = {
 			"examples/programs/real-life/RajdeepMukherjee/"
 		};
 	
@@ -57,7 +57,7 @@ public class Rajdeep extends AbstractTraceAbstractionTestSuite {
 		return 180 * 1000;
 	}
 
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 //		"svcomp2016/svcomp-Reach-32bit-Automizer_Default.epf",
 //		"svcomp2016/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf",
@@ -66,7 +66,7 @@ public class Rajdeep extends AbstractTraceAbstractionTestSuite {
 //		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
@@ -76,9 +76,9 @@ public class Rajdeep extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_InputFiles, new String[] {".c", ".i"});
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mInputFiles, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

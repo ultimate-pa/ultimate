@@ -26,26 +26,31 @@ package de.uni_freiburg.informatik.ultimate.logic;
  */
 public enum ReasonUnknown {
 	MEMOUT {
+		@Override
 		public String toString() {
 			return "memout";
 		}
 	},
 	INCOMPLETE {
+		@Override
 		public String toString() {
 			return "incomplete";
 		}
 	},
 	TIMEOUT {
+		@Override
 		public String toString() {
 			return "timeout";
 		}
 	},
 	CRASHED {
+		@Override
 		public String toString() {
 			return "crashed";
 		}
 	},
 	CANCELLED {
+		@Override
 		public String toString() {
 			return "cancelled";
 		}

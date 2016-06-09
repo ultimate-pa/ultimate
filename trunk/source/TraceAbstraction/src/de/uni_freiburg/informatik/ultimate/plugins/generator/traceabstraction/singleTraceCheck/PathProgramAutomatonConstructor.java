@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -58,11 +58,11 @@ public class PathProgramAutomatonConstructor {
 	/**
 	 *  A mapping from positions of given path to states of the constructed automaton.
 	 */
-	private List<IPredicate> m_PositionsToStates;
+	private List<IPredicate> mPositionsToStates;
 
 	
 	public List<IPredicate> getPositionsToStates() {
-		return m_PositionsToStates;
+		return mPositionsToStates;
 	}
 	
 	/**
@@ -71,9 +71,9 @@ public class PathProgramAutomatonConstructor {
 	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(NestedWord<CodeBlock> path, IUltimateServiceProvider services, SmtManager smtManager,
 			TAPreferences taPrefs) {
 		// Set the alphabet
-		Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
-		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
+		final Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
 		for (int i = 0; i < path.length(); i++) {
 			if (path.isInternalPosition(i)) {
 				internalAlphabet.add(path.getSymbol(i));
@@ -86,33 +86,33 @@ public class PathProgramAutomatonConstructor {
 			}
 		}
 		
-		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
+		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
 		// Create the automaton
-		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
+		final NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
 		// We need this list to create the transitions of the automaton.
-		m_PositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
+		mPositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
 		
-		ProgramPoint[] arrOfProgPoints = new ProgramPoint[path.length()];
+		final ProgramPoint[] arrOfProgPoints = new ProgramPoint[path.length()];
 		// We use this map to keep track of the predicates we've created so far. We don't want to create a new predicate
 		// for the same program point, therefore we use the map to get the predicate we've constructed before.
-		Map<ProgramPoint, SPredicate> programPointToState = new HashMap<>();
+		final Map<ProgramPoint, SPredicate> programPointToState = new HashMap<>();
 		
 		ProgramPoint tempProgramPoint = null;
 		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
-		SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
+		final Term trueTerm = smtManager.getScript().term("true");
+		final SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);
-		m_PositionsToStates.add(0, initialState);
+		mPositionsToStates.add(0, initialState);
 		
 		// Add the other states
 		for (int i = 0; i < path.length(); i++) {
 			tempProgramPoint = (ProgramPoint) path.getSymbol(i).getTarget();
 			if (!programPointToState.containsKey(tempProgramPoint)) {
-				SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
+				final SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 				programPointToState.put(tempProgramPoint, newState);
 				arrOfProgPoints[i] = (ProgramPoint) path.getSymbol(i).getTarget();
 				if (i + 1 == path.length()) {
@@ -122,19 +122,19 @@ public class PathProgramAutomatonConstructor {
 					pathPA.addState(false, false, newState);
 				}
 			}
-			m_PositionsToStates.add(i+1, programPointToState.get(tempProgramPoint));
+			mPositionsToStates.add(i+1, programPointToState.get(tempProgramPoint));
 		}
 		
 		// Add the transitions
 		for (int i = 0; i < path.length(); i++) {
-			IPredicate pred = m_PositionsToStates.get(i);
-			IPredicate succ = m_PositionsToStates.get(i+1);
+			final IPredicate pred = mPositionsToStates.get(i);
+			final IPredicate succ = mPositionsToStates.get(i+1);
 			if (path.isInternalPosition(i)) {
 				pathPA.addInternalTransition(pred, path.getSymbol(i), succ);
 			} else if (path.isCallPosition(i)) {
 				pathPA.addCallTransition(pred, path.getSymbol(i), succ);
 			} else if (path.isReturnPosition(i)) {
-				IPredicate hier = m_PositionsToStates.get(path.getCallPosition(i));
+				final IPredicate hier = mPositionsToStates.get(path.getCallPosition(i));
 				pathPA.addReturnTransition(pred, hier, path.getSymbol(i), succ);
 			}
 		}

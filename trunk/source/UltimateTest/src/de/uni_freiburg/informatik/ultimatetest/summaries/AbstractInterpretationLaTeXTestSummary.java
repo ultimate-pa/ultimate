@@ -38,13 +38,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ActualResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.OldTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ActualResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.OldTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
  * @author Christopher Dillo
@@ -52,7 +51,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  */
 public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 
-	protected final String m_pathOfTrunk;
+	protected final String mpathOfTrunk;
 	
 	protected final static TestResult[] s_testResultTypes = {TestResult.SUCCESS, TestResult.UNKNOWN, TestResult.FAIL};
 
@@ -68,15 +67,16 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 		protected static final int TIMESUM = 2;
 		protected static final int MEMSUM = 3;
 		protected static final int SIZE = 4;
-		private Map<ExpectedResultType, Long[]> m_statistics;
+		private final Map<ExpectedResultType, Long[]> mstatistics;
 		
 		protected ResultStatistics() {
-			m_statistics = new HashMap<ExpectedResultType, Long[]>();
-			for (ExpectedResultType e : s_expectedResultTypes) {
-				Long[] eStats = new Long[SIZE];
-				for (int i = 0; i < SIZE; i++)
+			mstatistics = new HashMap<ExpectedResultType, Long[]>();
+			for (final ExpectedResultType e : s_expectedResultTypes) {
+				final Long[] eStats = new Long[SIZE];
+				for (int i = 0; i < SIZE; i++) {
 					eStats[i] = 0L;
-				m_statistics.put(e, eStats);
+				}
+				mstatistics.put(e, eStats);
 			}
 		}
 		
@@ -86,7 +86,7 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 		 * @param peakMemory Peak memory usage. Negative to ignore.
 		 */
 		protected void addData(ExpectedResultType resultType, long runtime, long peakMemory) {
-			Long[] typeStats = getData(resultType);
+			final Long[] typeStats = getData(resultType);
 			if (typeStats != null) {
 				if (runtime >= 0) {
 					typeStats[TIMECOUNT]++;
@@ -100,15 +100,17 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 		}
 		
 		protected Long[] getData(ExpectedResultType resultType) {
-			return m_statistics.get(resultType);
+			return mstatistics.get(resultType);
 		}
 		
 		protected void addStats(ResultStatistics stats, boolean addTime, boolean addMem) {
-			if (stats == null) return;
+			if (stats == null) {
+				return;
+			}
 
-			for (ExpectedResultType e : s_expectedResultTypes) {
-				Long[] localStats = getData(e);
-				Long[] foreignStats = stats.getData(e);
+			for (final ExpectedResultType e : s_expectedResultTypes) {
+				final Long[] localStats = getData(e);
+				final Long[] foreignStats = stats.getData(e);
 				if (addTime) {
 					localStats[TIMECOUNT] += foreignStats[TIMECOUNT];
 					localStats[TIMESUM] += foreignStats[TIMESUM];
@@ -122,12 +124,12 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	}
 
 	// used for determining the table prefix
-	protected final String m_svcompFolder = "\\examples\\svcomp\\";
+	protected final String msvcompFolder = "\\examples\\svcomp\\";
 
 	public AbstractInterpretationLaTeXTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		
-		m_pathOfTrunk = TestUtil.getPathFromTrunk("");
+		mpathOfTrunk = TestUtil.getPathFromTrunk("");
 	}
 
 	@Override
@@ -146,12 +148,12 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	@Override
 	public String getSummaryLog() {
 		
-		StringBuilder sb = new StringBuilder();
-		String lineSeparator = System.getProperty("line.separator");
-		Map<TestResult, Integer> totalCounts = new HashMap<>();
+		final StringBuilder sb = new StringBuilder();
+		final String lineSeparator = System.getProperty("line.separator");
+		final Map<TestResult, Integer> totalCounts = new HashMap<>();
 
 		// cummulative stats for all tests
-		ResultStatistics totalStats = new ResultStatistics();
+		final ResultStatistics totalStats = new ResultStatistics();
 
 		/*
 		 * Prints a table for use with the LaTeX-package "tabu" that can span over
@@ -169,17 +171,17 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 			.append(lineSeparator)
 			.append("\t \\endhead").append(lineSeparator).append(lineSeparator);
 		
-		for (TestResult result : s_testResultTypes) {
+		for (final TestResult result : s_testResultTypes) {
 			int resultCategoryCount = 0;
 			
-			String resultTag = testResultTag(result);
+			final String resultTag = testResultTag(result);
 			
-			for (Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
+			for (final Entry<String, Summary> entry : getSummaryMap(result).entrySet()) {
 				
-				String[] categoryBlurb = entry.getKey().split(" ## ");
-				String tool = categoryBlurb.length > 0 ? categoryBlurb[0] : "---";
-				ExpectedResultType expectedResult = categoryBlurb.length > 1 ? expectedResultFromTag(categoryBlurb[1]) : null;
-				ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
+				final String[] categoryBlurb = entry.getKey().split(" ## ");
+				final String tool = categoryBlurb.length > 0 ? categoryBlurb[0] : "---";
+				final ExpectedResultType expectedResult = categoryBlurb.length > 1 ? expectedResultFromTag(categoryBlurb[1]) : null;
+				final ActualResultType actualResult = categoryBlurb.length > 2 ? actualResultFromTag(categoryBlurb[2]) : null;
 				
 				// this summary only checks for abstract interpretation stuff!
 				if (tool.startsWith("abstractinterpretation")) {
@@ -196,33 +198,34 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 						.append("\t\\hline \\linestrut").append(lineSeparator);
 	
 					// stats for current actual-expected results pair
-					ResultStatistics currentStats = new ResultStatistics();
+					final ResultStatistics currentStats = new ResultStatistics();
 					
-					for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
+					for (final Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
 						// \sffamily [SOURCE] & \small [FILENAME] & [LINES] & [RUNTIME] & [MAXMEM] \\
 						
 						// filename and source tag, file size
 						String fileName = fileMsgPair.getKey();
 						String tablePrefix = "---";
-						String fileLines = calculateNumberOfLines(fileName);
-						if (fileName.startsWith(m_pathOfTrunk + m_svcompFolder)) {
+						final String fileLines = calculateNumberOfLines(fileName);
+						if (fileName.startsWith(mpathOfTrunk + msvcompFolder)) {
 							tablePrefix = "S"; // file from SV-COMP
 						} else {
 							tablePrefix = "U"; // file from ULTIMATE
 						}
-						String[] fileBlurb = fileName.split("\\\\");
-						if (fileBlurb.length > 1)
+						final String[] fileBlurb = fileName.split("\\\\");
+						if (fileBlurb.length > 1) {
 							fileName = fileBlurb[fileBlurb.length-1];
+						}
 						
 						sb.append("\t\\sffamily ").append(tablePrefix)
 							.append(" & \\small ").append(fileName).append(" & ")
 							.append(fileLines).append(" & ");
 						
 						// runtime, max memory usage
-						String customMessage = fileMsgPair.getValue();
+						final String customMessage = fileMsgPair.getValue();
 						if (customMessage != null && !customMessage.isEmpty()) {
 							// customMessage: expected result, actual result, runtime, max memory usage, original result message
-							String[] message = customMessage.split(" ## ");
+							final String[] message = customMessage.split(" ## ");
 							if (message.length > 3) {
 								sb.append(message[2]).append(" & ").append(message[3]).append(" \\\\");
 								currentStats.addData(expectedResult, Long.parseLong(message[2]), Long.parseLong(message[3]));
@@ -233,7 +236,7 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 						sb.append(lineSeparator);
 					}
 	
-					Long[] currentStatsNumbers = currentStats.getData(expectedResult);
+					final Long[] currentStatsNumbers = currentStats.getData(expectedResult);
 					long runtimeSum, runtimeCount, memorySum, memoryCount;
 					if (currentStatsNumbers == null) {
 						runtimeSum = 0;
@@ -246,7 +249,7 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 						memorySum = currentStatsNumbers[ResultStatistics.MEMSUM];
 						memoryCount = currentStatsNumbers[ResultStatistics.MEMCOUNT];
 					}
-					int localCount = entry.getValue().getCount();
+					final int localCount = entry.getValue().getCount();
 					sb.append("\t\\hline \\linestrut & Count: ").append(localCount)
 						.append(String.format(" & Avg: & %s & %s \\\\ %% RAW: %s / %s ms, %s / %s MiB",
 								calculateAverage(runtimeSum, runtimeCount),
@@ -271,14 +274,14 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 			.append("\t\\textbf{Result} & \\textbf{Count} \\\\").append(lineSeparator)
 			.append("\t\\dhline \\linestrut").append(lineSeparator);
 		int totalCount = 0;
-		for (TestResult result : s_testResultTypes) {
+		for (final TestResult result : s_testResultTypes) {
 			sb.append("\t").append(testResultTag(result)).append(" & ").append(totalCounts.get(result)).append(" \\\\").append(lineSeparator);
 			totalCount += totalCounts.get(result);
 		}
 		sb.append("\t\\hline \\linestrut Total & ").append(totalCount).append(" \\\\").append(lineSeparator);
 		
-		for (ExpectedResultType e : s_expectedResultTypes) {
-			Long[] totalStatsNumbers = totalStats.getData(e);
+		for (final ExpectedResultType e : s_expectedResultTypes) {
+			final Long[] totalStatsNumbers = totalStats.getData(e);
 			long runtimeSum, runtimeCount, memorySum, memoryCount;
 			if (totalStatsNumbers == null) {
 				runtimeSum = 0;
@@ -310,18 +313,21 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	protected String calculateNumberOfLines(String fileName) {
 		String result = "---";
 		try {
-			LineNumberReader reader = new LineNumberReader(new FileReader(new File(fileName)));
+			final LineNumberReader reader = new LineNumberReader(new FileReader(new File(fileName)));
 			reader.skip(Long.MAX_VALUE);
 			result = String.format("%d", reader.getLineNumber());
 			reader.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 		return result;
 	}
 
 	protected String calculateAverage(long sum, long count) {
-		if (count == 0) return "---"; // No count, no average.
+		if (count == 0)
+		 {
+			return "---"; // No count, no average.
+		}
 		return String.format("%d", Math.round(((double) sum) / ((double) count)));
 	}
 	
@@ -339,7 +345,9 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	}
 
 	protected String actualResultTag(ActualResultType result) {
-		if (result == null) return "---";
+		if (result == null) {
+			return "---";
+		}
 		
 		switch (result) {
 		case SAFE :
@@ -359,7 +367,9 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	}
 	
 	protected String expectedResultTag(ExpectedResultType result) {
-		if (result == null) return "---";
+		if (result == null) {
+			return "---";
+		}
 		
 		switch (result) {
 		case SAFE :
@@ -375,7 +385,9 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	}
 
 	protected ActualResultType actualResultFromTag(String resultTag) {
-		if (resultTag == null) return ActualResultType.NO_RESULT;
+		if (resultTag == null) {
+			return ActualResultType.NO_RESULT;
+		}
 		
 		switch (resultTag) {
 		case "SAFE" :
@@ -400,7 +412,9 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	}
 	
 	protected ExpectedResultType expectedResultFromTag(String resultTag) {
-		if (resultTag == null) return ExpectedResultType.NOANNOTATION;
+		if (resultTag == null) {
+			return ExpectedResultType.NOANNOTATION;
+		}
 		
 		switch (resultTag) {
 		case "SAFE" :

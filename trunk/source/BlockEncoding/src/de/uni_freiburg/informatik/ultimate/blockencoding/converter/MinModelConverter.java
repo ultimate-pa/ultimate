@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.ConfigurableHeuristic;
@@ -44,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.StatisticBasedHe
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -67,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  */
 public class MinModelConverter {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private Boogie2SMT mBoogie2SMT;
 
@@ -80,7 +78,7 @@ public class MinModelConverter {
 	 */
 	public MinModelConverter(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**
@@ -92,15 +90,15 @@ public class MinModelConverter {
 	 * @return the converted rootNode
 	 */
 	public RootNode startConversion(RootNode root) {
-		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
+		final RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
-		boolean simplify = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final boolean simplify = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
-		for (RCFGEdge edge : root.getOutgoingEdges()) {
+		for (final RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
-				BlockEncodingAnnotation annot = BlockEncodingAnnotation.getAnnotation(edge);
+				final BlockEncodingAnnotation annot = BlockEncodingAnnotation.getAnnotation(edge);
 				if (annot != null) {
 					ModelUtils.copyAnnotations(edge, new RootEdge(newRoot, convertFunction(annot.getNode())));
 				} else {
@@ -126,16 +124,16 @@ public class MinModelConverter {
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		String prefValue = prefs.getString(PreferenceInitializer.LABEL_RATINGBOUND);
-		RatingStrategy strategy = prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final String prefValue = prefs.getString(PreferenceInitializer.LABEL_RATINGBOUND);
+		final RatingStrategy strategy = prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class);
 		// if there is no boundary value given, we do Large Block Encoding
 		if (strategy == RatingStrategy.LARGE_BLOCK) {
 			return null;
 		}
 		// check if we should use the statistic based heuristic
 		if (prefs.getBoolean(PreferenceInitializer.LABEL_USESTATHEURISTIC)) {
-			StatisticBasedHeuristic heuristic = new StatisticBasedHeuristic(strategy, mLogger);
+			final StatisticBasedHeuristic heuristic = new StatisticBasedHeuristic(strategy, mLogger);
 			// maybe the case that there is no supported heuristic, then we use
 			// Large Block Encoding
 			if (!heuristic.isRatingStrategySupported(strategy)) {
@@ -144,7 +142,7 @@ public class MinModelConverter {
 			heuristic.init(prefValue);
 			return heuristic;
 		} else if (prefs.getBoolean(PreferenceInitializer.LABEL_USEDYNAMICHEURISTIC)) {
-			DynamicHeuristic heuristic = new DynamicHeuristic(strategy);
+			final DynamicHeuristic heuristic = new DynamicHeuristic(strategy);
 			// maybe the case that there is no supported heuristic, then we use
 			// Large Block Encoding
 			if (!heuristic.isRatingStrategySupported(strategy)) {
@@ -153,7 +151,7 @@ public class MinModelConverter {
 			heuristic.init(prefValue);
 			return heuristic;
 		} else {
-			ConfigurableHeuristic heuristic = new ConfigurableHeuristic(strategy);
+			final ConfigurableHeuristic heuristic = new ConfigurableHeuristic(strategy);
 			heuristic.init(prefValue);
 			return heuristic;
 		}
@@ -167,7 +165,7 @@ public class MinModelConverter {
 	 * @return converted ProgramPoint
 	 */
 	private ProgramPoint convertFunction(MinimizedNode node) {
-		ProgramPoint newNode = mConvertVisitor.getReferencedNode(node);
+		final ProgramPoint newNode = mConvertVisitor.getReferencedNode(node);
 		// To do the conversion, we need to run over the minimized graph,
 		// and convert every edge into an regular RCFG edge
 		// ---> to do this we need some special Visitor which does the
@@ -186,29 +184,29 @@ public class MinModelConverter {
 	 * @param rootAnnot
 	 */
 	private void updateRootAnnot(RootAnnot rootAnnot) {
-		HashMap<ProgramPoint, ProgramPoint> progPointMap = mConvertVisitor.getOrigToNewMap();
+		final HashMap<ProgramPoint, ProgramPoint> progPointMap = mConvertVisitor.getOrigToNewMap();
 		// Update the Entry-Nodes
-		HashMap<String, ProgramPoint> entryNodes = new HashMap<String, ProgramPoint>(rootAnnot.getEntryNodes());
+		final HashMap<String, ProgramPoint> entryNodes = new HashMap<String, ProgramPoint>(rootAnnot.getEntryNodes());
 		rootAnnot.getEntryNodes().clear();
-		for (String key : entryNodes.keySet()) {
-			ProgramPoint oldVal = entryNodes.get(key);
+		for (final String key : entryNodes.keySet()) {
+			final ProgramPoint oldVal = entryNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
 				rootAnnot.getEntryNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Exit-Nodes
-		HashMap<String, ProgramPoint> exitNodes = new HashMap<String, ProgramPoint>(rootAnnot.getExitNodes());
+		final HashMap<String, ProgramPoint> exitNodes = new HashMap<String, ProgramPoint>(rootAnnot.getExitNodes());
 		rootAnnot.getExitNodes().clear();
-		for (String key : exitNodes.keySet()) {
-			ProgramPoint oldVal = exitNodes.get(key);
+		for (final String key : exitNodes.keySet()) {
+			final ProgramPoint oldVal = exitNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
 				rootAnnot.getExitNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Error-Nodes
-		for (String key : rootAnnot.getErrorNodes().keySet()) {
-			ArrayList<ProgramPoint> newReferences = new ArrayList<ProgramPoint>();
-			for (ProgramPoint oldVal : rootAnnot.getErrorNodes().get(key)) {
+		for (final String key : rootAnnot.getErrorNodes().keySet()) {
+			final ArrayList<ProgramPoint> newReferences = new ArrayList<ProgramPoint>();
+			for (final ProgramPoint oldVal : rootAnnot.getErrorNodes().get(key)) {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
 				} else {
@@ -220,11 +218,11 @@ public class MinModelConverter {
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!
-		HashSet<ProgramPoint> keySet = new HashSet<ProgramPoint>(rootAnnot.getLoopLocations().keySet());
+		final HashSet<ProgramPoint> keySet = new HashSet<ProgramPoint>(rootAnnot.getLoopLocations().keySet());
 		rootAnnot.getLoopLocations().clear();
-		for (ProgramPoint oldVal : keySet) {
+		for (final ProgramPoint oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
-				ProgramPoint newVal = (ProgramPoint) progPointMap.get(oldVal);
+				final ProgramPoint newVal = progPointMap.get(oldVal);
 				if (newVal.getBoogieASTNode() != null) {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in

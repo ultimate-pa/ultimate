@@ -11,10 +11,11 @@ necessary steps.
 
 2. Find out the last merged version by looking into Version.properties
    cat source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
+   The version number looks e.g., like 2.1-228-g5118445
 
 3. Create a patch for the changes from SMTInterpol/src and Library-SMTLIB/src.
    cd smtinterpol.git
-   git diff <version-number> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
+   git diff <version-number-last-merged> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
    cd ../source
    patch -p1 < ../smtinterpol.git/smtinterpol.diff
 
@@ -38,7 +39,10 @@ necessary steps.
 
 7. Check if everything works in Eclipse.
 
-8. Commit die updated Ultimate.
+8. Find out the version of the SMTInterpol version that you just merged.
+   cat source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
+
+9. Commit die updated Ultimate.
    git commit source/SMTInterpol source/Library-SMTLIB
    The log message should say (version can be found by executing "git describe" 
    in smtinterpol.git)

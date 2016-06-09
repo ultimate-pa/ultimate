@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -42,52 +42,52 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 8374243361020834074L;
-	private ConditionalBooleanOperatorAST m_operator;
+	private ConditionalBooleanOperatorAST moperator;
 	
 	public ConditionalBooleanExpressionAST(ILocation loc) {
 		super(loc);
-		m_returnType = Boolean.class;
-		m_expectingType = m_returnType;
+		mreturnType = Boolean.class;
+		mexpectingType = mreturnType;
 	}
 	
 	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element) {
 		super(loc);
-		m_returnType = Boolean.class;
-		m_expectingType = m_returnType;
+		mreturnType = Boolean.class;
+		mexpectingType = mreturnType;
 		addOutgoingNode(element);
 	}
 	
 	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element1, AtsASTNode element2) {
 		super(loc);
-		m_returnType = Boolean.class;
-		m_expectingType = m_returnType;
+		mreturnType = Boolean.class;
+		mexpectingType = mreturnType;
 		addOutgoingNode(element1);
 		addOutgoingNode(element2);
 	}
 
 	public ConditionalBooleanOperatorAST getOperator() {
-		return m_operator;
+		return moperator;
 	}
 
 	public void setOperator(ConditionalBooleanOperatorAST operator) {
-		this.m_operator = operator;
+		moperator = operator;
 	}
 
 	@Override
 	public String toString() {
-		return "ConditionalBooleanExpression [#Arguments: " + getOutgoingNodes().size() + ", Operator: " + m_operator + "]";
+		return "ConditionalBooleanExpression [#Arguments: " + getOutgoingNodes().size() + ", Operator: " + moperator + "]";
 	}
 
 	@Override
 	public String getAsString() {
-		if (m_children.size() == 2) {
-			String operatorAsString = (m_operator == ConditionalBooleanOperatorAST.AND? "&&" : "||");
-			return m_children.get(0).getAsString() + " " +
+		if (mchildren.size() == 2) {
+			final String operatorAsString = (moperator == ConditionalBooleanOperatorAST.AND? "&&" : "||");
+			return mchildren.get(0).getAsString() + " " +
 		           operatorAsString + " " +
-				   m_children.get(1).getAsString();	
+				   mchildren.get(1).getAsString();	
 		           
-		} else if (m_children.size() == 1) {
-			return "!" + m_children.get(0).getAsString();
+		} else if (mchildren.size() == 1) {
+			return "!" + mchildren.get(0).getAsString();
 		} else {
 			return "";
 		}

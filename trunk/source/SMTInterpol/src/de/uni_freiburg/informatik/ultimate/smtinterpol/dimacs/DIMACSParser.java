@@ -31,20 +31,21 @@ public class DIMACSParser implements IParser {
 	@Override
 	public int run(Script solver, String filename) {
 		try {
-			MySymbolFactory symfactory = new MySymbolFactory();
+			final MySymbolFactory symfactory = new MySymbolFactory();
 			Reader reader;
 			if (filename == null) {
 				filename = "<stdin>";
 				reader = new InputStreamReader(System.in);				
-			} else
+			} else {
 				reader = new FileReader(filename);
-			Lexer lexer = new Lexer(reader);
+			}
+			final Lexer lexer = new Lexer(reader);
 			lexer.setSymbolFactory(symfactory);
-			Parser parser = new Parser(lexer, symfactory);
+			final Parser parser = new Parser(lexer, symfactory);
 			parser.init(filename);
 			parser.setSolver(solver);
 			parser.parse();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			System.err.println(e.getMessage());
 			return 1;
 		}

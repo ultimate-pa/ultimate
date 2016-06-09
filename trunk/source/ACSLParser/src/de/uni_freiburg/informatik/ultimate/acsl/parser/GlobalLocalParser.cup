@@ -17,14 +17,14 @@ import java.util.Arrays;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 parser Parser;
 option java15, compact_red, newpositions;
 
 parser code {:
-    /** The logger instance. */
-    protected Logger mLogger;
+    /** The ILogger instance. */
+    protected ILogger mILogger;
     
 	/** Holds an ACSL node. */
 	private ACSLNode acslNode;
@@ -49,11 +49,11 @@ parser code {:
 	 * 
 	 * @param s the Scanner object.
 	 * @param sf the SymbolFactory object.
-	 * @param logger the Logger object to be used.
+	 * @param ILogger the ILogger object to be used.
 	 */
-	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, Logger logger) {
+	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, ILogger ILogger) {
 		this(s, sf);
-		mLogger = logger;
+		mILogger = ILogger;
 	}
 	
 	/**
@@ -136,15 +136,15 @@ parser code {:
 	 * @param input the input string to be parsed
 	 * @param start the start line number.
 	 * @param end the end line number.
-	 * @param logger the Logger object to be used.
+	 * @param ILogger the ILogger object to be used.
 	 * @return the parsed comment in an <code>ACSLNode</code>
 	 * @throws Exception Well yeah - care for it ...
 	 */
-	public static ACSLNode parseComment(String input, int start, int end, Logger logger) throws Exception {
+	public static ACSLNode parseComment(String input, int start, int end, ILogger ILogger) throws Exception {
 		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
 		ComplexSymbolFactory sf = new ComplexSymbolFactory();
 		Scanner scanner = new Scanner(instream, sf);
-		Parser parser = new Parser(scanner, sf, logger);
+		Parser parser = new Parser(scanner, sf, ILogger);
 		parser.setStartLineNumber(start);
 		parser.setEndLineNumber(end);
 		parser.parse();
@@ -321,14 +321,14 @@ start with start_grammar;
 
 /* mehrere Einstiegspunkte... ? */
 start_grammar::= LSTART local 
-{: 				if(parser.mLogger!=null){
-					parser.mLogger.debug("Start Parsing Local");
+{: 				if(parser.mILogger!=null){
+					parser.mILogger.debug("Start Parsing Local");
 				} else {
 					System.out.println("Start Parsing Local");
 				} :} 
 | GSTART global {: 
-	if(parser.mLogger!=null){
-		parser.mLogger.debug("Start Parsing Global");
+	if(parser.mILogger!=null){
+		parser.mILogger.debug("Start Parsing Global");
 	} else {
 		System.out.println("Start Parsing Global");
 	} :}

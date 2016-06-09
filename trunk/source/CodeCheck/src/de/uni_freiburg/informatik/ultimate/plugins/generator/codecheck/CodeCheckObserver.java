@@ -40,29 +40,39 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -78,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAE
 //import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulsChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -88,9 +97,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -100,21 +109,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -133,16 +131,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
 	protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
 
-	public final Logger mLogger;
+	public final ILogger mLogger;
 	private CodeChecker codeChecker;
 
-	RootNode m_originalRoot;
-	// TAPreferences m_taPrefs;
-	ImpRootNode m_graphRoot;
+	RootNode moriginalRoot;
+	// TAPreferences mtaPrefs;
+	ImpRootNode mgraphRoot;
 
-	SmtManager m_smtManager;
+	SmtManager msmtManager;
 	public PredicateUnifier _predicateUnifier;
-	IHoareTripleChecker m_edgeChecker;
+	IHoareTripleChecker medgeChecker;
 
 	GraphWriter _graphWriter;
 
@@ -151,19 +149,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _satQuadruples;
 	NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _unsatQuadruples;
 	Collection<ProgramPoint> mErrNodesOfAllProc;
-	private final IUltimateServiceProvider m_services;
-	private IToolchainStorage m_toolchainStorage;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mtoolchainStorage;
 
 	private static final boolean DEBUG = false;
 
 	boolean loop_forever = true; // for DEBUG
 	int iterationsLimit = -1; // for DEBUG
-	private boolean outputHoareAnnotation = false;
+	private final boolean outputHoareAnnotation = false;
 
 	CodeCheckObserver(IUltimateServiceProvider services, IToolchainStorage toolchainStorage) {
-		m_services = services;
-		mLogger = m_services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_toolchainStorage = toolchainStorage;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mtoolchainStorage = toolchainStorage;
 	}
 
 	/**
@@ -175,19 +173,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	public boolean initialize(IElement root) {
 		readPreferencePage();
 
-		m_originalRoot = (RootNode) root;
-		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
+		moriginalRoot = (RootNode) root;
+		final RootAnnot rootAnnot = moriginalRoot.getRootAnnot();
 
-		m_smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), m_services, false, rootAnnot.getManagedScript());
+		msmtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
+				rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript());
 
-		_predicateUnifier = new PredicateUnifier(m_services, m_smtManager);
+		_predicateUnifier = new PredicateUnifier(mServices, msmtManager);
 
-		m_edgeChecker = new MonolithicHoareTripleChecker(m_smtManager);
+		medgeChecker = new MonolithicHoareTripleChecker(msmtManager.getManagedScript(), msmtManager.getModifiableGlobals());
 
-		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<ProgramPoint>();
-		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
@@ -200,13 +198,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			_unsatQuadruples = new NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained>();
 		}
 		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, true, true, true, false,
-				m_smtManager.getScript());
+				msmtManager.getScript());
 
 		//DD: removed dependency to AIMK2, will be replaced by AIv2 soon 
 //		boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
-		Map<RCFGNode, Term> initialPredicates = null;
+		final Map<RCFGNode, Term> initialPredicates = null;
 //		if (usePredicatesFromAbstractInterpretation) {
-//			AbstractInterpretationPredicates annot = AbstractInterpretationPredicates.getAnnotation(m_originalRoot);
+//			AbstractInterpretationPredicates annot = AbstractInterpretationPredicates.getAnnotation(moriginalRoot);
 //			if (annot != null) {
 //				initialPredicates = annot.getPredicates();
 //			} else {
@@ -216,24 +214,24 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 //			}
 //		}
 		//end dependency removal
-		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger, _predicateUnifier.getTruePredicate(),
+		final RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(msmtManager, mLogger, _predicateUnifier.getTruePredicate(),
 				initialPredicates);
-		m_graphRoot = r2ar.convert(m_services, m_originalRoot);
+		mgraphRoot = r2ar.convert(mServices, moriginalRoot);
 
-		_graphWriter.writeGraphAsImage(m_graphRoot,
+		_graphWriter.writeGraphAsImage(mgraphRoot,
 				String.format("graph_%s_originalAfterConversion", _graphWriter._graphCounter));
 
 		removeSummaryEdges();
 
-		_graphWriter.writeGraphAsImage(m_graphRoot,
+		_graphWriter.writeGraphAsImage(mgraphRoot,
 				String.format("graph_%s_originalSummaryEdgesRemoved", _graphWriter._graphCounter));
 
 		if (GlobalSettings._instance.checker == Checker.IMPULSE) {
-			codeChecker = new ImpulseChecker(root, m_smtManager, m_originalRoot, m_graphRoot, _graphWriter,
-					m_edgeChecker, _predicateUnifier, mLogger);
+			codeChecker = new ImpulseChecker(root, msmtManager, moriginalRoot, mgraphRoot, _graphWriter,
+					medgeChecker, _predicateUnifier, mLogger);
 		} else {
-			codeChecker = new UltimateChecker(root, m_smtManager, m_originalRoot, m_graphRoot, _graphWriter,
-					m_edgeChecker, _predicateUnifier, mLogger);
+			codeChecker = new UltimateChecker(root, msmtManager, moriginalRoot, mgraphRoot, _graphWriter,
+					medgeChecker, _predicateUnifier, mLogger);
 		}
 		iterationsLimit = GlobalSettings._instance._iterations;
 		loop_forever = (iterationsLimit == -1);
@@ -242,7 +240,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void readPreferencePage() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		GlobalSettings.init();
 
@@ -282,8 +280,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		GlobalSettings._instance.defaultRedirection = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_DEF_RED,
 				CodeCheckPreferenceInitializer.DEF_DEF_RED);
-		GlobalSettings._instance.removeFalseNodes = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_RM_FALSE,
-				CodeCheckPreferenceInitializer.DEF_RM_FALSE);
+		GlobalSettings._instance.removeFalseNodes = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_RmFALSE,
+				CodeCheckPreferenceInitializer.DEF_RmFALSE);
 		GlobalSettings._instance.checkSatisfiability = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_CHK_SAT,
 				CodeCheckPreferenceInitializer.DEF_CHK_SAT);
 
@@ -324,18 +322,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void removeSummaryEdges() {
-		Stack<AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
-		HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
-		visited.add(m_graphRoot);
-		stack.add(m_graphRoot);
+		final Stack<AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
+		final HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
+		visited.add(mgraphRoot);
+		stack.add(mgraphRoot);
 		while (!stack.isEmpty()) {
-			AnnotatedProgramPoint node = stack.pop();
-			AppEdge[] outEdges = node.getOutgoingEdges().toArray(new AppEdge[] {});
-			for (AppEdge outEdge : outEdges) {
-				AnnotatedProgramPoint successor = outEdge.getTarget();
+			final AnnotatedProgramPoint node = stack.pop();
+			final AppEdge[] outEdges = node.getOutgoingEdges().toArray(new AppEdge[] {});
+			for (final AppEdge outEdge : outEdges) {
+				final AnnotatedProgramPoint successor = outEdge.getTarget();
 				if (outEdge.getStatement() instanceof Summary) {
-					if (((Summary) outEdge.getStatement()).calledProcedureHasImplementation())
+					if (((Summary) outEdge.getStatement()).calledProcedureHasImplementation()) {
 						outEdge.disconnect();
+					}
 				}
 				if (!visited.contains(successor)) {
 					visited.add(successor);
@@ -345,28 +344,29 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
+	@Override
 	public boolean process(IElement root) {
 		initialize(root);
 
-		_graphWriter.writeGraphAsImage(m_graphRoot, String.format("graph_%s_original", _graphWriter._graphCounter));
+		_graphWriter.writeGraphAsImage(mgraphRoot, String.format("graph_%s_original", _graphWriter._graphCounter));
 
-		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
+		final ImpRootNode originalGraphCopy = copyGraph(mgraphRoot);
 
 		_graphWriter.writeGraphAsImage(originalGraphCopy,
 				String.format("graph_%s_originalCopied", _graphWriter._graphCounter));
 
-		ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
+		final ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
 
 		// check for Ultimate.start -- assuming that if such a procedure exists,
 		// it comes from the c translation
-		for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+		for (final AnnotatedProgramPoint procRoot : mgraphRoot.getOutgoingNodes()) {
 			if (procRoot.getProgramPoint().getProcedure().startsWith("ULTIMATE.start")) {
 				procRootsToCheck.add(procRoot);
 				break;
 			}
 		}
 		if (procRootsToCheck.isEmpty()) { // -> no Ultimate.start present
-			procRootsToCheck.addAll(m_graphRoot.getOutgoingNodes());
+			procRootsToCheck.addAll(mgraphRoot.getOutgoingNodes());
 		}
 
 		Result overallResult = Result.UNKNOWN;
@@ -375,27 +375,28 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RcfgProgramExecution realErrorProgramExecution = null;
 
 		// benchmark data collector variables
-		CegarLoopBenchmarkGenerator benchmarkGenerator =  new CegarLoopBenchmarkGenerator();
-		benchmarkGenerator.start(CegarLoopBenchmarkType.s_OverallTime);
+		final CegarLoopStatisticsGenerator benchmarkGenerator =  new CegarLoopStatisticsGenerator();
+		benchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		int iterationsCount = 0;
 
 		InterpolatingTraceChecker traceChecker = null;
 
-		for (AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
-			if (!m_services.getProgressMonitorService().continueProcessing()) {
+		for (final AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				verificationInterrupted = true;
 				break;
 			}
 
 			mLogger.debug("Exploring : " + procedureRoot);
 
-			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(m_services);
+			final IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
-			if (DEBUG)
+			if (DEBUG) {
 				codeChecker.debug();
+			}
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
-				if (!m_services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					verificationInterrupted = true;
 					break;
 				}
@@ -403,7 +404,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				benchmarkGenerator.announceNextIteration();
 
 				mLogger.debug(String.format("Iterations = %d\n", iterationsCount));
-				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = emptinessCheck.checkForEmptiness(procedureRoot);
+				final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = emptinessCheck.checkForEmptiness(procedureRoot);
 
 				if (errorRun == null) {
 					// TODO: this only works for the case where we have 1 procedure in procRootsToCheck, right??
@@ -419,31 +420,35 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 									procedureRoot.toString().substring(0, 5)),
 							errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
-					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
-						_predicateUnifier = new PredicateUnifier(m_services, m_smtManager);
+					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
+						_predicateUnifier = new PredicateUnifier(mServices, msmtManager);
+					}
 
 					SmtManager smtManagerTracechecks;
 //					if (noArrayOrNIRAsofar && GlobalSettings._instance.useSeparateSolverForTracechecks) {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
-						Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_services, m_toolchainStorage,
-								m_originalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount,
-								GlobalSettings._instance.chooseSeparateSolverForTracechecks, 
-								false, // m_taPrefs.dumpSmtScriptToFile(),
-								"", // m_taPrefs.pathOfDumpedScript(),
-								GlobalSettings._instance.separateSolverForTracechecksCommand,
-								false, 
+						final String filename = moriginalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
+						final SolverMode solverMode = GlobalSettings._instance.chooseSeparateSolverForTracechecks;
+						final String commandExternalSolver = GlobalSettings._instance.separateSolverForTracechecksCommand;
+						final boolean dumpSmtScriptToFile = false;
+						final String pathOfDumpedScript = "";
+						final Settings solverSettings = SolverBuilder.constructSolverSettings(
+								filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+						final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mtoolchainStorage,
+								GlobalSettings._instance.chooseSeparateSolverForTracechecks,
+								solverSettings, false, 
 								false, 
 								GlobalSettings._instance.separateSolverForTracechecksTheory,
 								"TraceCheck_Iteration" + iterationsCount);
 
-						smtManagerTracechecks = new SmtManager(tcSolver, m_originalRoot.getRootAnnot().getBoogie2SMT(),
-								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false, m_originalRoot.getRootAnnot().getManagedScript());
-						TermTransferrer tt = new TermTransferrer(tcSolver);
-						for (Term axiom : m_originalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
+						smtManagerTracechecks = new SmtManager(tcSolver, moriginalRoot.getRootAnnot().getBoogie2SMT(),
+								moriginalRoot.getRootAnnot().getModGlobVarManager(), mServices, false, moriginalRoot.getRootAnnot().getManagedScript());
+						final TermTransferrer tt = new TermTransferrer(tcSolver);
+						for (final Term axiom : moriginalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
 							tcSolver.assertTerm(tt.transform(axiom));
 						}
 					} else {
-						smtManagerTracechecks = m_smtManager;
+						smtManagerTracechecks = msmtManager;
 					}
 
 					traceChecker = null;
@@ -454,30 +459,31 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
 									_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 									// is infeasible
-									new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
-									m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									new TreeMap<Integer, IPredicate>(), errorRun.getWord(), msmtManager,
+									moriginalRoot.getRootAnnot().getModGlobVarManager(),
 									/*
 									 * TODO : When Matthias introduced this parameter he set the argument to
 									 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
 									 * value.
-									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
+									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, _predicateUnifier,
 									 GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true);
 							//							} catch (UnsupportedOperationException uoe) {
-						} catch (Exception e) {
-							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks)
+						} catch (final Exception e) {
+							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 								throw e;
+							}
 							/*
 							 * The fallback tracechecker is always the normal solver (i.e. the smtManager that was set in RCFGBuilder settings
 							 * with forward predicates betim interpolation.
 							 */
 							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
 									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									errorRun.getWord(), msmtManager, moriginalRoot.getRootAnnot().getModGlobVarManager(),
 									AssertCodeBlockOrder.NOT_INCREMENTALLY, 
 									UnsatCores.CONJUNCT_LEVEL, 
-									true, m_services,
+									true, mServices,
 									true, _predicateUnifier, INTERPOLATION.ForwardPredicates, //fallback interpolation mode hardcoded for now
-									m_smtManager);
+									msmtManager);
 						}
 						break;
 					case ForwardPredicates:
@@ -491,23 +497,24 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						try {
 							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
 									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									errorRun.getWord(), msmtManager, moriginalRoot.getRootAnnot().getModGlobVarManager(),
 									AssertCodeBlockOrder.NOT_INCREMENTALLY, 
 									GlobalSettings._instance.useUnsatCores,
 									GlobalSettings._instance.useLiveVariables,
-									m_services,
+									mServices,
 									true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
 									smtManagerTracechecks);
-						} catch (Exception e) {
-							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks)
+						} catch (final Exception e) {
+							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 								throw e;
+							}
 
 							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
 									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
-									AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
+									errorRun.getWord(), msmtManager, moriginalRoot.getRootAnnot().getModGlobVarManager(),
+									AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
 									true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
-									m_smtManager);
+									msmtManager);
 						}
 						break;
 					case PathInvariants:
@@ -522,7 +529,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						throw traceChecker.getToolchainCancelledExpection();
 					}
 
-					LBool isSafe = traceChecker.isCorrect();
+					final LBool isSafe = traceChecker.isCorrect();
 					benchmarkGenerator.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
 					
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
@@ -531,17 +538,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						if (GlobalSettings._instance.useInterpolantconsolidation) {
 							try {
 
-								InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
+								final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
 										_predicateUnifier.getTruePredicate(), _predicateUnifier.getFalsePredicate(),
 										new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(errorRun.getWord()),
-										m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services,
-										mLogger, _predicateUnifier, traceChecker, null// m_taPrefs
+										msmtManager, moriginalRoot.getRootAnnot().getModGlobVarManager(), mServices,
+										mLogger, _predicateUnifier, traceChecker, null// mtaPrefs
 								);
 								// Add benchmark data of interpolant consolidation
-								// m_CegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-								// m_InterpolantGenerator = interpConsoli;
+								// mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
+								// mInterpolantGenerator = interpConsoli;
 								interpolants = interpConsoli.getInterpolants();
-							} catch (OperationCanceledException e) {
+							} catch (final AutomataOperationCanceledException e) {
 								// Timeout
 								e.printStackTrace();
 							}
@@ -550,14 +557,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						}
 
 						if (GlobalSettings._instance._memoizeNormalEdgeChecks
-								&& GlobalSettings._instance._memoizeReturnEdgeChecks)
+								&& GlobalSettings._instance._memoizeReturnEdgeChecks) {
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples,
 									_satQuadruples, _unsatQuadruples);
-						else if (GlobalSettings._instance._memoizeNormalEdgeChecks
-								&& !GlobalSettings._instance._memoizeReturnEdgeChecks)
+						} else if (GlobalSettings._instance._memoizeNormalEdgeChecks
+								&& !GlobalSettings._instance._memoizeReturnEdgeChecks) {
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples);
-						else
+						} else {
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
+						}
 
 						benchmarkGenerator.addEdgeCheckerData(codeChecker._edgeChecker.getEdgeCheckerBenchmark());
 
@@ -567,31 +575,35 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						allSafe = false;
 						realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
 
-						if (DEBUG)
+						if (DEBUG) {
 							codeChecker.debug();
+						}
 						break;
 					}
 				}
-				if (DEBUG)
+				if (DEBUG) {
 					codeChecker.debug();
+				}
 			}
 			// we need a fresh copy for each iteration because..??
-			m_graphRoot = copyGraph(originalGraphCopy);
-			codeChecker.m_graphRoot = m_graphRoot;
+			mgraphRoot = copyGraph(originalGraphCopy);
+			codeChecker.mgraphRoot = mgraphRoot;
 
-			if (!allSafe)
+			if (!allSafe) {
 				break;
+			}
 		}
 
-		if (DEBUG)
+		if (DEBUG) {
 			codeChecker.debug();
+		}
 
 		if (!verificationInterrupted) {
 			if (allSafe) {
 				overallResult = Result.CORRECT;
-			}
-			else
+			} else {
 				overallResult = Result.INCORRECT;
+			}
 		} else {
 			reportTimeoutResult(mErrNodesOfAllProc);
 		}
@@ -604,9 +616,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		//benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
-		benchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(m_originalRoot.getRootAnnot());
+		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(moriginalRoot.getRootAnnot());
 		ccb.aggregateBenchmarkData(benchmarkGenerator);
 
 		reportBenchmark(ccb);
@@ -615,10 +627,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportPositiveResults(mErrNodesOfAllProc);
 
 			if (outputHoareAnnotation) {
-				for (AnnotatedProgramPoint pr : procRootsToCheck) {
+				for (final AnnotatedProgramPoint pr : procRootsToCheck) {
 					mLogger.info("Hoare annotation for entrypoint " + pr.getProgramPoint().getProcedure());
-					HashMap<ProgramPoint, Term> ha = computeHoareAnnotation(pr);
-					for (Entry<ProgramPoint, Term> kvp : ha.entrySet()) {
+					final HashMap<ProgramPoint, Term> ha = computeHoareAnnotation(pr);
+					for (final Entry<ProgramPoint, Term> kvp : ha.entrySet()) {
 						mLogger.info("At program point  " + prettyPrintProgramPoint(kvp.getKey())
 								+ "  the Hoare annotation is:  " + kvp.getValue());
 					}
@@ -627,11 +639,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} else if (overallResult == Result.INCORRECT) {
 			reportCounterexampleResult(realErrorProgramExecution);
 		} else {
-			String shortDescription = "Unable to decide if program is safe!";
-			String longDescription = "Unable to decide if program is safe!";
-			GenericResult result = new GenericResult(Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+			final String shortDescription = "Unable to decide if program is safe!";
+			final String longDescription = "Unable to decide if program is safe!";
+			final GenericResult result = new GenericResult(Activator.PLUGIN_NAME, shortDescription, longDescription,
 					Severity.INFO);
-			m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		}
 
 		return false;
@@ -639,9 +651,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	// taken from TraceAbstractionStarter
 	private static String prettyPrintProgramPoint(ProgramPoint pp) {
-		int startLine = pp.getPayload().getLocation().getStartLine();
-		int endLine = pp.getPayload().getLocation().getStartLine();
-		StringBuilder sb = new StringBuilder();
+		final int startLine = pp.getPayload().getLocation().getStartLine();
+		final int endLine = pp.getPayload().getLocation().getStartLine();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(pp);
 		if (startLine == endLine) {
 			sb.append("(line " + startLine + ")");
@@ -652,20 +664,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private HashMap<ProgramPoint, Term> computeHoareAnnotation(AnnotatedProgramPoint pr) {
-		HashMap<ProgramPoint, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints = new HashMap<>();
+		final HashMap<ProgramPoint, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints = new HashMap<>();
 
-		HashMap<ProgramPoint, Term> programPointToHoareAnnotation = new HashMap<>();
+		final HashMap<ProgramPoint, Term> programPointToHoareAnnotation = new HashMap<>();
 
 		computeProgramPointToAnnotatedProgramPoints(pr, programPointToAnnotatedProgramPoints);
 
-		for (Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
+		for (final Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
 				.entrySet()) {
-			IPredicate annot = m_smtManager.getPredicateFactory().newPredicate(
-					m_smtManager.getPredicateFactory().constructFalse()); 
+			IPredicate annot = msmtManager.getPredicateFactory().newPredicate(
+					msmtManager.getScript().term("false")); 
 
-			for (AnnotatedProgramPoint app : kvp.getValue()) {
-				TermVarsProc tvp = m_smtManager.getPredicateFactory().or(annot, app.getPredicate());
-				annot = m_smtManager.getPredicateFactory().newSPredicate(kvp.getKey(), tvp);
+			for (final AnnotatedProgramPoint app : kvp.getValue()) {
+				final Term tvp = msmtManager.getPredicateFactory().or(false, annot, app.getPredicate());
+				annot = msmtManager.getPredicateFactory().newSPredicate(kvp.getKey(), tvp);
 			}
 			// programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
 			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());
@@ -682,14 +694,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void computeProgramPointToAnnotatedProgramPoints(AnnotatedProgramPoint entry,
 			HashMap<ProgramPoint, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints) {
 
-		HashSet<AnnotatedProgramPoint> visited = new HashSet<>();
+		final HashSet<AnnotatedProgramPoint> visited = new HashSet<>();
 
-		ArrayDeque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
+		final ArrayDeque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
 
 		queue.push(entry);
 
 		while (!queue.isEmpty()) {
-			AnnotatedProgramPoint current = queue.pop();
+			final AnnotatedProgramPoint current = queue.pop();
 
 			HashSet<AnnotatedProgramPoint> apps = programPointToAnnotatedProgramPoints.get(current.getProgramPoint());
 			if (apps == null) {
@@ -698,7 +710,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 			apps.add(current);
 
-			for (AppEdge outEdge : current.getOutgoingEdges()) {
+			for (final AppEdge outEdge : current.getOutgoingEdges()) {
 				if (!visited.contains(outEdge.getTarget())) {
 					queue.push(outEdge.getTarget());
 					visited.add(outEdge.getTarget());
@@ -714,35 +726,37 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	public ImpRootNode copyGraph(ImpRootNode root) {
-		HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
-		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
+		final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
+		final ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
 		copy.put(root, newRoot);
-		Stack<AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
-		for (AnnotatedProgramPoint child : root.getOutgoingNodes()) {
+		final Stack<AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
+		for (final AnnotatedProgramPoint child : root.getOutgoingNodes()) {
 			stack.add(child);
 		}
 		while (!stack.isEmpty()) {
-			AnnotatedProgramPoint current = stack.pop();
-			if (copy.containsKey(current))
+			final AnnotatedProgramPoint current = stack.pop();
+			if (copy.containsKey(current)) {
 				continue;
+			}
 			copy.put(current, new AnnotatedProgramPoint(current));
-			List<AnnotatedProgramPoint> nextNodes = current.getOutgoingNodes();
-			for (AnnotatedProgramPoint nextNode : nextNodes) {
+			final List<AnnotatedProgramPoint> nextNodes = current.getOutgoingNodes();
+			for (final AnnotatedProgramPoint nextNode : nextNodes) {
 				if (!copy.containsKey(nextNode)) {
 					stack.add(nextNode);
 				}
 			}
 		}
-		for (Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> entry : copy.entrySet()) {
-			AnnotatedProgramPoint oldNode = entry.getKey();
-			AnnotatedProgramPoint newNode = entry.getValue();
-			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
+		for (final Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> entry : copy.entrySet()) {
+			final AnnotatedProgramPoint oldNode = entry.getKey();
+			final AnnotatedProgramPoint newNode = entry.getValue();
+			for (final AppEdge outEdge : oldNode.getOutgoingEdges()) {
 				if (outEdge instanceof AppHyperEdge) {
-					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
-					AnnotatedProgramPoint hier = copy.get(outHypEdge.getHier());
-					if (hier != null)
+					final AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
+					final AnnotatedProgramPoint hier = copy.get(outHypEdge.getHier());
+					if (hier != null) {
 						newNode.connectOutgoingReturn(hier, (Return) outHypEdge.getStatement(),
 								copy.get(outHypEdge.getTarget()));
+					}
 				} else {
 					newNode.connectOutgoing(outEdge.getStatement(), copy.get(outEdge.getTarget()));
 				}
@@ -752,8 +766,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
-		String shortDescription = "Ultimate CodeCheck benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		final String shortDescription = "Ultimate CodeCheck benchmark data";
+		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -766,13 +780,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					+ " specifiation because the program does not contain any specification.";
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
-						m_services.getBacktranslationService());
+			for (final ProgramPoint errorLoc : errorLocs) {
+				final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
+						mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
-		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+		final AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
@@ -784,57 +798,51 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.s_PLUGIN_NAME, m_services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
-		ProgramPoint errorPP = getErrorPP(pe);
-		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_services.getBacktranslationService(), pe, unproabilityReasons);
+		final ProgramPoint errorPP = getErrorPP(pe);
+		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
-		int lastPosition = rcfgProgramExecution.getLength() - 1;
-		RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		final int lastPosition = rcfgProgramExecution.getLength() - 1;
+		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
-			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+		for (final ProgramPoint errorIpp : errorLocs) {
+			final ProgramPoint errorLoc = errorIpp;
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, m_services.getBacktranslationService(), timeOutMessage);
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
 	}
 
 	private void reportResult(IResult res) {
-		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	// Debug
 
 	public ImpRootNode getRoot() {
-		return codeChecker.m_graphRoot;
+		return codeChecker.mgraphRoot;
 	}
 
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
 
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

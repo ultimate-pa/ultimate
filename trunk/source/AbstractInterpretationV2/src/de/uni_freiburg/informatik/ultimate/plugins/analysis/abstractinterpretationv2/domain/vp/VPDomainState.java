@@ -36,11 +36,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -71,7 +71,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	private final Set<Expression> mExprSet;
 	private final Map<String, Set<Expression>> mPtrReadintMap;
 
-	private boolean mIsFixpoint;
+	private final boolean mIsFixpoint;
 
 	protected VPDomainState() {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
@@ -295,13 +295,13 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 	public VPDomainState copy() {
 
-		Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>();
+		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>();
 		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
 			final String key = entry.getKey();
 			newExprMap.put(key, new HashSet<Expression>(mVarExprMap.get(key)));
 		}
 
-		Map<String, Set<Expression>> newPtrReadinMap = new HashMap<String, Set<Expression>>();
+		final Map<String, Set<Expression>> newPtrReadinMap = new HashMap<String, Set<Expression>>();
 		for (final Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
 			final String key = entry.getKey();
 			newPtrReadinMap.put(key, new HashSet<Expression>(mPtrReadintMap.get(key)));
@@ -355,7 +355,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 	public void printExprMap() {
 		System.out.println(" Variables Expression Map: ");
-		for (Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
+		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
 			if (entry.getValue() instanceof IntegerLiteral) {
 				System.out.println(entry.getKey() + ": " + ((IntegerLiteral) entry.getValue()).getValue());
 			} else {
@@ -367,7 +367,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 	public void printPtrReadintMap() {
 		System.out.println(" Pointer Read-int Map: ");
-		for (Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
+		for (final Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
 			if (entry.getValue() instanceof IntegerLiteral) {
 				System.out.println(entry.getKey() + ": " + ((IntegerLiteral) entry.getValue()).getValue());
 			} else {
@@ -431,12 +431,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	 */
 	public static Map<String, String> generateVarGroupInfo(Map<String, Set<String>> partition) {
 
-		Iterator<String> partitionIter = partition.keySet().iterator();
+		final Iterator<String> partitionIter = partition.keySet().iterator();
 		String groupNumber;
 		Set<String> groupSet;
 		Iterator<String> groupSetIter;
 
-		Map<String, String> result = new HashMap<String, String>();
+		final Map<String, String> result = new HashMap<String, String>();
 
 		while (partitionIter.hasNext()) {
 			groupNumber = partitionIter.next();
@@ -473,10 +473,10 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	 */
 	public static Map<String, Set<String>> reIndexGroups(Map<String, Set<String>> partition) {
 
-		Map<String, Set<String>> result = new HashMap<String, Set<String>>();
+		final Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 
-		Set<String> keySet = partition.keySet();
-		Iterator<String> keySetIter = keySet.iterator();
+		final Set<String> keySet = partition.keySet();
+		final Iterator<String> keySetIter = keySet.iterator();
 		int index = 1;
 		String key;
 
@@ -498,8 +498,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			return "1";
 		}
 
-		Set<String> keySet = partition.keySet();
-		Iterator<String> keySetIter = keySet.iterator();
+		final Set<String> keySet = partition.keySet();
+		final Iterator<String> keySetIter = keySet.iterator();
 
 		Integer max = new Integer(keySetIter.next());
 		String next;

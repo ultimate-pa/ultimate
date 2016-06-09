@@ -30,11 +30,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * @author Markus Lindenmann
@@ -298,17 +298,17 @@ public final class SFO {
 		 */
 		MEMSETRES("memset");
 
-		String m_Id;
+		String mId;
 
 		AUXVAR(String id) {
-			m_Id = id;
+			mId = id;
 		}
 
 		/**
 		 * @return Identifier used in the variable name.
 		 */
 		public String getId() {
-			return m_Id;
+			return mId;
 		}
 
 	}
@@ -330,7 +330,7 @@ public final class SFO {
 		// tempVar = new VarList(loc, new String[] { tmpName },
 		// pt);
 		// }
-		VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
+		final VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 	};
 

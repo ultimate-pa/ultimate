@@ -38,17 +38,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Para
 
 public class HybridAutomaton extends SpaceExElement {
 	// Params
-	private Map<String, ParameterType> mParameters;
+	private final Map<String, ParameterType> mParameters;
 
 	// Consts
 
 	// Labels
 
 	// Locations
-	private Map<Integer, Location> mLocations;
+	private final Map<Integer, Location> mLocations;
 
 	// Transitions
-	private List<Transition> mTransitions;
+	private final List<Transition> mTransitions;
 
 	public HybridAutomaton(ComponentType automaton) {
 
@@ -56,11 +56,11 @@ public class HybridAutomaton extends SpaceExElement {
 		mTransitions = new ArrayList<Transition>();
 		mParameters = new HashMap<String, ParameterType>();
 
-		for (LocationType loc : automaton.getLocation()) {
+		for (final LocationType loc : automaton.getLocation()) {
 			addLocation(loc);
 		}
 
-		for (ParamType param : automaton.getParam()) {
+		for (final ParamType param : automaton.getParam()) {
 			addParameter(param);
 		}
 	}
@@ -89,7 +89,7 @@ public class HybridAutomaton extends SpaceExElement {
 			        + " is already part of the automaton.");
 		}
 
-		Location newLoc = new Location(location);
+		final Location newLoc = new Location(location);
 
 		mLocations.put(newLoc.getId(), newLoc);
 	}

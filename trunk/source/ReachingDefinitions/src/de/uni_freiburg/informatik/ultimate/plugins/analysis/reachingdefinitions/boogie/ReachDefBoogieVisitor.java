@@ -28,26 +28,26 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
 public class ReachDefBoogieVisitor extends BoogieVisitor {
 
-	private ReachDefStatementAnnotation mCurrentRD;
+	private final ReachDefStatementAnnotation mCurrentRD;
 	private Statement mCurrentStatement;
 	private TransFormula mCurrentTransFormula;
 
 	private boolean mIsLHS;
 	private boolean mIsAssume;
 	private ReachDefStatementAnnotation mOldRD;
-	private ScopedBoogieVarBuilder mBuilder;
+	private final ScopedBoogieVarBuilder mBuilder;
 	private final String mKey;
 
 	public ReachDefBoogieVisitor(ReachDefStatementAnnotation current, ScopedBoogieVarBuilder builder) {
@@ -68,7 +68,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 		mCurrentTransFormula = transFormula;
 		mIsLHS = false;
 		mIsAssume = false;
-		mOldRD = (ReachDefStatementAnnotation) mCurrentRD.clone();
+		mOldRD = mCurrentRD.clone();
 		processStatement(node);
 	}
 
@@ -76,7 +76,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		// TODO: Problem: how do we recognize array recursion?
 		mIsLHS = true;
-		LeftHandSide rtr = super.processLeftHandSide(lhs);
+		final LeftHandSide rtr = super.processLeftHandSide(lhs);
 		mIsLHS = false;
 		return rtr;
 	}
@@ -97,7 +97,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	protected void visit(IdentifierExpression identifier) {
 		super.visit(identifier);
 
-		ScopedBoogieVar current = mBuilder.getScopedBoogieVar(identifier, mCurrentTransFormula);
+		final ScopedBoogieVar current = mBuilder.getScopedBoogieVar(identifier, mCurrentTransFormula);
 
 		if (mIsAssume) {
 			// if we are inside an assume, every identifier expression is a use
@@ -121,9 +121,9 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	}
 
 	private void updateUse(ScopedBoogieVar id) {
-		Collection<IndexedStatement> stmts = mOldRD.getDef(id);
+		final Collection<IndexedStatement> stmts = mOldRD.getDef(id);
 		if (stmts != null) {
-			for (IndexedStatement stmt : stmts) {
+			for (final IndexedStatement stmt : stmts) {
 				mCurrentRD.addUse(id, stmt.getStatement(), stmt.getKey());
 			}
 		}

@@ -31,13 +31,13 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -53,8 +53,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		InterpolatingTraceChecker {
 	
-	private final IToolchainStorage m_Storage;
-	private final NestedRun<? extends IAction, IPredicate> m_NestedRun;
+	private final IToolchainStorage mStorage;
+	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
+	private final boolean mUseNonlinerConstraints;
+	private final Settings mSolverSettings;
 	
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
 			IPredicate precondition, IPredicate postcondition,
@@ -65,14 +67,17 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			IUltimateServiceProvider services,
 			IToolchainStorage storage,
 			boolean computeRcfgProgramExecution,
-			PredicateUnifier predicateUnifier) {
+			PredicateUnifier predicateUnifier, 
+			boolean useNonlinerConstraints, Settings solverSettings) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, smtManager);
-		m_Storage = storage;
-		m_NestedRun = run;
+		mStorage = storage;
+		mNestedRun = run;
+		mUseNonlinerConstraints = useNonlinerConstraints;
+		mSolverSettings = solverSettings;
 		if (super.isCorrect() == LBool.UNSAT) {
-			m_TraceCheckFinished = true;
+			mTraceCheckFinished = true;
 			super.unlockSmtManager();
 			computeInterpolants(new AllIntegers(), INTERPOLATION.PathInvariants);
 		}
@@ -81,23 +86,24 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	@Override
 	protected void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
-		PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
-				super.m_Services, m_Storage, m_NestedRun, super.getPrecondition(), 
-				super.getPostcondition(), m_PredicateUnifier, super.m_SmtManager,
-				m_ModifiedGlobals);
+		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
+				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
+				super.getPostcondition(), mPredicateUnifier, super.mSmtManager,
+				mModifiedGlobals, mUseNonlinerConstraints, mSolverSettings);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();
 		}
-		if (interpolants.length != m_Trace.length() - 1) {
+		if (interpolants.length != mTrace.length() - 1) {
 			throw new AssertionError("inkorrekt number of interpolants. "
 					+ "There should be one interpolant between each "
 					+ "two successive CodeBlocks");
 		}
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), 
-				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "invariant map", 
-				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in invariant map";
-		m_Interpolants = interpolants;
+				mTrace, mPrecondition, mPostcondition, mPendingContexts, "invariant map", 
+				mModifiedGlobals, mLogger, mManagedScript, mVariableManager)
+			: "invalid Hoare triple in invariant map";
+		mInterpolants = interpolants;
 	}
 
 	private IPredicate[] fallbackInterpolantComputation() {

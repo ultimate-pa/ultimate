@@ -26,16 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 
 public class BlockEncodingAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
-	private MinimizedNode mNode;
+	private final MinimizedNode mNode;
 
 	public BlockEncodingAnnotation(MinimizedNode node) {
 		mNode = node;
@@ -56,13 +56,13 @@ public class BlockEncodingAnnotation extends AbstractAnnotations {
 	}
 
 	public static void addAnnotation(IElement elem, IAnnotations annot) {
-		elem.getPayload().getAnnotations().put(Activator.s_PLUGIN_ID, annot);
+		elem.getPayload().getAnnotations().put(Activator.PLUGIN_ID, annot);
 	}
 
 	public static BlockEncodingAnnotation getAnnotation(IElement elem) {
 		if (elem.hasPayload()) {
-			IAnnotations rtr = elem.getPayload().getAnnotations()
-					.get(Activator.s_PLUGIN_ID);
+			final IAnnotations rtr = elem.getPayload().getAnnotations()
+					.get(Activator.PLUGIN_ID);
 			if (rtr != null) {
 				return (BlockEncodingAnnotation) rtr;
 			}

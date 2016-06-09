@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -44,9 +44,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 public class DebuggerException extends Exception {
 	private static final long serialVersionUID = 1L;
 	
-	final Class<?> mClassOfThrower;
-	final String mMessage;
+	private final Class<?> mClassOfThrower;
+	private final String mMessage;
 	
+	/**
+	 * @param thrower class of the thrower (for better identification)
+	 * @param message message to print when throwing
+	 */
 	public DebuggerException(final Class<?> thrower, final String message) {
 		mClassOfThrower = thrower;
 		mMessage = message;

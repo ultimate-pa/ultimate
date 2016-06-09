@@ -29,32 +29,28 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -63,74 +59,33 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class PredicateFactory {
 
-	private final Boogie2SMT m_Boogie2Smt;
-	private final Script m_Script;
+	private final Boogie2SMT mBoogie2Smt;
+	private final Script mScript;
 
-	protected int m_SerialNumber;
+	protected int mSerialNumber;
 
 	private static final Set<BoogieVar> EMPTY_VARS = Collections.emptySet();
 	private static final String[] NO_PROCEDURE = new String[0];
 
-	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	
-	protected Term m_DontCareTerm;
-	protected Term m_EmptyStackTerm;
+	protected Term mDontCareTerm;
+	protected Term mEmptyStackTerm;
 	
 	
 	
 	public Term getDontCareTerm() {
-		return m_DontCareTerm;
+		return mDontCareTerm;
 	}
 
 	public PredicateFactory(IUltimateServiceProvider services, Boogie2SMT boogie2smt) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_DontCareTerm = new AuxilliaryTerm("don't care");
-		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
-		m_Boogie2Smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
-	}
-	
-	/**
-	 * Constructs a predicate from the given term. If the given term is
-	 * quantifier-free, a BasicPredicate will be constructed, otherwise it
-	 * constructs a BasicPredicateExplicitQuantifier.
-	 * 
-	 * @param term
-	 *            - resulting predicate is constructed using this term
-	 * @param quantifier
-	 *            - describes how the given variables in the set
-	 *            "quantifiedVariables" are quantified (only two possibilities
-	 *            here: 0 or 1)
-	 * @param quantifiedVariables
-	 *            - the variables in the given term, which should be quantified.
-	 *            If this set is empty, nothing is quantified, and the result is
-	 *            a BasicPredicate, otherwise it constructs a
-	 *            BasicPredicateExplicitQuantifier.
-	 */
-	public IPredicate constructPredicate(Term term, int quantifier, Set<TermVariable> quantifiedVariables) {
-		assert checkIfValidPredicate(term, quantifiedVariables);
-		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2Smt);
-			return newPredicate(tvp);
-		} else {
-			Term result = PartialQuantifierElimination.quantifier(m_Services, m_Logger, m_Script, m_Boogie2Smt.getVariableManager(), quantifier,
-					quantifiedVariables, term, (Term[][]) null);
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
-			// Check whether the result has still quantifiers
-			if (result instanceof QuantifiedFormula) {
-				quantifiedVariables = new HashSet<TermVariable>(Arrays.asList(((QuantifiedFormula) result)
-						.getVariables()));
-				return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), result,
-						tvp.getVars(), tvp.getClosedFormula(), quantifier, quantifiedVariables);
-			} else {
-				return newPredicate(tvp);
-			}
-
-		}
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mDontCareTerm = new AuxilliaryTerm("don't care");
+		mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
+		mBoogie2Smt = boogie2smt;
+		mScript = boogie2smt.getScript();
 	}
 	
 	/**
@@ -138,8 +93,8 @@ public class PredicateFactory {
 	 * be quantified. Throws an Exception otherwise.
 	 */
 	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
-		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = m_Boogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+		for (final TermVariable tv : term.getFreeVars()) {
+			final BoogieVar bv = mBoogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
 			if (bv == null) {
 				if (!quantifiedVariables.contains(tv)) {
 					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
@@ -154,144 +109,142 @@ public class PredicateFactory {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, TermVarsProc tvp, Map<Integer, Term> history) {
-		PredicateWithHistory pred = new PredicateWithHistory(pp, m_SerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
+	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, Term term, Map<Integer, Term> history) {
+		final TermVarsProc tvp = constructTermVarsProc(term);
+		final PredicateWithHistory pred = new PredicateWithHistory(pp, mSerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
 	}
 
 	public boolean isDontCare(IPredicate pred) {
-		return pred.getFormula() == m_DontCareTerm;
+		return pred.getFormula() == mDontCareTerm;
 	}
 	
-	public boolean isDontCare(TermVarsProc tvp) {
-		return tvp.getFormula() == m_DontCareTerm;
+	public boolean isDontCare(Term term) {
+		return term == mDontCareTerm;
 	}
 
-	public SPredicate newSPredicate(ProgramPoint pp, TermVarsProc termVarsProc) {
-		SPredicate pred = new SPredicate(pp, m_SerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
+	public SPredicate newSPredicate(ProgramPoint pp, final Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
+		return newSPredicate(pp, termVarsProc);
+	}
+	
+	private SPredicate newSPredicate(ProgramPoint pp, final TermVarsProc termVarsProc) {
+		final SPredicate pred = new SPredicate(pp, mSerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 
-	public BasicPredicate newPredicate(TermVarsProc termVarsProc) {
-		BasicPredicate predicate = new BasicPredicate(m_SerialNumber++, termVarsProc.getProcedures(),
+	public BasicPredicate newPredicate(final Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
+		final BasicPredicate predicate = new BasicPredicate(mSerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
-	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, TermVarsProc termVarsProc) {
-		MLPredicate predicate = new MLPredicate(programPoints, m_SerialNumber++, termVarsProc.getProcedures(),
+	private TermVarsProc constructTermVarsProc(final Term term) {
+		final TermVarsProc termVarsProc;
+		if (term == mDontCareTerm) {
+			termVarsProc = constructDontCare();
+		} else {
+			termVarsProc = TermVarsProc.computeTermVarsProc(term, mBoogie2Smt);
+		}
+		return termVarsProc;
+	}
+
+	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
+		final MLPredicate predicate = new MLPredicate(programPoints, mSerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 	
 	public ProdState getNewProdState(List<IPredicate> programPoints) {
-		return new ProdState(m_SerialNumber++, programPoints, m_Script.term("true"),new HashSet<BoogieVar>(0));
+		return new ProdState(mSerialNumber++, programPoints, mScript.term("true"),new HashSet<BoogieVar>(0));
 	}
 	
-	public TermVarsProc constructTrue() {
-		final Term trueTerm = m_Script.term("true");
-		return new TermVarsProc(trueTerm, EMPTY_VARS, NO_PROCEDURE, trueTerm);
-	}
-	
-	public TermVarsProc constructFalse() {
-		final Term trueTerm = m_Script.term("false");
-		return new TermVarsProc(trueTerm, EMPTY_VARS, NO_PROCEDURE, trueTerm);
-	}
-	
-	public TermVarsProc constructDontCare() {
-		return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+	private TermVarsProc constructDontCare() {
+		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, NO_PROCEDURE, mDontCareTerm);
 	}
 
 	
 	
 
 	public UnknownState newDontCarePredicate(ProgramPoint pp) {
-		UnknownState pred = new UnknownState(pp, m_SerialNumber++, m_DontCareTerm);
+		final UnknownState pred = new UnknownState(pp, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
 
 	public DebugPredicate newDebugPredicate(String debugMessage) {
-		DebugPredicate pred = new DebugPredicate(debugMessage, m_SerialNumber++, m_DontCareTerm);
+		final DebugPredicate pred = new DebugPredicate(debugMessage, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
 
 	public ISLPredicate newEmptyStackPredicate() {
-		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
-		return newSPredicate(pp, new TermVarsProc(m_EmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, m_EmptyStackTerm));
+		final ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
+		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
 
 	}
 
 	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode, Integer stutteringSteps) {
-		SPredicate pred = new SPredicateWithWitnessNode(pp, m_SerialNumber++, NO_PROCEDURE, m_Script.term("true"), EMPTY_VARS,
-				m_Script.term("true"), witnessNode, stutteringSteps);
+		final SPredicate pred = new SPredicateWithWitnessNode(pp, mSerialNumber++, NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
+				mScript.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp, ModifiableGlobalVariableManager modifiableGlobals) {
-		return new HoareAnnotation(pp, m_SerialNumber++, m_Boogie2Smt, this, modifiableGlobals, m_Services);
+		return new HoareAnnotation(pp, mSerialNumber++, mBoogie2Smt, this, modifiableGlobals, mServices);
 	}
 
 	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
-		TermVarsProc tvp = and(inputPreds.toArray(new IPredicate[0]));
-		BuchiPredicate buchi = new BuchiPredicate(m_SerialNumber++, tvp.getProcedures(), tvp.getFormula(),
+		final Term conjunction = and(inputPreds);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mBoogie2Smt);
+		final BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;
 	}
 	
 	
 	
-	public TermVarsProc and(IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		Term term = m_Script.term("true");
-		for (IPredicate p : preds) {
+	public Term and(IPredicate... preds) {
+		return and(Arrays.asList(preds));
+	}
+	
+	public Term and(Collection<IPredicate> preds) {
+		Term term = mScript.term("true");
+		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+				return mDontCareTerm;
 			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
-			term = Util.and(m_Script, term, p.getFormula());
+			term = Util.and(mScript, term, p.getFormula());
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
+		return term;
 	}
 	
-	public TermVarsProc or(IPredicate... preds) {
-		return or(false, preds);
-	}
-	
-	public TermVarsProc orWithSimplifyDDA(IPredicate... preds) {
-		return or(true, preds);
+	public Term or(boolean withSimplifyDDA, IPredicate... preds) {
+		return or(withSimplifyDDA, Arrays.asList(preds));
 	}
 
-	public TermVarsProc or(boolean withSimplifyDDA, IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		Term term = m_Script.term("false");
-		for (IPredicate p : preds) {
+	public Term or(boolean withSimplifyDDA, Collection<IPredicate> preds) {
+		Term term = mScript.term("false");
+		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+				return mDontCareTerm;
 			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
-			term = Util.or(m_Script, term, p.getFormula());
+			term = Util.or(mScript, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(m_Script, term, m_Services);
+			term = SmtUtils.simplify(mScript, term, mServices);
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
+		return term;
 	}
 
-	public TermVarsProc not(IPredicate p) {
+	public Term not(IPredicate p) {
 		if (isDontCare(p)) {
-			return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+			return mDontCareTerm;
 		}
-		Term term = Util.not(m_Script, p.getFormula());
-		Term closedTerm = Util.not(m_Script, p.getClosedFormula());
-		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
+		final Term term = SmtUtils.not(mScript, p.getFormula());
+		return term;
 	}
 	
 
@@ -300,11 +253,11 @@ public class PredicateFactory {
 	
 	private class AuxilliaryTerm extends Term {
 
-		String m_Name;
+		String mName;
 
 		private AuxilliaryTerm(String name) {
 			super(0);
-			m_Name = name;
+			mName = name;
 		}
 
 		@Override
@@ -313,7 +266,7 @@ public class PredicateFactory {
 		}
 
 		@Override
-		public void toStringHelper(ArrayDeque<Object> m_Todo) {
+		public void toStringHelper(ArrayDeque<Object> mTodo) {
 			throw new UnsupportedOperationException("Auxiliary term must not be subterm of other terms");
 		}
 
@@ -329,12 +282,12 @@ public class PredicateFactory {
 
 		@Override
 		public String toString() {
-			return m_Name;
+			return mName;
 		}
 
 		@Override
 		public String toStringDirect() {
-			return m_Name;
+			return mName;
 		}
 
 		@Override

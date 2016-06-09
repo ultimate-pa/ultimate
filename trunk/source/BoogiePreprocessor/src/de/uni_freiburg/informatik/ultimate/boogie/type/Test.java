@@ -28,56 +28,56 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 public class Test {
 	public Test() {
-		int[] o0 = new int[0];
-		int[] o1 = new int[] { 0 };
-		TypeConstructor wicket = new TypeConstructor("Wicket", false, 0, o0);
-		TypeConstructor barrel = new TypeConstructor("Barrel", false, 1, o1);
-		TypeConstructor field = new TypeConstructor("Field", false, 1, o1);
-		BoogieType msetType = BoogieType.createArrayType
+		final int[] o0 = new int[0];
+		final int[] o1 = new int[] { 0 };
+		final TypeConstructor wicket = new TypeConstructor("Wicket", false, 0, o0);
+		final TypeConstructor barrel = new TypeConstructor("Barrel", false, 1, o1);
+		final TypeConstructor field = new TypeConstructor("Field", false, 1, o1);
+		final BoogieType msetType = BoogieType.createArrayType
 			(0, new BoogieType[] { BoogieType.createPlaceholderType(0) }, 
-					BoogieType.intType);
+					BoogieType.TYPE_INT);
 		System.err.println("Test1: "+msetType);
-		TypeConstructor multiSet = new TypeConstructor("MultiSet", true, 1, o1, msetType);
+		final TypeConstructor multiSet = new TypeConstructor("MultiSet", true, 1, o1, msetType);
 		BoogieType testType = BoogieType.createConstructedType(multiSet, 
-				BoogieType.intType);
+				BoogieType.TYPE_INT);
 		System.err.println("Test2: "+testType+ " = "+ testType.getUnderlyingType());
 		
-		BoogieType heapType = BoogieType.createArrayType
+		final BoogieType heapType = BoogieType.createArrayType
 		(1, new BoogieType[] { 
-				BoogieType.intType,
+				BoogieType.TYPE_INT,
 				BoogieType.createConstructedType(field, new BoogieType[] { BoogieType.createPlaceholderType(0) })
 		}, BoogieType.createPlaceholderType(0));
 		System.err.println("Test3: "+heapType+ " = "+ heapType.getUnderlyingType());
-		TypeConstructor heap  = new TypeConstructor("Heap", true, 0, o0, heapType);
+		final TypeConstructor heap  = new TypeConstructor("Heap", true, 0, o0, heapType);
 		testType = BoogieType.createConstructedType(heap);
 		System.err.println("Test4: "+testType+ " = "+ testType.getUnderlyingType());
 		testType = BoogieType.createConstructedType(multiSet, testType);
 		System.err.println("Test5: "+testType+ " = "+ testType.getUnderlyingType());
 		
-		BoogieType w  = BoogieType.createConstructedType(wicket);
-		BoogieType bw = BoogieType.createConstructedType(barrel, w);
-		BoogieType bbw = BoogieType.createConstructedType(barrel, bw);
+		final BoogieType w  = BoogieType.createConstructedType(wicket);
+		final BoogieType bw = BoogieType.createConstructedType(barrel, w);
+		final BoogieType bbw = BoogieType.createConstructedType(barrel, bw);
 		System.err.println("Test6: "+w+", "+bw+", "+bbw);
 		testType = BoogieType.createConstructedType(multiSet, bbw);
 		System.err.println("Test7: "+testType+ " = "+ testType.getUnderlyingType());
 
-		BoogieType nestedType = BoogieType.createArrayType
+		final BoogieType nestedType = BoogieType.createArrayType
 			(1, new BoogieType[] { 
 				BoogieType.createPlaceholderType(1),
 				BoogieType.createConstructedType(field, new BoogieType[] { BoogieType.createPlaceholderType(0) })
 			}, BoogieType.createPlaceholderType(0));
-		TypeConstructor genHeap  = new TypeConstructor("GenHeap", true, 1, o1, nestedType);
+		final TypeConstructor genHeap  = new TypeConstructor("GenHeap", true, 1, o1, nestedType);
 		System.err.println("Test8: "+w+", "+bw+", "+bbw);
 		testType = BoogieType.createConstructedType(genHeap, BoogieType.createPlaceholderType(0));
 		System.err.println("Test9: "+testType+ " = "+ testType.getUnderlyingType());
 		testType = BoogieType.createConstructedType(genHeap, testType);
 		System.err.println("TestA: "+testType+ " = "+ testType.getUnderlyingType());
-		testType = testType.substitutePlaceholders(new BoogieType[] { BoogieType.intType });
+		testType = testType.substitutePlaceholders(new BoogieType[] { BoogieType.TYPE_INT });
 		System.err.println("TestB: "+testType+ " = "+ testType.getUnderlyingType());
 		
-		FunctionSignature cm = new FunctionSignature(0, new String[] {"heap","this"}, 
-				new BoogieType[] { heapType, BoogieType.intType},
-				null, BoogieType.boolType);
+		final FunctionSignature cm = new FunctionSignature(0, new String[] {"heap","this"}, 
+				new BoogieType[] { heapType, BoogieType.TYPE_INT},
+				null, BoogieType.TYPE_BOOL);
 		System.err.println("function C.m"+cm+";");
 	}
 	

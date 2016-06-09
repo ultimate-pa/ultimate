@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import java.text.MessageFormat;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 
 /**
  * Class for Transition form one state of the automaton to another.
@@ -12,22 +13,25 @@ import java.text.MessageFormat;
  */
 public class OutgoingTreeTransition<LETTER, STATE> implements OutgoingTransitionlet<LETTER, STATE> {
 	
-		private final LETTER m_Letter; 
-		private final STATE m_Succ;
+		private final LETTER mLetter; 
+		private final STATE mSucc;
 		
 		public OutgoingTreeTransition(LETTER letter, STATE succ) {
-			m_Letter = letter;
-			m_Succ = succ;
+			mLetter = letter;
+			mSucc = succ;
 		}
 		
+		@Override
 		public LETTER getLetter() {
-			return m_Letter;
+			return mLetter;
 		}
 		
+		@Override
 		public STATE getSucc() {
-			return m_Succ;
+			return mSucc;
 		}
 		
+		@Override
 		public String toString() {
 			return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());
 		}

@@ -45,15 +45,15 @@ public abstract class BinaryRelation {
 	    LESS("<"),
 	    GREATER(">");
 	    
-	    private final String m_StringRepresentation;
+	    private final String mStringRepresentation;
 	    
 	    RelationSymbol(String stringRepresentation) {
-	    	this.m_StringRepresentation = stringRepresentation;
+	    	mStringRepresentation = stringRepresentation;
 	    }
 	
 	    @Override
 	    public String toString() {
-	        return m_StringRepresentation;
+	        return mStringRepresentation;
 	    }
 	}
 	
@@ -139,7 +139,7 @@ public abstract class BinaryRelation {
 			break;
 		case GEQ:
 		case GREATER:
-			RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
+			final RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
 			result = script.term(swapped.toString(), rhsTerm, lhsTerm);
 			break;
 		default:
@@ -150,16 +150,16 @@ public abstract class BinaryRelation {
 	
 	
 
-	protected final RelationSymbol m_RelationSymbol;
-	protected final Term m_Lhs;
-	protected final Term m_Rhs;
+	protected final RelationSymbol mRelationSymbol;
+	protected final Term mLhs;
+	protected final Term mRhs;
 	
 
 	protected BinaryRelation(RelationSymbol relationSymbol, Term lhs, Term rhs) {
 		super();
-		m_RelationSymbol = relationSymbol;
-		m_Lhs = lhs;
-		m_Rhs = rhs;
+		mRelationSymbol = relationSymbol;
+		mLhs = lhs;
+		mRhs = rhs;
 	}
 
 	public BinaryRelation(Term term) throws NoRelationOfThisKindException {
@@ -172,7 +172,7 @@ public abstract class BinaryRelation {
 		boolean isNegated;
 		if (functionSymbolName.equals("not")) {
 			assert params.length == 1;
-			Term notTerm = params[0];
+			final Term notTerm = params[0];
 			if (!(notTerm instanceof ApplicationTerm)) {
 				throw new NoRelationOfThisKindException("no ApplicationTerm");
 			}
@@ -190,7 +190,7 @@ public abstract class BinaryRelation {
 
 		
 		RelationSymbol relSymb = getRelationSymbol(functionSymbolName, isNegated);
-		for (RelationSymbol symb : RelationSymbol.values()) {
+		for (final RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
 				relSymb = isNegated ? negateRelation(symb) : symb;
 				break;
@@ -200,9 +200,9 @@ public abstract class BinaryRelation {
 			throw new NoRelationOfThisKindException(
 					"no binary numeric relation symbol");
 		} else {
-			m_RelationSymbol = relSymb;
-			m_Lhs = params[0];
-			m_Rhs = params[1];
+			mRelationSymbol = relSymb;
+			mLhs = params[0];
+			mRhs = params[1];
 		}
 	}
 	
@@ -224,15 +224,15 @@ public abstract class BinaryRelation {
 					throws NoRelationOfThisKindException;
 
 	public RelationSymbol getRelationSymbol() {
-		return m_RelationSymbol;
+		return mRelationSymbol;
 	}
 
 	public Term getLhs() {
-		return m_Lhs;
+		return mLhs;
 	}
 
 	public Term getRhs() {
-		return m_Rhs;
+		return mRhs;
 	}
 	
 	public static class NoRelationOfThisKindException extends Exception {

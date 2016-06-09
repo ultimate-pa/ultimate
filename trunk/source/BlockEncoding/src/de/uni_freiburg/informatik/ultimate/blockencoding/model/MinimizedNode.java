@@ -37,11 +37,11 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  * @author Stefan Wissert
  * 
  */
-public class MinimizedNode
-		implements IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge> {
+public class MinimizedNode implements
+		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge, VisualizationNode> {
 
 	/**
 	 * Serial number, do not know if this really needed
@@ -62,7 +62,7 @@ public class MinimizedNode
 	/**
 	 * the reference for the underlying node in the original RCFG
 	 */
-	private ProgramPoint mOriginalNode;
+	private final ProgramPoint mOriginalNode;
 
 	/**
 	 * Because we want to store all levels of the minimization, we keep in track all created edges. We store each level
@@ -74,7 +74,7 @@ public class MinimizedNode
 
 	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> incomingEdges;
 
-	private Payload mPayload;
+	private final Payload mPayload;
 
 	/**
 	 * Constructor for the MinimizedNode, it takes as input an INode, which should always be an ProgramPoint
@@ -105,7 +105,7 @@ public class MinimizedNode
 		if (edgeToRate != null) {
 			maxRating = edgeToRate.getRating();
 		} else {
-			for (IMinimizedEdge edge : edges) {
+			for (final IMinimizedEdge edge : edges) {
 				if (maxRating == null) {
 					maxRating = edge.getRating();
 				} else {
@@ -115,21 +115,21 @@ public class MinimizedNode
 				}
 			}
 		}
-		if (this.outgoingEdges == null) {
-			this.outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		if (outgoingEdges == null) {
+			outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
 	 * @return
 	 */
 	public List<IMinimizedEdge> getMinimalOutgoingEdgeLevel() {
-		if (this.outgoingEdges == null) {
+		if (outgoingEdges == null) {
 			return null;
 		}
-		if (this.outgoingEdges.size() > 0) {
-			return this.outgoingEdges.get(this.outgoingEdges.size() - 1).getValue();
+		if (outgoingEdges.size() > 0) {
+			return outgoingEdges.get(outgoingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -141,7 +141,7 @@ public class MinimizedNode
 		// TODO: We need here the same, as for outgoing edge level?
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
-		for (IMinimizedEdge edge : edges) {
+		for (final IMinimizedEdge edge : edges) {
 			if (maxRating == null) {
 				maxRating = edge.getRating();
 			} else {
@@ -150,21 +150,21 @@ public class MinimizedNode
 				}
 			}
 		}
-		if (this.incomingEdges == null) {
-			this.incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		if (incomingEdges == null) {
+			incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
 	 * @return
 	 */
 	public List<IMinimizedEdge> getMinimalIncomingEdgeLevel() {
-		if (this.incomingEdges == null) {
+		if (incomingEdges == null) {
 			return null;
 		}
-		if (this.incomingEdges.size() > 0) {
-			return this.incomingEdges.get(this.incomingEdges.size() - 1).getValue();
+		if (incomingEdges.size() > 0) {
+			return incomingEdges.get(incomingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -185,7 +185,7 @@ public class MinimizedNode
 
 	@Override
 	public List<IMinimizedEdge> getIncomingEdges() {
-		if (this.incomingEdges == null) {
+		if (incomingEdges == null) {
 			return null;
 		}
 		return new ArrayList<IMinimizedEdge>(getMinimalIncomingEdgeLevel());
@@ -193,7 +193,7 @@ public class MinimizedNode
 
 	@Override
 	public List<IMinimizedEdge> getOutgoingEdges() {
-		if (this.outgoingEdges == null) {
+		if (outgoingEdges == null) {
 			return null;
 		}
 		return new ArrayList<IMinimizedEdge>(getMinimalOutgoingEdgeLevel());
@@ -206,12 +206,12 @@ public class MinimizedNode
 	 */
 	@Override
 	public String toString() {
-		return this.mOriginalNode.toString();
+		return mOriginalNode.toString();
 	}
 
 	@Override
 	public IPayload getPayload() {
-		return this.mPayload;
+		return mPayload;
 	}
 
 	@Override
@@ -227,7 +227,7 @@ public class MinimizedNode
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public List<IWalkable> getSuccessors() {
-		return (List<IWalkable>) (List) getOutgoingEdges();
+		return (List) getOutgoingEdges();
 	}
 
 	@Override

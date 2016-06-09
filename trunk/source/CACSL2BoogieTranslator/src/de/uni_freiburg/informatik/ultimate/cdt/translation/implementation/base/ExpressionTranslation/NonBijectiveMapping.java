@@ -30,14 +30,14 @@ import java.math.BigInteger;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Defines the following conversion between pointers and integers.
@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  */
 public class NonBijectiveMapping implements IPointerIntegerConversion {
 	
-	protected final  AExpressionTranslation m_ExpressionTranslation;
-	private final ITypeHandler m_TypeHandler;
+	protected final  AExpressionTranslation mExpressionTranslation;
+	private final ITypeHandler mTypeHandler;
 	
 	public NonBijectiveMapping(AExpressionTranslation expressionTranslation,
 			ITypeHandler typeHandler) {
-		m_ExpressionTranslation = expressionTranslation;
-		m_TypeHandler = typeHandler;
+		mExpressionTranslation = expressionTranslation;
+		mTypeHandler = typeHandler;
 	}
 
 	@Override
@@ -61,21 +61,21 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 		final RValue pointer = (RValue) rexp.lrVal;
 		final Expression baseAddress = MemoryHandler.getPointerBaseAddress(pointer.getValue(), loc);
 		final Expression offset = MemoryHandler.getPointerOffset(pointer.getValue(), loc);
-		final Expression sumExpr = m_ExpressionTranslation.constructArithmeticExpression(
+		final Expression sumExpr = mExpressionTranslation.constructArithmeticExpression(
 				loc, IASTBinaryExpression.op_plus, 
-				baseAddress, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-				offset, m_ExpressionTranslation.getCTypeOfPointerComponents());
-		final RValue sum = new RValue(sumExpr, m_ExpressionTranslation.getCTypeOfPointerComponents());
+				baseAddress, mExpressionTranslation.getCTypeOfPointerComponents(), 
+				offset, mExpressionTranslation.getCTypeOfPointerComponents());
+		final RValue sum = new RValue(sumExpr, mExpressionTranslation.getCTypeOfPointerComponents());
 		rexp.lrVal = sum;
-		m_ExpressionTranslation.convertIntToInt(loc, rexp, newType);
+		mExpressionTranslation.convertIntToInt(loc, rexp, newType);
 	}
 
 	@Override
 	public void convertIntToPointer(ILocation loc, ExpressionResult rexp, CPointer newType) {
-		m_ExpressionTranslation.convertIntToInt(loc, rexp, m_ExpressionTranslation.getCTypeOfPointerComponents());
-		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
-				loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
+		mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
+				loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
 		rexp.lrVal = rValue;
 	}
 

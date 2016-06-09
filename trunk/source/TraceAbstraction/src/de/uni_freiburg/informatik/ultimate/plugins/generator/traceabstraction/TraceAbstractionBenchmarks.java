@@ -35,45 +35,45 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 
-	private final StatisticsData m_CegarLoopBenchmarkData;
-	private final int m_Procedures;
-	private final int m_Locations;
-	private final int m_ErrorLocations;
+	private final StatisticsData mCegarLoopBenchmarkData;
+	private final int mProcedures;
+	private final int mLocations;
+	private final int mErrorLocations;
 
 	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
-		m_Procedures = rootAnnot.getEntryNodes().size();
-		m_Locations = rootAnnot.getNumberOfProgramPoints();
-		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
-		m_CegarLoopBenchmarkData = new StatisticsData();
+		mProcedures = rootAnnot.getEntryNodes().size();
+		mLocations = rootAnnot.getNumberOfProgramPoints();
+		mErrorLocations = rootAnnot.getNumberOfErrorNodes();
+		mCegarLoopBenchmarkData = new StatisticsData();
 	}
 
-	public void aggregateBenchmarkData(CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator) {
-		m_CegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+	public void aggregateBenchmarkData(CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator) {
+		mCegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 	}
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time / 1000000000;
-		long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1000000000;
+		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("CFG has ");
-		sb.append(m_Procedures);
+		sb.append(mProcedures);
 		sb.append(" procedures, ");
-		sb.append(m_Locations);
+		sb.append(mLocations);
 		sb.append(" locations, ");
-		sb.append(m_ErrorLocations);
+		sb.append(mErrorLocations);
 		sb.append(" error locations. ");
-		sb.append(m_CegarLoopBenchmarkData.toString());
+		sb.append(mCegarLoopBenchmarkData.toString());
 		return sb.toString();
 	}
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		return m_CegarLoopBenchmarkData.createCvsProvider();
+		return mCegarLoopBenchmarkData.createCvsProvider();
 	}
 
 }

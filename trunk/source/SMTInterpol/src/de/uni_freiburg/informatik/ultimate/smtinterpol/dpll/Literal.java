@@ -34,7 +34,7 @@ public abstract class Literal {
 	}
 	
 	public Literal(int hash) {
-		this.mHash = hash;
+		mHash = hash;
 	}
 	
 	/**

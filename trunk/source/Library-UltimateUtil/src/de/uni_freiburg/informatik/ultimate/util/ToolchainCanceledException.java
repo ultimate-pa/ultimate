@@ -27,61 +27,60 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 /**
- * Exception that can be thrown if a plugin detects that the timeout is overdue
- * or a cancellation of the toolchain was requested.
+ * Exception that can be thrown if a plugin detects that the timeout is overdue or a cancellation of the toolchain was
+ * requested.
  * 
- * The core will create TimeoutResult if this exception is thrown. 
+ * The core will create TimeoutResult if this exception is thrown.
  *
+ * @author heizmann
  */
 public class ToolchainCanceledException extends RuntimeException {
-	
+
 	private static final long serialVersionUID = 7090759880566576629L;
-	
-	public final static String s_Message = "Timeout or Toolchain cancelled by user";
-	private final Class<?> m_ClassOfThrower; 
-	private final String m_RunningTaskInfo;
+
+	public static final String MESSAGE = "Timeout or Toolchain cancelled by user";
+	private final Class<?> mClassOfThrower;
+	private final String mRunningTaskInfo;
 
 	public ToolchainCanceledException(Class<?> thrower) {
-		super(s_Message);
-		m_ClassOfThrower = thrower;
-		m_RunningTaskInfo = null;
+		super(MESSAGE);
+		mClassOfThrower = thrower;
+		mRunningTaskInfo = null;
 	}
-	
+
 	public ToolchainCanceledException(Class<?> thrower, String runningTaskInfo) {
-		super(s_Message);
-		m_ClassOfThrower = thrower;
-		m_RunningTaskInfo = runningTaskInfo;
+		super(MESSAGE);
+		mClassOfThrower = thrower;
+		mRunningTaskInfo = runningTaskInfo;
 	}
 
 	@Override
 	public String getMessage() {
 		return super.getMessage();
 	}
-	
+
 	/**
 	 * Get the class of the object that has thrown this Exception.
+	 * 
 	 * @return
 	 */
 	public Class<?> getClassOfThrower() {
-		return m_ClassOfThrower;
+		return mClassOfThrower;
 	}
 
 	/**
-	 * Return optional message that was added by the algorithm/task that has
-	 * thrown this Exception. Null if no optional message was provided.
-	 * The message should provide some information that can be helpful for 
-	 * finding the reason for the timeout (e.g., algorithm with
-	 * exponential space complexity was applied to problem of input size 23).
+	 * Return optional message that was added by the algorithm/task that has thrown this Exception. Null if no optional
+	 * message was provided. The message should provide some information that can be helpful for finding the reason for
+	 * the timeout (e.g., algorithm with exponential space complexity was applied to problem of input size 23).
 	 */
 	public String getRunningTaskInfo() {
-		return m_RunningTaskInfo;
+		return mRunningTaskInfo;
 	}
-	
+
 	public String prettyPrint() {
 		return "(Timeout occurred in class " + getClassOfThrower().getSimpleName()
-				+ (getRunningTaskInfo() == null ? "" : " during the following task: "+ getRunningTaskInfo())
+				+ (getRunningTaskInfo() == null ? "" : " during the following task: " + getRunningTaskInfo())
 				+ ")";
 	}
-	
-	
+
 }

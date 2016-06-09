@@ -29,13 +29,14 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 	private final K[] mKeys;
 	private final V[] mValues;
 	public ArrayMap(K[] keys,V[] values) {
-		if (keys.length != values.length)
+		if (keys.length != values.length) {
 			throw new IllegalArgumentException("Unequal array lengths");
+		}
 		mKeys = keys;
 		mValues = values;
 	}
 	private class ArrayMapEntry implements Map.Entry<K, V> {
-		private int mId;
+		private final int mId;
 		public ArrayMapEntry(int id) {
 			mId = id;
 		}
@@ -51,7 +52,7 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V setValue(V value) {
-			V old = mValues[mId];
+			final V old = mValues[mId];
 			mValues[mId] = value;
 			return old;
 		}

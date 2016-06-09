@@ -32,11 +32,11 @@ public class SharedTermEvaluator {
 	public Rational evaluate(SharedTerm st, Theory t) {
 		if (st.validShared()) {
 			if (st.getLinVar() == null) {
-				SMTAffineTerm sat = SMTAffineTerm.create(st.getTerm());
+				final SMTAffineTerm sat = SMTAffineTerm.create(st.getTerm());
 				assert sat.isConstant();
 				return sat.getConstant();
 			}
-			Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
+			final Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
 				add(st.getOffset());
 			return val;
 		}

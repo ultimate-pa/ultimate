@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 
 public class FunctionInfo {
 	private final FunctionDeclaration declaration;
@@ -59,8 +59,9 @@ public class FunctionInfo {
 		this.sig = sig;
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(declaration.getIdentifier()).append(sig);
 		return sb.toString();
 	}

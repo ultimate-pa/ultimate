@@ -33,21 +33,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class OctStatementProcessor {
 
@@ -61,7 +61,7 @@ public class OctStatementProcessor {
 		if (statement instanceof AssignmentStatement) {
 			return processAssignmentStatement((AssignmentStatement) statement, oldStates);
 		} else if (statement instanceof AssumeStatement) {
-			Expression assumption = ((AssumeStatement) statement).getFormula();
+			final Expression assumption = ((AssumeStatement) statement).getFormula();
 			return mPostOp.getAssumeProcessor().assume(assumption, oldStates);
 		} else if (statement instanceof HavocStatement) {
 			return processHavocStatement((HavocStatement) statement, oldStates);
@@ -75,12 +75,12 @@ public class OctStatementProcessor {
 	private List<OctDomainState> processAssignmentStatement(AssignmentStatement statement,
 			List<OctDomainState> oldStates) {
 
-		LeftHandSide[] lhs = statement.getLhs();
-		Expression[] rhs = statement.getRhs();
+		final LeftHandSide[] lhs = statement.getLhs();
+		final Expression[] rhs = statement.getRhs();
 		assert lhs.length == rhs.length : "Unbalanced assignment: " + statement;
-		int length = lhs.length;		
+		final int length = lhs.length;		
 		if (length == 1) {
-			LeftHandSide l = lhs[0];
+			final LeftHandSide l = lhs[0];
 			if (l instanceof VariableLHS) {
 				return processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0], oldStates);
 			} else {
@@ -89,16 +89,16 @@ public class OctStatementProcessor {
 			}
 		}
 
-		Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		List<Pair<String, Expression>> mapLhsToRhs = new ArrayList<>(length);
-		List<Pair<String, String>> mapOrigVarToTmpVar = new ArrayList<>(length);
+		final Map<String, IBoogieVar> tmpVars = new HashMap<>();
+		final List<Pair<String, Expression>> mapLhsToRhs = new ArrayList<>(length);
+		final List<Pair<String, String>> mapOrigVarToTmpVar = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i) {
-			LeftHandSide l = lhs[i];
+			final LeftHandSide l = lhs[i];
 
 			if (l instanceof VariableLHS) {
-				VariableLHS vLhs = (VariableLHS) l;
-				String origVar = vLhs.getIdentifier();
-				String tmpVar = "octTmp(" + origVar + ")"; // unique (origVar is unique + braces are not allowed)
+				final VariableLHS vLhs = (VariableLHS) l;
+				final String origVar = vLhs.getIdentifier();
+				final String tmpVar = "octTmp(" + origVar + ")"; // unique (origVar is unique + braces are not allowed)
 
 				tmpVars.put(tmpVar, BoogieUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
 				mapLhsToRhs.add(new Pair<>(tmpVar, rhs[i]));
@@ -109,13 +109,13 @@ public class OctStatementProcessor {
 
 		// add temporary variables
 		List<OctDomainState> tmpStates = new ArrayList<>(oldStates.size());
-		for (OctDomainState oldState : oldStates) {
+		for (final OctDomainState oldState : oldStates) {
 			tmpStates.add(oldState.addVariables(tmpVars));
 		}
 
 		// (tmpVar := origExpr)*
 		// note: oldStates may be modified, since addVariables() returns only a shallow copy. Not a problem.
-		for (Pair<String, Expression> assignment : mapLhsToRhs) {
+		for (final Pair<String, Expression> assignment : mapLhsToRhs) {
 			tmpStates = processSingleAssignment(assignment.getFirst(), assignment.getSecond(), tmpStates);
 		}
 
@@ -124,14 +124,14 @@ public class OctStatementProcessor {
 		tmpStates.forEach(tmpState -> tmpState.copyVars(mapOrigVarToTmpVar));
 
 		// remove temporary variables
-		List<OctDomainState> newStates = new ArrayList<>(oldStates.size());
+		final List<OctDomainState> newStates = new ArrayList<>(oldStates.size());
 		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars)));
 		return newStates;
 	}
 
 	public List<OctDomainState> processSingleAssignment(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
-		IType type = rhs.getType();
+		final IType type = rhs.getType();
 		if (TypeUtil.isBoolean(type)) {
 			return processBooleanAssign(targetVar, rhs, oldStates);
 		} else if (TypeUtil.isNumeric(type)) {
@@ -145,16 +145,16 @@ public class OctStatementProcessor {
 			List<OctDomainState> oldStates) {
 
 		if (rhs instanceof BooleanLiteral) {
-			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
+			final BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
 			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 			oldStates.forEach(s -> s.assignBooleanVar(targetVar, value));
 			return oldStates;
 
 		} else if (rhs instanceof IdentifierExpression) {
-			IdentifierExpression ie = (IdentifierExpression) rhs;
+			final IdentifierExpression ie = (IdentifierExpression) rhs;
 			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 			if (BoogieUtil.isVariable(ie)) {
-				String sourceVar = ie.getIdentifier();
+				final String sourceVar = ie.getIdentifier();
 				oldStates.forEach(s -> s.copyVar(targetVar, sourceVar));
 			} else {
 				oldStates.forEach(s -> s.havocVar(targetVar));
@@ -162,7 +162,7 @@ public class OctStatementProcessor {
 			return oldStates;
 
 		} else {
-			Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
+			final Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
 			return mPostOp.splitF(oldStates,
 					stateList -> {
 						stateList = mPostOp.getAssumeProcessor().assume(rhs, stateList);
@@ -182,9 +182,9 @@ public class OctStatementProcessor {
 	private List<OctDomainState> processNumericAssign(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
-		List<OctDomainState> newStates = new ArrayList<>();
-		IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
-		for (Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
+		final List<OctDomainState> newStates = new ArrayList<>();
+		final IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
+		for (final Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
 			List<OctDomainState> oldStatesIfsAssumed = leaf.getSecond();
 			oldStatesIfsAssumed = OctPostOperator.removeBottomStates(oldStatesIfsAssumed); // important!
 			newStates.addAll(processNumericAssignWithoutIfs(targetVar, leaf.getFirst(), oldStatesIfsAssumed));
@@ -195,12 +195,12 @@ public class OctStatementProcessor {
 	private List<OctDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 		
-		AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
+		final AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
 			AffineExpression.OneVarForm ovf;
 			AffineExpression.TwoVarForm tvf;
 			if (ae.isConstant()) {
-				OctValue value = new OctValue(ae.getConstant());
+				final OctValue value = new OctValue(ae.getConstant());
 				oldStates.forEach(s -> s.assignNumericVarConstant(targetVar, value));
 				return oldStates;
 			} else if ((ovf = ae.getOneVarForm()) != null) {
@@ -214,8 +214,8 @@ public class OctStatementProcessor {
 				oldStates.forEach(action);
 				return oldStates;
 			} else if ((tvf = ae.getTwoVarForm()) != null) {
-				for (OctDomainState oldState : oldStates) {
-					OctInterval oi = oldState.projectToInterval(tvf);
+				for (final OctDomainState oldState : oldStates) {
+					final OctInterval oi = oldState.projectToInterval(tvf);
 					oldState.assignNumericVarInterval(targetVar, oi);
 				}
 				return oldStates;
@@ -233,8 +233,8 @@ public class OctStatementProcessor {
 
 	private List<OctDomainState> processHavocStatement(HavocStatement statement,
 			List<OctDomainState> oldStates) {
-		List<String> vars = new ArrayList<>();
-		for (VariableLHS lhs : statement.getIdentifiers()) {
+		final List<String> vars = new ArrayList<>();
+		for (final VariableLHS lhs : statement.getIdentifiers()) {
 			vars.add(lhs.getIdentifier());
 		}
 		oldStates = OctPostOperator.removeBottomStates(oldStates); // important!

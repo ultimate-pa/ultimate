@@ -46,23 +46,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 public class StateWithRankInfo<STATE> {
 	
 	public static final int s_NoRank = Integer.MIN_VALUE;
-	private final STATE m_State;
-	private final int m_Rank;
-	private final boolean m_InO;
+	private final STATE mState;
+	private final int mRank;
+	private final boolean mInO;
 	/**
 	 * Constructor for states that have a rank.
 	 */
 	public StateWithRankInfo(STATE state, int rank, boolean inO) {
 		super();
-		m_State = state;
+		mState = state;
 		if (rank < 0) {
 			throw new IllegalArgumentException("rank has to be nonnegative");
 		}
-		m_Rank = rank;
+		mRank = rank;
 //		if (inO && BuchiComplementFKVNwa.isOdd(rank)) {
 //			throw new IllegalArgumentException("state can be only in O if rank is even");
 //		}
-		m_InO = inO;
+		mInO = inO;
 	}
 
 	/**
@@ -70,59 +70,66 @@ public class StateWithRankInfo<STATE> {
 	 */
 	public StateWithRankInfo(STATE state) {
 		super();
-		m_State = state;
-		m_Rank = s_NoRank;
-		m_InO = false;
+		mState = state;
+		mRank = s_NoRank;
+		mInO = false;
 	}
 	
 	public boolean hasRank() {
-		return m_Rank != s_NoRank;
+		return mRank != s_NoRank;
 	}
 	
 	public STATE getState() {
-		return m_State;
+		return mState;
 	}
 	public int getRank() {
-		return m_Rank;
+		return mRank;
 	}
 	public boolean isInO() {
-		return m_InO;
+		return mInO;
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (m_InO ? 1231 : 1237);
-		result = prime * result + m_Rank;
-		result = prime * result + ((m_State == null) ? 0 : m_State.hashCode());
+		result = prime * result + (mInO ? 1231 : 1237);
+		result = prime * result + mRank;
+		result = prime * result + ((mState == null) ? 0 : mState.hashCode());
 		return result;
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		StateWithRankInfo other = (StateWithRankInfo) obj;
-		if (m_InO != other.m_InO)
+		}
+		final StateWithRankInfo other = (StateWithRankInfo) obj;
+		if (mInO != other.mInO) {
 			return false;
-		if (m_Rank != other.m_Rank)
+		}
+		if (mRank != other.mRank) {
 			return false;
-		if (m_State == null) {
-			if (other.m_State != null)
+		}
+		if (mState == null) {
+			if (other.mState != null) {
 				return false;
-		} else if (!m_State.equals(other.m_State))
+			}
+		} else if (!mState.equals(other.mState)) {
 			return false;
+		}
 		return true;
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("(");
 		sb.append(getState());
 		sb.append(",");

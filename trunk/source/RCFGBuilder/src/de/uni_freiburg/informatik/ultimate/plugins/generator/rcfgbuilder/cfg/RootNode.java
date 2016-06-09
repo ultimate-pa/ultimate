@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -81,8 +81,8 @@ public class RootNode extends RCFGNode {
 	 * 
 	 */
 	public String getFilename() {
-		String pathAndFilename = getPayload().getLocation().getFileName();
-		String pureFilename = (new File(pathAndFilename)).getName();
+		final String pathAndFilename = getPayload().getLocation().getFileName();
+		final String pureFilename = (new File(pathAndFilename)).getName();
 		return pureFilename;
 	}
 }

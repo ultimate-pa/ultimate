@@ -31,13 +31,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -54,7 +53,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -73,7 +72,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			throw new IllegalArgumentException("Could not find an initial edge");
 		}
 
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final IProgressAwareTimer timer;
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
 			timer = mServices.getProgressMonitorService().getChildTimer(0.2);

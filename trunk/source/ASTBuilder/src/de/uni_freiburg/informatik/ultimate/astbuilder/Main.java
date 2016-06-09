@@ -27,17 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
-import java.io.*;
+import java.io.FileReader;
 
-public class Main {
-	public void usage() {
-		System.err.println("java TreeBuilder.Main <options> <filename>");
-		System.err.println("<options>:  -debug");
-		System.err.println("            -ultimate");
-		System.err.println("            -acsl");
+@SuppressWarnings("squid:S106")
+public final class Main {
+
+	private Main() {
+		// prevent instantiation of the main class
 	}
 
-	public Main(String[] param) throws Exception {
+	public static void main(String[] param) {
 		if (param.length == 0) {
 			usage();
 			System.exit(1);
@@ -47,47 +46,60 @@ public class Main {
 		boolean debug = false;
 		int i = 0;
 		while (i < param.length) {
-			if (param[i].equals("-debug")) {
+			if ("-debug".equals(param[i])) {
 				i++;
 				debug = true;
-			} else if (param[i].equals("-ultimate")) {
-				i++;
-				emitter = new UltimateEmit();
-			} else if (param[i].equals("-ultimatenew")) {
+			} else if ("-ultimatenew".equals(param[i])) {
 				i++;
 				emitter = new NewUltimateEmit();
-			} else if (param[i].equals("-acsl")) {
+			} else if ("-acsl".equals(param[i])) {
 				i++;
 				emitter = new ACSLEmit();
 			} else {
 				break;
 			}
 		}
-		
-		if(emitter == null){
+
+		if (emitter == null) {
 			emitter = new Emit();
 		}
-		
+
 		for (; i < param.length; i++) {
-			Lexer lexer = new Lexer(new FileReader(param[i]));
-			parser p = new parser(lexer);
-			p.setFileName(param[i]);
-			Grammar grammar;
-			if (debug)
-				grammar = (Grammar) p.debug_parse().value;
-			else
-				grammar = (Grammar) p.parse().value;
-			if (grammar == null) {
-				System.err.println("Parse Error in file: " + param[i]);
+			final Grammar grammar;
+			try {
+				grammar = parseParam(param, debug, i);
+				if (grammar == null) {
+					System.err.println("Parse Error in file: " + param[i]);
+					System.exit(1);
+				}
+				emitter.setGrammar(grammar);
+				emitter.emitClasses();
+			} catch (Exception e) {
+				System.err.println("Parse Error in file: " + param[i] + ": " + e.getMessage());
+				if (debug) {
+					System.err.println(e);
+				}
 				System.exit(1);
+				return;
 			}
-			emitter.setGrammar(grammar);
-			emitter.emitClasses();
 		}
 	}
 
-	public static void main(String[] param) throws Exception {
-		new Main(param);
+	private static Grammar parseParam(String[] param, boolean debug, int i) throws Exception {
+		final Lexer lexer = new Lexer(new FileReader(param[i]));
+		final parser p = new parser(lexer);
+		p.setFileName(param[i]);
+		if (debug) {
+			return (Grammar) p.debug_parse().value;
+		} else {
+			return (Grammar) p.parse().value;
+		}
 	}
 
+	private static void usage() {
+		System.err.println("java TreeBuilder.Main <options> <filename>");
+		System.err.println("<options>:  -debug");
+		System.err.println("            -ultimate");
+		System.err.println("            -acsl");
+	}
 }

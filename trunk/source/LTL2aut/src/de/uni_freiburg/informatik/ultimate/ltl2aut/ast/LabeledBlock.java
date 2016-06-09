@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.ast;
 
 public class LabeledBlock extends AstNode {
 
-	private AstNode value;
+	private final AstNode value;
 	
 	public LabeledBlock(AstNode o){
-		this.value = o;
+		value = o;
 	}
 	
 	public LabeledBlock(AstNode value, AstNode child){
@@ -39,15 +39,17 @@ public class LabeledBlock extends AstNode {
 		this.addOutgoing(child);
 	}
 	
+	@Override
 	public String toString(){
 		String children = "";
-		for(AstNode node: this.getOutgoingNodes())
+		for(final AstNode node: getOutgoingNodes()) {
 			children += node.toString();
-		return this.value.toString()+":\n"+ children + "\n";
+		}
+		return value.toString()+":\n"+ children + "\n";
 	}
 	
 	public AstNode getValue()
 	{
-		return this.value;
+		return value;
 	}
 }

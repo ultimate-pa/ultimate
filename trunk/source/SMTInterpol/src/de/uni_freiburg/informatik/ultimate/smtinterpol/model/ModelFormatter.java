@@ -21,7 +21,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,8 +39,9 @@ public class ModelFormatter {
 	
 	private void newline() {
 		mString.append(mLineSep);
-		for (int i = 0; i < mIndent; ++i)
+		for (int i = 0; i < mIndent; ++i) {
 			mString.append(' ');
+		}
 	}
 	
 	public ModelFormatter(Theory t, Model model) {
@@ -60,7 +60,7 @@ public class ModelFormatter {
 	}
 	
 	public void appendSortInterpretation(SortInterpretation si, Sort sort) {
-		Term t = si.toSMTLIB(mTheory, sort);
+		final Term t = si.toSMTLIB(mTheory, sort);
 		if (t != null) {
 			mIndent += Config.INDENTATION;
 			newline();
@@ -72,15 +72,17 @@ public class ModelFormatter {
 	public void appendValue(FunctionSymbol f, FunctionValue value, Theory t) {
 		mIndent += Config.INDENTATION;
 		newline();
-		Sort[] paramSorts = f.getParameterSorts();
-		TermVariable[] vars = new TermVariable[paramSorts.length];
-		for (int i = 0; i < vars.length; ++i)
+		final Sort[] paramSorts = f.getParameterSorts();
+		final TermVariable[] vars = new TermVariable[paramSorts.length];
+		for (int i = 0; i < vars.length; ++i) {
 			vars[i] = t.createTermVariable("@p" + i, paramSorts[i]);
+		}
 		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(
 				f.getName())).append(" (");
-		for (int i = 0; i < vars.length; ++i)
+		for (int i = 0; i < vars.length; ++i) {
 			mString.append('(').append(vars[i]).append(' ').
 				append(paramSorts[i]).append(')');
+		}
 		mString.append(") ").append(f.getReturnSort());
 		mIndent += Config.INDENTATION;
 		appendFunctionValue(value, vars, f.getReturnSort());
@@ -90,12 +92,13 @@ public class ModelFormatter {
 	}
 	
 	private Term index2Term(Index index, TermVariable[] vars) {
-		int[] idx = index.getArray();
+		final int[] idx = index.getArray();
 		assert vars.length == idx.length;
-		Term[] conj = new Term[vars.length];
-		for (int i = 0; i < vars.length; ++i)
+		final Term[] conj = new Term[vars.length];
+		for (int i = 0; i < vars.length; ++i) {
 			conj[i] = mTheory.equals(vars[i],
 					mModel.toModelTerm(idx[i], vars[i].getSort()));
+		}
 		return mTheory.and(conj);
 	}
 	
@@ -107,9 +110,9 @@ public class ModelFormatter {
 					mModel.toModelTerm(value.getDefault(), resultSort)
 					.toStringDirect());
 		} else {
-			int defaultVal = value.getDefault();
+			final int defaultVal = value.getDefault();
 			int closing = 0;
-			for (Entry<Index, Integer> me : value.values().entrySet()) {
+			for (final Entry<Index, Integer> me : value.values().entrySet()) {
 				if (me.getValue() != defaultVal) {
 					newline();
 					mString.append("(ite ").append(
@@ -126,8 +129,9 @@ public class ModelFormatter {
 			newline();
 			mString.append(mModel.toModelTerm(defaultVal, resultSort)
 					.toStringDirect());
-			for (int i = 0; i < closing; ++i)
+			for (int i = 0; i < closing; ++i) {
 				mString.append(')');
+			}
 			mIndent -= Config.INDENTATION;
 		}
 	}

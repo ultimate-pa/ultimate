@@ -30,9 +30,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a PetriNet place.
@@ -45,12 +45,12 @@ public class PetriNetInitialNode extends PetriNetVisualizationNode {
 	public PetriNetInitialNode(Collection<String> acceptingMarkings) {
 		super("My sucessors are the initial marking");
 		
-		IPayload payload = this.getPayload();
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload();
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings of this petri net",
 				acceptingMarkings);
-		Map<String,IAnnotations> annotations = payload.getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
+		final Map<String,IAnnotations> annotations = payload.getAnnotations();
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}
 	
 }

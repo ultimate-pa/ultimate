@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.Deque;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 
 /**
  * Value for backtranslation mappings.
@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
  */
 public class BackTransValue {
 
-	private String mInlineEntryProcId;
-	private BoogieASTNode mOriginalNode;
-	private Deque<CallStatement> mOriginalCallStack;
+	private final String mInlineEntryProcId;
+	private final BoogieASTNode mOriginalNode;
+	private final Deque<CallStatement> mOriginalCallStack;
 
 	public BackTransValue(String inlineEntryProcId,  Deque<CallStatement> origCallStack, BoogieASTNode origNode) {
 		mInlineEntryProcId = inlineEntryProcId;

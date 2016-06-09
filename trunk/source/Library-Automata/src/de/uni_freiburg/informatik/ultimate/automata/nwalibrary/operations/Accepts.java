@@ -31,8 +31,8 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -53,24 +53,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									  implements IOperation<LETTER,STATE> {
 
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Automaton;
-	private final NestedWord<LETTER> m_Word;
-	private final boolean m_PrefixOfInputIsAccepted;
-	private final boolean m_InputIsSuffixOfAcceptedWord;
-	private boolean m_IsAccepted;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mAutomaton;
+	private final NestedWord<LETTER> mWord;
+	private final boolean mPrefixOfInputIsAccepted;
+	private final boolean mInputIsSuffixOfAcceptedWord;
+	private boolean mIsAccepted;
 
 	public Accepts(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) throws AutomataLibraryException {
 		super(services);
-		this.m_Automaton = automaton;
-		this.m_Word = word;
-		this.m_PrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
-		this.m_InputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
-		m_Logger.info(startMessage());
-		m_IsAccepted = isAccepted();
-		m_Logger.info(exitMessage());
+		this.mAutomaton = automaton;
+		this.mWord = word;
+		this.mPrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
+		this.mInputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
+		mLogger.info(startMessage());
+		mIsAccepted = isAccepted();
+		mLogger.info(exitMessage());
 	}
 	public Accepts(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) throws AutomataLibraryException {
@@ -85,28 +85,28 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " automaton "
-				+ m_Automaton.sizeInformation() + ". " + "word has length "
-				+ m_Word.length();
+				+ mAutomaton.sizeInformation() + ". " + "word has length "
+				+ mWord.length();
 	}
 
 	@Override
 	public String exitMessage() {
 		String message = "Finished " + operationName() + ". ";
-		String quantifier = m_IsAccepted ? "some " : "each ";
-		if (m_InputIsSuffixOfAcceptedWord) {
-			if (m_PrefixOfInputIsAccepted) {
+		final String quantifier = mIsAccepted ? "some " : "each ";
+		if (mInputIsSuffixOfAcceptedWord) {
+			if (mPrefixOfInputIsAccepted) {
 				message += quantifier + "prefix of " + quantifier + "suffix ";
 			} else {
 				message += quantifier + "suffix ";
 			}
 		} else {
-			if (m_PrefixOfInputIsAccepted) {
+			if (mPrefixOfInputIsAccepted) {
 				message += quantifier + "prefix ";
 			} else {
 				message += "word ";
 			}
 		}
-		if (m_IsAccepted) {
+		if (mIsAccepted) {
 			message += "is accepted.";
 		} else {
 			message += "is rejected.";
@@ -115,22 +115,22 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	}
 
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
-		return m_IsAccepted;
+	public Boolean getResult() throws AutomataOperationCanceledException {
+		return mIsAccepted;
 	}
 
 	private boolean isAccepted() throws AutomataLibraryException {
-		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(m_Automaton.getInitialStates());
-		for (int i = 0; i < m_Word.length(); i++) {
-			currentConfigs = successorConfigurations(currentConfigs, m_Word, i,
-					m_Automaton, m_InputIsSuffixOfAcceptedWord);
-			if (m_PrefixOfInputIsAccepted
+		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mAutomaton.getInitialStates());
+		for (int i = 0; i < mWord.length(); i++) {
+			currentConfigs = successorConfigurations(currentConfigs, mWord, i,
+					mAutomaton, mInputIsSuffixOfAcceptedWord);
+			if (mPrefixOfInputIsAccepted
 					&& containsAcceptingConfiguration(currentConfigs,
-							m_Automaton)) {
+							mAutomaton)) {
 				return true;
 			}
 		}
-		if (containsAcceptingConfiguration(currentConfigs, m_Automaton)) {
+		if (containsAcceptingConfiguration(currentConfigs, mAutomaton)) {
 			return true;
 		} else {
 			return false;
@@ -145,8 +145,8 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 */
 	public boolean containsAcceptingConfiguration(Set<Stack<STATE>> configurations,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		for (Stack<STATE> config : configurations) {
-			if (isAcceptingConfiguration(config, m_Automaton)) {
+		for (final Stack<STATE> config : configurations) {
+			if (isAcceptingConfiguration(config, mAutomaton)) {
 				return true;
 			}
 		}

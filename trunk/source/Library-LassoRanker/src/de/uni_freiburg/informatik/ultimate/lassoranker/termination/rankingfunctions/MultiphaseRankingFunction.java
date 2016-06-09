@@ -47,43 +47,43 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MultiphaseRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 5376322220596462295L;
 	
-	private final AffineFunction[] m_ranking;
+	private final AffineFunction[] mranking;
 	public final int phases;
 	
 	public MultiphaseRankingFunction(AffineFunction[] ranking) {
-		m_ranking = ranking;
+		mranking = ranking;
 		phases = ranking.length;
 		assert(phases > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.length + "-phase";
+		return mranking.length + "-phase";
 	}
 
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : m_ranking) {
+		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+		for (final AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
 	}
 	
 	public AffineFunction[] getComponents() {
-		return m_ranking;
+		return mranking;
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.length);
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mranking.length);
 		sb.append("-phase ranking function:\n");
 		for (int i = 0; i < phases; ++i) {
 			sb.append("  f" + i);
 			sb.append(" = ");
-			sb.append(m_ranking[i]);
+			sb.append(mranking[i]);
 			if (i < phases - 1) {
 				sb.append("\n");
 			}
@@ -95,11 +95,11 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		BigInteger n = BigInteger.ZERO;
 		Term phase = script.numeral(n);
-		Term value = m_ranking[m_ranking.length - 1].asTerm(script);
-		for (int i = m_ranking.length - 2; i >= 0; --i) {
+		Term value = mranking[mranking.length - 1].asTerm(script);
+		for (int i = mranking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
-			Term f_term = m_ranking[i].asTerm(script);
-			Term cond = script.term(">", f_term,
+			final Term f_term = mranking[i].asTerm(script);
+			final Term cond = script.term(">", f_term,
 					script.numeral(BigInteger.ZERO));
 			phase = script.term("ite", cond, script.numeral(n), phase);
 			value = script.term("ite", cond, f_term, value);
@@ -111,7 +111,7 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < phases; ++i) {
-			Rational r = m_ranking[i].evaluate(assignment);
+			final Rational r = mranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				return o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}

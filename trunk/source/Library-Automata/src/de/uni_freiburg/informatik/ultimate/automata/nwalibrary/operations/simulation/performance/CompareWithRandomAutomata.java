@@ -26,19 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that compares the different types of simulation methods for buechi
@@ -57,19 +56,19 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
 	/**
 	 * The resulting buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction
@@ -81,35 +80,35 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            A buechi automaton, it is not used by the operation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public CompareWithRandomAutomata(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Result = operand;
-		m_Logger.info(startMessage());
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mResult = operand;
+		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
+		final StateFactory<String> snf = new StringFactory();
 
-		int n = 100;
-		int k = 30;
-		int f = 20;
-		int totalityInPerc = 10;
-		int logEvery = 100;
-		int amount = 1000;
+		final int n = 100;
+		final int k = 30;
+		final int f = 20;
+		final int totalityInPerc = 10;
+		final int logEvery = 100;
+		final int amount = 1000;
 		NestedWordAutomaton<String, String> buechi;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
-				m_Logger.info("Worked " + i + " automata");
+				mLogger.info("Worked " + i + " automata");
 			}
 
-			boolean useNwaInsteadDfaMethod = false;
+			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
 				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
 			} else {
@@ -118,12 +117,12 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 
 			try {
 				new CompareReduceBuchiSimulation<String, String>(services, snf, buechi);
-			} catch (OperationCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*
@@ -155,7 +154,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	@Override
 	public Object getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	/*
@@ -177,6 +176,6 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 }

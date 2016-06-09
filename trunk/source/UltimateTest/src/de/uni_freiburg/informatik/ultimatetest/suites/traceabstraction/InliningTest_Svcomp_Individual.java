@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  *  Test for individual files from SV-COMP.
@@ -119,7 +119,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (sReachPreciseMemoryModel) {
-			for (String file : s_SVCOMP_Reach_PreciseMemoryModel) {
+			for (final String file : s_SVCOMP_Reach_PreciseMemoryModel) {
 				if (sAutomizerWithInlining) {
 					addTestCase("AutomizerCInline.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf", file);
 				}
@@ -129,7 +129,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 			}
 		}
 		if (sMemsafety) {
-			for (String file : s_SVCOMP_Memsafety) {
+			for (final String file : s_SVCOMP_Memsafety) {
 				if (sAutomizerWithInlining) {
 					addTestCase("AutomizerCInline.xml", "automizer/ForwardPredicates_SvcompMemsafety.epf", file);
 				}

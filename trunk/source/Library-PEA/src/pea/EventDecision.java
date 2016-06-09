@@ -43,11 +43,13 @@ public class EventDecision extends Decision {
     public static CDD create(Set<String> must, Set<String> forbid) {
         CDD result = CDD.TRUE;
 
-        for (String evt : must)
-            result = result.and(create(evt));
+        for (final String evt : must) {
+			result = result.and(create(evt));
+		}
 
-        for (String evt : forbid)
-            result = result.and(create('/', evt));
+        for (final String evt : forbid) {
+			result = result.and(create('/', evt));
+		}
 
         return result;
     }
@@ -74,7 +76,8 @@ public class EventDecision extends Decision {
         return CDD.create(new EventDecision(event), CDD.trueChilds);
     }
 
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (!(o instanceof EventDecision)) {
             return false;
         }
@@ -86,11 +89,13 @@ public class EventDecision extends Decision {
         return true;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return event.hashCode();
     }
 
-    public int compareTo(Object o) {
+    @Override
+	public int compareTo(Object o) {
         if (!(o instanceof EventDecision)) {
             return -1;
         }
@@ -98,19 +103,23 @@ public class EventDecision extends Decision {
         return event.compareTo(((EventDecision) o).event);
     }
 
-    public String toString(int child) {
+    @Override
+	public String toString(int child) {
         return (child == 0) ? event : ("/" + event);
     }
 
-    public String toSmtString(int child) {
+    @Override
+	public String toSmtString(int child) {
         return toString(child);
     }
 
-    public String toUppaalString(int child) {
+    @Override
+	public String toUppaalString(int child) {
         return "true";
     }
 
-    public String toUppaalStringDOM(int child) {
+    @Override
+	public String toUppaalStringDOM(int child) {
         return "true";
     }
 
@@ -136,7 +145,8 @@ public class EventDecision extends Decision {
         return (child == 0) ? event : ("\\neg" + event);
     }
 
-    public String getVar() {
+    @Override
+	public String getVar() {
         return "";
     }
 }

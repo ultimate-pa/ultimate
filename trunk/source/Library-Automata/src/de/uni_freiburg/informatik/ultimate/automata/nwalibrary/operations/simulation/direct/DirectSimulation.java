@@ -36,21 +36,19 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
  * Simulation that realizes <b>direct simulation</b> for reduction of a given
  * buechi automaton.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
  * For more information on the type of simulation see {@link DirectGameGraph}.
@@ -71,18 +69,18 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
-	private final AGameGraph<LETTER, STATE> m_Game;
+	private final AGameGraph<LETTER, STATE> mGame;
 
 	/**
 	 * Creates a new direct simulation with a given graph that tries to reduce
 	 * the given buechi automaton using <b>direct simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
@@ -92,7 +90,7 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -100,17 +98,17 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
+	public DirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);
 
 		game.setSimulationPerformance(getSimulationPerformance());
-		m_Game = game;
+		mGame = game;
 	}
 
 	/*
@@ -143,6 +141,6 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
-		return m_Game;
+		return mGame;
 	}
 }

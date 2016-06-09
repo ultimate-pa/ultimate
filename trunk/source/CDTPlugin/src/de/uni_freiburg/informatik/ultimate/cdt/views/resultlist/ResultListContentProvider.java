@@ -37,9 +37,9 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.CDTResultStore;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * @author Stefan Wissert
@@ -73,11 +73,11 @@ public class ResultListContentProvider implements ITreeContentProvider {
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (viewer instanceof TreeViewer) {
-			TreeViewer tViewer = (TreeViewer) viewer;
+			final TreeViewer tViewer = (TreeViewer) viewer;
 			tViewer.getTree().removeAll();
 			internalList.clear();
 
-			for (IResult res : CDTResultStore.getResults((String) newInput)) {
+			for (final IResult res : CDTResultStore.getResults((String) newInput)) {
 				if (res instanceof CounterExampleResult
 						|| res instanceof UnprovableResult) {
 					internalList.add(res);

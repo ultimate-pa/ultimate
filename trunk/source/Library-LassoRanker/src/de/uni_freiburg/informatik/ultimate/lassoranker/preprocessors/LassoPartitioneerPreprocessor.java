@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
@@ -45,23 +45,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	public static final String s_Description = "LassoPartitioneer";
 	
-	private final IUltimateServiceProvider m_Services;
-	private final Boogie2SMT m_Boogie2Smt;
+	private final IUltimateServiceProvider mServices;
+	private final Boogie2SMT mBoogie2Smt;
 	
-	private final Script m_Script;
+	private final Script mScript;
 
 	public LassoPartitioneerPreprocessor(Script script, 
 			IUltimateServiceProvider services, 
 			Boogie2SMT boogie2smt) {
-		m_Services = services;
-		m_Script = script;
-		m_Boogie2Smt = boogie2smt;
+		mServices = services;
+		mScript = script;
+		mBoogie2Smt = boogie2smt;
 	}
 
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			LassoUnderConstruction lasso) throws TermException {
-		LassoPartitioneer lp = new LassoPartitioneer(m_Services, m_Boogie2Smt, m_Script, lasso);
+		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mBoogie2Smt, mScript, lasso);
 		return lp.getNewLassos();
 	}
 

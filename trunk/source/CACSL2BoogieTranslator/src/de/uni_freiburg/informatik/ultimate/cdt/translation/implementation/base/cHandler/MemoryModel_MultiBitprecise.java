@@ -34,80 +34,76 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class MemoryModel_MultiBitprecise extends AMemoryModel {
-	
-	private final Map<Integer, HeapDataArray> m_Size2HeapDataArray = new HashMap<>();
-	
-	public MemoryModel_MultiBitprecise(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+
+	private final Map<Integer, HeapDataArray> mSize2HeapDataArray = new HashMap<>();
+
+	public MemoryModel_MultiBitprecise(TypeSizes typeSizes, ITypeHandler typeHandler,
+			AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		for (PRIMITIVE primitive : PRIMITIVE.values()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
-			if (!m_Size2HeapDataArray.containsKey(bytesize)) {
-				final String name = "data" + bytesize;
-				final ASTType astType = typeHandler.ctype2asttype(ignoreLoc, new CPrimitive(primitive));
-				final HeapDataArray hda = new HeapDataArray(name, astType, bytesize);
-				m_Size2HeapDataArray.put(bytesize, hda);
-			}
-		}
 	}
-       	
-	
-	
+
+	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
-		final int bytesize = m_TypeSizes.getSize(primitive);
-		return m_Size2HeapDataArray.get(bytesize);
+		final int bytesize = mTypeSizes.getSize(primitive);
+		HeapDataArray result = mSize2HeapDataArray.get(bytesize);
+		if (result == null) {
+			final String name = "data" + bytesize;
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(primitive));
+			result = new HeapDataArray(name, astType, bytesize);
+			mSize2HeapDataArray.put(bytesize, result);
+		}
+		return result;
 	}
-
-
 
 	@Override
 	public String getProcedureSuffix(PRIMITIVE primitive) {
 		if (primitive.isFloatingtype()) {
-			throw new UnsupportedOperationException("Floating types are not yet supported in "
-						+ this.getClass().getSimpleName());
+			throw new UnsupportedOperationException(
+					"Floating types are not yet supported in " + this.getClass().getSimpleName());
 		}
 		return getDataHeapArray(primitive).getName();
 	}
-	
+
 	@Override
-	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
+		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
 		}
-		List<ReadWriteDefinition> result = new ArrayList<>();
-		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+		final List<ReadWriteDefinition> result = new ArrayList<>();
+		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
-			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(),
+					new CPrimitive(representative));
+			result.add(
+					new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;
 	}
-	
-	
+
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return m_TypeSizes.getSizeOfPointer();
+		return mTypeSizes.getSizeOfPointer();
 	}
-
-
 
 }

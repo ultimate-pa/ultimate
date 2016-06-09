@@ -65,11 +65,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class LinearTransition implements Serializable {
 	private static final long serialVersionUID = 8925538198614759883L;
 	
-	private final Map<RankVar, Term> m_inVars;
-	private final Map<RankVar, Term> m_outVars;
+	private final Map<RankVar, Term> minVars;
+	private final Map<RankVar, Term> moutVars;
 	
-	private final List<List<LinearInequality>> m_polyhedra;
-	private final boolean m_contains_integers;
+	private final List<List<LinearInequality>> mpolyhedra;
+	private final boolean mcontains_integers;
 	
 	/**
 	 * Construct a new LinearTransition
@@ -82,14 +82,14 @@ public class LinearTransition implements Serializable {
 		assert(polyhedra != null);
 		assert(inVars != null);
 		assert(outVars != null);
-		for (List<LinearInequality> polyhedron : polyhedra) {
+		for (final List<LinearInequality> polyhedron : polyhedra) {
 			assert(polyhedron != null);
 		}
-		m_polyhedra = polyhedra;
-		m_inVars = Collections.unmodifiableMap(inVars);
-		m_outVars = Collections.unmodifiableMap(outVars);
-		m_contains_integers = checkIfContainsSort(m_inVars.keySet(), "Int") || 
-				checkIfContainsSort(m_outVars.keySet(), "Int");
+		mpolyhedra = polyhedra;
+		minVars = Collections.unmodifiableMap(inVars);
+		moutVars = Collections.unmodifiableMap(outVars);
+		mcontains_integers = checkIfContainsSort(minVars.keySet(), "Int") || 
+				checkIfContainsSort(moutVars.keySet(), "Int");
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class LinearTransition implements Serializable {
 	 * sortname.
 	 */
 	private boolean checkIfContainsSort(Set<RankVar> varSet, String sortname) {
-		for (RankVar rv : varSet) {
+		for (final RankVar rv : varSet) {
 			if (rv.getDefinition().getSort().getName().equals(sortname)) {
 				return true;
 			}
@@ -106,12 +106,12 @@ public class LinearTransition implements Serializable {
 	}
 
 	/**
-	 * @return true iff there is at least one integer variable in m_polyhedra
+	 * @return true iff there is at least one integer variable in mpolyhedra
 	 */
 	private boolean checkIfContainsIntegers() {
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
-			for (LinearInequality ieq : polyhedron) {
-				for (Term var : ieq.getVariables()) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
+			for (final LinearInequality ieq : polyhedron) {
+				for (final Term var : ieq.getVariables()) {
 					if (var.getSort().getName().equals("Int")) {
 						return true;
 					}
@@ -143,7 +143,7 @@ public class LinearTransition implements Serializable {
 	 * @return the maximal transition (0 <= 0)
 	 */
 	public static LinearTransition getTranstionTrue() {
-		LinearInequality eqTrue = new LinearInequality();
+		final LinearInequality eqTrue = new LinearInequality();
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqTrue)),
 				Collections.<RankVar, Term> emptyMap(),
@@ -155,7 +155,7 @@ public class LinearTransition implements Serializable {
 	 * @return the empty transition (0 < 0)
 	 */
 	public static LinearTransition getTranstionFalse() {
-		LinearInequality eqFalse = new LinearInequality();
+		final LinearInequality eqFalse = new LinearInequality();
 		eqFalse.setStrict(true);
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqFalse)),
@@ -170,17 +170,17 @@ public class LinearTransition implements Serializable {
 	 * @return list of clauses
 	 */
 	private static List<Term> toClauses(Term term) {
-		List<Term> l = new ArrayList<Term>();
+		final List<Term> l = new ArrayList<Term>();
 		if (!(term instanceof ApplicationTerm)) {
 			l.add(term);
 			return l;
 		}
-		ApplicationTerm appt = (ApplicationTerm) term;
+		final ApplicationTerm appt = (ApplicationTerm) term;
 		if (!appt.getFunction().getName().equals("or")) {
 			l.add(term);
 			return l;
 		}
-		for (Term t : appt.getParameters()) {
+		for (final Term t : appt.getParameters()) {
 			l.addAll(toClauses(t));
 		}
 		return l;
@@ -202,9 +202,9 @@ public class LinearTransition implements Serializable {
 	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf, 
 			NlaHandling nlaHandling)
 			throws TermException {
-		List<List<LinearInequality>> polyhedra =
+		final List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
-		for (Term disjunct : toClauses(tf.getFormula())) {
+		for (final Term disjunct : toClauses(tf.getFormula())) {
 			polyhedra.add(InequalityConverter.convert(disjunct, nlaHandling));
 		}
 		return new LinearTransition(polyhedra, tf.getInVars(), tf.getOutVars());
@@ -215,7 +215,7 @@ public class LinearTransition implements Serializable {
 	 *         and their representation as a TermVariable
 	 */
 	public Map<RankVar, Term> getInVars() {
-		return m_inVars;
+		return minVars;
 	}
 	
 	/**
@@ -223,21 +223,21 @@ public class LinearTransition implements Serializable {
 	 *         and their representation as a TermVariable
 	 */
 	public Map<RankVar, Term> getOutVars() {
-		return m_outVars;
+		return moutVars;
 	}
 	
 	/**
 	 * @return whether this linear transition contains any integer variables
 	 */
 	public boolean containsIntegers() {
-		return m_contains_integers;
+		return mcontains_integers;
 	}
 	
 	/**
 	 * Compute the integral hull of each polyhedron
 	 */
 	public void integralHull() {
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			polyhedron.addAll(IntegralHull.compute(polyhedron));
 		}
 	}
@@ -246,16 +246,16 @@ public class LinearTransition implements Serializable {
 	 * @return whether this transition contains only one polyhedron
 	 */
 	public boolean isConjunctive() {
-		return m_polyhedra.size() <= 1;
+		return mpolyhedra.size() <= 1;
 	}
 	
 	/**
 	 * @return whether this transition is trivially true
 	 */
 	public boolean isTrue() {
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			boolean istrue = true;
-			for (LinearInequality li : polyhedron) {
+			for (final LinearInequality li : polyhedron) {
 				istrue = istrue && li.isConstant()
 				                && li.getConstant().isZero()
 				                && !li.isStrict();
@@ -271,9 +271,9 @@ public class LinearTransition implements Serializable {
 	 * @return whether this transition is trivially false
 	 */
 	public boolean isFalse() {
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			boolean isfalse = false;
-			for (LinearInequality li : polyhedron) {
+			for (final LinearInequality li : polyhedron) {
 				if (li.isConstant() && li.getConstant().isZero() && li.isStrict()) {
 					isfalse = true;
 					break;
@@ -290,7 +290,7 @@ public class LinearTransition implements Serializable {
 	 * @return the number of polyhedra (number of disjuncts)
 	 */
 	public int getNumPolyhedra() {
-		return m_polyhedra.size();
+		return mpolyhedra.size();
 	}
 	
 	/**
@@ -298,7 +298,7 @@ public class LinearTransition implements Serializable {
 	 */
 	public int getNumInequalities() {
 		int num = 0;
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			num += polyhedron.size();
 		}
 		return num;
@@ -308,9 +308,9 @@ public class LinearTransition implements Serializable {
 	 * @return all variables occuring in any of the inequalities
 	 */
 	public Set<Term> getVariables() {
-		Set<Term> vars = new LinkedHashSet<Term>();
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
-			for (LinearInequality li : polyhedron) {
+		final Set<Term> vars = new LinkedHashSet<Term>();
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
+			for (final LinearInequality li : polyhedron) {
 				vars.addAll(li.getVariables());
 			}
 		}
@@ -321,23 +321,24 @@ public class LinearTransition implements Serializable {
 	 * @return this transition's polyhedra as a list
 	 */
 	public List<List<LinearInequality>> getPolyhedra() {
-		return Collections.unmodifiableList(m_polyhedra);
+		return Collections.unmodifiableList(mpolyhedra);
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		
 		// inVars and outVars
 		sb.append("InVars: ");
-		sb.append(m_inVars.toString());
+		sb.append(minVars.toString());
 		sb.append("\nOutVars: ");
-		sb.append(m_outVars.toString());
+		sb.append(moutVars.toString());
 		
 		// Transition polyhedron
 		sb.append("\n(OR\n");
-		for (List<LinearInequality> polyhedron : m_polyhedra) {
+		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			sb.append("    (AND\n");
-			for (LinearInequality ieq : polyhedron) {
+			for (final LinearInequality ieq : polyhedron) {
 				sb.append("        ");
 				sb.append(ieq);
 				sb.append("\n");

@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
 import pea.Phase;
@@ -25,7 +25,7 @@ public class PeaTestGeneratorExecution implements IProgramExecution<BoogieASTNod
 	public PeaTestGeneratorExecution(List<ProgramState<Expression>> states, List<HashSet<Phase>> phases, SystemInformation sysInfo){
 		this.sysInfo = sysInfo;
 		this.states = states;
-		this.phases = phases;
+		this.phases = phases; 
 	}
 	
 	@Override

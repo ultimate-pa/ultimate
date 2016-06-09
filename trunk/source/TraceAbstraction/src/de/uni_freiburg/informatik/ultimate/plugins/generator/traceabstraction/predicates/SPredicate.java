@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  */
 public class SPredicate extends BasicPredicate implements ISLPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
-	protected final ProgramPoint m_ProgramPoint;
+	protected final ProgramPoint mProgramPoint;
 
 	protected SPredicate(ProgramPoint programPoint, int serialNumber, String[] procedures, Term term,
 			Set<BoogieVar> vars, Term closedFormula) {
 		super(serialNumber, procedures, term, vars, closedFormula);
-		m_ProgramPoint = programPoint;
+		mProgramPoint = programPoint;
 	}
 
 	/**
@@ -61,48 +61,53 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "ProgramPoint")
-			return m_Procedures;
-		else
+		if (field == "ProgramPoint") {
+			return mProcedures;
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 
 	@Override
 	public ProgramPoint getProgramPoint() {
-		return m_ProgramPoint;
+		return mProgramPoint;
 	}
 
 	/**
-	 * @return the m_Assertion
+	 * @return the mAssertion
 	 */
+	@Override
 	public Term getFormula() {
-		return m_Formula;
+		return mFormula;
 	}
 
+	@Override
 	public Term getClosedFormula() {
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
+	@Override
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 
 	@Override
 	public String toString() {
-		String result = super.m_SerialNumber + "#";
-		if (m_ProgramPoint != null) {
-			result += m_ProgramPoint.getPosition();
+		String result = super.mSerialNumber + "#";
+		if (mProgramPoint != null) {
+			result += mProgramPoint.getPosition();
 		}
-		result += m_Formula.toString();
+		result += mFormula.toString();
 		return result;
 	}
 
+	@Override
 	public boolean isUnknown() {
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return super.m_SerialNumber;
+		return super.mSerialNumber;
 	}
 }

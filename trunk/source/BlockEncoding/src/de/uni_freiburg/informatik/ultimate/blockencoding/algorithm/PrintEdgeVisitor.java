@@ -29,10 +29,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Stefan Wissert
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
  */
 public class PrintEdgeVisitor extends AbstractMinimizationVisitor {
 
-	public PrintEdgeVisitor(Logger logger) {
+	public PrintEdgeVisitor(ILogger logger) {
 		super(logger);
 	}
 
@@ -54,8 +53,8 @@ public class PrintEdgeVisitor extends AbstractMinimizationVisitor {
 	 */
 	@Override
 	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
-		for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
-			s_Logger.debug("Visit Edge: " + edge.toString());
+		for (final IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
+			mLogger.debug("Visit Edge: " + edge.toString());
 		}
 		return new MinimizedNode[0];
 	}

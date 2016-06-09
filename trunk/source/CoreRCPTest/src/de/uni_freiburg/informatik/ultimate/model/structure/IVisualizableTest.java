@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.InterfaceTest;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 
 //import de.uni_freiburg.informatik.junit_helper.InterfaceTest;
 

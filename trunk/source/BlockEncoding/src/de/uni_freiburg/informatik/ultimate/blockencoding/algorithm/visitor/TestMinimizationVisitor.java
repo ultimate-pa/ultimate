@@ -34,13 +34,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.AbstractMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -57,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 
-	public TestMinimizationVisitor(Logger logger) {
+	public TestMinimizationVisitor(ILogger logger) {
 		super(logger);
 	}
 
@@ -73,18 +72,18 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
 		// check if sequential merge is possible
 		if (checkIfSequentialMergePossible(node)) {
-			s_Logger.error("Sequential Minimization is possible -> so Minimization is not complete");
-			s_Logger.info("Node: " + node);
-			s_Logger.info("Incoming Edges: " + node.getIncomingEdges());
-			s_Logger.info("Outgoing Edges: " + node.getOutgoingEdges());
+			mLogger.error("Sequential Minimization is possible -> so Minimization is not complete");
+			mLogger.info("Node: " + node);
+			mLogger.info("Incoming Edges: " + node.getIncomingEdges());
+			mLogger.info("Outgoing Edges: " + node.getOutgoingEdges());
 			return new MinimizedNode[0];
 		}
 		// check if parallel merge is possible
 		if (checkIfParallelMergePossible(node)) {
-			s_Logger.error("Parallel Minimization is possible -> so Minimization is not complete");
-			s_Logger.info("Node: " + node);
-			s_Logger.info("Incoming Edges: " + node.getIncomingEdges());
-			s_Logger.info("Outgoing Edges: " + node.getOutgoingEdges());
+			mLogger.error("Parallel Minimization is possible -> so Minimization is not complete");
+			mLogger.info("Node: " + node);
+			mLogger.info("Incoming Edges: " + node.getIncomingEdges());
+			mLogger.info("Outgoing Edges: " + node.getOutgoingEdges());
 			return new MinimizedNode[0];
 		}
 		return new MinimizedNode[0];
@@ -99,13 +98,13 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 				&& node.getOutgoingEdges().size() == 1) {
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
-			listToCheck.add((IMinimizedEdge) node.getIncomingEdges().get(0));
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
-			for (IMinimizedEdge edgeToCheck : listToCheck) {
+			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
-					IBasicEdge basic = (IBasicEdge) edgeToCheck;
+					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
 					if (basic.getOriginalEdge() instanceof Call
 							|| basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {
@@ -124,20 +123,20 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}
 			}
-			HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
-			for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
+			final HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
+			for (final IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
-					s_Logger.info("Found a self-loop, should not happen");
+					mLogger.info("Found a self-loop, should not happen");
 					return false;
 				}
 				if (targetNodes.contains(edge.getTarget())) {
-					s_Logger.info("Found Parallel Nodes, should not happen");
+					mLogger.info("Found Parallel Nodes, should not happen");
 					return false;
 				}
 				targetNodes.add(edge.getTarget());
@@ -145,13 +144,13 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
-			listToCheck.add((IMinimizedEdge) node.getIncomingEdges().get(0));
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
-			for (IMinimizedEdge edgeToCheck : listToCheck) {
+			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
-					IBasicEdge basic = (IBasicEdge) edgeToCheck;
+					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
 					if (basic.getOriginalEdge() instanceof Call
 							|| basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {
@@ -170,12 +169,12 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 				|| node.getIncomingEdges().size() <= 1) {
 			return false;
 		}
-		HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
-		for (IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
+		final HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
+		for (final IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
 			if (!pointingMap.containsKey(incomingEdge.getSource())) {
 				pointingMap.put(incomingEdge.getSource(), incomingEdge);
 			} else {
-				IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
+				final IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
 						.getSource());
 				// ParallelEdges maybe Return-Edges, we do not merge them
 				if (incomingEdge.isBasicEdge()

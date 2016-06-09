@@ -58,7 +58,7 @@ public class CLassoRankerTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 		
 		tools.add(new Tool(PrefStrings.s_syntaxchecker));
 		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
@@ -69,7 +69,7 @@ public class CLassoRankerTC extends WebToolchain {
 	
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		List<Setting> rtr = BoogieLassoRankerTC.boogieLassoRankerAdditionalSettings();
+		final List<Setting> rtr = BoogieLassoRankerTC.boogieLassoRankerAdditionalSettings();
 //		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
 //				"main", true));
 		return rtr;

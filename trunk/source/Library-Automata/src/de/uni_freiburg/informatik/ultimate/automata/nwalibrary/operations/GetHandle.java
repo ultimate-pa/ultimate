@@ -26,13 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -58,57 +57,57 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @author Matthias Heizmann
  */
 public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
-	private NestedRun<LETTER,STATE> m_Handle;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private NestedRun<LETTER,STATE> mHandle;
 	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
-	private NoHandleReason m_NoHandleReason;
+	private NoHandleReason mNoHandleReason;
 
 	public GetHandle(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		if (m_Operand.getInitialStates().size() != 1) {
-			m_NoHandleReason = NoHandleReason.MULTI_INITIAL;
+			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		if (mOperand.getInitialStates().size() != 1) {
+			mNoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
-			STATE singleInitial = m_Operand.getInitialStates().iterator().next();
-			m_Handle = getSingleSuccessor(singleInitial);
-			if (m_Handle == null) {
-				m_NoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
+			final STATE singleInitial = mOperand.getInitialStates().iterator().next();
+			mHandle = getSingleSuccessor(singleInitial);
+			if (mHandle == null) {
+				mNoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
 			} else {
 				while (true) {
-					STATE knownPredecessor = m_Handle.getStateAtPosition(m_Handle.getLength()-2);
-					STATE current = m_Handle.getStateAtPosition(m_Handle.getLength()-1);
-					boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
+					final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength()-2);
+					final STATE current = mHandle.getStateAtPosition(mHandle.getLength()-1);
+					final boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
 					if (!singlePred) {
 						break;
 					}
-					NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
+					final NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
 					if (newSuffix == null) {
 						break;
 					} else {
-						m_Handle = m_Handle.concatenate(newSuffix);
+						mHandle = mHandle.concatenate(newSuffix);
 					}
-					if (m_Handle.getLength() > m_Operand.size()) {
-						m_Logger.info("automaton has cycle shape");
-						m_Handle = null;
-						m_NoHandleReason = NoHandleReason.CYCLE_SHAPE;
+					if (mHandle.getLength() > mOperand.size()) {
+						mLogger.info("automaton has cycle shape");
+						mHandle = null;
+						mNoHandleReason = NoHandleReason.CYCLE_SHAPE;
 						break;
 					}
 				}
 			}
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	
 	public NestedRun<LETTER,STATE> getSingleSuccessor(STATE state) {
 		NestedRun<LETTER,STATE> result = null;
-		for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Operand.internalSuccessors(state)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.INTERNAL_POSITION,
@@ -118,7 +117,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return null;
 			}
 		}
-		for (OutgoingCallTransition<LETTER, STATE> outTrans : m_Operand.callSuccessors(state)) {
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : mOperand.callSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.PLUS_INFINITY,
@@ -128,7 +127,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return null;
 			}
 		}
-		for (OutgoingReturnTransition<LETTER, STATE> outTrans : m_Operand.returnSuccessors(state)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mOperand.returnSuccessors(state)) {
 			if (result == null) {
 				result = new NestedRun<LETTER, STATE>(state, 
 						outTrans.getLetter(), NestedWord.MINUS_INFINITY,
@@ -143,7 +142,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	public boolean hasSinglePredecessor(STATE state, STATE knownPredecessor) {
 		STATE predecessor = null;
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : m_Operand.internalPredecessors(state)) {
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getPred();
 			} else {
@@ -151,7 +150,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : m_Operand.callPredecessors(state)) {
+		for (final IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getPred();
 			} else {
@@ -159,7 +158,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 		}
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : m_Operand.returnPredecessors(state)) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
 			if (predecessor == null) {
 				predecessor = inTrans.getLinPred();
 			} else {
@@ -176,8 +175,8 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public NestedRun<LETTER,STATE> getResult() throws OperationCanceledException {
-		return m_Handle;
+	public NestedRun<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
+		return mHandle;
 	}
 
 	@Override
@@ -188,16 +187,16 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		String result = "Finished " + operationName();
-		if (m_Handle == null) {
-			result += ". Automaton has no handle. Reason: " + m_NoHandleReason;
+		if (mHandle == null) {
+			result += ". Automaton has no handle. Reason: " + mNoHandleReason;
 		} else {
-			result += ". Found word of length " + m_Handle.getLength();
+			result += ". Found word of length " + mHandle.getLength();
 		}
 		return result;
 	}

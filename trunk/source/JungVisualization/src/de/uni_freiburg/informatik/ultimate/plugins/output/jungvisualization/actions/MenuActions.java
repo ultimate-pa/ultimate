@@ -64,7 +64,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	}
 
 	public Mode getMode() {
-		JungEditorInput editorInput = getActiveEditorInput();
+		final JungEditorInput editorInput = getActiveEditorInput();
 		if (editorInput == null) {
 
 			return Mode.PICKING;
@@ -74,7 +74,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * Sets the working mode in the system propery MenuActions.SYSTEM_MODE. Is
+	 * Sets the working mode in the system propery MenuActions.SYSTEmMODE. Is
 	 * called when a user switches between Picking and Transforming modes.
 	 * Synchronizes radio buttons in the context menu with those in the main
 	 * menu.
@@ -88,8 +88,8 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 		editorInput.setMode(mode);
 
 		if (mRadioActions.containsKey(Mode.PICKING) && mRadioActions.containsKey(Mode.TRANSFORMING)) {
-			IAction pickingAction = mRadioActions.get(Mode.PICKING);
-			IAction transformingAction = mRadioActions.get(Mode.TRANSFORMING);
+			final IAction pickingAction = mRadioActions.get(Mode.PICKING);
+			final IAction transformingAction = mRadioActions.get(Mode.TRANSFORMING);
 			if (mode.equals(Mode.PICKING)) {
 				pickingAction.setChecked(true);
 				transformingAction.setChecked(false);
@@ -112,33 +112,33 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	@Override
 	public void run(IAction action) {
 
-		String actionID = action.getId();
-		JungEditorInput input = getActiveEditorInput();
+		final String actionID = action.getId();
+		final JungEditorInput input = getActiveEditorInput();
 
 		if (input == null) {
 			return;
 		}
 
 		if (actionID.endsWith("ExportAsSVG")) {
-			CommandExportAsSVG cmd = new CommandExportAsSVG();
+			final CommandExportAsSVG cmd = new CommandExportAsSVG();
 			cmd.exportAsSVG(input);
 		} else if (actionID.endsWith("Mode")) {
 			changeMode(action, input);
 		} else if (actionID.endsWith("KeyHelp")) {
-			CommandShowKeyHelp cmd = new CommandShowKeyHelp();
+			final CommandShowKeyHelp cmd = new CommandShowKeyHelp();
 			cmd.openKeyHelp();
 		}
 
 	}
 
 	private JungEditorInput getActiveEditorInput() {
-		IWorkbenchWindow wbwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		final IWorkbenchWindow wbwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		if (wbwindow != null) {
-			IWorkbenchPage wbpage = wbwindow.getActivePage();
+			final IWorkbenchPage wbpage = wbwindow.getActivePage();
 			if (wbpage != null) {
-				IEditorPart activeEditor = wbpage.getActiveEditor();
+				final IEditorPart activeEditor = wbpage.getActiveEditor();
 				if (activeEditor != null) {
-					IEditorInput editorInput = activeEditor.getEditorInput();
+					final IEditorInput editorInput = activeEditor.getEditorInput();
 					if (editorInput instanceof JungEditorInput) {
 						return (JungEditorInput) editorInput;
 					}
@@ -152,10 +152,10 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	@Override
 	public void selectionChanged(IAction action, ISelection selection) {
 
-		IWorkbenchWindow wbwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		final IWorkbenchWindow wbwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		if (wbwindow != null) {
 			boolean editorOpened = false;
-			IWorkbenchPage wbpage = wbwindow.getActivePage();
+			final IWorkbenchPage wbpage = wbwindow.getActivePage();
 			if (wbpage != null) {
 				editorOpened = wbpage.getActiveEditor() instanceof JungEditor;
 			}
@@ -180,7 +180,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	 */
 	public void changeMode(IAction action, JungEditorInput editorInput) {
 		assert editorInput != null;
-		DefaultModalGraphMouse<?, ?> gm = (DefaultModalGraphMouse<?, ?>) editorInput.getViewer().getGraphMouse();
+		final DefaultModalGraphMouse<?, ?> gm = (DefaultModalGraphMouse<?, ?>) editorInput.getViewer().getGraphMouse();
 
 		if (action.getId().endsWith("PickingMode")) {
 			if (action.isChecked()) {

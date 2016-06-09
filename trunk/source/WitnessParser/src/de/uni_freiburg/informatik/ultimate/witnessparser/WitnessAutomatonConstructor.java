@@ -39,15 +39,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.Transformer;
-import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -72,7 +72,7 @@ import edu.uci.ics.jung.io.graphml.NodeMetadata;
 public class WitnessAutomatonConstructor {
 
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private Map<String, WitnessNode> mNodes;
 	private ModelType.Type mWitnessType;
 	private WitnessGraphAnnotation mGraphAnnotation;
@@ -174,9 +174,9 @@ public class WitnessAutomatonConstructor {
 					file);
 			reader.init();
 			return reader.readGraph();
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (GraphIOException e) {
+		} catch (final GraphIOException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -302,7 +302,7 @@ public class WitnessAutomatonConstructor {
 		}
 		try {
 			return Enum.valueOf(clazz, entry.toUpperCase());
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			mLogger.error("Your witness contains an illegal value for " + key + " in element type "
 					+ data.getMetadataType() + ": \"" + entry + "\". Assuming default value \"" + defaultValue + "\"");
 			return defaultValue;
@@ -317,7 +317,7 @@ public class WitnessAutomatonConstructor {
 		if (entry != null) {
 			try {
 				value = Integer.valueOf(entry);
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				value = -1;
 			}
 		} else {

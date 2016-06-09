@@ -32,9 +32,17 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
 
-public class OctLiteralWideningOperator
-		implements IAbstractStateBinaryOperator<OctDomainState>, OctMatrix.WideningStepSupplier {
+/**
+ * Widening operator for octagons that increases bounds using a fixed set of constants.
+ * Usually, the constants are collected literals of the analyzed program.
+ * 
+ * @see OctMatrix#widenStepwise(OctMatrix, WideningStepSupplier)
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
+public class OctLiteralWideningOperator implements IAbstractStateBinaryOperator<OctDomainState>, WideningStepSupplier {
 
 	/**
 	 * Widening steps.
@@ -45,13 +53,22 @@ public class OctLiteralWideningOperator
 	 * But the actual implementation of {@link TreeSet} (openjdk 8u40-b25) actually works in this scenario.
 	 * {@code equals} is only used in methods like {@link TreeSet#contains(Object)}} or {@link TreeSet#remove(Object)}}.
 	 */
-	private TreeSet<OctValue> wideningSteps;
+	private final TreeSet<OctValue> wideningSteps;
 	
-	public OctLiteralWideningOperator(Collection<BigDecimal> numberLiterals) {
+	/**
+	 * Creates a new literal widening operator.
+	 * The widening operator will increase values to one of the given literals or infinity.
+	 * <p>
+	 * The created widening operator will use an extended set of literals.
+	 * For a literal {@code l} the literals {@code -2*l}, {@code -l}, and {@code 2*l} are introduced.
+	 * 
+	 * @param numberLiterals Set of constants (preferable literals from the program to be analyzed)
+	 */
+	public OctLiteralWideningOperator(final Collection<BigDecimal> numberLiterals) {
 		wideningSteps = new TreeSet<>(); // removes duplicates using method "compareTo"
-		for (BigDecimal literal : numberLiterals) {			
+		for (final BigDecimal literal : numberLiterals) {			
 
-			BigDecimal literal2 = literal.add(literal); // literal * 2, since octagons store interval bounds * 2
+			final BigDecimal literal2 = literal.add(literal); // literal * 2, since octagons store interval bounds * 2
 
 			wideningSteps.add(new OctValue(literal));
 			wideningSteps.add(new OctValue(literal2));
@@ -64,13 +81,13 @@ public class OctLiteralWideningOperator
 	}
 
 	@Override
-	public OctValue nextWideningStep(OctValue v) {
-		OctValue ceil = wideningSteps.ceiling(v); // TODO some programs only terminate with "higher(v)"
+	public OctValue nextWideningStep(final OctValue val) {
+		final OctValue ceil = wideningSteps.ceiling(val);
 		return (ceil == null) ? OctValue.INFINITY : ceil;
 	}
 	
 	@Override
-	public OctDomainState apply(OctDomainState first, OctDomainState second) {
+	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, (m, n) -> m.widenStepwise(n, this));
 	}
 

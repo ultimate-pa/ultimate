@@ -37,17 +37,19 @@ public class SubtermChecker extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker) {
-			SubtermChecker sc = (SubtermChecker) walker;
+			final SubtermChecker sc = (SubtermChecker) walker;
 			if (getTerm() == sc.mSubTerm) {
 				sc.mFound = true;
 				// Clear the todo stack
 				sc.done();
 			} else if (getTerm() instanceof SMTAffineTerm) {
-				SMTAffineTerm at = (SMTAffineTerm) getTerm();
-				for (Term s : at.getSummands().keySet())
+				final SMTAffineTerm at = (SMTAffineTerm) getTerm();
+				for (final Term s : at.getSummands().keySet()) {
 					walker.enqueueWalker(new IsSubterm(s));
-			} else
+				}
+			} else {
 				super.walk(walker);
+			}
 		}
 
 		@Override
@@ -62,8 +64,9 @@ public class SubtermChecker extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			for (Term p : term.getParameters())
+			for (final Term p : term.getParameters()) {
 				walker.enqueueWalker(new IsSubterm(p));
+			}
 		}
 
 		@Override
@@ -95,6 +98,7 @@ public class SubtermChecker extends NonRecursive {
 		return mFound;
 	}
 	
+	@Override
 	public void reset() {
 		super.reset();
 		mFound = false;

@@ -26,18 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableDirectedGraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableDirectedGraph;
 
 public abstract class PetriNetVisualizationNode extends ModifiableDirectedGraph<PetriNetVisualizationNode> {
 
 	private static final long serialVersionUID = 8569911796785553004L;
-	protected final String m_Name;
+	protected final String mName;
 	
 	protected PetriNetVisualizationNode(String name) {
-		m_Name = name;
+		mName = name;
 	}
 
+	@Override
 	public String toString() {
-		return m_Name;
+		return mName;
 	}
 }

@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
-import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * 
@@ -66,14 +66,17 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
 	}
 
+	@Override
 	public Map<LOCATION, Term> getLoc2Term() {
 		return mLoc2Term;
 	}
 
+	@Override
 	public List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> getCounterexamples() {
 		return mCounterexamples;
 	}
 
+	@Override
 	public boolean hasReachedError() {
 		return !mCounterexamples.isEmpty();
 	}
@@ -92,6 +95,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		return toSimplifiedString(a -> a.toStringDirect());
 	}
 
+	@Override
 	public String toSimplifiedString(Function<Term, String> funSimplify) {
 		final StringBuilder sb = new StringBuilder();
 		if (hasReachedError()) {

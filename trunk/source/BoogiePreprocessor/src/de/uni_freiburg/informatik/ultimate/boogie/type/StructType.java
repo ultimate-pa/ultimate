@@ -33,9 +33,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Class representing a struct type.
@@ -79,51 +79,60 @@ public class StructType extends BoogieType {
         this.fTypes = fTypes;
         boolean changed = false;
         boolean finite = true;
-        BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
         for (int i = 0; i < getFieldCount(); i++) {
             newFTypes[i] = fTypes[i].getUnderlyingType();
-            if (newFTypes[i] != fTypes[i])
-                changed = true;
-            if (finite && fTypes[i].isFinite())
-                finite = false;
+            if (newFTypes[i] != fTypes[i]) {
+				changed = true;
+			}
+            if (finite && fTypes[i].isFinite()) {
+				finite = false;
+			}
         }
-        if (changed)
-            realType = createStructType(fNames, newFTypes);
-        else
-            realType = this;
-        this.isFinite = finite;
+        if (changed) {
+			realType = createStructType(fNames, newFTypes);
+		} else {
+			realType = this;
+		}
+        isFinite = finite;
     }
 
     @Override
     protected BoogieType substitutePlaceholders(int depth,
             BoogieType[] substType) {
-        if (getFieldCount() == 0)
-            return this;
-        BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+        if (getFieldCount() == 0) {
+			return this;
+		}
+        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
         boolean changed = false;
         for (int i = 0; i < getFieldCount(); i++) {
             newFTypes[i] = fTypes[i].substitutePlaceholders(depth, substType);
-            if (newFTypes[i] != fTypes[i])
-                changed = true;
+            if (newFTypes[i] != fTypes[i]) {
+				changed = true;
+			}
         }
-        if (!changed)
-            return this;
+        if (!changed) {
+			return this;
+		}
         return createStructType(fNames, newFTypes);
     }
 
     @Override
     protected BoogieType incrementPlaceholders(int depth, int incDepth) {
-        if (getFieldCount() == 0)
-            return this;
-        BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+        if (getFieldCount() == 0) {
+			return this;
+		}
+        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
         boolean changed = false;
         for (int i = 0; i < getFieldCount(); i++) {
             newFTypes[i] = fTypes[i].incrementPlaceholders(depth, incDepth);
-            if (newFTypes[i] != fTypes[i])
-                changed = true;
+            if (newFTypes[i] != fTypes[i]) {
+				changed = true;
+			}
         }
-        if (!changed)
-            return this;
+        if (!changed) {
+			return this;
+		}
         return createStructType(fNames, fTypes);
     }
 
@@ -135,24 +144,28 @@ public class StructType extends BoogieType {
     @Override
     protected boolean unify(int depth, BoogieType other,
             BoogieType[] substitution) {
-        if (!(other instanceof StructType))
-            return false;
-        StructType type = (StructType) other;
-        if (isFinite() != type.isFinite())
-            return false;
-        for (String f : fNames) {
+        if (!(other instanceof StructType)) {
+			return false;
+		}
+        final StructType type = (StructType) other;
+        if (isFinite() != type.isFinite()) {
+			return false;
+		}
+        for (final String f : fNames) {
             if (!getFieldType(f).unify(depth, type.getFieldType(f),
-                    substitution))
-                return false;
+                    substitution)) {
+				return false;
+			}
         }
         return true;
     }
 
     @Override
     protected boolean hasPlaceholder(int minDepth, int maxDepth) {
-        for (BoogieType t : fTypes) {
-            if (t.hasPlaceholder(minDepth, maxDepth))
-                return true;
+        for (final BoogieType t : fTypes) {
+            if (t.hasPlaceholder(minDepth, maxDepth)) {
+				return true;
+			}
         }
         return false;
     }
@@ -160,17 +173,21 @@ public class StructType extends BoogieType {
     @Override
     protected boolean isUnifiableTo(int depth, BoogieType other,
             ArrayList<BoogieType> subst) {
-        if (this == other || other == errorType)
-            return true;
-        if (!(other instanceof StructType))
-            return false;
-        StructType type = (StructType) other;
-        if (isFinite() != type.isFinite())
-            return false;
-        for (String f : fNames) {
+        if (this == other || other == TYPE_ERROR) {
+			return true;
+		}
+        if (!(other instanceof StructType)) {
+			return false;
+		}
+        final StructType type = (StructType) other;
+        if (isFinite() != type.isFinite()) {
+			return false;
+		}
+        for (final String f : fNames) {
             if (!getFieldType(f).isUnifiableTo(depth, type.getFieldType(f),
-                    subst))
-                return false;
+                    subst)) {
+				return false;
+			}
         }
         return true;
     }
@@ -192,7 +209,7 @@ public class StructType extends BoogieType {
      * @return the field type.
      */
     public BoogieType getFieldType(String id) {
-        int idx = Arrays.asList(fNames).indexOf(id);
+        final int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id
                     + "' not in struct!");
@@ -231,9 +248,10 @@ public class StructType extends BoogieType {
     
     @Override
     protected String toString(int depth, boolean needParentheses) {
-        StringBuilder sb = new StringBuilder();
-        if (needParentheses)
-            sb.append("(");
+        final StringBuilder sb = new StringBuilder();
+        if (needParentheses) {
+			sb.append("(");
+		}
         sb.append("{ ");
         String comma = "";
         for (int i = 0; i < getFieldCount(); i++) {
@@ -243,25 +261,28 @@ public class StructType extends BoogieType {
             comma = ", ";
         }
         sb.append(" }");
-        if (needParentheses)
-            sb.append(")");
+        if (needParentheses) {
+			sb.append(")");
+		}
         return sb.toString();
     }
     
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		VarList[] varlist = new VarList[fNames.length];
-		for (int i = 0; i < fNames.length; i++)
+		final VarList[] varlist = new VarList[fNames.length];
+		for (int i = 0; i < fNames.length; i++) {
 			varlist[i] = new VarList(loc, new String[] { fNames[i] }, 
 					fTypes[i].toASTType(loc, depth));
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		}
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			StructType(loc, this, varlist);
 	}
 	
     @Override
     public boolean isFinite() {
-        if (realType != this)
-            return realType.isFinite();
-        return this.isFinite;
+        if (realType != this) {
+			return realType.isFinite();
+		}
+        return isFinite;
     }
 }

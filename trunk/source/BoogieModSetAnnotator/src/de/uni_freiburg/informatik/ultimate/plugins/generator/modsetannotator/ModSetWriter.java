@@ -31,37 +31,35 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class ModSetWriter implements IUnmanagedObserver {
-	private boolean m_PerformedChanges = false;
-	private Logger logger;
-	private Map<String, Set<String>> m_Modifies;
-	private ModSetAnalyzer m_Analyzer;
+	private boolean mPerformedChanges = false;
+	private final ILogger mLogger;
+	private Map<String, Set<String>> mModifies;
+	private final ModSetAnalyzer mAnalyzer;
 
 	public ModSetWriter(ModSetAnalyzer analyzer,
 			IUltimateServiceProvider services) {
-		logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_Analyzer = analyzer;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mAnalyzer = analyzer;
 	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex,
 			int numberOfModels) throws Throwable {
-		m_Modifies = m_Analyzer.getModifiedGlobals();
+		mModifies = mAnalyzer.getModifiedGlobals();
 	}
 
 	@Override
@@ -69,26 +67,20 @@ public class ModSetWriter implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
-		return m_PerformedChanges;
+		return mPerformedChanges;
 	}
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			Declaration[] declarations = unit.getDeclarations();
+			final Unit unit = (Unit) root;
+			final Declaration[] declarations = unit.getDeclarations();
 			for (int i = 0; i < declarations.length; i++) {
-				Declaration d = declarations[i];
+				final Declaration d = declarations[i];
 				if (d instanceof Procedure) {
-					Procedure proc = (Procedure) d;
-					Procedure newProc = processProcedure(proc);
+					final Procedure proc = (Procedure) d;
+					final Procedure newProc = processProcedure(proc);
 					if (newProc != proc) {
 						// Replace the declaration if it was modified
 						declarations[i] = newProc;
@@ -107,13 +99,13 @@ public class ModSetWriter implements IUnmanagedObserver {
 	 * @return
 	 */
 	protected Procedure processProcedure(Procedure proc) {
-		Set<String> modifiesSet = m_Modifies.get(proc.getIdentifier());
+		final Set<String> modifiesSet = mModifies.get(proc.getIdentifier());
 		// Only process if there is work to do and it is a procedure declaration
 		if (modifiesSet != null && proc.getSpecification() != null) {
 			// Look for the modifies clause if it exists
 			int modSpecPosition = -1;
 			VariableLHS[] modifiesArray = null;
-			Specification[] specs = proc.getSpecification();
+			final Specification[] specs = proc.getSpecification();
 
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof ModifiesSpecification) {
@@ -124,10 +116,10 @@ public class ModSetWriter implements IUnmanagedObserver {
 				}
 			}
 
-			Set<VariableLHS> newModifiesSet = new HashSet<VariableLHS>();
+			final Set<VariableLHS> newModifiesSet = new HashSet<VariableLHS>();
 
 			if (modifiesArray != null) {
-				for (VariableLHS var : modifiesArray) {
+				for (final VariableLHS var : modifiesArray) {
 					newModifiesSet.add(var);
 					modifiesSet.remove(var.getIdentifier());
 				}
@@ -135,14 +127,14 @@ public class ModSetWriter implements IUnmanagedObserver {
 
 			if (!modifiesSet.isEmpty()) {
 				// New variables will be added to the modify clause
-				m_PerformedChanges = true;
+				mPerformedChanges = true;
 
-				for (String var : modifiesSet) {
-					VariableLHS newModVar = new VariableLHS(null, var);
+				for (final String var : modifiesSet) {
+					final VariableLHS newModVar = new VariableLHS(null, var);
 					newModifiesSet.add(newModVar);
 				}
 
-				ModifiesSpecification newModifies = new ModifiesSpecification(
+				final ModifiesSpecification newModifies = new ModifiesSpecification(
 						proc.getLocation(), false,
 						newModifiesSet.toArray(new VariableLHS[newModifiesSet
 								.size()]));
@@ -150,11 +142,11 @@ public class ModSetWriter implements IUnmanagedObserver {
 				if (modSpecPosition != -1) { // Do the modification in-place
 					specs[modSpecPosition] = newModifies;
 				} else { // We need a new declaration
-					Specification[] newSpec = Arrays.copyOf(specs,
+					final Specification[] newSpec = Arrays.copyOf(specs,
 							specs.length + 1);
 					newSpec[specs.length] = newModifies;
 
-					Procedure newDecl = new Procedure(proc.getLocation(),
+					final Procedure newDecl = new Procedure(proc.getLocation(),
 							proc.getAttributes(), proc.getIdentifier(),
 							proc.getTypeParams(), proc.getInParams(),
 							proc.getOutParams(), newSpec, proc.getBody());

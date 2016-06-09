@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -42,6 +41,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.PhaseEventAutomata;
 
 /**
@@ -82,25 +82,25 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public TestForm2MCFormCompiler(String loggerName) throws Exception {
-        URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
+        final URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
         PropertyConfigurator.configure(url);
 
         if (loggerName.equals("")) {
-            this.logger = Logger
+            logger = ILogger
                     .getLogger(TestForm2MCFormCompiler.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
 
-        this.initialiseParser();
+        initialiseParser();
 
-        this.trueNodeList = new ArrayList<Element>();
-        this.mcFormsList = new ArrayList<Element>();
-        this.handledIntervalsList = new ArrayList<String>();
+        trueNodeList = new ArrayList<Element>();
+        mcFormsList = new ArrayList<Element>();
+        handledIntervalsList = new ArrayList<String>();
     }
 
     /**
@@ -122,18 +122,18 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * @see org.apache.xerces.parsers.DOMParser;
      */
     protected void initialiseParser() throws Exception {
-        this.parser = new DOMParser();
+        parser = new DOMParser();
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_VALIDATION_FEATURE, true);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_VALIDATION_FEATURE + "\" successful");
 
-        this.logger.debug("Trying to set parser feature \""
+        logger.debug("Trying to set parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\"");
-        this.parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, true);
-        this.logger.debug("Setting parser feature \""
+        parser.setFeature(XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE, true);
+        logger.debug("Setting parser feature \""
                 + XMLTags.PARSER_SCHEMA_VALIDATION_FEATURE + "\" successful");
 
     }
@@ -144,10 +144,10 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * accessed.
      */
     protected Document parse(String file) throws SAXException, IOException {
-        this.logger.debug("Trying to parse file=\"" + file + "\"");
-        this.parser.parse(file);
-        this.logger.debug("Parsing file=\"" + file + "\" successful");
-        return this.parser.getDocument();
+        logger.debug("Trying to parse file=\"" + file + "\"");
+        parser.parse(file);
+        logger.debug("Parsing file=\"" + file + "\" successful");
+        return parser.getDocument();
     }
 
     /**
@@ -183,84 +183,84 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      */
     public Document compile(String toCompile, String mcFile) throws Exception {
 
-        this.document = this.parse(toCompile);
+        document = parse(toCompile);
 
-        this.mcFormsList.clear();
-        this.trueNodeList.clear();
-        this.handledIntervalsList.clear();
+        mcFormsList.clear();
+        trueNodeList.clear();
+        handledIntervalsList.clear();
 
-        File ioFile = new File(toCompile);
-        String fileName = ioFile.getName();
-        String fileNameWithoutXML = ioFile.getName().substring(0,
+        final File ioFile = new File(toCompile);
+        final String fileName = ioFile.getName();
+        final String fileNameWithoutXML = ioFile.getName().substring(0,
                 fileName.length() - 4);
-	String parent = ioFile.getParent() != null ? ioFile.getParent()+ "/" : "";
-        String binFile = parent + fileNameWithoutXML
+	final String parent = ioFile.getParent() != null ? ioFile.getParent()+ "/" : "";
+        final String binFile = parent + fileNameWithoutXML
                 + "_bin.xml";
-        String syncFile = parent + fileNameWithoutXML
+        final String syncFile = parent + fileNameWithoutXML
                 + "_sync.xml";
-        String nfFile = parent + fileNameWithoutXML
+        final String nfFile = parent + fileNameWithoutXML
                 + "_nf.xml";
         if (mcFile.equals("")) {
             mcFile = parent + fileNameWithoutXML + "_mc.xml";
         }
 
-        this.logger.info("Starting compilation");
+        logger.info("Starting compilation");
 
-        NodeList testForms = this.document
-                .getElementsByTagName(XMLTags.TESTFORM_TAG);
+        final NodeList testForms = document
+                .getElementsByTagName(XMLTags.TESTFORmTAG);
         if (testForms.getLength() != 1) {
             throw new RuntimeException("Testform count != 1 is not allowed");
         }
-        Element testForm = (Element) testForms.item(0);
+        final Element testForm = (Element) testForms.item(0);
 
-        this.logger.info("Trying to make testForm tree binary");
-        this.makeBinary(testForm);
-        this.logger.info("Making testForm tree binary successful");
+        logger.info("Trying to make testForm tree binary");
+        makeBinary(testForm);
+        logger.info("Making testForm tree binary successful");
 
-        XMLWriter writer = new XMLWriter();
-        writer.writeXMLDocumentToFile(this.document, binFile);
+        final XMLWriter writer = new XMLWriter();
+        writer.writeXMLDocumentToFile(document, binFile);
 
-        this.logger.info("Trying to replace chops with sync events");
-        this.introduceSyncEvents();
-        this.logger.info("Replacing chops with sync events successful");
+        logger.info("Trying to replace chops with sync events");
+        introduceSyncEvents();
+        logger.info("Replacing chops with sync events successful");
 
-        writer.writeXMLDocumentToFile(this.document, syncFile);
+        writer.writeXMLDocumentToFile(document, syncFile);
 
-        this.logger.info("Trying to build normal form");
-        this.buildNF(testForm);
-        this.logger.info("Building normal form successful");
+        logger.info("Trying to build normal form");
+        buildNF(testForm);
+        logger.info("Building normal form successful");
 
-        writer.writeXMLDocumentToFile(this.document, nfFile);
+        writer.writeXMLDocumentToFile(document, nfFile);
 
-        this.logger.info("Trying to build model-checkable form");
-        this.findMCForms(testForm);
-        this.appendMCForms();
-        this.logger.info("Building model-checkable form successful");
+        logger.info("Trying to build model-checkable form");
+        findMCForms(testForm);
+        appendMCForms();
+        logger.info("Building model-checkable form successful");
 
-        writer.writeXMLDocumentToFile(this.document, mcFile);
+        writer.writeXMLDocumentToFile(document, mcFile);
 
-        this.logger.info("Compilation finished");
-        return this.document;
+        logger.info("Compilation finished");
+        return document;
     }
 
     /**
      * Generates a list of all <code>MCForm</code> elements.
      */
     private void appendMCForms() {
-        if (!this.mcFormsList.isEmpty()) {
-            Element mcFormsNode = this.document
+        if (!mcFormsList.isEmpty()) {
+            final Element mcFormsNode = document
                     .createElement(XMLTags.MCFORMS_TAG);
             mcFormsNode.setAttribute(XMLTags.XMLNS_TAG, XMLTags.SCHEMAINST_TAG);
             mcFormsNode.setAttribute(XMLTags.NONAMESPACELOC_TAG,
                     XMLTags.MODELCHECKFORMSCHEMA_PATH);
 
-            Iterator mcFormIterator = this.mcFormsList.iterator();
+            final Iterator mcFormIterator = mcFormsList.iterator();
             while (mcFormIterator.hasNext()) {
-                Element actMCFormNode = (Element) mcFormIterator.next();
+                final Element actMCFormNode = (Element) mcFormIterator.next();
                 mcFormsNode.appendChild(actMCFormNode);
             }
 
-            this.document.replaceChild(mcFormsNode, this.document
+            document.replaceChild(mcFormsNode, document
                     .getFirstChild());
         } else {
             throw new RuntimeException("The list of mcForms is empty");
@@ -272,15 +272,14 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      *  
      */
     protected void introduceSyncEvents() {
-        NodeList tfTreeNodes = this.document
+        final NodeList tfTreeNodes = document
                 .getElementsByTagName(XMLTags.TFTREE_TAG);
-        int tfTreeNodeCount = tfTreeNodes.getLength();
+        final int tfTreeNodeCount = tfTreeNodes.getLength();
         for (int i = 0; i < tfTreeNodeCount; i++) {
-            Element actTfTreeNode = (Element) tfTreeNodes.item(i);
+            final Element actTfTreeNode = (Element) tfTreeNodes.item(i);
             if (actTfTreeNode.getAttribute(XMLTags.OPERATOR_TAG).equals(
                     XMLTags.CHOP_CONST)) {
-                actTfTreeNode.setAttribute(XMLTags.OPERATOR_TAG, this
-                        .getFreshSyncEvent());
+                actTfTreeNode.setAttribute(XMLTags.OPERATOR_TAG, getFreshSyncEvent());
             }
         }
     }
@@ -289,14 +288,14 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * Creates a new true DC-phase
      */
     private Element getNewTrueNode() {
-        Element trueNode = this.document.createElement(XMLTags.TRACE_TAG);
+        final Element trueNode = document.createElement(XMLTags.TRACE_TAG);
         trueNode.setAttribute(XMLTags.SPEC_TAG, XMLTags.TRUE_CONST);
 
-        Element phase = this.document.createElement(XMLTags.PHASE_TAG);
+        final Element phase = document.createElement(XMLTags.PHASE_TAG);
 
-        Element stateInvariant = this.document
+        final Element stateInvariant = document
                 .createElement(XMLTags.STATEINVARIANT_TAG);
-        Element booleanExpression = this.document
+        final Element booleanExpression = document
                 .createElement(XMLTags.BOOLEANEXPRESSION_TAG);
         booleanExpression.setAttribute(XMLTags.EXPRESSION_TAG,
                 XMLTags.TRUE_CONST);
@@ -305,23 +304,24 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         phase.appendChild(stateInvariant);
         trueNode.appendChild(phase);
 
-        this.trueNodeList.add(trueNode);
+        trueNodeList.add(trueNode);
         return trueNode;
     }
 
     /**
      * Implements the special distributivity between Sync and AND
      */
-    protected void changeNodeSyncChildAnd(Element node, Element[] children,
+    @Override
+	protected void changeNodeSyncChildAnd(Element node, Element[] children,
             int childIndex) {
-        Element[] andChildren = this.getFormulaOperands(children[childIndex]);
-        String syncEvent = node.getAttribute(XMLTags.OPERATOR_TAG);
+        final Element[] andChildren = getFormulaOperands(children[childIndex]);
+        final String syncEvent = node.getAttribute(XMLTags.OPERATOR_TAG);
 
-        Element syncNode1 = this.document.createElement(XMLTags.TFTREE_TAG);
+        final Element syncNode1 = document.createElement(XMLTags.TFTREE_TAG);
         syncNode1.setAttribute(XMLTags.OPERATOR_TAG, syncEvent);
-        Element syncNode2 = this.document.createElement(XMLTags.TFTREE_TAG);
+        final Element syncNode2 = document.createElement(XMLTags.TFTREE_TAG);
         syncNode2.setAttribute(XMLTags.OPERATOR_TAG, syncEvent);
-        Element syncNode3 = this.document.createElement(XMLTags.TFTREE_TAG);
+        final Element syncNode3 = document.createElement(XMLTags.TFTREE_TAG);
         syncNode3.setAttribute(XMLTags.OPERATOR_TAG, syncEvent);
 
         children[childIndex].appendChild(syncNode1);
@@ -329,25 +329,25 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 
         if (childIndex == 0) {
             syncNode1.appendChild(andChildren[0]);
-            syncNode1.appendChild(this.getNewTrueNode());
+            syncNode1.appendChild(getNewTrueNode());
 
             syncNode2.appendChild(andChildren[1]);
-            syncNode2.appendChild(this.getNewTrueNode());
+            syncNode2.appendChild(getNewTrueNode());
 
-            syncNode3.appendChild(this.getNewTrueNode());
+            syncNode3.appendChild(getNewTrueNode());
             syncNode3.appendChild(children[1]);
 
             node.appendChild(syncNode3);
 
         } else {
-            syncNode1.appendChild(this.getNewTrueNode());
+            syncNode1.appendChild(getNewTrueNode());
             syncNode1.appendChild(andChildren[0]);
 
-            syncNode2.appendChild(this.getNewTrueNode());
+            syncNode2.appendChild(getNewTrueNode());
             syncNode2.appendChild(andChildren[1]);
 
             syncNode3.appendChild(children[0]);
-            syncNode3.appendChild(this.getNewTrueNode());
+            syncNode3.appendChild(getNewTrueNode());
 
             node.insertBefore(syncNode3, children[1]);
         }
@@ -358,7 +358,8 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * Testformulae may not have NOT operators. Thus the call of this method
      * raises an exception.
      */
-    protected void changeNodeNotChildAnd(Element node, Element child) {
+    @Override
+	protected void changeNodeNotChildAnd(Element node, Element child) {
         throw new RuntimeException("Operator " + XMLTags.NOT_CONST
                 + " may not be used in testformulae");
     }
@@ -367,7 +368,8 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * Testformulae may not have NOT operators. Thus the call of this method
      * raises an exception.
      */
-    protected void changeNodeNotChildOr(Element node, Element child) {
+    @Override
+	protected void changeNodeNotChildOr(Element node, Element child) {
         throw new RuntimeException("Operator " + XMLTags.NOT_CONST
                 + " may not be used in testformulae");
     }
@@ -382,35 +384,35 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      */
     protected void findMCForms(Node actNode) {
         if (actNode.getNodeType() != Node.ELEMENT_NODE) {
-            this.logger.debug("No element node, returning...");
+            logger.debug("No element node, returning...");
             return;
         }
-        Element node = (Element) actNode;
+        final Element node = (Element) actNode;
 
-        if (node.getNodeName().equals(XMLTags.TESTFORM_TAG)) {
-            this.logger.debug("TestForm node, finding mcForm in children...");
-            NodeList childList = node.getChildNodes();
+        if (node.getNodeName().equals(XMLTags.TESTFORmTAG)) {
+            logger.debug("TestForm node, finding mcForm in children...");
+            final NodeList childList = node.getChildNodes();
             for (int i = 0; i < childList.getLength(); i++) {
-                this.findMCForms(childList.item(i));
+                findMCForms(childList.item(i));
             }
-            this.logger.debug("TestForm node, "
+            logger.debug("TestForm node, "
                     + "finding mcForm in children finished, " + "returning...");
             return;
         }
 
         if (node.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST)) {
-            this.logger.debug(XMLTags.OR_CONST
+            logger.debug(XMLTags.OR_CONST
                     + "-node, finding mcForm in children...");
-            Element[] operands = this.getFormulaOperands(node);
+            final Element[] operands = getFormulaOperands(node);
             for (int i = 0; i < operands.length; i++) {
-                this.findMCForms(operands[i]);
+                findMCForms(operands[i]);
             }
-            this.logger.debug(XMLTags.OR_CONST + "-node, "
+            logger.debug(XMLTags.OR_CONST + "-node, "
                     + "finding mcForm in children finished, " + "returning...");
         } else {
-            this.logger.debug("Building mcForm...");
-            this.createMCForm(node);
-            this.logger.debug("Building mcForm finished, returning...");
+            logger.debug("Building mcForm...");
+            createMCForm(node);
+            logger.debug("Building mcForm finished, returning...");
         }
     }
 
@@ -427,33 +429,33 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * @see <code>ModelCheckForm.xsd</code>
      */
     protected void createMCForm(Element node) {
-        ArrayList<Element> mcTraceNodeList = new ArrayList<Element>();
-        String commonExitSync = this.getFreshSyncEvent();
+        final ArrayList<Element> mcTraceNodeList = new ArrayList<Element>();
+        final String commonExitSync = getFreshSyncEvent();
 
         if (node.getNodeName().equals(XMLTags.TRACE_TAG)) {
-            this.logger.debug("Building mcForm from single trace node...");
-            Element mcTraceNode = this.createMCTrace(node, commonExitSync);
+            logger.debug("Building mcForm from single trace node...");
+            final Element mcTraceNode = createMCTrace(node, commonExitSync);
             if (mcTraceNode != null) {
                 mcTraceNodeList.add(mcTraceNode);
             }
-            this.logger.debug("Building mcForm from single trace node "
+            logger.debug("Building mcForm from single trace node "
                     + "finished...");
         } else {
 
-            this.logger.debug("Building mcForm from several trace nodes...");
+            logger.debug("Building mcForm from several trace nodes...");
 
             //True traces are treated afterwards to omit superfluous
             //mcTrace nodes
-            ArrayList<Element> trueTraces = new ArrayList<Element>();
+            final ArrayList<Element> trueTraces = new ArrayList<Element>();
 
-            NodeList traces = node.getElementsByTagName(XMLTags.TRACE_TAG);
-            int traceCount = traces.getLength();
+            final NodeList traces = node.getElementsByTagName(XMLTags.TRACE_TAG);
+            final int traceCount = traces.getLength();
             for (int i = 0; i < traceCount; i++) {
-                Element actTrace = (Element) traces.item(i);
-                if (this.isTrueNode(actTrace)) {
+                final Element actTrace = (Element) traces.item(i);
+                if (isTrueNode(actTrace)) {
                     trueTraces.add(actTrace);
                 } else {
-                    Element mcTraceNode = this.createMCTrace(actTrace,
+                    final Element mcTraceNode = createMCTrace(actTrace,
                             commonExitSync);
                     if (mcTraceNode != null) {
                         mcTraceNodeList.add(mcTraceNode);
@@ -461,30 +463,30 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
                 }
             }
 
-            Iterator trueTracesIterator = trueTraces.iterator();
+            final Iterator trueTracesIterator = trueTraces.iterator();
             while (trueTracesIterator.hasNext()) {
-                Element actTrace = (Element) trueTracesIterator.next();
-                Element mcTraceNode = this.createMCTrace(actTrace,
+                final Element actTrace = (Element) trueTracesIterator.next();
+                final Element mcTraceNode = createMCTrace(actTrace,
                         commonExitSync);
                 if (mcTraceNode != null) {
                     mcTraceNodeList.add(mcTraceNode);
                 }
             }
 
-            this.logger.debug("Building mcForm from several trace nodes "
+            logger.debug("Building mcForm from several trace nodes "
                     + "finished...");
         }
 
         if (!mcTraceNodeList.isEmpty()) {
-            Element mcFormNode = this.document
-                    .createElement(XMLTags.MCFORM_TAG);
-            Iterator mcTraceNodeIterator = mcTraceNodeList.iterator();
+            final Element mcFormNode = document
+                    .createElement(XMLTags.MCFORmTAG);
+            final Iterator mcTraceNodeIterator = mcTraceNodeList.iterator();
             while (mcTraceNodeIterator.hasNext()) {
-                Element actMCTraceNode = (Element) mcTraceNodeIterator.next();
+                final Element actMCTraceNode = (Element) mcTraceNodeIterator.next();
                 mcFormNode.appendChild(actMCTraceNode);
             }
 
-            this.mcFormsList.add(mcFormNode);
+            mcFormsList.add(mcFormNode);
         }
     }
 
@@ -504,15 +506,15 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      *  
      */
     protected Element createMCTrace(Element trace, String commonExitSync) {
-        Element parentNode1 = (Element) trace.getParentNode();
+        final Element parentNode1 = (Element) trace.getParentNode();
         Element parentNode2 = null;
-        if (!parentNode1.getNodeName().equals(XMLTags.TESTFORM_TAG)) {
+        if (!parentNode1.getNodeName().equals(XMLTags.TESTFORmTAG)) {
             parentNode2 = (Element) parentNode1.getParentNode();
         }
-        boolean traceIsFirstChild = this.isFirstChild(trace);
+        final boolean traceIsFirstChild = isFirstChild(trace);
         boolean parentNode1IsFirstChild;
         if (parentNode2 != null) {
-            parentNode1IsFirstChild = this.isFirstChild(parentNode1);
+            parentNode1IsFirstChild = isFirstChild(parentNode1);
         } else {
             parentNode1IsFirstChild = true;
         }
@@ -531,49 +533,49 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         }
 
         if (syncEvent1 == null) {
-            this.logger.debug("SyncEvent1==null");
-            if (this.isTrueNode(trace)) {
+            logger.debug("SyncEvent1==null");
+            if (isTrueNode(trace)) {
                 return null;
             }
-            return this.getMCTraceNode((Element) trace.cloneNode(true), null,
+            return getMCTraceNode((Element) trace.cloneNode(true), null,
                     commonExitSync);
         }
         if (traceIsFirstChild) {
             if (syncEvent2 == null || parentNode1IsFirstChild) {
-                this.logger.debug("traceIsFirstChild && "
+                logger.debug("traceIsFirstChild && "
                         + "(syncEvent2==NULL || parentNode1IsFirstChild");
-                if (this.isTrueNode(trace)) {
+                if (isTrueNode(trace)) {
                     return null;
                 }
-                return this.getMCTraceNode((Element) trace.cloneNode(true),
+                return getMCTraceNode((Element) trace.cloneNode(true),
                         null, syncEvent1);
             } else {
-                this.logger.debug("traceIsFirstChild && "
+                logger.debug("traceIsFirstChild && "
                         + "(syncEvent2!=NULL && !parentNode1IsFirstChild");
-                if (this.isAlreadyHandled(syncEvent2, syncEvent1)
-                        && this.isTrueNode(trace)) {
+                if (isAlreadyHandled(syncEvent2, syncEvent1)
+                        && isTrueNode(trace)) {
                     return null;
                 }
-                return this.getMCTraceNode((Element) trace.cloneNode(true),
+                return getMCTraceNode((Element) trace.cloneNode(true),
                         syncEvent2, syncEvent1);
             }
         } else {
             if (syncEvent2 == null || !parentNode1IsFirstChild) {
-                this.logger.debug("!traceIsFirstChild && "
+                logger.debug("!traceIsFirstChild && "
                         + "(syncEvent2==NULL || parentNode1IsFirstChild");
-                if (this.isTrueNode(trace)) {
+                if (isTrueNode(trace)) {
                     return null;
                 }
-                return this.getMCTraceNode((Element) trace.cloneNode(true),
+                return getMCTraceNode((Element) trace.cloneNode(true),
                         syncEvent1, commonExitSync);
             } else {
-                this.logger.debug("!traceIsFirstChild && "
+                logger.debug("!traceIsFirstChild && "
                         + "(syncEvent2!=NULL && parentNode1IsFirstChild");
-                if (this.isAlreadyHandled(syncEvent1, syncEvent2)
-                        && this.isTrueNode(trace)) {
+                if (isAlreadyHandled(syncEvent1, syncEvent2)
+                        && isTrueNode(trace)) {
                     return null;
                 }
-                return this.getMCTraceNode((Element) trace.cloneNode(true),
+                return getMCTraceNode((Element) trace.cloneNode(true),
                         syncEvent1, syncEvent2);
             }
         }
@@ -583,8 +585,8 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * Delivers a fresh sync event
      */
     private String getFreshSyncEvent() {
-        String result = XMLTags.SYNC_PREFIX + this.syncEventCounter;
-        this.syncEventCounter++;
+        final String result = XMLTags.SYNC_PREFIX + syncEventCounter;
+        syncEventCounter++;
         return result;
     }
 
@@ -604,7 +606,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      */
     protected Element getMCTraceNode(Element traceNode, String entrySync,
             String exitSync) {
-        Element mcTraceNode = this.document.createElement(XMLTags.MCTRACE_TAG);
+        final Element mcTraceNode = document.createElement(XMLTags.MCTRACE_TAG);
 
         if (entrySync != null) {
             if (entrySync.equals("")) {
@@ -621,21 +623,21 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         mcTraceNode.setAttribute(XMLTags.EXITSYNC_TAG, exitSync);
         mcTraceNode.appendChild(traceNode);
 
-        this.handledIntervalsList.add(entrySync + exitSync);
+        handledIntervalsList.add(entrySync + exitSync);
         return mcTraceNode;
     }
 
     private boolean isTrueNode(Element traceNode) {
-        return this.trueNodeList.contains(traceNode);
+        return trueNodeList.contains(traceNode);
     }
 
     private boolean isAlreadyHandled(String sync1, String sync2) {
-        return this.handledIntervalsList.contains(sync1 + sync2);
+        return handledIntervalsList.contains(sync1 + sync2);
     }
 
     private boolean isFirstChild(Node node) {
-        Element parent = (Element) node.getParentNode();
-        Element[] operands = this.getFormulaOperands(parent);
+        final Element parent = (Element) node.getParentNode();
+        final Element[] operands = getFormulaOperands(parent);
         if (node == operands[0]) {
             return true;
         }
@@ -645,23 +647,28 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
     /**
      * Implements the inherited methods with correct XML-Tags
      */
-    protected Element getNewTreeElement() {
-        return this.document.createElement(XMLTags.TFTREE_TAG);
+    @Override
+	protected Element getNewTreeElement() {
+        return document.createElement(XMLTags.TFTREE_TAG);
     }
 
-    protected boolean isTreeElement(Node node) {
+    @Override
+	protected boolean isTreeElement(Node node) {
         return node.getNodeName().equals(XMLTags.TFTREE_TAG);
     }
 
-    protected boolean isBasicElement(Node node) {
+    @Override
+	protected boolean isBasicElement(Node node) {
         return node.getNodeName().equals(XMLTags.TRACE_TAG);
     }
 
-    protected boolean isFormulaElement(Node node) {
-        return node.getNodeName().equals(XMLTags.TESTFORM_TAG);
+    @Override
+	protected boolean isFormulaElement(Node node) {
+        return node.getNodeName().equals(XMLTags.TESTFORmTAG);
     }
 
-    protected boolean isCorrectOperator(String operator) {
+    @Override
+	protected boolean isCorrectOperator(String operator) {
         return operator.equals(XMLTags.OR_CONST)
                 || operator.equals(XMLTags.AND_CONST)
                 || operator.equals(XMLTags.CHOP_CONST)

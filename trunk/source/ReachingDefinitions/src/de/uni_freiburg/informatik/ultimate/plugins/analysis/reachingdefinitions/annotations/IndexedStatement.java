@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 
 public class IndexedStatement {
 
@@ -63,23 +63,30 @@ public class IndexedStatement {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		IndexedStatement other = (IndexedStatement) obj;
+		}
+		final IndexedStatement other = (IndexedStatement) obj;
 		if (mKey == null) {
-			if (other.mKey != null)
+			if (other.mKey != null) {
 				return false;
-		} else if (!mKey.equals(other.mKey))
+			}
+		} else if (!mKey.equals(other.mKey)) {
 			return false;
+		}
 		if (mStatement == null) {
-			if (other.mStatement != null)
+			if (other.mStatement != null) {
 				return false;
-		} else if (!mStatement.equals(other.mStatement))
+			}
+		} else if (!mStatement.equals(other.mStatement)) {
 			return false;
+		}
 		return true;
 	}
 

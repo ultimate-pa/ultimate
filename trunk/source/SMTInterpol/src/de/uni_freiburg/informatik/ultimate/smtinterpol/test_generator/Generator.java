@@ -53,7 +53,7 @@ public class Generator {
 	}
 
 	public void setLogic(String lo) {
-		String logic = "(set-logic " + lo + ")";
+		final String logic = "(set-logic " + lo + ")";
 		mOut.println(logic);
 	}
 
@@ -67,12 +67,12 @@ public class Generator {
 
 	public void addFuncDec(String fun, Sort[] paramSorts, Sort resultSort) {
 		updateDots(fun);
-		StringBuilder result = new StringBuilder("(declare-fun ").append(fun)
+		final StringBuilder result = new StringBuilder("(declare-fun ").append(fun)
 				.append(" (");
 
 		if (paramSorts.length != 0) {
 			String sep = "";
-			for (Sort s : paramSorts) {
+			for (final Sort s : paramSorts) {
 				result.append(sep).append(s);
 				sep = " ";
 			}
@@ -91,13 +91,14 @@ public class Generator {
 	public void addFuncDef(String fun, TermVariable[] params, Sort resultSort,
 			Term definition) {
 		updateDots(fun);
-		StringBuilder result = new StringBuilder(30);
+		final StringBuilder result = new StringBuilder(30);
 		result.append("(define-fun ").append(fun).append(" (");
 
 		if (params.length != 0) {
-			for (TermVariable t : params)
+			for (final TermVariable t : params) {
 				result.append('(').append(t).append(' ').append(t.getSort())
 						.append(')');
+			}
 
 			result.deleteCharAt(result.length() - 1);
 		}
@@ -110,12 +111,13 @@ public class Generator {
 
 	public void addSortDef(String sort, Sort[] params, Sort definition) {
 		updateDots(sort);
-		StringBuilder result = new StringBuilder(30);
+		final StringBuilder result = new StringBuilder(30);
 		result.append("(define-sort ").append(sort).append(" (");
 
 		if (params.length != 0) {
-			for (Sort s : params)
+			for (final Sort s : params) {
 				result.append(s).append(' ');
+			}
 
 			result.deleteCharAt(result.length() - 1);
 		}
@@ -147,8 +149,9 @@ public class Generator {
 		mOut.println();
 		mOut.println("(push 1)");
 		mOut.println("(set-info :status unsat)");
-		for (Term aux : auxSymbols)
+		for (final Term aux : auxSymbols) {
 			mOut.println("(declare-fun " + aux + " () " + aux.getSort() + ")");
+		}
 		mOut.println("(assert " + formula.toStringDirect() + ")");
 		mOut.println("(check-sat)");
 		mOut.println("(pop 1)");
@@ -159,19 +162,21 @@ public class Generator {
 		int i = 0;
 
 		for (int j = 0; j < con.length(); j++) {
-			if (con.charAt(j) == '.')
+			if (con.charAt(j) == '.') {
 				i++;
-			else
+			} else {
 				break;
+			}
 		}
 		mDots = Math.max(mDots, i + 1);
 	}
 
 	public String getDots() {
-		StringBuilder result = new StringBuilder();
+		final StringBuilder result = new StringBuilder();
 		int i = mDots;
-		while (i-- > 0)
+		while (i-- > 0) {
 			result.append('.');
+		}
 		return result.toString();
 	}
 
@@ -182,27 +187,27 @@ public class Generator {
 
 	// Translate Clauses to Terms
 	public Term convertClauseToTerm(Theory theory, Clause cl) {
-		Term[] literals = new Term[cl.getSize()];
+		final Term[] literals = new Term[cl.getSize()];
 		for (int i = 0; i < cl.getSize(); i++) {
 			literals[i] = cl.getLiteral(i).getSMTFormula(theory, true);
 		}
-		Term clause = theory.or(literals);
+		final Term clause = theory.or(literals);
 		return clause;
 	}
 
 	public void generate(Theory theory, Term[] assertions,
 			List<Clause> clauses, Map<TermVariable, Term> shared) {
 		theory.push();
-		String prefix = getDots() + "con";
-		TermVariable[] tvars = new TermVariable[shared.size()];
-		Term[] terms = new Term[shared.size()];
-		Term[] constants = new Term[shared.size()];
+		final String prefix = getDots() + "con";
+		final TermVariable[] tvars = new TermVariable[shared.size()];
+		final Term[] terms = new Term[shared.size()];
+		final Term[] constants = new Term[shared.size()];
 		int varnr = 0;
-		for (Map.Entry<TermVariable, Term> entry : shared.entrySet()) {
-			Term term = entry.getValue();
-			Sort sort = term.getSort();
-			String conname = prefix + varnr;
-			FunctionSymbol fun = theory.declareFunction(conname, new Sort[0],
+		for (final Map.Entry<TermVariable, Term> entry : shared.entrySet()) {
+			final Term term = entry.getValue();
+			final Sort sort = term.getSort();
+			final String conname = prefix + varnr;
+			final FunctionSymbol fun = theory.declareFunction(conname, new Sort[0],
 					sort);
 			tvars[varnr] = entry.getKey();
 			terms[varnr] = term;
@@ -210,9 +215,9 @@ public class Generator {
 			varnr++;
 		}
 
-		Term[] clauseTerms = new ApplicationTerm[clauses.size()];
+		final Term[] clauseTerms = new ApplicationTerm[clauses.size()];
 		int j = 0;
-		for (Clause cl : clauses) {
+		for (final Clause cl : clauses) {
 			clauseTerms[j++] = convertClauseToTerm(theory, cl);
 		}
 
@@ -227,9 +232,9 @@ public class Generator {
 			clauseSetFormula = theory.let(tvars, constants, clauseSetFormula);
 		}
 
-		Term original = theory.and(assertions);
-		Term outputFormula1 = theory.term("and", original, negClauseSetFormula);
-		Term outputFormula2 = theory.term("and", clauseSetFormula,
+		final Term original = theory.and(assertions);
+		final Term outputFormula1 = theory.term("and", original, negClauseSetFormula);
+		final Term outputFormula2 = theory.term("and", clauseSetFormula,
 				theory.term("not", original));
 
 		writeCorrectness(new Term[0], outputFormula1);

@@ -64,7 +64,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**
  * @author nutz
@@ -78,7 +78,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     /**
      * The table containing all functions.
      */
-    private LinkedHashMap<String, IASTNode> functionTable;
+    private final LinkedHashMap<String, IASTNode> functionTable;
 //    private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
     
     Stack<IASTDeclaration> currentFunOrStructOrEnumDefOrInitializer;
@@ -91,28 +91,28 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     
     String checkedMethod;
 	private IASTTranslationUnit translationUnit;
-	private Dispatcher mDispatcher;
-	private LinkedHashMap<String, Integer> functionToIndex;
+	private final Dispatcher mDispatcher;
+	private final LinkedHashMap<String, Integer> functionToIndex;
 
     public DetermineNecessaryDeclarations(String checkedMethod, Dispatcher dispatcher, 
     		LinkedHashMap<String, IASTNode> fT, LinkedHashMap<String,Integer> functionToIndex) {
     	mDispatcher = dispatcher;
-    	this.shouldVisitParameterDeclarations = true;
-    	this.shouldVisitTranslationUnit = true;
-        this.shouldVisitDeclarations = true;
-        this.shouldVisitExpressions = true;
-        this.shouldVisitDeclSpecifiers = true;
-        this.shouldVisitTypeIds = true;
-        this.shouldVisitInitializers = true;
-        this.shouldVisitStatements = true;
-        this.shouldVisitEnumerators = true;
-        this.sT = new LinkedScopedHashMap<String, IASTDeclaration>();
+    	shouldVisitParameterDeclarations = true;
+    	shouldVisitTranslationUnit = true;
+        shouldVisitDeclarations = true;
+        shouldVisitExpressions = true;
+        shouldVisitDeclSpecifiers = true;
+        shouldVisitTypeIds = true;
+        shouldVisitInitializers = true;
+        shouldVisitStatements = true;
+        shouldVisitEnumerators = true;
+        sT = new LinkedScopedHashMap<String, IASTDeclaration>();
 //        this.functionTable = new LinkedHashMap<>();
-        this.functionTable = fT;
-        this.dependencyGraph = new LinkedHashMap<>();
-        this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
-        this.reachableDeclarations = new LinkedHashSet<>();
-        this.currentFunOrStructOrEnumDefOrInitializer = new Stack<>();
+        functionTable = fT;
+        dependencyGraph = new LinkedHashMap<>();
+        dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
+        reachableDeclarations = new LinkedHashSet<>();
+        currentFunOrStructOrEnumDefOrInitializer = new Stack<>();
         this.checkedMethod = checkedMethod;
         this.functionToIndex = functionToIndex;
     }
@@ -144,29 +144,30 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	@Override
 	public int visit(IASTParameterDeclaration declaration) {
-    	IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
+    	final IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
     	IASTDeclaration funcDec = null;
     	if (!currentFunOrStructOrEnumDefOrInitializer.isEmpty()) {
     		funcDec = currentFunOrStructOrEnumDefOrInitializer.peek();
     	} else { //we are not inside a function definition, but may still be inside a function declaration
     		//one getParent to reach the declarator, the other one to get to the declaration
     		IASTNode node = declaration;
-    		while (!(node instanceof IASTSimpleDeclaration))
-    			node = node.getParent();
+    		while (!(node instanceof IASTSimpleDeclaration)) {
+				node = node.getParent();
+			}
     		funcDec = (IASTDeclaration) node;
     	}
     	if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
-    		IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-    		String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
-    		IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
+    		final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
+    		final String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
+    		final IASTDeclaration decOfName = sT.get(name);
     		if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     			//    				addDependency(currentFunOrStructDef.peek(), decOfName);
     			addDependency(funcDec, decOfName);
     		}
     	} else if (declSpec instanceof IASTNamedTypeSpecifier) {
-    		IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
-    		String name = nts.getName().toString();
-    		IASTDeclaration decOfName = (IASTDeclaration) sT.get(name);
+    		final IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
+    		final String name = nts.getName().toString();
+    		final IASTDeclaration decOfName = sT.get(name);
     		if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
     			addDependency(funcDec, decOfName);
     		}
@@ -184,19 +185,21 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (typeId.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
 			symbolName = ((IASTNamedTypeSpecifier) typeId.getDeclSpecifier()).getName().toString();
 		} else if (typeId.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
-			IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier();
+			final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) typeId.getDeclSpecifier();
 			symbolName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 //		} else if (typeId.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
 		}
 		
-		if (symbolName.isEmpty())
+		if (symbolName.isEmpty()) {
 			return super.visit(typeId);
+		}
 		
-    	IASTDeclaration symbolDec = sT.get(symbolName);
-    	if (symbolDec != null)
-    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
-    	else
-    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
+    	final IASTDeclaration symbolDec = sT.get(symbolName);
+    	if (symbolDec != null) {
+			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
+		} else {
+			dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
+		}
 		return super.visit(typeId);
 	}
 
@@ -214,38 +217,42 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     }
 
     public int visit(IASTIdExpression expression) {
-    	String symbolName = expression.getName().toString();
-    	IASTDeclaration symbolDec = sT.get(symbolName);
-    	IASTNode funDec = functionTable.get(symbolName);
-    	if (symbolDec != null)
-    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
-    	else if (funDec != null)
-    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
-    	else
-    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
+    	final String symbolName = expression.getName().toString();
+    	final IASTDeclaration symbolDec = sT.get(symbolName);
+    	final IASTNode funDec = functionTable.get(symbolName);
+    	if (symbolDec != null) {
+			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
+		} else if (funDec != null) {
+			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
+		} else {
+			dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
+		}
         return super.visit(expression);
     }
     
 
 	public int visit(IASTFunctionCallExpression expression) {
-    	IASTExpression funNameEx = expression.getFunctionNameExpression();
+    	final IASTExpression funNameEx = expression.getFunctionNameExpression();
     	if (funNameEx instanceof IASTIdExpression) {
-    		IASTIdExpression idEx = (IASTIdExpression) funNameEx;
+    		final IASTIdExpression idEx = (IASTIdExpression) funNameEx;
 //    		IASTFunctionDefinition funcTableEntry = functionTable.get(idEx.getName().toString());
-    		IASTDeclaration decFromFuncTableEntry = getDeclarationFromFuncDefinitionOrFuncDeclarator(
+    		final IASTDeclaration decFromFuncTableEntry = getDeclarationFromFuncDefinitionOrFuncDeclarator(
     				functionTable.get(idEx.getName().toString()));
 //    		if (funcTableEntry != null)
-    		if (decFromFuncTableEntry != null)
-    			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decFromFuncTableEntry);
-    		IASTDeclaration sTEntry = sT.get(idEx.getName().toString());
-    		if (sTEntry != null)
-    			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), sTEntry);
-    		if (sTEntry == null || decFromFuncTableEntry == null) //we have to delay making the entry in the dependency graph
-    			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructOrEnumDefOrInitializer.peek());
+    		if (decFromFuncTableEntry != null) {
+				addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decFromFuncTableEntry);
+			}
+    		final IASTDeclaration sTEntry = sT.get(idEx.getName().toString());
+    		if (sTEntry != null) {
+				addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), sTEntry);
+			}
+    		if (sTEntry == null || decFromFuncTableEntry == null) {
+				dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructOrEnumDefOrInitializer.peek());
+			}
     	} else {
     		// We add a dependency from the method/whatever the function pointer is used in to 
     		//all methods that a function pointer may point to (from PreRunner's analysis)
-    		for (String fName : functionToIndex.keySet()) {
+    		for (final String fName : functionToIndex.keySet()) {
     			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(fName)));
     		}
     		
@@ -261,8 +268,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			return (IASTDeclaration) node;
 		} else if (node instanceof IASTFunctionDeclarator) {
 			IASTNode parent = node.getParent();
-			while (!(parent instanceof IASTDeclaration))
+			while (!(parent instanceof IASTDeclaration)) {
 				parent = parent.getParent();
+			}
 			return (IASTDeclaration) parent;
 		} else {
 			assert false : "should not happen";
@@ -275,9 +283,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	@Override
 	public int visit(IASTDeclaration declaration) {
 		if (declaration instanceof CASTSimpleDeclaration) {
-			boolean decIsGlobal = declaration.getParent() instanceof IASTTranslationUnit;
-			CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
-			IASTDeclSpecifier declSpec = cd.getDeclSpecifier();
+			final boolean decIsGlobal = declaration.getParent() instanceof IASTTranslationUnit;
+			final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
+			final IASTDeclSpecifier declSpec = cd.getDeclSpecifier();
 
 
 			if (decIsGlobal) { //global declaration
@@ -286,26 +294,26 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				// for example: struct s { int x; };
 				// we have to remember that struct name
 				if (declSpec instanceof IASTCompositeTypeSpecifier) {
-					IASTCompositeTypeSpecifier cts = (IASTCompositeTypeSpecifier) declSpec;
+					final IASTCompositeTypeSpecifier cts = (IASTCompositeTypeSpecifier) declSpec;
 					String declSpecName = cts.getName().toString();
 					if (!declSpecName.isEmpty()) {
 						//convention:
 						// a struct/union/enum declaration is saved in the symbolTable under a key that includes
 						// the struct/union/enum keyword --> otherwise we would have a collision
 						// in case of something like typedef struct a a;
-						String structOrUnion = getKindStringFromCompositeOrElaboratedTS(cts);
+						final String structOrUnion = getKindStringFromCompositeOrElaboratedTS(cts);
 						declSpecName = structOrUnion + declSpecName;
 						sT.put(declSpecName, declaration);
 					}
 
-					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
+					for (final String id : dependencyGraphPreliminaryInverse.keySet()) {
 						if (declSpecName.equals(id)) {
 							addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
 						}
 					}
 				} else if (declSpec instanceof IASTEnumerationSpecifier) {
-					IASTEnumerationSpecifier es = (IASTEnumerationSpecifier) declSpec;
-					String declSpecName = es.getName().toString();
+					final IASTEnumerationSpecifier es = (IASTEnumerationSpecifier) declSpec;
+					final String declSpecName = es.getName().toString();
 					if (!declSpecName.isEmpty()) {
 						//convention:
 						// a struct/union/enum declaration is saved in the symbolTable under a key that includes
@@ -319,13 +327,13 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				// each declarator of a global declaration has to be stored in the symbolTable
 				// --> we check all uses in IdExpression and add a dependecy to the declarator accordingly
 				// the symbolTable connects identifer and declarator
-				for (IASTDeclarator d : cd.getDeclarators()) {
-					IASTDeclarator nd = getInnermostFromNestedDeclarators(d);
+				for (final IASTDeclarator d : cd.getDeclarators()) {
+					final IASTDeclarator nd = getInnermostFromNestedDeclarators(d);
 					
-					String declaratorName = nd.getName().toString();
+					final String declaratorName = nd.getName().toString();
 					sT.put(declaratorName, declaration);
 
-					for (String id : dependencyGraphPreliminaryInverse.keySet()) {
+					for (final String id : dependencyGraphPreliminaryInverse.keySet()) {
 						if (declaratorName.equals(id)) {
 							addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
 						}
@@ -347,18 +355,18 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				 * when we visit the declaration _int i;
 				 */
 				if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
-					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-					String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
-					IASTDeclaration decOfName = sT.get(name);
+					final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
+					final String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
+					final IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decOfName);
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
 						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructOrEnumDefOrInitializer.peek());
 					}
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
-					IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
-					String name = nts.getName().toString();
-					IASTDeclaration decOfName = sT.get(name);
+					final IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
+					final String name = nts.getName().toString();
+					final IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
 						addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decOfName);
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
@@ -371,7 +379,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			}
 			/////////////////////////////
 			//global or local
-			for (IASTDeclarator d : cd.getDeclarators()) {
+			for (final IASTDeclarator d : cd.getDeclarators()) {
 				// "typedef declSpec declarators" introduces a dependency from each declarator to 
 				// - the declspec itself it it is a compositeType
 				// - the declspec's sT entry otherwise
@@ -382,18 +390,18 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					//					addDependency(declaration, declSpec); //not needed for what delcarations are made but for computing the memory model requirements
 					//					addDependency(d, declaration); //not needed for what delcarations are made but for computing the memory model requirements
 				} else if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
-					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
+					final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
 					declSpecName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
-					IASTDeclaration decOfName = sT.get(declSpecName);
+					final IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, sT.get(declSpecName));
 					} else if (decOfName == null && decIsGlobal) {
 						dependencyGraphPreliminaryInverse.put(declSpecName, declaration);
 					}
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
-					IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
+					final IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
 					declSpecName = nts.getName().toString();
-					IASTDeclaration decOfName = sT.get(declSpecName);
+					final IASTDeclaration decOfName = sT.get(declSpecName);
 					if (decOfName != null) {//if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway (most cases..)
 						addDependency(declaration, decOfName);
 					} else if (decOfName == null && decIsGlobal) {
@@ -409,7 +417,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			}
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
-			IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
+			final IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
 //			IASTDeclarator possiblyNestedDeclarator = funDef.getDeclarator();
 //			while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
 //				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
@@ -418,7 +426,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 //			functionTable.put(nameOfInnermostDeclarator, funDef);
 
 			if (declaration.getParent() instanceof IASTTranslationUnit) {
-				for (String id : dependencyGraphPreliminaryInverse.keySet()) {
+				for (final String id : dependencyGraphPreliminaryInverse.keySet()) {
 					if (funDef.getDeclarator().getName().toString().equals(id)) {
 						addDependency(dependencyGraphPreliminaryInverse.get(id), declaration);
 					}
@@ -427,15 +435,15 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 			sT.beginScope();
 			if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
-				CASTFunctionDeclarator dec =
+				final CASTFunctionDeclarator dec =
 						(CASTFunctionDeclarator)funDef.getDeclarator();
-				for (IASTParameterDeclaration param : dec.getParameters()) {
-					String key = param.getDeclarator().getName().toString();
+				for (final IASTParameterDeclaration param : dec.getParameters()) {
+					final String key = param.getDeclarator().getName().toString();
 					sT.put(key, declaration);
 				}
 			}
 			currentFunOrStructOrEnumDefOrInitializer.push(funDef);
-			int nr = super.visit(declaration);
+			final int nr = super.visit(declaration);
 			return nr;
 		} else {
 			return super.visit(declaration);
@@ -485,7 +493,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	@Override
 	public int visit(IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
-			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
+			final IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
 			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
 				currentFunOrStructOrEnumDefOrInitializer.push(correspondingDeclaration);
 			}
@@ -496,7 +504,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	@Override
 	public int leave(IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
-			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
+			final IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
 			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
 				currentFunOrStructOrEnumDefOrInitializer.pop();
 			}
@@ -562,8 +570,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	@Override
     public int leave(IASTTranslationUnit tu) {
-		this.translationUnit = tu;
-    	int result = super.leave(tu);
+		translationUnit = tu;
+    	final int result = super.leave(tu);
     	//compute set from graph
     	computeReachableSetAndUpdateMMRequirements();
     	return result;
@@ -587,9 +595,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	}
 
     String prettyPrintDependencyGraph() {
-    	StringBuilder sb = new StringBuilder();
-    	for (Entry<IASTDeclaration, LinkedHashSet<IASTDeclaration>> entry : dependencyGraph.entrySet()) {
-    		for (IASTNode n : entry.getValue()) {
+    	final StringBuilder sb = new StringBuilder();
+    	for (final Entry<IASTDeclaration, LinkedHashSet<IASTDeclaration>> entry : dependencyGraph.entrySet()) {
+    		for (final IASTNode n : entry.getValue()) {
     			sb.append(entry.getKey() == null ? "null" : entry.getKey().getRawSignature());
     			sb.append("\n -> \n");
     			sb.append(n == null ? "null" : n.getRawSignature());
@@ -600,9 +608,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     }
     
     String prettyPrintDependencyGraphFilter(String filter, int maxlength) {
-    	StringBuilder sb = new StringBuilder();
-    	for (Entry<IASTDeclaration, LinkedHashSet<IASTDeclaration>> entry : dependencyGraph.entrySet()) {
-    		for (IASTNode n : entry.getValue()) {
+    	final StringBuilder sb = new StringBuilder();
+    	for (final Entry<IASTDeclaration, LinkedHashSet<IASTDeclaration>> entry : dependencyGraph.entrySet()) {
+    		for (final IASTNode n : entry.getValue()) {
     			
     			String source = entry.getKey() == null ? "null" : entry.getKey().getRawSignature();
     			source = source.substring(0, maxlength < source.length() ? maxlength : source.length());
@@ -620,8 +628,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     }
     
     String prettyPrintReachableSet() {
-    	StringBuilder sb = new StringBuilder();
-    	for (IASTNode node : reachableDeclarations) {
+    	final StringBuilder sb = new StringBuilder();
+    	for (final IASTNode node : reachableDeclarations) {
     		sb.append(node.getRawSignature());
     		sb.append("\n\n--------\n");
     	}
@@ -629,9 +637,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     }
     
     String prettyPrintReachableSetFilter(String filter) {
-    	StringBuilder sb = new StringBuilder();
-    	for (IASTNode node : reachableDeclarations) {
-    		String nodeString = node.getRawSignature();
+    	final StringBuilder sb = new StringBuilder();
+    	for (final IASTNode node : reachableDeclarations) {
+    		final String nodeString = node.getRawSignature();
     		if (nodeString.contains(filter)) {
     			sb.append(nodeString);
     			sb.append("\n\n--------\n");
@@ -641,15 +649,15 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     }
       
     String prettyPrintSymbolTable() {
-    	StringBuilder sb = new StringBuilder();
-    	for (Entry<String, IASTDeclaration> x : sT.entrySet()) {
+    	final StringBuilder sb = new StringBuilder();
+    	for (final Entry<String, IASTDeclaration> x : sT.entrySet()) {
     		sb.append(x.getKey() + " --> " + x.getValue().getRawSignature() + "\n");
     	}
     	return sb.toString();
     }
     
     void computeReachableSetAndUpdateMMRequirements() {
-    	LinkedHashSet<String> entryPoints = new LinkedHashSet<>();//TODO: replace with input from settings
+    	final LinkedHashSet<String> entryPoints = new LinkedHashSet<>();//TODO: replace with input from settings
     	if (!checkedMethod.equals(SFO.EMPTY) && functionTable.containsKey(checkedMethod)) {
     			entryPoints.add(checkedMethod);
 //    		} else {
@@ -658,7 +666,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 //    		}
     	} else {
     		if (!checkedMethod.equals(SFO.EMPTY) && !functionTable.containsKey(checkedMethod)) {
-    			String msg = "You specified the starting procedure: "
+    			final String msg = "You specified the starting procedure: "
 					+ checkedMethod
 					+ "\n The program does not have this method. ULTIMATE will continue in "
 					+ "library mode (i.e., each procedure can be starting procedure and global "
@@ -668,17 +676,17 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     		entryPoints.addAll(functionTable.keySet());
     	}
     	
-    	ArrayDeque<IASTDeclaration> openNodes = new ArrayDeque<>();
-    	for (String ep : entryPoints) {
+    	final ArrayDeque<IASTDeclaration> openNodes = new ArrayDeque<>();
+    	for (final String ep : entryPoints) {
     		openNodes.add(getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(ep)));
     	}
     	
     	while(!openNodes.isEmpty()) {
-    		IASTDeclaration currentNode = openNodes.pollFirst();
+    		final IASTDeclaration currentNode = openNodes.pollFirst();
     		reachableDeclarations.add(currentNode);
-    		LinkedHashSet<IASTDeclaration> targets = dependencyGraph.get(currentNode);
+    		final LinkedHashSet<IASTDeclaration> targets = dependencyGraph.get(currentNode);
     		if (targets != null) {
-    			for (IASTDeclaration targetNode : targets) {
+    			for (final IASTDeclaration targetNode : targets) {
     				if (!reachableDeclarations.contains(targetNode)) {
     					openNodes.add(targetNode);
     				}

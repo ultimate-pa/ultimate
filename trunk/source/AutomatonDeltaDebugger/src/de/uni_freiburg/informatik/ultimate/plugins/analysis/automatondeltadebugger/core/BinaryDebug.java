@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -48,9 +48,10 @@ public class BinaryDebug<T, LETTER, STATE> {
 	/**
 	 * Left and right bound for the list of objects
 	 */
-	private class SublistBounds {
-		final int mLeft, mRight;
-		final boolean mIsLhs;
+	private static class SublistBounds {
+		private final int mLeft;
+		private final int mRight;
+		private final boolean mIsLhs;
 		
 		SublistBounds(final int left, final int right, final boolean isLhs) {
 			this.mLeft = left;
@@ -122,7 +123,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 	 */
 	public boolean run() {
 		boolean result = false;
-		List<T> list = mShrinker.extractList();
+		final List<T> list = mShrinker.extractList();
 		if (list.isEmpty()) {
 			return result;
 		}
@@ -137,7 +138,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 			// initialize test for the sublist
 			final INestedWordAutomaton<LETTER, STATE> automaton =
 					mShrinker.createAutomaton(sublist);
-					
+			
 			// run test
 			final boolean isTestSuccessful = mTester.test(automaton);
 			

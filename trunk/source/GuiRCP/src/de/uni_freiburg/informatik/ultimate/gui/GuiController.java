@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui;
 
 import java.io.FileNotFoundException;
@@ -35,7 +36,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -43,59 +43,56 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 
 /**
- * GUIController is the IController implementation of the UltimateDebug GUI
+ * GUIController is the IController<ToolchainListType> implementation of the UltimateDebug GUI
  * 
  * @author dietsch
  * 
  */
-public class GuiController implements IController {
+public class GuiController implements IController<ToolchainListType> {
 
-	// public static final String sPLUGINID = "UltimateGui";
-	public static final String sPLUGINID = GuiController.class.getPackage().getName();
-	public static final String sPLUGINNAME = "Gui Controller";
+	public static final String PLUGIN_ID = GuiController.class.getPackage().getName();
+	public static final String PLUGIN_NAME = "Gui Controller";
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private Display mDisplay;
 
 	private volatile ISource mParser;
-	private volatile ToolchainData mTools;
+	private volatile IToolchainData<ToolchainListType> mTools;
 	private volatile List<String> mModels;
 
-	private ICore mCore;
+	private ICore<ToolchainListType> mCore;
 	private TrayIconNotifier mTrayIconNotifier;
-	private IToolchain mCurrentToolchain;
+	private IToolchain<ToolchainListType> mCurrentToolchain;
+	private ILoggingService mLoggingService;
 
 	/**
-	 * Initialization of Controller. The GUI is created here. Note: This methods
-	 * blocks until the GUI is closed.
+	 * Initialization of Controller. The GUI is created here. Note: This methods blocks until the GUI is closed.
 	 * 
 	 * @return the exit code for the application
 	 */
-	public int init(ICore core, ILoggingService loggingService) {
-		if(loggingService == null){
-			throw new IllegalArgumentException("loggingService may not be null");
-		}
-		mLogger = loggingService.getControllerLogger();
-
+	@Override
+	public int init(final ICore<ToolchainListType> core) {
 		if (core == null) {
-			mLogger.fatal("Initialization failed because no ICore instance was supplied");
-			return -1;
+			throw new IllegalArgumentException("core may not be null");
 		}
-
+		mLoggingService = core.getCoreLoggingService();
+		mLogger = mLoggingService.getControllerLogger();
 		mCore = core;
 		mDisplay = PlatformUI.createDisplay();
 
@@ -104,7 +101,7 @@ public class GuiController implements IController {
 		mLogger.debug("Creating Workbench ...");
 		mLogger.debug("--------------------------------------------------------------------------------");
 		int returnCode = -1;
-		ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
+		final ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
 		if (mDisplay != null && workbenchAdvisor != null) {
 			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
 			workbenchAdvisor.init(mCore, mTrayIconNotifier, this, mLogger);
@@ -112,7 +109,7 @@ public class GuiController implements IController {
 				returnCode = PlatformUI.createAndRunWorkbench(mDisplay, workbenchAdvisor);
 				mLogger.debug("GUI return code: " + returnCode);
 				return returnCode;
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				mLogger.fatal("An exception occured", ex);
 				return returnCode;
 			} finally {
@@ -127,34 +124,38 @@ public class GuiController implements IController {
 		return returnCode;
 	}
 
+	@Override
 	public synchronized ISource selectParser(final Collection<ISource> parsers) {
 
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				mParser = new ParserChooseDialog(shell, parsers).open();
 			}
 		});
 		return mParser;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public synchronized ToolchainData selectTools(final List<ITool> t) {
+	public synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t) {
 		return selectTools(t, Collections.EMPTY_LIST);
 	}
 
-	public synchronized ToolchainData selectTools(final List<ITool> t, final List<ITool> previous) {
+	private synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t, final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				try {
-					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous).open();
-				} catch (FileNotFoundException e) {
+					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous, mCore).open();
+				} catch (final FileNotFoundException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
-				} catch (JAXBException e) {
+				} catch (final JAXBException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be validated.");
-				} catch (SAXException e) {
+				} catch (final SAXException e) {
 					MessageDialog.openError(shell, "An error occured",
 							"Toolchain XML file could not be properly parsed.");
 				}
@@ -163,22 +164,26 @@ public class GuiController implements IController {
 		return mTools;
 	}
 
+	@Override
 	public synchronized List<String> selectModel(final List<String> modelNames) {
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
 			}
 		});
 		return mModels;
 	}
 
+	@Override
 	public String getPluginName() {
-		return sPLUGINNAME;
+		return PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
-		return sPLUGINID;
+		return PLUGIN_ID;
 	}
 
 	@Override
@@ -196,36 +201,33 @@ public class GuiController implements IController {
 
 	@Override
 	public void displayToolchainResultProgramUnknown(String description) {
-		mTrayIconNotifier.showTrayBalloon("Program could not be checked", "Ultimate could not prove your program: "
-				+ description, SWT.ICON_INFORMATION);
+		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
+				"Ultimate could not prove your program: " + description, SWT.ICON_INFORMATION);
 
 	}
 
 	@Override
 	public void displayException(final String description, final Throwable ex) {
-		// mDisplay.asyncExec(new Runnable() {
-		// public void run() {
-		// Shell shell = new Shell(mDisplay);
-		// // MessageDialog.openError(shell, "An error occured", description +
-		// " " + ex.getMessage());
-		// }
-		// });
 
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 
-	public void setCurrentToolchain(IToolchain toolchain) {
+	public void setCurrentToolchain(IToolchain<ToolchainListType> toolchain) {
 		if (mCurrentToolchain != null && mCurrentToolchain != toolchain) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
 		mCurrentToolchain = toolchain;
 	}
 
-	public IToolchain getCurrentToolchain() {
+	public IToolchain<ToolchainListType> getCurrentToolchain() {
 		return mCurrentToolchain;
+	}
+
+	public ILoggingService getLoggingService() {
+		return mLoggingService;
 	}
 }

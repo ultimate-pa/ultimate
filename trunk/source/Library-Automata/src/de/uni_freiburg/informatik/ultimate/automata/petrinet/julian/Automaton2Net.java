@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -35,28 +33,29 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	IPetriNet<LETTER, STATE> m_Net;
+	INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	IPetriNet<LETTER, STATE> mNet;
 
 	public Automaton2Net(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		m_Net = new PetriNetJulian<LETTER, STATE>(m_Services, m_Operand);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		mNet = new PetriNetJulian<LETTER, STATE>(mServices, mOperand);
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public IPetriNet<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Net;
+		return mNet;
 	}
 
 	@Override
@@ -67,13 +66,13 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". PetriNet "
-				+ m_Net.sizeInformation();
+				+ mNet.sizeInformation();
 	}
 
 	@Override

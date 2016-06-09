@@ -26,21 +26,82 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 
 /**
- * Defines preference page for C translation. 
+ * Defines preference page for C translation.
  * 
- * Check https://wiki.debian.org/ArchitectureSpecificsMemo to find our which
- * setting for typesizes you want to use.
+ * Check https://wiki.debian.org/ArchitectureSpecificsMemo to find our which setting for typesizes you want to use.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String LABEL_MODE = "Translation Mode:";
+	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
+	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION = "Check unreachability of error function in SV-COMP mode";
+	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
+	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
+	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
+	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
+	public static final String LABEL_MEMORY_MODEL = "Memory model";
+	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
+	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
+	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
+	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
+	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
+	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
+	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
+	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
+	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
+	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations of floating types";
+	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
+
+	// typesize stuff
+	public static final String LABEL_USE_EXPLICIT_TYPESIZES = "Use the constants given below as storage sizes for the correponding types";
+	public static final String LABEL_EXPLICIT_TYPESIZE_BOOL = "sizeof _Bool";
+	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR = "sizeof char";
+	public static final String LABEL_EXPLICIT_TYPESIZE_SHORT = "sizeof short";
+	public static final String LABEL_EXPLICIT_TYPESIZE_INT = "sizeof int";
+	public static final String LABEL_EXPLICIT_TYPESIZE_LONG = "sizeof long";
+	public static final String LABEL_EXPLICIT_TYPESIZE_LONGLONG = "sizeof long long";
+	public static final String LABEL_EXPLICIT_TYPESIZE_FLOAT = "sizeof float";
+	public static final String LABEL_EXPLICIT_TYPESIZE_DOUBLE = "sizeof double";
+	public static final String LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE = "sizeof long double";
+	public static final String LABEL_EXPLICIT_TYPESIZE_POINTER = "sizeof POINTER";
+	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "sizeof char16";
+	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
+	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
+
+	public enum POINTER_CHECKMODE {
+		IGNORE, ASSUME, ASSERTandASSUME
+	}
+
+	public enum UNSIGNED_TREATMENT {
+		IGNORE, ASSUME_SOME, ASSUME_ALL, WRAPAROUND
+	}
+
+	public enum SIGNEDNESS {
+		SIGNED, UNSIGNED
+	}
+
+	public enum MEMORY_MODEL {
+		HoenickeLindenmann_Original, // one data array for each boogie type
+		HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution, HoenickeLindenmann_4ByteResolution, HoenickeLindenmann_8ByteResolution,
+	}
+
+	public enum POINTER_INTEGER_CONVERSION {
+		Overapproximate, NonBijectiveMapping, NutzBijection, IdentityAxiom,
+	}
+
+	public CACSLPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "C+ACSL to Boogie Translator");
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -105,6 +166,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_BITVECTOR_TRANSLATION,
 						false,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_OVERAPPROXIMATE_FLOATS,
+						false,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_SMT_BOOL_ARRAYS_WORKAROUND,
+						true,
+						PreferenceType.Boolean),
 
 				// typesize stuff
 				new UltimatePreferenceItem<Boolean>(
@@ -129,88 +198,16 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_POINTER, 8,	PreferenceType.Integer),
+						LABEL_EXPLICIT_TYPESIZE_POINTER, 8, PreferenceType.Integer),
 				// more exotic types
-//				new UltimatePreferenceItem<Integer>(
-//						LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
-//				new UltimatePreferenceItem<Integer>(
-//						LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
+				// new UltimatePreferenceItem<Integer>(
+				// LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
+				// new UltimatePreferenceItem<Integer>(
+				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<SIGNEDNESS>(
 						LABEL_SIGNEDNESS_CHAR,
 						SIGNEDNESS.SIGNED,
 						PreferenceType.Combo, SIGNEDNESS.values()),
-			};
+		};
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "C+ACSL to Boogie Translator";
-	}
-
-	public enum POINTER_CHECKMODE {
-		IGNORE, ASSUME, ASSERTandASSUME
-	}
-
-	public enum UNSIGNED_TREATMENT {
-		IGNORE, ASSUME_SOME, ASSUME_ALL, WRAPAROUND
-	}
-	
-	public enum SIGNEDNESS {
-		SIGNED, UNSIGNED
-	}
-	
-	public enum MEMORY_MODEL {
-		HoenickeLindenmann_Original, // one data array for each boogie type
-		HoenickeLindenmann_1ByteResolution, 
-		HoenickeLindenmann_2ByteResolution,
-		HoenickeLindenmann_4ByteResolution,
-		HoenickeLindenmann_8ByteResolution,
-	}
-	
-	public enum POINTER_INTEGER_CONVERSION {
-		Overapproximate,
-		NonBijectiveMapping,
-		NutzBijection,
-		IdentityAxiom,
-	}
-
-	public static final String LABEL_MODE = "Translation Mode:";
-	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
-	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION = "Check unreachability of error function in SV-COMP mode";
-	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
-	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
-	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
-	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
-	public static final String LABEL_MEMORY_MODEL = "Memory model";
-	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
-	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
-	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
-	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
-	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
-	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
-	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
-	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
-	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
-						
-
-	// typesize stuff
-	public static final String LABEL_USE_EXPLICIT_TYPESIZES = "Use the constants given below as storage sizes for the correponding types";
-	public static final String LABEL_EXPLICIT_TYPESIZE_BOOL = "sizeof _Bool";
-	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR = "sizeof char";
-	public static final String LABEL_EXPLICIT_TYPESIZE_SHORT = "sizeof short";
-	public static final String LABEL_EXPLICIT_TYPESIZE_INT = "sizeof int";
-	public static final String LABEL_EXPLICIT_TYPESIZE_LONG = "sizeof long";
-	public static final String LABEL_EXPLICIT_TYPESIZE_LONGLONG = "sizeof long long";
-	public static final String LABEL_EXPLICIT_TYPESIZE_FLOAT = "sizeof float";
-	public static final String LABEL_EXPLICIT_TYPESIZE_DOUBLE = "sizeof double";
-	public static final String LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE = "sizeof long double";
-	public static final String LABEL_EXPLICIT_TYPESIZE_POINTER = "sizeof POINTER";
-//	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "sizeof char16";
-//	public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
-	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
 }

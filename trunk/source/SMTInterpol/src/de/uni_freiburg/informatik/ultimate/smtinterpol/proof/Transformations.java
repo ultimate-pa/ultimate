@@ -100,11 +100,11 @@ public final class Transformations {
 		Map<Clause, Set<Literal>> deletedNodes = uc.getDeletedNodes();
 		uc = null; // done with it
 		FixProofDAG fix = new FixProofDAG();
-		Clause tmpproof = fix.fix(proof, deletedNodes);
-		ArrayDeque<Antecedent> fixedUnits =
+		final Clause tmpproof = fix.fix(proof, deletedNodes);
+		final ArrayDeque<Antecedent> fixedUnits =
 			new ArrayDeque<Antecedent>(units.size());
 		while (!units.isEmpty()) {
-			Antecedent a = units.remove();
+			final Antecedent a = units.remove();
 			fixedUnits.add(new Antecedent(a.mPivot,
 					fix.fix(a.mAntecedent, deletedNodes)));
 		}
@@ -114,28 +114,31 @@ public final class Transformations {
 		deletedNodes = null;
 		fix = null;
 		// Track literals in the hyper-resolution
-		HashSet<Literal> lits = new HashSet<Literal>();
-		for (int i = 0; i < tmpproof.getSize(); ++i)
+		final HashSet<Literal> lits = new HashSet<Literal>();
+		for (int i = 0; i < tmpproof.getSize(); ++i) {
 			lits.add(tmpproof.getLiteral(i));
-		if (lits.isEmpty())
+		}
+		if (lits.isEmpty()) {
 			return tmpproof;
+		}
 		// Reinsert unit literals
 		Antecedent[] antes = new Antecedent[fixedUnits.size()];
 		int antepos = 0;
 		while (!fixedUnits.isEmpty()) {
-			Antecedent unit = fixedUnits.remove();
+			final Antecedent unit = fixedUnits.remove();
 			if (lits.contains(unit.mPivot.negate())) {
 				antes[antepos++] = unit;
 				lits.remove(unit.mPivot.negate());
 				for (int i = 0; i < unit.mAntecedent.getSize(); ++i) {
-					Literal l = unit.mAntecedent.getLiteral(i);
-					if (l != unit.mPivot)
+					final Literal l = unit.mAntecedent.getLiteral(i);
+					if (l != unit.mPivot) {
 						lits.add(l);
+					}
 				}
 			}
 		}
 		if (antepos < antes.length) {
-			Antecedent[] tmp = new Antecedent[antepos];
+			final Antecedent[] tmp = new Antecedent[antepos];
 			System.arraycopy(antes, 0, tmp, 0, antepos);
 			antes = tmp;
 		}
@@ -150,12 +153,12 @@ public final class Transformations {
 	public static Clause recycleUnits(Clause proof) {
 		assert proof.getSize() == 0;
 		OccurrenceCounter occ = new OccurrenceCounter();
-		Map<Clause, Integer> counts = occ.count(proof);
+		final Map<Clause, Integer> counts = occ.count(proof);
 		occ = null; // done with it
 		RecyclePivots rp = new RecyclePivots();
-		Map<Clause, Set<Literal>> deleted = rp.regularize(proof, counts);
+		final Map<Clause, Set<Literal>> deleted = rp.regularize(proof, counts);
 		rp = null; // done with it
-		FixProofDAG fix = new FixProofDAG();
+		final FixProofDAG fix = new FixProofDAG();
 		return fix.fix(proof, deleted);
 	}
 }

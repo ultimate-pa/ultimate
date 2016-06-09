@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  * @author Matthias Heizmann
  */
 public class ArrayUpdate {
-	private final TermVariable m_NewArray;
-	private final MultiDimensionalStore m_MultiDimensionalStore;
-	private final Term m_ArrayUpdateTerm;
-	private final boolean m_IsNegatedEquality;
+	private final TermVariable mNewArray;
+	private final MultiDimensionalStore mMultiDimensionalStore;
+	private final Term mArrayUpdateTerm;
+	private final boolean mIsNegatedEquality;
 	
 	/**
 	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if
@@ -64,7 +64,7 @@ public class ArrayUpdate {
 		BinaryEqualityRelation ber = null;
 		try {
 			ber = new BinaryEqualityRelation(term);
-		} catch (NoRelationOfThisKindException e) {
+		} catch (final NoRelationOfThisKindException e) {
 			throw new ArrayUpdateException(e.getMessage());
 		}
 		if (isNegated && ber.getRelationSymbol() != RelationSymbol.DISTINCT) {
@@ -73,21 +73,21 @@ public class ArrayUpdate {
 		if (!isNegated && ber.getRelationSymbol() != RelationSymbol.EQ) {
 			throw new ArrayUpdateException("no not negated array update");
 		}
-		m_ArrayUpdateTerm = term;
-		m_IsNegatedEquality = isNegated;
-		Term lhs = ber.getLhs();
-		Term rhs = ber.getRhs();
+		mArrayUpdateTerm = term;
+		mIsNegatedEquality = isNegated;
+		final Term lhs = ber.getLhs();
+		final Term rhs = ber.getRhs();
 		ApplicationTerm allegedStoreTerm;
 		if (isArrayTermVariable(lhs)) {
 			if (isStoreTerm(rhs)) {
-				m_NewArray = (TermVariable) lhs;
+				mNewArray = (TermVariable) lhs;
 				allegedStoreTerm = (ApplicationTerm) rhs;
 			} else {
 				throw new ArrayUpdateException("no array update");
 			}
 		} else if (isArrayTermVariable(rhs)) {
 			if (isStoreTerm(lhs)) {
-				m_NewArray = (TermVariable) rhs;
+				mNewArray = (TermVariable) rhs;
 				allegedStoreTerm = (ApplicationTerm) lhs;
 			} else {
 				throw new ArrayUpdateException("no array update");
@@ -97,17 +97,17 @@ public class ArrayUpdate {
 		}
 		assert allegedStoreTerm.getFunction().getName().equals("store");
 		assert allegedStoreTerm.getParameters().length == 3;
-		assert m_NewArray.getSort() == allegedStoreTerm.getSort();
+		assert mNewArray.getSort() == allegedStoreTerm.getSort();
 		
-		m_MultiDimensionalStore = new MultiDimensionalStore(allegedStoreTerm);
-		if (m_MultiDimensionalStore.getIndex().size() == 0) {
+		mMultiDimensionalStore = new MultiDimensionalStore(allegedStoreTerm);
+		if (mMultiDimensionalStore.getIndex().size() == 0) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
-		if (!m_MultiDimensionalStore.getArray().getSort().equals(m_NewArray.getSort())) {
+		if (!mMultiDimensionalStore.getArray().getSort().equals(mNewArray.getSort())) {
 			throw new AssertionError("sort mismatch");
 		}
 		if (oldArrayIsTermVariable && 
-				!(m_MultiDimensionalStore.getArray() instanceof TermVariable)) {
+				!(mMultiDimensionalStore.getArray() instanceof TermVariable)) {
 			throw new ArrayUpdateException("old array is no term variable");
 			
 		}
@@ -131,7 +131,7 @@ public class ArrayUpdate {
 	 */
 	private boolean isStoreTerm(Term term) {
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("store")) {
 				return true;
 			}
@@ -156,31 +156,31 @@ public class ArrayUpdate {
 	}
 	
 	public Term getOldArray() {
-		return m_MultiDimensionalStore.getArray();
+		return mMultiDimensionalStore.getArray();
 	}
 	public TermVariable getNewArray() {
-		return m_NewArray;
+		return mNewArray;
 	}
 	public ArrayIndex getIndex() {
-		return m_MultiDimensionalStore.getIndex();
+		return mMultiDimensionalStore.getIndex();
 	}
 	public Term getValue() {
-		return m_MultiDimensionalStore.getValue();
+		return mMultiDimensionalStore.getValue();
 	}
 	public Term getArrayUpdateTerm() {
-		return m_ArrayUpdateTerm;
+		return mArrayUpdateTerm;
 	}
 	public MultiDimensionalStore getMultiDimensionalStore() {
-		return m_MultiDimensionalStore;
+		return mMultiDimensionalStore;
 	}
 	
 	public boolean isNegatedEquality() {
-		return m_IsNegatedEquality;
+		return mIsNegatedEquality;
 	}
 	
 	@Override
 	public String toString() {
-		return m_ArrayUpdateTerm.toString();
+		return mArrayUpdateTerm.toString();
 	}
 	
 	
@@ -198,9 +198,9 @@ public class ArrayUpdate {
 	 * and terms that are not array updates.
 	 */
 	public static class ArrayUpdateExtractor {
-		private final Map<Term, Term> m_Store2TermVariable = 
+		private final Map<Term, Term> mStore2TermVariable = 
 				new HashMap<Term, Term>();
-		private final List<ArrayUpdate> m_ArrayUpdates = 
+		private final List<ArrayUpdate> mArrayUpdates = 
 				new ArrayList<ArrayUpdate>();
 		private final List<Term> remainingTerms = 
 				new ArrayList<Term>();
@@ -211,18 +211,18 @@ public class ArrayUpdate {
 		 */
 		public ArrayUpdateExtractor(boolean negatedUpdate, 
 				boolean oldArrayIsTermVariable, Term... terms) {
-			for (Term term : terms) {
+			for (final Term term : terms) {
 				ArrayUpdate au;
 				try {
 					au = new ArrayUpdate(term, negatedUpdate, oldArrayIsTermVariable);
-				} catch (ArrayUpdateException e) {
+				} catch (final ArrayUpdateException e) {
 					au = null;
 				}
 				if (au == null) {
 					remainingTerms.add(term);
 				} else {
-					m_ArrayUpdates.add(au);
-					m_Store2TermVariable.put(
+					mArrayUpdates.add(au);
+					mStore2TermVariable.put(
 							au.getMultiDimensionalStore().getStoreTerm(), 
 							au.getNewArray());
 				}
@@ -230,11 +230,11 @@ public class ArrayUpdate {
 		}
 
 		public Map<Term, Term> getStore2TermVariable() {
-			return m_Store2TermVariable;
+			return mStore2TermVariable;
 		}
 
 		public List<ArrayUpdate> getArrayUpdates() {
-			return m_ArrayUpdates;
+			return mArrayUpdates;
 		}
 
 		public List<Term> getRemainingTerms() {

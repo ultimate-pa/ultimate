@@ -42,8 +42,8 @@ public class OccurrenceCounter {
 	 * @return Is this clause seen for the first time in the proof tree.
 	 */
 	private boolean incCounter(Clause cls) {
-		Integer oldVal = mCounts.get(cls);
-		int newVal = (oldVal == null) ? 1 : oldVal + 1;
+		final Integer oldVal = mCounts.get(cls);
+		final int newVal = (oldVal == null) ? 1 : oldVal + 1;
 		return mCounts.put(cls, newVal) == null;
 	}
 	/**
@@ -66,16 +66,17 @@ public class OccurrenceCounter {
 	 */
 	private void run() {
 		while (!mTodo.isEmpty()) {
-			Clause cls = mTodo.pop();
+			final Clause cls = mTodo.pop();
 			if (incCounter(cls)) {
 				// Descend into the subproof.
-				ProofNode pn = cls.getProof();
+				final ProofNode pn = cls.getProof();
 				// Nothing to do for leaves.
 				if (!pn.isLeaf()) {
-					ResolutionNode rn = (ResolutionNode) pn;
-					Antecedent[] antes = rn.getAntecedents();
-					for (int i = antes.length - 1; i >= 0; --i)
+					final ResolutionNode rn = (ResolutionNode) pn;
+					final Antecedent[] antes = rn.getAntecedents();
+					for (int i = antes.length - 1; i >= 0; --i) {
 						mTodo.push(antes[i].mAntecedent);
+					}
 					mTodo.push(rn.getPrimary());
 				}
 			}

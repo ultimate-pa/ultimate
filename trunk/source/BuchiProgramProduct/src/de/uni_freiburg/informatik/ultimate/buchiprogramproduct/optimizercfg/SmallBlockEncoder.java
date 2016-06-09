@@ -28,23 +28,17 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
@@ -69,36 +63,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  */
 public class SmallBlockEncoder extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final ProductBacktranslator mBacktranslator;
 	private final boolean mRewriteAssumes;
 	private final CodeBlockFactory mCbf;
 
-	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator, IToolchainStorage mStorage) {
+	public SmallBlockEncoder(final ILogger logger, ProductBacktranslator backtranslator,
+			final IToolchainStorage storage, final boolean rewriteAssumes) {
 		mLogger = logger;
-		mCbf = (CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		mCbf = (CodeBlockFactory) storage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		mBacktranslator = backtranslator;
-		mRewriteAssumes = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
+		mRewriteAssumes = rewriteAssumes;
 	}
 
 	@Override
 	public boolean process(IElement elem) throws Throwable {
 		if (elem instanceof RootNode) {
-			RootNode root = (RootNode) elem;
+			final RootNode root = (RootNode) elem;
 
 			int countDisjunctiveAssumes = 0;
 			int countNewEdges = 0;
 
-			ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-			HashSet<RCFGEdge> closed = new HashSet<>();
+			final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
+			final HashSet<RCFGEdge> closed = new HashSet<>();
 
-			NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 			edges.addAll(root.getOutgoingEdges());
 
 			while (!edges.isEmpty()) {
-				RCFGEdge current = edges.removeFirst();
+				final RCFGEdge current = edges.removeFirst();
 				if (closed.contains(current)) {
 					continue;
 				}
@@ -110,14 +104,14 @@ public class SmallBlockEncoder extends BaseObserver {
 				}
 
 				if (current instanceof StatementSequence) {
-					StatementSequence ss = (StatementSequence) current;
+					final StatementSequence ss = (StatementSequence) current;
 					if (ss.getStatements().size() != 1) {
 						throw new UnsupportedOperationException("StatementSequence has " + ss.getStatements().size()
 								+ " statements, but SingleStatement should enforce that there is only 1.");
 					}
-					Statement stmt = ss.getStatements().get(0);
+					final Statement stmt = ss.getStatements().get(0);
 					if (stmt instanceof AssumeStatement) {
-						AssumeStatement assume = (AssumeStatement) stmt;
+						final AssumeStatement assume = (AssumeStatement) stmt;
 						Expression expr = assume.getFormula();
 						if (mRewriteAssumes) {
 							expr = ct.rewriteNotEquals(expr);
@@ -129,12 +123,12 @@ public class SmallBlockEncoder extends BaseObserver {
 								mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
 							}
 						}
-						Collection<Expression> disjuncts = ct.toDnfDisjuncts(expr);
+						final Collection<Expression> disjuncts = ct.toDnfDisjuncts(expr);
 						if (mLogger.isDebugEnabled()) {
 							if (disjuncts.size() > 1) {
-								StringBuilder sb = new StringBuilder();
+								final StringBuilder sb = new StringBuilder();
 								sb.append("{");
-								for (Expression dis : disjuncts) {
+								for (final Expression dis : disjuncts) {
 									sb.append(BoogiePrettyPrinter.print(dis)).append(", ");
 								}
 								sb.delete(sb.length() - 2, sb.length()).append("}");
@@ -146,8 +140,9 @@ public class SmallBlockEncoder extends BaseObserver {
 						}
 						if (disjuncts.size() > 1) {
 							countDisjunctiveAssumes++;
-							for (Expression disjunct : disjuncts) {
-								StatementSequence newss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
+							for (final Expression disjunct : disjuncts) {
+								final StatementSequence newss = mCbf.constructStatementSequence(
+										(ProgramPoint) current.getSource(),
 										(ProgramPoint) current.getTarget(), new AssumeStatement(assume.getLocation(),
 												disjunct));
 								closed.add(newss);

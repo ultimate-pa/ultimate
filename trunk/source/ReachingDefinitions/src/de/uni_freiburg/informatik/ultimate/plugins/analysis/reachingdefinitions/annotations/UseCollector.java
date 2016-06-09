@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -58,14 +58,14 @@ class UseCollector extends RCFGEdgeVisitor {
 	protected void visit(StatementSequence c) {
 		super.visit(c);
 
-		List<Statement> stmts = c.getStatements();
+		final List<Statement> stmts = c.getStatements();
 
 		if (stmts == null || stmts.size() == 0) {
 			return;
 		}
 
-		for (Statement stmt : stmts) {
-			ReachDefBaseAnnotation annot = getAnnotation(stmt);
+		for (final Statement stmt : stmts) {
+			final ReachDefBaseAnnotation annot = getAnnotation(stmt);
 			if (annot != null) {
 				unionUse(annot);
 			}
@@ -85,14 +85,14 @@ class UseCollector extends RCFGEdgeVisitor {
 			return;
 		}
 
-		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> otheruse = other.getUse();
+		final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> otheruse = other.getUse();
 
 		if (otheruse == null || otheruse == mUse) {
 			return;
 		}
 
-		for (ScopedBoogieVar key : otheruse.keySet()) {
-			for (IndexedStatement stmt : otheruse.get(key)) {
+		for (final ScopedBoogieVar key : otheruse.keySet()) {
+			for (final IndexedStatement stmt : otheruse.get(key)) {
 				addUse(key, stmt.getStatement(), stmt.getKey());
 			}
 		}

@@ -35,41 +35,41 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation.LoopEntryType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Convert structured Boogie-Code (code containing while-loops, if-then-else constructs, break statements) into
@@ -107,11 +107,12 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	public BreakInfo findLabel(String label) {
-		ListIterator<BreakInfo> it = mBreakStack.listIterator(mBreakStack.size());
+		final ListIterator<BreakInfo> it = mBreakStack.listIterator(mBreakStack.size());
 		while (it.hasPrevious()) {
-			BreakInfo bi = (BreakInfo) it.previous();
-			if (bi.breakLabels.contains(label))
+			final BreakInfo bi = it.previous();
+			if (bi.breakLabels.contains(label)) {
 				return bi;
+			}
 		}
 		throw new TypeCheckException("Break to label " + label + " cannot be resolved.");
 	}
@@ -120,14 +121,16 @@ public class UnstructureCode extends BaseObserver {
 	 * The process function. Called by the tool-chain and gets a node of the graph as parameter. This function descends
 	 * to the unit node and then searches for all procedures and runs unstructureBody on it.
 	 */
+	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			for (Declaration decl : unit.getDeclarations()) {
+			final Unit unit = (Unit) root;
+			for (final Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof Procedure) {
-					Procedure proc = (Procedure) decl;
-					if (proc.getBody() != null)
+					final Procedure proc = (Procedure) decl;
+					if (proc.getBody() != null) {
 						unstructureBody(proc);
+					}
 				}
 			}
 			return false;
@@ -139,7 +142,7 @@ public class UnstructureCode extends BaseObserver {
 	 * The main function that converts a body of a procedure into unstructured code.
 	 */
 	private void unstructureBody(Procedure proc) {
-		Body body = proc.getBody();
+		final Body body = proc.getBody();
 		/* Initialize member variables */
 		mFlatStatements = new LinkedList<Statement>();
 		mLabelNr = 0;
@@ -155,8 +158,9 @@ public class UnstructureCode extends BaseObserver {
 		 * If the last block doesn't have a goto or a return, add a return statement
 		 */
 		// TODO Christian: add annotations? how?
-		if (mReachable)
+		if (mReachable) {
 			mFlatStatements.add(new ReturnStatement(proc.getLocation()));
+		}
 		body.setBlock(mFlatStatements.toArray(new Statement[mFlatStatements.size()]));
 	}
 
@@ -183,11 +187,11 @@ public class UnstructureCode extends BaseObserver {
 		 * The currentBI contains all labels of the current statement, and is used to generate appropriate break
 		 * destination labels.
 		 */
-		BreakInfo currentBI = new BreakInfo();
+		final BreakInfo currentBI = new BreakInfo();
 		for (int i = 0; i < block.length; i++) {
-			Statement s = block[i];
+			final Statement s = block[i];
 			if (s instanceof Label) {
-				Label label = (Label) s;
+				final Label label = (Label) s;
 				if (label.getName().startsWith(sLabelPrefix)) {
 					// FIXME: report unsupported syntax instead
 					throw new AssertionError("labels with prefix " + sLabelPrefix
@@ -221,11 +225,11 @@ public class UnstructureCode extends BaseObserver {
 	private Expression getLHSExpression(LeftHandSide lhs) {
 		Expression expr;
 		if (lhs instanceof ArrayLHS) {
-			ArrayLHS arrlhs = (ArrayLHS) lhs;
-			Expression array = getLHSExpression(arrlhs.getArray());
+			final ArrayLHS arrlhs = (ArrayLHS) lhs;
+			final Expression array = getLHSExpression(arrlhs.getArray());
 			expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), array, arrlhs.getIndices());
 		} else {
-			VariableLHS varlhs = (VariableLHS) lhs;
+			final VariableLHS varlhs = (VariableLHS) lhs;
 			expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), varlhs.getIdentifier(),
 					varlhs.getDeclarationInformation());
 		}
@@ -252,35 +256,38 @@ public class UnstructureCode extends BaseObserver {
 			mReachable = false;
 		} else if (origStmt instanceof BreakStatement) {
 			String label = ((BreakStatement) origStmt).getLabel();
-			if (label == null)
+			if (label == null) {
 				label = "*";
-			BreakInfo dest = findLabel(label);
-			if (dest.destLabel == null)
+			}
+			final BreakInfo dest = findLabel(label);
+			if (dest.destLabel == null) {
 				dest.destLabel = generateLabel();
+			}
 			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { dest.destLabel }));
 			mReachable = false;
 		} else if (origStmt instanceof WhileStatement) {
-			WhileStatement stmt = (WhileStatement) origStmt;
-			String head = generateLabel();
-			String body = generateLabel();
+			final WhileStatement stmt = (WhileStatement) origStmt;
+			final String head = generateLabel();
+			final String body = generateLabel();
 			String done;
 
-			if (!(stmt.getCondition() instanceof WildcardExpression))
+			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				done = generateLabel();
-			else {
-				if (outer.destLabel == null)
+			} else {
+				if (outer.destLabel == null) {
 					outer.destLabel = generateLabel();
+				}
 				done = outer.destLabel;
 			}
 
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
-			ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
+			final ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
 					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
 					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn(),
 					stmt.getLocation().getOrigin(), true);
 			addLabel(new Label(loopLocation, head));
-			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
+			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
 					postCreateStatement(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));
 				} else {
@@ -296,7 +303,7 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			} else {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
-						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.boolType, true));
+						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			}
@@ -311,14 +318,14 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done));
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 				mReachable = true;
 			}
 		} else if (origStmt instanceof IfStatement) {
-			IfStatement stmt = (IfStatement) origStmt;
-			String thenLabel = generateLabel();
-			String elseLabel = generateLabel();
+			final IfStatement stmt = (IfStatement) origStmt;
+			final String thenLabel = generateLabel();
+			final String elseLabel = generateLabel();
 			postCreateStatement(origStmt, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
 			postCreateStatement(origStmt, new Label(origStmt.getLocation(), thenLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
@@ -327,8 +334,9 @@ public class UnstructureCode extends BaseObserver {
 			}
 			unstructureBlock(stmt.getThenPart());
 			if (mReachable) {
-				if (outer.destLabel == null)
+				if (outer.destLabel == null) {
 					outer.destLabel = generateLabel();
+				}
 				postCreateStatement(origStmt,
 						new GotoStatement(origStmt.getLocation(), new String[] { outer.destLabel }));
 			}
@@ -337,20 +345,20 @@ public class UnstructureCode extends BaseObserver {
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 			}
 			unstructureBlock(stmt.getElsePart());
 		} else if (origStmt instanceof AssignmentStatement) {
-			AssignmentStatement assign = (AssignmentStatement) origStmt;
-			LeftHandSide[] lhs = assign.getLhs();
-			Expression[] rhs = assign.getRhs();
+			final AssignmentStatement assign = (AssignmentStatement) origStmt;
+			final LeftHandSide[] lhs = assign.getLhs();
+			final Expression[] rhs = assign.getRhs();
 			boolean changed = false;
 			for (int i = 0; i < lhs.length; i++) {
 				while (lhs[i] instanceof ArrayLHS) {
-					LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
-					Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
-					Expression arrayExpr = (Expression) getLHSExpression(array);
+					final LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
+					final Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
+					final Expression arrayExpr = getLHSExpression(array);
 					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
 							rhs[i]);
 					lhs[i] = array;

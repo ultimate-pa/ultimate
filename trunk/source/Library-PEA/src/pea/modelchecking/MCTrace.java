@@ -53,9 +53,9 @@ public class MCTrace {
 	
 	public MCTrace(CounterTrace trace, CDD entry, CDD exit, CDD missing, boolean spec){
 		this.trace = trace;
-		this.entrySync = entry;
-		this.exitSync = exit;
-		this.missingEvents = missing;
+		entrySync = entry;
+		exitSync = exit;
+		missingEvents = missing;
 		this.spec = spec;
 	}
 	
@@ -129,6 +129,6 @@ public class MCTrace {
      * @return Returns the spec flag.
      */
     public boolean getSpec() {
-        return this.spec;
+        return spec;
     }
 }

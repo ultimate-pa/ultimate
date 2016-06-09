@@ -27,11 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -39,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Write a Hoare annotation provided by HoareAnnotationFragments to the CFG.
@@ -49,56 +48,58 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 public class HoareAnnotationWriter {
 
-	private final RootAnnot m_rootAnnot;
-	private final SmtManager m_SmtManager;
-	private final HoareAnnotationFragments m_HoareAnnotationFragments;
+	private final RootAnnot mrootAnnot;
+	private final SmtManager mSmtManager;
+	private final HoareAnnotationFragments mHoareAnnotationFragments;
 
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry
 	 * given by automaton?
 	 */
-	private final boolean m_UseEntry;
-	private final PredicateTransformer m_PredicateTransformer;
+	private final boolean mUseEntry;
+	private final PredicateTransformer mPredicateTransformer;
 
 	public HoareAnnotationWriter(RootAnnot rootAnnot, SmtManager smtManager,
 			HoareAnnotationFragments hoareAnnotationFragments, IUltimateServiceProvider services) {
-		this.m_rootAnnot = rootAnnot;
-		this.m_SmtManager = smtManager;
-		this.m_HoareAnnotationFragments = hoareAnnotationFragments;
-		this.m_UseEntry = true;
-		m_PredicateTransformer = new PredicateTransformer(smtManager.getPredicateFactory(), 
-				smtManager.getVariableManager(), smtManager.getScript(), null, services);
+		mrootAnnot = rootAnnot;
+		mSmtManager = smtManager;
+		mHoareAnnotationFragments = hoareAnnotationFragments;
+		mUseEntry = true;
+		mPredicateTransformer = new PredicateTransformer(smtManager.getVariableManager(), 
+				smtManager.getScript(), null, services);
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
-		addHoareAnnotationForContext(m_SmtManager, precondForContext,
-				m_HoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
+		IPredicate precondForContext = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
+		addHoareAnnotationForContext(mSmtManager, precondForContext,
+				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
-		for (IPredicate context : m_HoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
-			if (true || m_UseEntry || containsAnOldVar(context)) {
-				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
+		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
+			if (true || mUseEntry || containsAnOldVar(context)) {
+				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_PredicateTransformer.strongestPostcondition(context,
+				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
+				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
 			}
-			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
-			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
+			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
+			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getDeadContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(m_SmtManager, precondForContext, pp2preds);
+			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
 		}
 
-		for (IPredicate context : m_HoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
-			if (true || m_UseEntry || containsAnOldVar(context)) {
-				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
+		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
+			if (true || mUseEntry || containsAnOldVar(context)) {
+				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_PredicateTransformer.strongestPostcondition(context,
+				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
+				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
 			}
-			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
-			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
+			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
+			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getLiveContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(m_SmtManager, precondForContext, pp2preds);
+			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
 		}
 	}
 
@@ -109,34 +110,34 @@ public class HoareAnnotationWriter {
 	 */
 	private void addHoareAnnotationForContext(SmtManager smtManager, IPredicate precondForContext,
 			HashRelation<ProgramPoint, IPredicate> pp2preds) {
-		for (ProgramPoint pp : pp2preds.getDomain()) {
-			IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
-			TermVarsProc tvp = smtManager.getPredicateFactory().or(preds);
-			IPredicate formulaForPP = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		for (final ProgramPoint pp : pp2preds.getDomain()) {
+			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
+			final Term tvp = smtManager.getPredicateFactory().or(false, preds);
+			final IPredicate formulaForPP = mSmtManager.getPredicateFactory().newPredicate(tvp);
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
 
 	private void addFormulasToLocNodes(ProgramPoint pp, IPredicate context, IPredicate current) {
-		String procName = pp.getProcedure();
-		String locName = pp.getPosition();
-		ProgramPoint locNode = m_rootAnnot.getProgramPoints().get(procName).get(locName);
+		final String procName = pp.getProcedure();
+		final String locName = pp.getPosition();
+		final ProgramPoint locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
 		
-		HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
+		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = m_SmtManager.getPredicateFactory().getNewHoareAnnotation(pp, m_rootAnnot.getModGlobVarManager());
+			hoareAnnot = mSmtManager.getPredicateFactory().getNewHoareAnnotation(pp, mrootAnnot.getModGlobVarManager());
 			hoareAnnot.annotate(locNode);
 		} else {
-			hoareAnnot = (HoareAnnotation) taAnnot;
+			hoareAnnot = taAnnot;
 		}
 		hoareAnnot.addInvariant(context, current);
 	}
 
 	private Call getCall(ISLPredicate pred) {
-		ProgramPoint pp = pred.getProgramPoint();
+		final ProgramPoint pp = pred.getProgramPoint();
 		Call result = null;
-		for (RCFGEdge edge : pp.getOutgoingEdges()) {
+		for (final RCFGEdge edge : pp.getOutgoingEdges()) {
 			if (edge instanceof Call) {
 				if (result == null) {
 					result = (Call) edge;
@@ -152,7 +153,7 @@ public class HoareAnnotationWriter {
 	}
 
 	private boolean containsAnOldVar(IPredicate p) {
-		for (BoogieVar bv : p.getVars()) {
+		for (final BoogieVar bv : p.getVars()) {
 			if (bv.isOldvar()) {
 				return true;
 			}

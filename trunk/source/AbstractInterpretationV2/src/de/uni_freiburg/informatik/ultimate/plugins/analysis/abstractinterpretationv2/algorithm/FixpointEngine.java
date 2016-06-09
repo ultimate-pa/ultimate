@@ -40,11 +40,10 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * 
@@ -75,7 +74,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
@@ -95,7 +94,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mLoopDetector = params.getLoopDetector();
 		mDebugHelper = params.getDebugHelper();
 
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
@@ -123,7 +122,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final IAbstractStateBinaryOperator<STATE> mergeOp = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		worklist.add(createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider)));
+		worklist.add(
+				createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider, mMaxParallelStates)));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -491,7 +491,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.getStack();
 
 		// count all stack items that are there more than once and the current item
-		Optional<Long> count = stackAtCallLocation.stream().map(a -> a.getFirst()).filter(a -> a != null)
+		final Optional<Long> count = stackAtCallLocation.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
 				.filter(e -> e.getValue() > 1 || e.getKey() == currentAction).map(e -> e.getValue())
 				.reduce((a, b) -> a + b);
@@ -516,7 +516,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			throw new AssertionError("Could not find last state in call stack");
 		}
 		// select the last state
-		int idx = orderedStates.size() - 2;
+		final int idx = orderedStates.size() - 2;
 		if (idx < 0) {
 			// not enough states to widen
 			return null;

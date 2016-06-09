@@ -89,14 +89,17 @@ public abstract class TCSWriter {
      */
     protected void writeConjunction(CDD constraint, Writer writer) throws IOException{
         
-        if (constraint == CDD.TRUE)
-            return;
-        if(constraint == CDD.FALSE)
-            throw new IllegalArgumentException("A constraint equal to false not allowed here");
+        if (constraint == CDD.TRUE) {
+			return;
+		}
+        if(constraint == CDD.FALSE) {
+			throw new IllegalArgumentException("A constraint equal to false not allowed here");
+		}
         
         for (int i = 0; i < constraint.getChilds().length; i++) {
-            if(constraint.getChilds()[i] == CDD.FALSE)
-                continue;
+            if(constraint.getChilds()[i] == CDD.FALSE) {
+				continue;
+			}
             
             writeDecision(constraint.getDecision(), i, writer);
             //if(i < constraint.getChilds().length - 1)

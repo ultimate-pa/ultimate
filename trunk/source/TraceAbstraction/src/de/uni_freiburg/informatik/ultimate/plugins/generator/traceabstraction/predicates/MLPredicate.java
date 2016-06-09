@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Arrays;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -44,13 +44,13 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	 * 
 	 */
 	private static final long serialVersionUID = 1750137515726690834L;
-	protected final ProgramPoint[] m_ProgramPoints;
+	protected final ProgramPoint[] mProgramPoints;
 	
 	
 	protected MLPredicate(ProgramPoint[] programPoints, int serialNumber, 
 			String[] procedures, Term term, Set<BoogieVar> vars, Term closedFormula) {
 		super(serialNumber,procedures,term,vars,closedFormula);
-		m_ProgramPoints = programPoints;
+		mProgramPoints = programPoints;
 	}
 
 
@@ -70,51 +70,56 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "ProgramPoint")
-			return m_Procedures;
-		else
+		if (field == "ProgramPoint") {
+			return mProcedures;
+		} else {
 			return super.getFieldValue(field);
+		}
 	}
 	
 	@Override
 	public ProgramPoint[] getProgramPoints() {
-		return m_ProgramPoints;
+		return mProgramPoints;
 	}
 
 	/**
-	 * @return the m_Assertion
+	 * @return the mAssertion
 	 */
+	@Override
 	public Term getFormula() {
-		return m_Formula;
+		return mFormula;
 	}
 	
+	@Override
 	public Term getClosedFormula() {
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
+	@Override
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	
 	@Override
 	public String toString() {
-		String result = super.m_SerialNumber + "#";
-		if (m_ProgramPoints != null) {
-			result += Arrays.toString(m_ProgramPoints);
+		String result = super.mSerialNumber + "#";
+		if (mProgramPoints != null) {
+			result += Arrays.toString(mProgramPoints);
 		}
-		result += m_Formula.toString();
+		result += mFormula.toString();
 		return result;
 	}
 
 
 
+	@Override
 	public boolean isUnknown() {
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return super.m_SerialNumber;
+		return super.mSerialNumber;
 	}
 	
 	

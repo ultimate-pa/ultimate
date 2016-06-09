@@ -34,16 +34,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Loca
 
 public class Location extends SpaceExElement {
 
-	private int mId;
-	private String mName;
+	private final int mId;
+	private final String mName;
 	private String mInvariant;
 	private String mFlow;
 
 	private final List<Transition> mOutgoingTransitions;
 	private final List<Transition> mIncomingTransitions;
 
-	private double mXPos;
-	private double mYPos;
+	private final double mXPos;
+	private final double mYPos;
 
 	public Location(final int id) {
 		this(id, new StringBuilder().append("loc_").append(id).toString());

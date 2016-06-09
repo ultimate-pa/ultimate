@@ -27,23 +27,22 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Represents an {@link Expression} as a set of if-free expression.
@@ -96,7 +95,7 @@ public final class IfExpressionTree {
 		final Expression elseCondition;
 		Expression thenCondition = expr.getCondition();
 		if (thenCondition instanceof WildcardExpression) {
-			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), BoogieType.boolType, true);
+			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), BoogieType.TYPE_BOOL, true);
 		} else {
 			// note: condition may contain further IfThenElseExpressions, which will not be removed.
 			elseCondition = exprTransformer.logicNegCached(thenCondition);
@@ -113,8 +112,8 @@ public final class IfExpressionTree {
 		final IfExpressionTree rightTree = buildTree(binExpr.getRight(), exprTransformer);
 
 		final ILocation location = binExpr.getLocation();
-		IType type = binExpr.getType();
-		BinaryExpression.Operator operator = binExpr.getOperator();
+		final IType type = binExpr.getType();
+		final BinaryExpression.Operator operator = binExpr.getOperator();
 
 		leftTree.append(rightTree, (left, right) -> new BinaryExpression(location, type, operator, left, right));
 		return leftTree;
@@ -270,7 +269,7 @@ public final class IfExpressionTree {
 			assert !suffix.isLeaf();
 			mThenCondition = suffix.mThenCondition;
 			mElseCondition = suffix.mElseCondition;
-			Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
+			final Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
 			mThenChild = suffix.mThenChild.deepCopy();
 			mThenChild.mapLeafExprs(curriedFunction);
 			mElseChild = suffix.mElseChild.deepCopy();
@@ -312,7 +311,7 @@ public final class IfExpressionTree {
 		List<OctDomainState> elseStates;
 
 		final int maxParallelStates = postOp.getMaxParallelStates();
-		OctAssumeProcessor ap = postOp.getAssumeProcessor();
+		final OctAssumeProcessor ap = postOp.getAssumeProcessor();
 		thenStates = ap.assume(mThenCondition, OctPostOperator.deepCopy(oldStates));
 		elseStates = ap.assume(mElseCondition, oldStates); // oldStates may be modified
 
@@ -338,6 +337,7 @@ public final class IfExpressionTree {
 		return thenLeafs;
 	}
 
+	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();
 		toString("", strBuilder);

@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 	
 
@@ -52,11 +51,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
-	private final String m_Result;
+	private final INestedWordAutomaton<LETTER,STATE> mOperand;
+	private final String mResult;
 	
 	
 	
@@ -69,46 +68,46 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand " + 
-				m_Operand.sizeInformation() + " Result " + 
-				m_Result;
+				mOperand.sizeInformation() + " Result " + 
+				mResult;
 	}
 	
 	public BuchiComplementationEvaluation(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_Operand = new NestedWordAutomatonReachableStates<>(m_Services, input);
-		m_Logger.info(startMessage());
-		m_Result = evaluate(stateFactory);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mOperand = new NestedWordAutomatonReachableStates<>(mServices, input);
+		mLogger.info(startMessage());
+		mResult = evaluate(stateFactory);
+		mLogger.info(exitMessage());
 	}
 	
 
 
 	private String evaluate(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
+		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		{
-			String name = "BuchiComplementBS";
-			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementNCSB<LETTER, STATE>(m_Services, stateFactory, m_Operand)).getResult();
+			final String name = "BuchiComplementBS";
+			final NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 			addToResultsWithSizeReduction(results, name, result);
 		}
-		for (FkvOptimization fkvOptimization : FkvOptimization.values()) {
+		for (final FkvOptimization fkvOptimization : FkvOptimization.values()) {
 			{
-				String name = "FKV_" + fkvOptimization;
-				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
+				final String name = "FKV_" + fkvOptimization;
+				final NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
 				addToResultsWithSizeReduction(results, name, result);
 			}
 //			{
 //				String name = "FKV_" + fkvOptimization + "_MaxRank3";
-//				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), 3)).getResult();
+//				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand, fkvOptimization.toString(), 3)).getResult();
 //				addToResultsWithSizeReduction(results, name, result);
 //			}
 		}
@@ -117,8 +116,8 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 
 
 	private String prettyPrint(LinkedHashMap<String, Integer> results) {
-		StringBuilder sb = new StringBuilder();
-		for (Entry<String, Integer> entry : results.entrySet()) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Entry<String, Integer> entry : results.entrySet()) {
 			sb.append(entry.getKey());
 			sb.append(" ");
 			sb.append(entry.getValue());
@@ -132,18 +131,18 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 			String name,
 			NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataLibraryException {
 		addToResults(results, name, result);
-		INestedWordAutomatonOldApi<LETTER, STATE> nl = (new RemoveNonLiveStates<LETTER, STATE>(m_Services, result)).getResult();
+		final INestedWordAutomatonOldApi<LETTER, STATE> nl = (new RemoveNonLiveStates<LETTER, STATE>(mServices, result)).getResult();
 		addToResults(results, name + "_nonLiveRemoved", nl);
-		INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(m_Services, nl)).getResult();
-		NestedWordAutomatonReachableStates<LETTER, STATE> bcru = (new RemoveUnreachable<LETTER, STATE>(m_Services, bc)).getResult();
-		INestedWordAutomaton<LETTER, STATE> minmized = new MinimizeSevpa<LETTER, STATE>(m_Services, bcru).getResult();
+		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(mServices, nl)).getResult();
+		final NestedWordAutomatonReachableStates<LETTER, STATE> bcru = (new RemoveUnreachable<LETTER, STATE>(mServices, bc)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> minmized = new MinimizeSevpa<LETTER, STATE>(mServices, bcru).getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	
 	private void addToResults(LinkedHashMap<String, Integer> results,
 			String name,
 			INestedWordAutomaton<LETTER, STATE> result) {
-		int size = result.getStates().size();
+		final int size = result.getStates().size();
 		results.put(name, size);
 	}
 
@@ -157,7 +156,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 	
 	@Override
 	public String getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 

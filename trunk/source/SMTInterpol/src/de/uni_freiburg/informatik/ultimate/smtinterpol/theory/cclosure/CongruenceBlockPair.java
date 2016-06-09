@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 public final class CongruenceBlockPair {
 	private static UnifyHash<CongruenceBlockPair> g_unifier;// NOCHECKSTYLE since unused.  Should be in QuantifierTheory
@@ -29,17 +29,17 @@ public final class CongruenceBlockPair {
 		return getPair(t.mFunc, t.mArg);
 	}
 	public static CongruenceBlockPair getPair(CCTerm func, CCTerm arg) {
-		int hash = hash(func,arg);
-		if (g_unifier == null)
+		final int hash = hash(func,arg);
+		if (g_unifier == null) {
 			g_unifier = new UnifyHash<CongruenceBlockPair>();
-		else {
-			for (CongruenceBlockPair p : g_unifier.iterateHashCode(hash)) {
+		} else {
+			for (final CongruenceBlockPair p : g_unifier.iterateHashCode(hash)) {
 				if (p.equals(func, arg)) {
 					return p;
 				}
 			}
 		}
-		CongruenceBlockPair res = new CongruenceBlockPair(func, arg);
+		final CongruenceBlockPair res = new CongruenceBlockPair(func, arg);
 		g_unifier.put(hash, res);
 		return res;
 	}
@@ -51,12 +51,14 @@ public final class CongruenceBlockPair {
 		mFunc = func;
 		mArg = arg;
 	}
+	@Override
 	public int hashCode() {
 		return hash(mFunc,mArg);
 	}
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof CongruenceBlockPair) {
-			CongruenceBlockPair p = (CongruenceBlockPair) o;
+			final CongruenceBlockPair p = (CongruenceBlockPair) o;
 			return p.equals(p.mFunc,p.mArg);
 		}
 		return false;

@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 
 public class VariableInfo {
 	private final boolean rigid;
@@ -68,6 +68,7 @@ public class VariableInfo {
 		this.declarationInformation = declarationInformation;
 	}
 	
+	@Override
 	public String toString() {
 		return name + ":" + type;
 	}

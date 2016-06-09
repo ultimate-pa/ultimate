@@ -53,22 +53,24 @@ final class IntArray implements Iterable<Integer> {
 	}
 
 	int get(int idx) {
-		if (idx < 0 || idx >= size)
+		if (idx < 0 || idx >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 
 		return array[idx];
 	}
 
 	void set(int idx, int val) {
-		if (idx < 0 || idx >= size)
+		if (idx < 0 || idx >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 
 		array[idx] = val;
 	}
 
 	void add(int val) {
 		if (size == capacity) {
-			int newCapacity = (capacity == 0) ? 4 : 2 * capacity;
+			final int newCapacity = (capacity == 0) ? 4 : 2 * capacity;
 			array = Arrays.copyOf(array, newCapacity);
 			capacity = newCapacity;
 		}
@@ -88,17 +90,21 @@ final class IntArray implements Iterable<Integer> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof IntArray))
+		if (obj == null || !(obj instanceof IntArray)) {
 			return false;
+		}
 
-		IntArray b = (IntArray) obj;
+		final IntArray b = (IntArray) obj;
 
-		if (b.size != size)
+		if (b.size != size) {
 			return false;
+		}
 
-		for (int i = 0; i < size; i++)
-			if (b.array[i] != array[i])
+		for (int i = 0; i < size; i++) {
+			if (b.array[i] != array[i]) {
 				return false;
+			}
+		}
 
 		return true;
 	}
@@ -118,7 +124,7 @@ final class IntArray implements Iterable<Integer> {
 
 			this.array = array;
 			this.last = last;
-			this.idx = first;
+			idx = first;
 		}
 
 		@Override
@@ -128,8 +134,9 @@ final class IntArray implements Iterable<Integer> {
 
 		@Override
 		public Integer next() {
-			if (idx == last)
+			if (idx == last) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 
 			return array[idx++];
 		}

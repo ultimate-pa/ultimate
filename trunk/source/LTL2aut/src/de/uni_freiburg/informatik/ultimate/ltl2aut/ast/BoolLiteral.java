@@ -35,14 +35,15 @@ public class BoolLiteral extends AstNode {
 		this.value = value;
 	}
 	
+	@Override
 	public String toString()
 	{
-		return Boolean.toString(this.value);
+		return Boolean.toString(value);
 	}
 	
 	public boolean getValue()
 	{
-		return this.value;
+		return value;
 	}
 
 }

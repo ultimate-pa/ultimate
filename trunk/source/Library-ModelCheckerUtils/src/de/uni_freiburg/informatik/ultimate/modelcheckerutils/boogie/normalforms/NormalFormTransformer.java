@@ -282,24 +282,24 @@ public class NormalFormTransformer<E> {
 			throw new AssertionError("Input not in NNF");
 		} else if (mWrapper.isAnd(current)) {
 			// apply distributivity
-			ArrayDeque<E> operands = new ArrayDeque<>();
+			final ArrayDeque<E> operands = new ArrayDeque<>();
 
-			Iterator<E> iter = mWrapper.getOperands(current);
+			final Iterator<E> iter = mWrapper.getOperands(current);
 			// first, make dnf for each operand
 			while (iter.hasNext()) {
-				E operand = makeDnf(iter.next());
+				final E operand = makeDnf(iter.next());
 				iter.remove();
 				operands.add(operand);
 			}
 
 			// then, distribute singletons with ors and eliminate redundant ones
 			while (!operands.isEmpty()) {
-				E firstOperand = operands.removeLast();
+				final E firstOperand = operands.removeLast();
 				if (operands.isEmpty()) {
 					// If there is no more or, we are finished.
 					return firstOperand;
 				}
-				E secondOperand = operands.removeLast();
+				final E secondOperand = operands.removeLast();
 
 				E or;
 				E notOr;
@@ -310,11 +310,11 @@ public class NormalFormTransformer<E> {
 						// (a || b) && (c || d)
 						// = (a && c) || (a && d) || (b && c) || (b && d)
 
-						ArrayList<E> newOrOperands = new ArrayList<>();
-						Iterator<E> firstOrOperands = mWrapper.getOperands(firstOperand);
+						final ArrayList<E> newOrOperands = new ArrayList<>();
+						final Iterator<E> firstOrOperands = mWrapper.getOperands(firstOperand);
 						while (firstOrOperands.hasNext()) {
-							Iterator<E> secondOrOperands = mWrapper.getOperands(secondOperand);
-							E currentOr = firstOrOperands.next();
+							final Iterator<E> secondOrOperands = mWrapper.getOperands(secondOperand);
+							final E currentOr = firstOrOperands.next();
 							while (secondOrOperands.hasNext()) {
 								newOrOperands.add(mWrapper.makeAnd(currentOr, secondOrOperands.next()));
 								secondOrOperands.remove();
@@ -338,8 +338,8 @@ public class NormalFormTransformer<E> {
 
 				// only one operand is or, apply
 				// a && (b || c) = (a && b) || (a && c)
-				ArrayList<E> newOrOperands = new ArrayList<>();
-				Iterator<E> currentOrOperands = mWrapper.getOperands(or);
+				final ArrayList<E> newOrOperands = new ArrayList<>();
+				final Iterator<E> currentOrOperands = mWrapper.getOperands(or);
 				while (currentOrOperands.hasNext()) {
 					newOrOperands.add(mWrapper.makeAnd(currentOrOperands.next(), notOr));
 					currentOrOperands.remove();
@@ -349,8 +349,8 @@ public class NormalFormTransformer<E> {
 			throw new AssertionError();
 		} else if (mWrapper.isOr(current)) {
 			// descend
-			ArrayList<E> inner = new ArrayList<>();
-			Iterator<E> iter = mWrapper.getOperands(current);
+			final ArrayList<E> inner = new ArrayList<>();
+			final Iterator<E> iter = mWrapper.getOperands(current);
 			while (iter.hasNext()) {
 				inner.add(makeDnf(iter.next()));
 			}
@@ -370,7 +370,7 @@ public class NormalFormTransformer<E> {
 			// nothing to do here
 			return condition;
 		} else if (mWrapper.isNot(condition)) {
-			E operand = mWrapper.getOperand(condition);
+			final E operand = mWrapper.getOperand(condition);
 			if (mWrapper.isAtom(operand)) {
 				// is already in nnf
 				return condition;
@@ -379,16 +379,16 @@ public class NormalFormTransformer<E> {
 				return makeNnf(mWrapper.getOperand(operand));
 			} else if (mWrapper.isOr(operand)) {
 				// use de morgan
-				ArrayDeque<E> inner = new ArrayDeque<>();
-				Iterator<E> iter = mWrapper.getOperands(operand);
+				final ArrayDeque<E> inner = new ArrayDeque<>();
+				final Iterator<E> iter = mWrapper.getOperands(operand);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(mWrapper.makeNot(iter.next())));
 				}
 				return mWrapper.makeAnd(inner.iterator());
 			} else if (mWrapper.isAnd(operand)) {
 				// use de morgan
-				ArrayDeque<E> inner = new ArrayDeque<>();
-				Iterator<E> iter = mWrapper.getOperands(operand);
+				final ArrayDeque<E> inner = new ArrayDeque<>();
+				final Iterator<E> iter = mWrapper.getOperands(operand);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(mWrapper.makeNot(iter.next())));
 				}
@@ -403,15 +403,15 @@ public class NormalFormTransformer<E> {
 		} else {
 			// its no atom, its no not, descend
 			if (mWrapper.isOr(condition)) {
-				ArrayDeque<E> inner = new ArrayDeque<>();
-				Iterator<E> iter = mWrapper.getOperands(condition);
+				final ArrayDeque<E> inner = new ArrayDeque<>();
+				final Iterator<E> iter = mWrapper.getOperands(condition);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(iter.next()));
 				}
 				return mWrapper.makeOr(inner.iterator());
 			} else if (mWrapper.isAnd(condition)) {
-				ArrayDeque<E> inner = new ArrayDeque<>();
-				Iterator<E> iter = mWrapper.getOperands(condition);
+				final ArrayDeque<E> inner = new ArrayDeque<>();
+				final Iterator<E> iter = mWrapper.getOperands(condition);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(iter.next()));
 				}

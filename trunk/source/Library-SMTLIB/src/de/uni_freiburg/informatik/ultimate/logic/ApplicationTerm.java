@@ -41,8 +41,8 @@ public class ApplicationTerm extends Term {
 	ApplicationTerm(FunctionSymbol function, Term[] parameters, int hash) {
 		super(hash);
 		function.typecheck(parameters);
-		this.mFunction   = function;
-		this.mParameters = parameters;
+		mFunction   = function;
+		mParameters = parameters;
 	}
 
 	/**
@@ -66,6 +66,7 @@ public class ApplicationTerm extends Term {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public Sort getSort() {
 		return mFunction.mReturnSort.getRealSort();
 	}
@@ -79,20 +80,20 @@ public class ApplicationTerm extends Term {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
-		String func = getFunction().getApplicationString();
-		Term[] args = getParameters();
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
+		final String func = getFunction().getApplicationString();
+		final Term[] args = getParameters();
 		if (args.length == 0) {
-			m_Todo.add(func);
+			mTodo.add(func);
 		} else {
 			// Add arguments to stack.
-			m_Todo.addLast(")");
+			mTodo.addLast(")");
 			for (int i = args.length - 1; i >= 0; i--) {
-				m_Todo.addLast(args[i]);
-				m_Todo.addLast(" ");
+				mTodo.addLast(args[i]);
+				mTodo.addLast(" ");
 			}
-			m_Todo.add(func);
-			m_Todo.add("(");
+			mTodo.add(func);
+			mTodo.add("(");
 		}
 	}
 }

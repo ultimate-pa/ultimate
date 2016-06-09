@@ -82,13 +82,13 @@ public class InequalityConverter {
 			throw new TermIsNotAffineException(
 					"Unsupported number of parameters", term);
 		}
-		String fname = term.getFunction().getName();
+		final String fname = term.getFunction().getName();
 		LinearInequality li1;
 		LinearInequality li2;
 		try {
 			li1 = LinearInequality.fromTerm(term.getParameters()[0]);
 			li2 = LinearInequality.fromTerm(term.getParameters()[1]);
-		} catch (TermIsNotAffineException tinae) {
+		} catch (final TermIsNotAffineException tinae) {
 			throw tinae;
 		}
 		
@@ -127,23 +127,23 @@ public class InequalityConverter {
 	 */
 	public static List<LinearInequality> convert(Term term, NlaHandling nlaHandling)
 			throws TermException {
-		List<LinearInequality> terms = new ArrayList<LinearInequality>();
+		final List<LinearInequality> terms = new ArrayList<LinearInequality>();
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
-			String fname = appt.getFunction().getName();
+			final ApplicationTerm appt = (ApplicationTerm) term;
+			final String fname = appt.getFunction().getName();
 			if (fname.equals("and")) {
-				for (Term t : appt.getParameters()) {
+				for (final Term t : appt.getParameters()) {
 					terms.addAll(convert(t, nlaHandling));
 				}
 			} else if (fname.equals("true")) {
 				// Add trivial linear inequality 0 ≤ 0.
-				LinearInequality li = new LinearInequality();
+				final LinearInequality li = new LinearInequality();
 				terms.add(li);
 			} else if (fname.equals("="))  {
-				Term param0 = appt.getParameters()[0];
-				Sort param0sort = param0.getSort();
+				final Term param0 = appt.getParameters()[0];
+				final Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
-					LinearInequality converted = tryToConvertAtom(
+					final LinearInequality converted = tryToConvertAtom(
 							nlaHandling, appt);
 					terms.add(converted);
 				} else if (param0sort.getName().equals("Bool")) {
@@ -153,15 +153,15 @@ public class InequalityConverter {
 				}
 			} else if (fname.equals("<") || fname.equals(">")
 					|| fname.equals("<=") || fname.equals(">=")) {
-				LinearInequality converted = tryToConvertAtom(
+				final LinearInequality converted = tryToConvertAtom(
 						nlaHandling, appt);
 				terms.add(converted);
 			} else {
 				throw new UnknownFunctionException(appt);
 			}
-		} else if (term instanceof TermVariable)
+		} else if (term instanceof TermVariable) {
 			throw new TermException(TermException.s_IsNotInDnf, term);
-		else {
+		} else {
 			throw new TermException(TermException.s_ExpectedApplicationTerm, term);
 		}
 		return terms;
@@ -173,7 +173,7 @@ public class InequalityConverter {
 		LinearInequality converted;
 		try {
 			converted = convertAtom(appt);
-		} catch (TermIsNotAffineException tinae) {
+		} catch (final TermIsNotAffineException tinae) {
 			if (tinae.getMessage().equals(TermIsNotAffineException.s_MultipleNonConstantFactors)) {
 				switch (nlaHandling) {
 				case EXCEPTION: {

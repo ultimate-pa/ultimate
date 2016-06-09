@@ -63,8 +63,8 @@ public class Utils {
 	}
 
 	public static String traceToString(List<RCFGEdge> trace) {
-		StringBuilder sb = new StringBuilder();
-		for (RCFGEdge edge : trace) {
+		final StringBuilder sb = new StringBuilder();
+		for (final RCFGEdge edge : trace) {
 			sb.append(edgeToString(edge));
 			sb.append(" ");
 		}
@@ -80,8 +80,8 @@ public class Utils {
 	}
 
 	public static <T> HashSet<T> intersect(HashSet<T> a, HashSet<T> b) {
-		HashSet<T> rtr = new HashSet<>();
-		for (T element : a) {
+		final HashSet<T> rtr = new HashSet<>();
+		for (final T element : a) {
 			if (b.contains(element)) {
 				rtr.add(element);
 			}

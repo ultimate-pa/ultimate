@@ -33,8 +33,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -56,11 +56,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 
 public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE> {
 	public int counter_run = 0, counter_total_nodes = 0 ;
-	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
-	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
-	private ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
-	private StateFactory<STATE> localStateFactory;
-	private AutomataLibraryServices localServiceProvider;
+	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
+	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
+	private final ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> local_mB2;
+	private final StateFactory<STATE> localStateFactory;
+	private final AutomataLibraryServices localServiceProvider;
 	private ArrayList<STATE> newBnStates;
 	//public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
 	//public HashMap<STATE,HashMap<NodeData<LETTER,STATE>,ArrayList<NodeData<LETTER,STATE>>>> coverage;
@@ -122,11 +122,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		m_Logger.info(startMessage());
-		local_m_B.add(nwa);
-		local_m_B2.add(nwa);
+		mLogger.info(startMessage());
+		local_mB.add(nwa);
+		local_mB2.add(nwa);
 		run2(nwa);
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 		//completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		//startingLeafs = null;
 		//currentTerminalLeafs = null;
@@ -138,40 +138,40 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
 		localStateFactory = sf;
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
-		local_m_A =  a;
-		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>(b);
-		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
+		local_mA =  a;
+		local_mB = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		local_mB2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>(b);
+		for(final INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 			try {
 				super.addSubtrahend(bn);
-			} catch (AutomataLibraryException e) {
+			} catch (final AutomataLibraryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			local_m_B.add(bn);
+			local_mB.add(bn);
 		}
 		run();
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
-	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
-		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
-			m_Logger.info("Alphabet inconsistent");
+	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException{
+		if(!local_mA.getAlphabet().containsAll(nwa.getAlphabet())){
+			mLogger.info("Alphabet inconsistent");
 			return;
 		}
 		if(result!=null){
 			do{
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				counter_run++;
 				if(refine_exceptionRun()||cover()){
 					break;
 				}
 				bufferedLeaf = null;
-				for(LETTER alphabet:local_m_A.getAlphabet()){
+				for(final LETTER alphabet:local_mA.getAlphabet()){
 					if(bufferedLeaf == null){
 						bufferedLeaf = new HashSet<Leaf<LETTER,STATE>>();
 						bufferedLeaf.addAll(expand(alphabet));
@@ -188,9 +188,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException{
 		result = null;
-		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
-			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+		for(final INestedWordAutomatonSimple<LETTER,STATE> B:local_mB){
+			if(!local_mA.getAlphabet().containsAll(B.getAlphabet())){
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 		}
@@ -204,11 +204,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				}
 			}
 			else{
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedLeaf = null;
-				for(LETTER alphabet:local_m_A.getAlphabet()){
+				for(final LETTER alphabet:local_mA.getAlphabet()){
 					if(bufferedLeaf == null){
 						bufferedLeaf = new HashSet<Leaf<LETTER,STATE>>();
 						bufferedLeaf.addAll(expand(alphabet));
@@ -227,10 +227,10 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	}
 	@SuppressWarnings("unchecked")
 	private ArrayList<Leaf<LETTER,STATE>> expand(LETTER alphabet){
-		ArrayList<Leaf<LETTER,STATE>> nextTerminal = new ArrayList<Leaf<LETTER,STATE>>();
+		final ArrayList<Leaf<LETTER,STATE>> nextTerminal = new ArrayList<Leaf<LETTER,STATE>>();
 		Leaf<LETTER,STATE> newLeaf = null;
 		if(alphabet == null){
-			for(STATE state:local_m_A.getInitialStates()){
+			for(final STATE state:local_mA.getInitialStates()){
 				newLeaf = new Leaf<LETTER,STATE>(state,new NestedRun<LETTER,STATE>(state));
 				newLeaf.setOrgin(newLeaf);
 				newLeaf.setParent(null);
@@ -241,10 +241,10 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 			}
 		}
 		else{
-			for(Leaf<LETTER,STATE> oldLeaf:currentTerminalLeafs){
+			for(final Leaf<LETTER,STATE> oldLeaf:currentTerminalLeafs){
 				if (oldLeaf.coveredBy==null){
-					for(OutgoingInternalTransition<LETTER, STATE> ATransition:local_m_A.internalSuccessors(oldLeaf.aState, alphabet)){
-						ArrayList<STATE> newStateSequence = (ArrayList<STATE>) oldLeaf.word.getStateSequence().clone();
+					for(final OutgoingInternalTransition<LETTER, STATE> ATransition:local_mA.internalSuccessors(oldLeaf.aState, alphabet)){
+						final ArrayList<STATE> newStateSequence = (ArrayList<STATE>) oldLeaf.word.getStateSequence().clone();
 						newStateSequence.add(ATransition.getSucc());
 						newLeaf = new Leaf<LETTER,STATE>(ATransition.getSucc(),new NestedRun<LETTER,STATE>(oldLeaf.word.getWord().concatenate(new NestedWord<LETTER>(alphabet,-2)),newStateSequence));
 						newLeaf.setOrgin(oldLeaf.orginLeaf);
@@ -270,14 +270,14 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		boolean newNodeInCompleteTree = false;
 		boolean containsAllbnState = false;
 		Leaf<LETTER,STATE> BufCurLeaf2 = null;
-		for(Leaf<LETTER,STATE> curLeaf1 : currentTerminalLeafs){
+		for(final Leaf<LETTER,STATE> curLeaf1 : currentTerminalLeafs){
 			containsAllbnState = false;
 			if(curLeaf1.coveredBy == null){
-				for(Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
+				for(final Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
 					BufCurLeaf2 = curLeaf2;
 					if(curLeaf2.coveredBy == null&&curLeaf1!=curLeaf2&&curLeaf1.aState.equals(curLeaf2.aState)){
 						containsAllbnState = true;
-						for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
+						for(final INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
 							if(curLeaf1.bStates.keySet().contains(bn)){
 								if(!curLeaf1.bStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
 									containsAllbnState=false;
@@ -308,21 +308,21 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		return !newNodeInCompleteTree;
 	}
 	private boolean refine_exceptionRun(){
-		HashSet<Leaf<LETTER,STATE>> newEdge = new HashSet<Leaf<LETTER,STATE>>(),toBeRemoved = new HashSet<Leaf<LETTER,STATE>>(), toBeRemovedBuffer = new HashSet<Leaf<LETTER,STATE>>();
+		final HashSet<Leaf<LETTER,STATE>> newEdge = new HashSet<Leaf<LETTER,STATE>>(),toBeRemoved = new HashSet<Leaf<LETTER,STATE>>(), toBeRemovedBuffer = new HashSet<Leaf<LETTER,STATE>>();
 		boolean firstRound = true;
 		int i;
 		Leaf<LETTER,STATE> cursorLeaf = null,cursorLeaf2 = null,newEdgeLeaf = null;
-		HashSet<INestedWordAutomatonSimple<LETTER,STATE>> CHKedBn = new HashSet<INestedWordAutomatonSimple<LETTER,STATE>>();
+		final HashSet<INestedWordAutomatonSimple<LETTER,STATE>> CHKedBn = new HashSet<INestedWordAutomatonSimple<LETTER,STATE>>();
 		boolean chkExpandedBn = true;
 		result = null;
 		boolean foundFinal = false;
-		for(Leaf<LETTER,STATE> curLeaf :currentTerminalLeafs){
-			if(local_m_A.isFinal(curLeaf.aState)){
+		for(final Leaf<LETTER,STATE> curLeaf :currentTerminalLeafs){
+			if(local_mA.isFinal(curLeaf.aState)){
 				CHKedBn.clear();
 				chkExpandedBn = true;
 				foundFinal = false;
-				for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf.bStates.keySet()){
-					for(STATE bnState:curLeaf.bStates.get(bn)){
+				for(final INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf.bStates.keySet()){
+					for(final STATE bnState:curLeaf.bStates.get(bn)){
 						if(bn.isFinal(bnState)){
 							foundFinal = true;
 							break;
@@ -335,7 +335,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				if(!foundFinal){
 					cursorLeaf2=curLeaf.directParentLeaf;
 					while(cursorLeaf2!=null){
-						for(INestedWordAutomatonSimple<LETTER,STATE> bn:cursorLeaf2.bStates.keySet()){
+						for(final INestedWordAutomatonSimple<LETTER,STATE> bn:cursorLeaf2.bStates.keySet()){
 							if(!CHKedBn.contains(bn)){
 								CHKedBn.add(bn);
 								if(NestedRunAcceptanceChk(bn,curLeaf.word)){
@@ -351,7 +351,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 												cursorLeaf.bStates.put(bn,new HashSet<STATE>());
 											}
 											cursorLeaf.bStates.get(bn).add(newBnStates.get(i));
-											for(Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
+											for(final Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
 												orgCover.coveredBy = null;
 											}
 											cursorLeaf.covering.clear();
@@ -379,7 +379,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 						cursorLeaf2=cursorLeaf2.directParentLeaf;
 					}
 					if(chkExpandedBn){
-						for(INestedWordAutomatonSimple<LETTER,STATE> bn:local_m_B){
+						for(final INestedWordAutomatonSimple<LETTER,STATE> bn:local_mB){
 							if(!CHKedBn.contains(bn)){
 								if(NestedRunAcceptanceChk(bn,curLeaf.word)){
 									foundFinal = true;
@@ -393,7 +393,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 												cursorLeaf.bStates.put(bn,new HashSet<STATE>());
 											}
 											cursorLeaf.bStates.get(bn).add(newBnStates.get(i));
-											for(Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
+											for(final Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
 												orgCover.coveredBy = null;
 											}
 											cursorLeaf.covering.clear();
@@ -424,31 +424,31 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 			}
 		}
 		if(result==null){
-			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+			for(final Leaf<LETTER,STATE> cursorLeaf3:newEdge){
 				toBeRemoved.addAll(childrenLeafWalker(cursorLeaf3));
 			}
-			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+			for(final Leaf<LETTER,STATE> cursorLeaf3:newEdge){
 				if(toBeRemoved.contains(cursorLeaf3)){
 					toBeRemovedBuffer.add(cursorLeaf3);
 				}
 			}
 			newEdge.removeAll(toBeRemovedBuffer);
 			toBeRemovedBuffer.clear();
-			for(Leaf<LETTER,STATE> cursorLeaf3 :currentTerminalLeafs){
+			for(final Leaf<LETTER,STATE> cursorLeaf3 :currentTerminalLeafs){
 				if(toBeRemoved.contains(cursorLeaf3)){
 					toBeRemovedBuffer.add(cursorLeaf3);
 				}
 			}
-			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+			for(final Leaf<LETTER,STATE> cursorLeaf3:newEdge){
 				cursorLeaf3.nextLeaf.clear();
 			}
-			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemovedBuffer){
-				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+			for(final Leaf<LETTER,STATE> cursorLeaf3:toBeRemovedBuffer){
+				for(final Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
 					cursorLeaf4.coveredBy=null;
 				}
 			}
-			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemoved){
-				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+			for(final Leaf<LETTER,STATE> cursorLeaf3:toBeRemoved){
+				for(final Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
 					cursorLeaf4.coveredBy=null;
 				}
 			}
@@ -459,9 +459,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		return result!=null;
 	}
 	private HashSet<Leaf<LETTER,STATE>> childrenLeafWalker (Leaf<LETTER,STATE> curLeaf){
-		HashSet<Leaf<LETTER,STATE>> leafSet = new HashSet<Leaf<LETTER,STATE>>();
-		for(LETTER alphabet:curLeaf.nextLeaf.keySet()){
-			for(Leaf<LETTER,STATE> childrenLeaf:curLeaf.nextLeaf.get(alphabet)){
+		final HashSet<Leaf<LETTER,STATE>> leafSet = new HashSet<Leaf<LETTER,STATE>>();
+		for(final LETTER alphabet:curLeaf.nextLeaf.keySet()){
+			for(final Leaf<LETTER,STATE> childrenLeaf:curLeaf.nextLeaf.get(alphabet)){
 				leafSet.add(childrenLeaf);
 				leafSet.addAll(childrenLeafWalker(childrenLeaf));
 			}
@@ -470,11 +470,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	}
 	@SuppressWarnings("unchecked")
 	private ArrayList<STATE> NestedRunStates(INestedWordAutomatonSimple<LETTER,STATE> bn,NestedRun<LETTER,STATE> word){
-		ArrayList<HashSet<STATE>> result = new ArrayList<HashSet<STATE>>();
-		ArrayList<STATE> result2 = new ArrayList<STATE>(word.getLength());
+		final ArrayList<HashSet<STATE>> result = new ArrayList<HashSet<STATE>>();
+		final ArrayList<STATE> result2 = new ArrayList<STATE>(word.getLength());
 		HashSet<STATE> curStaSet = null;
 		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
-		List<LETTER> wordList = word.getWord().asList();
+		final List<LETTER> wordList = word.getWord().asList();
 		boolean breakLoop = false;
 		HashSet<STATE> newStaSet;
 		curStaSet = new HashSet<STATE>();
@@ -482,11 +482,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		result.add((HashSet<STATE>) curStaSet.clone());
 		int i;
 		if(word.getWord().length()!=0){
-			for(LETTER alphabet:wordList){
+			for(final LETTER alphabet:wordList){
 				newStaSet = new HashSet<STATE>();
-				for(STATE OState:curStaSet){
+				for(final STATE OState:curStaSet){
 					nextStaSet = bn.internalSuccessors(OState, alphabet);
-					for(OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
+					for(final OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
 						newStaSet.add(newState.getSucc());
 					}
 				}
@@ -501,7 +501,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		i = result.size()-1;
 		while(i>=0){
 			if(i==result.size()-1){
-				for(STATE s:result.get(i)){
+				for(final STATE s:result.get(i)){
 					if(bn.isFinal(s)){
 						result2.set(i, s);
 						break;
@@ -509,10 +509,10 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				}
 			}
 			else{
-				for(STATE s: result.get(i)){
+				for(final STATE s: result.get(i)){
 					breakLoop = false;
 					nextStaSet = bn.internalSuccessors(s, wordList.get(i));
-					for(OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
+					for(final OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
 						if(newState.getSucc().equals(result2.get(i+1))){
 							result2.set(i,s);
 							breakLoop = true;
@@ -530,11 +530,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	}
 	@SuppressWarnings("unchecked")
 	private boolean NestedRunAcceptanceChk(INestedWordAutomatonSimple<LETTER,STATE> bn,NestedRun<LETTER,STATE> word){
-		ArrayList<HashSet<STATE>> staSetList = new ArrayList<HashSet<STATE>>();
+		final ArrayList<HashSet<STATE>> staSetList = new ArrayList<HashSet<STATE>>();
 		newBnStates = new ArrayList<STATE>(word.getLength());
 		int i;
 		boolean result = false,breakLoop = false;
-		List<LETTER> wordList = word.getWord().asList();
+		final List<LETTER> wordList = word.getWord().asList();
 		HashSet<STATE> curStaSet = null;
 		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
 		HashSet<STATE> newStaSet;
@@ -542,11 +542,11 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		curStaSet.addAll((HashSet<STATE>)bn.getInitialStates());
 		staSetList.add((HashSet<STATE>) curStaSet.clone());
 		if(word.getWord().length()!=0){
-			for(LETTER alphabet:wordList){
+			for(final LETTER alphabet:wordList){
 				newStaSet = new HashSet<STATE>();
-				for(STATE OState:curStaSet){
+				for(final STATE OState:curStaSet){
 					nextStaSet = bn.internalSuccessors(OState, alphabet);
-					for(OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
+					for(final OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
 						newStaSet.add(newState.getSucc());
 					}
 				}
@@ -556,7 +556,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				//curStaSet = nextStaSet;
 			}
 		}
-		for(STATE state:curStaSet){
+		for(final STATE state:curStaSet){
 			if(bn.isFinal(state)){
 				result = true;
 				break;
@@ -569,7 +569,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 			i = staSetList.size()-1;
 			while(i>=0){
 				if(i==staSetList.size()-1){
-					for(STATE s:staSetList.get(i)){
+					for(final STATE s:staSetList.get(i)){
 						if(bn.isFinal(s)){
 							newBnStates.set(i, s);
 							break;
@@ -577,10 +577,10 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 					}
 				}
 				else{
-					for(STATE s: staSetList.get(i)){
+					for(final STATE s: staSetList.get(i)){
 						breakLoop = false;
 						nextStaSet = bn.internalSuccessors(s, wordList.get(i));
-						for(OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
+						for(final OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
 							if(newState.getSucc().equals(newBnStates.get(i+1))){
 								newBnStates.set(i,s);
 								breakLoop = true;
@@ -599,10 +599,10 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	}
 	public boolean CoveringCheck(Leaf<LETTER,STATE> checkingLeaf){
 		boolean containsAllbnState = false;
-		for(Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
+		for(final Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
 			if(curLeaf2.coveredBy == null&&checkingLeaf!=curLeaf2&&checkingLeaf.aState.equals(curLeaf2.aState)&&!curLeaf2.ParentLeafs.contains(checkingLeaf)){
 				containsAllbnState = true;
-				for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
+				for(final INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
 					if(checkingLeaf.bStates.keySet().contains(bn)){
 						if(!checkingLeaf.bStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
 							containsAllbnState=false;
@@ -622,6 +622,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		}
 		return containsAllbnState;
 	}
+	@Override
 	public NestedRun<LETTER,STATE> getCounterexample(){
 		return result;
 	}
@@ -636,25 +637,26 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	
 	@Override
 	public String exitMessage() {
-		m_Logger.info("total:"+counter_total_nodes+"nodes");
-		m_Logger.info(completeLeafSet.size()+"nodes in the end");
-		m_Logger.info("total:"+counter_run+"runs");
+		mLogger.info("total:"+counter_total_nodes+"nodes");
+		mLogger.info(completeLeafSet.size()+"nodes in the end");
+		mLogger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
 	/*public Boolean getResult() throws OperationCanceledException{
 		return checkResult(localStateFactory);
 	}*/
+	@Override
 	public Boolean getResult() throws AutomataLibraryException{
 		return result == null;
 	}
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(
-				localServiceProvider, localStateFactory, local_m_A, local_m_B2, result);
+		final boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(
+				localServiceProvider, localStateFactory, local_mA, local_mB2, result);
 		return checkResult;
 //		//INestedWordAutomatonSimple<LETTER, STATE> a;
-//		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
+//		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2)).getResult())){
 //		//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
 //			return true;
 //		}

@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * IHoareTripleChecker that caches already computed results.
@@ -47,33 +47,33 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
  */
 public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	
-	private final IHoareTripleChecker m_ComputingHoareTripleChecker;
-	private final PredicateUnifier m_PredicateUnifer;
-	private final NestedMap3<IPredicate, IInternalAction, IPredicate, Validity> m_InternalCache =
+	private final IHoareTripleChecker mComputingHoareTripleChecker;
+	private final PredicateUnifier mPredicateUnifer;
+	private final NestedMap3<IPredicate, IInternalAction, IPredicate, Validity> mInternalCache =
 			new NestedMap3<>();
-	private final NestedMap3<IPredicate, CodeBlock, IPredicate, Validity> m_CallCache =
+	private final NestedMap3<IPredicate, CodeBlock, IPredicate, Validity> mCallCache =
 			new NestedMap3<>();
-	private final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, Validity> m_ReturnCache =
+	private final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, Validity> mReturnCache =
 			new NestedMap4<>();
-	private final boolean m_UnknownIfSomeExtendedCacheCheckIsUnknown = true;
+	private final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 	
 	public CachingHoareTripleChecker(
 			IHoareTripleChecker protectedHoareTripleChecker,
 			PredicateUnifier predicateUnifer) {
 		super();
-		m_ComputingHoareTripleChecker = protectedHoareTripleChecker;
-		m_PredicateUnifer = predicateUnifer;
+		mComputingHoareTripleChecker = protectedHoareTripleChecker;
+		mPredicateUnifer = predicateUnifer;
 	}
 
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		Validity result = m_InternalCache.get(pre, act, succ);
+		Validity result = mInternalCache.get(pre, act, succ);
 		if (result == null) {
 			result = extendedCacheCheckInternal(pre,act,succ);
 			if (result == null) {
-				result = m_ComputingHoareTripleChecker.checkInternal(pre, act, succ);
+				result = mComputingHoareTripleChecker.checkInternal(pre, act, succ);
 			}
-			m_InternalCache.put(pre, act, succ, result);
+			mInternalCache.put(pre, act, succ, result);
 		}
 		return result;
 	}
@@ -81,11 +81,11 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	private Validity extendedCacheCheckInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		boolean someResultWasUnknown = false;
 		{
-			Set<IPredicate> strongerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
-			Set<IPredicate> weakerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
-			for (IPredicate strengthenedPre : strongerThanPre) {
-				for (IPredicate weakenedSucc : weakerThanSucc) {
-					Validity result = m_InternalCache.get(strengthenedPre, act, weakenedSucc);
+			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
+			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
+			for (final IPredicate strengthenedPre : strongerThanPre) {
+				for (final IPredicate weakenedSucc : weakerThanSucc) {
+					final Validity result = mInternalCache.get(strengthenedPre, act, weakenedSucc);
 					if (result != null) {
 						switch (result) {
 						case VALID:
@@ -106,11 +106,11 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 			}
 		}
 		{
-			Set<IPredicate> weakerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-			Set<IPredicate> strongerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
-			for (IPredicate weakenedPre : weakerThanPre) {
-				for (IPredicate strengthenedSucc : strongerThanSucc) {
-					Validity result = m_InternalCache.get(weakenedPre, act, strengthenedSucc);
+			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
+			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			for (final IPredicate weakenedPre : weakerThanPre) {
+				for (final IPredicate strengthenedSucc : strongerThanSucc) {
+					final Validity result = mInternalCache.get(weakenedPre, act, strengthenedSucc);
 					if (result != null) {
 						switch (result) {
 						case VALID:
@@ -130,7 +130,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 				}
 			}
 		}
-		if (m_UnknownIfSomeExtendedCacheCheckIsUnknown && someResultWasUnknown) {
+		if (mUnknownIfSomeExtendedCacheCheckIsUnknown && someResultWasUnknown) {
 			return Validity.UNKNOWN;
 		} else {
 			return null;
@@ -139,29 +139,29 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
-		return m_ComputingHoareTripleChecker.checkCall(pre, act, succ);
+		return mComputingHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			IReturnAction act, IPredicate succ) {
-		return m_ComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+		return mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 	
 	
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_ComputingHoareTripleChecker.getEdgeCheckerBenchmark();
+		return mComputingHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 
 	public IHoareTripleChecker getProtectedHoareTripleChecker() {
-		return m_ComputingHoareTripleChecker;
+		return mComputingHoareTripleChecker;
 	}
 
 	@Override
 	public void releaseLock() {
-		m_ComputingHoareTripleChecker.releaseLock();
+		mComputingHoareTripleChecker.releaseLock();
 	}
 	
 	

@@ -39,15 +39,15 @@ import java.util.Set;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
-import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
@@ -62,12 +62,12 @@ import edu.uci.ics.jung.graph.Hypergraph;
  */
 public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
 	private final IBacktranslatedCFG<String, TTE> mTranslatedCFG;
 
 	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<String, TTE> translatedCFG,
-			final IBacktranslationValueProvider<TTE, TE> provider, final Logger logger) {
+			final IBacktranslationValueProvider<TTE, TE> provider, final ILogger logger) {
 		super();
 		mLogger = logger;
 		mStringProvider = provider;
@@ -137,26 +137,26 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<TTE, TE>(
 				mStringProvider);
 
-		final List<IExplicitEdgesMultigraph<?, ?, String, TTE>> roots = mTranslatedCFG.getCFGs();
+		final List<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
 			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
 		}
-		final IExplicitEdgesMultigraph<?, ?, String, TTE> root = roots.get(0);
+		final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> root = roots.get(0);
 
-		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE>> worklist = new ArrayDeque<>();
-		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache = new HashMap<>();
+		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> worklist = new ArrayDeque<>();
+		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache = new HashMap<>();
 
 		// add initial node to nodecache s.t. it will always be initial
 		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));
 
-		final Set<IMultigraphEdge<?, ?, String, TTE>> closed = new HashSet<>();
+		final Set<IMultigraphEdge<?, ?, String, TTE, ?>> closed = new HashSet<>();
 		worklist.add(root);
 
 		while (!worklist.isEmpty()) {
-			final IExplicitEdgesMultigraph<?, ?, String, TTE> sourceNode = worklist.remove();
+			final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> sourceNode = worklist.remove();
 			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, mStringProvider, fac, nodecache);
 
-			for (final IMultigraphEdge<?, ?, String, TTE> outgoing : sourceNode.getOutgoingEdges()) {
+			for (final IMultigraphEdge<?, ?, String, TTE, ?> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
 					// mLogger.info("Ignoring " + outgoing);
 					continue;
@@ -185,10 +185,10 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		return graph;
 	}
 
-	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, String, TTE> node,
+	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
 			final IBacktranslationValueProvider<TTE, TE> stringProvider,
 			final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac,
-			final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache) {
+			final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache) {
 		GeneratedWitnessNode wnode = nodecache.get(node);
 		if (wnode != null) {
 			return wnode;
@@ -198,7 +198,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		return wnode;
 	}
 
-	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE> node,
+	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
 			final GeneratedWitnessNode wnode) {
 		final String invariant = node.getLabel();
 		if (invariant != null) {

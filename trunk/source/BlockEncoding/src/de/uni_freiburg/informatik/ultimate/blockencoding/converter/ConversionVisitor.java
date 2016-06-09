@@ -41,8 +41,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
@@ -56,19 +54,19 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
@@ -79,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
 
 /**
  * This special visitor class is responsible for the conversion from MinimizedEdges and MinimizedNodes, back to
@@ -89,33 +88,33 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class ConversionVisitor implements IMinimizationVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private ProgramPoint mStartNode;
 
-	private HashMap<MinimizedNode, ProgramPoint> mRefNodeMap;
+	private final HashMap<MinimizedNode, ProgramPoint> mRefNodeMap;
 
-	private HashMap<ProgramPoint, ProgramPoint> mOrigToNewMap;
+	private final HashMap<ProgramPoint, ProgramPoint> mOrigToNewMap;
 
-	private HashMap<String, HashMap<String, ProgramPoint>> mLocNodesForAnnot;
+	private final HashMap<String, HashMap<String, ProgramPoint>> mLocNodesForAnnot;
 
-	private HashSet<IMinimizedEdge> mVisitedEdges;
+	private final HashSet<IMinimizedEdge> mVisitedEdges;
 
-	private Boogie2SMT mBoogie2SMT;
+	private final Boogie2SMT mBoogie2SMT;
 
-	private TransFormulaBuilder mTransFormBuilder;
+	private final TransFormulaBuilder mTransFormBuilder;
 
-	private ModifiableGlobalVariableManager mModGlobalVarManager;
+	private final ModifiableGlobalVariableManager mModGlobalVarManager;
 
-	private HashMap<IMinimizedEdge, Integer> mCheckForMultipleFormula;
+	private final HashMap<IMinimizedEdge, Integer> mCheckForMultipleFormula;
 
 	private IRatingHeuristic mHeuristic;
 
 	private boolean mLBE;
 
-	private Stack<ArrayList<CodeBlock>> mSeqComposedBlocks;
+	private final Stack<ArrayList<CodeBlock>> mSeqComposedBlocks;
 
-	private HashSet<IMinimizedEdge> mHasConjunctionAsParent;
+	private final HashSet<IMinimizedEdge> mHasConjunctionAsParent;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -129,7 +128,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * Apply an extended (more expensive) partial quantifier elimination to eliminate auxiliary variables.
 	 */
-	private boolean m_ExtPqe = false;
+	private final boolean mExtPqe = false;
 
 	/**
 	 * @param boogie2smt
@@ -177,7 +176,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	@Override
 	public void visitNode(MinimizedNode node) {
-		this.mVisitedEdges.clear();
+		mVisitedEdges.clear();
 		if (mStartNode == null) {
 			mLogger.warn("Illegal Execution Behaviour," + "init have to be called, before visitNode()!");
 			throw new IllegalStateException("No valid state that startNode == null");
@@ -209,12 +208,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			return;
 		}
 		// We now get the Edges according to the rating!
-		ArrayList<IMinimizedEdge> edgeList = getEdgesAccordingToRating(node);
+		final ArrayList<IMinimizedEdge> edgeList = getEdgesAccordingToRating(node);
 		// if edgeList has no entries, we reached an end of the graph
 		if (edgeList.size() == 0) {
 			return;
 		}
-		for (IMinimizedEdge edge : edgeList) {
+		for (final IMinimizedEdge edge : edgeList) {
 			if (!mVisitedEdges.contains(edge)) {
 				mVisitedEdges.add(edge);
 				// the minimized edge here has to be converted to a
@@ -232,7 +231,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				mLogger.info("Start Conversion of new minimized edge:");
 				if (edge.getRating() instanceof DisjunctVariablesRating
 						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
-					Integer[] ratingValues = (Integer[]) edge.getRating().getRatingValueContainer().getValue();
+					final Integer[] ratingValues = (Integer[]) edge.getRating().getRatingValueContainer().getValue();
 					mLogger.info("Disjunctions: " + ratingValues[0] + " UsedVars: " + ratingValues[1]
 							+ " ComputedValue: " + ratingValues[2]);
 				}
@@ -240,7 +239,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				EncodingStatistics.addToTotalRating(edge.getRating().getRatingValueAsInteger());
 				EncodingStatistics.incTotalEdges();
 				// Convert IMinimizedEdge to valid RCFGEdge
-				cb = convertMinimizedEdge(edge, mSimplify, m_ExtPqe);
+				cb = convertMinimizedEdge(edge, mSimplify, mExtPqe);
 				if (cb instanceof GotoEdge) {
 					// it is possible that the found replacement, is Goto-Edge,
 					// which we have to convert in a valid edge
@@ -262,7 +261,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					mLogger.debug("Formula not converted, probably due to timeout.");
 				}
 				// now we print out all edges which we added more than two times
-				for (IMinimizedEdge key : mCheckForMultipleFormula.keySet()) {
+				for (final IMinimizedEdge key : mCheckForMultipleFormula.keySet()) {
 					if (mCheckForMultipleFormula.get(key) >= 2) {
 						mLogger.error("Edge: " + key + " Occurence: " + mCheckForMultipleFormula.get(key));
 					}
@@ -295,7 +294,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// we iterate over the different edge levels and check the property, we
 		// start with the most minimized level (which is LBE)
 		for (int i = node.getOutgoingEdgeLevels().size() - 1; i >= 0; i--) {
-			SimpleEntry<IRating, List<IMinimizedEdge>> entry = node.getOutgoingEdgeLevels().get(i);
+			final SimpleEntry<IRating, List<IMinimizedEdge>> entry = node.getOutgoingEdgeLevels().get(i);
 			if (entry.getKey() == null) {
 				mLogger.debug("Outgoing edge level is null, should " + "only happen for ULTIMATE.start (" + node + ")");
 				return new ArrayList<IMinimizedEdge>();
@@ -325,7 +324,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		} else {
 			BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
 			if (astNode == null && node.getOriginalNode().getPayload().hasLocation()) {
-				ILocation loc = node.getOriginalNode().getPayload().getLocation();
+				final ILocation loc = node.getOriginalNode().getPayload().getLocation();
 				if (loc instanceof BoogieLocation) {
 					astNode = ((BoogieLocation) loc).getBoogieASTNode();
 					if (loc.getOrigin() != null) {
@@ -335,11 +334,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 			}
-			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
+			final ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
 					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
-			for (Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {
+			for (final Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {
 				newNode.getPayload().getAnnotations().put(annots.getKey(), annots.getValue());
 			}
 			mRefNodeMap.put(node, newNode);
@@ -352,7 +351,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
 				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getPosition(), newNode);
 			} else {
-				HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
+				final HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
 				newMap.put(newNode.getPosition(), newNode);
 				mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 			}
@@ -375,7 +374,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			return null;
 		}
 		if (mCheckForMultipleFormula.containsKey(edge)) {
-			mCheckForMultipleFormula.put(edge, ((Integer) mCheckForMultipleFormula.get(edge)) + 1);
+			mCheckForMultipleFormula.put(edge, (mCheckForMultipleFormula.get(edge)) + 1);
 		} else {
 			mCheckForMultipleFormula.put(edge, 1);
 		}
@@ -386,7 +385,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		}
 
 		if (edge instanceof ICompositeEdge) {
-			IMinimizedEdge[] edges = ((ICompositeEdge) edge).getCompositeEdges();
+			final IMinimizedEdge[] edges = ((ICompositeEdge) edge).getCompositeEdges();
 			if (edge instanceof ConjunctionEdge) {
 				// Since we want to compose sequential edges complete we
 				// remember which sub-Edges has a conjunction as parent
@@ -400,9 +399,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
 				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
 			}
-			ArrayList<CodeBlock> recConvEdges = new ArrayList<CodeBlock>();
-			for (IMinimizedEdge compEdge : edges) {
-				CodeBlock convEdge = convertMinimizedEdge(compEdge, simplify, extPqe);
+			final ArrayList<CodeBlock> recConvEdges = new ArrayList<CodeBlock>();
+			for (final IMinimizedEdge compEdge : edges) {
+				final CodeBlock convEdge = convertMinimizedEdge(compEdge, simplify, extPqe);
 				if (edge instanceof ConjunctionEdge && convEdge != null) {
 					// add on the actual list of the stack
 					mSeqComposedBlocks.peek().add(convEdge);
@@ -432,10 +431,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					return null;
 				}
 				// In a conjunction, we can ignore GotoEdges
-				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
-				ArrayList<CodeBlock> gotoEdges = new ArrayList<CodeBlock>();
+				final ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
+				final ArrayList<CodeBlock> gotoEdges = new ArrayList<CodeBlock>();
 				// we take the actual list from the stack...
-				for (CodeBlock cb : mSeqComposedBlocks.pop()) {
+				for (final CodeBlock cb : mSeqComposedBlocks.pop()) {
 					if (cb instanceof GotoEdge) {
 						gotoEdges.add(cb);
 						continue;
@@ -465,8 +464,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						Collections.unmodifiableList(composeEdges));
 			}
 			if (edge instanceof DisjunctionEdge) {
-				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
-				for (CodeBlock cb : recConvEdges) {
+				final ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
+				for (final CodeBlock cb : recConvEdges) {
 					if (!(cb instanceof SequentialComposition)) {
 						// if we have no code block, we have to remove the
 						// created lists on the stack
@@ -502,7 +501,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						|| composeEdges.get(1) instanceof ShortcutCodeBlock) {
 					throw new IllegalArgumentException("Shortcut is contained in ParallelComposition?");
 				}
-				List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
+				final List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
 				parallelCodeBlocks.add(composeEdges.get(0));
 				parallelCodeBlocks.add(composeEdges.get(1));
 				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks);
@@ -522,7 +521,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @return corresponding CodeBlock
 	 */
 	private CodeBlock convertBasicEdge(IMinimizedEdge edge) {
-		CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
+		final CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
 		final CodeBlock copyOfCodeBlock;
 		// We need to convert the basic edges, into new ones
 		// -> so basically we create a new instance of the CodeBlock,
@@ -564,16 +563,16 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (secondGotoEdge == null) {
 			replacement = mCbf.constructStatementSequence(null, null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
 			replacement = mCbf.constructStatementSequence(null, null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
-		String procId = gotoEdge.getPreceedingProcedure();
+		final String procId = gotoEdge.getPreceedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId);
 		return replacement;
 	}

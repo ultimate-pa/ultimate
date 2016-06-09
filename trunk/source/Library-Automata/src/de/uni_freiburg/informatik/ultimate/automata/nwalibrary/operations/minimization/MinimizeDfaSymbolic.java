@@ -33,8 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -47,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -63,36 +62,36 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @param <STATE>
  */
 public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final AutomataLibraryServices m_Services;
-	// Logger for debug - information.
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	// ILogger for debug - information.
+	private final ILogger mLogger;
 	// Result automaton.
-	private NestedWordAutomaton<LETTER, STATE> m_Result;
+	private NestedWordAutomaton<LETTER, STATE> mResult;
 	// Input automaton.
-	private INestedWordAutomaton<LETTER, STATE> m_operand;
+	private final INestedWordAutomaton<LETTER, STATE> moperand;
 
 	/***********************************************************************/
 	/**
 	 * Necessary data elements for computing the minimal DFA.
 	 */
-	private int m_nOfStates; // number of states.
+	private int mnOfStates; // number of states.
 
-	private STATE m_initialState; // initial state. In DFA there exists just
+	private STATE minitialState; // initial state. In DFA there exists just
 									// one.
 
-	private HashMap<STATE, Block> m_partition; // Partition
+	private HashMap<STATE, Block> mpartition; // Partition
 
-	private Worklist m_worklist; // Worklist
+	private Worklist mworklist; // Worklist
 
-	private Collection<LETTER> m_alphabet; // alphabet of automaton.
+	private Collection<LETTER> malphabet; // alphabet of automaton.
 
-	private HashMap<LETTER, Term> m_letter2Formular;
+	private HashMap<LETTER, Term> mletter2Formular;
 
-	private SMTInterpol m_smtInterpol; // Logic solver object.
+	private SMTInterpol msmtInterpol; // Logic solver object.
 
-	private Sort m_bool;
+	private Sort mbool;
 
-	private Sort[] m_emptyArray;
+	private Sort[] memptyArray;
 
 	/**************************************************************************/
 
@@ -103,17 +102,17 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * @param operand
 	 */
 	public MinimizeDfaSymbolic(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER, STATE> operand) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_operand = operand;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.moperand = operand;
 
 		// Start minimization.
 		System.out.println(startMessage());
-		long startTime = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
 		minimizeDfaSymbolic();
-		long endTime = System.currentTimeMillis();
+		final long endTime = System.currentTimeMillis();
 		System.out.println(exitMessage());
-		m_Logger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
+		mLogger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
 	}
 
 	private void minimizeDfaSymbolic() {
@@ -130,46 +129,46 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		 * Start with main algorithm.
 		 */
 		// While worklist is not empty.
-		long mainStartTime = System.currentTimeMillis();
-		while (!m_worklist.isEmpty()) {
+		final long mainStartTime = System.currentTimeMillis();
+		while (!mworklist.isEmpty()) {
 			// Choose and remove a block r from worklist.
-			Block r = m_worklist.pop();
+			final Block r = mworklist.pop();
 			// Create mapping of predecessor states leading into block r.
-			HashMap<STATE, Term> labelMapping = constructMapping(r);
+			final HashMap<STATE, Term> labelMapping = constructMapping(r);
 			// Get all predecessors and store into collection s.
 			Iterator<STATE> s = labelMapping.keySet().iterator();
 
-			// Building collection of blocks P of m_partition for which is known
+			// Building collection of blocks P of mpartition for which is known
 			// P intersect with s = NON - EMPTY
 			// and P \ s = NON - EMPTY.
-			HashMap<Block, Block> relevant = buildIntersectingBlocksMap(s);
-			Iterator<Block> relevantIt = relevant.keySet().iterator();
-			// iterate over relevant and split m_partition and m_worklist if
+			final HashMap<Block, Block> relevant = buildIntersectingBlocksMap(s);
+			final Iterator<Block> relevantIt = relevant.keySet().iterator();
+			// iterate over relevant and split mpartition and mworklist if
 			// necessary.
 			while (relevantIt.hasNext()) {
-				Block p = relevantIt.next();
-				Block p1 = relevant.get(p);
+				final Block p = relevantIt.next();
+				final Block p1 = relevant.get(p);
 				// if p1 is smaller than p, the difference of P\S is non -
 				// empty.
 				// Remove each state from p1 and change belonging block in
-				// m_partition.
+				// mpartition.
 				if (p1.size() < p.size()) {
-					Iterator<STATE> p1It = p1.iterator();
+					final Iterator<STATE> p1It = p1.iterator();
 					while (p1It.hasNext()) {
-						STATE belongingState = p1It.next();
+						final STATE belongingState = p1It.next();
 						p.remove(belongingState);
-						m_partition.put(belongingState, p1);
+						mpartition.put(belongingState, p1);
 					}
 					// Add new block to worklist, if already contains, or just
 					// add the
 					// smaller one.
-					if (m_worklist.contains(p)) {
-						m_worklist.push(p1);
+					if (mworklist.contains(p)) {
+						mworklist.push(p1);
 					} else {
 						if (p.size() <= p1.size()) {
-							m_worklist.push(p);
+							mworklist.push(p);
 						} else {
-							m_worklist.push(p1);
+							mworklist.push(p1);
 						}
 					}
 				}
@@ -178,45 +177,45 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 			boolean iterate = true;
 			while (iterate) {
 				iterate = false;
-				// Create blocks P from m_partition, which are non - empty after
+				// Create blocks P from mpartition, which are non - empty after
 				// intersecting with block s.
 				s = labelMapping.keySet().iterator();
-				HashSet<Block> intersectingBlocks = buildIntersectingBlocksSet(s);
+				final HashSet<Block> intersectingBlocks = buildIntersectingBlocksSet(s);
 				// Iterate over blocks P - for Loop over
 				// intersecting blocks in paper.
-				Iterator<Block> intersectingBlocksIt = intersectingBlocks.iterator();
+				final Iterator<Block> intersectingBlocksIt = intersectingBlocks.iterator();
 				while (intersectingBlocksIt.hasNext()) {
-					Block p = intersectingBlocksIt.next();
-					Block p1 = new Block();
+					final Block p = intersectingBlocksIt.next();
+					final Block p1 = new Block();
 					// Start with some element of P.
 					// Get formula of first state.
-					Iterator<STATE> pIterator = p.iterator();
-					STATE startState = pIterator.next();
+					final Iterator<STATE> pIterator = p.iterator();
+					final STATE startState = pIterator.next();
 					Term psi = labelMapping.get(startState);
 					boolean splitterFound = false;
 					p1.add(startState);
 
 					// iterate over rest of currentBlock P. (States).
 					while (pIterator.hasNext()) {
-						STATE q = pIterator.next();
+						final STATE q = pIterator.next();
 						// Get formula of current state.
-						Term phi = labelMapping.get(q);
+						final Term phi = labelMapping.get(q);
 						if (splitterFound) {
-							Term psiAndPhi = conjunct(psi, phi);
+							final Term psiAndPhi = conjunct(psi, phi);
 							if (isSatFormula(psiAndPhi)) {
 								p1.add(q);
 								psi = psiAndPhi;
 							}
 						} else {
-							Term negPhi = negate(phi);
-							Term psiAndNegPhi = conjunct(psi, negPhi);
+							final Term negPhi = negate(phi);
+							final Term psiAndNegPhi = conjunct(psi, negPhi);
 							if (isSatFormula(psiAndNegPhi)) {
 								// refine the local minterm.
 								psi = psiAndNegPhi;
 								splitterFound = true;
 							} else { // psi implies phi.
-								Term negPsi = negate(psi);
-								Term phiAndNegPsi = conjunct(phi, negPsi);
+								final Term negPsi = negate(psi);
+								final Term phiAndNegPsi = conjunct(phi, negPsi);
 								if (isSatFormula(phiAndNegPsi)) {
 									p1.clear();
 									p1.add(q);
@@ -232,21 +231,21 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 					if (p1.size() < p.size()) {
 						iterate = (iterate || (p.size() > 2));
 						// Remove each state from p1 and change belonging
-						// block in m_partition.
-						Iterator<STATE> p1It = p1.iterator();
+						// block in mpartition.
+						final Iterator<STATE> p1It = p1.iterator();
 						while (p1It.hasNext()) {
-							STATE belongingBlock = p1It.next();
+							final STATE belongingBlock = p1It.next();
 							p.remove(belongingBlock);
-							m_partition.put(belongingBlock, p1);
+							mpartition.put(belongingBlock, p1);
 						}
 						// Check if worklist already contains block p.
 						// If yes, add p1 too, if not, add the smaller one.
-						if (m_worklist.contains(p)) {
-							m_worklist.push(p1);
+						if (mworklist.contains(p)) {
+							mworklist.push(p1);
 						} else if (p.size() <= p1.size()) {
-							m_worklist.push(p);
+							mworklist.push(p);
 						} else {
-							m_worklist.push(p1);
+							mworklist.push(p1);
 						}
 					}
 				}
@@ -257,8 +256,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		 * New automaton should be ready, build the result automaton.
 		 */
 		buildResult();
-		long mainEndTime = System.currentTimeMillis();
-		m_Logger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
+		final long mainEndTime = System.currentTimeMillis();
+		mLogger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
 	}
 
 	/**
@@ -266,26 +265,26 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * initializeLables.
 	 */
 	private void preprocessingData() {
-		m_nOfStates = m_operand.getStates().size();
+		mnOfStates = moperand.getStates().size();
 
 		// There is only one initial state in a DFA.
-		m_initialState = m_operand.getInitialStates().iterator().next();
+		minitialState = moperand.getInitialStates().iterator().next();
 
-		// get internal alphabet of m_operand.
-		m_alphabet = m_operand.getInternalAlphabet();
+		// get internal alphabet of moperand.
+		malphabet = moperand.getInternalAlphabet();
 
 		// iterate over whole alphabet and construct letter --> atom mapping.
-		Iterator<LETTER> alphabetIt = m_alphabet.iterator();
-		m_letter2Formular = new HashMap<LETTER, Term>(computeHashMapCapacity(m_alphabet.size()));
+		final Iterator<LETTER> alphabetIt = malphabet.iterator();
+		mletter2Formular = new HashMap<LETTER, Term>(computeHashMapCapacity(malphabet.size()));
 		while (alphabetIt.hasNext()) {
-			LETTER letter = alphabetIt.next();
+			final LETTER letter = alphabetIt.next();
 			try {
-				m_smtInterpol.declareFun(letter.toString(), m_emptyArray, m_bool);
-			} catch (SMTLIBException e) {
-				m_Logger.error("Function already exists! Not able to build twice!", e);
+				msmtInterpol.declareFun(letter.toString(), memptyArray, mbool);
+			} catch (final SMTLIBException e) {
+				mLogger.error("Function already exists! Not able to build twice!", e);
 			}
-			Term var = m_smtInterpol.term(letter.toString());
-			m_letter2Formular.put(letter, var);
+			final Term var = msmtInterpol.term(letter.toString());
+			mletter2Formular.put(letter, var);
 
 		}
 	}
@@ -293,38 +292,38 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	private void initializePartitionAndWorklist() {
 		// First create initial partition. Therefor create block with final
 		// states and block with nonfinal states.
-		Block finalStates = new Block();
-		Block nonFinalStates = new Block();
-		// Iterate over all states of m_operand and sort states either to
+		final Block finalStates = new Block();
+		final Block nonFinalStates = new Block();
+		// Iterate over all states of moperand and sort states either to
 		// finaslStates - block or to nonfinalStates - Block.
 		// Therby also create Mapping STATE --> Block.
-		m_partition = new HashMap<STATE, Block>(computeHashMapCapacity(m_nOfStates));
-		Iterator<STATE> allStatesIt = m_operand.getStates().iterator();
+		mpartition = new HashMap<STATE, Block>(computeHashMapCapacity(mnOfStates));
+		final Iterator<STATE> allStatesIt = moperand.getStates().iterator();
 		while (allStatesIt.hasNext()) {
-			STATE st = allStatesIt.next();
-			if (m_operand.isFinal(st)) {
+			final STATE st = allStatesIt.next();
+			if (moperand.isFinal(st)) {
 				finalStates.add(st);
-				m_partition.put(st, finalStates);
+				mpartition.put(st, finalStates);
 			} else {
 				nonFinalStates.add(st);
-				m_partition.put(st, nonFinalStates);
+				mpartition.put(st, nonFinalStates);
 			}
 		}
 
 		// Second, create initial Worklist.
-		m_worklist = new Worklist(2);
-		m_worklist.push(finalStates);
-		m_worklist.push(nonFinalStates);
+		mworklist = new Worklist(2);
+		mworklist.push(finalStates);
+		mworklist.push(nonFinalStates);
 	}
 
 	private void initializeSolver() {
-		m_smtInterpol = new SMTInterpol();
+		msmtInterpol = new SMTInterpol();
 
 		// Set logic of solver object.
-		m_smtInterpol.setLogic(Logics.QF_UF);
+		msmtInterpol.setLogic(Logics.QF_UF);
 
-		m_bool = m_smtInterpol.sort("Bool");
-		m_emptyArray = new Sort[] {};
+		mbool = msmtInterpol.sort("Bool");
+		memptyArray = new Sort[] {};
 		throw new UnsupportedOperationException("Contact DD about creating SMTInterpol without SolverBuilder");
 	}
 
@@ -332,28 +331,28 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	// block r.
 	private HashMap<STATE, Term> constructMapping(Block r) {
 		// create HashMap with max size of number of states.
-		HashMap<STATE, Term> retMap = new HashMap<STATE, Term>(computeHashMapCapacity(m_nOfStates));
+		final HashMap<STATE, Term> retMap = new HashMap<STATE, Term>(computeHashMapCapacity(mnOfStates));
 
 		// Iterate over all containing states of block r.
-		Iterator<STATE> rIt = r.iterator();
+		final Iterator<STATE> rIt = r.iterator();
 		while (rIt.hasNext()) {
-			STATE st = rIt.next();
+			final STATE st = rIt.next();
 			// All letters over incoming transitions.
-			Set<LETTER> incomingLabels = m_operand.lettersInternalIncoming(st);
+			final Set<LETTER> incomingLabels = moperand.lettersInternalIncoming(st);
 			// Iterating over all incoming transitions and build term.
-			Iterator<LETTER> incomingLabelsIt = incomingLabels.iterator();
+			final Iterator<LETTER> incomingLabelsIt = incomingLabels.iterator();
 			while (incomingLabelsIt.hasNext()) {
-				LETTER letter = incomingLabelsIt.next();
+				final LETTER letter = incomingLabelsIt.next();
 				assert (hasIncomingTransitionWithLetter(st, letter));
 				// Get all predecessors with transition into state
 				// labled with letter.
-				Collection<STATE> predecessors = getPredecessor(st, letter);
-				Term atomLetter = m_letter2Formular.get(letter);
+				final Collection<STATE> predecessors = getPredecessor(st, letter);
+				final Term atomLetter = mletter2Formular.get(letter);
 				// Iterate over predecessors.
-				Iterator<STATE> predIt = predecessors.iterator();
+				final Iterator<STATE> predIt = predecessors.iterator();
 				while (predIt.hasNext()) {
-					STATE pred = predIt.next();
-					Term existingTermOfPred = retMap.get(pred);
+					final STATE pred = predIt.next();
+					final Term existingTermOfPred = retMap.get(pred);
 					if (existingTermOfPred != null) {
 						// HashMap contains pred already.
 						// Just add formula as disjunction.
@@ -369,10 +368,10 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 
 	private HashSet<Block> buildIntersectingBlocksSet(Iterator<STATE> s) {
-		HashSet<Block> ret = new HashSet<Block>(m_nOfStates);
+		final HashSet<Block> ret = new HashSet<Block>(mnOfStates);
 		// Iterate over STATEs in s and lookup to which block they belong to.
 		while (s.hasNext()) {
-			Block block = m_partition.get(s.next());
+			final Block block = mpartition.get(s.next());
 			// If ArrayList<Block> already contains block do not add twice.
 			if (!ret.contains(block)) {
 				ret.add(block);
@@ -382,18 +381,18 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 
 	private HashMap<Block, Block> buildIntersectingBlocksMap(Iterator<STATE> s) {
-		HashMap<Block, Block> ret = new HashMap<Block, Block>(computeHashMapCapacity(m_nOfStates));
+		final HashMap<Block, Block> ret = new HashMap<Block, Block>(computeHashMapCapacity(mnOfStates));
 		// Lookup all Blocks to which the STATEs of s belong to and add to Map.
 		while (s.hasNext()) {
-			STATE sState = s.next();
-			Block block = m_partition.get(sState);
+			final STATE sState = s.next();
+			final Block block = mpartition.get(sState);
 			if (ret.containsKey(block)) {
 				// Block is already existing in Map. Just add the state.
 				ret.get(block).add(sState);
 			} else {
 				// Block does not exist already in Map. Create new Block with
 				// this first state in it.
-				Block b = new Block();
+				final Block b = new Block();
 				b.add(sState);
 				ret.put(block, b);
 			}
@@ -410,7 +409,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * @return if incoming transition labeled with letter exists.
 	 */
 	private boolean hasIncomingTransitionWithLetter(STATE state, LETTER letter) {
-		return m_operand.internalPredecessors(letter, state).iterator().hasNext();
+		return moperand.internalPredecessors(letter, state).iterator().hasNext();
 	}
 
 	/**
@@ -422,8 +421,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * @return predecessor state.
 	 */
 	private LinkedList<STATE> getPredecessor(STATE state, LETTER letter) {
-		LinkedList<STATE> ret = new LinkedList<STATE>();
-		Iterator<IncomingInternalTransition<LETTER, STATE>> it = m_operand.internalPredecessors(letter, state)
+		final LinkedList<STATE> ret = new LinkedList<STATE>();
+		final Iterator<IncomingInternalTransition<LETTER, STATE>> it = moperand.internalPredecessors(letter, state)
 				.iterator();
 		while (it.hasNext()) {
 			ret.add(it.next().getPred());
@@ -433,36 +432,36 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 
 	// Create a conjunction from a collection of formulas.
 	private Term conjunct(Term f1, Term f2) {
-		Term[] conjuncts = new Term[2];
+		final Term[] conjuncts = new Term[2];
 		conjuncts[0] = f1;
 		conjuncts[1] = f2;
-		Term con = m_smtInterpol.term("and", conjuncts);
+		final Term con = msmtInterpol.term("and", conjuncts);
 		return con;
 	}
 
 	// Create a disjunction from a collection of formulas.
 	private Term disjunct(Term f1, Term f2) {
-		Term[] disjuncts = new Term[2];
+		final Term[] disjuncts = new Term[2];
 		disjuncts[0] = f1;
 		disjuncts[1] = f2;
-		Term dis = m_smtInterpol.term("or", disjuncts);
+		final Term dis = msmtInterpol.term("or", disjuncts);
 		return dis;
 	}
 
 	// Negate a given formula.
 	private Term negate(Term formula) {
-		Term[] negation = new Term[1];
+		final Term[] negation = new Term[1];
 		negation[0] = formula;
-		Term neg = m_smtInterpol.term("not", negation);
+		final Term neg = msmtInterpol.term("not", negation);
 		return neg;
 	}
 
 	private boolean isSatFormula(Term formula) {
-		m_smtInterpol.push(1);
-		m_smtInterpol.assertTerm(formula);
+		msmtInterpol.push(1);
+		msmtInterpol.assertTerm(formula);
 
-		LBool isSat = m_smtInterpol.checkSat();
-		m_smtInterpol.pop(1);
+		final LBool isSat = msmtInterpol.checkSat();
+		msmtInterpol.pop(1);
 		return (isSat == LBool.SAT);
 	}
 
@@ -485,50 +484,52 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * @author bjoern
 	 */
 	public class Worklist {
-		private HashSet<Block> m_setsOfStates;
+		private final HashSet<Block> msetsOfStates;
 
 		// Constructor. Initialize an empty LinkedList<Block>.
 		public Worklist(int size) {
-			m_setsOfStates = new HashSet<Block>(size);
+			msetsOfStates = new HashSet<Block>(size);
 		}
 
 		// Pop first element of worklist.
 		public Block pop() {
-			if (m_setsOfStates.size() <= 0)
+			if (msetsOfStates.size() <= 0) {
 				return null;
-			Block toPop = m_setsOfStates.iterator().next();
-			m_setsOfStates.remove(toPop);
+			}
+			final Block toPop = msetsOfStates.iterator().next();
+			msetsOfStates.remove(toPop);
 			return toPop;
 		}
 
 		// Push element into worklist.
 		public void push(Block block) {
-			m_setsOfStates.add(block);
+			msetsOfStates.add(block);
 		}
 
 		// Remove given block from worklist.
 		public boolean remove(Block block) {
-			return m_setsOfStates.remove(block);
+			return msetsOfStates.remove(block);
 		}
 
 		// Returns if worklist contains given block or not.
 		public boolean contains(Block block) {
-			return m_setsOfStates.contains(block);
+			return msetsOfStates.contains(block);
 		}
 
 		// Return current size of Worklist.
 		public int size() {
-			return m_setsOfStates.size();
+			return msetsOfStates.size();
 		}
 
 		// Returns if Worklist is currently empty or not.
 		public boolean isEmpty() {
-			return m_setsOfStates.isEmpty();
+			return msetsOfStates.isEmpty();
 		}
 
+		@Override
 		public String toString() {
 			String ret = "(";
-			Iterator<Block> it = m_setsOfStates.iterator();
+			final Iterator<Block> it = msetsOfStates.iterator();
 			while (it.hasNext()) {
 				ret += it.next().toString();
 			}
@@ -546,15 +547,15 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * 
 	 */
 	public class Block {
-		private HashSet<STATE> m_states;
+		private HashSet<STATE> mstates;
 
 		// Constructor.
 		public Block(Collection<STATE> block) {
 			// create new ArrayList<STATE> with allocated space.
-			m_states = new HashSet<STATE>(block.size());
-			Iterator<STATE> it = block.iterator();
+			mstates = new HashSet<STATE>(block.size());
+			final Iterator<STATE> it = block.iterator();
 			while (it.hasNext()) {
-				m_states.add(it.next());
+				mstates.add(it.next());
 			}
 		}
 
@@ -564,53 +565,54 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		}
 
 		// Default constructor. Just allocates space for HashSet<STATE>
-		// m_states.
+		// mstates.
 		public Block() {
-			m_states = new HashSet<STATE>(m_nOfStates);
+			mstates = new HashSet<STATE>(mnOfStates);
 		}
 
 		// Remove state <st> from block.
 		public boolean remove(STATE st) {
-			return m_states.remove(st);
+			return mstates.remove(st);
 		}
 
 		// Add state <st> to block.
 		public void add(STATE st) {
-			m_states.add(st);
+			mstates.add(st);
 		}
 
 		// Clear current block.
 		public void clear() {
-			m_states.clear();
+			mstates.clear();
 		}
 
 		// Returns iterator for Block - Object.
 		public Iterator<STATE> iterator() {
-			return m_states.iterator();
+			return mstates.iterator();
 		}
 
 		// Returns current size of block.
 		public int size() {
-			return m_states.size();
+			return mstates.size();
 		}
 
 		// Returns if block contains currently state <state> or not.
 		public boolean contains(STATE state) {
-			return m_states.contains(state);
+			return mstates.contains(state);
 		}
 
 		// Returns if block is currently empty or not.
 		public boolean isEmpty() {
-			return m_states.isEmpty();
+			return mstates.isEmpty();
 		}
 
 		public HashSet<STATE> returnStates() {
-			return m_states;
+			return mstates;
 		}
 
+		@Override
 		public String toString() {
 			String ret = "(";
-			Iterator<STATE> it = m_states.iterator();
+			final Iterator<STATE> it = mstates.iterator();
 			while (it.hasNext()) {
 				ret += "{";
 				ret += it.next().toString();
@@ -627,36 +629,36 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 * transitions.
 	 */
 	private void buildResult() {
-		m_Result = new NestedWordAutomaton<LETTER, STATE>(m_Services, m_operand.getInternalAlphabet(), null, null,
-				m_operand.getStateFactory());
+		mResult = new NestedWordAutomaton<LETTER, STATE>(mServices, moperand.getInternalAlphabet(), null, null,
+				moperand.getStateFactory());
 
 		// Get StateFactory from old automaton to build new one.
-		StateFactory<STATE> sF = m_operand.getStateFactory();
+		final StateFactory<STATE> sF = moperand.getStateFactory();
 		// Store new states in ArrayList with size = # blocks in partition.
-		HashMap<Block, STATE> blockToNewStates = new HashMap<Block, STATE>(computeHashMapCapacity(m_partition.size()));
+		final HashMap<Block, STATE> blockToNewStates = new HashMap<Block, STATE>(computeHashMapCapacity(mpartition.size()));
 
-		Block blockWithinInitialState = m_partition.get(m_initialState);
-		// Iterate over blocks in m_partition and build new state out of the
+		final Block blockWithinInitialState = mpartition.get(minitialState);
+		// Iterate over blocks in mpartition and build new state out of the
 		// states belonging to one block. Therefor first get values of HashMap.
-		Collection<Block> blocksInPartition = m_partition.values();
+		final Collection<Block> blocksInPartition = mpartition.values();
 		Iterator<Block> it = blocksInPartition.iterator();
-		HashSet<Block> alreadyLookedUp = new HashSet<Block>(blocksInPartition.size());
+		final HashSet<Block> alreadyLookedUp = new HashSet<Block>(blocksInPartition.size());
 		while (it.hasNext()) {
-			Block blockOfPartition = it.next();
+			final Block blockOfPartition = it.next();
 			if (alreadyLookedUp.contains(blockOfPartition)) {
 				// State for this block was already created.
 				continue;
 			}
 			alreadyLookedUp.add(blockOfPartition);
 			// Get states of this block;
-			Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
+			final Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
 			// Build the new state by using the minimize-function of
 			// StateFactory.
-			STATE newState = sF.minimize(statesOfBlock);
+			final STATE newState = sF.minimize(statesOfBlock);
 			// Add new state to the new result automaton.
-			STATE firstOfBlock = blockOfPartition.iterator().next();
+			final STATE firstOfBlock = blockOfPartition.iterator().next();
 			blockToNewStates.put(blockOfPartition, newState);
-			m_Result.addState(blockOfPartition == blockWithinInitialState, m_operand.isFinal(firstOfBlock), newState);
+			mResult.addState(blockOfPartition == blockWithinInitialState, moperand.isFinal(firstOfBlock), newState);
 		}
 
 		// Iterate over each block to get the outgoing transitions of every
@@ -664,28 +666,28 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		it = blocksInPartition.iterator();
 		while (it.hasNext()) {
 			// Get block of partition.
-			Block blockOfPartition = it.next();
+			final Block blockOfPartition = it.next();
 			// Get first state of current block.
-			STATE firstOfBlock = blockOfPartition.iterator().next();
+			final STATE firstOfBlock = blockOfPartition.iterator().next();
 			// As predecessor for the transition take the states created above.
-			STATE newPred = blockToNewStates.get(blockOfPartition);
+			final STATE newPred = blockToNewStates.get(blockOfPartition);
 			// Get all outgoing transitions of firstOfBlock for taking all
 			// existing successors to build new transitions.
-			Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt = m_operand.internalSuccessors(
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt = moperand.internalSuccessors(
 					firstOfBlock).iterator();
 			// Iterate over all outgoing transitions of each block to create a
 			// new transition add it to the new automaton.
 			while (transitionIt.hasNext()) {
 				// Get next outgoing transition.
-				OutgoingInternalTransition<LETTER, STATE> next = transitionIt.next();
+				final OutgoingInternalTransition<LETTER, STATE> next = transitionIt.next();
 				// Get the successor if the transition.
-				STATE succ = next.getSucc();
-				// Get block in m_partition succ belongs to.
-				Block blockOfSucc = m_partition.get(succ);
+				final STATE succ = next.getSucc();
+				// Get block in mpartition succ belongs to.
+				final Block blockOfSucc = mpartition.get(succ);
 				// Get new successor out of new states created above.
-				STATE newSucc = blockToNewStates.get(blockOfSucc);
+				final STATE newSucc = blockToNewStates.get(blockOfSucc);
 				// Add the new transition to the result automaton.
-				m_Result.addInternalTransition(newPred, next.getLetter(), newSucc);
+				mResult.addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
 		}
 	}
@@ -711,17 +713,17 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		final String message;
 
-		if (checkInclusion(m_operand, getResult(), stateFactory)) {
-			if (checkInclusion(getResult(), m_operand, stateFactory)) {
-				m_Logger.info("Finished testing correctness of " + operationName());
+		if (checkInclusion(moperand, getResult(), stateFactory)) {
+			if (checkInclusion(getResult(), moperand, stateFactory)) {
+				mLogger.info("Finished testing correctness of " + operationName());
 				return true;
 			} else {
 				message = "The result recognizes less words than before.";
@@ -730,7 +732,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 			message = "The result recognizes more words than before.";
 		}
 
-		ResultChecker.writeToFileIfPreferred(m_Services, operationName() + " failed", message, m_operand);
+		ResultChecker.writeToFileIfPreferred(mServices, operationName() + " failed", message, moperand);
 		return false;
 	}
 
@@ -752,7 +754,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	private final boolean checkInclusion(final INestedWordAutomatonSimple<LETTER, STATE> subset,
 			final INestedWordAutomatonSimple<LETTER, STATE> superset, final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(m_Services, ResultChecker.getOldApiNwa(m_Services, subset),
-				ResultChecker.getOldApiNwa(m_Services, superset), stateFactory) == null;
+		return ResultChecker.nwaLanguageInclusion(mServices, ResultChecker.getOldApiNwa(mServices, subset),
+				ResultChecker.getOldApiNwa(mServices, superset), stateFactory) == null;
 	}
 }

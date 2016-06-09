@@ -29,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incre
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * TODO: Documentation
@@ -46,22 +45,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
  */
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
-	protected final AutomataLibraryServices m_Services;
-	protected final Logger m_Logger;
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();
+	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
+	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mB = new ArrayList<>();
 	
 	
 	public AbstractIncrementalInclusionCheck(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (a == null) {
 			throw new NullPointerException("automaton A must not be null");
 		} else {
-			m_A = a;
+			mA = a;
 		}
 	}
 
@@ -71,22 +70,22 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	 * not accepted by any of the automata B_0,..,B_n.
 	 * Return null if no such run exists, i.e., the language inclusion 
 	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample() throws OperationCanceledException;
+	public abstract NestedRun<LETTER,STATE> getCounterexample() throws AutomataOperationCanceledException;
 	
 	
 	/**
 	 * Add automaton B_{n+1} to our set of subtrahends B_0,...,B_n.
 	 * @throws AutomataLibraryException 
 	 */
-	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException, AutomataLibraryException {
-		m_B.add(nwa);
+	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException, AutomataLibraryException {
+		mB.add(nwa);
 	}
 
 
 	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
-		return m_A;
+		return mA;
 	}
 	
 	

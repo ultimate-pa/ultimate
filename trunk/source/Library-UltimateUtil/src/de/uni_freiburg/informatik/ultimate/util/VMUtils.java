@@ -37,9 +37,9 @@ import java.lang.management.RuntimeMXBean;
 public class VMUtils {
 
 	public static String getVMInfos() {
-		RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-		String br = System.getProperty("line.separator");
-		StringBuilder sb = new StringBuilder();
+		final RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+		final String br = System.getProperty("line.separator");
+		final StringBuilder sb = new StringBuilder();
 		sb.append("VM Information is:").append(br);
 		sb.append(" * Name: ").append(runtimeMxBean.getName()).append(br);
 		try {
@@ -52,7 +52,7 @@ public class VMUtils {
 			sb.append(" * Spec version: ").append(runtimeMxBean.getSpecVersion()).append(br);
 			sb.append(" * Management spec version: ").append(runtimeMxBean.getManagementSpecVersion()).append(br);
 			sb.append(" * Library : ").append(runtimeMxBean.getLibraryPath()).append(br);
-		} catch (Error err) {
+		} catch (final Error err) {
 			sb.append("Error accessing VM information: ").append(err).append(br);
 		}
 		return sb.delete(sb.length() - br.length(), sb.length()).toString();

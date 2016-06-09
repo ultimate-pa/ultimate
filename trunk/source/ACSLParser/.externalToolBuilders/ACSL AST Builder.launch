@@ -24,6 +24,7 @@
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_BUILD_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#13;&#10;&lt;resources&gt;&#13;&#10;&lt;item path=&quot;/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/acsl.ast&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/build-ast.xml&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;/resources&gt;}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/build-ast.xml}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS" value="full,incremental,auto,"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l &quot;${workspace_loc}/ant-acslast.log&quot;"/>
 <booleanAttribute key="org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED" value="true"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast}"/>
 </launchConfiguration>

@@ -35,10 +35,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
@@ -46,36 +67,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * This class removes our Boogie syntax extension of structs and creates a plain
@@ -190,7 +188,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
-	protected StructExpander(BoogiePreprocessorBacktranslator translator, Logger logger) {
+	protected StructExpander(BoogiePreprocessorBacktranslator translator, ILogger logger) {
 		mTranslator = translator;
 		mFlattenCache = new HashMap<BoogieType, BoogieType>();
 		mStructTypes = new HashMap<String, TypeConstructor>();
@@ -206,22 +204,25 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * @returns a new constructed type for this struct type.
 	 */
 	private BoogieType createStructWrapperType(StructType st) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("struct");
-		for (String f : st.getFieldIds())
+		for (final String f : st.getFieldIds()) {
 			sb.append('~').append(f);
-		String name = sb.toString();
+		}
+		final String name = sb.toString();
 		TypeConstructor tc = mStructTypes.get(name);
 		if (tc == null) {
-			int[] paramOrder = new int[st.getFieldCount()];
-			for (int i = 0; i < paramOrder.length; i++)
+			final int[] paramOrder = new int[st.getFieldCount()];
+			for (int i = 0; i < paramOrder.length; i++) {
 				paramOrder[i] = i;
+			}
 			tc = new TypeConstructor(name, false, st.getFieldCount(), paramOrder);
 			mStructTypes.put(name, tc);
 		}
-		BoogieType[] types = new BoogieType[st.getFieldCount()];
-		for (int i = 0; i < types.length; i++)
+		final BoogieType[] types = new BoogieType[st.getFieldCount()];
+		for (int i = 0; i < types.length; i++) {
 			types[i] = st.getFieldType(i);
+		}
 		return BoogieType.createConstructedType(tc, types);
 	}
 
@@ -238,42 +239,44 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 */
 	private BoogieType flattenType(IType itype) {
 		BoogieType result;
-		BoogieType type = ((BoogieType) itype).getUnderlyingType();
-		if (mFlattenCache.containsKey(type))
+		final BoogieType type = ((BoogieType) itype).getUnderlyingType();
+		if (mFlattenCache.containsKey(type)) {
 			return mFlattenCache.get(type);
+		}
 		if (type instanceof PrimitiveType) {
 			result = type;
 		} else if (type instanceof ConstructedType) {
-			ConstructedType ctype = (ConstructedType) type;
-			int numParams = ctype.getParameterCount();
-			BoogieType[] paramTypes = new BoogieType[numParams];
+			final ConstructedType ctype = (ConstructedType) type;
+			final int numParams = ctype.getParameterCount();
+			final BoogieType[] paramTypes = new BoogieType[numParams];
 			for (int i = 0; i < paramTypes.length; i++) {
 				paramTypes[i] = flattenType(ctype.getParameter(i));
 				if (paramTypes[i] instanceof StructType) {
-					StructType st = (StructType) paramTypes[i];
+					final StructType st = (StructType) paramTypes[i];
 					paramTypes[i] = createStructWrapperType(st);
 				}
 			}
 			result = BoogieType.createConstructedType(ctype.getConstr(), paramTypes);
 		} else if (type instanceof ArrayType) {
-			ArrayType at = (ArrayType) type;
-			ArrayList<BoogieType> flattenedIndices = new ArrayList<BoogieType>();
+			final ArrayType at = (ArrayType) type;
+			final ArrayList<BoogieType> flattenedIndices = new ArrayList<BoogieType>();
 			for (int i = 0; i < at.getIndexCount(); i++) {
-				BoogieType flat = flattenType(at.getIndexType(i));
+				final BoogieType flat = flattenType(at.getIndexType(i));
 				if (flat instanceof StructType) {
-					StructType st = (StructType) flat;
-					for (int j = 0; j < st.getFieldCount(); j++)
+					final StructType st = (StructType) flat;
+					for (int j = 0; j < st.getFieldCount(); j++) {
 						flattenedIndices.add(st.getFieldType(j));
+					}
 				} else {
 					flattenedIndices.add(flat);
 				}
 			}
-			BoogieType[] indexTypes = flattenedIndices.toArray(new BoogieType[flattenedIndices.size()]);
-			BoogieType valueType = flattenType(at.getValueType());
+			final BoogieType[] indexTypes = flattenedIndices.toArray(new BoogieType[flattenedIndices.size()]);
+			final BoogieType valueType = flattenType(at.getValueType());
 			if (valueType instanceof StructType) {
-				StructType st = (StructType) valueType;
-				String[] names = st.getFieldIds();
-				BoogieType[] resultTypes = new BoogieType[names.length];
+				final StructType st = (StructType) valueType;
+				final String[] names = st.getFieldIds();
+				final BoogieType[] resultTypes = new BoogieType[names.length];
 				for (int i = 0; i < names.length; i++) {
 					resultTypes[i] = BoogieType
 							.createArrayType(at.getNumPlaceholders(), indexTypes, st.getFieldType(i));
@@ -283,14 +286,14 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 				result = BoogieType.createArrayType(at.getNumPlaceholders(), indexTypes, valueType);
 			}
 		} else if (type instanceof StructType) {
-			StructType stype = (StructType) type;
-			ArrayList<String> allNames = new ArrayList<String>();
-			ArrayList<BoogieType> allTypes = new ArrayList<BoogieType>();
+			final StructType stype = (StructType) type;
+			final ArrayList<String> allNames = new ArrayList<String>();
+			final ArrayList<BoogieType> allTypes = new ArrayList<BoogieType>();
 			for (int i = 0; i < stype.getFieldCount(); i++) {
-				String id = stype.getFieldIds()[i];
-				BoogieType bt = flattenType(stype.getFieldType(i));
+				final String id = stype.getFieldIds()[i];
+				final BoogieType bt = flattenType(stype.getFieldType(i));
 				if (bt instanceof StructType) {
-					StructType st = (StructType) bt;
+					final StructType st = (StructType) bt;
 					for (int j = 0; j < st.getFieldCount(); j++) {
 						allNames.add(id + DOT + st.getFieldIds()[j]);
 						allTypes.add(st.getFieldType(j));
@@ -300,8 +303,8 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 					allTypes.add(bt);
 				}
 			}
-			String[] names = allNames.toArray(new String[allNames.size()]);
-			BoogieType[] types = allTypes.toArray(new BoogieType[allTypes.size()]);
+			final String[] names = allNames.toArray(new String[allNames.size()]);
+			final BoogieType[] types = allTypes.toArray(new BoogieType[allTypes.size()]);
 			result = BoogieType.createStructType(names, types);
 		} else if (type instanceof PlaceholderType) {
 			result = type;
@@ -321,11 +324,6 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
 		return true;
 	}
@@ -336,20 +334,21 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
-			Unit unit = (Unit) root;
-			ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
-			for (Declaration d : unit.getDeclarations()) {
-				Declaration[] funcs = expandDeclaration(d);
-				for (Declaration newDecl : funcs) {
+			final Unit unit = (Unit) root;
+			final ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
+			for (final Declaration d : unit.getDeclarations()) {
+				final Declaration[] funcs = expandDeclaration(d);
+				for (final Declaration newDecl : funcs) {
 					mTranslator.addMapping(d, newDecl);
 					newDecls.add(newDecl);
 				}
 			}
-			for (TypeConstructor tc : mStructTypes.values()) {
-				String[] typeParams = new String[tc.getParamCount()];
-				for (int i = 0; i < typeParams.length; i++)
+			for (final TypeConstructor tc : mStructTypes.values()) {
+				final String[] typeParams = new String[tc.getParamCount()];
+				for (int i = 0; i < typeParams.length; i++) {
 					typeParams[i] = "$" + i;
-				Declaration d = new TypeDeclaration(unit.getLocation(), new Attribute[0], tc.isFinite(), tc.getName(),
+				}
+				final Declaration d = new TypeDeclaration(unit.getLocation(), new Attribute[0], tc.isFinite(), tc.getName(),
 						typeParams);
 				newDecls.addFirst(d);
 			}
@@ -370,9 +369,9 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 */
 	@Override
 	protected VarList[] processVarLists(VarList[] vls) {
-		ArrayList<VarList> flat = new ArrayList<VarList>();
-		for (VarList vl : vls) {
-			for (VarList newVl : expandVarList(vl)) {
+		final ArrayList<VarList> flat = new ArrayList<VarList>();
+		for (final VarList vl : vls) {
+			for (final VarList newVl : expandVarList(vl)) {
 				flat.add(newVl);
 				if (newVl != vl) {
 					mTranslator.addMapping(vl, newVl);
@@ -396,14 +395,14 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * @return The expanded varlist.
 	 */
 	private VarList[] expandVarList(VarList input) {
-		IType oldType = input.getType().getBoogieType();
-		BoogieType bt = flattenType(oldType);
+		final IType oldType = input.getType().getBoogieType();
+		final BoogieType bt = flattenType(oldType);
 
 		if (bt instanceof StructType) {
-			StructType st = (StructType) bt;
-			VarList[] newVarList = new VarList[input.getIdentifiers().length * st.getFieldCount()];
+			final StructType st = (StructType) bt;
+			final VarList[] newVarList = new VarList[input.getIdentifiers().length * st.getFieldCount()];
 			int i = 0;
-			for (String id : input.getIdentifiers()) {
+			for (final String id : input.getIdentifiers()) {
 				for (int j = 0; j < st.getFieldCount(); j++) {
 					newVarList[i++] = new VarList(input.getLocation(), new String[] { id + DOT + st.getFieldIds()[j] },
 							st.getFieldType(j).toASTType(input.getLocation()));
@@ -411,8 +410,9 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			}
 			return newVarList;
 		} else {
-			if (bt.equals(oldType))
+			if (bt.equals(oldType)) {
 				return new VarList[] { input };
+			}
 			return new VarList[] { new VarList(input.getLocation(), input.getIdentifiers(), bt.toASTType(input
 					.getLocation())) };
 		}
@@ -431,10 +431,10 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	protected Expression processExpression(final Expression expr) {
 		Expression newExpr = null;
 		if (expr instanceof StructAccessExpression) {
-			StructAccessExpression sae = (StructAccessExpression) expr;
-			Expression[] exprs = expandExpression(sae.getStruct());
-			StructType subType = (StructType) flattenType(sae.getStruct().getType());
-			String[] fields = subType.getFieldIds();
+			final StructAccessExpression sae = (StructAccessExpression) expr;
+			final Expression[] exprs = expandExpression(sae.getStruct());
+			final StructType subType = (StructType) flattenType(sae.getStruct().getType());
+			final String[] fields = subType.getFieldIds();
 			assert (fields.length == exprs.length);
 			for (int i = 0; i < fields.length; i++) {
 				if (fields[i].equals(sae.getField())) {
@@ -446,13 +446,13 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			throw new RuntimeException("Field name not found in " + expr);
 		}
 		if (expr instanceof BinaryExpression) {
-			BinaryExpression binexpr = (BinaryExpression) expr;
-			BinaryExpression.Operator op = binexpr.getOperator();
+			final BinaryExpression binexpr = (BinaryExpression) expr;
+			final BinaryExpression.Operator op = binexpr.getOperator();
 			if (op == BinaryExpression.Operator.COMPEQ || op == BinaryExpression.Operator.COMPNEQ) {
-				Expression[] left = expandExpression(binexpr.getLeft());
-				Expression[] right = expandExpression(binexpr.getRight());
+				final Expression[] left = expandExpression(binexpr.getLeft());
+				final Expression[] right = expandExpression(binexpr.getRight());
 				assert (left.length == right.length && left.length > 0);
-				BinaryExpression.Operator andOp = op == BinaryExpression.Operator.COMPEQ ? BinaryExpression.Operator.LOGICAND
+				final BinaryExpression.Operator andOp = op == BinaryExpression.Operator.COMPEQ ? BinaryExpression.Operator.LOGICAND
 						: BinaryExpression.Operator.LOGICOR;
 				int i = left.length - 1;
 				Expression result = new BinaryExpression(expr.getLocation(), expr.getType(), op, left[i], right[i]);
@@ -464,7 +464,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			}
 		}
 		if (newExpr == null) {
-			Expression result = super.processExpression(expr);
+			final Expression result = super.processExpression(expr);
 			result.setType(flattenType(expr.getType()));
 			return result;
 		} else {
@@ -494,82 +494,84 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 		if (e.getType() == null) {
 			throw new NullPointerException("The expression " + BoogiePrettyPrinter.print(e) + " has a null type!");
 		}
-		BoogieType bt = flattenType(e.getType());
+		final BoogieType bt = flattenType(e.getType());
 		if (!(bt instanceof StructType)) {
 			// quick check, if process expression can be used.
 			return new Expression[] { processExpression(e) };
 		}
 
-		StructType st = (StructType) bt;
+		final StructType st = (StructType) bt;
 		if (e instanceof IdentifierExpression) {
-			IdentifierExpression ie = (IdentifierExpression) e;
-			String id = ie.getIdentifier();
-			Expression[] flattened = new Expression[st.getFieldCount()];
+			final IdentifierExpression ie = (IdentifierExpression) e;
+			final String id = ie.getIdentifier();
+			final Expression[] flattened = new Expression[st.getFieldCount()];
 			for (int i = 0; i < flattened.length; i++) {
-				String ident = id + DOT + st.getFieldIds()[i];
-				IType type = st.getFieldType(i);
+				final String ident = id + DOT + st.getFieldIds()[i];
+				final IType type = st.getFieldType(i);
 				flattened[i] = new IdentifierExpression(e.getLocation(), type, ident, ie.getDeclarationInformation());
 			}
 			return flattened;
 		} else if (e instanceof ArrayAccessExpression) {
-			ArrayAccessExpression aae = (ArrayAccessExpression) e;
-			Expression[] arrays = expandExpression(aae.getArray());
-			Expression[] indices = processExpressions(aae.getIndices());
-			Expression[] result = new Expression[arrays.length];
+			final ArrayAccessExpression aae = (ArrayAccessExpression) e;
+			final Expression[] arrays = expandExpression(aae.getArray());
+			final Expression[] indices = processExpressions(aae.getIndices());
+			final Expression[] result = new Expression[arrays.length];
 			assert (st.getFieldCount() == result.length);
 			for (int i = 0; i < result.length; i++) {
-				IType resultType = st.getFieldType(i);
+				final IType resultType = st.getFieldType(i);
 				result[i] = new ArrayAccessExpression(aae.getLocation(), resultType, arrays[i], indices);
 			}
 			return result;
 		} else if (e instanceof FunctionApplication) {
-			FunctionApplication app = (FunctionApplication) e;
-			Expression[] args = processExpressions(app.getArguments());
-			Expression[] result = new Expression[st.getFieldCount()];
+			final FunctionApplication app = (FunctionApplication) e;
+			final Expression[] args = processExpressions(app.getArguments());
+			final Expression[] result = new Expression[st.getFieldCount()];
 			for (int i = 0; i < result.length; i++) {
-				String funcName = app.getIdentifier() + DOT + st.getFieldIds()[i];
-				IType resultType = st.getFieldType(i);
+				final String funcName = app.getIdentifier() + DOT + st.getFieldIds()[i];
+				final IType resultType = st.getFieldType(i);
 				result[i] = new FunctionApplication(app.getLocation(), resultType, funcName, args);
 			}
 			return result;
 		} else if (e instanceof ArrayStoreExpression) {
-			ArrayStoreExpression ase = (ArrayStoreExpression) e;
-			Expression[] arrays = expandExpression(ase.getArray());
-			Expression[] indices = processExpressions(ase.getIndices());
-			Expression[] values = expandExpression(ase.getValue());
-			Expression[] result = new Expression[arrays.length];
+			final ArrayStoreExpression ase = (ArrayStoreExpression) e;
+			final Expression[] arrays = expandExpression(ase.getArray());
+			final Expression[] indices = processExpressions(ase.getIndices());
+			final Expression[] values = expandExpression(ase.getValue());
+			final Expression[] result = new Expression[arrays.length];
 			assert (st.getFieldCount() == result.length);
 			for (int i = 0; i < result.length; i++) {
-				IType resultType = st.getFieldType(i);
+				final IType resultType = st.getFieldType(i);
 				result[i] = new ArrayStoreExpression(ase.getLocation(), resultType, arrays[i], indices, values[i]);
 			}
 			return result;
 		} else if (e instanceof StructConstructor) {
 			return processExpressions(((StructConstructor) e).getFieldValues());
 		} else if (e instanceof StructAccessExpression) {
-			StructAccessExpression sae = (StructAccessExpression) e;
-			Expression[] exprs = expandExpression(sae.getStruct());
-			StructType subType = (StructType) flattenType(sae.getStruct().getType());
-			String field = sae.getField();
+			final StructAccessExpression sae = (StructAccessExpression) e;
+			final Expression[] exprs = expandExpression(sae.getStruct());
+			final StructType subType = (StructType) flattenType(sae.getStruct().getType());
+			final String field = sae.getField();
 			int start = -1, end = -1;
 			for (int i = 0; i < subType.getFieldCount(); i++) {
 				if (subType.getFieldIds()[i].startsWith(field + DOT)) {
-					if (start == -1)
+					if (start == -1) {
 						start = i;
+					}
 					end = i;
 				}
 			}
-			if (start == -1)
+			if (start == -1) {
 				throw new RuntimeException("Field name not found in " + e);
-			Expression[] result = new Expression[end - start + 1];
+			}
+			final Expression[] result = new Expression[end - start + 1];
 			System.arraycopy(exprs, start, result, 0, end - start + 1);
 			return result;
 		} else if (e instanceof IfThenElseExpression) {
-			IfThenElseExpression ite = (IfThenElseExpression) e;
-			Expression[] thens = expandExpression(ite.getThenPart());
-			Expression[] elses = expandExpression(ite.getElsePart());
+			final IfThenElseExpression ite = (IfThenElseExpression) e;
+			final Expression[] thens = expandExpression(ite.getThenPart());
+			final Expression[] elses = expandExpression(ite.getElsePart());
 			assert (thens.length == elses.length);
-			Expression[] result = new Expression[thens.length];
+			final Expression[] result = new Expression[thens.length];
 			for (int i = 0; i < result.length; i++) {
 				assert (thens[i].getType().equals(elses[i].getType()));
 				result[i] = new IfThenElseExpression(ite.getLocation(), thens[i].getType(), ite.getCondition(),
@@ -578,10 +580,10 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			return result;
 		} else if (e instanceof UnaryExpression) {
 			/* this can only be an "old" expression */
-			UnaryExpression uexpr = (UnaryExpression) e;
+			final UnaryExpression uexpr = (UnaryExpression) e;
 			assert (uexpr.getOperator() == UnaryExpression.Operator.OLD);
-			Expression[] subExprs = expandExpression(uexpr.getExpr());
-			Expression[] result = new Expression[subExprs.length];
+			final Expression[] subExprs = expandExpression(uexpr.getExpr());
+			final Expression[] result = new Expression[subExprs.length];
 			for (int i = 0; i < result.length; i++) {
 				result[i] = new UnaryExpression(e.getLocation(), subExprs[i].getType(), uexpr.getOperator(),
 						subExprs[i]);
@@ -605,8 +607,8 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 */
 	@Override
 	protected Expression[] processExpressions(Expression[] exprs) {
-		ArrayList<Expression> flat = new ArrayList<Expression>();
-		for (Expression e : exprs) {
+		final ArrayList<Expression> flat = new ArrayList<Expression>();
+		for (final Expression e : exprs) {
 			flat.addAll(Arrays.asList(expandExpression(e)));
 		}
 		return flat.toArray(new Expression[flat.size()]);
@@ -623,19 +625,19 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	@Override
 	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof StructLHS) {
-			StructLHS slhs = (StructLHS) lhs;
-			LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
-			StructType st = (StructType) flattenType(slhs.getStruct().getType());
+			final StructLHS slhs = (StructLHS) lhs;
+			final LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
+			final StructType st = (StructType) flattenType(slhs.getStruct().getType());
 			for (int i = 0; i < st.getFieldCount(); i++) {
 				if (st.getFieldIds()[i].equals(slhs.getField())) {
-					LeftHandSide newLhs = allFields[i];
+					final LeftHandSide newLhs = allFields[i];
 					ModelUtils.copyAnnotations(lhs, newLhs);
 					return newLhs;
 				}
 			}
 			throw new RuntimeException("Field name not found in " + lhs);
 		}
-		LeftHandSide result = super.processLeftHandSide(lhs);
+		final LeftHandSide result = super.processLeftHandSide(lhs);
 		result.setType(flattenType(lhs.getType()));
 		return result;
 	}
@@ -652,49 +654,51 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 		if (lhs.getType() == null) {
 			throw new NullPointerException("type of " + lhs.toString() + " is null");
 		}
-		BoogieType bt = flattenType(lhs.getType());
+		final BoogieType bt = flattenType(lhs.getType());
 		if (!(bt instanceof StructType)) {
 			// quick check, if process expression can be used.
 			return new LeftHandSide[] { processLeftHandSide(lhs) };
 		}
-		StructType st = (StructType) bt;
+		final StructType st = (StructType) bt;
 
 		if (lhs instanceof VariableLHS) {
-			VariableLHS vlhs = (VariableLHS) lhs;
-			String id = vlhs.getIdentifier();
-			VariableLHS[] flattened = new VariableLHS[st.getFieldCount()];
+			final VariableLHS vlhs = (VariableLHS) lhs;
+			final String id = vlhs.getIdentifier();
+			final VariableLHS[] flattened = new VariableLHS[st.getFieldCount()];
 			for (int i = 0; i < flattened.length; i++) {
-				String ident = id + DOT + st.getFieldIds()[i];
-				IType type = st.getFieldType(i);
+				final String ident = id + DOT + st.getFieldIds()[i];
+				final IType type = st.getFieldType(i);
 				flattened[i] = new VariableLHS(lhs.getLocation(), type, ident, vlhs.getDeclarationInformation());
 			}
 			return flattened;
 		} else if (lhs instanceof ArrayLHS) {
-			ArrayLHS alhs = (ArrayLHS) lhs;
-			LeftHandSide[] arrays = expandLeftHandSide(alhs.getArray());
-			Expression[] indices = processExpressions(alhs.getIndices());
-			LeftHandSide[] result = new LeftHandSide[arrays.length];
+			final ArrayLHS alhs = (ArrayLHS) lhs;
+			final LeftHandSide[] arrays = expandLeftHandSide(alhs.getArray());
+			final Expression[] indices = processExpressions(alhs.getIndices());
+			final LeftHandSide[] result = new LeftHandSide[arrays.length];
 			for (int i = 0; i < result.length; i++) {
-				IType resultType = st.getFieldType(i);
+				final IType resultType = st.getFieldType(i);
 				result[i] = new ArrayLHS(alhs.getLocation(), resultType, arrays[i], indices);
 			}
 			return result;
 		} else if (lhs instanceof StructLHS) {
-			StructLHS slhs = (StructLHS) lhs;
-			LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
-			StructType subType = (StructType) flattenType(slhs.getStruct().getType());
+			final StructLHS slhs = (StructLHS) lhs;
+			final LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
+			final StructType subType = (StructType) flattenType(slhs.getStruct().getType());
 			assert (subType.getFieldCount() == allFields.length);
 			int start = -1, end = -1;
 			for (int i = 0; i < subType.getFieldCount(); i++) {
 				if (subType.getFieldIds()[i].startsWith(slhs.getField() + DOT)) {
-					if (start == -1)
+					if (start == -1) {
 						start = i;
+					}
 					end = i;
 				}
 			}
-			if (start == -1)
+			if (start == -1) {
 				throw new RuntimeException("Field name not found in " + lhs);
-			LeftHandSide[] result = new LeftHandSide[end - start + 1];
+			}
+			final LeftHandSide[] result = new LeftHandSide[end - start + 1];
 			System.arraycopy(allFields, start, result, 0, end - start + 1);
 			return result;
 		} else {
@@ -714,8 +718,8 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 */
 	@Override
 	protected LeftHandSide[] processLeftHandSides(LeftHandSide[] lhss) {
-		ArrayList<LeftHandSide> flat = new ArrayList<LeftHandSide>();
-		for (LeftHandSide e : lhss) {
+		final ArrayList<LeftHandSide> flat = new ArrayList<LeftHandSide>();
+		for (final LeftHandSide e : lhss) {
 			flat.addAll(Arrays.asList(expandLeftHandSide(e)));
 		}
 		return flat.toArray(new LeftHandSide[flat.size()]);
@@ -751,25 +755,26 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 */
 	private Declaration[] expandDeclaration(Declaration decl) {
 		if (decl instanceof FunctionDeclaration) {
-			FunctionDeclaration funDecl = (FunctionDeclaration) decl;
-			IType retType = funDecl.getOutParam().getType().getBoogieType();
-			BoogieType bt = flattenType(retType);
+			final FunctionDeclaration funDecl = (FunctionDeclaration) decl;
+			final IType retType = funDecl.getOutParam().getType().getBoogieType();
+			final BoogieType bt = flattenType(retType);
 			if (!(bt instanceof StructType)) {
 				// quick check, if processDeclaration can be used.
 				return new Declaration[] { processDeclaration(funDecl) };
 			}
-			StructType st = (StructType) bt;
-			Declaration[] newDecls = new Declaration[st.getFieldCount()];
+			final StructType st = (StructType) bt;
+			final Declaration[] newDecls = new Declaration[st.getFieldCount()];
 			Expression[] bodies;
-			if (funDecl.getBody() == null)
+			if (funDecl.getBody() == null) {
 				bodies = new Expression[st.getFieldCount()];
-			else
+			} else {
 				bodies = expandExpression(funDecl.getBody());
-			VarList[] newInParams = processVarLists(funDecl.getInParams());
+			}
+			final VarList[] newInParams = processVarLists(funDecl.getInParams());
 
 			for (int i = 0; i < newDecls.length; i++) {
-				ILocation loc = funDecl.getOutParam().getLocation();
-				VarList newOutParam = new VarList(loc, funDecl.getOutParam().getIdentifiers(), st.getFieldType(i)
+				final ILocation loc = funDecl.getOutParam().getLocation();
+				final VarList newOutParam = new VarList(loc, funDecl.getOutParam().getIdentifiers(), st.getFieldType(i)
 						.toASTType(loc));
 				newDecls[i] = new FunctionDeclaration(funDecl.getLocation(), funDecl.getAttributes(),
 						funDecl.getIdentifier() + DOT + st.getFieldIds()[i], funDecl.getTypeParams(), newInParams,
@@ -777,28 +782,31 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			}
 			return newDecls;
 		} else if (decl instanceof ConstDeclaration) {
-			ConstDeclaration cdecl = (ConstDeclaration) decl;
-			VarList varList = cdecl.getVarList();
-			VarList[] newVarList = expandVarList(varList);
-			if (newVarList.length == 1 && newVarList[0] == varList)
+			final ConstDeclaration cdecl = (ConstDeclaration) decl;
+			final VarList varList = cdecl.getVarList();
+			final VarList[] newVarList = expandVarList(varList);
+			if (newVarList.length == 1 && newVarList[0] == varList) {
 				return new Declaration[] { decl };
+			}
 
-			Declaration[] newDecls = new Declaration[newVarList.length];
+			final Declaration[] newDecls = new Declaration[newVarList.length];
 			for (int i = 0; i < newDecls.length; i++) {
 				newDecls[i] = new ConstDeclaration(cdecl.getLocation(), cdecl.getAttributes(), cdecl.isUnique(),
 						newVarList[i], cdecl.getParentInfo(), cdecl.isComplete());
 			}
 			return newDecls;
 		} else if (decl instanceof TypeDeclaration) {
-			TypeDeclaration td = (TypeDeclaration) decl;
+			final TypeDeclaration td = (TypeDeclaration) decl;
 			Declaration result = td;
 			if (td.getSynonym() != null) {
-				BoogieType bt = flattenType(td.getSynonym().getBoogieType());
-				if (bt instanceof StructType)
+				final BoogieType bt = flattenType(td.getSynonym().getBoogieType());
+				if (bt instanceof StructType) {
 					return new Declaration[0];
-				if (!bt.equals(td.getSynonym().getBoogieType()))
+				}
+				if (!bt.equals(td.getSynonym().getBoogieType())) {
 					result = new TypeDeclaration(td.getLocation(), td.getAttributes(), td.isFinite(),
 							td.getIdentifier(), td.getTypeParams(), bt.toASTType(td.getLocation()));
+				}
 			}
 			return new Declaration[] { result };
 		} else {
@@ -808,7 +816,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 
 	@Override
 	protected Statement processStatement(Statement statement) {
-		Statement rtr = super.processStatement(statement);
+		final Statement rtr = super.processStatement(statement);
 		if (rtr != statement) {
 			mTranslator.addMapping(statement, rtr);
 		}

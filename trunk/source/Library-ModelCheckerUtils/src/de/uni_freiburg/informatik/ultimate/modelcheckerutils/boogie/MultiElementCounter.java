@@ -39,21 +39,21 @@ import java.util.Map;
  * @param <E>
  */
 public class MultiElementCounter<E> {
-	private final Map<E, Integer> m_Counter = new HashMap<E, Integer>();
+	private final Map<E, Integer> mCounter = new HashMap<E, Integer>();
 	
 	/**
 	 * Increase the counter for element by one and return the 
 	 * increased number.
 	 */
 	public Integer increase(E element) {
-		final Integer lastIndex = m_Counter.get(element);
+		final Integer lastIndex = mCounter.get(element);
 		final Integer newIndex;
 		if (lastIndex == null) {
 			newIndex = 1;
 		} else {
 			newIndex = lastIndex + 1;
 		}
-		m_Counter.put(element, newIndex);
+		mCounter.put(element, newIndex);
 		return newIndex;
 	}
 }

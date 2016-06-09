@@ -35,7 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -45,21 +44,21 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
@@ -72,17 +71,17 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	private Map<IElement, String> mSeenList;
 	private int mNumberOfRoots;
 	private VisualizationNode mUltimateRootNode;
-	private Graph<VisualizationNode, VisualizationEdge> mGraph;
-	private Layout<VisualizationNode, VisualizationEdge> mGraphLayout;
-	private VisualizationViewer<VisualizationNode, VisualizationEdge> mVisualizationViewer;
+	private final Graph<VisualizationNode, VisualizationEdge> mGraph;
+	private final Layout<VisualizationNode, VisualizationEdge> mGraphLayout;
+	private final VisualizationViewer<VisualizationNode, VisualizationEdge> mVisualizationViewer;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private boolean mOpenWindow;
 	private final ModelType mInputGraphType;
 	private final IUltimateServiceProvider mServices;
 
-	public JungVisualizationObserver(Logger logger, ModelType graphType, IUltimateServiceProvider services) {
+	public JungVisualizationObserver(ILogger logger, ModelType graphType, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
@@ -100,34 +99,35 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof IVisualizable) {
-			mUltimateRootNode = ((IVisualizable) root).getVisualizationGraph();
-			mGraph.addVertex(mUltimateRootNode);
-			dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
-//			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
-
-			GraphProperties.setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
-					getCounterExampleTraces(mServices));
-			mOpenWindow = true;
-		} else {
-			mLogger.error("Model is not visualizable: " + root);
-			mOpenWindow = false;
+			final Object unknownVisualizationGraph = ((IVisualizable<?>) root).getVisualizationGraph();
+			if (unknownVisualizationGraph instanceof VisualizationNode) {
+				mUltimateRootNode = (VisualizationNode) unknownVisualizationGraph;
+				mGraph.addVertex(mUltimateRootNode);
+				dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
+				GraphProperties.setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
+						getCounterExampleTraces(mServices));
+				mOpenWindow = true;
+				return false;
+			}
 		}
+		mLogger.error("Model is not visualizable: " + root);
+		mOpenWindow = false;
 		return false;
 	}
 
 	@SuppressWarnings("rawtypes")
 	private ArrayList<LinkedHashSet<Object>> getCounterExampleTraces(IUltimateServiceProvider services) {
-		Collection<CounterExampleResult> finiteCounterExamples = CoreUtil.filterResults(services.getResultService()
-				.getResults(), CounterExampleResult.class);
-		Collection<NonterminatingLassoResult> infiniteCounterExamples = CoreUtil.filterResults(services
-				.getResultService().getResults(), NonterminatingLassoResult.class);
+		final Collection<CounterExampleResult> finiteCounterExamples = ResultUtil
+				.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
+		final Collection<NonterminatingLassoResult> infiniteCounterExamples = ResultUtil
+				.filterResults(services.getResultService().getResults(), NonterminatingLassoResult.class);
 
-		ArrayList<LinkedHashSet<Object>> traces = new ArrayList<>();
-		for (CounterExampleResult cex : finiteCounterExamples) {
+		final ArrayList<LinkedHashSet<Object>> traces = new ArrayList<>();
+		for (final CounterExampleResult cex : finiteCounterExamples) {
 			traces.add(getTrace(cex.getProgramExecution()));
 		}
 
-		for (NonterminatingLassoResult cex : infiniteCounterExamples) {
+		for (final NonterminatingLassoResult cex : infiniteCounterExamples) {
 			traces.add(getTrace(cex.getStem(), cex.getLasso()));
 		}
 
@@ -136,8 +136,8 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 
 	@SuppressWarnings("rawtypes")
 	private LinkedHashSet<Object> getTrace(IProgramExecution... programExecutions) {
-		LinkedHashSet<Object> trace = new LinkedHashSet<>();
-		for (IProgramExecution programExecution : programExecutions) {
+		final LinkedHashSet<Object> trace = new LinkedHashSet<>();
+		for (final IProgramExecution programExecution : programExecutions) {
 			for (int i = 0; i < programExecution.getLength(); ++i) {
 				trace.add(programExecution.getTraceElement(i).getTraceElement());
 			}
@@ -149,10 +149,11 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mOpenWindow) {
 			// Calls UIJob.
-			UIJob job = new UIJob("Jung Graph View Display") {
+			final UIJob job = new UIJob("Jung Graph View Display") {
+				@Override
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					// here we are in UI-thread so we can call
-					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+					final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 					openGraphEditor(window);
 					return Status.OK_STATUS;
 				}
@@ -171,21 +172,21 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	 *            active IWorkbenchWindow
 	 */
 	private void openGraphEditor(IWorkbenchWindow workbenchWindow) {
-		String name = getName(mInputGraphType);
-		JungEditorInput editorInput = new JungEditorInput(name, mVisualizationViewer);
+		final String name = getName(mInputGraphType);
+		final JungEditorInput editorInput = new JungEditorInput(name, mVisualizationViewer);
 		try {
 			workbenchWindow.getActivePage().openEditor(editorInput, JungEditor.ID, true);
-		} catch (PartInitException pie) {
+		} catch (final PartInitException pie) {
 			MessageDialog.openError(workbenchWindow.getShell(), "Error",
 					"Error opening JungEditor:\n" + pie.getMessage());
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 		}
 	}
 
 	private String getName(ModelType graphType) {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 
-		String[] parts = graphType.getCreator().split("\\.");
+		final String[] parts = graphType.getCreator().split("\\.");
 		if (parts.length - 1 > 0) {
 			sb.append(parts[parts.length - 1]);
 		} else {
@@ -199,26 +200,21 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 		return sb.toString();
 	}
 
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
 	private void dfstraverse(VisualizationNode node, String numbering) {
 
 		mSeenList.put(node, numbering);
-		List<VisualizationNode> newnodes = new ArrayList<VisualizationNode>();
-		List<VisualizationNode> children = node.getOutgoingNodes();
+		final List<VisualizationNode> newnodes = new ArrayList<VisualizationNode>();
+		final List<VisualizationNode> children = node.getOutgoingNodes();
 
 		if (children != null) {
 			int num = -1;
 			// Add new nodes and detect back edges...
-			for (VisualizationNode n : children) {
-				String backedge = mSeenList.get(n);
+			for (final VisualizationNode n : children) {
+				final String backedge = mSeenList.get(n);
 
 				if (backedge != null) {
 				} else {
-					String newnumbering = String.format("%s.%s", numbering, ++num);
+					final String newnumbering = String.format("%s.%s", numbering, ++num);
 					mSeenList.put(n, newnumbering);
 					newnodes.add(n);
 					// add nodes to the graph
@@ -226,9 +222,9 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 
 				}
 				// add edges to the graph
-				Iterator<VisualizationEdge> outEdges = node.getOutgoingEdges().iterator();
+				final Iterator<VisualizationEdge> outEdges = node.getOutgoingEdges().iterator();
 				while (outEdges.hasNext()) {
-					VisualizationEdge tmpEdge = outEdges.next();
+					final VisualizationEdge tmpEdge = outEdges.next();
 
 					if (tmpEdge.getTarget().equals(n) && (!mSeenList.containsKey(tmpEdge))) {
 						mGraph.addEdge(tmpEdge, node, n, EdgeType.DIRECTED);
@@ -238,7 +234,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 
 			}
 		}
-		for (VisualizationNode n : newnodes) {
+		for (final VisualizationNode n : newnodes) {
 			dfstraverse(n, mSeenList.get(n));
 		}
 	}

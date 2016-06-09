@@ -32,16 +32,12 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -59,17 +55,10 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
-	protected final PredicateUnifier m_PredicateUnifier;
+	protected final PredicateUnifier mPredicateUnifier;
 
-	protected IPredicate[] m_Interpolants;
+	protected IPredicate[] mInterpolants;
 	
-	protected void unlockSmtManager() {
-		super.unlockSmtManager();
-		if (m_Interpolants != null) {
-			assert !inductivityOfSequenceCanBeRefuted();
-		}
-	}
-
 	/**
 	 * Check if trace fulfills specification given by precondition,
 	 * postcondition and pending contexts. The pendingContext maps the positions
@@ -94,7 +83,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
-		m_PredicateUnifier = predicateUnifier;
+		mPredicateUnifier = predicateUnifier;
 	}
 
 
@@ -122,7 +111,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            UnknownPredicate.
 	 *            <p>
 	 *            interpolatedPositions has to be sorted (ascending) and its
-	 *            entries have to be smaller than or equal to m_Trace.size()
+	 *            entries have to be smaller than or equal to mTrace.size()
 	 * @param predicateUnifier
 	 *            A PredicateUnifier in which precondition, postcondition and
 	 *            all pending contexts are representatives.
@@ -134,83 +123,41 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
-		for (int i = 0; i < m_Interpolants.length; i++) {
-			IPredicate itp = m_Interpolants[i];
-			Set<BoogieVar> vars = itp.getVars();
-			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
-			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		for (int i = 0; i < mInterpolants.length; i++) {
+			final IPredicate itp = mInterpolants[i];
+			final Set<BoogieVar> vars = itp.getVars();
+			final Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
+			final Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
-				m_Logger.warn("forward relevant variables wrong");
+				mLogger.warn("forward relevant variables wrong");
 				result = false;
 			}
 			if (!brel.containsAll(vars)) {
-				m_Logger.warn("backward relevant variables wrong");
+				mLogger.warn("backward relevant variables wrong");
 				result = false;
 			}
 		}
 		return result;
 	}
 
+	@Override
 	public IPredicate[] getInterpolants() {
 		if (isCorrect() == LBool.UNSAT) {
-			if (m_Interpolants == null) {
+			if (mInterpolants == null) {
 				throw new AssertionError("No Interpolants");
 			}
-			assert m_Interpolants.length == m_Trace.length() - 1;
-			return m_Interpolants;
+			assert mInterpolants.length == mTrace.length() - 1;
+			return mInterpolants;
 		} else {
 			throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 		}
 	}
 
+	@Override
 	public final PredicateUnifier getPredicateUnifier() {
-		return m_PredicateUnifier;
+		return mPredicateUnifier;
 	}
-
-	/**
-	 * Return true iff m_Interpolants is an inductive sequence of nested
-	 * interpolants.
-	 */
-	protected final boolean inductivityOfSequenceCanBeRefuted() {
-		boolean result = false;
-		for (int i = 0; i < m_Trace.length(); i++) {
-			if (m_Trace.isCallPosition(i)) {
-				LBool inductive = m_SmtManager.isInductiveCall(getInterpolant(i - 1), (Call) m_Trace.getSymbol(i),
-						getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			} else if (m_Trace.isReturnPosition(i)) {
-				IPredicate context;
-				if (m_Trace.isPendingReturn(i)) {
-					context = m_PendingContexts.get(i);
-				} else {
-					int callPosition = ((NestedWord<CodeBlock>) m_Trace).getCallPosition(i);
-					context = getInterpolant(callPosition - 1);
-				}
-				LBool inductive = m_SmtManager.isInductiveReturn(getInterpolant(i - 1), context,
-						(Return) m_Trace.getSymbol(i), getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			} else {
-				LBool inductive = m_SmtManager.isInductive(getInterpolant(i - 1), (IInternalAction) m_Trace.getSymbol(i),
-						getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			}
-			assert !result;
-		}
-		return result;
-	}
-
-	private final IPredicate getInterpolant(int i) {
-		if (i == -1) {
-			return m_Precondition;
-		} else if (i == m_Interpolants.length) {
-			return m_Postcondition;
-		} else {
-			return m_Interpolants[i];
-		}
-	}
-
-
 
 	/**
 	 * Set<Integer> implementation that has only a contains method. The method

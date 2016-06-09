@@ -81,17 +81,17 @@ public class ProcessDeclarationsVisitor implements
      */
     @Override
     public Map<String, String> visitAxPara(AxPara para) {
-        Map<String,String> result = new HashMap<String,String>();
-        for (Decl decl : para.getZSchText().getZDeclList()) {
+        final Map<String,String> result = new HashMap<String,String>();
+        for (final Decl decl : para.getZSchText().getZDeclList()) {
             if(decl instanceof VarDecl){
-                StringWriter type = new StringWriter();
+                final StringWriter type = new StringWriter();
                 PrintUtils.print(((VarDecl)decl).getExpr(), type, (SectionManager) term.getSectionInfo(),
                         ZWrapper.getSectionName(),Markup.UNICODE);
-                for ( Name varname : ((VarDecl)decl).getZNameList()) {
+                for ( final Name varname : ((VarDecl)decl).getZNameList()) {
                     result.put(varname.toString(), type.toString());
                 }
             }else {
-                StringWriter failureString = new StringWriter();
+                final StringWriter failureString = new StringWriter();
                 PrintUtils.print(para, failureString, (SectionManager) term.getSectionInfo(),
                         ZWrapper.getSectionName(), Markup.UNICODE);
                 throw new RuntimeException("Only axiomatic constant definitions " +
@@ -100,13 +100,14 @@ public class ProcessDeclarationsVisitor implements
             }
         }
         if(para.getZSchText().getPred() != null){
-            TermToZCDDVisitor cddVisitor = new TermToZCDDVisitor(term);
+            final TermToZCDDVisitor cddVisitor = new TermToZCDDVisitor(term);
             invariant = invariant.and(para.getZSchText().getPred().accept(cddVisitor));
         }
-        if(result.size() == 0)
-            return null;
-        else
-            return result;
+        if(result.size() == 0) {
+			return null;
+		} else {
+			return result;
+		}
     }
 
     /* (non-Javadoc)
@@ -115,32 +116,34 @@ public class ProcessDeclarationsVisitor implements
     @Override
     public Map<String, String> visitTerm(Term zedObject) {
         
-        Map<String,String> result = new HashMap<String,String>();
-        Object[] children = zedObject.getChildren();
-        for (Object child : children) {
+        final Map<String,String> result = new HashMap<String,String>();
+        final Object[] children = zedObject.getChildren();
+        for (final Object child : children) {
             if(child instanceof GivenPara) {
-                Map<String,String> newbasicTypes = ((GivenPara)child).accept(this);
-                for (String type : newbasicTypes.keySet()) {
+                final Map<String,String> newbasicTypes = ((GivenPara)child).accept(this);
+                for (final String type : newbasicTypes.keySet()) {
                     freeTypes.put(type,freeTypeCounter++);
                 }
                 
             } else if (child instanceof Term) {
-                Map<String,String> temp = ((Term) child).accept(this);
+                final Map<String,String> temp = ((Term) child).accept(this);
                 if(temp != null){
-                    for (String var : temp.keySet()) {
+                    for (final String var : temp.keySet()) {
                         if(result.containsKey(var) &&
-                                !result.get(var).equals(temp.get(var)))
-                            throw new RuntimeException("Different type definitions for" +
+                                !result.get(var).equals(temp.get(var))) {
+							throw new RuntimeException("Different type definitions for" +
                                     " " + var + "found!");
+						}
                         result.put(var, temp.get(var));
                     }
                 }
             }
         }
-        if(result.size() == 0)
-            return null;
-        else
-            return result;
+        if(result.size() == 0) {
+			return null;
+		} else {
+			return result;
+		}
     }
 
     /* 
@@ -153,8 +156,8 @@ public class ProcessDeclarationsVisitor implements
      */
     @Override
     public Map<String, String> visitGivenPara(GivenPara para) {
-        Map<String,String> result = new HashMap<String,String>();
-        for(Name typeName : para.getZNameList()) {
+        final Map<String,String> result = new HashMap<String,String>();
+        for(final Name typeName : para.getZNameList()) {
             if(typeName instanceof ZName) {
                 result.put(((ZName)typeName).toString(),null);
             }

@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -42,30 +42,30 @@ public class VariableExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 1274217864955285514L;
-	private String m_Identifier;
+	private String mIdentifier;
 	
 	public VariableExpressionAST(ILocation loc, String identifier) {
 		super(loc);
-		m_Identifier = identifier;
+		mIdentifier = identifier;
 	}
 
 	public String getIdentifier() {
-		return m_Identifier;
+		return mIdentifier;
 	}
 
 	public void setIdentifier(String identifier) {
-		this.m_Identifier = identifier;
+		mIdentifier = identifier;
 	}
 	
 
 	@Override
 	public String toString() {
-		return "VariableExpression [Identifier: " + m_Identifier + "]";
+		return "VariableExpression [Identifier: " + mIdentifier + "]";
 	}
 
 	@Override
 	public String getAsString() {
-		return m_Identifier;
+		return mIdentifier;
 	}
 	
 	

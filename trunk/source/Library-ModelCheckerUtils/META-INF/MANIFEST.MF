@@ -15,10 +15,13 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil,
+ Library-BoogieAST,
  BoogiePreprocessor,
  SMTInterpol,
- SMTSolverBridge
+ SMTSolverBridge,
+ Library-JavaBDD

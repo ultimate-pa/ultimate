@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class NWAContainer extends BasePayloadContainer implements IVisualizable {
@@ -50,10 +50,10 @@ public class NWAContainer extends BasePayloadContainer implements IVisualizable 
 
 	@Override
 	public VisualizationNode getVisualizationGraph() {
-		Collection<String> initials = mNWA.getInitialStates();
+		final Collection<String> initials = mNWA.getInitialStates();
 
-		ArrayList<NWAVisualizationNode<String, CodeBlock>> visInitials = new ArrayList<>();
-		for (String initial : initials) {
+		final ArrayList<NWAVisualizationNode<String, CodeBlock>> visInitials = new ArrayList<>();
+		for (final String initial : initials) {
 			visInitials.add(new NWAVisualizationNode<String, CodeBlock>(mNWA, initial));
 		}
 

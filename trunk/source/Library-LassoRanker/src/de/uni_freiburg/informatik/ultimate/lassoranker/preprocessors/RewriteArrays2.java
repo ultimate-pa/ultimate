@@ -30,9 +30,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellRepVarConstructor;
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUti
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
@@ -61,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVaria
  */
 public class RewriteArrays2 extends LassoPreprocessor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
 	public static final boolean s_AdditionalChecksIfAssertionsEnabled = !false;
@@ -74,36 +73,36 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	/**
 	 * The script used to transform the formula
 	 */
-	private final Script m_Script;
+	private final Script mScript;
 
 
-//	private final boolean m_SearchAdditionalSupportingInvariants;
-	private final TransFormula m_OriginalStem;
-	private final TransFormula m_OriginalLoop;
-	private final Set<Term> m_ArrayIndexSupportingInvariants;
-	private final Set<BoogieVar> m_ModifiableGlobalsAtHonda;
+//	private final boolean mSearchAdditionalSupportingInvariants;
+	private final TransFormula mOriginalStem;
+	private final TransFormula mOriginalLoop;
+	private final Set<Term> mArrayIndexSupportingInvariants;
+	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
 	
-	private final ReplacementVarFactory m_ReplacementVarFactory;
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
-	private final Boogie2SMT m_boogie2smt;
+	private final ReplacementVarFactory mReplacementVarFactory;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final Boogie2SMT mboogie2smt;
 
 
-	private final boolean m_OverapproximateByOmmitingDisjointIndices;
+	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
 	public RewriteArrays2(boolean overapproximateByOmmitingDisjointIndices,
 			TransFormula originalStem, TransFormula originalLoop, Set<BoogieVar> modifiableGlobalsAtHonda,
 			IUltimateServiceProvider services, Set<Term> arrayIndexSupportingInvariants, Boogie2SMT boogie2smt, ReplacementVarFactory ReplacementVarFactory) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_OriginalStem = originalStem;
-		m_OriginalLoop = originalLoop;
-		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
-		m_OverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
-		m_boogie2smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
-		m_ReplacementVarFactory = ReplacementVarFactory;
-		m_FreshTermVariableConstructor = m_boogie2smt.getVariableManager();
+		mOriginalStem = originalStem;
+		mOriginalLoop = originalLoop;
+		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
+		mArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
+		mOverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
+		mboogie2smt = boogie2smt;
+		mScript = boogie2smt.getScript();
+		mReplacementVarFactory = ReplacementVarFactory;
+		mFreshTermVariableConstructor = mboogie2smt.getVariableManager();
 	}
 	
 
@@ -120,53 +119,53 @@ public class RewriteArrays2 extends LassoPreprocessor {
 //	@Override
 //	public void process(LassoBuilder lasso_builder) 
 //			throws TermException {
-//		m_lassoBuilder = lasso_builder;
-//		m_Script = lasso_builder.getScript();
+//		mlassoBuilder = lasso_builder;
+//		mScript = lasso_builder.getScript();
 //		ReplacementVarFactory replacementVarFactory = lasso_builder.getReplacementVarFactory();
 //		
-//		Collection<TransFormulaLR> old_stem_components = lasso_builder.getStemComponentsTermination();
-////		assert old_stem_components == lasso_builder.getStemComponentsNonTermination();
+//		Collection<TransFormulaLR> old_stemcomponents = lasso_builder.getStemComponentsTermination();
+////		assert old_stemcomponents == lasso_builder.getStemComponentsNonTermination();
 //		Collection<TransFormulaLR> old_loop_components = lasso_builder.getLoopComponentsTermination();
 ////		assert old_loop_components == lasso_builder.getLoopComponentsNonTermination();
 //		List<TransFormulaLRWithArrayInformation> stemComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
-//		for (TransFormulaLR stemComponent : old_stem_components) {
+//		for (TransFormulaLR stemComponent : old_stemcomponents) {
 //			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(
-//					mServices, stemComponent, replacementVarFactory, m_Script, m_lassoBuilder.getBoogie2SMT().getVariableManager(), null);
+//					mServices, stemComponent, replacementVarFactory, mScript, mlassoBuilder.getBoogie2SMT().getVariableManager(), null);
 //			stemComponents1.add(test);
 //		}
 //		List<TransFormulaLRWithArrayInformation> loopComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
 //		for (TransFormulaLR loopComponent : old_loop_components) {
 //			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(
-//					mServices, loopComponent, replacementVarFactory, m_Script, m_lassoBuilder.getBoogie2SMT().getVariableManager(), stemComponents1);
+//					mServices, loopComponent, replacementVarFactory, mScript, mlassoBuilder.getBoogie2SMT().getVariableManager(), stemComponents1);
 //			loopComponents1.add(test);
 //		}
-//		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(replacementVarFactory, m_Script, stemComponents1, loopComponents1);
-//		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, lasso_builder.getBoogie2SMT(), m_OriginalStem, m_OriginalLoop, m_ModifiableGlobalsAtHonda);
-//		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
-//		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
+//		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(replacementVarFactory, mScript, stemComponents1, loopComponents1);
+//		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, lasso_builder.getBoogie2SMT(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+//		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
+//		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 //		
 //		// for termination, we overapproximate by ommiting disjoint indices
 //		{
 //			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-//			List<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+//			List<TransFormulaLR> new_stemcomponents = new ArrayList<TransFormulaLR>(old_stemcomponents.size());
 //			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
-//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, true, true);
+//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, mScript, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, true, true);
 //				stemComponents2.add(test);
-//				new_stem_components.add(test.getResult());
+//				new_stemcomponents.add(test.getResult());
 //			}
-//			lasso_builder.setStemComponentsTermination(new_stem_components);
+//			lasso_builder.setStemComponentsTermination(new_stemcomponents);
 //		}
 //		
 //		// for nontermination, we do not overapproximate
 //		{
 //			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-//			List<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+//			List<TransFormulaLR> new_stemcomponents = new ArrayList<TransFormulaLR>(old_stemcomponents.size());
 //			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
-//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, false, true);
+//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, mScript, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, false, true);
 //				stemComponents2.add(test);
-//				new_stem_components.add(test.getResult());
+//				new_stemcomponents.add(test.getResult());
 //			}
-//			lasso_builder.setStemComponentsNonTermination(new_stem_components);
+//			lasso_builder.setStemComponentsNonTermination(new_stemcomponents);
 //		}
 //		
 //		// for termination, we overapproximate by ommiting disjoint indices
@@ -174,7 +173,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 //			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
 //			List<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
 //			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
-//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, true, false);
+//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, mScript, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, true, false);
 //				loopComponents2.add(test);
 //				new_loop_components.add(test.getResult());
 //			}
@@ -187,7 +186,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 //			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
 //			List<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
 //			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
-//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, false, false);
+//				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, mScript, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, false, false);
 //				loopComponents2.add(test);
 //				new_loop_components.add(test.getResult());
 //			}
@@ -200,31 +199,31 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(LassoUnderConstruction lasso) throws TermException {
-		boolean overapproximate = true;
-		TransFormulaLRWithArrayInformation stemTfwai = new TransFormulaLRWithArrayInformation(
-					mServices, lasso.getStem(), m_ReplacementVarFactory, m_Script, m_boogie2smt, null);
-		TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
-					mServices, lasso.getLoop(), m_ReplacementVarFactory, m_Script, m_boogie2smt, stemTfwai);
-		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(m_ReplacementVarFactory, m_Script, stemTfwai, loopTfwai);
-		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, m_boogie2smt, m_OriginalStem, m_OriginalLoop, m_ModifiableGlobalsAtHonda);
-		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
-		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
-		TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, m_ReplacementVarFactory, m_Script, stemTfwai, isia, m_boogie2smt, null, overapproximate, true);
-		TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, m_ReplacementVarFactory, m_Script, loopTfwai, isia, m_boogie2smt, acrvc, overapproximate, false);
-		LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
+		final boolean overapproximate = true;
+		final TransFormulaLRWithArrayInformation stemTfwai = new TransFormulaLRWithArrayInformation(
+					mServices, lasso.getStem(), mReplacementVarFactory, mScript, mboogie2smt, null);
+		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
+					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
+		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
+		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, mboogie2smt, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
+		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
+		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
+		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);
+		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !s_AdditionalChecksIfAssertionsEnabled || checkStemImplication(
-				mServices, mLogger, lasso, newLasso, m_boogie2smt) : "result of RewriteArrays too strong";
+				mServices, mLogger, lasso, newLasso, mboogie2smt) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}
 	
 	
 	private boolean checkStemImplication(IUltimateServiceProvider services, 
-			Logger logger,
+			ILogger logger,
 			LassoUnderConstruction oldLasso,
 			LassoUnderConstruction newLasso,
 			Boogie2SMT boogie2smt) {
-		LBool implies = TransFormulaUtils.implies(mServices, mLogger, 
-				oldLasso.getStem(), newLasso.getStem(), m_Script, boogie2smt.getBoogie2SmtSymbolTable());
+		final LBool implies = TransFormulaUtils.implies(mServices, mLogger, 
+				oldLasso.getStem(), newLasso.getStem(), mScript, boogie2smt.getBoogie2SmtSymbolTable());
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);
 		}

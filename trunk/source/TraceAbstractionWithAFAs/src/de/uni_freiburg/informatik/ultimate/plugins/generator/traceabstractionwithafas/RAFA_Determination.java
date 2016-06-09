@@ -32,12 +32,12 @@ import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -56,17 +56,17 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 			Collections.<LETTER>emptySet(),
 			alternatingAutomaton.getStateFactory()
 		);
-		LinkedList<BitSet> newStates = new LinkedList<BitSet>();
+		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		resultAutomaton.addState(true, alternatingAutomaton.getAcceptingFunction().getResult(alternatingAutomaton.getFinalStatesBitVector()), getPredicate(alternatingAutomaton.getFinalStatesBitVector()));
 		while(!newStates.isEmpty()){
-			BitSet state = newStates.removeFirst();
-			IPredicate predicate = getPredicate(state);
-			for(LETTER letter : alternatingAutomaton.getAlphabet()){
-				BitSet nextState = (BitSet) state.clone();
+			final BitSet state = newStates.removeFirst();
+			final IPredicate predicate = getPredicate(state);
+			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
 				if(!nextState.isEmpty()){
-					IPredicate nextPredicate = getPredicate(nextState);
+					final IPredicate nextPredicate = getPredicate(nextState);
 					if(!resultAutomaton.getStates().contains(nextPredicate)){
 						resultAutomaton.addState(false, alternatingAutomaton.getAcceptingFunction().getResult(nextState), nextPredicate);
 						newStates.add(nextState);
@@ -76,10 +76,10 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 			}
 		}
 	}
-	private AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private SmtManager smtManager;
-	private PredicateUnifier predicateUnifier;
-	private NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
+	private final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
+	private final SmtManager smtManager;
+	private final PredicateUnifier predicateUnifier;
+	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 
 	private IPredicate getPredicate(BitSet state){
 		IPredicate predicate = predicateUnifier.getTruePredicate();
@@ -107,7 +107,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> getResult() throws OperationCanceledException{
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() throws AutomataOperationCanceledException{
 		return resultAutomaton;
 	}
 

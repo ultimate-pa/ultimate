@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Indicates that a part of the program couldn't be inlined, and that the toolchain should be canceled.

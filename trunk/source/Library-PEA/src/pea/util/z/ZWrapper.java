@@ -49,8 +49,9 @@ public class ZWrapper {
     }
     
     protected void instantiate() {
-        if(this.getClass() != ZWrapper.class)
-            INSTANCE = this;
+        if(this.getClass() != ZWrapper.class) {
+			INSTANCE = this;
+		}
     }
     
     /**
@@ -90,16 +91,16 @@ public class ZWrapper {
      * @return
      */
     public String declToZml(ZTerm term) {
-        StringWriter sw = new StringWriter();
-        JaxbXmlWriter ozWriter = new JaxbXmlWriter();
+        final StringWriter sw = new StringWriter();
+        final JaxbXmlWriter ozWriter = new JaxbXmlWriter();
         ozWriter.write(term.getTerm(), sw);
-        String result = sw.toString();
+        final String result = sw.toString();
         return result.replaceFirst("<\\?xml.*\\?>\\n", "");
 //        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
 
     public String termToUnicode(ZTerm term) {
-        StringWriter sw = new StringWriter();
+        final StringWriter sw = new StringWriter();
         PrintUtils.print(term.term, sw, (SectionManager) term.sectionInfo,
                 DEFAULT_SECTIONNAME, Markup.UNICODE);
         return sw.toString();

@@ -30,17 +30,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that reduces a given nwa automaton by using {@link FairSimulation}.
@@ -61,7 +60,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger mLogger;
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -74,12 +73,12 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The nwa automaton to reduce
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
 	}
 
@@ -97,13 +96,13 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
 
@@ -126,21 +125,21 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
 	 *            optimization for the simulation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
+			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
-						stateFactory, possibleEquivalentClasses,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
+						possibleEquivalentClasses,
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	/*
@@ -152,12 +151,12 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		// Simply returns true in any case. The only method that currently
 		// exists for checking the result needs very long and we do not want to
 		// slow progress.
-		boolean correct = true;
-		m_Logger.info("Finished testing correctness of " + operationName());
+		final boolean correct = true;
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

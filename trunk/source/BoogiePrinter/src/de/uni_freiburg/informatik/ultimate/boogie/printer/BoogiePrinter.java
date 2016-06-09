@@ -34,44 +34,35 @@ package de.uni_freiburg.informatik.ultimate.boogie.printer;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @author hoenicke
  */
 public class BoogiePrinter implements IOutput {
-	/**
-	 * Holds the plugin's name.
-	 */
-	private static final String sPLUGIN_NAME = "BoogiePrinter";
-	/**
-	 * Holds the plugin's ID.
-	 */
-	private static final String sPLUGIN_ID = Activator.s_PLUGIN_ID;
-	/**
-	 * The observer for this instance.
-	 */
+
 	private BoogiePrinterObserver mObserver;
 	private IUltimateServiceProvider mServices;
 
 	@Override
 	public String getPluginName() {
-		return sPLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return sPLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public void init() {
+		//no init needed 
 	}
 
 	@Override
@@ -81,7 +72,6 @@ public class BoogiePrinter implements IOutput {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// no special tool needed.
 		return null;
 	}
 
@@ -101,8 +91,8 @@ public class BoogiePrinter implements IOutput {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new BoogiePrinterObserver(mServices.getLoggingService().getLogger(sPLUGIN_ID));
-		return Collections.singletonList((IObserver) this.mObserver);
+		mObserver = new BoogiePrinterObserver(mServices);
+		return Collections.singletonList(mObserver);
 	}
 
 	@Override
@@ -111,14 +101,13 @@ public class BoogiePrinter implements IOutput {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-		
+		//no storage needed 
 	}
 
 	@Override
@@ -128,7 +117,6 @@ public class BoogiePrinter implements IOutput {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		//no finish needed 
 	}
 }

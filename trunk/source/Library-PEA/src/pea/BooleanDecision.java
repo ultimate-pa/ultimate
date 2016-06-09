@@ -26,7 +26,7 @@
  */
 package pea;
 
-import java.util.*;
+import java.util.Vector;
 
 /**
  * BooleanDecision represents a simple boolean statement. It shall not be used
@@ -61,7 +61,8 @@ public class BooleanDecision extends Decision {
         return CDD.create(new BooleanDecision(var), CDD.trueChilds);
     }
 
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (!(o instanceof BooleanDecision)) {
             return false;
         }
@@ -73,11 +74,13 @@ public class BooleanDecision extends Decision {
         return true;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return var.hashCode();
     }
 
-    public int compareTo(Object o) {
+    @Override
+	public int compareTo(Object o) {
         if (!(o instanceof BooleanDecision)) {
             return 1;
         }
@@ -88,19 +91,23 @@ public class BooleanDecision extends Decision {
     /**
      * @return Returns the var.
      */
-    public String getVar() {
+    @Override
+	public String getVar() {
         return var;
     }
 
-    public String toString(int child) {
+    @Override
+	public String toString(int child) {
         return (child == 0) ? var : ("!" + var);
     }
 
-    public String toSmtString(int child) {
+    @Override
+	public String toSmtString(int child) {
         return toSmtString(child, -1);
     }
 
-    public String toSmtString(int child, int index) {
+    @Override
+	public String toSmtString(int child, int index) {
         if (index < 0) {
             return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + ")")
                                 : ("(not var_h_" + Math.abs(var.hashCode()) +
@@ -112,25 +119,29 @@ public class BooleanDecision extends Decision {
         }
     }
 
-    public String toTexString(int child) {
+    @Override
+	public String toTexString(int child) {
         return (child == 0) ? var : (" \\neg " + var);
     }
 
-    public String toUppaalString(int child) {
+    @Override
+	public String toUppaalString(int child) {
         //return child == 0 ? var : " \\neg " + var;
         return "true";
     }
 
-    public String toUppaalStringDOM(int child) {
+    @Override
+	public String toUppaalStringDOM(int child) {
         return "true";
     }
 
     private Decision primeCache;
     @Override
     public Decision prime() {
-    	if (primeCache != null)
-    		return primeCache;
-        String decision = this.var.replaceAll("([a-zA-Z_])(\\w*)",
+    	if (primeCache != null) {
+			return primeCache;
+		}
+        final String decision = var.replaceAll("([a-zA-Z_])(\\w*)",
                 "$1$2" + BooleanDecision.PRIME);
 
         primeCache = new BooleanDecision(decision);
@@ -140,7 +151,7 @@ public class BooleanDecision extends Decision {
     //by Ami
     @Override
     public Decision unprime() {
-        String result = this.var.replaceAll("([a-zA-Z_])(\\w*)" +
+        final String result = var.replaceAll("([a-zA-Z_])(\\w*)" +
                 BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
 
         return (new BooleanDecision(result));

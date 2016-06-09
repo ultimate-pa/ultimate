@@ -29,17 +29,17 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.LinkedHashMap;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Collect function declarations for all functions that are used in the
@@ -56,9 +56,9 @@ public class FunctionDeclarations {
 	/**
 	 * Names of all bitwise operation that occurred in the program.
 	 */
-	private final LinkedHashMap<String, FunctionDeclaration> m_DeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
-	private final ITypeHandler m_TypeHandler;
-	private final TypeSizes m_TypeSizeConstants;
+	private final LinkedHashMap<String, FunctionDeclaration> mDeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
+	private final ITypeHandler mTypeHandler;
+	private final TypeSizes mTypeSizeConstants;
 	public static final String s_BUILTIN_IDENTIFIER = "builtin";
 	public static final String s_OVERAPPROX_IDENTIFIER = "overapproximation";
 	public static final String s_INDEX_IDENTIFIER = "indices";
@@ -67,8 +67,8 @@ public class FunctionDeclarations {
 	public FunctionDeclarations(ITypeHandler typeHandler,
 			TypeSizes typeSizeConstants) {
 		super();
-		m_TypeHandler = typeHandler;
-		m_TypeSizeConstants = typeSizeConstants;
+		mTypeHandler = typeHandler;
+		mTypeSizeConstants = typeSizeConstants;
 	}
 
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, 
@@ -77,17 +77,17 @@ public class FunctionDeclarations {
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, "bool");
 		} else {
-			resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
+			resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 		}
-		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
+		final ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
-			paramASTTypes[i] = m_TypeHandler.ctype2asttype(loc, paramCTypes[i]);
+			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
 		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
-		if (m_DeclaredFunctions.containsKey(prefixedFunctionName)) {
+		if (mDeclaredFunctions.containsKey(prefixedFunctionName)) {
 			return;
 			//throw new IllegalArgumentException("Function " + functionName + " already declared");
 		}
@@ -95,23 +95,23 @@ public class FunctionDeclarations {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
 
-		VarList[] inParams = new VarList[paramASTTypes.length];
+		final VarList[] inParams = new VarList[paramASTTypes.length];
 		for (int i=0; i<paramASTTypes.length; i++) {
 			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
 		}
-		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
-		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
-		m_DeclaredFunctions.put(prefixedFunctionName, d);
+		final VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
+		final FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
+		mDeclaredFunctions.put(prefixedFunctionName, d);
 	}
 
 	public LinkedHashMap<String, FunctionDeclaration> getDeclaredFunctions() {
-		return m_DeclaredFunctions;
+		return mDeclaredFunctions;
 	}
 	
 	public String computeBitvectorSuffix(ILocation loc, CPrimitive... paramCTypes) {
-		CPrimitive firstParam = paramCTypes[0];
-		Integer bytesize = m_TypeSizeConstants.getSize(firstParam.getType());
-		int bitsize = bytesize * 8;
+		final CPrimitive firstParam = paramCTypes[0];
+		final Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
+		final int bitsize = bytesize * 8;
 		
 		return String.valueOf(bitsize);
 	}
@@ -122,8 +122,8 @@ public class FunctionDeclarations {
 	 * @return true iff all CPrimitives in cPrimitives are equivalent.
 	 */
 	public boolean checkParameters(CPrimitive... cPrimitives) {
-		PRIMITIVE type = cPrimitives[0].getType();
-		for (CPrimitive t : cPrimitives) {
+		final PRIMITIVE type = cPrimitives[0].getType();
+		for (final CPrimitive t : cPrimitives) {
 			if (!t.getType().equals(type)) {
 				return false;
 			}

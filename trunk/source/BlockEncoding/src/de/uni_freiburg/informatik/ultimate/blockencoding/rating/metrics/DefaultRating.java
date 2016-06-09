@@ -61,16 +61,16 @@ public class DefaultRating implements IRating {
 		// and the right side
 		if (edge instanceof ICompositeEdge) {
 			countOfStatements = new RatingValueContainer<Integer>(0);
-			ICompositeEdge compEdge = (ICompositeEdge) edge;
-			IMinimizedEdge left = compEdge.getCompositeEdges()[0];
-			IMinimizedEdge right = compEdge.getCompositeEdges()[1];
+			final ICompositeEdge compEdge = (ICompositeEdge) edge;
+			final IMinimizedEdge left = compEdge.getCompositeEdges()[0];
+			final IMinimizedEdge right = compEdge.getCompositeEdges()[1];
 			if (!(left.getRating() instanceof DefaultRating)
 					|| !(right.getRating() instanceof DefaultRating)) {
 				throw new IllegalArgumentException(
 						"Rating-Objects should be of the same type!");
 			}
-			DefaultRating leftRating = (DefaultRating) left.getRating();
-			DefaultRating rightRating = (DefaultRating) right.getRating();
+			final DefaultRating leftRating = (DefaultRating) left.getRating();
+			final DefaultRating rightRating = (DefaultRating) right.getRating();
 			countOfStatements.setValue(leftRating.getRatingValueContainer()
 					.getValue()
 					+ rightRating.getRatingValueContainer().getValue());
@@ -86,7 +86,7 @@ public class DefaultRating implements IRating {
 	 */
 	public DefaultRating(String prefValue) {
 		// Here we interpret the preference string
-		this.countOfStatements = new RatingValueContainer<Integer>(
+		countOfStatements = new RatingValueContainer<Integer>(
 				Integer.parseInt(prefValue));
 	}
 
@@ -108,7 +108,7 @@ public class DefaultRating implements IRating {
 			throw new IllegalArgumentException(
 					"Comparison of different Ratings is forbidden!");
 		}
-		DefaultRating otherRating = (DefaultRating) other;
+		final DefaultRating otherRating = (DefaultRating) other;
 		return countOfStatements.getValue().compareTo(
 				otherRating.getRatingValueContainer().getValue());
 	}

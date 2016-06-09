@@ -33,22 +33,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -65,20 +65,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  */
 public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mParallelStates;
 
-	public IntervalPostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
+	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
+			IUltimateServiceProvider services) {
+		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);
-		mSymbolTable = symbolTable;
 
-		mParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable,
+				prefs.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE),
+				prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES));
+		mSymbolTable = symbolTable;
+		mParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 
 	@Override
@@ -119,14 +122,14 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 	@Override
 	public List<IntervalDomainState> apply(final IntervalDomainState stateBeforeLeaving,
-	        final IntervalDomainState stateAfterLeaving, final CodeBlock transition) {
+			final IntervalDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<IntervalDomainState> returnList = new ArrayList<>();
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			final CallStatement callStatement = (CallStatement) call.getCallStatement();
+			final CallStatement callStatement = call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
 
 			// If there are no arguments, we don't need to rewrite states.
@@ -150,7 +153,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			}
 
 			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-			        idents.toArray(new LeftHandSide[idents.size()]), args);
+					idents.toArray(new LeftHandSide[idents.size()]), args);
 
 			final IntervalDomainState interimState = stateBeforeLeaving.addVariables(paramVariables);
 
@@ -173,7 +176,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 			if (args.length != paramIdentifiers.size()) {
 				throw new UnsupportedOperationException(
-				        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+						"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
 			}
 
 			for (final IntervalDomainState resultState : result) {
@@ -198,7 +201,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					} else {
 						mLogger.warn("The IBoogieVar type " + type.getIType()
-						        + " cannot be handled. Assuming normal variable type.");
+								+ " cannot be handled. Assuming normal variable type.");
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					}
 				}
@@ -212,12 +215,12 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final CallStatement correspondingCall = ret.getCallStatement();
 
 			final List<IntervalDomainValue> vals = getOutParamValues(correspondingCall.getMethodName(),
-			        stateBeforeLeaving);
+					stateBeforeLeaving);
 			final VariableLHS[] lhs = correspondingCall.getLhs();
 
 			if (vals.size() != lhs.length) {
 				throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
-				        + ") is different from the function's number of return variables (" + vals.size() + ").");
+						+ ") is different from the function's number of return variables (" + vals.size() + ").");
 			}
 
 			final List<String> updateVarNames = new ArrayList<>();
@@ -226,14 +229,14 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			}
 
 			final IntervalDomainState returnState = stateAfterLeaving.setValues(
-			        updateVarNames.toArray(new String[updateVarNames.size()]),
-			        vals.toArray(new IntervalDomainValue[vals.size()]));
+					updateVarNames.toArray(new String[updateVarNames.size()]),
+					vals.toArray(new IntervalDomainValue[vals.size()]));
 
 			returnList.add(returnState);
 			return IntervalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 		} else {
 			throw new UnsupportedOperationException(
-			        "IntervalDomain does not support context switches other than Call and Return (yet)");
+					"IntervalDomain does not support context switches other than Call and Return (yet)");
 		}
 	}
 
@@ -281,12 +284,12 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 	private Procedure getProcedure(final String procedureName) {
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
-		        .filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
-		        .filter(proc -> proc.getBody() != null).findFirst().get();
+				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
+				.filter(proc -> proc.getBody() != null).findFirst().get();
 	}
 
 	private List<IntervalDomainValue> getOutParamValues(final String procedureName,
-	        final IntervalDomainState stateBeforeLeaving) {
+			final IntervalDomainState stateBeforeLeaving) {
 		// functions are already inlined and if there are procedure and implementation declaration for a proc, we know
 		// that we only get the implementation from the FXPE
 		final Procedure procedure = getProcedure(procedureName);

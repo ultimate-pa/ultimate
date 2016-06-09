@@ -46,12 +46,12 @@ public class ACSLSyntaxErrorException extends Exception {
 	/**
 	 * ACSLNode that locates the SyntaxError.
 	 */
-	private ACSLNode location;
+	private final ACSLNode location;
 
 	/**
 	 * The message of this Exception (is displayed to the user).
 	 */
-	private String message;
+	private final String message;
 
 	/**
 	 * SerialID

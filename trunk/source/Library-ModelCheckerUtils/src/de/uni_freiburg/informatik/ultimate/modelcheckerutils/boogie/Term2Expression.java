@@ -35,7 +35,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -47,32 +71,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * Translates SMT Terms to Boogie Expressions. 
@@ -84,18 +84,18 @@ public class Term2Expression implements Serializable {
 	private static final long serialVersionUID = -4519646474900935398L;
 
 
-	private final Script m_Script;
+	private final Script mScript;
 	
-	private final ScopedHashMap<TermVariable, VarList> m_QuantifiedVariables =
+	private final ScopedHashMap<TermVariable, VarList> mQuantifiedVariables =
 			new ScopedHashMap<TermVariable, VarList>();
 
 	
-	private int m_freshIdentiferCounter = 0;
+	private int mfreshIdentiferCounter = 0;
 
 
-	private final TypeSortTranslator m_TypeSortTranslator;
+	private final TypeSortTranslator mTypeSortTranslator;
 	
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	
 
 	
@@ -103,15 +103,15 @@ public class Term2Expression implements Serializable {
 	public Term2Expression(TypeSortTranslator tsTranslation, 
 			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
 
-		m_TypeSortTranslator = tsTranslation;
-		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		m_Script = boogie2SmtSymbolTable.getScript();
+		mTypeSortTranslator = tsTranslation;
+		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
+		mScript = boogie2SmtSymbolTable.getScript();
 	}
 
-	Set<IdentifierExpression> m_freeVariables = new HashSet<IdentifierExpression>();
+	Set<IdentifierExpression> mfreeVariables = new HashSet<IdentifierExpression>();
 	
 	private String getFreshIdenfier() {
-		return "freshIdentifier" + m_freshIdentiferCounter++;
+		return "freshIdentifier" + mfreshIdentiferCounter++;
 	}
 	
 	public Expression translate(Term term) {
@@ -141,9 +141,9 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression translate(ApplicationTerm term) {
-		FunctionSymbol symb = term.getFunction();
-		IType type = m_TypeSortTranslator.getType(symb.getReturnSort());
-		Term[] termParams = term.getParameters();
+		final FunctionSymbol symb = term.getFunction();
+		final IType type = mTypeSortTranslator.getType(symb.getReturnSort());
+		final Term[] termParams = term.getParameters();
 		if (symb.isIntern() && symb.getName().equals("select")) {
 			return translateSelect(term);
 		} else if (symb.isIntern() && symb.getName().equals("store")) {
@@ -151,23 +151,23 @@ public class Term2Expression implements Serializable {
 		} else if (BitvectorUtils.isBitvectorConstant(symb)) {
 			return translateBitvectorConstant(term);
 		}
-		Expression[] params = new Expression[termParams.length];
+		final Expression[] params = new Expression[termParams.length];
 		for (int i=0; i<termParams.length; i++) {
 			params[i] = translate(termParams[i]);
 		}
 		if (symb.getParameterSorts().length == 0) {
-			if (term == m_Script.term("true")) {
-				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
+			if (term == mScript.term("true")) {
+				final IType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, true);
 			}
-			if (term == m_Script.term("false")) {
-				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
+			if (term == mScript.term("false")) {
+				final IType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			BoogieConst boogieConst = m_Boogie2SmtSymbolTable.getBoogieConst(term);
+			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getBoogieConst(term);
 			if (boogieConst != null) {
-				IdentifierExpression ie = new IdentifierExpression(null, 
-						m_TypeSortTranslator.getType(term.getSort()),
+				final IdentifierExpression ie = new IdentifierExpression(null, 
+						mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(),
 						new DeclarationInformation(StorageClass.GLOBAL, null));
 				return ie;
@@ -181,7 +181,7 @@ public class Term2Expression implements Serializable {
 					&& !symb.getName().equals("=") && !symb.getName().equals("distinct")) {
 				if (symb.getName().equals("extract")) {
 					return translateBitvectorAccess(type, term);
-				} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams); 
 				} else {
 					throw new UnsupportedOperationException("translation of " + symb + 
@@ -189,12 +189,12 @@ public class Term2Expression implements Serializable {
 				}
 			} else if (symb.getParameterSorts().length == 1) {
 				if (symb.getName().equals("not")) {
-					Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+					final Expression param = translate(term.getParameters()[0]);
+					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
 							param);
 				} else if (symb.getName().equals("-")) {
-					Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE,
+					final Expression param = translate(term.getParameters()[0]);
+					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE,
 							param);
 				}else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
@@ -206,7 +206,7 @@ public class Term2Expression implements Serializable {
 				} else if (symb.getName().equals("mod")) {
 					return mod(params);
 				}
-				Operator op = getBinaryOperator(symb);
+				final Operator op = getBinaryOperator(symb);
 				if (symb.isLeftAssoc()) {
 					return leftAssoc(op, type, params);
 				} else if (symb.isRightAssoc()) {
@@ -220,7 +220,7 @@ public class Term2Expression implements Serializable {
 							" which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 			return translateWithSymbolTable(symb, type, termParams); 
 		} else {
 			throw new UnsupportedOperationException("translation of " + symb + 
@@ -232,9 +232,9 @@ public class Term2Expression implements Serializable {
 		assert term.getFunction().getName().equals("extract") : "no extract";
 		assert term.getParameters().length == 1;
 		assert term.getFunction().getIndices().length == 2;
-		Expression bitvector = translate(term.getParameters()[0]);
-		int start = term.getFunction().getIndices()[1].intValueExact();
-		int end = term.getFunction().getIndices()[0].intValueExact();
+		final Expression bitvector = translate(term.getParameters()[0]);
+		final int start = term.getFunction().getIndices()[1].intValueExact();
+		final int end = term.getFunction().getIndices()[0].intValueExact();
 		return new BitVectorAccessExpression(null, type, bitvector, end, start);
 	}
 
@@ -243,8 +243,8 @@ public class Term2Expression implements Serializable {
 	 * Boogie function application.
 	 */
 	private Expression translateWithSymbolTable(FunctionSymbol symb, IType type, Term[] termParams) {
-		String identifier = m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
-		Expression[] arguments = new Expression[termParams.length];
+		final String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		final Expression[] arguments = new Expression[termParams.length];
 		for (int i=0; i<termParams.length; i++) {
 			arguments[i] = translate(termParams[i]);
 		}
@@ -257,11 +257,11 @@ public class Term2Expression implements Serializable {
 	 */
 	private Expression translateBitvectorConstant(ApplicationTerm term) {
 		assert term.getSort().getIndices().length == 1;
-		String name = term.getFunction().getName();
+		final String name = term.getFunction().getName();
 		assert name.startsWith("bv");
-		String decimalValue = name.substring(2, name.length());
-		IType type = m_TypeSortTranslator.getType(term.getSort());
-		BigInteger length = term.getSort().getIndices()[0];
+		final String decimalValue = name.substring(2, name.length());
+		final IType type = mTypeSortTranslator.getType(term.getSort());
+		final BigInteger length = term.getSort().getIndices()[0];
 		return new BitvecLiteral(null, type , decimalValue, length.intValue());
 	}
 
@@ -269,14 +269,14 @@ public class Term2Expression implements Serializable {
 		if (params.length != 2) {
 			throw new AssertionError("mod has two parameters");
 		}
-		return new BinaryExpression(null, BoogieType.intType, Operator.ARITHMOD, params[0], params[1]);
+		return new BinaryExpression(null, BoogieType.TYPE_INT, Operator.ARITHMOD, params[0], params[1]);
 	}
 
 	private ArrayStoreExpression translateStore(ApplicationTerm term) {
-		Expression array = translate(term.getParameters()[0]);
-		Expression index = translate(term.getParameters()[1]);
-		Expression[] indices = { index };
-		Expression value = translate(term.getParameters()[2]);
+		final Expression array = translate(term.getParameters()[0]);
+		final Expression index = translate(term.getParameters()[1]);
+		final Expression[] indices = { index };
+		final Expression value = translate(term.getParameters()[2]);
 		return new ArrayStoreExpression(null, array, indices, value);
 	}
 
@@ -287,9 +287,9 @@ public class Term2Expression implements Serializable {
 	 * program. 
 	 */
 	private ArrayAccessExpression translateSelect(ApplicationTerm term) {
-		Expression array = translate(term.getParameters()[0]);
-		Expression index = translate(term.getParameters()[1]);
-		Expression[] indices = { index };
+		final Expression array = translate(term.getParameters()[0]);
+		final Expression index = translate(term.getParameters()[1]);
+		final Expression[] indices = { index };
 		return new ArrayAccessExpression(null, array, indices);
 	}
 
@@ -298,20 +298,20 @@ public class Term2Expression implements Serializable {
 	 * ArrayAccessExpression. (see translateSelect why this might be useful) 
 	 */
 	private ArrayAccessExpression translateArray(ApplicationTerm term) {
-		List<Expression> reverseIndices = new ArrayList<Expression>();
+		final List<Expression> reverseIndices = new ArrayList<Expression>();
 		while (term.getFunction().getName().equals("select") && 
 				(term.getParameters()[0] instanceof ApplicationTerm)) {
 			assert (term.getParameters().length == 2);
-			Expression index = translate(term.getParameters()[1]);
+			final Expression index = translate(term.getParameters()[1]);
 			reverseIndices.add(index);
 			term = (ApplicationTerm) term.getParameters()[0];
 		}
 		assert (term.getParameters().length == 2);
-		Expression index = translate(term.getParameters()[1]);
+		final Expression index = translate(term.getParameters()[1]);
 		reverseIndices.add(index);
 
-		Expression array = translate(term.getParameters()[0]);
-		Expression[] indices = new Expression[reverseIndices.size()];
+		final Expression array = translate(term.getParameters()[0]);
+		final Expression[] indices = new Expression[reverseIndices.size()];
 		for (int i=0; i<indices.length; i++) {
 			indices[i] = reverseIndices.get(indices.length-1-i);
 		}
@@ -320,14 +320,14 @@ public class Term2Expression implements Serializable {
 
 
 	private Expression translate(ConstantTerm term) {
-		Object value = term.getValue();
-		IType type = m_TypeSortTranslator.getType(term.getSort());
+		final Object value = term.getValue();
+		final IType type = mTypeSortTranslator.getType(term.getSort());
 		if (term.getSort().getRealSort().getName().equals("BitVec")) {
-			BigInteger[] indices = term.getSort().getIndices();
+			final BigInteger[] indices = term.getSort().getIndices();
 			if (indices.length !=1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
-			int length = indices[0].intValue();
+			final int length = indices[0].intValue();
 			BigInteger decimalValue;
 			if (value.toString().startsWith("#x")) {
 				decimalValue = new BigInteger(value.toString().substring(2), 16);
@@ -363,75 +363,75 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression translate(QuantifiedFormula term) {
-		m_QuantifiedVariables.beginScope();
-		VarList[] parameters = new VarList[term.getVariables().length];
+		mQuantifiedVariables.beginScope();
+		final VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
-		for (TermVariable tv : term.getVariables()) {
-			IType type = m_TypeSortTranslator.getType(tv.getSort());
-			String[] identifiers = { tv.getName() };
+		for (final TermVariable tv : term.getVariables()) {
+			final IType type = mTypeSortTranslator.getType(tv.getSort());
+			final String[] identifiers = { tv.getName() };
 			//FIXME: Matthias: How can I get the ASTType of type?
-			VarList varList = new VarList(null, identifiers, null);
+			final VarList varList = new VarList(null, identifiers, null);
 			parameters[offset] = varList;
-			m_QuantifiedVariables.put(tv, varList);
+			mQuantifiedVariables.put(tv, varList);
 			offset++;
 		}
-		IType type = m_TypeSortTranslator.getType(term.getSort());
+		final IType type = mTypeSortTranslator.getType(term.getSort());
 		assert (term.getQuantifier() == QuantifiedFormula.FORALL || 
 							term.getQuantifier() == QuantifiedFormula.EXISTS);
-		boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
-		String[] typeParams = new String[0];
+		final boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
+		final String[] typeParams = new String[0];
 		Attribute[] attributes;
 		Term subTerm = term.getSubformula();
 		if (subTerm instanceof AnnotatedTerm) {
 				assert ((AnnotatedTerm) subTerm).getAnnotations()[0].getKey().equals(":pattern");
-			Annotation[] annotations = ((AnnotatedTerm) subTerm).getAnnotations();
+			final Annotation[] annotations = ((AnnotatedTerm) subTerm).getAnnotations();
 			//FIXME: does not have to be the case, allow several annotations
 			assert (annotations.length == 1) : "expecting only one annotation at a time";
-			Annotation annotation = annotations[0];
-			Object value = annotation.getValue();
+			final Annotation annotation = annotations[0];
+			final Object value = annotation.getValue();
 			assert (value instanceof Term[]) : "expecting Term[]" + value;
-			Term[] pattern = (Term[]) value;
+			final Term[] pattern = (Term[]) value;
 			subTerm = ((AnnotatedTerm) subTerm).getSubterm();
-			Expression[] triggers = new Expression[pattern.length];
+			final Expression[] triggers = new Expression[pattern.length];
 			for (int i=0; i<pattern.length; i++) {
 				triggers[i] = translate(pattern[i]);
 			}
-			Trigger trigger = new Trigger(null, triggers);
+			final Trigger trigger = new Trigger(null, triggers);
 			attributes = new Attribute[1];
 			attributes[0] = trigger;
 		} else {
 			attributes = new Attribute[0];			
 		}
-		Expression subformula = translate(subTerm);
-		QuantifierExpression result = new QuantifierExpression(null, type, 
+		final Expression subformula = translate(subTerm);
+		final QuantifierExpression result = new QuantifierExpression(null, type, 
 					isUniversal, typeParams, parameters, attributes, subformula);
-		m_QuantifiedVariables.endScope();
+		mQuantifiedVariables.endScope();
 		return result;
 	}
 	
 	private Expression translate(TermVariable term) {
 		Expression result;
-		IType type = m_TypeSortTranslator.getType(term.getSort());
-		if (m_QuantifiedVariables.containsKey(term)) {
-			VarList varList = m_QuantifiedVariables.get(term);
+		final IType type = mTypeSortTranslator.getType(term.getSort());
+		if (mQuantifiedVariables.containsKey(term)) {
+			final VarList varList = mQuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
-			String id = varList.getIdentifiers()[0];
+			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, id,
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-		} else if (m_Boogie2SmtSymbolTable.getBoogieVar(term) == null) {
+		} else if (mBoogie2SmtSymbolTable.getBoogieVar(term) == null) {
 			//Case where term contains some auxilliary variable that was 
 			//introduced during model checking. 
 			//TODO: Matthias: I think we want closed expressions, we should
 			//quantify auxilliary variables
 			result = new IdentifierExpression(null, type, getFreshIdenfier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-			m_freeVariables.add((IdentifierExpression) result);
+			mfreeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			BoogieVar bv = m_Boogie2SmtSymbolTable.getBoogieVar(term);
-			ILocation loc = m_Boogie2SmtSymbolTable.getAstNode(bv).getLocation();
-			DeclarationInformation declInfo = 
-					m_Boogie2SmtSymbolTable.getDeclarationInformation(bv);
+			final BoogieVar bv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(bv).getLocation();
+			final DeclarationInformation declInfo = 
+					mBoogie2SmtSymbolTable.getDeclarationInformation(bv);
 			result = new IdentifierExpression(loc, type, bv.getIdentifier(), 
 					declInfo);
 			if (bv.isOldvar()) {
@@ -523,18 +523,18 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression chainable(Operator op, IType type, Expression[] params) {
-		assert(type == BoogieType.boolType);
+		assert(type == BoogieType.TYPE_BOOL);
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression chain;
 		for (int i=1;i<params.length-1; i++) {
 			chain = new BinaryExpression(null, type, op, params[i], params[i+1]);
-			result = new BinaryExpression(null, BoogieType.boolType, Operator.LOGICAND, result, chain);
+			result = new BinaryExpression(null, BoogieType.TYPE_BOOL, Operator.LOGICAND, result, chain);
 		}
 		return result;
 	}
 
 	private Expression pairwise(Operator op, IType type, Expression[] params) {
-		assert(type == BoogieType.boolType);
+		assert(type == BoogieType.TYPE_BOOL);
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression neq;
 			for (int i=0; i<params.length-1; i++) {
@@ -543,7 +543,7 @@ public class Term2Expression implements Serializable {
 						continue;
 					}
 					neq = new BinaryExpression(null, type, op, params[j], params[j+1]);
-					result = new BinaryExpression(null, BoogieType.boolType, Operator.LOGICAND, result, neq);
+					result = new BinaryExpression(null, BoogieType.TYPE_BOOL, Operator.LOGICAND, result, neq);
 				}
 			}
 		return result;
@@ -551,9 +551,9 @@ public class Term2Expression implements Serializable {
 	
 	
 	private Expression xor(Expression[] params) {
-		IType type = BoogieType.boolType;
-		Operator iff = Operator.LOGICIFF;
-		UnaryExpression.Operator neg = UnaryExpression.Operator.LOGICNEG;
+		final IType type = BoogieType.TYPE_BOOL;
+		final Operator iff = Operator.LOGICIFF;
+		final UnaryExpression.Operator neg = UnaryExpression.Operator.LOGICNEG;
 		Expression result = params[0];
 		for (int i=0; i<params.length-1; i++) {
 			result = new BinaryExpression(null, type, iff, params[i+1],result);

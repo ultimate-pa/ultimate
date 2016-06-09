@@ -73,7 +73,7 @@ public class PEA2ARMCConverter {
 	public static void convert(PhaseEventAutomata pea, 
 			    String file, 
 			    boolean rename) {
-	    PEA2TCSConverter armcConverter = 
+	    final PEA2TCSConverter armcConverter = 
 	        new PEA2TCSConverter(new ARMCWriter(file, rename),
                                      pea);
 	    armcConverter.useBooleanDecision();

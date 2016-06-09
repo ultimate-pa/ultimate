@@ -32,7 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 
 /**
  * @author Markus Lindenmann

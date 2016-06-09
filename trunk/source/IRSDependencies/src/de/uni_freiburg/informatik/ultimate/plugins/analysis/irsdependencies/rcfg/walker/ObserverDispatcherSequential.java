@@ -26,8 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -35,19 +34,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class ObserverDispatcherSequential extends ObserverDispatcher
 {
 
-	public ObserverDispatcherSequential(Logger logger) {
+	public ObserverDispatcherSequential(ILogger logger) {
 		super(logger);
 	}
 
 	private SimpleRCFGVisitor mCurrentVisitor;
 
+	@Override
 	public void run(RCFGNode node)
 	{
 		if (!(node instanceof RootNode)) {
 			mLogger.error("RCFGWalker can only process models created by RCFGBuilder");
 			return;
 		}
-		for (SimpleRCFGVisitor visitor : mObservers) {
+		for (final SimpleRCFGVisitor visitor : mObservers) {
 			mCurrentVisitor = visitor;
 			mCurrentVisitor.init(null, 0, 1);
 			mWalker.startFrom((RootNode) node);
@@ -56,6 +56,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 
 	}
 
+	@Override
 	protected void callObservers(IRCFGVisitorDispatcher dispatcher)
 	{
 		dispatcher.dispatch(mCurrentVisitor);
@@ -67,6 +68,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 		return mCurrentVisitor.abortCurrentBranch();
 	}
 	
+	@Override
 	public boolean abortAll()
 	{
 		return mCurrentVisitor.abortAll();

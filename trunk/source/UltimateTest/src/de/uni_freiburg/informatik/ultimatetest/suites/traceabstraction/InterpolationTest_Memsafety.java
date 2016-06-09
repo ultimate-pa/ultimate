@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -41,28 +41,28 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 1;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 1;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_Deref = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
-		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_DerefFreeMemtrack = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_DerefFreeMemtrack = {
 		/*** Category 3. Heap Data Structures ***/
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 
 	
 	
-	private static final String[] m_CurrentBugs_Deref = {
+	private static final String[] mCurrentBugs_Deref = {
 		};
 	
-	private static final String[] m_CurrentBugs_DerefFreeMemtrack = {
+	private static final String[] mCurrentBugs_DerefFreeMemtrack = {
 //			"examples/programs/regression",
 //			"examples/programs/quantifier/regression",
 		};
@@ -76,7 +76,7 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 		return 60 * 1000;
 	}
 
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
 		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
 		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf",
@@ -94,7 +94,7 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 	
 	
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
@@ -105,16 +105,16 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_Deref);
-				addTestCase(toolchain, setting, m_CurrentBugs_Deref, new String[] {".c", ".i"});
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_Deref);
+				addTestCase(toolchain, setting, mCurrentBugs_Deref, new String[] {".c", ".i"});
 			}
 		}
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_DerefFreeMemtrack);
-				addTestCase(toolchain, setting, m_CurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
+		for (final String setting : mSettings) {
+			for (final String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_DerefFreeMemtrack);
+				addTestCase(toolchain, setting, mCurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * 
@@ -46,20 +46,24 @@ public class BoogieModSetAnnotator implements IAnalysis {
 
 	private IUltimateServiceProvider mServices;
 
+	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
 
+	@Override
 	public void init() {
 	}
 
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
@@ -67,23 +71,27 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/* use old graph type definition */
 		return null;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		// not required.
 	}
 
 	// @Override
+	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		ModSetAnalyzer analyzer = new ModSetAnalyzer(mServices);
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ModSetAnalyzer analyzer = new ModSetAnalyzer(mServices);
 		observers.add(analyzer);
 		observers.add(new ModSetWriter(analyzer, mServices));
 		return observers;
@@ -95,7 +103,7 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

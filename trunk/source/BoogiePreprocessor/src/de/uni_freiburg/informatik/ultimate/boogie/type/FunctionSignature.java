@@ -106,8 +106,9 @@ public class FunctionSignature {
 		return resultType;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		String delim;
 		if (typeArgCount > 0) {
 			sb.append("<");
@@ -122,14 +123,16 @@ public class FunctionSignature {
 		delim = "";
 		for (int i = 0; i < paramTypes.length; i++) {
 			sb.append(delim);
-			if (paramNames[i] != null)
+			if (paramNames[i] != null) {
 				sb.append(paramNames[i]).append(":");
+			}
 			sb.append(paramTypes[i].toString(typeArgCount, false));
 			delim = ", ";
 		}
 		sb.append(") returns (");
-		if (resultName != null)
+		if (resultName != null) {
 			sb.append(resultName).append(":");
+		}
 		sb.append(resultType.toString(typeArgCount, false));
 		sb.append(")");
 		return sb.toString();

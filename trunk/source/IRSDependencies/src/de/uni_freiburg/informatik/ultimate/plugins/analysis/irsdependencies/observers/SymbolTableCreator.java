@@ -26,20 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTableTransformer;
 
 public class SymbolTableCreator extends BaseObserver
 {
 	protected SymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public SymbolTableCreator(Logger logger) {
+	public SymbolTableCreator(ILogger logger) {
 		mLogger = logger;
 	}
 	
@@ -58,8 +57,8 @@ public class SymbolTableCreator extends BaseObserver
 	@Override
 	public boolean process(IElement root)
 	{
-		SymbolTableTransformer transformer = new SymbolTableTransformer(mLogger);
-		boolean finished = transformer.process(root);
+		final SymbolTableTransformer transformer = new SymbolTableTransformer(mLogger);
+		final boolean finished = transformer.process(root);
 		mSymbolTable = transformer.getSymbolTable();
 		return finished;
 	}

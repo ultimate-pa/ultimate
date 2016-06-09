@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -49,7 +49,7 @@ public class StateShrinker<LETTER, STATE>
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> states) {
 		// create fresh automaton
-		INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
 		
 		// add the complement of the passed states
 		final Set<STATE> oldStates = new HashSet<STATE>(mAutomaton.getStates());

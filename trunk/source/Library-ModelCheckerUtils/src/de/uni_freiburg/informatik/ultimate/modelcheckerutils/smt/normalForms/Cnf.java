@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
@@ -79,13 +79,13 @@ public class Cnf extends Xnf {
 
 		@Override
 		public Term innerConnective(Script script, List<Term> params) {
-			Term result = SmtUtils.or(m_Script, params);
+			final Term result = SmtUtils.or(mScript, params);
 			return result;
 		}
 
 		@Override
 		public Term outerConnective(Script script, List<Term> params) {
-			Term result = SmtUtils.and(m_Script, params);
+			final Term result = SmtUtils.and(mScript, params);
 			return result;
 		}
 

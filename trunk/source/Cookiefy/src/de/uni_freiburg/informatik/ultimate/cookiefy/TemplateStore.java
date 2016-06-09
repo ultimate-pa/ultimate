@@ -33,40 +33,39 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathAlphaNode;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Stores the templates for the Boogiepl code inserted by cookiefy.
@@ -78,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
  */
 public class TemplateStore {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
-	private String filename = "Cook Annotation";
+	private final String filename = "Cook Annotation";
 
 	/**
 	 * VarList is the array of global state vars.
@@ -96,7 +95,7 @@ public class TemplateStore {
 	private int boolStackFrameCounter = 0;
 
 	// ?
-	private IdentMap identMap = new IdentMap();
+	private final IdentMap identMap = new IdentMap();
 
 	/**
 	 * AST Prototype for the type definition of the int stack.
@@ -145,7 +144,7 @@ public class TemplateStore {
 	 * var intStack : iStack, boolStack : bStack, idStack : iArray, ppStack : iArray, sp : int;
 	 * </code>
 	 */
-	private VariableDeclaration stack = new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {},
+	private final VariableDeclaration stack = new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {},
 			new VarList[] {
 					new VarList(LocationProvider.getLocation(), new String[] { "intStack" }, new NamedType(
 							LocationProvider.getLocation(), "iStack", new ASTType[] {})),
@@ -165,15 +164,15 @@ public class TemplateStore {
 	 * pp:int
 	 * </code>
 	 */
-	private VarList pp = new VarList(LocationProvider.getLocation(), new String[] { "pp" }, new PrimitiveType(
+	private final VarList pp = new VarList(LocationProvider.getLocation(), new String[] { "pp" }, new PrimitiveType(
 			LocationProvider.getLocation(), "int"));
 
 	/**
 	 * Prefix for cookiefy generated procedure arguments
 	 */
-	private String parameterToVariablePrefix = "cookiefy_args_";
+	private final String parameterToVariablePrefix = "cookiefy_args_";
 
-	private Program InputProgram;
+	private final Program InputProgram;
 
 	public Program getInputProgram() {
 		return InputProgram;
@@ -185,10 +184,10 @@ public class TemplateStore {
 	 * @param u
 	 *            unit generated for
 	 */
-	public TemplateStore(Program program, Logger logger) {
+	public TemplateStore(Program program, ILogger logger) {
 		mLogger = logger;
 		InputProgram = program;
-		this.setGlobalStateVars();
+		setGlobalStateVars();
 	}
 
 	/**
@@ -206,7 +205,7 @@ public class TemplateStore {
 	public Statement[] programFragmentTemplate(ContextPathNode cp, Procedure p, int pp) {
 		switch (cp.getFormulaType()) {
 		case Alpha:
-			Expression expr = ((ContextPathAlphaNode) cp).getExpression();
+			final Expression expr = ((ContextPathAlphaNode) cp).getExpression();
 			return atomicPropositionTemplate(expr);
 		case And:
 			return andTemplate(cp.getPath(), p, pp);
@@ -242,15 +241,15 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] andTemplate(String contextPath, Procedure p, int currentLine) {
-		VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
+		final VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
 		// left branch call
-		Statement[] lcallL = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
-				this.methodeNameGen(p, contextPath, "L"), this.concatToEncArgs(p)) };
+		final Statement[] lcallL = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+				methodeNameGen(p, contextPath, "L"), this.concatToEncArgs(p)) };
 		// right branch call
-		Statement[] lcallR = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
-				this.methodeNameGen(p, contextPath, "R"), this.concatToEncArgs(p)) };
+		final Statement[] lcallR = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+				methodeNameGen(p, contextPath, "R"), this.concatToEncArgs(p)) };
 
-		Statement[] andAST = new Statement[] { new IfStatement(LocationProvider.getLocation(), new WildcardExpression(
+		final Statement[] andAST = new Statement[] { new IfStatement(LocationProvider.getLocation(), new WildcardExpression(
 				LocationProvider.getLocation()), lcallL, lcallR) };
 
 		return andAST;
@@ -278,11 +277,11 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] orTemplate(String contextPath, Procedure p, int currentLine) {
-		Statement[] orAST = new Statement[2];
+		final Statement[] orAST = new Statement[2];
 		// left call first
 		orAST[0] = this.lcall(contextPath, p, currentLine, "L");
 		// right call
-		Statement[] lcallR = new Statement[] { this.lcall(contextPath, p, currentLine, "R"),
+		final Statement[] lcallR = new Statement[] { this.lcall(contextPath, p, currentLine, "R"),
 				new ReturnStatement(LocationProvider.getLocation()) };
 		// if left then right
 		orAST[1] = new IfStatement(LocationProvider.getLocation(), new IdentifierExpression(
@@ -310,9 +309,9 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] AGTemplate(String contextPath, Procedure p, int currentLine, int pp) {
-		Statement[] agAST = new Statement[3];
+		final Statement[] agAST = new Statement[3];
 		// nondeterministic if break
-		agAST[0] = agAST[0] = this.nonDetRet(contextPath, p, currentLine);
+		agAST[0] = agAST[0] = nonDetRet(contextPath, p, currentLine);
 		// left hand call
 		agAST[1] = this.lcall(contextPath, p, currentLine, "L", new IntegerLiteral(LocationProvider.getLocation(),
 				Integer.toString(pp)));
@@ -343,9 +342,9 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] AWTemplate(String contextPath, Procedure p, int currentLine, int pp) {
-		Statement[] agAST = new Statement[3];
+		final Statement[] agAST = new Statement[3];
 		// nondeterministic if break
-		agAST[0] = this.nonDetRet(contextPath, p, currentLine);
+		agAST[0] = nonDetRet(contextPath, p, currentLine);
 		// left hand call
 		agAST[1] = this.lcall(contextPath, p, currentLine, "L", new IntegerLiteral(LocationProvider.getLocation(),
 				Integer.toString(pp)));
@@ -368,9 +367,10 @@ public class TemplateStore {
 	 * @return the corresponding array of VariableLHS objects (type is not set).
 	 */
 	private VariableLHS[] makeVariableLHS(String[] ids) {
-		VariableLHS[] result = new VariableLHS[ids.length];
-		for (int i = 0; i < ids.length; i++)
+		final VariableLHS[] result = new VariableLHS[ids.length];
+		for (int i = 0; i < ids.length; i++) {
 			result[i] = new VariableLHS(LocationProvider.getLocation(), ids[i]);
+		}
 		return result;
 	}
 
@@ -384,15 +384,15 @@ public class TemplateStore {
 	 * @return
 	 */
 	private Statement lcall(String contextPath, Procedure p, int currentLine, String branch, Expression pp) {
-		VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
+		final VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
 		return new CallStatement(LocationProvider.getLocation(), false, ret,
-				this.methodeNameGen(p, contextPath, branch), this.concatToEncArgs(p, pp));
+				methodeNameGen(p, contextPath, branch), this.concatToEncArgs(p, pp));
 	}
 
 	private Statement lcall(String contextPath, Procedure p, int currentLine, String branch) {
 		// if no pp Expression is given, we set in the variable
 		return lcall(contextPath, p, currentLine, branch, new IdentifierExpression(LocationProvider.getLocation(),
-				this.pp.getIdentifiers()[0]));
+				pp.getIdentifiers()[0]));
 	}
 
 	/**
@@ -432,7 +432,7 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] atomicPropositionTemplate(Expression expr) {
-		Statement[] assign = new Statement[] {
+		final Statement[] assign = new Statement[] {
 				new AssignmentStatement(LocationProvider.getLocation(), new VariableLHS[] { new VariableLHS(
 						LocationProvider.getLocation(), "ret") }, new Expression[] { expr }),
 				new ReturnStatement(LocationProvider.getLocation()) };
@@ -470,19 +470,19 @@ public class TemplateStore {
 		// VariableDeclaration[] params =
 		// cookifyArgsDeclareLocals(InputProgram.Procedures.get(entryPoint),true);
 
-		List<String> modifiesIdentifiers = new LinkedList<String>();
-		List<Expression> parameters = new LinkedList<Expression>();
-		List<Statement> statements = new LinkedList<Statement>();
-		List<VariableDeclaration> localVars = new LinkedList<VariableDeclaration>();
-		Procedure main = InputProgram.Procedures.get(entryPoint);
+		final List<String> modifiesIdentifiers = new LinkedList<String>();
+		final List<Expression> parameters = new LinkedList<Expression>();
+		final List<Statement> statements = new LinkedList<Statement>();
+		final List<VariableDeclaration> localVars = new LinkedList<VariableDeclaration>();
+		final Procedure main = InputProgram.Procedures.get(entryPoint);
 
 		//
 		// havoc all global variables variables
 		//
 		// globals (from input program)
-		for (VarList v : this.globalStateVars) {
+		for (final VarList v : globalStateVars) {
 			// must get modifies specification, because of the havoc
-			for (String id : v.getIdentifiers()) {
+			for (final String id : v.getIdentifiers()) {
 				modifiesIdentifiers.add(id);
 			}
 			Helper.addVarListToIdentifierList(parameters, v);
@@ -490,7 +490,7 @@ public class TemplateStore {
 			statements.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
 		}
 		// stacks (add to parameters)
-		for (VarList v : this.stack.getVariables()) {
+		for (final VarList v : stack.getVariables()) {
 			Helper.addVarListToIdentifierList(parameters, v);
 		}
 		// pp (=0)
@@ -502,17 +502,17 @@ public class TemplateStore {
 		localVars.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0],
 				new VarList[] { new VarList(LocationProvider.getLocation(), new String[] { "CookiefyRet" },
 						new PrimitiveType(LocationProvider.getLocation(), "bool")) }));
-		localVars.add(this.stack);
-		localVars.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0], this.globalStateVars));
+		localVars.add(stack);
+		localVars.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0], globalStateVars));
 
-		Body body = new Body(LocationProvider.getLocation(),
+		final Body body = new Body(LocationProvider.getLocation(),
 				localVars.toArray(new VariableDeclaration[localVars.size()]), new Statement[] {
 						new HavocStatement(LocationProvider.getLocation(),
 								makeVariableLHS(modifiesIdentifiers.toArray(new String[modifiesIdentifiers.size()]))),
 						// this.getHavocCallStatement(new Expression[0], main,
 						// "T", new IntegerLiteral("0")),
 						new CallStatement(LocationProvider.getLocation(), false,
-								makeVariableLHS(new String[] { "CookiefyRet" }), this.methodeNameGenPrepare(main, "T",
+								makeVariableLHS(new String[] { "CookiefyRet" }), methodeNameGenPrepare(main, "T",
 										""), parameters.toArray(new Expression[parameters.size()])),
 						new AssertStatement(LocationProvider.getLocation(), new BinaryExpression(
 								LocationProvider.getLocation(), BinaryExpression.Operator.COMPNEQ,
@@ -582,29 +582,40 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public Expression[] concatToEncArgs(Procedure p, Expression pp) {
-		ArrayList<Expression> idents = new ArrayList<Expression>();
+		final ArrayList<Expression> idents = new ArrayList<Expression>();
 
 		// in parameters of p
-		for (VarList v : p.getInParams())
-			for (String s : v.getIdentifiers())
+		for (final VarList v : p.getInParams()) {
+			for (final String s : v.getIdentifiers()) {
 				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+			}
+		}
 		// out parameters of p
-		for (VarList v : p.getOutParams())
-			for (String s : v.getIdentifiers())
+		for (final VarList v : p.getOutParams()) {
+			for (final String s : v.getIdentifiers()) {
 				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+			}
+		}
 		// local variables of p
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			for (VarList v : vd.getVariables())
-				for (String s : v.getIdentifiers())
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			for (final VarList v : vd.getVariables()) {
+				for (final String s : v.getIdentifiers()) {
 					idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+				}
+			}
+		}
 		// globals
-		for (VarList v : this.globalStateVars)
-			for (String s : v.getIdentifiers())
+		for (final VarList v : globalStateVars) {
+			for (final String s : v.getIdentifiers()) {
 				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+			}
+		}
 		// stack
-		for (VarList v : this.stack.getVariables())
-			for (String s : v.getIdentifiers())
+		for (final VarList v : stack.getVariables()) {
+			for (final String s : v.getIdentifiers()) {
 				idents.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+			}
+		}
 		// program counter
 		idents.add(pp);
 
@@ -612,7 +623,7 @@ public class TemplateStore {
 	}
 
 	public Expression[] concatToEncArgs(Procedure p) {
-		return concatToEncArgs(p, new IdentifierExpression(LocationProvider.getLocation(), this.pp.getIdentifiers()[0]));
+		return concatToEncArgs(p, new IdentifierExpression(LocationProvider.getLocation(), pp.getIdentifiers()[0]));
 	}
 
 	/**
@@ -631,27 +642,33 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public Statement[] cookifyArgsToVariables(Procedure p) {
-		ArrayList<Statement> assignments = new ArrayList<Statement>();
+		final ArrayList<Statement> assignments = new ArrayList<Statement>();
 
 		// LAMBDA
 		// Args (in parameters of p)
-		for (VarList v : p.getInParams())
-			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
+		for (final VarList v : p.getInParams()) {
+			assignments.addAll(prefixVarToLocalVar(v, parameterToVariablePrefix));
+		}
 
-		for (VarList v : p.getOutParams())
-			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
+		for (final VarList v : p.getOutParams()) {
+			assignments.addAll(prefixVarToLocalVar(v, parameterToVariablePrefix));
+		}
 		// Locals (local variables of p)
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			for (VarList v : vd.getVariables())
-				assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			for (final VarList v : vd.getVariables()) {
+				assignments.addAll(prefixVarToLocalVar(v, parameterToVariablePrefix));
+			}
+		}
 
-		for (VarList v : this.stack.getVariables())
-			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
+		for (final VarList v : stack.getVariables()) {
+			assignments.addAll(prefixVarToLocalVar(v, parameterToVariablePrefix));
+		}
 
 		// GAMMA
 		// globals
-		for (VarList v : this.globalStateVars)
-			assignments.addAll(this.prefixVarToLocalVar(v, parameterToVariablePrefix));
+		for (final VarList v : globalStateVars) {
+			assignments.addAll(prefixVarToLocalVar(v, parameterToVariablePrefix));
+		}
 
 		return assignments.toArray(new Statement[assignments.size()]);
 	}
@@ -669,32 +686,38 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public VariableDeclaration[] cookifyArgsDeclareLocals(Procedure p, boolean withStack, boolean withGlobals) {
-		ArrayList<VariableDeclaration> declarations = new ArrayList<VariableDeclaration>();
+		final ArrayList<VariableDeclaration> declarations = new ArrayList<VariableDeclaration>();
 
 		// LAMBDA
 		// Args (in parameters of p)
-		if (p.getInParams().length > 0)
+		if (p.getInParams().length > 0) {
 			declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, p
 					.getInParams()));
-		if (p.getOutParams().length > 0)
+		}
+		if (p.getOutParams().length > 0) {
 			declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, p
 					.getOutParams()));
+		}
 		// Locals (local variables of p)
-		for (VariableDeclaration vd : p.getBody().getLocalVars()) {
-			if (vd.getVariables().length > 0)
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			if (vd.getVariables().length > 0) {
 				declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {}, vd
 						.getVariables()));
+			}
 		}
 
-		if (withStack)
-			declarations.add(this.stack);
+		if (withStack) {
+			declarations.add(stack);
+		}
 
 		// GAMMA
 		// globals
-		if (withGlobals)
-			if (this.globalStateVars.length > 0)
+		if (withGlobals) {
+			if (globalStateVars.length > 0) {
 				declarations.add(new VariableDeclaration(LocationProvider.getLocation(), new Attribute[] {},
-						this.globalStateVars));
+						globalStateVars));
+			}
+		}
 
 		return declarations.toArray(new VariableDeclaration[declarations.size()]);
 	}
@@ -711,31 +734,37 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public VarList[] concatToEncParams(Procedure p) {
-		ArrayList<VarList> idents = new ArrayList<VarList>();
+		final ArrayList<VarList> idents = new ArrayList<VarList>();
 
 		// LAMBDA
 		// Args (in parameters of p)
-		for (VarList v : p.getInParams())
+		for (final VarList v : p.getInParams()) {
 			Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
+		}
 		// return
-		for (VarList v : p.getOutParams())
+		for (final VarList v : p.getOutParams()) {
 			Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
+		}
 		// Locals (local variables of p)
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			for (VarList v : vd.getVariables())
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			for (final VarList v : vd.getVariables()) {
 				Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
+			}
+		}
 
 		// GAMMA
 		// globals
-		for (VarList v : this.globalStateVars)
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
+		}
 
 		// stack
-		for (VarList v : this.stack.getVariables())
+		for (final VarList v : stack.getVariables()) {
 			Helper.addVarListToArrayList(idents, v, parameterToVariablePrefix);
+		}
 
 		// program counter
-		idents.add(this.pp);
+		idents.add(pp);
 
 		return idents.toArray(new VarList[idents.size()]);
 	}
@@ -751,31 +780,37 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public VarList[] concatToEncParamsAtom(Procedure p) {
-		ArrayList<VarList> idents = new ArrayList<VarList>();
+		final ArrayList<VarList> idents = new ArrayList<VarList>();
 
 		// LAMBDA
 		// Args (in parameters of p)
-		for (VarList v : p.getInParams())
+		for (final VarList v : p.getInParams()) {
 			Helper.addVarListToArrayList(idents, v, "");
+		}
 		// return
-		for (VarList v : p.getOutParams())
+		for (final VarList v : p.getOutParams()) {
 			Helper.addVarListToArrayList(idents, v, "");
+		}
 		// Locals (local variables of p)
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			for (VarList v : vd.getVariables())
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			for (final VarList v : vd.getVariables()) {
 				Helper.addVarListToArrayList(idents, v, "");
+			}
+		}
 
 		// GAMMA
 		// globals
-		for (VarList v : this.globalStateVars)
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToArrayList(idents, v, "");
+		}
 
 		// stack
-		for (VarList v : this.stack.getVariables())
+		for (final VarList v : stack.getVariables()) {
 			Helper.addVarListToArrayList(idents, v, "");
+		}
 
 		// program counter
-		idents.add(this.pp);
+		idents.add(pp);
 
 		return idents.toArray(new VarList[idents.size()]);
 	}
@@ -786,15 +821,15 @@ public class TemplateStore {
 	 * @param vd
 	 */
 	private void setGlobalStateVars() {
-		ArrayList<VarList> vars = new ArrayList<VarList>();
+		final ArrayList<VarList> vars = new ArrayList<VarList>();
 
-		for (VariableDeclaration vdecl : InputProgram.Globals) {
-			for (VarList vlist : vdecl.getVariables()) {
+		for (final VariableDeclaration vdecl : InputProgram.Globals) {
+			for (final VarList vlist : vdecl.getVariables()) {
 				Helper.addVarListToArrayList(vars, vlist, "");
 			}
 		}
 
-		this.globalStateVars = vars.toArray(new VarList[vars.size()]);
+		globalStateVars = vars.toArray(new VarList[vars.size()]);
 	}
 
 	/**
@@ -809,12 +844,13 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private ArrayList<Statement> prefixVarToLocalVar(VarList v, String prefix) {
-		ArrayList<Statement> assignments = new ArrayList<Statement>();
-		for (String s : v.getIdentifiers())
+		final ArrayList<Statement> assignments = new ArrayList<Statement>();
+		for (final String s : v.getIdentifiers()) {
 			assignments
 					.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
 							LocationProvider.getLocation(), s) }, new Expression[] { new IdentifierExpression(
 							LocationProvider.getLocation(), "cookiefy_args_" + s) }));
+		}
 		return assignments;
 	}
 
@@ -838,45 +874,53 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public Procedure encodeInitProcedurestateProcedure(Procedure pPrime, String path, Expression[] args) {
-		ArrayList<Statement> body = new ArrayList<Statement>();
+		final ArrayList<Statement> body = new ArrayList<Statement>();
 		// prepare params for the havoc_... procedure
-		ArrayList<VarList> params = new ArrayList<VarList>();
-		for (VarList v : pPrime.getInParams())
-			Helper.addVarListToArrayList(params, v, this.parameterToVariablePrefix);
+		final ArrayList<VarList> params = new ArrayList<VarList>();
+		for (final VarList v : pPrime.getInParams()) {
+			Helper.addVarListToArrayList(params, v, parameterToVariablePrefix);
+		}
 		// globals
-		for (VarList v : this.globalStateVars)
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToArrayList(params, v, "");
-		for (VarList v : this.stack.getVariables())
+		}
+		for (final VarList v : stack.getVariables()) {
 			Helper.addVarListToArrayList(params, v, "");
-		params.add(this.pp);
+		}
+		params.add(pp);
 		// pp = 0!
 
 		// declaration is done in the procedure declaration
 		// havoc Vars
-		for (VarList v : pPrime.getInParams())
+		for (final VarList v : pPrime.getInParams()) {
 			body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
-		for (VarList v : pPrime.getOutParams())
+		}
+		for (final VarList v : pPrime.getOutParams()) {
 			body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
-		for (VariableDeclaration vd : pPrime.getBody().getLocalVars())
-			for (VarList v : vd.getVariables())
+		}
+		for (final VariableDeclaration vd : pPrime.getBody().getLocalVars()) {
+			for (final VarList v : vd.getVariables()) {
 				body.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
+			}
+		}
 
 		// copy arguments to vars
-		for (VarList v : pPrime.getInParams())
-			for (String ident : v.getIdentifiers())
+		for (final VarList v : pPrime.getInParams()) {
+			for (final String ident : v.getIdentifiers()) {
 				body.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
 						LocationProvider.getLocation(), ident) }, new Expression[] { new IdentifierExpression(
-						LocationProvider.getLocation(), this.parameterToVariablePrefix + ident) }));
+						LocationProvider.getLocation(), parameterToVariablePrefix + ident) }));
+			}
+		}
 
 		// call procedure
-		body.add(new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), this
-				.methodeNameGen(pPrime, path, ""), this.concatToEncArgs(pPrime)));
+		body.add(new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), methodeNameGen(pPrime, path, ""), this.concatToEncArgs(pPrime)));
 
-		return new Procedure(LocationProvider.getLocation(), new Attribute[0], this.methodeNameGenPrepare(pPrime, path,
+		return new Procedure(LocationProvider.getLocation(), new Attribute[0], methodeNameGenPrepare(pPrime, path,
 				""), new String[0], params.toArray(new VarList[params.size()]), new VarList[] { new VarList(
 				LocationProvider.getLocation(), new String[] { "ret" }, new PrimitiveType(
 						LocationProvider.getLocation(), "bool")) }, new Specification[0], new Body(
-				LocationProvider.getLocation(), this.cookifyArgsDeclareLocals(pPrime, false, false),
+				LocationProvider.getLocation(), cookifyArgsDeclareLocals(pPrime, false, false),
 				body.toArray(new Statement[body.size()]))
 
 		);
@@ -897,35 +941,40 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private ArrayList<Statement> pushVarListToStack(VarList[] varLists) {
-		ArrayList<Statement> statements = new ArrayList<Statement>();
+		final ArrayList<Statement> statements = new ArrayList<Statement>();
 		Expression noExp = null;
 		// in parameters of p
-		for (VarList v : varLists)
-			for (String s : v.getIdentifiers()) {
+		for (final VarList v : varLists) {
+			for (final String s : v.getIdentifiers()) {
 
-				if (((PrimitiveType) v.getType()).getName() == "int")
+				if (((PrimitiveType) v.getType()).getName() == "int") {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
-							Integer.toString(this.intStackFrameCounter));
-				if (((PrimitiveType) v.getType()).getName() == "bool")
+							Integer.toString(intStackFrameCounter));
+				}
+				if (((PrimitiveType) v.getType()).getName() == "bool") {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
-							Integer.toString(this.boolStackFrameCounter));
+							Integer.toString(boolStackFrameCounter));
+				}
 
 				statements.add(new AssignmentStatement(LocationProvider.getLocation(),
 						new LeftHandSide[] { new ArrayLHS(LocationProvider.getLocation(), new ArrayLHS(LocationProvider
-								.getLocation(), new VariableLHS(LocationProvider.getLocation(), this.getStackFromType(v
+								.getLocation(), new VariableLHS(LocationProvider.getLocation(), getStackFromType(v
 								.getType())), new Expression[] { new IdentifierExpression(LocationProvider
 								.getLocation(), "sp") }), new Expression[] { noExp }) },
 						new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), s) }
 
 				));
 				if (v.getType() instanceof PrimitiveType) {
-					if (((PrimitiveType) v.getType()).getName() == "int")
-						this.intStackFrameCounter++;
-					if (((PrimitiveType) v.getType()).getName() == "bool")
-						this.boolStackFrameCounter++;
+					if (((PrimitiveType) v.getType()).getName() == "int") {
+						intStackFrameCounter++;
+					}
+					if (((PrimitiveType) v.getType()).getName() == "bool") {
+						boolStackFrameCounter++;
+					}
 				}
 
 			}
+		}
 		return statements;
 	}
 
@@ -940,40 +989,46 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private ArrayList<Expression> popVarsFromStack(VarList[] varLists) {
-		ArrayList<Expression> expressions = new ArrayList<Expression>();
+		final ArrayList<Expression> expressions = new ArrayList<Expression>();
 		Expression noExp = null;
 		// in parameters of p
-		for (VarList v : varLists)
-			for (String s : v.getIdentifiers()) {
+		for (final VarList v : varLists) {
+			for (final String s : v.getIdentifiers()) {
 
-				if (((PrimitiveType) v.getType()).getName() == "int")
+				if (((PrimitiveType) v.getType()).getName() == "int") {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
-							Integer.toString(this.intStackFrameCounter));
-				if (((PrimitiveType) v.getType()).getName() == "bool")
+							Integer.toString(intStackFrameCounter));
+				}
+				if (((PrimitiveType) v.getType()).getName() == "bool") {
 					noExp = new IntegerLiteral(LocationProvider.getLocation(),
-							Integer.toString(this.boolStackFrameCounter));
+							Integer.toString(boolStackFrameCounter));
+				}
 
 				expressions.add(new ArrayAccessExpression(LocationProvider.getLocation(), new ArrayAccessExpression(
-						LocationProvider.getLocation(), new IdentifierExpression(LocationProvider.getLocation(), this
-								.getStackFromType(v.getType())), new Expression[] { new IdentifierExpression(
+						LocationProvider.getLocation(), new IdentifierExpression(LocationProvider.getLocation(), getStackFromType(v.getType())), new Expression[] { new IdentifierExpression(
 								LocationProvider.getLocation(), "sp") }), new Expression[] { noExp }));
 				if (v.getType() instanceof PrimitiveType) {
-					if (((PrimitiveType) v.getType()).getName() == "int")
-						this.intStackFrameCounter++;
-					if (((PrimitiveType) v.getType()).getName() == "bool")
-						this.boolStackFrameCounter++;
+					if (((PrimitiveType) v.getType()).getName() == "int") {
+						intStackFrameCounter++;
+					}
+					if (((PrimitiveType) v.getType()).getName() == "bool") {
+						boolStackFrameCounter++;
+					}
 				}
 
 			}
+		}
 		return expressions;
 	}
 
 	private String getStackFromType(ASTType type) {
 		if (type instanceof PrimitiveType) {
-			if (((PrimitiveType) type).getName() == "int")
+			if (((PrimitiveType) type).getName() == "int") {
 				return "intStack";
-			if (((PrimitiveType) type).getName() == "bool")
+			}
+			if (((PrimitiveType) type).getName() == "bool") {
 				return "boolStack";
+			}
 		}
 		return "error";
 	}
@@ -985,35 +1040,40 @@ public class TemplateStore {
 	 * @param pp
 	 */
 	public Expression[] stackPop(Procedure p) {
-		ArrayList<Expression> expressions = new ArrayList<Expression>();
+		final ArrayList<Expression> expressions = new ArrayList<Expression>();
 		// stack add
-		this.intStackFrameCounter = 0;
-		this.boolStackFrameCounter = 0;
+		intStackFrameCounter = 0;
+		boolStackFrameCounter = 0;
 		// in parameters of p
-		expressions.addAll(this.popVarsFromStack(p.getInParams()));
+		expressions.addAll(popVarsFromStack(p.getInParams()));
 		// out parameters of p
-		expressions.addAll(this.popVarsFromStack(p.getOutParams()));
+		expressions.addAll(popVarsFromStack(p.getOutParams()));
 		// local variables of p
 
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			expressions.addAll(this.popVarsFromStack(vd.getVariables()));
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			expressions.addAll(popVarsFromStack(vd.getVariables()));
+		}
 
 		// globals
-		for (VarList v : this.globalStateVars)
-			for (String s : v.getIdentifiers())
+		for (final VarList v : globalStateVars) {
+			for (final String s : v.getIdentifiers()) {
 				expressions.add(new IdentifierExpression(LocationProvider.getLocation(), s));
+			}
+		}
 
 		// stacks
-		for (VarList v : this.stack.getVariables())
-			for (String ident : v.getIdentifiers()) {
-				if (ident == "sp")
+		for (final VarList v : stack.getVariables()) {
+			for (final String ident : v.getIdentifiers()) {
+				if (ident == "sp") {
 					expressions.add(new BinaryExpression(LocationProvider.getLocation(),
 							BinaryExpression.Operator.ARITHMINUS, new IdentifierExpression(LocationProvider
 									.getLocation(), "sp"), new IntegerLiteral(LocationProvider.getLocation(), "1")));
-				else
+				} else {
 					expressions.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
+				}
 
 			}
+		}
 		// pp
 		expressions.add(new ArrayAccessExpression(LocationProvider.getLocation(), new IdentifierExpression(
 				LocationProvider.getLocation(), "ppStack"), new Expression[] { new IdentifierExpression(
@@ -1029,17 +1089,18 @@ public class TemplateStore {
 	 * @param pp
 	 */
 	public ArrayList<Statement> stackPush(Procedure p, int pp) {
-		this.intStackFrameCounter = 0;
-		this.boolStackFrameCounter = 0;
-		ArrayList<Statement> statements = new ArrayList<Statement>();
+		intStackFrameCounter = 0;
+		boolStackFrameCounter = 0;
+		final ArrayList<Statement> statements = new ArrayList<Statement>();
 		// in parameters of p
-		statements.addAll(this.pushVarListToStack(p.getInParams()));
+		statements.addAll(pushVarListToStack(p.getInParams()));
 		// out parameters of p
-		statements.addAll(this.pushVarListToStack(p.getOutParams()));
+		statements.addAll(pushVarListToStack(p.getOutParams()));
 		// local variables of p
 
-		for (VariableDeclaration vd : p.getBody().getLocalVars())
-			statements.addAll(this.pushVarListToStack(vd.getVariables()));
+		for (final VariableDeclaration vd : p.getBody().getLocalVars()) {
+			statements.addAll(pushVarListToStack(vd.getVariables()));
+		}
 
 		// pp
 		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new ArrayLHS(
@@ -1052,7 +1113,7 @@ public class TemplateStore {
 		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new ArrayLHS(
 				LocationProvider.getLocation(), new VariableLHS(LocationProvider.getLocation(), "idStack"),
 				new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), "sp") }) },
-				new Expression[] { new IntegerLiteral(LocationProvider.getLocation(), Integer.toString(this.identMap
+				new Expression[] { new IntegerLiteral(LocationProvider.getLocation(), Integer.toString(identMap
 						.getID(p.getIdentifier()))) }
 
 		));
@@ -1075,28 +1136,32 @@ public class TemplateStore {
 	 */
 	public Statement getHavocCallStatement(Expression[] args, Procedure pPrime, String path, Expression sp) {
 
-		ArrayList<Expression> params = new ArrayList<Expression>();
-		for (Expression e : args)
+		final ArrayList<Expression> params = new ArrayList<Expression>();
+		for (final Expression e : args) {
 			params.add(e);
+		}
 
 		// globals
-		for (VarList v : this.globalStateVars)
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToIdentifierList(params, v);
+		}
 
 		// stacks
-		for (VarList v : this.stack.getVariables())
-			for (String ident : v.getIdentifiers()) {
-				if (ident == "sp")
+		for (final VarList v : stack.getVariables()) {
+			for (final String ident : v.getIdentifiers()) {
+				if (ident == "sp") {
 					params.add(sp);
-				else
+				} else {
 					params.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
+				}
 
 			}
+		}
 		// pp
 		params.add(new IntegerLiteral(LocationProvider.getLocation(), "0"));
 
 		return new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }),
-				this.methodeNameGenPrepare(pPrime, path, ""), params.toArray(new Expression[params.size()]));
+				methodeNameGenPrepare(pPrime, path, ""), params.toArray(new Expression[params.size()]));
 
 	}
 
@@ -1117,18 +1182,19 @@ public class TemplateStore {
 	 * </code>
 	 */
 	public CallStatement pReturnCall(String path) {
-		ArrayList<Expression> params = new ArrayList<Expression>();
+		final ArrayList<Expression> params = new ArrayList<Expression>();
 
 		// globals
-		for (VarList v : this.globalStateVars) {
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToIdentifierList(params, v);
 		}
 		// stacks
-		for (VarList v : this.stack.getVariables())
-			for (String ident : v.getIdentifiers()) {
+		for (final VarList v : stack.getVariables()) {
+			for (final String ident : v.getIdentifiers()) {
 				params.add(new IdentifierExpression(LocationProvider.getLocation(), ident));
 
 			}
+		}
 
 		return new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }),
 				"preturn_" + path, params.toArray(new Expression[params.size()]));
@@ -1158,8 +1224,8 @@ public class TemplateStore {
 	 * 	</code>
 	 */
 	public Procedure pReturn(String path) {
-		ArrayList<Statement> statements = new ArrayList<Statement>();
-		int pid = 0;
+		final ArrayList<Statement> statements = new ArrayList<Statement>();
+		final int pid = 0;
 
 		statements.add(new AssignmentStatement(LocationProvider.getLocation(), new LeftHandSide[] { new VariableLHS(
 				LocationProvider.getLocation(), "func_id") }, new Expression[] { new ArrayAccessExpression(
@@ -1167,30 +1233,32 @@ public class TemplateStore {
 				new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), "sp") }) }));
 
 		// for every procedure in the program add a sp -> procedure call
-		for (String pName : this.InputProgram.Procedures.keySet()) {
-			Procedure p = this.InputProgram.Procedures.get(pName);
+		for (final String pName : InputProgram.Procedures.keySet()) {
+			final Procedure p = InputProgram.Procedures.get(pName);
 
 			statements.add(new IfStatement(LocationProvider.getLocation(), new BinaryExpression(LocationProvider
 					.getLocation(), BinaryExpression.Operator.COMPEQ, new IdentifierExpression(LocationProvider
 					.getLocation(), "func_id"), new IntegerLiteral(LocationProvider.getLocation(), Integer
-					.toString(this.identMap.getID(pName)))), new Statement[] {
+					.toString(identMap.getID(pName)))), new Statement[] {
 			// the actual call doing the returning... wtf
-			new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), this
-					.methodeNameGen(p, path, ""), this.stackPop(p)) }, new Statement[] {}
+			new CallStatement(LocationProvider.getLocation(), false, makeVariableLHS(new String[] { "ret" }), methodeNameGen(p, path, ""), stackPop(p)) }, new Statement[] {}
 
 			));
 		}
 
-		ArrayList<VarList> idents = new ArrayList<VarList>();
+		final ArrayList<VarList> idents = new ArrayList<VarList>();
 		// globals
-		for (VarList v : this.globalStateVars)
+		for (final VarList v : globalStateVars) {
 			Helper.addVarListToArrayList(idents, v, "");
+		}
 		// stack
-		for (VarList v : this.stack.getVariables())
+		for (final VarList v : stack.getVariables())
+		 {
 			Helper.addVarListToArrayList(idents, v, "");
 		// program counter
 		// idents.add(this.pp); //Jeremi: preturn braucht keinen procedure
 		// counter!
+		}
 
 		return new Procedure(LocationProvider.getLocation(), new Attribute[] {}, "preturn_" + path, new String[] {},
 				idents.toArray(new VarList[idents.size()]), new VarList[] { new VarList(LocationProvider.getLocation(),

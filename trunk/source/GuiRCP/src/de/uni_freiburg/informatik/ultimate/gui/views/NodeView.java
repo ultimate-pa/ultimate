@@ -24,11 +24,9 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.views;
 
-import de.uni_freiburg.informatik.ultimate.gui.interfaces.IElementSelection;
-import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationTreeProvider;
-import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationsLabelProvider;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -40,6 +38,10 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
+
+import de.uni_freiburg.informatik.ultimate.gui.interfaces.IElementSelection;
+import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationTreeProvider;
+import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationsLabelProvider;
 
 /**
  * A nodeViewer so we can present selected nodes to the user...
@@ -58,6 +60,7 @@ public class NodeView extends ViewPart implements ISelectionListener {
 		super();
 	}
 	
+	@Override
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService()
 				.removeSelectionListener(this);
@@ -65,6 +68,7 @@ public class NodeView extends ViewPart implements ISelectionListener {
 	}
 
 	//@Override
+	@Override
 	public void createPartControl(Composite parent) {
 		treeViewer = new TreeViewer(parent, SWT.BORDER | SWT.MULTI
 				| SWT.V_SCROLL);
@@ -74,13 +78,16 @@ public class NodeView extends ViewPart implements ISelectionListener {
 	}
 
 	//@Override
+	@Override
 	public void setFocus() {
 		treeViewer.getControl().setFocus();
 	}
 
+	@Override
 	public void selectionChanged(IWorkbenchPart part, final ISelection selection) {
 		if (selection instanceof IElementSelection) {
-			UIJob job = new UIJob("Selection changed...") {
+			final UIJob job = new UIJob("Selection changed...") {
+				@Override
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					treeViewer.setSelection(null);
 					treeViewer.setInput(((IElementSelection) selection).getElement());
@@ -93,10 +100,4 @@ public class NodeView extends ViewPart implements ISelectionListener {
 			job.schedule(); 
 		}
 	}
-	
-	
-	
-	
-	
-
 }

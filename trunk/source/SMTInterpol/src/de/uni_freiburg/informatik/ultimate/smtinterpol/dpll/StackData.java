@@ -37,7 +37,7 @@ public class StackData {
 	}
 	
 	protected StackData(StackData prev) {
-		this.mPrev = prev;
+		mPrev = prev;
 	}
 	/**
 	 * Add an atom to this stack level.
@@ -50,17 +50,19 @@ public class StackData {
 	
 	public StackData save(DPLLEngine engine) {
 		mCompleteness = engine.getCompleteness();
-		ITheory[] satellites = engine.getAttachedTheories();
+		final ITheory[] satellites = engine.getAttachedTheories();
 		mSatelliteData = new Object[satellites.length];
-		for (int i = 0; i < mSatelliteData.length; ++i)
+		for (int i = 0; i < mSatelliteData.length; ++i) {
 			mSatelliteData[i] = satellites[i].push();
+		}
 		return new NonRootLvlStackData(this);
 	}
 	
 	public StackData restore(DPLLEngine engine, int targetlevel) {
-		ITheory[] satellites = engine.getAttachedTheories();
-		for (int i = 0; i < mPrev.mSatelliteData.length; ++i)
+		final ITheory[] satellites = engine.getAttachedTheories();
+		for (int i = 0; i < mPrev.mSatelliteData.length; ++i) {
 			satellites[i].pop(mPrev.mSatelliteData[i], targetlevel);
+		}
 		engine.setCompleteness(mPrev.mCompleteness);
 		return mPrev;
 	}

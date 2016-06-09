@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**
  * Class to check if a term is closed.  It is closed if it does not contain
@@ -74,32 +74,37 @@ public class CheckClosedTerm extends NonRecursive {
 	}
 
 	void check(Term t) {
-		if (mCheckedTerms.contains(t) || !mIsClosed)
+		if (mCheckedTerms.contains(t) || !mIsClosed) {
 			return;
+		}
 		mCheckedTerms.add(t);
 		if (t instanceof ApplicationTerm) {
-			for (Term arg : ((ApplicationTerm)t).getParameters())
+			for (final Term arg : ((ApplicationTerm)t).getParameters()) {
 				enqueueWalker(new TermWalker(arg));
+			}
 		} else if (t instanceof AnnotatedTerm) {
 			enqueueWalker(new TermWalker(((AnnotatedTerm)t).getSubterm()));
 		} else if (t instanceof LetTerm) {
-			LetTerm let = (LetTerm) t;
-			for (Term value : let.getValues())
+			final LetTerm let = (LetTerm) t;
+			for (final Term value : let.getValues()) {
 				enqueueWalker(new TermWalker(value));
+			}
 			mCheckedTerms.beginScope();
 			enqueueWalker(new EndScopeWalker());
-			for (TermVariable var : let.getVariables())
+			for (final TermVariable var : let.getVariables()) {
 				mCheckedTerms.add(var);
+			}
 			enqueueWalker(new TermWalker(let.getSubTerm()));
 		} else if (t instanceof TermVariable) {
 			/* all bound term variables were added to mCheckedTerms */
 			mIsClosed = false;
 		} else if (t instanceof QuantifiedFormula) {
-			QuantifiedFormula quant = (QuantifiedFormula) t;
+			final QuantifiedFormula quant = (QuantifiedFormula) t;
 			mCheckedTerms.beginScope();
 			enqueueWalker(new EndScopeWalker());
-			for (TermVariable var : quant.getVariables())
+			for (final TermVariable var : quant.getVariables()) {
 				mCheckedTerms.add(var);
+			}
 			enqueueWalker(new TermWalker(quant.getSubformula()));
 		} else if (!(t instanceof ConstantTerm)) {
 			throw new AssertionError("Unknown term: " + t.getClass());

@@ -4,8 +4,4 @@
    <extension point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl class="de.uni_freiburg.informatik.ultimate.ltl2aut.LTL2aut"/>
    </extension>
-   
-   <extension point="org.eclipse.core.runtime.preferences">
-    <initializer class="de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer" />
- </extension>
 </plugin>

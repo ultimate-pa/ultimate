@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of an automaton transition.
@@ -40,7 +40,7 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 	
 	public enum Transition { CALL, INTERNAL, RETURN, INITIAL };
 	
-	private String m_Name;
+	private String mName;
 	
 	public AutomatonTransition(AutomatonState state,
 							   Transition type,
@@ -51,15 +51,15 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		assert(type == Transition.RETURN || linPred ==null);
 		assert(type != Transition.RETURN || linPred != null);
 		switch (type) {
-		case CALL: m_Name = "Call"; break;
-		case INTERNAL: m_Name = "Internal"; break;
-		case RETURN: m_Name = "Return"; break;
-		case INITIAL: m_Name = ""; break;
+		case CALL: mName = "Call"; break;
+		case INTERNAL: mName = "Internal"; break;
+		case RETURN: mName = "Return"; break;
+		case INITIAL: mName = ""; break;
 		default: throw new IllegalArgumentException();
 		}
-		m_Name = m_Name + ": " + transitionLabel;
+		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
-			m_Name = m_Name + " " + linPred;
+			mName = mName + " " + linPred;
 		}
 		
 		if (transitionLabel instanceof IAnnotations) {
@@ -68,8 +68,9 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
+	@Override
 	public String toString() {
-		return m_Name;
+		return mName;
 	}
 	@Override
 	public AutomatonTransition getLabel() {

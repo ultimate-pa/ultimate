@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -53,13 +53,13 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode process(RootNode root) {
-		ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		HashSet<RCFGEdge> closed = new HashSet<>();
+		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
+		final HashSet<RCFGEdge> closed = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			RCFGEdge current = edges.removeFirst();
+			final RCFGEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -81,7 +81,7 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 			return;
 		}
 
-		Infeasibility result = cb.getTransitionFormula().isInfeasible();
+		final Infeasibility result = cb.getTransitionFormula().isInfeasible();
 
 		switch (result) {
 		case INFEASIBLE:
@@ -97,6 +97,7 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 		}
 	}
 
+	@Override
 	public boolean isGraphChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}

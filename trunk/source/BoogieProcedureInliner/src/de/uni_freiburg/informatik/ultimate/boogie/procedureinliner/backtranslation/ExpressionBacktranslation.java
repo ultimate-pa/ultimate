@@ -26,25 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation;
 
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.GLOBAL;
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.IMPLEMENTATION_INPARAM;
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.IMPLEMENTATION_OUTPARAM;
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.PROC_FUNC_INPARAM;
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.PROC_FUNC_OUTPARAM;
+import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass.QUANTIFIED;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.VarMapKey;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.VarMapValue;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-
-import static de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass.*;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Part of @link {@link InlinerBacktranslator}.
@@ -55,21 +60,21 @@ import static de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInform
  */
 public class ExpressionBacktranslation extends BoogieTransformer {
 
-	private Map<VarMapValue, VarMapKey> mReverseVarMap = new HashMap<>();
+	private final Map<VarMapValue, VarMapKey> mReverseVarMap = new HashMap<>();
 
 	private Set<String> mActiveProcedures = Collections.emptySet();
 	
 	private boolean mProcessedExprWasActive = false;
 	
 	public void reverseAndAddMapping(Map<VarMapKey, VarMapValue> map) {
-		for (Map.Entry<VarMapKey, VarMapValue> entry : map.entrySet()) {
-			VarMapValue key = entry.getValue();
-			VarMapKey newValue = entry.getKey();
-			VarMapKey oldValue = mReverseVarMap.put(key, newValue);
+		for (final Map.Entry<VarMapKey, VarMapValue> entry : map.entrySet()) {
+			final VarMapValue key = entry.getValue();
+			final VarMapKey newValue = entry.getKey();
+			final VarMapKey oldValue = mReverseVarMap.put(key, newValue);
 			if (oldValue != null && !oldValue.equals(newValue)) {
 				if (oldValue.getVarId().equals(oldValue.getVarId())) {
-					DeclarationInformation combinedDeclInfo = combineDeclInfo(oldValue.getDeclInfo(), newValue.getDeclInfo());
-					VarMapKey combinedValue = new VarMapKey(oldValue.getVarId(), combinedDeclInfo);
+					final DeclarationInformation combinedDeclInfo = combineDeclInfo(oldValue.getDeclInfo(), newValue.getDeclInfo());
+					final VarMapKey combinedValue = new VarMapKey(oldValue.getVarId(), combinedDeclInfo);
 					mReverseVarMap.put(key, combinedValue);
 				} else {
 					throw new AssertionError("Ambiguous backtranslation mapping. Different variable names.");
@@ -79,11 +84,11 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 	}
 	
 	private DeclarationInformation combineDeclInfo(DeclarationInformation oldDI, DeclarationInformation newDI) {
-		String oldProc = oldDI.getProcedure();
-		String newProc = newDI.getProcedure();
+		final String oldProc = oldDI.getProcedure();
+		final String newProc = newDI.getProcedure();
 		if (oldProc != null && oldProc.equals(newProc) || oldProc == null && newProc == null) {
-			StorageClass oldSC = oldDI.getStorageClass();
-			StorageClass newSC = newDI.getStorageClass();
+			final StorageClass oldSC = oldDI.getStorageClass();
+			final StorageClass newSC = newDI.getStorageClass();
 			if (oldSC == IMPLEMENTATION_INPARAM && newSC == PROC_FUNC_INPARAM
 					|| newSC == IMPLEMENTATION_INPARAM && oldSC == PROC_FUNC_INPARAM) {
 				return new DeclarationInformation(IMPLEMENTATION_INPARAM, oldProc);
@@ -121,17 +126,17 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 		if (isDisguisedStruct(expr)) {
 			return processDisguisedStruct((IdentifierExpression) expr);
 		} else if (expr instanceof IdentifierExpression) {
-			IdentifierExpression idExpr = (IdentifierExpression) expr;
-			ILocation location = idExpr.getLocation();
-			IType type = idExpr.getType();
-			VarMapKey mapping = mReverseVarMap.get(
+			final IdentifierExpression idExpr = (IdentifierExpression) expr;
+			final ILocation location = idExpr.getLocation();
+			final IType type = idExpr.getType();
+			final VarMapKey mapping = mReverseVarMap.get(
 					new VarMapValue(idExpr.getIdentifier(), idExpr.getDeclarationInformation()));
 			if (mapping == null) {
 				mProcessedExprWasActive = true;
 				return expr;
 			}
-			DeclarationInformation translatedDeclInfo = mapping.getDeclInfo();
-			String translatedId = mapping.getVarId();
+			final DeclarationInformation translatedDeclInfo = mapping.getDeclInfo();
+			final String translatedId = mapping.getVarId();
 			Expression newExpr = new IdentifierExpression(location, type, translatedId, translatedDeclInfo);
 			ModelUtils.copyAnnotations(expr, newExpr);
 			if (mapping.getInOldExprOfProc() != null) {
@@ -160,7 +165,7 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 	 */
 	private boolean isDisguisedStruct(Expression expr) {
 		if (expr instanceof IdentifierExpression) {
-			IdentifierExpression idExpr = (IdentifierExpression) expr;
+			final IdentifierExpression idExpr = (IdentifierExpression) expr;
 			return idExpr.getIdentifier().contains("!");
 		}
 		return false;
@@ -176,11 +181,11 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 	 * @return Backtranslated struct as an IdentifierExpression.
 	 */
 	private IdentifierExpression processDisguisedStruct(IdentifierExpression disguisedStruct) {
-		String[] idParts = disguisedStruct.getIdentifier().split("!", 2);
+		final String[] idParts = disguisedStruct.getIdentifier().split("!", 2);
 		assert idParts.length == 2 : "IdentifierExpression was no disguised struct: " + disguisedStruct;
-		IdentifierExpression struct = new IdentifierExpression(
+		final IdentifierExpression struct = new IdentifierExpression(
 				disguisedStruct.getLocation(), null, idParts[0], disguisedStruct.getDeclarationInformation());
-		IdentifierExpression newStruct = (IdentifierExpression) processExpression(struct);		
+		final IdentifierExpression newStruct = (IdentifierExpression) processExpression(struct);		
 		return new IdentifierExpression(newStruct.getLocation(), disguisedStruct.getType(),
 				newStruct.getIdentifier() + "!" + idParts[1], newStruct.getDeclarationInformation());
 	} 

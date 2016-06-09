@@ -36,14 +36,13 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
@@ -56,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
 public class SpaceExParser implements ISource {
 
 	private final String[] mFileTypes;
-	private List<String> mFileNames;
+	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
@@ -101,13 +100,13 @@ public class SpaceExParser implements ISource {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new SpaceExParserPreferenceInitializer();
 	}
 
 	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -120,7 +119,7 @@ public class SpaceExParser implements ISource {
 
 		boolean knownExtension = false;
 
-		for (String s : getFileTypes()) {
+		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				knownExtension = true;
 				break;
@@ -177,7 +176,7 @@ public class SpaceExParser implements ISource {
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, mFileNames);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
@@ -27,8 +27,8 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider
 		implements ITransitionProvider<CodeBlock, ProgramPoint>, ILoopDetector<CodeBlock> {
 
 	private final NestedRun<CodeBlock, ?> mCex;
-	private Map<CodeBlock, Integer> mLetter2Index;
-	private CodeBlock mPostErrorLoc;
+	private final Map<CodeBlock, Integer> mLetter2Index;
+	private final CodeBlock mPostErrorLoc;
 
 	public NWAPathProgramTransitionProvider(final NestedRun<CodeBlock, ?> counterexample,
 			final IUltimateServiceProvider services, final RootAnnot annotation) {

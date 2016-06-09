@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -63,11 +63,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		// so we have the two edges
 		// e1 = (q1,st1,q2)
 		// e2 = (q2,st2,q3)
-		RCFGEdge predEdge = target.getIncomingEdges().get(0);
-		RCFGEdge succEdge = target.getOutgoingEdges().get(0);
+		final RCFGEdge predEdge = target.getIncomingEdges().get(0);
+		final RCFGEdge succEdge = target.getOutgoingEdges().get(0);
 
-		ProgramPoint pred = (ProgramPoint) predEdge.getSource();
-		ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
+		final ProgramPoint pred = (ProgramPoint) predEdge.getSource();
+		final ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return

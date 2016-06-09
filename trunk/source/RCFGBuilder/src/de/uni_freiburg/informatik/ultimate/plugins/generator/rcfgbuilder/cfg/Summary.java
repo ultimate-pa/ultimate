@@ -27,11 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 
@@ -50,11 +49,11 @@ public class Summary extends CodeBlock implements IInternalAction {
 	 */
 	private static final long serialVersionUID = 6048827510357561291L;
 
-	private final CallStatement m_CallStatement;
-	private final String m_PrettyPrintedStatements;
+	private final CallStatement mCallStatement;
+	private final String mPrettyPrintedStatements;
 	
 	@Visualizable
-	private final boolean m_CalledProcedureHasImplementation;
+	private final boolean mCalledProcedureHasImplementation;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -71,32 +70,33 @@ public class Summary extends CodeBlock implements IInternalAction {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CallStatement") {
-			return m_CallStatement;
+			return mCallStatement;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrintedStatements;
+			return mPrettyPrintedStatements;
 		} else {
 			return super.getFieldValue(field);
 		}
 	}
 
 	Summary(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st,
-			boolean calledProcedureHasImplementation, Logger logger) {
+			boolean calledProcedureHasImplementation, ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_CallStatement = st;
-		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;
-		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
+		mCallStatement = st;
+		mCalledProcedureHasImplementation = calledProcedureHasImplementation;
+		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 
 	public boolean calledProcedureHasImplementation() {
-		return m_CalledProcedureHasImplementation;
+		return mCalledProcedureHasImplementation;
 	}
 
 	public CallStatement getCallStatement() {
-		return m_CallStatement;
+		return mCallStatement;
 	}
 
+	@Override
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrintedStatements;
+		return mPrettyPrintedStatements;
 	}
 
 	@Override

@@ -40,7 +40,7 @@ public class PrintTerm {
 		try {
 			mTodo.push(term);
 			run(appender);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
@@ -54,7 +54,7 @@ public class PrintTerm {
 		try {
 			mTodo.push(sort);
 			run(appender);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
@@ -67,7 +67,7 @@ public class PrintTerm {
 		try {
 			mTodo.push(sexpr);
 			run(appender);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
@@ -81,12 +81,13 @@ public class PrintTerm {
 	public static String quoteIdentifier(String id) {
 		assert id.indexOf('|')  < 0 && id.indexOf('\\') < 0;
 		for (int idx = 0; idx < id.length(); idx++) {
-			char c = id.charAt(idx);
+			final char c = id.charAt(idx);
 			if (!(c >= 'A' && c <= 'Z')
 				&& !(c >= 'a' && c <= 'z')
 				&& !(c >= '0' && c <= '9' && idx > 0)
-				&& "~!@$%^&*_+-=<>.?/".indexOf(c) < 0)
+				&& "~!@$%^&*_+-=<>.?/".indexOf(c) < 0) {
 				return "|" + id + "|";
+			}
 		}
 		return id;
 	}
@@ -108,18 +109,19 @@ public class PrintTerm {
 	
 	private void run(Appendable appender) throws IOException {
 		while (!mTodo.isEmpty()) {
-			Object next = mTodo.removeLast();
+			final Object next = mTodo.removeLast();
 			if (next instanceof Term) {
 				((Term)next).toStringHelper(mTodo);
 			} else if (next instanceof Sort) {
 				((Sort)next).toStringHelper(mTodo);
 			} else if (next instanceof Object[]) {
-				Object[] arr = (Object[]) next;
+				final Object[] arr = (Object[]) next;
 				mTodo.addLast(")");
 				for (int i = arr.length - 1; i >= 0; i--) {
 					mTodo.addLast(arr[i]);
-					if (i > 0)
+					if (i > 0) {
 						mTodo.addLast(" ");
+					}
 				}
 				appender.append('(');
 			} else {
@@ -128,6 +130,7 @@ public class PrintTerm {
 		}
 	}
 	
+	@Override
 	public String toString() {
 		return "[PrintTerm: " + mTodo + "]";
 	}

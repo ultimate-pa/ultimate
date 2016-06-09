@@ -80,7 +80,7 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(ParallelComposition c) {
-		for(CodeBlock b : c.getCodeBlocks()){
+		for(final CodeBlock b : c.getCodeBlocks()){
 			visit(b);
 		}
 	}
@@ -90,7 +90,7 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(SequentialComposition c) {
-		for(CodeBlock b : c.getCodeBlocks()){
+		for(final CodeBlock b : c.getCodeBlocks()){
 			visit(b);
 		}
 	}

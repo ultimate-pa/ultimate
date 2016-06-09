@@ -76,14 +76,14 @@ public final class TarjanSCC {
             throw new IllegalArgumentException();
         }
         this.graph = graph;
-        this.maxIndex = 0;
-        this.stack = new Stack<String>();
-        this.sccs = new LinkedHashSet<LinkedHashSet<String>>();
-        this.indices = new LinkedHashMap<String, Integer>();
-        this.lowLink = new LinkedHashMap<String, Integer>();
-        for (String v : this.graph.keySet()) {
-            if (!this.indices.containsKey(v)) {
-                this.strongConnect(v);
+        maxIndex = 0;
+        stack = new Stack<String>();
+        sccs = new LinkedHashSet<LinkedHashSet<String>>();
+        indices = new LinkedHashMap<String, Integer>();
+        lowLink = new LinkedHashMap<String, Integer>();
+        for (final String v : this.graph.keySet()) {
+            if (!indices.containsKey(v)) {
+                strongConnect(v);
             }
         }
         return sccs;
@@ -98,34 +98,34 @@ public final class TarjanSCC {
      *            the vertex to visit.
      */
     private void strongConnect(String v) {
-        if (!this.graph.containsKey(v)) {
+        if (!graph.containsKey(v)) {
             return; // skip undeclared methods!
         }
-        assert (!this.indices.containsKey(v));
-        assert (!this.indices.containsKey(v));
-        this.indices.put(v, this.maxIndex);
-        this.lowLink.put(v, this.maxIndex);
-        this.maxIndex++;
-        this.stack.push(v);
-        for (String s : this.graph.get(v)) {
-            if (!this.graph.containsKey(s)) {
+        assert (!indices.containsKey(v));
+        assert (!indices.containsKey(v));
+        indices.put(v, maxIndex);
+        lowLink.put(v, maxIndex);
+        maxIndex++;
+        stack.push(v);
+        for (final String s : graph.get(v)) {
+            if (!graph.containsKey(s)) {
                 stack.remove(s);
                 continue; // skip undeclared methods!
             }
-            if (!this.indices.containsKey(s)) {
-                this.strongConnect(s);
-                this.lowLink.put(v,
-                        Math.min(this.lowLink.get(v), this.lowLink.get(s)));
+            if (!indices.containsKey(s)) {
+                strongConnect(s);
+                lowLink.put(v,
+                        Math.min(lowLink.get(v), lowLink.get(s)));
             } else if (stack.contains(s)) {
-                this.lowLink.put(v,
-                        Math.min(this.lowLink.get(v), this.indices.get(s)));
+                lowLink.put(v,
+                        Math.min(lowLink.get(v), indices.get(s)));
             }
         }
-        if (this.lowLink.get(v).equals(this.indices.get(v))) {
-            LinkedHashSet<String> set = new LinkedHashSet<String>();
+        if (lowLink.get(v).equals(indices.get(v))) {
+            final LinkedHashSet<String> set = new LinkedHashSet<String>();
             String s;
             do {
-                s = this.stack.pop();
+                s = stack.pop();
                 set.add(s);
             } while (!s.equals(v));
             sccs.add(set);

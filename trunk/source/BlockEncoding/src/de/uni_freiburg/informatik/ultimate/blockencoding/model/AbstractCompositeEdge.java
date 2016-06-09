@@ -37,10 +37,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
 /**
  * Basic abstract class for composite edges (Conjunction or Disjunction),
@@ -88,12 +88,12 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 *            the right side of the conjunction
 	 */
 	protected AbstractCompositeEdge(IMinimizedEdge left, IMinimizedEdge right) {
-		this.containedEdges = initContainedEdges(left, right);
-		this.leftEdge = left;
+		containedEdges = initContainedEdges(left, right);
+		leftEdge = left;
 		counter = counter + left.getElementCount();
-		this.rightEdge = right;
+		rightEdge = right;
 		counter = counter + right.getElementCount();
-		this.payload = new Payload();
+		payload = new Payload();
 		// update the contained disjunctions
 		if (left instanceof AbstractCompositeEdge) {
 			mContainedDisjunctions = ((AbstractCompositeEdge) left)
@@ -103,10 +103,10 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 			mContainedDisjunctions += ((AbstractCompositeEdge) right)
 					.getContainedDisjunctions();
 		}
-		this.usedVariables = new HashSet<BoogieVar>();
-		this.usedVariables.addAll(left.getDifferentVariables());
-		this.usedVariables.addAll(right.getDifferentVariables());
-		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(this.usedVariables
+		usedVariables = new HashSet<BoogieVar>();
+		usedVariables.addAll(left.getDifferentVariables());
+		usedVariables.addAll(right.getDifferentVariables());
+		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(usedVariables
 				.size());
 	}
 
@@ -124,7 +124,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 */
 	private HashSet<IMinimizedEdge> initContainedEdges(IMinimizedEdge left,
 			IMinimizedEdge right) {
-		HashSet<IMinimizedEdge> conEdges = new HashSet<IMinimizedEdge>();
+		final HashSet<IMinimizedEdge> conEdges = new HashSet<IMinimizedEdge>();
 		if (left.isBasicEdge()) {
 			conEdges.add(left);
 		} else {
@@ -144,7 +144,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 * @return
 	 */
 	public Set<IMinimizedEdge> getContainedEdgesSet() {
-		return this.containedEdges;
+		return containedEdges;
 	}
 
 	/**
@@ -158,15 +158,15 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		if (edgeToCheck.isBasicEdge()) {
 			return containedEdges.contains(edgeToCheck);
 		} else {
-			boolean flag = containedEdges.contains(edgeToCheck);
+			final boolean flag = containedEdges.contains(edgeToCheck);
 			if (flag) {
 				return true;
 			}
 		}
-		IMinimizedEdge[] compositeEdges = ((ICompositeEdge) edgeToCheck)
+		final IMinimizedEdge[] compositeEdges = ((ICompositeEdge) edgeToCheck)
 				.getCompositeEdges();
-		boolean left = duplicationOfFormula(compositeEdges[0]);
-		boolean right = duplicationOfFormula(compositeEdges[1]);
+		final boolean left = duplicationOfFormula(compositeEdges[0]);
+		final boolean right = duplicationOfFormula(compositeEdges[1]);
 		return left || right;
 	}
 
@@ -184,7 +184,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		// Instead of using the recursive algorithm we use here Set-Intersection
 		// it seems to be a little bit faster, and way more easier to debug.
 		if (!edgeToCheck.isBasicEdge()) {
-			HashSet<IMinimizedEdge> interSection = new HashSet<IMinimizedEdge>(
+			final HashSet<IMinimizedEdge> interSection = new HashSet<IMinimizedEdge>(
 					containedEdges);
 			interSection.retainAll(((AbstractCompositeEdge) edgeToCheck)
 					.getContainedEdgesSet());
@@ -258,12 +258,12 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 
 	@Override
 	public void setTarget(MinimizedNode target) {
-		this.rightEdge.setTarget(target);
+		rightEdge.setTarget(target);
 	}
 
 	@Override
 	public void setSource(MinimizedNode source) {
-		this.leftEdge.setSource(source);
+		leftEdge.setSource(source);
 	}
 
 	@Override
@@ -299,7 +299,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public List<IWalkable> getSuccessors() {
-		return (List<IWalkable>) (List) Arrays.asList(new IMinimizedEdge[] {
+		return (List) Arrays.asList(new IMinimizedEdge[] {
 				leftEdge, rightEdge });
 	}
 
@@ -334,7 +334,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 */
 	@Override
 	public Set<BoogieVar> getDifferentVariables() {
-		return this.usedVariables;
+		return usedVariables;
 	}
 	
 	@Override

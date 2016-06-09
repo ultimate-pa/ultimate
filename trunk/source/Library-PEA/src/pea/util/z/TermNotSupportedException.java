@@ -38,7 +38,7 @@ import net.sourceforge.czt.session.SectionInfo;
 public class TermNotSupportedException extends RuntimeException {
 
     
-    public static final String Z_TERM_NOT_SUPPORTED_IN_CURRENT_OPERATION = "Z term not supported in current operation: ";
+    public static final String Z_TERmNOT_SUPPORTED_IN_CURRENT_OPERATION = "Z term not supported in current operation: ";
     
     private static final long serialVersionUID = -395464031262474943L;
     
@@ -87,7 +87,7 @@ public class TermNotSupportedException extends RuntimeException {
      */
     @Override
     public String toString() {
-        return Z_TERM_NOT_SUPPORTED_IN_CURRENT_OPERATION + 
+        return Z_TERmNOT_SUPPORTED_IN_CURRENT_OPERATION + 
             getUnsupportedTermAsUnicode();
     }
     

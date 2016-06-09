@@ -34,12 +34,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AutomatonSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -47,13 +46,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Operation that computes the loop complexity of an automaton.
- * We define the loop complexity of an automaton as the loop complexity of
- * the underlying graph representation. This number is also called cycle rank.
+ * Operation that computes the loop complexity of an automaton. We define the loop complexity of an automaton as the
+ * loop complexity of the underlying graph representation. This number is also called cycle rank.
  * https://en.wikipedia.org/wiki/Cycle_rank
  * 
  * @author Thomas Lang, Matthias Heizmann
@@ -61,79 +59,74 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @param <LETTER>
  * @param <STATE>
  */
-public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> {	
-	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
-	
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Operand;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Graph;
-	private final Integer m_Result;
-	
-	private HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
-	
-	
-	public LoopComplexity(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> {
+
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mOperand;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mGraph;
+	private final Integer mResult;
+
+	private final HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
+
+	public LoopComplexity(AutomataLibraryServices services, INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataLibraryException {
 		super();
-		
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		
+
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+
 		if (operand instanceof NestedWordAutomatonReachableStates) {
-			m_Operand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
+			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
 		} else {
-			m_Operand = (new RemoveUnreachable<LETTER, STATE>(m_Services, operand)).getResult();
+			mOperand = (new RemoveUnreachable<LETTER, STATE>(mServices, operand)).getResult();
 		}
-		
-		m_Graph = constructGraph(m_Operand);
-		
-		m_Logger.info(this.startMessage());
-		
-		m_Result = computeLoopComplexityOfSubgraph(m_Graph.getStates());
-		m_Logger.info(this.exitMessage());
+
+		mGraph = constructGraph(mOperand);
+
+		mLogger.info(this.startMessage());
+
+		mResult = computeLoopComplexityOfSubgraph(mGraph.getStates());
+		mLogger.info(this.exitMessage());
 	}
 
 	/**
-	 * Construct an automaton that represents the graph structure of
-	 * the operand. The Result is a copy of the operand where each edge
-	 * has the same label. As label we us some letter form the alphabet.
+	 * Construct an automaton that represents the graph structure of the operand. The Result is a copy of the operand
+	 * where each edge has the same label. As label we us some letter form the alphabet.
 	 */
 	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
-			INestedWordAutomaton<LETTER, STATE> automaton) throws OperationCanceledException {
-		LETTER letter = automaton.getInternalAlphabet().iterator().next();
-		Set<LETTER> singletonAlphabet = Collections.singleton(letter);
-		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(
-				m_Services, singletonAlphabet, singletonAlphabet, singletonAlphabet, 
-				automaton.getStateFactory());
-				
-		for (STATE q : automaton.getStates()) {
+			INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
+		final LETTER letter = automaton.getInternalAlphabet().iterator().next();
+		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
+		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(mServices, singletonAlphabet,
+				singletonAlphabet, singletonAlphabet, automaton.getStateFactory());
+
+		for (final STATE q : automaton.getStates()) {
 			graph.addState(true, true, q);
 		}
-		
-		for (STATE q1 : automaton.getStates()) {
-			for ( OutgoingInternalTransition<LETTER, STATE> outTrans : automaton.internalSuccessors(q1)) {
-				STATE q2 = outTrans.getSucc();
+
+		for (final STATE q1 : automaton.getStates()) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : automaton.internalSuccessors(q1)) {
+				final STATE q2 = outTrans.getSucc();
 				if (!graph.containsInternalTransition(q1, letter, q2)) {
 					graph.addInternalTransition(q1, letter, q2);
 				}
 			}
 		}
-		return (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
+		return (new RemoveUnreachable<LETTER, STATE>(mServices, graph)).getResult();
 	}
-	
 
 	/**
-	 * Compute the loop complexity of the subgraph that is obtained by
-	 * projecting m_Graph to a subgraph. 
+	 * Compute the loop complexity of the subgraph that is obtained by projecting mGraph to a subgraph.
+	 * 
 	 * @throws AutomataLibraryException
 	 */
-	private Integer computeLoopComplexityOfSubgraph(Set<STATE> statesOfSubgraph) 
-			throws AutomataLibraryException {
+	private Integer computeLoopComplexityOfSubgraph(Set<STATE> statesOfSubgraph) throws AutomataLibraryException {
 
-		AutomatonSccComputation<LETTER, STATE> sccComputation = 
-				new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, statesOfSubgraph, statesOfSubgraph);
-		Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
+		final AutomatonSccComputation<LETTER, STATE> sccComputation = new AutomatonSccComputation<LETTER, STATE>(mGraph,
+				mServices, statesOfSubgraph, statesOfSubgraph);
+		final Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
 
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
@@ -141,25 +134,24 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
 
+			final Set<STATE> ballStates = balls.iterator().next().getNodes();
 
-			Set<STATE> ballStates = balls.iterator().next().getNodes();
-
-			Collection<STATE> nonchainStates = extractNonchainStates(ballStates);
+			final Collection<STATE> nonchainStates = extractNonchainStates(ballStates);
 
 			// If every state has one predecessor and one successor, the ball is a cycle.
 			if (nonchainStates.isEmpty()) {
 				return 1;
 			}
 
-			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
+			final Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
 			// Create a copy since 'nonchainStates' itself should not be modified.
-			Set<STATE> copyStates = new HashSet<STATE>(statesOfSubgraph);
+			final Set<STATE> copyStates = new HashSet<STATE>(statesOfSubgraph);
 
-			for (STATE stateOut : nonchainStates) {
+			for (final STATE stateOut : nonchainStates) {
 				// Check for cancel button.
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 
 				copyStates.remove(stateOut);
@@ -167,11 +159,11 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (statesToLC.containsKey(copyStates)) {
 					subGraphLoopComplexities.add(statesToLC.get(copyStates));
 				} else {
-					Integer i = this.computeLoopComplexityOfSubgraph(copyStates);
+					final Integer i = this.computeLoopComplexityOfSubgraph(copyStates);
 
 					// Create another copy to prevent HashMap from not
 					// recognizing sets of states after they have been modified.
-					Set<STATE> keyStates = new HashSet<STATE>(copyStates);
+					final Set<STATE> keyStates = new HashSet<STATE>(copyStates);
 					statesToLC.put(keyStates, i);
 
 					subGraphLoopComplexities.add(i);
@@ -181,17 +173,17 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			}
 
 			return 1 + Collections.min(subGraphLoopComplexities);
-		} else { // Graph itself is not a ball.		
-			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
+		} else { // Graph itself is not a ball.
+			final Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 
 			// Compute Loop Complexity for each ball.
-			for (StronglyConnectedComponent<STATE> scc : balls) {
+			for (final StronglyConnectedComponent<STATE> scc : balls) {
 				if (statesToLC.containsKey(scc.getNodes())) {
 					ballLoopComplexities.add(statesToLC.get(scc.getNodes()));
 				} else {
-					Integer i = this.computeLoopComplexityOfSubgraph(scc.getNodes());
+					final Integer i = this.computeLoopComplexityOfSubgraph(scc.getNodes());
 
-					Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
+					final Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
 					statesToLC.put(keyStates, i);
 
 					ballLoopComplexities.add(i);
@@ -202,30 +194,28 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		}
 	}
 
-	
 	/**
-	 * Returns a new collection that contains only the non-chain states.
-	 * We call a state a non-chain state if it has not exactly one predecessor
-	 * or not exactly one successor. 
+	 * Returns a new collection that contains only the non-chain states. We call a state a non-chain state if it has not
+	 * exactly one predecessor or not exactly one successor.
 	 */
 	private Collection<STATE> extractNonchainStates(Set<STATE> states) {
-		Collection<STATE> peakStates = new ArrayList<STATE>();
+		final Collection<STATE> peakStates = new ArrayList<STATE>();
 		// Determine number of predecessors and successors for each state.
-		for (STATE q : states) {
+		for (final STATE q : states) {
 			int pCount = 0;
 			int sCount = 0;
 
-			Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
-			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
+			final Iterable<IncomingInternalTransition<LETTER, STATE>> preds = mGraph.internalPredecessors(q);
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = mGraph.internalSuccessors(q);
 
-			for (IncomingInternalTransition<LETTER, STATE> p : preds) {
+			for (final IncomingInternalTransition<LETTER, STATE> p : preds) {
 				if (!states.contains(p.getPred())) {
 					continue;
 				}
 				++pCount;
 			}
 
-			for (OutgoingInternalTransition<LETTER, STATE> s : succs) {
+			for (final OutgoingInternalTransition<LETTER, STATE> s : succs) {
 				if (!states.contains(s.getSucc())) {
 					continue;
 				}
@@ -249,25 +239,22 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + 
-				m_Operand.sizeInformation();	
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand with " + 
-				m_Operand.getStates().size() + " states hast loop complexity " 
-				+ m_Result;
+		return "Finished " + operationName() + ". Operand with " + mOperand.getStates().size()
+				+ " states hast loop complexity " + mResult;
 	}
 
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return true;
 	}

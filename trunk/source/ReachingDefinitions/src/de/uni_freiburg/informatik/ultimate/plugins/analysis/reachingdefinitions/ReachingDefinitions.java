@@ -29,15 +29,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.apache.log4j.Logger;
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefGraphAnnotationProvider;
@@ -85,13 +86,13 @@ public class ReachingDefinitions implements IAnalysis {
 	public List<IObserver> getObservers() {
 		if (mCurrentGraphType.getCreator().equals(
 				de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID)) {
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefGraphAnnotationProvider<>(null);
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefGraphAnnotationProvider<>(null);
-			Logger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefGraphAnnotationProvider<>(null);
+			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefGraphAnnotationProvider<>(null);
+			final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-			AssumeFinder finder = new AssumeFinder(logger);
+			final AssumeFinder finder = new AssumeFinder(logger);
 
-			List<IObserver> rtr = new ArrayList<>();
+			final List<IObserver> rtr = new ArrayList<>();
 			rtr.add(new ReachDefRCFG(logger, stmtProvider, edgeProvider));
 			rtr.add(finder);
 			// rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
@@ -116,20 +117,20 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 
-	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
 			RootNode rootNode) throws Throwable {
 		return computeRDForTrace(trace, logger, PreprocessorAnnotation.getAnnotation(rootNode).getSymbolTable());
 	}
 
-	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
 			BoogieSymbolTable symbolTable) throws Throwable {
-		IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
-		IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
-		ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
+		final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
+		final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
+		final ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
 		return rdt.process(trace);
 	}
 

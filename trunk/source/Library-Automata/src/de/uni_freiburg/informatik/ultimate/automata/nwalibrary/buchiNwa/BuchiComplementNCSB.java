@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -40,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 	
 
@@ -51,12 +50,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
-	private final BuchiComplementNCSBNwa<LETTER, STATE> m_Complemented;	
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
+	private final BuchiComplementNCSBNwa<LETTER, STATE> mComplemented;	
 	
 	
 	
@@ -69,27 +68,27 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand " + 
-				m_Operand.sizeInformation() + " Result " + 
-				m_Result.sizeInformation();
+				mOperand.sizeInformation() + " Result " + 
+				mResult.sizeInformation();
 	}
 	
 	public BuchiComplementNCSB(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_Operand = input;
-		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementNCSBNwa<LETTER, STATE>(m_Services, input, stateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mComplemented = new BuchiComplementNCSBNwa<LETTER, STATE>(mServices, input, stateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
+		mLogger.info(exitMessage());
 	}
 	
 
@@ -97,62 +96,62 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		boolean underApproximationOfComplement = false;
+		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
-		m_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Services, m_Operand);
-		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
-		boolean operandEmpty = operandEmptiness.getResult();
+		mLogger.info("Start testing correctness of " + operationName());
+		final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
+				ResultChecker.getOldApiNwa(mServices, mOperand);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
+		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
-		boolean resultEmpty = resultEmptiness.getResult();
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, operandOldApi)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, operandOldApi)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		
 
-		for (NestedLassoWord<LETTER> nlw : lassoWords) {
+		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
 			if (!thistime) {
 				thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
@@ -162,10 +161,10 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 		}
 
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "FailedRes", "", m_Result);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "FailedRes", "", mResult);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
@@ -173,8 +172,8 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand , 
 			boolean underApproximationOfComplement) throws AutomataLibraryException {
-		boolean op = (new BuchiAccepts<LETTER, STATE>(m_Services, operand, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
+		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		boolean correct;
 		if (underApproximationOfComplement) {
 			correct = !res || op;
@@ -188,7 +187,7 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 

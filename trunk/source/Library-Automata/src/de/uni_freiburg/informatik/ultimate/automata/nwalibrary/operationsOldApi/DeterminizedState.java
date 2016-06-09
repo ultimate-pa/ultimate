@@ -56,20 +56,22 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * present is contained in the image of caller.  
 	 */
 	private final Map<STATE,Set<STATE>> caller2presents;
-	private boolean m_ConstructionFinished;
-	private int m_HashCode;
+	private boolean mConstructionFinished;
+	private int mHashCode;
 	private boolean containsFinal = false;
-	private STATE m_CachedResultingState = null;
+	private STATE mCachedResultingState = null;
 	
 	public DeterminizedState(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		caller2presents = new HashMap<STATE,Set<STATE>>();
 	}
 	
+	@Override
 	public Set<STATE> getDownStates() {
 		return caller2presents.keySet();
 	}
 	
 	
+	@Override
 	public Set<STATE> getUpStates(STATE caller) {
 		return caller2presents.get(caller);
 	}
@@ -91,8 +93,8 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		if (caller2presents.isEmpty()) {
 			return false;
 		}
-		for (STATE down : caller2presents.keySet()) {
-			for (STATE up : caller2presents.get(down)) {
+		for (final STATE down : caller2presents.keySet()) {
+			for (final STATE up : caller2presents.get(down)) {
 				if (!nwa.isFinal(up)) {
 					return false;
 				}
@@ -106,10 +108,10 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * By the contentFactory created content for the determinized state.
 	 */
 	public STATE getContent(StateFactory<STATE> stateFactory) {
-		if (m_CachedResultingState == null) {
-			m_CachedResultingState = stateFactory.determinize(caller2presents);
+		if (mCachedResultingState == null) {
+			mCachedResultingState = stateFactory.determinize(caller2presents);
 		}
-		return m_CachedResultingState;
+		return mCachedResultingState;
 	}
 
 
@@ -117,7 +119,7 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * Add the pair (caller,present) to the set. 
 	 */
 	public void addPair(STATE caller, STATE present, INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		if (m_ConstructionFinished) {
+		if (mConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}
 		if (nwa.isFinal(present)) {
@@ -140,7 +142,7 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof DeterminizedState) {
-			DeterminizedState<LETTER,STATE> detState = (DeterminizedState<LETTER,STATE>) obj;
+			final DeterminizedState<LETTER,STATE> detState = (DeterminizedState<LETTER,STATE>) obj;
 			return caller2presents.equals(detState.caller2presents);
 		}
 		else {
@@ -151,26 +153,27 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	
 	@Override
 	public int hashCode() {
-		if (!m_ConstructionFinished) {
-			m_HashCode = caller2presents.hashCode();
-			m_ConstructionFinished = true;
+		if (!mConstructionFinished) {
+			mHashCode = caller2presents.hashCode();
+			mConstructionFinished = true;
 		}
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 
+	@Override
 	public String toString() {
 		return caller2presents.toString();
 	}
 	
 	public boolean isSubsetOf(DeterminizedState<LETTER,STATE> superset) {
-		for (STATE down : getDownStates()) {
-			Set<STATE> SupersetUpStates = superset.getUpStates(down);
+		for (final STATE down : getDownStates()) {
+			final Set<STATE> SupersetUpStates = superset.getUpStates(down);
 			if (SupersetUpStates == null) {
 				return false;
 			}
 			else {
-				for (STATE up : getUpStates(down)) {
+				for (final STATE up : getUpStates(down)) {
 					if (!SupersetUpStates.contains(up)) {
 						return false;
 					}
@@ -186,7 +189,7 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	
 	public int degreeOfNondeterminism() {
 		int degree = 0;
-		for ( STATE down : getDownStates()) {
+		for ( final STATE down : getDownStates()) {
 			degree += getUpStates(down).size();
 		}
 		return degree;

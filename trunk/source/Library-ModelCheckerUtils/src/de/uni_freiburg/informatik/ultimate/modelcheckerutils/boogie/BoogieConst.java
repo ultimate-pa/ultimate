@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 
 
 /**
@@ -37,63 +37,75 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
  *
  */
 public class BoogieConst implements IBoogieVar {
-	private final String m_Identifier;
-	private final IType m_IType;
+	private final String mIdentifier;
+	private final IType mIType;
 	
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in
 	 * closed SMT terms. 
 	 */
-	private final ApplicationTerm m_SmtConstant;
+	private final ApplicationTerm mSmtConstant;
 
 	public BoogieConst(String identifier, IType iType,
 			ApplicationTerm smtConstant) {
-		m_Identifier = identifier;
-		m_IType = iType;
-		m_SmtConstant = smtConstant;
+		mIdentifier = identifier;
+		mIType = iType;
+		mSmtConstant = smtConstant;
 	}
 	
+	@Override
 	public String getIdentifier() {
-		return m_Identifier;
+		return mIdentifier;
 	}
 
+	@Override
 	public IType getIType() {
-		return m_IType;
+		return mIType;
 	}
 
+	@Override
 	public ApplicationTerm getDefaultConstant() {
-		return m_SmtConstant;
+		return mSmtConstant;
 	}
 
 	@Override
 	public int hashCode() {
-		return m_Identifier.hashCode();
+		return mIdentifier.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		BoogieConst other = (BoogieConst) obj;
-		if (m_SmtConstant == null) {
-			if (other.m_SmtConstant != null)
+		}
+		final BoogieConst other = (BoogieConst) obj;
+		if (mSmtConstant == null) {
+			if (other.mSmtConstant != null) {
 				return false;
-		} else if (!m_SmtConstant.equals(other.m_SmtConstant))
+			}
+		} else if (!mSmtConstant.equals(other.mSmtConstant)) {
 			return false;
-		if (m_IType == null) {
-			if (other.m_IType != null)
+		}
+		if (mIType == null) {
+			if (other.mIType != null) {
 				return false;
-		} else if (!m_IType.equals(other.m_IType))
+			}
+		} else if (!mIType.equals(other.mIType)) {
 			return false;
-		if (m_Identifier == null) {
-			if (other.m_Identifier != null)
+		}
+		if (mIdentifier == null) {
+			if (other.mIdentifier != null) {
 				return false;
-		} else if (!m_Identifier.equals(other.m_Identifier))
+			}
+		} else if (!mIdentifier.equals(other.mIdentifier)) {
 			return false;
+		}
 		return true;
 	}
 }

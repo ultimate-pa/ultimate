@@ -75,7 +75,7 @@ public class BoogieAutomizerTC extends WebToolchain {
 	}
 
 	static List<Tool> boogieAutomizerTools() {
-		List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<Tool>();
 
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
@@ -85,7 +85,7 @@ public class BoogieAutomizerTC extends WebToolchain {
 	}
 
 	static List<Setting> boogieAutomizerAdditionalSettings() {
-		List<Setting> rtr = new ArrayList<>();
+		final List<Setting> rtr = new ArrayList<>();
 
 //		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
 //				"true", true));

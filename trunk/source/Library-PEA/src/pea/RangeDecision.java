@@ -47,35 +47,40 @@ public class RangeDecision extends Decision {
         this.limits = limits;
     }
 
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (!(o instanceof RangeDecision)) {
             return false;
         }
 
-        RangeDecision rd = (RangeDecision) o;
+        final RangeDecision rd = (RangeDecision) o;
 
         if (!var.equals(rd.var)) {
             return false;
         }
 
-        for (int i = 0; i < limits.length; i++)
-            if (limits[i] != rd.limits[i]) {
+        for (int i = 0; i < limits.length; i++) {
+			if (limits[i] != rd.limits[i]) {
                 return false;
             }
+		}
 
         return true;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         int hash = var.hashCode();
 
-        for (int i = 0; i < limits.length; i++)
-            hash = (hash * (i + 13)) ^ limits[i];
+        for (int i = 0; i < limits.length; i++) {
+			hash = (hash * (i + 13)) ^ limits[i];
+		}
 
         return hash;
     }
 
-    public CDD simplify(CDD[] childs) {
+    @Override
+	public CDD simplify(CDD[] childs) {
         int elems = 0;
 
         for (int i = 0; i < limits.length; i++) {
@@ -89,8 +94,8 @@ public class RangeDecision extends Decision {
         }
 
         if (elems < limits.length) {
-            int[] nlimits = new int[elems++];
-            CDD[] nchilds = new CDD[elems];
+            final int[] nlimits = new int[elems++];
+            final CDD[] nchilds = new CDD[elems];
             elems = 0;
 
             for (int i = 0; i < limits.length; i++) {
@@ -156,7 +161,8 @@ public class RangeDecision extends Decision {
         return cdd;
     }
 
-    public int compareTo(Object o) {
+    @Override
+	public int compareTo(Object o) {
         if (o instanceof EventDecision) {
             return 1;
         }
@@ -168,12 +174,13 @@ public class RangeDecision extends Decision {
         return var.compareTo(((RangeDecision) o).var);
     }
 
-    public CDD and(Decision other, CDD[] childs, CDD[] ochilds, HashMap<CDD,HashMap<CDD,CDD>> cache) {
-        int[] olimits = ((RangeDecision) other).limits;
+    @Override
+	public CDD and(Decision other, CDD[] childs, CDD[] ochilds, HashMap<CDD,HashMap<CDD,CDD>> cache) {
+        final int[] olimits = ((RangeDecision) other).limits;
 
         if (childs.length == 1) // SR2010-08-03 
          {
-            CDD[] t = childs;
+            final CDD[] t = childs;
             childs = new CDD[2];
             childs[0] = t[0];
             childs[1] = CDD.FALSE;
@@ -217,11 +224,11 @@ public class RangeDecision extends Decision {
         }
 
         if (nptr != nlimits.length) {
-            int[] nnlimits = new int[nptr];
+            final int[] nnlimits = new int[nptr];
             System.arraycopy(nlimits, 0, nnlimits, 0, nptr);
             nlimits = nnlimits;
 
-            CDD[] nnchilds = new CDD[nptr + 1];
+            final CDD[] nnchilds = new CDD[nptr + 1];
             System.arraycopy(nchilds, 0, nnchilds, 0, nptr + 1);
             nchilds = nnchilds;
         }
@@ -229,8 +236,9 @@ public class RangeDecision extends Decision {
         return CDD.create(new RangeDecision(var, nlimits), nchilds);
     }
 
-    public CDD or(Decision other, CDD[] childs, CDD[] ochilds) {
-        int[] olimits = ((RangeDecision) other).limits;
+    @Override
+	public CDD or(Decision other, CDD[] childs, CDD[] ochilds) {
+        final int[] olimits = ((RangeDecision) other).limits;
 
         /* intersect all intervals */
         CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
@@ -270,11 +278,11 @@ public class RangeDecision extends Decision {
         }
 
         if (nptr != nlimits.length) {
-            int[] nnlimits = new int[nptr];
+            final int[] nnlimits = new int[nptr];
             System.arraycopy(nlimits, 0, nnlimits, 0, nptr);
             nlimits = nnlimits;
 
-            CDD[] nnchilds = new CDD[nptr + 1];
+            final CDD[] nnchilds = new CDD[nptr + 1];
             System.arraycopy(nchilds, 0, nnchilds, 0, nptr + 1);
             nchilds = nnchilds;
         }
@@ -282,8 +290,9 @@ public class RangeDecision extends Decision {
         return CDD.create(new RangeDecision(var, nlimits), nchilds);
     }
 
-    public CDD assume(Decision other, CDD[] childs, CDD[] ochilds) {
-        int[] olimits = ((RangeDecision) other).limits;
+    @Override
+	public CDD assume(Decision other, CDD[] childs, CDD[] ochilds) {
+        final int[] olimits = ((RangeDecision) other).limits;
 
         /* intersect all intervals */
         CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
@@ -337,11 +346,11 @@ public class RangeDecision extends Decision {
         }
 
         if (nptr != nlimits.length) {
-            int[] nnlimits = new int[nptr];
+            final int[] nnlimits = new int[nptr];
             System.arraycopy(nlimits, 0, nnlimits, 0, nptr);
             nlimits = nnlimits;
 
-            CDD[] nnchilds = new CDD[nptr + 1];
+            final CDD[] nnchilds = new CDD[nptr + 1];
             System.arraycopy(nchilds, 0, nnchilds, 0, nptr + 1);
             nchilds = nnchilds;
         }
@@ -349,8 +358,9 @@ public class RangeDecision extends Decision {
         return CDD.create(new RangeDecision(var, nlimits), nchilds);
     }
 
-    public boolean implies(Decision other, CDD[] childs, CDD[] ochilds) {
-        int[] olimits = ((RangeDecision) other).limits;
+    @Override
+	public boolean implies(Decision other, CDD[] childs, CDD[] ochilds) {
+        final int[] olimits = ((RangeDecision) other).limits;
 
         int tptr = 0;
         int optr = 0;
@@ -379,7 +389,8 @@ public class RangeDecision extends Decision {
         return true;
     }
 
-    public String toString(int childs) {
+    @Override
+	public String toString(int childs) {
         if (childs == 0) {
             return var + (((limits[0] & 1) == 0) ? " < " : " \u2264 ") +
             (limits[0] / 2);
@@ -401,12 +412,14 @@ public class RangeDecision extends Decision {
         (limits[childs] / 2);
     }
 
-    public String toSmtString(int childs) {
+    @Override
+	public String toSmtString(int childs) {
         return toSmtString(childs, 0);
     }
 
-    public String toSmtString(int childs, int index) {
-        String var = "(- T_" + index + " " + this.var + "_" + index + ")";
+    @Override
+	public String toSmtString(int childs, int index) {
+        final String var = "(- T_" + index + " " + this.var + "_" + index + ")";
 
         if (childs == 0) {
             return "( " + (((limits[0] & 1) == 0) ? " < " : " <= ") + var +
@@ -454,7 +467,8 @@ public class RangeDecision extends Decision {
         return OP_INVALID;
     }
 
-    public String toUppaalString(int childs) {
+    @Override
+	public String toUppaalString(int childs) {
         String var = this.var;
 
         if (var.charAt(var.length() - 1) == '\'') {
@@ -483,7 +497,8 @@ public class RangeDecision extends Decision {
         (limits[childs] / 2);
     }
 
-    public String toUppaalStringDOM(int childs) {
+    @Override
+	public String toUppaalStringDOM(int childs) {
         String var = this.var;
 
         if (var.charAt(var.length() - 1) == '\'') {
@@ -511,7 +526,7 @@ public class RangeDecision extends Decision {
     }
 
     public static void main(String[] param) {
-        CDD[] a = new CDD[] {
+        final CDD[] a = new CDD[] {
                 RangeDecision.create("x", OP_EQ, 5),
                 RangeDecision.create("x", OP_LTEQ, 7),
                 RangeDecision.create("x", OP_LT, 3),
@@ -536,7 +551,8 @@ public class RangeDecision extends Decision {
     /**
      * @return Returns the var.
      */
-    public String getVar() {
+    @Override
+	public String getVar() {
         return var;
     }
 
@@ -549,8 +565,8 @@ public class RangeDecision extends Decision {
 
     @Override
     public Decision prime() {
-        String primed = this.var + RangeDecision.PRIME;
-        int[] limits = this.limits.clone();
+        final String primed = var + RangeDecision.PRIME;
+        final int[] limits = this.limits.clone();
 
         return new RangeDecision(primed, limits);
     }
@@ -558,13 +574,13 @@ public class RangeDecision extends Decision {
     //by Ami
     @Override
     public Decision unprime() {
-        String unprimed = this.var;
+        String unprimed = var;
 
-        if (this.var.endsWith(PRIME)) {
-            unprimed = this.var.substring(0, this.var.length() - 1);
+        if (var.endsWith(PRIME)) {
+            unprimed = var.substring(0, var.length() - 1);
         }
 
-        int[] limits = this.limits.clone();
+        final int[] limits = this.limits.clone();
 
         return new RangeDecision(unprimed, limits);
     }

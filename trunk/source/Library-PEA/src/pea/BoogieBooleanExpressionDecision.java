@@ -2,24 +2,19 @@ package pea;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 
 /**
  * Pea Decision expressed by a BoogieAST Expression.
@@ -176,7 +171,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	class BoogieIdentifierCollector extends BoogieVisitor{
 		
 		private ArrayList<IdentifierExpression> identifiers = new ArrayList<IdentifierExpression>();
-		private BoogieType aproxType = BoogieType.boolType;
+		private BoogieType aproxType = BoogieType.TYPE_BOOL;
 		
 		@Override
 		protected void visit(IdentifierExpression expr) {
@@ -184,15 +179,15 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		}
 		@Override
 		protected void visit(RealLiteral expr) {
-			this.aproxType = BoogieType.realType;
+			this.aproxType = BoogieType.TYPE_REAL;
 		}
 		@Override
 		protected void visit(BooleanLiteral expr) {
-			this.aproxType = BoogieType.boolType;
+			this.aproxType = BoogieType.TYPE_BOOL;
 		}
 		@Override
 		protected void visit(IntegerLiteral expr) {
-			this.aproxType = BoogieType.intType;
+			this.aproxType = BoogieType.TYPE_INT;
 		}
 		
 		public ArrayList<IdentifierExpression> getIdentifiers(Expression expr){

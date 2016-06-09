@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -50,6 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 public abstract class AAutomatonFactory<LETTER, STATE> {
 	protected final INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	
+	/**
+	 * @param automaton nested word automaton
+	 */
 	public AAutomatonFactory(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		this.mAutomaton = automaton;
@@ -71,17 +74,18 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public INestedWordAutomaton<LETTER, STATE> create(
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
 			Set<LETTER> returnAlphabet) {
-		if (internalAlphabet == null) {
-			internalAlphabet = mAutomaton.getAlphabet();
-		}
-		if (callAlphabet == null) {
-			callAlphabet = mAutomaton.getCallAlphabet();
-		}
-		if (returnAlphabet == null) {
-			returnAlphabet = mAutomaton.getReturnAlphabet();
-		}
-		return createWithAlphabets(internalAlphabet, callAlphabet,
-				returnAlphabet);
+		final Set<LETTER> internalAlphabetRes = (internalAlphabet == null)
+				? mAutomaton.getAlphabet()
+				: internalAlphabet;
+		final Set<LETTER> callAlphabetRes = (callAlphabet == null)
+				? mAutomaton.getCallAlphabet()
+				: callAlphabet;
+		final Set<LETTER> returnAlphabetRes = (returnAlphabet == null)
+				? mAutomaton.getReturnAlphabet()
+				: returnAlphabet;
+		
+		return createWithAlphabets(internalAlphabetRes, callAlphabetRes,
+				returnAlphabetRes);
 	}
 	
 	/**
@@ -164,13 +168,15 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions internal transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addInternalTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert (trans.mLetter.mType == ELetterType.Internal) : "Wrong transition type.";
-			addInternalTransition(automaton, trans.mPred, trans.mLetter.mLetter,
-					trans.mSucc);
+			assert (trans.getLetter().getType() == ELetterType.INTERNAL) :
+				"No internal transition.";
+			addInternalTransition(automaton, trans.getPred(),
+					trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
 	
@@ -178,13 +184,15 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions internal transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addCallTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert (trans.mLetter.mType == ELetterType.Call) : "Wrong transition type.";
-			addCallTransition(automaton, trans.mPred, trans.mLetter.mLetter,
-					trans.mSucc);
+			assert (trans.getLetter().getType() == ELetterType.CALL) :
+				"No call transition.";
+			addCallTransition(automaton, trans.getPred(),
+					trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
 	
@@ -192,13 +200,15 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param transitions return transitions
 	 */
+	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public void addReturnTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert (trans.mLetter.mType == ELetterType.Return) : "Wrong transition type.";
-			addReturnTransition(automaton, trans.mPred, trans.mHier,
-					trans.mLetter.mLetter, trans.mSucc);
+			assert (trans.getLetter().getType() == ELetterType.RETURN) :
+				"No return transition.";
+			addReturnTransition(automaton, trans.getPred(), trans.getHier(),
+					trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
 	
@@ -215,7 +225,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 					.internalSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
 						trans.getSucc(), null, new TypedLetter<LETTER>(
-								trans.getLetter(), ELetterType.Internal)));
+								trans.getLetter(), ELetterType.INTERNAL)));
 			}
 		}
 		return transitions;
@@ -234,7 +244,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 					.callSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
 						trans.getSucc(), null, new TypedLetter<LETTER>(
-								trans.getLetter(), ELetterType.Call)));
+								trans.getLetter(), ELetterType.CALL)));
 			}
 		}
 		return transitions;
@@ -254,7 +264,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
 						trans.getSucc(), trans.getHierPred(),
 						new TypedLetter<LETTER>(trans.getLetter(),
-								ELetterType.Return)));
+								ELetterType.RETURN)));
 			}
 		}
 		return transitions;

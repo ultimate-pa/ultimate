@@ -34,13 +34,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation.Result;
 import org.ojalgo.optimisation.Variable;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.ILpSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LinearConstraint;
 
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private ExpressionsBasedModel mModel;
 
@@ -66,7 +66,7 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 	private Map<String, Integer> mVariableIndexMap;
 	private Map<Integer, String> mVariableNameMap;
 
-	public OjAlgoSolver(Logger logger, Class<T> type) {
+	public OjAlgoSolver(ILogger logger, Class<T> type) {
 		mLogger = logger;
 		mModelIsPresent = false;
 		mType = type;
@@ -84,7 +84,7 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 		mVariableNameMap = new HashMap<>();
 
 		int index = 0;
-		for (String var : variables) {
+		for (final String var : variables) {
 			final Integer lastIndex = mVariableIndexMap.put(var, index);
 			final String lastName = mVariableNameMap.put(index++, var);
 			if (lastIndex != null || lastName != null) {

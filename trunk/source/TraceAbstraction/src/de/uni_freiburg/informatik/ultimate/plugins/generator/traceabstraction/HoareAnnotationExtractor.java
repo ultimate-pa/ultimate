@@ -34,11 +34,11 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -51,40 +51,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPredicate> {
 
-	Set<DoubleDecker<IPredicate>> m_ReportedDoubleDeckers = new HashSet<DoubleDecker<IPredicate>>();
+	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<DoubleDecker<IPredicate>>();
 
-	private final HoareAnnotationFragments m_HoareAnnotation;
+	private final HoareAnnotationFragments mHoareAnnotation;
 
 	public HoareAnnotationExtractor(IUltimateServiceProvider services, INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction,
 			HoareAnnotationFragments haf) {
 		super(new AutomataLibraryServices(services));
-		m_TraversedNwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) abstraction;
-		m_HoareAnnotation = haf;
+		mTraversedNwa = abstraction;
+		mHoareAnnotation = haf;
 
 		try {
 			traverseDoubleDeckerGraph();
-		} catch (OperationCanceledException e) {
-			m_Logger.warn("Computation of Hoare annotation canceled.");
+		} catch (final AutomataOperationCanceledException e) {
+			mLogger.warn("Computation of Hoare annotation canceled.");
 		}
 	}
 
 	private void addContext(DoubleDecker<IPredicate> doubleDecker) {
-		if (!m_ReportedDoubleDeckers.contains(doubleDecker)) {
-			IPredicate state = doubleDecker.getUp();
-			IPredicate context = doubleDecker.getDown();
-			m_HoareAnnotation.addDoubleDecker(context, state, m_TraversedNwa.getEmptyStackState());
-			m_ReportedDoubleDeckers.add(doubleDecker);
+		if (!mReportedDoubleDeckers.contains(doubleDecker)) {
+			final IPredicate state = doubleDecker.getUp();
+			final IPredicate context = doubleDecker.getDown();
+			mHoareAnnotation.addDoubleDecker(context, state, mTraversedNwa.getEmptyStackState());
+			mReportedDoubleDeckers.add(doubleDecker);
 		}
 
 	}
 
 	@Override
 	protected Collection<IPredicate> getInitialStates() {
-		Collection<IPredicate> result = m_TraversedNwa.getInitialStates();
+		final Collection<IPredicate> result = mTraversedNwa.getInitialStates();
 		if (result.size() == 1) {
 			// case where automaton is emtpy minimized and contains only one
 			// dummy state.
-			IPredicate p = result.iterator().next();
+			final IPredicate p = result.iterator().next();
 			if (!(p instanceof SPredicate)) {
 				throw new AssertionError("No State Automaton would be ok");
 				// result = new ArrayList<Predicate>(0);
@@ -96,10 +96,10 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 	@Override
 	protected Collection<IPredicate> visitAndGetInternalSuccessors(DoubleDecker<IPredicate> doubleDecker) {
 		addContext(doubleDecker);
-		IPredicate state = doubleDecker.getUp();
-		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		for (CodeBlock symbol : m_TraversedNwa.lettersInternal(state)) {
-			for (IPredicate succ : m_TraversedNwa.succInternal(state, symbol)) {
+		final IPredicate state = doubleDecker.getUp();
+		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
+		for (final CodeBlock symbol : mTraversedNwa.lettersInternal(state)) {
+			for (final IPredicate succ : mTraversedNwa.succInternal(state, symbol)) {
 				succs.add(succ);
 			}
 		}
@@ -109,21 +109,21 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 	@Override
 	protected Collection<IPredicate> visitAndGetCallSuccessors(DoubleDecker<IPredicate> doubleDecker) {
 		addContext(doubleDecker);
-		IPredicate state = doubleDecker.getUp();
-		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		Collection<CodeBlock> symbolsCall = m_TraversedNwa.lettersCall(state);
+		final IPredicate state = doubleDecker.getUp();
+		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
+		final Collection<CodeBlock> symbolsCall = mTraversedNwa.lettersCall(state);
 		if (symbolsCall.size() > 1) {
 			throw new UnsupportedOperationException("Several outgoing calls not supported");
 		}
-		for (CodeBlock symbol : symbolsCall) {
-			Iterable<IPredicate> succCall = m_TraversedNwa.succCall(state, symbol);
-			Iterator<IPredicate> calls = succCall.iterator();
+		for (final CodeBlock symbol : symbolsCall) {
+			final Iterable<IPredicate> succCall = mTraversedNwa.succCall(state, symbol);
+			final Iterator<IPredicate> calls = succCall.iterator();
 			calls.next();
 			if (calls.hasNext()) {
 				throw new UnsupportedOperationException("Several outgoing calls not supported");
 			}
-			for (IPredicate succ : succCall) {
-				m_HoareAnnotation.addContextEntryPair(state, succ);
+			for (final IPredicate succ : succCall) {
+				mHoareAnnotation.addContextEntryPair(state, succ);
 				succs.add(succ);
 			}
 		}
@@ -133,14 +133,14 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 	@Override
 	protected Collection<IPredicate> visitAndGetReturnSuccessors(DoubleDecker<IPredicate> doubleDecker) {
 		addContext(doubleDecker);
-		IPredicate state = doubleDecker.getUp();
-		IPredicate context = doubleDecker.getDown();
-		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		if (context == m_TraversedNwa.getEmptyStackState()) {
+		final IPredicate state = doubleDecker.getUp();
+		final IPredicate context = doubleDecker.getDown();
+		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
+		if (context == mTraversedNwa.getEmptyStackState()) {
 			return succs;
 		}
-		for (CodeBlock symbol : m_TraversedNwa.lettersReturn(state)) {
-			for (IPredicate succ : m_TraversedNwa.succReturn(state, context, symbol)) {
+		for (final CodeBlock symbol : mTraversedNwa.lettersReturn(state)) {
+			for (final IPredicate succ : mTraversedNwa.succReturn(state, context, symbol)) {
 				succs.add(succ);
 			}
 		}

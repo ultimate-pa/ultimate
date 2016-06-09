@@ -30,16 +30,15 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This class initializes the boogie preprocessor.
@@ -52,20 +51,24 @@ public class BoogiePreprocessor implements IAnalysis {
 
 	private IUltimateServiceProvider mServices;
 
+	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
 
+	@Override
 	public void init() {
 	}
 
 	/**
 	 * I give you every model.
 	 */
+	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
@@ -73,30 +76,34 @@ public class BoogiePreprocessor implements IAnalysis {
 	/**
 	 * I don't need a special tool
 	 */
+	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		/* use old graph type definition */
 		return null;
 	}
 
+	@Override
 	public void setInputDefinition(ModelType graphType) {
 		// not required.
 	}
 
 	// @Override
+	@Override
 	public List<IObserver> getObservers() {
-		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
+		final BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
 
-		Logger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
+		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
 		backTranslator.setSymbolTable(symb.getSymbolTable());
 
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		// observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
@@ -113,7 +120,7 @@ public class BoogiePreprocessor implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

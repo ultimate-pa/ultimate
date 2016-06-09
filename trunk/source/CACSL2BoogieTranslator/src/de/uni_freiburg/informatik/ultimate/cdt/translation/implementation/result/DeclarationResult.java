@@ -29,10 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTInitializer;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-
 /**
  * A Result that contains CDeclarations.
  * It is used in the visitor pattern for returning one or more of those.
@@ -65,6 +61,7 @@ public class DeclarationResult extends Result {
 		return mDecls;
 	}
 	
+	@Override
 	public String toString() {
 		return mDecls.toString();
 	}

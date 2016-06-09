@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Main class of Plug-In TraceAbstractionConcurrent
@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  */
 public class TraceAbstractionConcurrent implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private TraceAbstractionConcurrentObserver m_Observer;
-	private ModelType m_InputDefinition;
-	private IUltimateServiceProvider m_Services;
-	private IToolchainStorage m_ToolchainStorage;
+	private TraceAbstractionConcurrentObserver mObserver;
+	private ModelType mInputDefinition;
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mToolchainStorage;
 
 	@Override
 	public String getPluginName() {
@@ -82,13 +82,13 @@ public class TraceAbstractionConcurrent implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new TraceAbstractionConcurrentObserver(m_Services, m_ToolchainStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new TraceAbstractionConcurrentObserver(mServices, mToolchainStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -97,12 +97,12 @@ public class TraceAbstractionConcurrent implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return mObserver.getRoot();
 	}
 
 	@Override
@@ -111,20 +111,20 @@ public class TraceAbstractionConcurrent implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		m_ToolchainStorage = storage;
+		mToolchainStorage = storage;
 
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		m_Services = services;
+		mServices = services;
 	}
 
 	@Override

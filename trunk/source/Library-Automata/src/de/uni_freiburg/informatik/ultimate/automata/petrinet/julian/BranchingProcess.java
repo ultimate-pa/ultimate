@@ -34,18 +34,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	final private Collection<Condition<S, C>> conditions;
 	final private Collection<Event<S, C>> events;
@@ -56,18 +55,18 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	final private Event<S, C> dummyRoot;
 
-	private PetriNetJulian<S, C> net;
+	private final PetriNetJulian<S, C> net;
 	
-	private final Order<S,C> m_Order;
+	private final Order<S,C> mOrder;
 
 	public BranchingProcess(AutomataLibraryServices services,
 			PetriNetJulian<S, C> net, Order<S, C> order) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.net = net;
-		this.m_Order = order;
+		this.mOrder = order;
 		this.place2cond = new HashMap<Place<S, C>, Set<Condition<S, C>>>();
-		for (Place<S, C> p : net.getPlaces()) {
+		for (final Place<S, C> p : net.getPlaces()) {
 			place2cond.put(p, new HashSet<Condition<S, C>>());
 		}
 		this.conditions = new HashSet<Condition<S, C>>();
@@ -100,11 +99,11 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 */
 	boolean addEvent(Event<S, C> e) {
 		events.add(e);
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
+		for (final Condition<S, C> c : e.getPredecessorConditions()) {
 			c.addSuccesssor(e);
 		}
 		boolean someSuccessorIsAccepting = false;
-		for (Condition<S, C> c : e.getSuccessorConditions()) {
+		for (final Condition<S, C> c : e.getSuccessorConditions()) {
 			conditions.add(c);
 			place2cond.get(c.getPlace()).add(c);
 			if (isAccepting(c)) {
@@ -117,12 +116,12 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	private boolean checkOneSafety(Event<S, C> e) {
-		for (Condition<S, C> condition : e.getSuccessorConditions()) {
-			Set<Condition<S, C>> existing = place2cond
+		for (final Condition<S, C> condition : e.getSuccessorConditions()) {
+			final Set<Condition<S, C>> existing = place2cond
 					.get(condition.getPlace());
-			for (Condition<S, C> c : existing) {
+			for (final Condition<S, C> c : existing) {
 				if (c != condition && isInCoRelation(c, condition)) {
-					m_Logger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
+					mLogger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
 					return false;
 				}
 			}
@@ -144,7 +143,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public boolean isCutoffEvent(Event<S, C> e, Comparator<Event<S, C>> order,
 			boolean sameTransitionCutOff) {
 		// TODO possibly optimize
-		for (Event<S, C> ev : getEvents()) {
+		for (final Event<S, C> ev : getEvents()) {
 			if (e.checkCutOffSetCompanion(ev, order, sameTransitionCutOff)) {
 				return true;
 			}
@@ -175,14 +174,17 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	private boolean isAncestorChecker(Condition<S, C> leaf,
 			Condition<S, C> ancestor) {
-		if (leaf == ancestor)
+		if (leaf == ancestor) {
 			return true;
-		Event<S, C> p = leaf.getPredecessorEvent();
-		if (p == null || p.getPredecessorConditions() == null)
+		}
+		final Event<S, C> p = leaf.getPredecessorEvent();
+		if (p == null || p.getPredecessorConditions() == null) {
 			return false;
-		for (Condition<S, C> parentOfLeaf : p.getPredecessorConditions()) {
-			if (isAncestorChecker(parentOfLeaf, ancestor))
+		}
+		for (final Condition<S, C> parentOfLeaf : p.getPredecessorConditions()) {
+			if (isAncestorChecker(parentOfLeaf, ancestor)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -220,12 +222,12 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * @return
 	 */
 	public Collection<Event<S, C>> getMinEvents() {
-		HashSet<Event<S, C>> h = new HashSet<Event<S, C>>();
-		HashSet<Event<S, C>> min = new HashSet<Event<S, C>>();
-		for (Condition<S, C> c : initialConditions()) {
+		final HashSet<Event<S, C>> h = new HashSet<Event<S, C>>();
+		final HashSet<Event<S, C>> min = new HashSet<Event<S, C>>();
+		for (final Condition<S, C> c : initialConditions()) {
 			h.addAll(c.getSuccessorEvents());
 		}
-		for (Event<S, C> e : h) {
+		for (final Event<S, C> e : h) {
 			if (initialConditions().containsAll(e.getPredecessorConditions())) {
 				min.add(e);
 			}
@@ -254,11 +256,11 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		if (c1 == c2) {
 			return false;
 		}
-		Set<Object> c1Ancestors = ancestorNodes(c1);
+		final Set<Object> c1Ancestors = ancestorNodes(c1);
 		if (c1Ancestors.contains(c2)) {
 			return true;
 		}
-		Set<Object> c2Ancestors = ancestorNodes(c2);
+		final Set<Object> c2Ancestors = ancestorNodes(c2);
 		if (c2Ancestors.contains(c1)) {
 			return true;
 		}
@@ -274,11 +276,11 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * </ul>
 	 */
 	public boolean inCausalRelation(Condition<S, C> c, Event<S, C> e) {
-		Set<Object> cAncestors = ancestorNodes(c);
+		final Set<Object> cAncestors = ancestorNodes(c);
 		if (cAncestors.contains(e)) {
 			return true;
 		}
-		Set<Object> eAncestors = ancestorNodes(e);
+		final Set<Object> eAncestors = ancestorNodes(e);
 		if (eAncestors.contains(c)) {
 			return true;
 		}
@@ -295,7 +297,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		if (c1 == c2) {
 			return false;
 		}
-		Set<Object> c2Ancestors = ancestorNodes(c2);
+		final Set<Object> c2Ancestors = ancestorNodes(c2);
 		return conflictPathCheck(c1, c2, c2Ancestors);
 	}
 
@@ -312,7 +314,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		if (c2Ancestors.contains(c1)) {
 			return true;
 		}
-		Event<S, C> pred = c1.getPredecessorEvent();
+		final Event<S, C> pred = c1.getPredecessorEvent();
 		if (c2Ancestors.contains(pred)) {
 			return false;
 		}
@@ -320,7 +322,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 			return false;
 		}
 		boolean result = false;
-		for (Condition<S, C> cPred : pred.getPredecessorConditions()) {
+		for (final Condition<S, C> cPred : pred.getPredecessorConditions()) {
 			result = result || conflictPathCheck(cPred, c2, c2Ancestors);
 		}
 		return result;
@@ -332,7 +334,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 *         ancestor.
 	 */
 	private Set<Object> ancestorNodes(Condition<S, C> c) {
-		Set<Object> ancestorConditionAndEvents = new HashSet<Object>();
+		final Set<Object> ancestorConditionAndEvents = new HashSet<Object>();
 		addAllAncestors(c, ancestorConditionAndEvents);
 		return ancestorConditionAndEvents;
 	}
@@ -342,7 +344,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 *         Event e. The dummyRoot is not considered as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(Event<S, C> e) {
-		Set<Object> ancestorConditionAndEvents = new HashSet<Object>();
+		final Set<Object> ancestorConditionAndEvents = new HashSet<Object>();
 		addAllAncestors(e, ancestorConditionAndEvents);
 		return ancestorConditionAndEvents;
 	}
@@ -354,7 +356,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 */
 	private void addAllAncestors(Condition<S, C> c,
 			Set<Object> setOfConditionsAndEvents) {
-		Event<S, C> pred = c.getPredecessorEvent();
+		final Event<S, C> pred = c.getPredecessorEvent();
 		setOfConditionsAndEvents.add(pred);
 		addAllAncestors(pred, setOfConditionsAndEvents);
 	}
@@ -368,7 +370,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		if (e == dummyRoot) {
 			return;
 		} else {
-			for (Condition<S, C> pred : e.getPredecessorConditions()) {
+			for (final Condition<S, C> pred : e.getPredecessorConditions()) {
 				setOfConditionsAndEvents.add(pred);
 				addAllAncestors(pred, setOfConditionsAndEvents);
 			}
@@ -386,8 +388,8 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 					"method only defined for non-empty set of conditions");
 		}
 		boolean result = true;
-		for (Condition<S, C> c1 : conditions) {
-			for (Condition<S, C> c2 : conditions) {
+		for (final Condition<S, C> c1 : conditions) {
+			for (final Condition<S, C> c2 : conditions) {
 				if (!inCausalRelation(c1, c2) && !inConflict(c1, c2)) {
 					result = false;
 				}
@@ -396,13 +398,14 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		return result;
 	}
 
+	@Override
 	public String sizeInformation() {
 		return "has " + conditions.size() + "conditions, " + events.size()
 				+ " events";
 	}
 
 	public Order<S,C> getOrder() {
-		return m_Order;
+		return mOrder;
 	}
 
 	@Override

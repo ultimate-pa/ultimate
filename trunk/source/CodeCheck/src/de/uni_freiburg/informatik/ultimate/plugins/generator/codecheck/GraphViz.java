@@ -162,12 +162,13 @@ public class GraphViz
          if (dot != null)
          {
             img_stream = get_img_stream(dot, type);
-            if (dot.delete() == false) 
-               System.err.println("Warning: " + dot.getAbsolutePath() + " could not be deleted!");
+            if (dot.delete() == false) {
+				System.err.println("Warning: " + dot.getAbsolutePath() + " could not be deleted!");
+			}
             return img_stream;
          }
          return null;
-      } catch (java.io.IOException ioe) { return null; }
+      } catch (final java.io.IOException ioe) { return null; }
    }
 
    /**
@@ -178,7 +179,7 @@ public class GraphViz
     */
    public int writeGraphToFile(byte[] img, String file)
    {
-      File to = new File(file);
+      final File to = new File(file);
       return writeGraphToFile(img, to);
    }
 
@@ -191,10 +192,10 @@ public class GraphViz
    public int writeGraphToFile(byte[] img, File to)
    {
       try {
-         FileOutputStream fos = new FileOutputStream(to);
+         final FileOutputStream fos = new FileOutputStream(to);
          fos.write(img);
          fos.close();
-      } catch (java.io.IOException ioe) { return -1; }
+      } catch (final java.io.IOException ioe) { return -1; }
       return 1;
    }
 
@@ -212,29 +213,32 @@ public class GraphViz
 
       try {
          img = File.createTempFile("graph_", "."+type, new File(GraphViz.TEMP_DIR));
-         Runtime rt = Runtime.getRuntime();
+         final Runtime rt = Runtime.getRuntime();
          
          // patch by Mike Chenault
-         String[] args = {DOT, "-T"+type, dot.getAbsolutePath(), "-o", img.getAbsolutePath()};
-         Process p = rt.exec(args);
+         final String[] args = {DOT, "-T"+type, dot.getAbsolutePath(), "-o", img.getAbsolutePath()};
+         final Process p = rt.exec(args);
          
          p.waitFor();
 
-         FileInputStream in = new FileInputStream(img.getAbsolutePath());
+         final FileInputStream in = new FileInputStream(img.getAbsolutePath());
          img_stream = new byte[in.available()];
          in.read(img_stream);
          // Close it if we need to
-         if( in != null ) in.close();
+         if( in != null ) {
+			in.close();
+		}
 
-         if (img.delete() == false) 
-            System.err.println("Warning: " + img.getAbsolutePath() + " could not be deleted!");
+         if (img.delete() == false) {
+			System.err.println("Warning: " + img.getAbsolutePath() + " could not be deleted!");
+		}
       }
-      catch (java.io.IOException ioe) {
+      catch (final java.io.IOException ioe) {
          System.err.println("Error:    in I/O processing of tempfile in dir " + GraphViz.TEMP_DIR+"\n");
          System.err.println("       or in calling external command");
          ioe.printStackTrace();
       }
-      catch (java.lang.InterruptedException ie) {
+      catch (final java.lang.InterruptedException ie) {
          System.err.println("Error: the execution of the external program was interrupted");
          ie.printStackTrace();
       }
@@ -253,11 +257,11 @@ public class GraphViz
       File temp;
       try {
          temp = File.createTempFile("graph_", ".dot.tmp", new File(GraphViz.TEMP_DIR));
-         FileWriter fout = new FileWriter(temp);
+         final FileWriter fout = new FileWriter(temp);
          fout.write(str);
          fout.close();
       }
-      catch (Exception e) {
+      catch (final Exception e) {
          System.err.println("Error: I/O error while writing the dot source to temp file!");
          return null;
       }
@@ -288,24 +292,24 @@ public class GraphViz
     */
    public void readSource(String input)
    {
-	   StringBuilder sb = new StringBuilder();
+	   final StringBuilder sb = new StringBuilder();
 	   
 	   try
 	   {
-		   FileInputStream fis = new FileInputStream(input);
-		   DataInputStream dis = new DataInputStream(fis);
-		   BufferedReader br = new BufferedReader(new InputStreamReader(dis));
+		   final FileInputStream fis = new FileInputStream(input);
+		   final DataInputStream dis = new DataInputStream(fis);
+		   final BufferedReader br = new BufferedReader(new InputStreamReader(dis));
 		   String line;
 		   while ((line = br.readLine()) != null) {
 			   sb.append(line);
 		   }
 		   dis.close();
 	   } 
-	   catch (Exception e) {
+	   catch (final Exception e) {
 		   System.err.println("Error: " + e.getMessage());
 	   }
 	   
-	   this.graph = sb;
+	   graph = sb;
    }
    
 } // end of class GraphViz

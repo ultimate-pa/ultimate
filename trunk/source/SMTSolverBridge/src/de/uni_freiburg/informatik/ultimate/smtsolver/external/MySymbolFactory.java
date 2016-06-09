@@ -38,8 +38,8 @@ public class MySymbolFactory implements SymbolFactory {
  		public LineColumnSymbol(String name, int id, int state) {
  			super(id, state);
  			this.name = name;
- 			this.lcolumn = -1;
- 			this.rcolumn = -1;
+ 			lcolumn = -1;
+ 			rcolumn = -1;
  		}
  		
  		public LineColumnSymbol(String name, int id, 
@@ -54,27 +54,31 @@ public class MySymbolFactory implements SymbolFactory {
 		public LineColumnSymbol(String name, int id, Symbol left, Symbol right, Object o) {
 			super(id, left, right, o);
 			this.name = name;
-			if (left instanceof LineColumnSymbol)
+			if (left instanceof LineColumnSymbol) {
 				lcolumn = ((LineColumnSymbol) left).lcolumn;
-			else
+			} else {
 				lcolumn = 0;
-			if (right instanceof LineColumnSymbol)
+			}
+			if (right instanceof LineColumnSymbol) {
 				rcolumn = ((LineColumnSymbol) left).rcolumn;
-			else
+			} else {
 				rcolumn = 0;
+			}
 		}
 		
 		public String getLocation() {
-			if (lcolumn >= 0)
+			if (lcolumn >= 0) {
 				return ""+left+":"+lcolumn;
-			else
+			} else {
 				return ""+left;
+			}
 		}
 
 		public String getName() {
 			return name;
 		}
 		
+		@Override
 		public String toString() {
 			return "("+name+" "+left+":"+lcolumn+"-"+right+":"+rcolumn+")";
 		}
@@ -87,20 +91,25 @@ public class MySymbolFactory implements SymbolFactory {
     public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol){
         return new LineColumnSymbol(name,id,lline,lcol,rline,rcol, null);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
+    @Override
+	public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
         return new LineColumnSymbol(name,id,left,right,value);
     }
-    public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
+    @Override
+	public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
         return new LineColumnSymbol(name,id,left,right,null);
     }
-    public Symbol newSymbol(String name, int id){
+    @Override
+	public Symbol newSymbol(String name, int id){
         return new LineColumnSymbol(name,id,-1,-1,-1,-1,null);
     }
-    public Symbol newSymbol(String name, int id, Object value){
+    @Override
+	public Symbol newSymbol(String name, int id, Object value){
         return new LineColumnSymbol(name,id,-1,-1,-1,-1,value);
     }
-    public Symbol startSymbol(String name, int id, int state){
-        LineColumnSymbol s = new LineColumnSymbol(name,id, state);
+    @Override
+	public Symbol startSymbol(String name, int id, int state){
+        final LineColumnSymbol s = new LineColumnSymbol(name,id, state);
         return s;
     }
 }

@@ -81,30 +81,33 @@ public class UnitCollector {
 	 */
 	private void run() {
 		while (!mTodo.isEmpty()) {
-			Clause cls = mTodo.pop();
+			final Clause cls = mTodo.pop();
 			if (seen(cls)) {
-				if (cls.getSize() == 1 && mCounts.get(cls) > 1)
+				if (cls.getSize() == 1 && mCounts.get(cls) > 1) {
 					// Unit with at least two children
 					mUnits.add(new Antecedent(cls.getLiteral(0), cls));
-				ProofNode pn = cls.getProof();
+				}
+				final ProofNode pn = cls.getProof();
 				if (!pn.isLeaf()) {
 					Set<Literal> deletions = null;
 					// Enqueue children
-					ResolutionNode rn = (ResolutionNode) pn;
-					Antecedent[] antes = rn.getAntecedents();
+					final ResolutionNode rn = (ResolutionNode) pn;
+					final Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i) {
 						if (antes[i].mAntecedent.getSize() == 1 
 								&& mCounts.get(antes[i].mAntecedent) > 1) {
 							// We will lower this unit => Mark it deleted
-							if (deletions == null)
+							if (deletions == null) {
 								deletions = new HashSet<Literal>();
+							}
 							deletions.add(antes[i].mPivot);
 						}
 						mTodo.push(antes[i].mAntecedent);
 					}
 					mTodo.push(rn.getPrimary());
-					if (deletions != null)
+					if (deletions != null) {
 						mDelUnits.put(cls, deletions);
+					}
 				}
 			}
 		}
@@ -117,10 +120,10 @@ public class UnitCollector {
 	 * @return Is this clause reached for the last time?
 	 */
 	private boolean seen(Clause cls) {
-		Integer cnt = mSeen.get(cls);
-		int newcnt = cnt == null ? 1 : cnt + 1;
+		final Integer cnt = mSeen.get(cls);
+		final int newcnt = cnt == null ? 1 : cnt + 1;
 		mSeen.put(cls, newcnt);
-		int total = mCounts.get(cls);
+		final int total = mCounts.get(cls);
 		assert (newcnt <= total);
 		return total == newcnt;
 	}

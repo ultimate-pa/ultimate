@@ -99,9 +99,9 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		public boolean doesUnsatCoreContainTransition() {
-			Term[] unsatCore = m_ManagedScript.getUnsatCore(this);
-			for (Term term : unsatCore) {
-				ApplicationTerm appTerm = (ApplicationTerm) term;
+			final Term[] unsatCore = mManagedScript.getUnsatCore(this);
+			for (final Term term : unsatCore) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction().getApplicationString().equals(
 						IncrementalHoareTripleChecker.s_IdTransitionFormula)) {
 					return true;
@@ -116,14 +116,14 @@ public class FaultLocalizationRelevanceChecker {
 	public FaultLocalizationRelevanceChecker(ManagedScript managedScript, 
 			ModifiableGlobalVariableManager modGlobVarManager,
 			Boogie2SMT boogie2smt) {
-		this.mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
+		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
 				managedScript, modGlobVarManager, boogie2smt);
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
 			final IInternalAction act, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
-		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
@@ -131,7 +131,7 @@ public class FaultLocalizationRelevanceChecker {
 	public ERelevanceStatus relevanceCall(final IPredicate pre,
 			final ICallAction call, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
-		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
@@ -141,7 +141,7 @@ public class FaultLocalizationRelevanceChecker {
 			final IReturnAction ret, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
 				callPre, ret, post);
-		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
@@ -161,7 +161,7 @@ public class FaultLocalizationRelevanceChecker {
 				break;
 				
 			case VALID: // unsatisfiable, check unsat core
-				boolean ucContainsTransition = hoareTripleChecker.doesUnsatCoreContainTransition();
+				final boolean ucContainsTransition = hoareTripleChecker.doesUnsatCoreContainTransition();
 				result = ucContainsTransition
 						? ERelevanceStatus.InUnsatCore
 						: ERelevanceStatus.NotInUnsatCore;

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 public class HeapLValue extends LRValue {
 
@@ -50,9 +50,10 @@ public class HeapLValue extends LRValue {
 	Expression address;
 	
 	public Expression getAddress() {
-		return this.address;
+		return address;
 	}
 	
+	@Override
 	public Expression getValue() {
 		throw new AssertionError("HeapLValues must be converted to RValue before their value can be queried.");
 	}

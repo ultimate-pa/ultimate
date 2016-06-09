@@ -31,9 +31,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a PetriNet place.
@@ -48,16 +48,16 @@ public class PlaceNode extends PetriNetVisualizationNode {
 	public PlaceNode(Place<?, ?> place, Collection<String> participatedAcceptingMarkings) {
 		super(place.getContent().toString());
 
-		IPayload payload = this.getPayload();
-		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
+		final IPayload payload = getPayload();
+		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings containing this place", participatedAcceptingMarkings);
 		thisPluginsAnnotations.put("toString", place.toString());
 		thisPluginsAnnotations.put("hashCode", place.hashCode());
-		Map<String, IAnnotations> annotations = payload.getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
+		final Map<String, IAnnotations> annotations = payload.getAnnotations();
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 
 		if (place.getContent() instanceof IAnnotations) {
-			thisPluginsAnnotations.put("Content", (IAnnotations) place.getContent());
+			thisPluginsAnnotations.put("Content", place.getContent());
 		}
 	}
 }

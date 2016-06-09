@@ -52,7 +52,7 @@ class Yylex {
     "\1\30";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[45];
+    final int [] result = new int[45];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -61,11 +61,13 @@ class Yylex {
   private static int zzUnpackAction(String packed, int offset, int [] result) {
     int i = 0;       /* index in packed string  */
     int j = offset;  /* index in unpacked array */
-    int l = packed.length();
+    final int l = packed.length();
     while (i < l) {
       int count = packed.charAt(i++);
-      int value = packed.charAt(i++);
-      do result[j++] = value; while (--count > 0);
+      final int value = packed.charAt(i++);
+      do {
+		result[j++] = value;
+	} while (--count > 0);
     }
     return j;
   }
@@ -85,7 +87,7 @@ class Yylex {
     "\0\66\0\66\0\u026d\0\u0288\0\66";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[45];
+    final int [] result = new int[45];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -94,9 +96,9 @@ class Yylex {
   private static int zzUnpackRowMap(String packed, int offset, int [] result) {
     int i = 0;  /* index in packed string  */
     int j = offset;  /* index in unpacked array */
-    int l = packed.length();
+    final int l = packed.length();
     while (i < l) {
-      int high = packed.charAt(i++) << 16;
+      final int high = packed.charAt(i++) << 16;
       result[j++] = high | packed.charAt(i++);
     }
     return j;
@@ -199,7 +201,7 @@ class Yylex {
     "\2\0\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[45];
+    final int [] result = new int[45];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -208,11 +210,13 @@ class Yylex {
   private static int zzUnpackAttribute(String packed, int offset, int [] result) {
     int i = 0;       /* index in packed string  */
     int j = offset;  /* index in unpacked array */
-    int l = packed.length();
+    final int l = packed.length();
     while (i < l) {
       int count = packed.charAt(i++);
-      int value = packed.charAt(i++);
-      do result[j++] = value; while (--count > 0);
+      final int value = packed.charAt(i++);
+      do {
+		result[j++] = value;
+	} while (--count > 0);
     }
     return j;
   }
@@ -264,7 +268,7 @@ class Yylex {
   private boolean zzAtEOF;
 
   /* user code: */
-private StringBuffer sb=new StringBuffer();
+private final StringBuffer sb=new StringBuffer();
 
 int getPosition(){
 	return yychar;
@@ -279,7 +283,7 @@ int getPosition(){
    * @param   in  the java.io.Reader to read input from.
    */
   Yylex(java.io.Reader in) {
-    this.zzReader = in;
+    zzReader = in;
   }
 
   /**
@@ -299,13 +303,15 @@ int getPosition(){
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x10000];
+    final char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
     while (i < 90) {
       int  count = packed.charAt(i++);
-      char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      final char value = packed.charAt(i++);
+      do {
+		map[j++] = value;
+	} while (--count > 0);
     }
     return map;
   }
@@ -336,13 +342,13 @@ int getPosition(){
     /* is the buffer big enough? */
     if (zzCurrentPos >= zzBuffer.length) {
       /* if not: blow it up */
-      char newBuffer[] = new char[zzCurrentPos*2];
+      final char newBuffer[] = new char[zzCurrentPos*2];
       System.arraycopy(zzBuffer, 0, newBuffer, 0, zzBuffer.length);
       zzBuffer = newBuffer;
     }
 
     /* finally: fill the buffer with new input */
-    int numRead = zzReader.read(zzBuffer, zzEndRead,
+    final int numRead = zzReader.read(zzBuffer, zzEndRead,
                                             zzBuffer.length-zzEndRead);
 
     if (numRead > 0) {
@@ -351,7 +357,7 @@ int getPosition(){
     }
     // unlikely but not impossible: read 0 characters, but not at end of stream    
     if (numRead == 0) {
-      int c = zzReader.read();
+      final int c = zzReader.read();
       if (c == -1) {
         return true;
       } else {
@@ -372,8 +378,9 @@ int getPosition(){
     zzAtEOF = true;            /* indicate end of file */
     zzEndRead = zzStartRead;  /* invalidate buffer    */
 
-    if (zzReader != null)
-      zzReader.close();
+    if (zzReader != null) {
+		zzReader.close();
+	}
   }
 
 
@@ -467,7 +474,7 @@ int getPosition(){
     try {
       message = ZZ_ERROR_MSG[errorCode];
     }
-    catch (ArrayIndexOutOfBoundsException e) {
+    catch (final ArrayIndexOutOfBoundsException e) {
       message = ZZ_ERROR_MSG[ZZ_UNKNOWN_ERROR];
     }
 
@@ -484,8 +491,9 @@ int getPosition(){
    *                This number must not be greater than yylength()!
    */
   public void yypushback(int number)  {
-    if ( number > yylength() )
-      zzScanError(ZZ_PUSHBACK_2BIG);
+    if ( number > yylength() ) {
+		zzScanError(ZZ_PUSHBACK_2BIG);
+	}
 
     zzMarkedPos -= number;
   }
@@ -507,11 +515,11 @@ int getPosition(){
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
     char [] zzBufferL = zzBuffer;
-    char [] zzCMapL = ZZ_CMAP;
+    final char [] zzCMapL = ZZ_CMAP;
 
-    int [] zzTransL = ZZ_TRANS;
-    int [] zzRowMapL = ZZ_ROWMAP;
-    int [] zzAttrL = ZZ_ATTRIBUTE;
+    final int [] zzTransL = ZZ_TRANS;
+    final int [] zzRowMapL = ZZ_ROWMAP;
+    final int [] zzAttrL = ZZ_ATTRIBUTE;
 
     while (true) {
       zzMarkedPosL = zzMarkedPos;
@@ -528,9 +536,9 @@ int getPosition(){
       zzForAction: {
         while (true) {
     
-          if (zzCurrentPosL < zzEndReadL)
-            zzInput = zzBufferL[zzCurrentPosL++];
-          else if (zzAtEOF) {
+          if (zzCurrentPosL < zzEndReadL) {
+			zzInput = zzBufferL[zzCurrentPosL++];
+		} else if (zzAtEOF) {
             zzInput = YYEOF;
             break zzForAction;
           }
@@ -538,7 +546,7 @@ int getPosition(){
             // store back cached positions
             zzCurrentPos  = zzCurrentPosL;
             zzMarkedPos   = zzMarkedPosL;
-            boolean eof = zzRefill();
+            final boolean eof = zzRefill();
             // get translated positions and possibly new buffer
             zzCurrentPosL  = zzCurrentPos;
             zzMarkedPosL   = zzMarkedPos;
@@ -552,15 +560,19 @@ int getPosition(){
               zzInput = zzBufferL[zzCurrentPosL++];
             }
           }
-          int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
-          if (zzNext == -1) break zzForAction;
+          final int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
+          if (zzNext == -1) {
+			break zzForAction;
+		}
           zzState = zzNext;
 
-          int zzAttributes = zzAttrL[zzState];
+          final int zzAttributes = zzAttrL[zzState];
           if ( (zzAttributes & 1) == 1 ) {
             zzAction = zzState;
             zzMarkedPosL = zzCurrentPosL;
-            if ( (zzAttributes & 8) == 8 ) break zzForAction;
+            if ( (zzAttributes & 8) == 8 ) {
+				break zzForAction;
+			}
           }
 
         }
@@ -587,7 +599,7 @@ int getPosition(){
           }
         case 28: break;
         case 23: 
-          { Boolean val=Boolean.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
+          { final Boolean val=Boolean.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
           }
         case 29: break;
         case 22: 
@@ -603,7 +615,7 @@ int getPosition(){
           }
         case 32: break;
         case 21: 
-          { Double val=Double.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
+          { final Double val=Double.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
           }
         case 33: break;
         case 1: 
@@ -640,10 +652,10 @@ int getPosition(){
         case 41: break;
         case 24: 
           { try{
-														int ch=Integer.parseInt(yytext().substring(2),16);
+														final int ch=Integer.parseInt(yytext().substring(2),16);
 														sb.append((char)ch);
 													}
-													catch(Exception e){
+													catch(final Exception e){
 														throw new ParseException(yychar, ParseException.ERROR_UNEXPECTED_EXCEPTION, e);
 													}
           }
@@ -657,7 +669,7 @@ int getPosition(){
           }
         case 44: break;
         case 2: 
-          { Long val=Long.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
+          { final Long val=Long.valueOf(yytext()); return new Yytoken(Yytoken.TYPE_VALUE, val);
           }
         case 45: break;
         case 18: 

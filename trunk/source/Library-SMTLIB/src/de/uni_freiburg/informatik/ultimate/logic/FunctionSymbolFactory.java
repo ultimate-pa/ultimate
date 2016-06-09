@@ -21,7 +21,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * Factory for overloaded and/or polymorphic function symbols.
@@ -44,9 +44,10 @@ public abstract class FunctionSymbolFactory {
 	}
 
 	private static boolean isReal(Sort[] sorts) {
-		for (Sort s : sorts) {
-			if (s.getRealSort() != s)
+		for (final Sort s : sorts) {
+			if (s.getRealSort() != s) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -59,19 +60,21 @@ public abstract class FunctionSymbolFactory {
 			Theory theory, BigInteger[] indices, Sort[] paramSorts,
 			Sort resultSort) {
 		assert isReal(paramSorts);
-		int flags = getFlags(indices, paramSorts, resultSort);
+		final int flags = getFlags(indices, paramSorts, resultSort);
 		if ((flags & (FunctionSymbol.ASSOCMASK)) != 0) {
-			if (paramSorts.length < 2)
+			if (paramSorts.length < 2) {
 				return null;
-			Sort[] realParams = new Sort[] {
+			}
+			final Sort[] realParams = new Sort[] {
 				paramSorts[0], paramSorts[paramSorts.length - 1]
 			};
-			Sort otherSort = 
+			final Sort otherSort = 
 				(flags & (FunctionSymbol.ASSOCMASK)) == FunctionSymbol.LEFTASSOC
 				? realParams[1] : realParams[0];
 			for (int i = 1; i < paramSorts.length - 1; i++) {
-				if (paramSorts[i] != otherSort)
+				if (paramSorts[i] != otherSort) {
 					return null;
+				}
 			}
 			paramSorts = realParams;
 		}
@@ -82,20 +85,22 @@ public abstract class FunctionSymbolFactory {
 			 */
 			return null;
 		}
-		int hash = Arrays.hashCode(indices)
+		final int hash = Arrays.hashCode(indices)
 			^ Arrays.hashCode(paramSorts) 
 			^ (resultSort == null ? 0 : resultSort.hashCode());
-		for (FunctionSymbol func : mInstances.iterateHashCode(hash)) {
+		for (final FunctionSymbol func : mInstances.iterateHashCode(hash)) {
 			if (Arrays.equals(func.mIndices, indices)
 				&& Arrays.equals(func.mParamSort, paramSorts)
 				&& (resultSort == null
-						|| func.mReturnSort == resultSort))
+						|| func.mReturnSort == resultSort)) {
 				return func;
+			}
 		}
 		
 		resultSort = getResultSort(indices, paramSorts, resultSort); 
-		if (resultSort == null)
+		if (resultSort == null) {
 			return null;
+		}
 		
 		TermVariable[] defVars = new TermVariable[paramSorts.length];
 		for (int i = 0; i < paramSorts.length; i++) {
@@ -104,21 +109,24 @@ public abstract class FunctionSymbolFactory {
 		Term definition;
 		if (((flags & (FunctionSymbol.RETURNOVERLOAD)) != 0)// NOPMD
 			&& resultSort != resultSort.getRealSort()) {
-			FunctionSymbol realFunc = 
+			final FunctionSymbol realFunc = 
 				getFunctionWithResult(theory, indices, paramSorts,
 						resultSort.getRealSort());
 			definition = theory.term(realFunc, defVars);
-		} else
+		} else {
 			definition = getDefinition(defVars, resultSort);
-		if (definition == null)
+		}
+		if (definition == null) {
 			defVars = null;
-		FunctionSymbol func = new FunctionSymbol(
+		}
+		final FunctionSymbol func = new FunctionSymbol(
 				mFuncName, indices, paramSorts, resultSort, 
 					defVars, definition, flags); 
 		mInstances.put(hash, func);
 		return func;
 	}
 	
+	@Override
 	public String toString() {
 		return mFuncName;
 	}

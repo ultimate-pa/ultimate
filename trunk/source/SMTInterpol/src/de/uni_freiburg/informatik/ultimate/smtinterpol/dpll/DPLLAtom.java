@@ -42,15 +42,18 @@ public abstract class DPLLAtom extends Literal {
 	public static class NegLiteral extends Literal {
 		public NegLiteral(DPLLAtom atom) {
 			super(~atom.hashCode());//TODO is bit-flipping a good hash??? 
-			this.mAtom = atom;
-			this.mNegated = atom;
+			mAtom = atom;
+			mNegated = atom;
 		}
+		@Override
 		public int getSign() {
 			return -1;
 		}
+		@Override
 		public String toString() {
 			return mAtom.toStringNegated();
 		}
+		@Override
 		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 			return mAtom.getNegatedSMTFormula(smtTheory, quoted);
 		}
@@ -69,9 +72,9 @@ public abstract class DPLLAtom extends Literal {
 	
 	public DPLLAtom(int hash, int assertionstacklevel) {
 		super(hash);
-		this.mAtom = this;
-		this.mNegated = new NegLiteral(this);
-		this.mAssertionstacklevel = assertionstacklevel;
+		mAtom = this;
+		mNegated = new NegLiteral(this);
+		mAssertionstacklevel = assertionstacklevel;
 		mLastStatus = mNegated;
 	}
 	
@@ -86,6 +89,7 @@ public abstract class DPLLAtom extends Literal {
 	/**
 	 * Returns 1, since an atom is always positive.
 	 */
+	@Override
 	public int getSign() {
 		return 1;
 	}

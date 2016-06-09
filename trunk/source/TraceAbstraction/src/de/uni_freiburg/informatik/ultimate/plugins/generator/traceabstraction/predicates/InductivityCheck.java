@@ -27,20 +27,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -57,42 +56,42 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class InductivityCheck {
 
-	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	
 
 	private final INestedWordAutomaton<CodeBlock, IPredicate> nwa;
 	
-	private final IHoareTripleChecker m_HoareTripleChecker;
-	private final boolean m_AntiInductivity;
-	private final boolean m_AssertInductivity;
+	private final IHoareTripleChecker mHoareTripleChecker;
+	private final boolean mAntiInductivity;
+	private final boolean mAssertInductivity;
 	private final int[] yield = new int[3];
-	private final boolean m_Result;
+	private final boolean mResult;
 
-	public InductivityCheck(IUltimateServiceProvider services, INestedWordAutomaton<CodeBlock, IPredicate> m_Nwa, boolean m_AntiInductivity,
-			boolean m_AssertInductivity, IHoareTripleChecker hoareTripleChecker) {
+	public InductivityCheck(IUltimateServiceProvider services, INestedWordAutomaton<CodeBlock, IPredicate> mNwa, boolean mAntiInductivity,
+			boolean mAssertInductivity, IHoareTripleChecker hoareTripleChecker) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.nwa = m_Nwa;
-		this.m_HoareTripleChecker = hoareTripleChecker;
-		this.m_AntiInductivity = m_AntiInductivity;
-		this.m_AssertInductivity = m_AssertInductivity;
-		m_Result = checkInductivity();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		nwa = mNwa;
+		mHoareTripleChecker = hoareTripleChecker;
+		this.mAntiInductivity = mAntiInductivity;
+		this.mAssertInductivity = mAssertInductivity;
+		mResult = checkInductivity();
 	}
 
 	public boolean getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 	private boolean checkInductivity() {
-		if (m_AntiInductivity) {
-			m_Logger.debug("Start checking anti-inductivity of automaton");
+		if (mAntiInductivity) {
+			mLogger.debug("Start checking anti-inductivity of automaton");
 		} else {
-			m_Logger.debug("Start checking inductivity of automaton");
+			mLogger.debug("Start checking inductivity of automaton");
 		}
 
-		boolean result = true;
+		final boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
 		// yield[1] is the number of edges whose inductiveness could be
@@ -102,33 +101,33 @@ public class InductivityCheck {
 		// yield[3] is the number of edges whose inductiveness could be
 		// neither proven nor refuted because there were no interpolants
 
-		for (IPredicate state : nwa.getStates()) {
-			for (CodeBlock cb : nwa.lettersInternal(state)) {
-				for (OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state, cb)) {
-					Validity inductivity = m_HoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
+		for (final IPredicate state : nwa.getStates()) {
+			for (final CodeBlock cb : nwa.lettersInternal(state)) {
+				for (final OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state, cb)) {
+					final Validity inductivity = mHoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (CodeBlock cb : nwa.lettersCall(state)) {
-				for (OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
-					Validity inductivity = m_HoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
+			for (final CodeBlock cb : nwa.lettersCall(state)) {
+				for (final OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
+					final Validity inductivity = mHoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (CodeBlock cb : nwa.lettersReturn(state)) {
-				for (IPredicate hier : nwa.hierPred(state, cb)) {
-					for (OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSucccessors(state, hier,
+			for (final CodeBlock cb : nwa.lettersReturn(state)) {
+				for (final IPredicate hier : nwa.hierPred(state, cb)) {
+					for (final OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSucccessors(state, hier,
 							cb)) {
-						Validity inductivity = m_HoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
+						final Validity inductivity = mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
 						evaluateResult(inductivity, state, outTrans);
 					}
 				}
 			}
 		}
-		if (m_HoareTripleChecker instanceof IncrementalHoareTripleChecker) {
-			((IncrementalHoareTripleChecker) m_HoareTripleChecker).clearAssertionStack();
+		if (mHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
+			((IncrementalHoareTripleChecker) mHoareTripleChecker).clearAssertionStack();
 		}
-		m_Logger.info("Interpolant automaton has " + (yield[0] + yield[1] + yield[2]) + " edges. " + yield[0]
+		mLogger.info("Interpolant automaton has " + (yield[0] + yield[1] + yield[2]) + " edges. " + yield[0]
 				+ " inductive. " + yield[1] + " not inductive. " + yield[2] + " times theorem prover too"
 				+ " weak to decide inductivity. ");
 		return result;
@@ -139,19 +138,19 @@ public class InductivityCheck {
 		switch (inductivity) {
 		case VALID: {
 			yield[0]++;
-			if (m_AntiInductivity) {
-				m_Logger.warn("Transition " + state + " " + trans + " not anti inductive");
+			if (mAntiInductivity) {
+				mLogger.warn("Transition " + state + " " + trans + " not anti inductive");
 				result = false;
-				assert !m_AssertInductivity || result : "anti inductivity failed";
+				assert !mAssertInductivity || result : "anti inductivity failed";
 			}
 			break;
 		}
 		case INVALID: {
 			yield[1]++;
-			if (!m_AntiInductivity) {
-				m_Logger.warn("Transition " + state + " " + trans + " not inductive");
+			if (!mAntiInductivity) {
+				mLogger.warn("Transition " + state + " " + trans + " not inductive");
 				result = false;
-				assert !m_AssertInductivity || result : "inductivity failed";
+				assert !mAssertInductivity || result : "inductivity failed";
 			}
 			break;
 		}

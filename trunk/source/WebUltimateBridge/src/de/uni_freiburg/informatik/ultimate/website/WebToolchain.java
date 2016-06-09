@@ -130,7 +130,7 @@ public abstract class WebToolchain {
 	 * @return a String describing this toolchain
 	 */
 	public final String getDescription() {
-		return this.mDescription;
+		return mDescription;
 	}
 
 	/**
@@ -139,9 +139,9 @@ public abstract class WebToolchain {
 	 * @return the toolchain XML String
 	 */
 	public final String getToolchainXML() {
-		StringBuffer toolchainXML = new StringBuffer("<toolchain>");
+		final StringBuffer toolchainXML = new StringBuffer("<toolchain>");
 		toolchainXML.append(sEOL);
-		for (Tool t : mTools) {
+		for (final Tool t : mTools) {
 			toolchainXML.append("\t<plugin id=\"");
 			toolchainXML.append(t.getId());
 			toolchainXML.append("\"/>").append(sEOL);
@@ -158,13 +158,13 @@ public abstract class WebToolchain {
 	 * @return the content of a created settings file for this toolchain.
 	 */
 	public final String getSettingFileContent() {
-		DateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
-		StringBuffer settings = new StringBuffer("#");
+		final DateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
+		final StringBuffer settings = new StringBuffer("#");
 		settings.append(dateFormat.format(new Date())).append(sEOL);
 		settings.append("# Settings file for ").append(getId()).append(", ").append(getName()).append(sEOL);
 		settings.append(sEOL).append("#").append(dateFormat.format(new Date()));
 		settings.append(sEOL).append("file_export_version=3.0").append(sEOL);
-		for (Setting set : mSettings) {
+		for (final Setting set : mSettings) {
 			if (set.isUserModifiable()) {
 				settings.append("# User-modifiable").append(sEOL);
 			}
@@ -296,7 +296,7 @@ public abstract class WebToolchain {
 		if (description.length() > 250) {
 			throw new IllegalArgumentException("String to long!");
 		}
-		this.mDescription = description;
+		mDescription = description;
 	}
 
 	/**
@@ -312,7 +312,7 @@ public abstract class WebToolchain {
 		if (name.length() > 30) {
 			throw new IllegalArgumentException("Name cannot be longer than 30 characters!");
 		}
-		this.mName = name;
+		mName = name;
 	}
 
 	/**
@@ -336,7 +336,7 @@ public abstract class WebToolchain {
 			throw new IllegalArgumentException("ID must be unique!");
 		}
 		sIds.add(id);
-		this.mId = id;
+		mId = id;
 	}
 
 	/**
@@ -346,7 +346,7 @@ public abstract class WebToolchain {
 	 *            the taskname to set
 	 */
 	protected final void setTaskName(Tasks.TaskNames[] taskName) {
-		this.mTaskName = taskName;
+		mTaskName = taskName;
 	}
 
 	/**
@@ -356,7 +356,7 @@ public abstract class WebToolchain {
 	 *            the language string to set
 	 */
 	protected final void setLanguage(String language) {
-		this.mLanguage = language;
+		mLanguage = language;
 	}
 
 	/**
@@ -366,7 +366,7 @@ public abstract class WebToolchain {
 	 *            the fontsize string to set
 	 */
 	protected final void setInterfaceLayoutFontsize(String fontsize) {
-		this.mLayoutFontsize = fontsize;
+		mLayoutFontsize = fontsize;
 	}
 
 	/**
@@ -376,7 +376,7 @@ public abstract class WebToolchain {
 	 *            the orientation string to set
 	 */
 	protected final void setInterfaceLayoutOrientation(String orientation) {
-		this.mLayoutOrientation = orientation;
+		mLayoutOrientation = orientation;
 	}
 
 	/**
@@ -386,7 +386,7 @@ public abstract class WebToolchain {
 	 *            the transitions preset string to set
 	 */
 	protected final void setInterfaceLayoutTransitions(String transition) {
-		this.mLayoutTransitions = transition;
+		mLayoutTransitions = transition;
 	}
 
 	/**
@@ -395,7 +395,7 @@ public abstract class WebToolchain {
 	 * @return
 	 */
 	protected final void setUserInfo(String userInfo) {
-		this.mUserInfo = userInfo;
+		mUserInfo = userInfo;
 	}
 
 	/**
@@ -411,7 +411,7 @@ public abstract class WebToolchain {
 		if (tools.isEmpty()) {
 			throw new IllegalArgumentException("Empty toolchain is not valid!");
 		}
-		this.mTools = tools;
+		mTools = tools;
 	}
 
 	private void createSettingsFromSettingsFile(String defineToolchainSettingsFile) {
@@ -419,10 +419,10 @@ public abstract class WebToolchain {
 			return;
 		}
 
-		String name = "/resources/settings/" + defineToolchainSettingsFile;
+		final String name = "/resources/settings/" + defineToolchainSettingsFile;
 		try {
 			mSettings.addAll(readSettingsFromResource(name));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			SimpleLogger.log("Exception occurred during loading of settings file for toolchain " + mId);
 			e.printStackTrace();
 		}
@@ -431,10 +431,10 @@ public abstract class WebToolchain {
 
 	private List<Setting> readSettingsFromResource(String resourceName) throws IOException {
 		SimpleLogger.log("Loading settings file from " + getClass().getResource(resourceName));
-		InputStream stream = getClass().getResourceAsStream(resourceName);
-		BufferedReader buff = new BufferedReader(new InputStreamReader(stream));
+		final InputStream stream = getClass().getResourceAsStream(resourceName);
+		final BufferedReader buff = new BufferedReader(new InputStreamReader(stream));
 
-		List<Setting> rtr = new ArrayList<Setting>();
+		final List<Setting> rtr = new ArrayList<Setting>();
 
 		String line = new String();
 		while (true) {
@@ -457,17 +457,17 @@ public abstract class WebToolchain {
 			if (line.startsWith("/instance/")) {
 				// we generate Settings from those lines
 
-				String[] valueName = splitAtEqualsSign(line).toArray(new String[0]);
+				final String[] valueName = splitAtEqualsSign(line).toArray(new String[0]);
 				if (valueName.length != 2) {
 					System.out.println("Ignoring line " + line);
 					continue;
 				}
-				String name = valueName[0].replaceFirst("/instance/", "");
-				String value = valueName[1];
+				final String name = valueName[0].replaceFirst("/instance/", "");
+				final String value = valueName[1];
 
 				try {
 					rtr.add(new Setting(name, SettingType.STRING, name, value, false));
-				} catch (Exception ex) {
+				} catch (final Exception ex) {
 					SimpleLogger.log("Exception occurred during creation of settings for line " + line);
 					SimpleLogger.log(ex.getMessage());
 				}
@@ -480,9 +480,9 @@ public abstract class WebToolchain {
 	}
 
 	private List<String> splitAtEqualsSign(String line) {
-		List<String> rtr = new ArrayList<>();
+		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < line.length(); ++i) {
-			char current = line.charAt(i);
+			final char current = line.charAt(i);
 			if (current == '=' && current > 0 && line.charAt(i - 1) != '\\') {
 				rtr.add(line.substring(0, i));
 				rtr.addAll(splitAtEqualsSign(line.substring(i + 1)));
@@ -498,7 +498,7 @@ public abstract class WebToolchain {
 			return;
 		}
 		// remove all settings that are already present
-		for (Setting setting : additionalSettings) {
+		for (final Setting setting : additionalSettings) {
 			for (int i = 0; i < mSettings.size(); ++i) {
 				if (setting.getSettingString().equals(mSettings.get(i).getSettingString())) {
 					mSettings.remove(i);
@@ -564,8 +564,8 @@ public abstract class WebToolchain {
 	}
 
 	public List<Setting> getUserModifiableSettings() {
-		List<Setting> rtr = new ArrayList<>();
-		for (Setting set : mSettings) {
+		final List<Setting> rtr = new ArrayList<>();
+		for (final Setting set : mSettings) {
 			if (set.isUserModifiable()) {
 				rtr.add(set);
 			}

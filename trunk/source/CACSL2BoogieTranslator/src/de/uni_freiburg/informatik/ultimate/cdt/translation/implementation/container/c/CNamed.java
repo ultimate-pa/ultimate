@@ -85,7 +85,8 @@ public class CNamed extends CType {
      * 
      * @return the type this named type is referring to.
      */
-    public CType getUnderlyingType() {
+    @Override
+	public CType getUnderlyingType() {
         CType underlying = mappedType;
         while (underlying instanceof CNamed) {
             underlying = ((CNamed) underlying).getMappedType();
@@ -117,6 +118,6 @@ public class CNamed extends CType {
 	
 	@Override
 	public int hashCode() {
-		return HashUtils.hashJenkins(31, this.getUnderlyingType());
+		return HashUtils.hashJenkins(31, getUnderlyingType());
 	}
 }

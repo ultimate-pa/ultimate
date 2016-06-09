@@ -14,9 +14,14 @@ Export-Package: pea,
  pea.test,
  pea.util,
  pea.util.z
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
  Library-jdom,
  Library-xerces,
- Library-CZT,
  BoogiePreprocessor,
- UltimateCore
+ UltimateCore,
+ Library-CZT
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie,
+ de.uni_freiburg.informatik.ultimate.boogie.ast,
+ de.uni_freiburg.informatik.ultimate.boogie.output

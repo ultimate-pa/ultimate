@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -57,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected ObserverDispatcher mDispatcher;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
-	public RCFGWalker(ObserverDispatcher dispatcher, Logger logger) {
+	public RCFGWalker(ObserverDispatcher dispatcher, ILogger logger) {
 		mDispatcher = dispatcher;
 		mLogger = logger;
 	}
@@ -91,6 +90,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void programExitReached() {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.endOfTrace();
 			}
@@ -99,6 +99,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void pre(final RCFGNode node) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.pre(node);
 			}
@@ -107,6 +108,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void pre(final RCFGEdge edge) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.pre(edge);
 			}
@@ -115,6 +117,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void post(final RCFGNode node) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.post(node);
 			}
@@ -123,6 +126,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void post(final RCFGEdge edge) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.post(edge);
 			}
@@ -131,6 +135,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void level(final RCFGNode node) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.level(node);
 			}
@@ -139,6 +144,7 @@ public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected void level(final RCFGEdge edge) {
 		mDispatcher.callObservers(new IRCFGVisitorDispatcher() {
+			@Override
 			public void dispatch(SimpleRCFGVisitor visitor) {
 				visitor.level(edge);
 			}

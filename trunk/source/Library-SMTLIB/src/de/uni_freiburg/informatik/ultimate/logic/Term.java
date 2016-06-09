@@ -75,8 +75,9 @@ public abstract class Term {
 	 * @return the free variables.
 	 */
 	public TermVariable[] getFreeVars() {
-		if (mFreeVars == null)
+		if (mFreeVars == null) {
 			new NonRecursive().run(new ComputeFreeVariables(this));
+		}
 		return mFreeVars;
 	}
 
@@ -91,8 +92,9 @@ public abstract class Term {
 	 * a term with lots of sharing. 
 	 * @return an SMTLIB representation.
 	 */
+	@Override
 	public String toString() {
-		Term letted = new FormulaLet().let(this);
+		final Term letted = new FormulaLet().let(this);
 		return letted.toStringDirect();
 	}
 	
@@ -103,11 +105,12 @@ public abstract class Term {
 	 * @return the canonical SMTLIB representation.
 	 */
 	public String toStringDirect() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		new PrintTerm().append(sb, this);
 		return sb.toString();
 	}
 	
+	@Override
 	public int hashCode() {
 		return mHash;
 	}
@@ -116,8 +119,8 @@ public abstract class Term {
 	 * Convert a term to a string in a stack based fashion.  This is used
 	 * for internal purposes.  External users can just use toString()
 	 * or toStringDirect().
-	 * @param m_Todo The stack where to put the strings and sub terms.
+	 * @param mTodo The stack where to put the strings and sub terms.
 	 * @see PrintTerm
 	 */
-	protected abstract void toStringHelper(ArrayDeque<Object> m_Todo);
+	protected abstract void toStringHelper(ArrayDeque<Object> mTodo);
 }

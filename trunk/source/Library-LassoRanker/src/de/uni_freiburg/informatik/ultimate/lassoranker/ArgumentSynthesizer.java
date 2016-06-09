@@ -30,10 +30,9 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 import java.io.Closeable;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
@@ -54,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @see NonTerminationArgumentSynthesizer
  */
 public abstract class ArgumentSynthesizer implements Closeable {
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 
 	
@@ -68,31 +67,31 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * The SMT script for argument synthesis
 	 */
-	protected final Script m_script;
+	protected final Script mscript;
 
 	/**
 	 * The lasso program that we are analyzing
 	 */
-	protected final Lasso m_lasso;
+	protected final Lasso mlasso;
 
 	/**
 	 * Preferences
 	 */
-	protected final LassoRankerPreferences m_preferences;
+	protected final LassoRankerPreferences mpreferences;
 
 	/**
 	 * Whether synthesize() has been called
 	 */
-	private boolean m_synthesis_successful = false;
+	private boolean msynthesis_successful = false;
 
 	/**
 	 * Whether close() has been called
 	 */
-	private boolean m_closed = false;
+	private boolean mclosed = false;
 
 	
-	protected IUltimateServiceProvider m_services;
-	protected IToolchainStorage m_storage;
+	protected IUltimateServiceProvider mservices;
+	protected IToolchainStorage mstorage;
 	
 	/**
 	 * Constructor for the argument synthesizer
@@ -110,25 +109,32 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			String constaintsName, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_preferences = preferences;
-		m_script = SMTSolver.newScript(preferences, constaintsName, services, storage);
-		m_lasso = lasso;
-		m_services = services;
-		m_storage = storage;
+		mpreferences = preferences;
+		mlasso = lasso;
+		mservices = services;
+		mstorage = storage;
+		mscript = constructScript(mpreferences, constaintsName);
 	}
+	
+	/**
+	 * @param constaintsName Identifier for this script.
+	 * @return SMT script that will be used for the argument synthesis
+	 */
+	protected abstract Script constructScript(
+			LassoRankerPreferences preferences, String constaintsName);
 
 	/**
 	 * @return the SMT script to be used for the argument synthesis
 	 */
 	public Script getScript() {
-		return m_script;
+		return mscript;
 	}
 
 	/**
 	 * @return whether the last call to synthesize() was successfull
 	 */
 	public boolean synthesisSuccessful() {
-		return m_synthesis_successful;
+		return msynthesis_successful;
 	}
 
 	/**
@@ -138,8 +144,8 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @throws IOException 
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
-		LBool lBool = do_synthesis();
-		m_synthesis_successful = (lBool == LBool.SAT);
+		final LBool lBool = do_synthesis();
+		msynthesis_successful = (lBool == LBool.SAT);
 		return lBool;
 	}
 
@@ -166,7 +172,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *             if something goes wrong, e.g. the name is already defined
 	 */
 	public Term newConstant(String name, String sortname) throws SMTLIBException {
-		return SmtUtils.buildNewConstant(m_script, name, sortname);
+		return SmtUtils.buildNewConstant(mscript, name, sortname);
 	}
 
 
@@ -174,17 +180,19 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * Perform cleanup actions
 	 */
+	@Override
 	public void close() {
-		if (!m_closed) {
-			m_script.exit();
-			m_closed = true;
+		if (!mclosed) {
+			mscript.exit();
+			mclosed = true;
 		}
 	}
 
+	@Override
 	protected void finalize() {
 		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
-		this.close();
+		close();
 	}
 }

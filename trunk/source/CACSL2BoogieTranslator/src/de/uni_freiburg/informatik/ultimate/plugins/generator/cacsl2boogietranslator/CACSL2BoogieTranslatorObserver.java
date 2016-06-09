@@ -38,13 +38,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
@@ -53,23 +53,22 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieAstCopier;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -87,7 +86,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * The logger instance.
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */
@@ -98,7 +97,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
-	private boolean m_LastModel;
+	private boolean mLastModel;
 	private BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
@@ -196,7 +195,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			// clear witness extractor to make him loose unused references
 			//mWitnessExtractor.clear();
 		}
-		if (m_LastModel) {
+		if (mLastModel) {
 			doTranslation();
 		}
 	}
@@ -208,11 +207,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 		// translate to Boogie
 		final Dispatcher main;
-		final UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mService.getPreferenceProvider(Activator.PLUGIN_ID);
 		TranslationMode mode = TranslationMode.BASE;
 		try {
 			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new IllegalArgumentException("Unable to determine preferred mode.");
 		}
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
@@ -231,7 +230,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 		final ASTDecorator decorator = new ASTDecorator();
 		// build a list of ACSL ASTs
-		FunctionLineVisitor visitor = new FunctionLineVisitor();
+		final FunctionLineVisitor visitor = new FunctionLineVisitor();
 		inputTU.accept(visitor);
 		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
 		final List<ACSLNode> acslNodes = cparser.processComments();
@@ -270,14 +269,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		if (currentModelIndex == numberOfModels -1) {
-			m_LastModel = true;
+			mLastModel = true;
 		}
 	}
 

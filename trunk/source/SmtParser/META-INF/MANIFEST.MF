@@ -4,11 +4,16 @@ Bundle-Name: SmtParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.source.smtparser;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.smtparser.Activator
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-SMTLIB,
+ SMTInterpol,
  SMTSolverBridge,
- SMTInterpol
+ de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;bundle-version="0.0.1",
+ Library-BoogieAST,
+ Library-ModelCheckerUtils
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.source.smtparser
 

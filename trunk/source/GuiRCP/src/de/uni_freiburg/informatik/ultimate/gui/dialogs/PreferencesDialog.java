@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
 import java.util.prefs.Preferences;
 
-import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,6 +41,8 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 
 public class PreferencesDialog extends Dialog {
 
@@ -78,10 +78,11 @@ public class PreferencesDialog extends Dialog {
 		createContents();
 		shell.open();
 		shell.layout();
-		Display display = getParent().getDisplay();
+		final Display display = getParent().getDisplay();
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
+			if (!display.readAndDispatch()) {
 				display.sleep();
+			}
 		}
 		return result;
 	}
@@ -90,7 +91,7 @@ public class PreferencesDialog extends Dialog {
 	 * Create contents of the dialog
 	 */
 	protected void createContents() {
-		Preferences my=Preferences.userRoot().node(GuiController.sPLUGINID);
+		final Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
 		
 		shell = new Shell(getParent(), SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		final GridLayout gridLayout_1 = new GridLayout();
@@ -116,18 +117,21 @@ public class PreferencesDialog extends Dialog {
 		
 		final Button chooseButton = new Button(dottyGroup, SWT.NONE);
 		chooseButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				FileDialog fd= new FileDialog(shell, SWT.OPEN);
+				final FileDialog fd= new FileDialog(shell, SWT.OPEN);
 				fd.setText("Where is your DOT (not dotty!)");
-				String dotfile = fd.open();
-				if(dotfile != null)
+				final String dotfile = fd.open();
+				if(dotfile != null) {
 					text.setText(dotfile);
+				}
 			}
 		});
 		chooseButton.setText("choose");
 
 		final Button okButton = new Button(shell, SWT.NONE);
 		okButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				save();
 				shell.dispose();
@@ -140,6 +144,7 @@ public class PreferencesDialog extends Dialog {
 
 		final Button cancelButton = new Button(shell, SWT.NONE);
 		cancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				shell.dispose();
 			}
@@ -153,7 +158,7 @@ public class PreferencesDialog extends Dialog {
 	
 	
 	private void save(){
-		Preferences my=Preferences.userRoot().node(GuiController.sPLUGINID);
+		final Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
 		my.put(dotpath, text.getText() );
 		
 		

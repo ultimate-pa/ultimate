@@ -27,20 +27,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 public class AAToUltimateModel<LETTER,STATE> {
-//	private static Logger m_Logger = 
+//	private static ILogger mLogger = 
 //		NestedWordAutomata.getLogger();
 //	
-	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws OperationCanceledException {
+	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws AutomataOperationCanceledException {
 //		final AlternatingAutomaton<LETTER,STATE> aa;
 //		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
 		System.out.println("Foo");
-		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
+		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
 //		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
 //		LinkedList<STATE> queue = new LinkedList<STATE>();
@@ -70,7 +70,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				else {
 //					succVSN = new AutomatonState(succState,
 //							nwa.isFinal(succState));
-//					m_Logger.debug("Creating Node: " + succVSN.toString());
+//					mLogger.debug("Creating Node: " + succVSN.toString());
 //					constructed.put(succState,succVSN);
 //					queue.add(succState);
 //				}
@@ -87,7 +87,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				} else {
 //					succVSN = new AutomatonState(succState,
 //							nwa.isFinal(succState));
-//					m_Logger.debug("Creating Node: " + succVSN.toString());
+//					mLogger.debug("Creating Node: " + succVSN.toString());
 //					constructed.put(succState, succVSN);
 //					queue.add(succState);
 //				}
@@ -103,7 +103,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //						succVSN = constructed.get(succState);
 //					} else {
 //						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
-//						m_Logger.debug("Creating Node: " + succVSN.toString());
+//						mLogger.debug("Creating Node: " + succVSN.toString());
 //						constructed.put(succState, succVSN);
 //						queue.add(succState);
 //					}

@@ -26,15 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public abstract class AbstractOperation<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 	protected final AutomataLibraryServices mServices;
 	
 	
-	protected AbstractOperation(Logger logger, AutomataLibraryServices services){
+	protected AbstractOperation(ILogger logger, AutomataLibraryServices services){
 		mLogger = logger;
 		mServices = services;
 	}

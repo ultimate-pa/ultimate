@@ -34,13 +34,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class CallSymbolAST {
-	private String m_Symbol;
+	private final String mSymbol;
 	public CallSymbolAST(String sym) {
-		m_Symbol = sym;
+		mSymbol = sym;
 	}
 	
 	public String getSymbol() {
-		return m_Symbol;
+		return mSymbol;
 	}
 	
 	

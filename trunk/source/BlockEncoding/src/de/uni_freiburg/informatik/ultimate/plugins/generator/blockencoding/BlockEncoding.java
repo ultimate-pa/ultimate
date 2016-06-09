@@ -30,15 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 
 /**
@@ -50,27 +49,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.prefe
  */
 public class BlockEncoding implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
-
 	private MinModelConversionObserver mConversionObserver;
 	private BlockEncodingObserver mBlockEncodingObserver;
-	private ModelType m_InputDefinition;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public void init() {
-		Logger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
 		mBlockEncodingObserver = new BlockEncodingObserver(logger, mServices);
 	}
@@ -87,22 +83,23 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(mBlockEncodingObserver);
 		observers.add(mConversionObserver);
 		return observers;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		if (mConversionObserver.getRoot() == null) {
-			return new ModelType("BlockEncodedModel", m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+			return new ModelType("BlockEncodedModel", mInputDefinition.getType(), mInputDefinition.getFileNames());
 		}
-		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
@@ -110,7 +107,7 @@ public class BlockEncoding implements IGenerator {
 		if (mConversionObserver.getRoot() == null) {
 			return mBlockEncodingObserver.getRoot();
 		}
-		return this.mConversionObserver.getRoot();
+		return mConversionObserver.getRoot();
 	}
 
 	@Override
@@ -119,7 +116,7 @@ public class BlockEncoding implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

@@ -32,16 +32,15 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -60,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class BlockEncoder {
 
-	private Logger mLogger;
+	private final ILogger mLogger;
 
 	private MinimizeBranchVisitor mbVisitor;
 
@@ -74,11 +73,11 @@ public class BlockEncoder {
 
 	private ArrayList<MinimizedNode> nonCallingFunctions;
 
-	private IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
-	public BlockEncoder(Logger logger, IUltimateServiceProvider services) {
+	public BlockEncoder(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
-		m_Services = services;
+		mServices = services;
 	}
 
 	/**
@@ -93,22 +92,22 @@ public class BlockEncoder {
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
 				prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class));
 		shouldMinimizeCallReturn = prefs.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
 
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(mLogger);
-		mlVisitor = new MinimizeLoopVisitor(mLogger, m_Services);
+		mlVisitor = new MinimizeLoopVisitor(mLogger, mServices);
 		mcrVisitor = new MinimizeCallReturnVisitor(mLogger, mbVisitor);
 		tmVisitor = new TestMinimizationVisitor(mLogger);
 
 		nonCallingFunctions = new ArrayList<MinimizedNode>();
 
-		for (RCFGEdge edge : root.getOutgoingEdges()) {
+		for (final RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
-				RootEdge rootEdge = (RootEdge) edge;
+				final RootEdge rootEdge = (RootEdge) edge;
 				if (rootEdge.getTarget() instanceof ProgramPoint) {
 					processFunction((ProgramPoint) rootEdge.getTarget(), rootEdge);
 				} else {
@@ -124,23 +123,23 @@ public class BlockEncoder {
 		// mbVisitor again
 		// Now it is configurable if this minimization should be done!
 		if (shouldMinimizeCallReturn) {
-			for (MinimizedNode node : nonCallingFunctions) {
+			for (final MinimizedNode node : nonCallingFunctions) {
 				mlVisitor.visitNode(node);
 			}
 			// Since it is possible to merge methods in different steps, we have
 			// to handle this. Therefore we made up a list where the
 			// MinimizeCallReturnVisitor tells us which nodes we have to inspect
 			// again!
-			ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
-			for (RCFGEdge edge : root.getOutgoingEdges()) {
+			final ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
+			for (final RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
-					methodNodes.add(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+					methodNodes.add(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 				}
 			}
 			// Now we start processing the method nodes, first step is to
 			// replace the call and return edges with substitutions
 			do {
-				for (MinimizedNode node : methodNodes) {
+				for (final MinimizedNode node : methodNodes) {
 					mLogger.debug("Try to merge Call- and Return-Edges for the Method: " + node);
 					mcrVisitor.visitNode(node);
 				}
@@ -150,15 +149,15 @@ public class BlockEncoder {
 				mcrVisitor.getNodesForReVisit().clear();
 				// Here try to minimize the rest of the CFG, so that maybe a
 				// further minimization is possible in the next run
-				for (RCFGEdge edge : root.getOutgoingEdges()) {
+				for (final RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 					}
 				}
-				for (RCFGEdge edge : root.getOutgoingEdges()) {
+				for (final RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
-						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
+						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 					}
 				}
 			} while (!methodNodes.isEmpty());

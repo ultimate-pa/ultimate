@@ -39,18 +39,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Markus Lindenmann
@@ -58,22 +57,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnr
  * @date 13.11.2011
  */
 public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
     /**
      * The jLogger instance.
      */
-	private final Logger m_Logger;
+	private final ILogger mLogger;
     /**
      * The resulting automaton.
      */
-    private NestedWordAutomaton<LETTER,STATE> m_Result;
+    private NestedWordAutomaton<LETTER,STATE> mResult;
     /**
      * The input automaton.
      */
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+    private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -83,30 +82,30 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * 
 	 * @param operand
 	 *            the input automaton
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
     public MinimizeDfa(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
-    	m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-        if (new HasUnreachableStates<LETTER,STATE>(m_Services, operand)
+    	mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+        if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
-		m_Operand = operand;
-		m_Logger.info(startMessage());
+		mOperand = operand;
+		mLogger.info(startMessage());
 
-		ArrayList<STATE> states = new ArrayList<STATE>();
-		states.addAll(m_Operand.getStates());
-		boolean[][] table = initializeTable(states);
+		final ArrayList<STATE> states = new ArrayList<STATE>();
+		states.addAll(mOperand.getStates());
+		final boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
 
-		if (m_Logger.isDebugEnabled()) {
+		if (mLogger.isDebugEnabled()) {
 			printTable(states, table);
 		}
 		generateResultAutomaton(states, table);
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*_______________________________________________________________________*\
@@ -121,7 +120,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 *            the alphabet
 	 * @param table
 	 *            the table
-     * @throws OperationCanceledException 
+     * @throws AutomataOperationCanceledException 
 	 */
 	private void calculateTable(ArrayList<STATE> states, boolean[][] table) throws AutomataLibraryException {
 		// we iterate on the table to get all the equivalent states
@@ -131,9 +130,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (int i = 0; i < states.size(); i++) {
 				for (int j = 0; j < i; j++) { // for each (i, j)
 					if (!table[i][j]) { // if (i, j) not marked
-						for (LETTER s : m_Operand.getInternalAlphabet()) {
-							ArrayList<STATE> first = getSuccessors(states, s, i);
-							ArrayList<STATE> second = getSuccessors(states, s, j);
+						for (final LETTER s : mOperand.getInternalAlphabet()) {
+							final ArrayList<STATE> first = getSuccessors(states, s, i);
+							final ArrayList<STATE> second = getSuccessors(states, s, j);
 							// if either i or j has no successors, for k mark
 							// (i, j) as not equivalent
 							if (first.isEmpty() ^ second.isEmpty()) {
@@ -151,9 +150,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						}
 					}
 				}
-				if (m_Services.getProgressMonitorService() != null
-						&& !m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
+				if (mServices.getProgressMonitorService() != null
+						&& !mServices.getProgressMonitorService().continueProcessing()) {
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}
@@ -185,8 +184,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private ArrayList<STATE> getSuccessors(ArrayList<STATE> states, LETTER s, int i) {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
-		ArrayList<STATE> first = new ArrayList<STATE>();
-		for(STATE state : m_Operand.succInternal(states.get(i), s)) {
+		final ArrayList<STATE> first = new ArrayList<STATE>();
+		for(final STATE state : mOperand.succInternal(states.get(i), s)) {
 			first.add(state);
 		}
 		return first;
@@ -201,14 +200,14 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private boolean[][] initializeTable(ArrayList<STATE> states) {
 		// table that will save the equivalent states
-		boolean[][] table = new boolean[states.size()][states.size()];
+		final boolean[][] table = new boolean[states.size()][states.size()];
 		// Initialization:
 		// we mark all the states (p,q) such that p in F and q not in F
 		for (int r = 0; r < states.size(); r++) {
 			for (int c = 0; c < r; c++) {
 				if (!table[r][c]
-						&& (m_Operand.getFinalStates().contains(states.get(r)) !=
-						m_Operand.getFinalStates().contains(states.get(c)))) {
+						&& (mOperand.getFinalStates().contains(states.get(r)) !=
+						mOperand.getFinalStates().contains(states.get(c)))) {
 					mark(table, r, c);
 				}
 			}
@@ -228,14 +227,15 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void generateResultAutomaton(ArrayList<STATE> states, boolean[][] table) {
 		// merge states
-		boolean[] marker = new boolean[states.size()];
-		Set<STATE> temp = new HashSet<STATE>();
-		HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
+		final boolean[] marker = new boolean[states.size()];
+		final Set<STATE> temp = new HashSet<STATE>();
+		final HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
 		@SuppressWarnings("unchecked")
-		StateFactory<STATE> snf = m_Operand.getStateFactory();
-        m_Result = new NestedWordAutomaton<LETTER,STATE>(
-        		m_Services, 
-                m_Operand.getInternalAlphabet(), null, null, snf);
+		final
+		StateFactory<STATE> snf = mOperand.getStateFactory();
+        mResult = new NestedWordAutomaton<LETTER,STATE>(
+        		mServices, 
+                mOperand.getInternalAlphabet(), null, null, snf);
 
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i]) {
@@ -250,28 +250,28 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					temp.add(states.get(j));
 					marker[j] = true;
                     if (!isFinal) {
-                        isFinal = m_Operand.isFinal(states.get(j));
+                        isFinal = mOperand.isFinal(states.get(j));
                     }
                     if (!isInitial) {
-                        isInitial = m_Operand.isInitial(states.get(j));
+                        isInitial = mOperand.isInitial(states.get(j));
                     }
 				}
 			}
-			STATE minimizedStateName = snf.minimize(temp);
-			for (STATE c : temp) {
+			final STATE minimizedStateName = snf.minimize(temp);
+			for (final STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}
-			m_Result.addState(isInitial, isFinal, minimizedStateName);
+			mResult.addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
 		}
 
 		// add edges
-		for (STATE c : m_Operand.getStates()) {
-			for (LETTER s : m_Operand.getInternalAlphabet()) {
-				for (STATE succ : m_Operand.succInternal(c, s)) {
-					STATE newPred = oldSNames2newSNames.get(c);
-					STATE newSucc = oldSNames2newSNames.get(succ);
-					m_Result.addInternalTransition(newPred, s, newSucc);
+		for (final STATE c : mOperand.getStates()) {
+			for (final LETTER s : mOperand.getInternalAlphabet()) {
+				for (final STATE succ : mOperand.succInternal(c, s)) {
+					final STATE newPred = oldSNames2newSNames.get(c);
+					final STATE newSucc = oldSNames2newSNames.get(succ);
+					mResult.addInternalTransition(newPred, s, newSucc);
 				}
 			}
 		}
@@ -288,15 +288,17 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private void printTable(ArrayList<STATE> st, boolean[][] t) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(" \t");
-		for (int i = 0; i < st.size(); i++)
+		for (int i = 0; i < st.size(); i++) {
 			sb.append(st.get(i) + "\t");
-		m_Logger.debug(sb.toString());
+		}
+		mLogger.debug(sb.toString());
 		sb = new StringBuilder();
 		for (int i = 0; i < st.size(); i++) {
 			sb.append(st.get(i) + "\t");
-			for (int j = 0; j < st.size(); j++)
+			for (int j = 0; j < st.size(); j++) {
 				sb.append(t[i][j] ? "X\t" : " \t");
-			m_Logger.debug(sb.toString());
+			}
+			mLogger.debug(sb.toString());
 			sb = new StringBuilder();
 		}
 	}
@@ -307,13 +309,15 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void printTransitions(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		StringBuilder msg;
-		for (STATE c : nwa.getStates())
-		    for (LETTER s : nwa.getInternalAlphabet())
-		        for (STATE succ : nwa.succInternal(c, s)) {
+		for (final STATE c : nwa.getStates()) {
+			for (final LETTER s : nwa.getInternalAlphabet()) {
+				for (final STATE succ : nwa.succInternal(c, s)) {
 		        	msg = new StringBuilder(c.toString());
 		            msg.append(" ").append(s).append(" ").append(succ);
-		            m_Logger.debug(msg);
+		            mLogger.debug(msg);
 		        }
+			}
+		}
 	}
 
 	/**
@@ -359,19 +363,19 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
     @Override
     public String startMessage() {
-    	m_Logger.info("Starting DFA Minimizer");
-        StringBuilder msg = new StringBuilder("Start ");
+    	mLogger.info("Starting DFA Minimizer");
+        final StringBuilder msg = new StringBuilder("Start ");
 		msg.append(operationName()).append(" Operand ")
-				.append(m_Operand.sizeInformation());
-        m_Logger.info(msg.toString());
+				.append(mOperand.sizeInformation());
+        mLogger.info(msg.toString());
 
-        if (m_Logger.isDebugEnabled()) {
-            printTransitions(m_Operand);
+        if (mLogger.isDebugEnabled()) {
+            printTransitions(mOperand);
         }
         
-        if (!m_Operand.isDeterministic()) {
-            m_Logger.info("Given automaton is not deterministic!");
-            m_Logger.info("Automaton will not be minimized, but only reduced.");
+        if (!mOperand.isDeterministic()) {
+            mLogger.info("Given automaton is not deterministic!");
+            mLogger.info("Automaton will not be minimized, but only reduced.");
         }
         
         return "Starting to minimize...";
@@ -379,33 +383,33 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     
     @Override
     public String exitMessage() {
-        if (m_Logger.isDebugEnabled()) {
-        	printTransitions(m_Result);
+        if (mLogger.isDebugEnabled()) {
+        	printTransitions(mResult);
         }
-        StringBuilder msg = new StringBuilder();
+        final StringBuilder msg = new StringBuilder();
         msg.append("Finished ").append(operationName()).append(" Result ")
-                .append(m_Result.sizeInformation());
-        m_Logger.info(msg.toString());
+                .append(mResult.sizeInformation());
+        mLogger.info(msg.toString());
 
         return "Exiting DFA minimization";
     }
 
     @Override
     public  INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
-        return m_Result;
+        return mResult;
     }
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mOperand, mResult, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, mOperand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
     

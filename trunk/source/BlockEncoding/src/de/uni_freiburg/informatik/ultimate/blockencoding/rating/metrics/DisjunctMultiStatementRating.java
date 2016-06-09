@@ -70,13 +70,13 @@ public class DisjunctMultiStatementRating implements IRating {
 				throw new IllegalArgumentException(
 						"There should be an CompositeEdge here!");
 			}
-			IMinimizedEdge[] edges = ((ICompositeEdge) edge)
+			final IMinimizedEdge[] edges = ((ICompositeEdge) edge)
 					.getCompositeEdges();
 			int totalDisjunctions = 0;
 			int totalStatements = 0;
 			int computedRating = 0;
-			for (IMinimizedEdge compEdge : edges) {
-				Integer[] ratingValues = (Integer[]) compEdge.getRating()
+			for (final IMinimizedEdge compEdge : edges) {
+				final Integer[] ratingValues = (Integer[]) compEdge.getRating()
 						.getRatingValueContainer().getValue();
 				totalDisjunctions = totalDisjunctions + ratingValues[0];
 				totalStatements = totalStatements + ratingValues[1];
@@ -122,7 +122,7 @@ public class DisjunctMultiStatementRating implements IRating {
 			throw new IllegalArgumentException(
 					"Comparison of different Ratings is forbidden!");
 		}
-		Integer[] values = ((DisjunctMultiStatementRating) other)
+		final Integer[] values = ((DisjunctMultiStatementRating) other)
 				.getRatingValueContainer().getValue();
 		return ratingValue.getValue()[2].compareTo(values[2]);
 	}

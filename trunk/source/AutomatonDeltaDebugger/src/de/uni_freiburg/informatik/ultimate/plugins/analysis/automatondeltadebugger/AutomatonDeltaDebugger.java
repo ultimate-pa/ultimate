@@ -28,24 +28,23 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
@@ -61,66 +60,48 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Ultimate interface to the automaton delta debugger.
  * 
- * NOTE: A user must change the code at three places: - the tester (which
- * specifies which operation is run) - the list of rules to be applied
- * iteratively - the list of rules to be applied only once in the end The class
- * provides some default values here.
+ * NOTE: A user may change the code at three places: <br>
+ * - the tester (which specifies which operation is run, mandatory change)
+ * {@link #getGeneralTester()} or
+ * {@link #getIOperation(INestedWordAutomaton, StateFactory)} <br>
+ * - the list of rules to be applied iteratively (optional change)
+ * {@link #getShrinkersLoop()} <br>
+ * - the list of rules to be applied only once in the end (optional change)
+ * {@link #getShrinkersEnd()} <br>
+ * The class provides some default values here.
  * 
- * @see getTester
- * @see getShrinkersLoop
- * @see getShrinkersEnd
- * 		
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
-	
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
-	
+
+	/**
+	 * standard automaton delta debugger
+	 */
 	public AutomatonDeltaDebugger() {
 		mObservers = new LinkedList<IObserver>();
 	}
-	
+
 	@Override
-	public ModelType getOutputDefinition() {
-		return null;
-	}
-	
-	@Override
-	public boolean isGuiRequired() {
-		return false;
-	}
-	
-	@Override
-	public ModelQuery getModelQuery() {
-		return ModelQuery.LAST;
-	}
-	
-	@Override
-	public List<String> getDesiredToolID() {
-		return null;
-	}
-	
-	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
-		
-		String creator = graphType.getCreator();
-		switch (creator) {
-			case "de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser":
-				mLogger.info("Preparing to process Automata...");
-				mObservers
-						.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
-								mServices, getCheckResultTester(),
-								getShrinkersLoop(), getShrinkersEnd()));
-				break;
-			default:
-				mLogger.warn("Ignoring input definition " + creator);
+
+		final String creator = graphType.getCreator();
+		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
+			mLogger.info("Preparing to process automaton...");
+			mObservers.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
+					mServices, getCheckResultTester(), getShrinkersLoop(),
+					getShrinkersEnd()));
+		} else {
+			mLogger.warn("Ignoring input definition " + creator);
 		}
 	}
-	
+
+	/* --- change the following methods accordingly --- */
+
 	/**
 	 * example tester for debugging general problems
 	 * 
@@ -129,12 +110,14 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * 
 	 * @return tester which listens for the specified throwable
 	 */
+	@SuppressWarnings({"unused", "squid:UnusedPrivateMethod"})
 	private ATester<LETTER, STATE> getGeneralTester() {
 		// example, use your own throwable here
 		final Throwable throwable = new Exception();
-		
+
 		// example, use your own method here
 		return new ATester<LETTER, STATE>(throwable) {
+			@SuppressWarnings("squid:S1848")
 			@Override
 			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
@@ -143,36 +126,30 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			}
 		};
 	}
-	
+
 	/**
 	 * example tester for debugging problems with the <code>checkResult()</code>
 	 * method of <code>IOperation</code>
 	 * 
-	 * NOTE: Insert one of the automaton library methods here.
-	 * 
-	 * @return tester which listens for checkResult problems
+	 * @return tester which debugs the checkResult method
 	 */
 	private ATester<LETTER, STATE> getCheckResultTester() {
 		// example, use your own thrower class here (not important)
 		final Class<?> thrower = MinimizeNwaMaxSAT.class;
-		
+
 		final String message = "'checkResult' failed";
 		final Throwable throwable = new DebuggerException(thrower, message);
-		
+
 		return new ATester<LETTER, STATE>(throwable) {
 			@Override
 			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
 				final StateFactory<STATE> factory = automaton.getStateFactory();
-				
-				// example, use your own IOperation here
+
+				// change the following method for a different IOperation
 				final IOperation<LETTER, STATE> op =
-						new MinimizeNwaMaxSAT<LETTER, STATE>(
-								new AutomataLibraryServices(mServices), factory,
-								new RemoveUnreachable<LETTER, STATE>(
-										new AutomataLibraryServices(mServices),
-										automaton).getResult());
-										
+						getIOperation(automaton, factory);
+
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
 					throw new DebuggerException(thrower, message);
@@ -180,27 +157,48 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			}
 		};
 	}
-	
+
+	/**
+	 * NOTE: Call your own method here.
+	 * 
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
+	 * @return IOperation instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	@SuppressWarnings("squid:S00112")
+	private IOperation<LETTER, STATE> getIOperation(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final StateFactory<STATE> factory) throws Throwable {
+		final AutomatonDebuggerExamples<LETTER, STATE> examples =
+				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
+
+		// example code, use your own method here
+		return examples.reduceNwaDirectSimulation(automaton, factory);
+	}
+
 	/**
 	 * NOTE: Insert or remove shrinkers here.
 	 * 
-	 * @return list of shrinkers (i.e., rules to apply) to be applied
-	 *         iteratively
+	 * @return list of shrinkers (i.e., rules to apply) to be applied iteratively
 	 */
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersLoop() {
 		final List<AShrinker<?, LETTER, STATE>> shrinkersLoop =
 				new ArrayList<AShrinker<?, LETTER, STATE>>();
-				
+
 		// examples, use your own shrinkers here
 		shrinkersLoop.add(new StateShrinker<LETTER, STATE>());
 		shrinkersLoop.add(new InternalTransitionShrinker<LETTER, STATE>());
 		shrinkersLoop.add(new CallTransitionShrinker<LETTER, STATE>());
 		shrinkersLoop.add(new ReturnTransitionShrinker<LETTER, STATE>());
 		shrinkersLoop.add(new SingleExitShrinker<LETTER, STATE>());
-		
+
 		return shrinkersLoop;
 	}
-	
+
 	/**
 	 * NOTE: Insert or remove shrinkers here.
 	 * 
@@ -209,51 +207,72 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersEnd() {
 		final List<AShrinker<?, LETTER, STATE>> shrinkersEnd =
 				new ArrayList<AShrinker<?, LETTER, STATE>>();
-				
+
 		// examples, use your own shrinkers here
 		shrinkersEnd.add(new UnusedLetterShrinker<LETTER, STATE>());
 		shrinkersEnd.add(new NormalizeStateShrinker<LETTER, STATE>());
-		
+
 		return shrinkersEnd;
 	}
-	
+
+	@Override
+	public ModelType getOutputDefinition() {
+		return null;
+	}
+
+	@Override
+	public boolean isGuiRequired() {
+		return false;
+	}
+
+	@Override
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
+	}
+
+	@Override
+	public List<String> getDesiredToolID() {
+		return Collections.emptyList();
+	}
+
 	@Override
 	public List<IObserver> getObservers() {
 		return mObservers;
 	}
-	
+
 	@Override
 	public void init() {
+		//no init needed 
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
-	
+
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-	
+	public void setToolchainStorage(final IToolchainStorage services) {
+		//no storage needed 
 	}
-	
+
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
+
 	@Override
 	public void finish() {
-	
+		//no finish needed
 	}
 }

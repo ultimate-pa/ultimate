@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
-import pea.Phase;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class PEALocation<T> implements ILocation {
 	

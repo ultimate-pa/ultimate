@@ -88,10 +88,12 @@ public abstract class AbstractFullAstChecker extends AbstractIndexAstChecker {
 	@Override
 	public synchronized boolean processResource(IResource resource)
 			throws OperationCanceledException {
-		if (!shouldProduceProblems(resource))
+		if (!shouldProduceProblems(resource)) {
 			return false;
-		if (!(resource instanceof IFile))
+		}
+		if (!(resource instanceof IFile)) {
 			return true;
+		}
 
 		processFile((IFile) resource);
 		return false;
@@ -105,27 +107,27 @@ public abstract class AbstractFullAstChecker extends AbstractIndexAstChecker {
 	 */
 	private void processFile(IFile file) throws OperationCanceledException {
 		this.file = file;
-		ICElement celement = CoreModel.getDefault().create(file);
+		final ICElement celement = CoreModel.getDefault().create(file);
 		if (!(celement instanceof ITranslationUnit)) {
 			return;
 		}
-		ITranslationUnit tu = (ITranslationUnit) celement;
+		final ITranslationUnit tu = (ITranslationUnit) celement;
 		ICProject[] projects;
 		try {
 			projects = CoreModel.getDefault().getCModel().getCProjects();
-			IIndex index = CCorePlugin.getIndexManager().getIndex(projects);
+			final IIndex index = CCorePlugin.getIndexManager().getIndex(projects);
 			index.acquireReadLock();
-			IASTTranslationUnit ast = tu.getAST(index, PARSE_MODE);
+			final IASTTranslationUnit ast = tu.getAST(index, PARSE_MODE);
 			if (ast != null) {
 				synchronized (ast) {
 					processAst(ast);
 				}
 			}
-		} catch (CModelException e1) {
+		} catch (final CModelException e1) {
 			e1.printStackTrace();
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
 	}

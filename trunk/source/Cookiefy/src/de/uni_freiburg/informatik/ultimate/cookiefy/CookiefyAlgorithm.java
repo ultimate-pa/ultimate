@@ -32,38 +32,36 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Implementation of the Cookiefy Algorithm
@@ -78,23 +76,23 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	private WrapperNode root = null;
 
 	public IElement getRoot() {
-		return this.root;
+		return root;
 	}
 
-	// public static Logger logger =
+	// public static ILogger logger =
 	// UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	protected TemplateStore TemplateStore;
 	protected Program InputProgram;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public CookiefyAlgorithm(Logger logger) {
+	public CookiefyAlgorithm(ILogger logger) {
 		mLogger = logger;
 	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		this.root = null;
+		root = null;
 	}
 
 	@Override
@@ -102,11 +100,6 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		// cleanup
 		InputProgram = null;
 		TemplateStore = null;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override
@@ -120,12 +113,12 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 		if (root instanceof WrapperNode) {
 			if (((WrapperNode) root).getBacking() instanceof Unit) {
-				Unit inputProgramUnit = (Unit) ((WrapperNode) root).getBacking();
+				final Unit inputProgramUnit = (Unit) ((WrapperNode) root).getBacking();
 
 				InputProgram = new Program(inputProgramUnit, mLogger);
 				TemplateStore = new TemplateStore(InputProgram, mLogger);
 
-				Program EncodedProgram = Cookiefy(inputProgramUnit);
+				final Program EncodedProgram = Cookiefy(inputProgramUnit);
 				if (EncodedProgram != null) {
 					this.root = new WrapperNode(null, EncodedProgram.toUnit());
 				}
@@ -153,7 +146,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 */
 	public Program Cookiefy(Unit P, String entryPoint, Map<String, Expression> entryPointInit,
 			Map<String, Expression> globalVarsInit) {
-		Program EncodedProgram = new Program(mLogger);
+		final Program EncodedProgram = new Program(mLogger);
 
 		// add program entry point
 		EncodedProgram.addProcedure(TemplateStore.programEntryPointTemplate("main", entryPointInit, globalVarsInit));
@@ -166,18 +159,19 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		mLogger.warn("Currently the Sub-Function is not implemented. Therefore we proceed with the following example temporal property:");
 		mLogger.warn("AG(!foo)");
 
-		for (ContextPathNode cp : ContextPath.getAGNotFoo()) {
+		for (final ContextPathNode cp : ContextPath.getAGNotFoo()) {
 			EncodedProgram.addProcedure(TemplateStore.pReturn(cp.getPath()));
-			for (Procedure p : InputProgram.Procedures.values()) {
+			for (final Procedure p : InputProgram.Procedures.values()) {
 				// Alg: create procedure header (here postponed to end of loop)
 
 				VarList[] newArg = new VarList[] {};
-				if (cp.isAtom())
+				if (cp.isAtom()) {
 					newArg = TemplateStore.concatToEncParamsAtom(p);
-				else
+				} else {
 					newArg = TemplateStore.concatToEncParams(p);
+				}
 				// TODO: ensure, that no variable already named 'ret'! -> rename
-				VarList returnVar = new VarList(LocationProvider.getLocation(), new String[] { "ret" },
+				final VarList returnVar = new VarList(LocationProvider.getLocation(), new String[] { "ret" },
 						new PrimitiveType(LocationProvider.getLocation(), "bool"));
 
 				Statement[] statements = new Statement[0];
@@ -193,14 +187,14 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				}
 
 				// generate havoc procedure
-				EncodedProgram.addProcedure(this.TemplateStore.encodeInitProcedurestateProcedure(p, cp.getPath(),
+				EncodedProgram.addProcedure(TemplateStore.encodeInitProcedurestateProcedure(p, cp.getPath(),
 						new Expression[] {}));
 
 				// create specifications (modifies)
-				List<Specification> specs = new LinkedList<Specification>();
+				final List<Specification> specs = new LinkedList<Specification>();
 				if (p.getOutParams().length > 0) {
-					String retValName = "retVal_" + ((PrimitiveType) p.getOutParams()[0].getType()).getName();
-					VariableLHS retVal = new VariableLHS(LocationProvider.getLocation(), retValName);
+					final String retValName = "retVal_" + ((PrimitiveType) p.getOutParams()[0].getType()).getName();
+					final VariableLHS retVal = new VariableLHS(LocationProvider.getLocation(), retValName);
 					specs.add(new ModifiesSpecification(LocationProvider.getLocation(), false,
 							new VariableLHS[] { retVal }));
 				}
@@ -209,7 +203,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				EncodedProgram.addProcedure(new Procedure(LocationProvider.getLocation(), new Attribute[0],
 						TemplateStore.methodeNameGen(p, cp.getPath(), ""), new String[0], newArg, // inParams
 						new VarList[] { returnVar }, // outParams
-						(Specification[]) specs.toArray(new Specification[specs.size()]), new Body(LocationProvider
+						specs.toArray(new Specification[specs.size()]), new Body(LocationProvider
 								.getLocation(), cp.isTemporal() // OPTIMIZATION
 																// DONE
 						? TemplateStore.cookifyArgsDeclareLocals(p, true, true)
@@ -237,8 +231,8 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 		// TODO: input program's parameters should be havoced here or should be
 		// assigned a start value
-		HashMap<String, Expression> entryPointInit = new HashMap<String, Expression>();
-		HashMap<String, Expression> globalVarsInit = new HashMap<String, Expression>();
+		final HashMap<String, Expression> entryPointInit = new HashMap<String, Expression>();
+		final HashMap<String, Expression> globalVarsInit = new HashMap<String, Expression>();
 
 		return Cookiefy(P, "main", entryPointInit, globalVarsInit);
 	}
@@ -253,23 +247,23 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 */
 	private Statement[] TemporalProcedureBody(ContextPathNode cp, Procedure p, Program EncodedProgram) {
 		int pp = 0;
-		LinkedList<Statement> statements = new LinkedList<Statement>();
+		final LinkedList<Statement> statements = new LinkedList<Statement>();
 
-		for (Statement s : p.getBody().getBlock()) {
+		for (final Statement s : p.getBody().getBlock()) {
 			// handle call statements
 			if (s instanceof CallStatement) {
-				CallStatement call = (CallStatement) s;
+				final CallStatement call = (CallStatement) s;
 				pp++;
 				// label
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// template
-				for (Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
+				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
 					statements.add(st);
 				}
 				// pcall
 				statements.addAll(TemplateStore.stackPush(p, pp + 1));
 				statements.add(TemplateStore.getHavocCallStatement(call.getArguments(),
-						this.InputProgram.Procedures.get(((CallStatement) s).getMethodName()), cp.getPath()));
+						InputProgram.Procedures.get(((CallStatement) s).getMethodName()), cp.getPath()));
 				statements.add(new ReturnStatement(LocationProvider.getLocation()));
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", ++pp)));
 				// TODO catch value from preturn if more than one
@@ -278,10 +272,10 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 					mLogger.warn("currently only 1-tuple returns supported in calls!");
 				} else if (call.getLhs().length == 1) {
 					// supports currently only one return value
-					ASTType retType = InputProgram.Procedures.get(call.getMethodName()).getOutParams()[0].getType();
+					final ASTType retType = InputProgram.Procedures.get(call.getMethodName()).getOutParams()[0].getType();
 					if (retType instanceof PrimitiveType) {
-						PrimitiveType ptype = (PrimitiveType) retType;
-						String globVarName = "retVal_" + ptype.getName();
+						final PrimitiveType ptype = (PrimitiveType) retType;
+						final String globVarName = "retVal_" + ptype.getName();
 						statements.add(new AssignmentStatement(LocationProvider.getLocation(),
 								new LeftHandSide[] { call.getLhs()[0] }, new Expression[] { new IdentifierExpression(
 										LocationProvider.getLocation(), globVarName) }));
@@ -295,7 +289,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				pp++;
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// Program Fragment Template
-				for (Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
+				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
 					statements.add(st);
 				}
 				// (1) store return value into global variable retVal
@@ -303,8 +297,8 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 					if (p.getOutParams()[0].getType() instanceof PrimitiveType) {
 
 						// Fetch the return value
-						PrimitiveType ptype = (PrimitiveType) p.getOutParams()[0].getType();
-						String retValName = "retVal_" + ptype.getName();
+						final PrimitiveType ptype = (PrimitiveType) p.getOutParams()[0].getType();
+						final String retValName = "retVal_" + ptype.getName();
 						statements.add(new AssignmentStatement(LocationProvider.getLocation(),
 								new LeftHandSide[] { new VariableLHS(LocationProvider.getLocation(), retValName) },
 								new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), p
@@ -335,7 +329,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				// label
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// template
-				for (Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
+				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
 					statements.add(st);
 				}
 				// code
@@ -362,12 +356,12 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 * 
 	 */
 	private void create_globalRetVals(Program encodedProgram) {
-		Map<String, VariableDeclaration> retVals = new HashMap<String, VariableDeclaration>();
+		final Map<String, VariableDeclaration> retVals = new HashMap<String, VariableDeclaration>();
 
-		for (Procedure p : TemplateStore.getInputProgram().Procedures.values()) {
-			for (VarList vl : p.getOutParams()) {
+		for (final Procedure p : TemplateStore.getInputProgram().Procedures.values()) {
+			for (final VarList vl : p.getOutParams()) {
 				if (vl.getType() instanceof PrimitiveType) {
-					PrimitiveType type = (PrimitiveType) vl.getType();
+					final PrimitiveType type = (PrimitiveType) vl.getType();
 					if (retVals.containsKey(type.getName())) {
 						// OPTIMIZATION DONE: only one retVal for each type
 						continue;

@@ -3,16 +3,13 @@ Bundle-ManifestVersion: 2
 Bundle-Name: IRSDependencies
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator
-Require-Bundle: UltimateCore,
- Library-log4j,
- Library-ModelCheckerUtils,
- Library-UltimateUtil,
- BoogieParser,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.automata
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker
+Require-Bundle: Library-UltimateModel,
+ Library-UltimateUtil,
+ Library-BoogieAST,
+ UltimateCore,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder

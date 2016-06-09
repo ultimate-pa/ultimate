@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  * Test small examples on our two most common settings.
@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
-	private static final String[] m_UltimateRepository_ForwardPredicates = {
+	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy",
 	};
 	
-	private static final String[] m_UltimateRepository_TreeInterpolation = {
+	private static final String[] mUltimateRepository_TreeInterpolation = {
 		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
@@ -57,11 +57,11 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 
 	
 	
-	private static final String[] m_Settings_ForwardPredicates = {
+	private static final String[] mSettings_ForwardPredicates = {
 		"automizer/ForwardPredicates.epf",
 	};
 	
-	private static final String[] m_Settings_TreeInterpolation = {
+	private static final String[] mSettings_TreeInterpolation = {
 		"automizer/TreeInterpolants.epf",
 	};
 
@@ -74,12 +74,12 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 		return 10 * 1000;
 	}
 	
-	private static final String[] m_BoogieToolchains = {
+	private static final String[] mBoogieToolchains = {
 		"AutomizerBpl.xml",
 //		"AutomizerBplInline.xml",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
@@ -89,30 +89,30 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 
 		{
 			// Tests with TreeInterpolation
-			for (String setting : m_Settings_TreeInterpolation) {
-				for (String toolchain : m_BoogieToolchains) {
-					addTestCase(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
+			for (final String setting : mSettings_TreeInterpolation) {
+				for (final String toolchain : mBoogieToolchains) {
+					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
 							new String[] {".bpl"});
 				}
 			}
-			for (String setting : m_Settings_TreeInterpolation) {
-				for (String toolchain : m_CToolchains) {
-					addTestCase(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
+			for (final String setting : mSettings_TreeInterpolation) {
+				for (final String toolchain : mCToolchains) {
+					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
 							new String[] {".c", ".i"});
 				}
 			}
 		}
 		
 		{	// Tests with ForwardPredicates
-			for (String setting : m_Settings_ForwardPredicates) {
-				for (String toolchain : m_BoogieToolchains) {
-					addTestCase(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
+			for (final String setting : mSettings_ForwardPredicates) {
+				for (final String toolchain : mBoogieToolchains) {
+					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, 
 							new String[] {".bpl"});
 				}
 			}
-			for (String setting : m_Settings_ForwardPredicates) {
-				for (String toolchain : m_CToolchains) {
-					addTestCase(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
+			for (final String setting : mSettings_ForwardPredicates) {
+				for (final String toolchain : mCToolchains) {
+					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, 
 							new String[] {".c", ".i"});
 				}
 			}

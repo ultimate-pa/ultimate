@@ -35,35 +35,35 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @author hoenicke
  */
 public class BoogiePrinterObserver implements IUnmanagedObserver {
 
-	private Logger mLogger;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public BoogiePrinterObserver(Logger logger){
-		mLogger = logger;
+	public BoogiePrinterObserver(final IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
-	
+
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
-			PrintWriter writer = openTempFile(root);
+			final PrintWriter writer = openTempFile(root);
 			if (writer != null) {
-				Unit unit = (Unit) root;
-				BoogieOutput output = new BoogieOutput(writer);
+				final Unit unit = (Unit) root;
+				final BoogieOutput output = new BoogieOutput(writer);
 				output.printBoogieProgram(unit);
 				writer.close();
 			}
@@ -76,43 +76,45 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 		String path;
 		String filename;
-		File f;
+		File file;
 
-		if (PreferenceInitializer.getSaveInSourceDirectory()) {
-			path = new File(root.getPayload().getLocation().getFileName())
-					.getParent();
-			if(path == null){
+		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
+			path = new File(root.getPayload().getLocation().getFileName()).getParent();
+			if (path == null) {
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = PreferenceInitializer.getDumpPath();
+				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 			}
 		} else {
-			path = PreferenceInitializer.getDumpPath();
+			path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(PreferenceInitializer.DUMP_PATH_LABEL);
 		}
 
 		try {
-			if (PreferenceInitializer.getUseUniqueFilename()) {
-				f = File.createTempFile("BoogiePrinter_"
-						+ new File(root.getPayload().getLocation()
-								.getFileName()).getName() + "_UID", ".bpl",
-						new File(path));
+			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
+				file = File.createTempFile(
+						"BoogiePrinter_" + new File(root.getPayload().getLocation().getFileName()).getName() + "_UID",
+						".bpl", new File(path));
 			} else {
-				filename = PreferenceInitializer.getFilename();
-				f = new File(path + File.separatorChar + filename);
-				if (f.isFile() && f.canWrite() || !f.exists()) {
-					if (f.exists()) {
-						mLogger.info("File already exists and will be overwritten: "
-								+ f.getAbsolutePath());
-					}
-					f.createNewFile();
-				} else {
-					mLogger.warn("Cannot write to: " + f.getAbsolutePath());
+				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getString(PreferenceInitializer.FILE_NAME_LABEL);
+				file = new File(path + File.separatorChar + filename);
+				if ((!file.isFile() || !file.canWrite()) && file.exists()) {
+					mLogger.warn("Cannot write to: " + file.getAbsolutePath());
 					return null;
 				}
-			}
-			mLogger.info("Writing to file " + f.getAbsolutePath());
-			return new PrintWriter(new FileWriter(f));
 
-		} catch (IOException e) {
+				if (file.exists()) {
+					mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
+				}
+				file.createNewFile();
+			}
+			mLogger.info("Writing to file " + file.getAbsolutePath());
+			return new PrintWriter(new FileWriter(file));
+
+		} catch (final IOException e) {
 			mLogger.fatal("Cannot open file", e);
 			return null;
 		}
@@ -121,11 +123,6 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		// not required
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

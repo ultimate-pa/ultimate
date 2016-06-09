@@ -52,7 +52,7 @@ public class Assignments {
 		 */
 		public TruthIterator(Boolean truthVal) {
 			mTruthVal = truthVal;
-			mIt = Assignments.this.mAssignment.entrySet().iterator();
+			mIt = mAssignment.entrySet().iterator();
 			nextVal();
 		}
 		/**
@@ -60,7 +60,7 @@ public class Assignments {
 		 */
 		private void nextVal() {			
 			while (mIt.hasNext()) {
-				Map.Entry<String, Boolean> me = mIt.next();
+				final Map.Entry<String, Boolean> me = mIt.next();
 				if (me.getValue() == mTruthVal) {
 					mNextVal = me.getKey();
 					return;
@@ -76,9 +76,10 @@ public class Assignments {
 
 		@Override
 		public String next() {
-			String val = mNextVal;
-			if (val == null)
+			final String val = mNextVal;
+			if (val == null) {
 				throw new NoSuchElementException();
+			}
 			nextVal();
 			return val;
 		}
@@ -112,10 +113,11 @@ public class Assignments {
 	public Boolean getAssignment(String label) {
 		return mAssignment.get(label);
 	}
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append('(');
-		for (Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
+		for (final Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
 			sb.append('(').append(me.getKey()).append(' ').
 				append(me.getValue()).append(')');
 		}
@@ -157,9 +159,10 @@ public class Assignments {
 	public int getNumTrueAssignments() {
 		if (mNumTrue == -1) {
 			mNumTrue = 0;
-			for (Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
-				if (me.getValue() == Boolean.TRUE)
+			for (final Map.Entry<String, Boolean> me : mAssignment.entrySet()) {
+				if (me.getValue() == Boolean.TRUE) {
 					++mNumTrue;
+				}
 			}
 		}
 		return mNumTrue;

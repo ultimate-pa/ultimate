@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -46,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public class ArrayIndex implements List<Term> {
 	
-	private final List<Term> m_IndexEntries;
+	private final List<Term> mIndexEntries;
 	
 	public ArrayIndex(List<Term> indexEntries) {
-		m_IndexEntries = indexEntries;
+		mIndexEntries = indexEntries;
 	}
 
 	@Override
@@ -79,47 +77,47 @@ public class ArrayIndex implements List<Term> {
 
 	@Override
 	public boolean contains(Object arg0) {
-		return m_IndexEntries.contains(arg0);
+		return mIndexEntries.contains(arg0);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> arg0) {
-		return m_IndexEntries.containsAll(arg0);
+		return mIndexEntries.containsAll(arg0);
 	}
 
 	@Override
 	public Term get(int arg0) {
-		return m_IndexEntries.get(arg0);
+		return mIndexEntries.get(arg0);
 	}
 
 	@Override
 	public int indexOf(Object arg0) {
-		return m_IndexEntries.indexOf(arg0);
+		return mIndexEntries.indexOf(arg0);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return m_IndexEntries.isEmpty();
+		return mIndexEntries.isEmpty();
 	}
 
 	@Override
 	public Iterator<Term> iterator() {
-		return m_IndexEntries.iterator();
+		return mIndexEntries.iterator();
 	}
 
 	@Override
 	public int lastIndexOf(Object arg0) {
-		return m_IndexEntries.lastIndexOf(arg0);
+		return mIndexEntries.lastIndexOf(arg0);
 	}
 
 	@Override
 	public ListIterator<Term> listIterator() {
-		return m_IndexEntries.listIterator();
+		return mIndexEntries.listIterator();
 	}
 
 	@Override
 	public ListIterator<Term> listIterator(int arg0) {
-		return m_IndexEntries.listIterator(arg0);
+		return mIndexEntries.listIterator(arg0);
 	}
 
 	@Override
@@ -149,22 +147,22 @@ public class ArrayIndex implements List<Term> {
 
 	@Override
 	public int size() {
-		return m_IndexEntries.size();
+		return mIndexEntries.size();
 	}
 
 	@Override
 	public List<Term> subList(int arg0, int arg1) {
-		return m_IndexEntries.subList(arg0, arg1);
+		return mIndexEntries.subList(arg0, arg1);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return m_IndexEntries.toArray();
+		return mIndexEntries.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] arg0) {
-		return m_IndexEntries.toArray(arg0);
+		return mIndexEntries.toArray(arg0);
 	}
 
 	@Override
@@ -172,30 +170,35 @@ public class ArrayIndex implements List<Term> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_IndexEntries == null) ? 0 : m_IndexEntries.hashCode());
+				+ ((mIndexEntries == null) ? 0 : mIndexEntries.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		ArrayIndex other = (ArrayIndex) obj;
-		if (m_IndexEntries == null) {
-			if (other.m_IndexEntries != null)
+		}
+		final ArrayIndex other = (ArrayIndex) obj;
+		if (mIndexEntries == null) {
+			if (other.mIndexEntries != null) {
 				return false;
-		} else if (!m_IndexEntries.equals(other.m_IndexEntries))
+			}
+		} else if (!mIndexEntries.equals(other.mIndexEntries)) {
 			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return m_IndexEntries.toString();
+		return mIndexEntries.toString();
 	}
 
 	/**
@@ -203,9 +206,9 @@ public class ArrayIndex implements List<Term> {
 	 * index.
 	 */
 	public ArrayIndex getFirst(int k) {
-		List<Term> indexEntries = new ArrayList<>();
+		final List<Term> indexEntries = new ArrayList<>();
 		for (int i=0; i<k; i++) {
-			indexEntries.add(m_IndexEntries.get(i));
+			indexEntries.add(mIndexEntries.get(i));
 		}
 		return new ArrayIndex(indexEntries);
 	}
@@ -214,7 +217,7 @@ public class ArrayIndex implements List<Term> {
 	 * Returns the free variable of all entries.
 	 */
 	public Set<TermVariable> getFreeVars() {
-		return SmtUtils.getFreeVars(m_IndexEntries);
+		return SmtUtils.getFreeVars(mIndexEntries);
 	}
 	
 	/**
@@ -222,8 +225,8 @@ public class ArrayIndex implements List<Term> {
 	 * of tvSet.
 	 */
 	public boolean freeVarsAreSubset(Set<TermVariable> tvSet) {
-	for (Term term : m_IndexEntries) {
-		for (TermVariable tv : term.getFreeVars()) {
+	for (final Term term : mIndexEntries) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			if (!tvSet.contains(tv)) {
 				return false;
 			} 

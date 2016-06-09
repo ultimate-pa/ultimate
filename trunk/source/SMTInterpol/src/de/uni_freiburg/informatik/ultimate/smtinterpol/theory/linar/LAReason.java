@@ -120,20 +120,23 @@ public abstract class LAReason {
 	abstract InfinitNumber explain(Explainer explainer, 
 		InfinitNumber slack, Rational factor);
 
+	@Override
 	public String toString() {
 		return mVar + (mIsUpper ? "<=" : ">=") + mBound;
 	}
+	@Override
 	public int hashCode() {
 		return HashUtils.hashJenkins(mBound.hashCode(), mVar);
 	}
 	
 	public Term toSMTLIB(Theory smtTheory, boolean useAuxVars) {
-		MutableAffinTerm at = new MutableAffinTerm();
+		final MutableAffinTerm at = new MutableAffinTerm();
 		at.add(Rational.ONE, mVar);
 		at.add(mBound.negate());
-		if (!mIsUpper)
+		if (!mIsUpper) {
 			at.add(mVar.getEpsilon());
-		Term posTerm = at.toSMTLibLeq0(smtTheory, useAuxVars);
+		}
+		final Term posTerm = at.toSMTLibLeq0(smtTheory, useAuxVars);
 		return (mIsUpper ? posTerm : smtTheory.term("not", posTerm));
 	}
 }

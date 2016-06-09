@@ -30,12 +30,12 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 
 
@@ -86,8 +86,8 @@ public abstract class RankingFunction implements Serializable {
 	 * @return ranking function as boolean term
 	 */
 	public Expression[] asLexExpression(Script script, Term2Expression term2expr) {
-		Term[] lex = this.asLexTerm(script);
-		Expression[] lexExpressions = new Expression[lex.length];
+		final Term[] lex = asLexTerm(script);
+		final Expression[] lexExpressions = new Expression[lex.length];
 		for (int i = 0; i < lex.length; ++i) {
 			lexExpressions[i] = term2expr.translate(lex[i]);
 		}

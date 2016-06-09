@@ -48,6 +48,7 @@ public class SourceAnnotation implements IAnnotation {
 	public Term getSource() {
 		return mSource;
 	}
+	@Override
 	public String toString() {
 		return mAnnot;
 	}

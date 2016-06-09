@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of an automaton state.
@@ -40,24 +40,25 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdg
 public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
-	private final String m_Name;
+	private final String mName;
 	
 	public AutomatonState(Object content, boolean isAccepting) {
 		
-		DefaultAnnotations acceptance = new DefaultAnnotations();
+		final DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting",isAccepting);
-		Map<String,IAnnotations> annotations = getPayload().getAnnotations();
+		final Map<String,IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put("isAccepting", acceptance);
 		
 		if (content instanceof IAnnotations) {
 			annotations.put("Content", (IAnnotations) content);
 		}
 		
-		m_Name = String.valueOf(content);
+		mName = String.valueOf(content);
 	}
 	
+	@Override
 	public String toString() {
-		return m_Name;
+		return mName;
 	}
 
 	@Override

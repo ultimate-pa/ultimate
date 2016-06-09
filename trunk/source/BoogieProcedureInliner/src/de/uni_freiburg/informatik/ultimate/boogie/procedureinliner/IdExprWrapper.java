@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 
 /**
  * Wrapper class for IdentifierExpression to be used, when equals() and hashCode() are needed.
@@ -77,13 +77,16 @@ public class IdExprWrapper {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		String otherIdentifer = ((IdExprWrapper) obj).mIdExpr.getIdentifier();
+		}
+		final String otherIdentifer = ((IdExprWrapper) obj).mIdExpr.getIdentifier();
 		return mIdExpr.getIdentifier().equals(otherIdentifer);
 	}
 

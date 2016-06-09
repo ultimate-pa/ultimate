@@ -35,8 +35,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -46,16 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredicate> {
 
-	final protected TAPreferences m_Pref;
-	private final IPredicate m_emtpyStack;
-	protected final SmtManager m_SmtManager;
+	final protected TAPreferences mPref;
+	private final IPredicate memtpyStack;
+	protected final SmtManager mSmtManager;
 
 	public PredicateFactoryForInterpolantAutomata(SmtManager smtManager, TAPreferences taPrefs) {
-		m_Pref = taPrefs;
-		m_SmtManager = smtManager;
-		m_emtpyStack = m_SmtManager.getPredicateFactory().newEmptyStackPredicate();
+		mPref = taPrefs;
+		mSmtManager = smtManager;
+		memtpyStack = mSmtManager.getPredicateFactory().newEmptyStackPredicate();
 	}
 
+	@Override
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		throw new AssertionError(
 				"intersect is only required for refinement, not for construction of interpolant automaton");
@@ -63,33 +64,34 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		if (m_Pref.computeHoareAnnotation()) {
-			assert ((m_Pref.interprocedural()) || down2up.keySet().size() <= 1) : "more than one down state";
+		if (mPref.computeHoareAnnotation()) {
+			assert ((mPref.interprocedural()) || down2up.keySet().size() <= 1) : "more than one down state";
 
-			List<IPredicate> upPredicates = new ArrayList<IPredicate>();
-			for (IPredicate caller : down2up.keySet()) {
-				for (IPredicate current : down2up.get(caller)) {
-					if (m_SmtManager.getPredicateFactory().isDontCare(current)) {
-						return m_SmtManager.getPredicateFactory().newDontCarePredicate(null);
+			final List<IPredicate> upPredicates = new ArrayList<IPredicate>();
+			for (final IPredicate caller : down2up.keySet()) {
+				for (final IPredicate current : down2up.get(caller)) {
+					if (mSmtManager.getPredicateFactory().isDontCare(current)) {
+						return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
 					}
 					upPredicates.add(current);
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(upPredicates.toArray(new IPredicate[0]));
-			IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term conjunction = mSmtManager.getPredicateFactory().and(upPredicates);
+			final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(conjunction);
 			return result;
 		} else {
-			return m_SmtManager.getPredicateFactory().newDontCarePredicate(null);
+			return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
 		}
 	}
 
+	@Override
 	public IPredicate createSinkStateContent() {
-		return m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
+		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
 	}
 
 	@Override
 	public IPredicate createEmptyStackState() {
-		return m_emtpyStack;
+		return memtpyStack;
 	}
 
 	@Override
@@ -99,20 +101,20 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(states.toArray(new IPredicate[0]));
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
+		final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
 		return result;
 	}
 
 	@Override
 	public IPredicate senwa(IPredicate entry, IPredicate state) {
 		assert false : "still used?";
-		return m_SmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
 	public IPredicate buchiComplementFKV(LevelRankingState<?, IPredicate> compl) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(compl.toString());
+		return mSmtManager.getPredicateFactory().newDebugPredicate(compl.toString());
 	}
 
 	@Override
@@ -136,16 +138,16 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 			programPoints = new ProgramPoint[2];
 			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
 		} else if (c1 instanceof IMLPredicate) {
-			IMLPredicate mlpred = (IMLPredicate) c1;
-			int newLength = mlpred.getProgramPoints().length + 1;
+			final IMLPredicate mlpred = (IMLPredicate) c1;
+			final int newLength = mlpred.getProgramPoints().length + 1;
 			programPoints = Arrays.copyOf(mlpred.getProgramPoints(), newLength);
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
+		final ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(c1, c2);
-		IMLPredicate result = m_SmtManager.getPredicateFactory().newMLPredicate(programPoints, tvp);
+		final Term conjunction = mSmtManager.getPredicateFactory().and(c1, c2);
+		final IMLPredicate result = mSmtManager.getPredicateFactory().newMLPredicate(programPoints, conjunction);
 		return result;
 	}
 

@@ -5,9 +5,9 @@ import java.util.List;
 
 public class TreeNode<LETTER> {
 
-	private TreeNode<LETTER> parent;
-	private List<TreeNode<LETTER>> children;
-	private LETTER symbol;
+	private final TreeNode<LETTER> parent;
+	private final List<TreeNode<LETTER>> children;
+	private final LETTER symbol;
 	
 	public TreeNode(LETTER symbol) {
 		this.parent = null;
@@ -58,8 +58,8 @@ public class TreeNode<LETTER> {
 	 * @return Returns a Tree.
 	 */
 	public Tree<LETTER> createTree() {
-		TreeNode<LETTER> treeRoot = this;
-		Tree<LETTER> tree = new Tree<LETTER>(treeRoot);
+		final TreeNode<LETTER> treeRoot = this;
+		final Tree<LETTER> tree = new Tree<LETTER>(treeRoot);
 		if (treeRoot.isLeaf()) {
 			tree.addLeaf(treeRoot);	
 		} else {

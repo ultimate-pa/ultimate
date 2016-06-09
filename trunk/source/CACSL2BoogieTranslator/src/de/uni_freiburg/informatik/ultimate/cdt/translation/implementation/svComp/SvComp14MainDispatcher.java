@@ -31,17 +31,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
  * TODO: rename this to 2015 perhaps??
@@ -51,19 +49,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class SvComp14MainDispatcher extends MainDispatcher {
 
 	public SvComp14MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants, IUltimateServiceProvider services,
-			Logger logger) {
+			ILogger logger) {
 		super(backtranslator, witnessInvariants, services, logger);
 	}
 
 	@Override
 	protected void init() {
-		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new SVCompTypeHandler(!m_BitvectorTranslation);
-		acslHandler = new ACSLHandler(m_WitnessInvariants != null);
-		nameHandler = new NameHandler(backtranslator);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, m_BitvectorTranslation, nameHandler);
-		this.backtranslator.setExpressionTranslation(((SvComp14CHandler) cHandler).getExpressionTranslation());
-		preprocessorHandler = new SvComp14PreprocessorHandler();
-		REPORT_WARNINGS = false;
+		mSideEffectHandler = new SideEffectHandler();
+		mTypeHandler = new SVCompTypeHandler(!mBitvectorTranslation);
+		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
+		mNameHandler = new NameHandler(mBacktranslator);
+		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation, mOverapproximateFloatingPointOperations, mNameHandler);
+		mBacktranslator.setExpressionTranslation(((SvComp14CHandler) mCHandler).getExpressionTranslation());
+		mPreprocessorHandler = new SvComp14PreprocessorHandler();
+		mReportWarnings = false;
 	}
 }

@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -54,20 +54,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class StraightLineInterpolantAutomatonBuilder {
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 	
-	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Result;
+	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	
 	public StraightLineInterpolantAutomatonBuilder(
 			IUltimateServiceProvider services, 
 			InCaReAlphabet<CodeBlock> alphabet,
 			IInterpolantGenerator interpolantGenerator,
 			PredicateFactoryForInterpolantAutomata predicateFactory) {
-		m_Services = services;
-		InterpolantsPreconditionPostcondition ipp = 
+		mServices = services;
+		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
-		m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(m_Services), 
+		mResult =	new NestedWordAutomaton<CodeBlock, IPredicate>(
+				new AutomataLibraryServices(mServices), 
 						alphabet.getInternalAlphabet(),
 						alphabet.getCallAlphabet(),
 						alphabet.getReturnAlphabet(),
@@ -78,33 +78,33 @@ public class StraightLineInterpolantAutomatonBuilder {
 	private void addStatesAndTransitions(IInterpolantGenerator interpolantGenerator, 
 			PredicateFactoryForInterpolantAutomata predicateFactory, InterpolantsPreconditionPostcondition ipp) { 
 
-		m_Result.addState(true, false, interpolantGenerator.getPrecondition());
-		m_Result.addState(false, true, interpolantGenerator.getPostcondition());
-		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
+		mResult.addState(true, false, interpolantGenerator.getPrecondition());
+		mResult.addState(false, true, interpolantGenerator.getPostcondition());
+		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = ipp.getInterpolant(i);
-			IPredicate succ = ipp.getInterpolant(i+1);
-			assert m_Result.getStates().contains(pred);
-			if (!m_Result.getStates().contains(succ)) {
-				m_Result.addState(false, false, succ);
+			final IPredicate pred = ipp.getInterpolant(i);
+			final IPredicate succ = ipp.getInterpolant(i+1);
+			assert mResult.getStates().contains(pred);
+			if (!mResult.getStates().contains(succ)) {
+				mResult.addState(false, false, succ);
 			}
 			if (trace.isCallPosition(i)) {
-				m_Result.addCallTransition(pred, trace.getSymbol(i), succ);
+				mResult.addCallTransition(pred, trace.getSymbol(i), succ);
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
-				int callPos = trace.getCallPosition(i);
-				IPredicate hierPred = ipp.getInterpolant(callPos);
-				m_Result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
+				final int callPos = trace.getCallPosition(i);
+				final IPredicate hierPred = ipp.getInterpolant(callPos);
+				mResult.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
-				m_Result.addInternalTransition(pred, trace.getSymbol(i), succ);
+				mResult.addInternalTransition(pred, trace.getSymbol(i), succ);
 			}
 		}
 	}
 
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
-		return m_Result;
+		return mResult;
 	}
 	
 }

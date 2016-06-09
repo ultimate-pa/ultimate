@@ -31,14 +31,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Matcher;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+
 
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
@@ -80,9 +81,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *         toolchain and the second represents settings.
 	 */
 	protected Collection<Pair> getRunConfiguration() {
-		ArrayList<Pair> rtr = new ArrayList<>();
+		final ArrayList<Pair> rtr = new ArrayList<>();
 
-		File root = getRootFolder(mRootFolder);
+		final File root = getRootFolder(mRootFolder);
 		if (root == null) {
 			return rtr;
 		}
@@ -95,14 +96,14 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		settingsFiles = TestUtil.filterFiles(settingsFiles, ".*regression.*");
 		settingsFiles = TestUtil.filterFiles(settingsFiles, mFilterRegex);
 
-		for (File toolchain : toolchainFiles) {
-			String toolchainName = toolchain.getName().replaceAll("\\..*", "");
-			String localRegex = Matcher.quoteReplacement(toolchain.getParent()) + ".*";
+		for (final File toolchain : toolchainFiles) {
+			final String toolchainName = toolchain.getName().replaceAll("\\..*", "");
+			final String localRegex = Matcher.quoteReplacement(toolchain.getParent()) + ".*";
 
-			Collection<File> relevantSettings = TestUtil.filterFiles(settingsFiles, localRegex);
+			final Collection<File> relevantSettings = TestUtil.filterFiles(settingsFiles, localRegex);
 
-			for (File settings : relevantSettings) {
-				String settingsName = settings.getName().replaceAll("\\..*", "");
+			for (final File settings : relevantSettings) {
+				final String settingsName = settings.getName().replaceAll("\\..*", "");
 
 				if (settingsName.startsWith(toolchainName)) {
 					rtr.add(new Pair(toolchain, settings));
@@ -133,7 +134,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return null;
 		}
 
-		File root = new File(path);
+		final File root = new File(path);
 
 		if (!root.exists() || !root.isDirectory()) {
 			return null;
@@ -175,8 +176,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return "Toolchain:" + getToolchainFile() + " Settings:" + getSettingsFile();
 		}
 
-		private File mToolchainFile;
-		private File mSettingsFile;
+		private final File mToolchainFile;
+		private final File mSettingsFile;
 	}
 
 }

@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
  */
 public class DynamicHeuristic implements IRatingHeuristic {
 
-	private RatingStrategy strategy;
+	private final RatingStrategy strategy;
 
-	private List<RatingStrategy> supportedStrategies;
+	private final List<RatingStrategy> supportedStrategies;
 
 	private int maxThreshold;
 
@@ -65,10 +65,10 @@ public class DynamicHeuristic implements IRatingHeuristic {
 	 */
 	public DynamicHeuristic(RatingStrategy strategy) {
 		this.strategy = strategy;
-		this.supportedStrategies = new ArrayList<RatingStrategy>();
-		this.supportedStrategies
+		supportedStrategies = new ArrayList<RatingStrategy>();
+		supportedStrategies
 				.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
-		this.supportedStrategies
+		supportedStrategies
 				.add(RatingStrategy.DISJUNCTIVE_MULTI_STATEMENT_RATING);
 	}
 
@@ -94,7 +94,7 @@ public class DynamicHeuristic implements IRatingHeuristic {
 		int totalRating = 0;
 		int edges = 0;
 		MinimizedNode source = null;
-		for (IMinimizedEdge edge : edgeLevel) {
+		for (final IMinimizedEdge edge : edgeLevel) {
 			if (source == null) {
 				source = edge.getSource();
 			}
@@ -114,7 +114,7 @@ public class DynamicHeuristic implements IRatingHeuristic {
 			}
 		}
 		// here we compute what the new average value would be
-		int newThreshold = (totalRatingValue + totalRating)
+		final int newThreshold = (totalRatingValue + totalRating)
 				/ (countOfEdges + edges);
 		// now check if the new threshold is under the maximum given there
 		if (newThreshold <= maxThreshold) {
@@ -127,7 +127,7 @@ public class DynamicHeuristic implements IRatingHeuristic {
 	}
 
 	private boolean containsOnlyCalls(List<IMinimizedEdge> edges) {
-		for (IMinimizedEdge checkEdge : edges) {
+		for (final IMinimizedEdge checkEdge : edges) {
 			if (!(checkEdge.isBasicEdge())) {
 				return false;
 			} else {

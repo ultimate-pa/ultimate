@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 int main() {
-  float x;
-  float y;
+  double x = 1.231;
+  double y = 2.623;
   if (x == y)
   {
     return 1;

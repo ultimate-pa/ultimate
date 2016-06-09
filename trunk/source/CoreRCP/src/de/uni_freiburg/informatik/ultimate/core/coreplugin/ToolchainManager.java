@@ -35,38 +35,33 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.GenericServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.ProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IModelManager;
-import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
-import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
-import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.GenericServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.SubchainType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
  * 
@@ -77,14 +72,14 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
  */
 public class ToolchainManager {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final PluginFactory mPluginFactory;
-	private final IController mCurrentController;
+	private final IController<ToolchainListType> mCurrentController;
 	private final AtomicLong mCurrentId;
 	private final ConcurrentHashMap<Long, Toolchain> mActiveToolchains;
-	private final LoggingService mLoggingService;
+	private final Log4JLoggingService mLoggingService;
 
-	public ToolchainManager(LoggingService loggingService, PluginFactory factory, IController controller) {
+	public ToolchainManager(Log4JLoggingService loggingService, PluginFactory factory, IController<ToolchainListType> controller) {
 		mLoggingService = loggingService;
 		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mPluginFactory = factory;
@@ -93,7 +88,7 @@ public class ToolchainManager {
 		mActiveToolchains = new ConcurrentHashMap<>();
 	}
 
-	public void releaseToolchain(IToolchain toolchain) {
+	public void releaseToolchain(IToolchain<ToolchainListType> toolchain) {
 		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
 			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
@@ -104,8 +99,8 @@ public class ToolchainManager {
 		}
 	}
 
-	public IToolchain requestToolchain() {
-		Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), createModelManager());
+	public IToolchain<ToolchainListType> requestToolchain() {
+		final Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), createModelManager());
 		mActiveToolchains.put(tc.getId(), tc);
 		return tc;
 	}
@@ -115,8 +110,8 @@ public class ToolchainManager {
 
 		if (mActiveToolchains.size() > 0) {
 			mLogger.info("There are still " + mActiveToolchains.size() + " active toolchains alive");
-			List<Toolchain> openChains = new ArrayList<>(mActiveToolchains.values());
-			for (Toolchain tc : openChains) {
+			final List<Toolchain> openChains = new ArrayList<>(mActiveToolchains.values());
+			for (final Toolchain tc : openChains) {
 				if (tc != null && tc.getCurrentToolchainData() != null
 						&& tc.getCurrentToolchainData().getStorage() != null) {
 					tc.getCurrentToolchainData().getStorage().clear();
@@ -127,20 +122,20 @@ public class ToolchainManager {
 	}
 
 	private IModelManager createModelManager() {
-		String tmp_dir = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
+		final String tmp_dir = new RcpPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(CorePreferenceInitializer.LABEL_MmTMPDIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
 
 	/*************************** ToolchainContainer Implementation ****************************/
-	private class Toolchain implements IToolchain {
+	private class Toolchain implements IToolchain<ToolchainListType> {
 
 		private final long mId;
 		private final IModelManager mModelManager;
 		private final Benchmark mBenchmark;
 
-		private ToolchainData mToolchainData;
-		private Map<File, ISource> mParsers;
+		private IToolchainData<ToolchainListType> mToolchainData;
+		private final Map<File, ISource> mParsers;
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
@@ -151,10 +146,10 @@ public class ToolchainManager {
 			mParsers = new LinkedHashMap<File, ISource>();
 		}
 
-		/*************************** IToolchain Implementation ****************************/
+		/*************************** IToolchain<ToolchainListType> Implementation ****************************/
 
 		@Override
-		public void init(IProgressMonitor monitor) {
+		public void init(IToolchainProgressMonitor monitor) {
 			if (mToolchainData == null) {
 				return;
 			}
@@ -164,14 +159,14 @@ public class ToolchainManager {
 
 			// install logging services into toolchain storage
 			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
-			mToolchainData.getStorage().putStorable(LoggingService.getServiceKey(), mLoggingService);
+			mToolchainData.getStorage().putStorable(Log4JLoggingService.getServiceKey(), mLoggingService);
 
 			// install service provider service into toolchain storage
 			mToolchainData.getStorage().putStorable(GenericServiceProvider.getServiceKey(),
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
+			final ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 		}
@@ -182,8 +177,8 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public ToolchainData makeToolSelection(IProgressMonitor monitor) {
-			List<ITool> tools = mPluginFactory.getAllAvailableTools();
+		public IToolchainData<ToolchainListType> makeToolSelection(final IToolchainProgressMonitor monitor) {
+			final List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
 			if (tools.isEmpty()) {
 				mLogger.warn(getLogPrefix() + ": There are no plugins present, returning null tools.");
@@ -191,11 +186,12 @@ public class ToolchainManager {
 			}
 
 			// present selection dialog
-			ToolchainData rtr = mCurrentController.selectTools(tools);
+			final IToolchainData<ToolchainListType> rtr = mCurrentController.selectTools(tools);
 			return setToolSelection(monitor, rtr);
 		}
 
-		public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data) {
+		@Override
+		public IToolchainData<ToolchainListType> setToolSelection(final IToolchainProgressMonitor monitor, final IToolchainData<ToolchainListType> data) {
 			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
@@ -212,26 +208,22 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public boolean initializeParsers(PreludeProvider preludefile) {
+		public boolean initializeParsers() {
 			if (mInputFiles == null || mInputFiles.length == 0) {
 				mLogger.fatal(getLogPrefix() + ": No input files specified");
 				return false;
 			}
 
-			for (File inputFile : mInputFiles) {
-				ISource parser = selectParser(inputFile);
+			for (final File inputFile : mInputFiles) {
+				final ISource parser = selectParser(inputFile);
 
 				if (parser == null) {
 					mLogger.warn(getLogPrefix() + ": No parsers available for " + inputFile.getAbsolutePath());
 					return false;
 				}
 
-				// set prelude file if present
-				if (preludefile != null) {
-					parser.setPreludeFile(preludefile.getPreludeFile());
-				} else {
-					parser.setPreludeFile(null);
-				}
+				// TODO: remove preludes from parser interface
+				parser.setPreludeFile(null);
 				mParsers.put(inputFile, parser);
 			}
 			mLogger.info(getLogPrefix() + ": Parser(s) successfully initiated...");
@@ -240,14 +232,14 @@ public class ToolchainManager {
 
 		@Override
 		public void runParsers() throws Exception {
-			for (Entry<File, ISource> entry : mParsers.entrySet()) {
-				ISource parser = entry.getValue();
-				File input = entry.getKey();
+			for (final Entry<File, ISource> entry : mParsers.entrySet()) {
+				final ISource parser = entry.getValue();
+				final File input = entry.getKey();
 
-				IElement element = runParser(input, parser);
-				ModelType t = parser.getOutputDefinition();
+				final IElement element = runParser(input, parser);
+				final ModelType t = parser.getOutputDefinition();
 				if (t == null) {
-					String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
+					final String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
 							+ input.getAbsolutePath();
 					mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
 					throw new IllegalArgumentException(errorMsg);
@@ -257,10 +249,10 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
+		public ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
-			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
+			final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+			final boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
 			if (useBenchmark) {
 				bench = new Benchmark();
@@ -273,16 +265,13 @@ public class ToolchainManager {
 					throw new IllegalStateException("There is no model present.");
 				}
 
-				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
+				final CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
 						mParsers.values().toArray(new ISource[0]), mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
 
 			} finally {
-				IResultService resultService = mToolchainData.getServices().getResultService();
-				// resultService.reportResult(Activator.s_PLUGIN_ID, new
-				// GenericResult(Activator.s_PLUGIN_ID,
-				// "VM Information", VMUtils.getVMInfos(), Severity.INFO));
+				final IResultService resultService = mToolchainData.getServices().getResultService();
 				if (VMUtils.areAssertionsEnabled()) {
 					resultService.reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
@@ -290,8 +279,8 @@ public class ToolchainManager {
 
 				if (useBenchmark) {
 					bench.stopAll();
-					bench.printResult();
-					mBenchmark.printResult();
+					bench.printResult(mLogger);
+					mBenchmark.printResult(mLogger);
 
 					// report benchmark results
 					resultService.reportResult(Activator.PLUGIN_ID,
@@ -304,7 +293,7 @@ public class ToolchainManager {
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
 			}
 
-			return Status.OK_STATUS;
+			return ReturnCode.Ok;
 		}
 
 		@Override
@@ -326,7 +315,7 @@ public class ToolchainManager {
 			return mInputFiles != null;
 		}
 
-		/*************************** End IToolchain Implementation ****************************/
+		/*************************** End IToolchain<ToolchainListType> Implementation ****************************/
 
 		/**
 		 * Checks whether all plugins in the toolchain are present.
@@ -336,31 +325,32 @@ public class ToolchainManager {
 		 * @return <code>true</code> if and only if every plugin in the chain exists.
 		 */
 		private boolean checkToolchain(List<Object> chain) {
-			for (Object o : chain) {
+			for (final Object o : chain) {
 				if (o instanceof PluginType) {
-					PluginType plugin = (PluginType) o;
+					final PluginType plugin = (PluginType) o;
 					if (!mPluginFactory.isPluginAvailable(plugin.getId())) {
 						mLogger.error(getLogPrefix() + ": Did not find plugin with id \"" + plugin.getId()
 								+ "\". The following plugins are currently available:");
 						if (mLogger.isInfoEnabled()) {
-							for (ITool t : mPluginFactory.getAllAvailableTools()) {
+							for (final ITool t : mPluginFactory.getAllAvailableTools()) {
 								mLogger.info(getLogPrefix() + ": " + t.getPluginID());
 							}
 						}
 						return false;
 					}
 				} else if (o instanceof SubchainType) {
-					SubchainType sub = (SubchainType) o;
-					if (!checkToolchain(sub.getPluginOrSubchain()))
+					final SubchainType sub = (SubchainType) o;
+					if (!checkToolchain(sub.getPluginOrSubchain())) {
 						// Did already log...
 						return false;
+					}
 				}
 			}
 			return true;
 		}
 
 		private final IElement runParser(final File file, ISource parser) throws Exception {
-			boolean useBenchmark = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+			final boolean useBenchmark = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
 
@@ -379,11 +369,11 @@ public class ToolchainManager {
 				}
 
 				/*
-				 * for testing purposes only for(ISerialization ser : m_SerializationPlugins) { ser.serialize(root,
+				 * for testing purposes only for(ISerialization ser : mSerializationPlugins) { ser.serialize(root,
 				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt"); if(in == in)
 				 * System.out.println(in.toString()); }
 				 */
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Exception during parsing: " + e.getMessage());
 				resetModelManager();
 			} finally {
@@ -397,7 +387,7 @@ public class ToolchainManager {
 				mLogger.info(getLogPrefix() + ": Clearing model...");
 				try {
 					mModelManager.persistAll(false);
-				} catch (StoreObjectException e) {
+				} catch (final StoreObjectException e) {
 					final Throwable cause = e.getCause();
 					mLogger.error(getLogPrefix() + ": Failed to persist models: "
 							+ (cause == null ? e.getMessage() : cause.getMessage()));
@@ -407,15 +397,15 @@ public class ToolchainManager {
 		}
 
 		private final ISource selectParser(final File file) {
-			// how many parsers does m_SourcePlugins provide?
-			ArrayList<ISource> usableParsers = new ArrayList<ISource>();
+			// how many parsers does mSourcePlugins provide?
+			final ArrayList<ISource> usableParsers = new ArrayList<ISource>();
 			ISource parser = null;
-			List<String> parserIds = mPluginFactory.getPluginClassNames(ISource.class);
+			final List<String> parserIds = mPluginFactory.getPluginClassNames(ISource.class);
 			mLogger.debug(getLogPrefix() + ": We have " + parserIds.size() + " parsers present.");
 
 			// how many of these parsers can be used on our input file?
-			for (String parserId : parserIds) {
-				ISource p = mPluginFactory.createTool(parserId);
+			for (final String parserId : parserIds) {
+				final ISource p = mPluginFactory.createTool(parserId);
 				if (p != null && p.parseable(file)) {
 					mLogger.info(getLogPrefix() + ": Parser " + p.getPluginName() + " is usable for "
 							+ file.getAbsolutePath());
@@ -428,7 +418,7 @@ public class ToolchainManager {
 				}
 			}
 
-			boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID).getBoolean(
+			final boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID).getBoolean(
 					CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
 					CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
 
@@ -447,7 +437,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public ToolchainData getCurrentToolchainData() {
+		public IToolchainData<ToolchainListType> getCurrentToolchainData() {
 			return mToolchainData;
 		}
 

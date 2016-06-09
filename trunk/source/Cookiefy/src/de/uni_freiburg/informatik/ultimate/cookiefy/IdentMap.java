@@ -40,8 +40,8 @@ import java.util.Map;
  *
  */
 public class IdentMap {
-	private Map<String, Integer> IdentToID;
-	private Map<Integer, String> IDToIdent;
+	private final Map<String, Integer> IdentToID;
+	private final Map<Integer, String> IDToIdent;
 
 	/**
 	 * auto incrementing ID. use getNextID
@@ -63,7 +63,7 @@ public class IdentMap {
 	 */
 	public void put(String procedureIdentifier) {
 		if (!IdentToID.containsKey(procedureIdentifier)) {
-			int id = getNextID();
+			final int id = getNextID();
 			IDToIdent.put(id, procedureIdentifier);
 			IdentToID.put(procedureIdentifier, id);
 		}

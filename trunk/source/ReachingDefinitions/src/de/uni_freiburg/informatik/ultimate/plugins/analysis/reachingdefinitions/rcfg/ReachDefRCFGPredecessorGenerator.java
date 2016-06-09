@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
@@ -43,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;
 
-	public ReachDefRCFGPredecessorGenerator(IAnnotationProvider<ReachDefStatementAnnotation> provider, Logger logger) {
+	public ReachDefRCFGPredecessorGenerator(IAnnotationProvider<ReachDefStatementAnnotation> provider, ILogger logger) {
 		mLogger = logger;
 		mProvider = provider;
 	}
@@ -65,7 +64,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 			return rtr;
 		}
 
-		for (RCFGEdge pre : currentNode.getIncomingEdges()) {
+		for (final RCFGEdge pre : currentNode.getIncomingEdges()) {
 			visit(pre);
 		}
 
@@ -79,7 +78,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		List<CodeBlock> blck = c.getCodeBlocks();
+		final List<CodeBlock> blck = c.getCodeBlocks();
 		if (blck == null || blck.isEmpty()) {
 			return;
 		}
@@ -88,7 +87,7 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(StatementSequence stmtSeq) {
-		ReachDefStatementAnnotation annot = mProvider.getAnnotation(stmtSeq.getStatements().get(
+		final ReachDefStatementAnnotation annot = mProvider.getAnnotation(stmtSeq.getStatements().get(
 				stmtSeq.getStatements().size() - 1));
 		if (annot != null) {
 			rtr.add(annot);

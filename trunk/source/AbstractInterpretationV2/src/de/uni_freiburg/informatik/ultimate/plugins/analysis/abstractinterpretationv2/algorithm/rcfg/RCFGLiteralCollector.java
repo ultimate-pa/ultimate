@@ -36,12 +36,12 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -70,6 +70,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
 
+	@Override
 	public LiteralCollection getLiteralCollection() {
 		return mLiteralCollection;
 	}
@@ -132,7 +133,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		@Override
 		protected void visit(IntegerLiteral expr) {
 			super.visit(expr);
-			StringBuilder litBuilder = new StringBuilder();
+			final StringBuilder litBuilder = new StringBuilder();
 			if (mNegate) {
 				litBuilder.append("-");
 			}
@@ -159,7 +160,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		@Override
 		protected void visit(RealLiteral expr) {
 			super.visit(expr);
-			StringBuilder litBuilder = new StringBuilder();
+			final StringBuilder litBuilder = new StringBuilder();
 			if (mNegate) {
 				litBuilder.append("-");
 			}

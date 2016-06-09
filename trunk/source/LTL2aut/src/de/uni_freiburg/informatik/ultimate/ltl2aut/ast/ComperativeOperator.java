@@ -39,20 +39,21 @@ public class ComperativeOperator extends AstNode {
 		this.type = type;
 	}
 	
+	@Override
 	public String toString()
 	{
 		String op = "??";
-		switch(this.type){
+		switch(type){
 			case equals: op = "="; break;
 			case greater: op = ">"; break;
 			case geq: op = ">="; break;
 		}
 		
-		return this.getOutgoingNodes().get(0).toString() + op + this.getOutgoingNodes().get(1).toString();
+		return getOutgoingNodes().get(0).toString() + op + getOutgoingNodes().get(1).toString();
 	}
 
 	public ComperativeType getType()
 	{
-		return this.type;
+		return type;
 	}
 }

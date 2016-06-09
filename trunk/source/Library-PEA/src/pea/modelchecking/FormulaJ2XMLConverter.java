@@ -31,9 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import net.sourceforge.czt.parser.util.ParseException;
-
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
@@ -41,6 +38,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import net.sourceforge.czt.parser.util.ParseException;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.Decision;
@@ -62,7 +61,7 @@ public class FormulaJ2XMLConverter {
 
     private static final String DEFAULT_LOGGER = "FormulaJ2XMLConverter";
 
-    Logger logger = null;
+    ILogger logger = null;
 
     Document document = null;
 
@@ -70,7 +69,7 @@ public class FormulaJ2XMLConverter {
 
     protected List<String> events = null;
     
-    private Vector<String> disjuncts = new Vector<String>();
+    private final Vector<String> disjuncts = new Vector<String>();
 
     private int dnfCount = 1;
 
@@ -83,15 +82,15 @@ public class FormulaJ2XMLConverter {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public FormulaJ2XMLConverter(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            logger = ILogger
                     .getLogger(FormulaJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            logger = ILogger.getLogger(loggerName);
         }
     }
 
@@ -129,14 +128,14 @@ public class FormulaJ2XMLConverter {
      */
     public Element convert(CDD formulaCDD,
             List<String> rangeExpressionVariables, List<String> events) {
-        this.document = new DocumentImpl();
+        document = new DocumentImpl();
 
         this.rangeExpressionVariables = rangeExpressionVariables;
         this.events = events;
 
-        this.logger.debug("Trying to build formula node");
-        Element result = this.createCDDFormula(formulaCDD);
-        this.logger.debug("Building formula node successful");
+        logger.debug("Trying to build formula node");
+        final Element result = createCDDFormula(formulaCDD);
+        logger.debug("Building formula node successful");
 
         return result;
     }
@@ -161,28 +160,28 @@ public class FormulaJ2XMLConverter {
      */
     private Element createCDDFormula(CDD formulaCDD) {
         if (formulaCDD == CDD.TRUE) {
-            return this.createBooleanExpressionNode(XMLTags.TRUE_CONST);
+            return createBooleanExpressionNode(XMLTags.TRUE_CONST);
         }
         if (formulaCDD == CDD.FALSE) {
-            return this.createBooleanExpressionNode(XMLTags.FALSE_CONST);
+            return createBooleanExpressionNode(XMLTags.FALSE_CONST);
         }
 
-        CDD[] children = formulaCDD.getChilds();
-        List<Node> simpleChildNodes = new ArrayList<Node>();
-        List<Node> complexChildNodes = new ArrayList<Node>();
+        final CDD[] children = formulaCDD.getChilds();
+        final List<Node> simpleChildNodes = new ArrayList<Node>();
+        final List<Node> complexChildNodes = new ArrayList<Node>();
         for (int i = 0; i < children.length; i++) {
             if (children[i] == CDD.FALSE) {
                 continue;
             }
             if (formulaCDD.childDominates(i)) {
-                Element actChildNode = this.createCDDFormula(children[i]);
+                final Element actChildNode = createCDDFormula(children[i]);
                 if (actChildNode.getNodeName().equals(XMLTags.FORMULATREE_TAG)) {
 
                     // Simplify nested disjunctions
                     if (actChildNode.getAttribute(XMLTags.OPERATOR_TAG).equals(
                             XMLTags.OR_CONST)) {
-                        NodeList grandChildren = actChildNode.getChildNodes();
-                        int grandChildCount = grandChildren.getLength();
+                        final NodeList grandChildren = actChildNode.getChildNodes();
+                        final int grandChildCount = grandChildren.getLength();
                         for (int j = 0; j < grandChildCount; j++) {
                             if (grandChildren.item(j).getNodeName().equals(
                                     XMLTags.FORMULATREE_TAG)) {
@@ -199,11 +198,11 @@ public class FormulaJ2XMLConverter {
                     simpleChildNodes.add(actChildNode);
                 }
             } else {
-                Element decisionNode = this.createDecisionNode(formulaCDD
+                final Element decisionNode = createDecisionNode(formulaCDD
                         .getDecision(), i);
                 if (children[i] != CDD.TRUE) {
-                    Element actChildNode = this.createCDDFormula(children[i]);
-                    Element formulaTreeAND = this.createDecisionAndChildTree(
+                    final Element actChildNode = createCDDFormula(children[i]);
+                    final Element formulaTreeAND = createDecisionAndChildTree(
                             decisionNode, actChildNode);
                     complexChildNodes.add(formulaTreeAND);
                 } else {
@@ -225,18 +224,18 @@ public class FormulaJ2XMLConverter {
             return (Element) complexChildNodes.get(0);
         }
 
-        Element actFormulaTree = this.document
+        final Element actFormulaTree = document
                 .createElement(XMLTags.FORMULATREE_TAG);
         actFormulaTree.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.OR_CONST);
 
-        Iterator simpleChildNodeIterator = simpleChildNodes.iterator();
+        final Iterator simpleChildNodeIterator = simpleChildNodes.iterator();
         while (simpleChildNodeIterator.hasNext()) {
-            Element actChildNode = (Element) simpleChildNodeIterator.next();
+            final Element actChildNode = (Element) simpleChildNodeIterator.next();
             actFormulaTree.appendChild(actChildNode);
         }
-        Iterator complexChildNodeIterator = complexChildNodes.iterator();
+        final Iterator complexChildNodeIterator = complexChildNodes.iterator();
         while (complexChildNodeIterator.hasNext()) {
-            Element actChildNode = (Element) complexChildNodeIterator.next();
+            final Element actChildNode = (Element) complexChildNodeIterator.next();
             actFormulaTree.appendChild(actChildNode);
         }
 
@@ -261,7 +260,7 @@ public class FormulaJ2XMLConverter {
      */
     private Element createDecisionAndChildTree(Element decisionNode,
             Element childNode) {
-        Element formulaTreeAND = this.document
+        final Element formulaTreeAND = document
                 .createElement(XMLTags.FORMULATREE_TAG);
         formulaTreeAND.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.AND_CONST);
 
@@ -270,10 +269,10 @@ public class FormulaJ2XMLConverter {
         // Simplify nested conjunctions
         if (childNode.getAttribute(XMLTags.OPERATOR_TAG).equals(
                 XMLTags.AND_CONST)) {
-            NodeList grandChildren = childNode.getChildNodes();
-            List<Element> left = new ArrayList<Element>();
+            final NodeList grandChildren = childNode.getChildNodes();
+            final List<Element> left = new ArrayList<Element>();
             for (int i = grandChildren.getLength() - 1; i >= 0; i--) {
-                Element actGrandChild = (Element) grandChildren.item(i);
+                final Element actGrandChild = (Element) grandChildren.item(i);
                 if (actGrandChild.getNodeName().equals(XMLTags.FORMULATREE_TAG)) {
                     left.add(actGrandChild);
                 } else {
@@ -283,7 +282,7 @@ public class FormulaJ2XMLConverter {
 
             // Operands that are trees theirselves are appended for improved
             // readability of the XML-file.
-            for (Element actGrandChild : left) {
+            for (final Element actGrandChild : left) {
                 formulaTreeAND.appendChild(actGrandChild);
             }
 
@@ -331,25 +330,25 @@ public class FormulaJ2XMLConverter {
         }
 
         if (decision instanceof RangeDecision) {
-            Element rangeDecisionNode = this.createRangeExpressionNode(
+            final Element rangeDecisionNode = createRangeExpressionNode(
                     (RangeDecision) decision, i);
             return rangeDecisionNode;
         }
 
         Element expressionNode = null;
         if (decision instanceof BooleanDecision) {
-            String variable = ((BooleanDecision) decision).getVar();
-            expressionNode = this.createBooleanExpressionNode(variable);
+            final String variable = ((BooleanDecision) decision).getVar();
+            expressionNode = createBooleanExpressionNode(variable);
         } else if (decision instanceof EventDecision) {
-            String event = ((EventDecision) decision).getEvent();
-            expressionNode = this.createEventExpressionNode(event);
+            final String event = ((EventDecision) decision).getEvent();
+            expressionNode = createEventExpressionNode(event);
         } else if (decision instanceof ZDecision) {
-            Element zNode = this.document.createElement(XMLTags.Z_TAG);
+            final Element zNode = document.createElement(XMLTags.Z_TAG);
             try {
                 zNode.setTextContent(((ZDecision) decision).getZML());
-            } catch (ParseException e) {
+            } catch (final ParseException e) {
                 zNode.setTextContent(e.toString());
-            } catch (InstantiationException e) {
+            } catch (final InstantiationException e) {
                 zNode.setTextContent(e.toString());
             } 
             expressionNode = zNode;
@@ -358,7 +357,7 @@ public class FormulaJ2XMLConverter {
         if (i == 0) {
             return expressionNode;
         } else {
-            Element notFormulaNode = this.document
+            final Element notFormulaNode = document
                     .createElement(XMLTags.FORMULATREE_TAG);
             notFormulaNode
                     .setAttribute(XMLTags.OPERATOR_TAG, XMLTags.NOT_CONST);
@@ -388,7 +387,7 @@ public class FormulaJ2XMLConverter {
                     "Boolean expressions with empty content are not allowed");
         }
 
-        Element expressionNode = this.document
+        final Element expressionNode = document
                 .createElement(XMLTags.BOOLEANEXPRESSION_TAG);
         expressionNode.setAttribute(XMLTags.EXPRESSION_TAG, expression.replace(
                 "<", "&lt;").replace(">", "&gt;"));
@@ -417,20 +416,20 @@ public class FormulaJ2XMLConverter {
      * @see pea.modelchecking.schemas.BasicTypes.xsd
      */
     private Element createRangeExpressionNode(RangeDecision decision, int i) {
-        Element rangeExpressionNode = this.document
+        final Element rangeExpressionNode = document
                 .createElement(XMLTags.RANGEEXPRESSION_TAG);
 
-        String variable = decision.getVar();
+        final String variable = decision.getVar();
         if (variable.equals("")) {
             throw new RuntimeException("Variables are not allowed to be empty");
         }
         rangeExpressionNode.setAttribute(XMLTags.VARIABLE_TAG, variable);
 
-        if (!this.rangeExpressionVariables.contains(variable)) {
-            this.rangeExpressionVariables.add(variable);
+        if (!rangeExpressionVariables.contains(variable)) {
+            rangeExpressionVariables.add(variable);
         }
 
-        int[] limits = decision.getLimits();
+        final int[] limits = decision.getLimits();
         if (i == 0) {
             if ((limits[0] & 1) == 0) {
                 rangeExpressionNode.setAttribute(XMLTags.OPERATOR_TAG,
@@ -464,7 +463,7 @@ public class FormulaJ2XMLConverter {
             return rangeExpressionNode;
         }
 
-        Element formulaTreeNode = this.document
+        final Element formulaTreeNode = document
                 .createElement(XMLTags.FORMULATREE_TAG);
         formulaTreeNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.AND_CONST);
         if ((limits[i - 1] & 1) == 1) {
@@ -477,7 +476,7 @@ public class FormulaJ2XMLConverter {
         rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, ""
                 + (limits[i - 1] / 2));
 
-        Element rangeExpressionNode2 = this.document
+        final Element rangeExpressionNode2 = document
                 .createElement(XMLTags.RANGEEXPRESSION_TAG);
         rangeExpressionNode2.setAttribute(XMLTags.VARIABLE_TAG, variable);
 
@@ -517,11 +516,11 @@ public class FormulaJ2XMLConverter {
             throw new RuntimeException("Events are not allowed to be empty");
         }
 
-        if (!this.events.contains(event)) {
-            this.events.add(event);
+        if (!events.contains(event)) {
+            events.add(event);
         }
 
-        Element eventNode = this.document
+        final Element eventNode = document
                 .createElement(XMLTags.EVENTEXPRESSION_TAG);
         eventNode.setAttribute(XMLTags.NAME_Tag, event);
         return eventNode;
@@ -531,7 +530,7 @@ public class FormulaJ2XMLConverter {
     public String[] getDisjuncts(CDD cdd,
             List<String> rangeExpressionVariables, List<String> events,
             int numberOfDNFs) {
-        this.disjuncts.clear();
+        disjuncts.clear();
 
         this.rangeExpressionVariables = rangeExpressionVariables;
         this.events = events;
@@ -539,12 +538,12 @@ public class FormulaJ2XMLConverter {
         /*System.out.println("Computing DNF " + dnfCount
                 + ((numberOfDNFs == 0) ? "" : "" + numberOfDNFs));*/
         dnfCount++;
-        this.cddToDNF(new StringBuilder(), cdd);
+        cddToDNF(new StringBuilder(), cdd);
 
-        int disjunctCount = this.disjuncts.size();
-        String[] strings = new String[disjunctCount];
+        final int disjunctCount = disjuncts.size();
+        final String[] strings = new String[disjunctCount];
         for (int i = 0; i < disjunctCount; i++) {
-            strings[i] = (String) this.disjuncts.elementAt(i);
+            strings[i] = disjuncts.elementAt(i);
 
         }
 
@@ -558,32 +557,32 @@ public class FormulaJ2XMLConverter {
 
     private void cddToDNF(StringBuilder buf, CDD cdd) {
         if (cdd == CDD.TRUE) {
-            this.disjuncts.add(buf.toString());
+            disjuncts.add(buf.toString());
             return;
         } else if (cdd == CDD.FALSE) {
             return;
         }
         for (int i = 0; i < cdd.getChilds().length; i++) {
-            StringBuilder newBuf = new StringBuilder(buf);
+            final StringBuilder newBuf = new StringBuilder(buf);
             //newBuf.append(buf.toString());
             //TODO: Hier ist noch ein Bug. Die Unds innerhalb eines Disjunkts
             //werden noch nicht geschrieben.
-            this.appendDecisionToBuffer(newBuf, cdd.getDecision(), i);
+            appendDecisionToBuffer(newBuf, cdd.getDecision(), i);
 
-            this.cddToDNF(newBuf, cdd.getChilds()[i]);
+            cddToDNF(newBuf, cdd.getChilds()[i]);
         }
     }
 
     private void appendDecisionToBuffer(StringBuilder buf, Decision dec, int i) {
         if (dec instanceof RangeDecision) {
-            String variable = ((RangeDecision) dec).getVar();
+            final String variable = ((RangeDecision) dec).getVar();
             buf.append("  <rangeExpression variable=\"" + variable + "\" ");
 
-            if (!this.rangeExpressionVariables.contains(variable)) {
-                this.rangeExpressionVariables.add(variable);
+            if (!rangeExpressionVariables.contains(variable)) {
+                rangeExpressionVariables.add(variable);
             }
 
-            int[] limits = ((RangeDecision) dec).getLimits();
+            final int[] limits = ((RangeDecision) dec).getLimits();
             if (i == 0) {
                 if ((limits[0] & 1) == 0) {
                     buf.append("operator = \"less\" ");
@@ -632,17 +631,17 @@ public class FormulaJ2XMLConverter {
                         + ((BooleanDecision) dec).getVar().replace("<", "&lt;")
                                 .replace(">", "&gt;") + "\"/>\n");
             } else if (dec instanceof EventDecision) {
-                String event = ((EventDecision) dec).getEvent();
-                if (!this.events.contains(event)) {
-                    this.events.add(event);
+                final String event = ((EventDecision) dec).getEvent();
+                if (!events.contains(event)) {
+                    events.add(event);
                 }
                 buf.append("  <eventExpression name=\"" + event + "\"/>\n");
             } else if (dec instanceof ZDecision) {
                 try {
                     buf.append(((ZDecision) dec).getZML());
-                } catch (ParseException e) {
+                } catch (final ParseException e) {
                     e.printStackTrace();
-                } catch (InstantiationException e) {
+                } catch (final InstantiationException e) {
                     e.printStackTrace();
                 } 
             }
@@ -654,9 +653,9 @@ public class FormulaJ2XMLConverter {
                                 .replace(">", "&gt;") + "\"/>\n");
                 buf.append("  </formulaTree>\n");
             } else if (dec instanceof EventDecision) {
-                String event = ((EventDecision) dec).getEvent();
-                if (!this.events.contains(event)) {
-                    this.events.add(event);
+                final String event = ((EventDecision) dec).getEvent();
+                if (!events.contains(event)) {
+                    events.add(event);
                 }
                 buf.append("  <formulaTree operator = \"NOT\">\n");
                 buf.append("    <eventExpression name=\"" + event + "\"/>\n");
@@ -664,11 +663,11 @@ public class FormulaJ2XMLConverter {
             } else if (dec instanceof ZDecision) {
                 try {
                     buf.append(((ZDecision) dec).negate().getZML());
-                } catch (ParseException p) {
+                } catch (final ParseException p) {
                     // this exception occurs if the negation is not computed
                     // correctly
                     p.printStackTrace();
-                } catch (InstantiationException p) {
+                } catch (final InstantiationException p) {
                     p.printStackTrace();
                 } 
             }
@@ -677,8 +676,8 @@ public class FormulaJ2XMLConverter {
 
     public String convertFast(CDD formulaCDD,
             List<String> rangeExpressionVariables, List<String> events) {
-        XMLWriter writer = new XMLWriter();
-        String result = writer.writeXMLDocumentToString(this.convert(
+        final XMLWriter writer = new XMLWriter();
+        final String result = writer.writeXMLDocumentToString(convert(
                 formulaCDD, rangeExpressionVariables, events));
 
         return result.substring(1, result.length()) + "\n";
@@ -699,30 +698,34 @@ public class FormulaJ2XMLConverter {
      */
     public StringBuilder cddToXML(CDD cdd) {
         //logger.debug("Processing CDD " + cdd);
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         boolean ordelim = false;
         int clauses = 0;
-        if (cdd == CDD.TRUE)
-            return new StringBuilder("<booleanExpression expression=\"true\"/>");
-        if (cdd == CDD.FALSE)
-            return new StringBuilder("<booleanExpression expression=\"false\"/>");
+        if (cdd == CDD.TRUE) {
+			return new StringBuilder("<booleanExpression expression=\"true\"/>");
+		}
+        if (cdd == CDD.FALSE) {
+			return new StringBuilder("<booleanExpression expression=\"false\"/>");
+		}
 
-        CDD[] childs = cdd.getChilds();
+        final CDD[] childs = cdd.getChilds();
         for (int j = 0; j < childs.length; j++) {
-            if(ordelim && childs[j] != CDD.FALSE)
-                sb.append("<formulaTree operator = \"OR\">\n");             
-            else if(childs[j] != CDD.FALSE)
-                ordelim = true;
+            if(ordelim && childs[j] != CDD.FALSE) {
+				sb.append("<formulaTree operator = \"OR\">\n");
+			} else if(childs[j] != CDD.FALSE) {
+				ordelim = true;
+			}
         }
 
         ordelim = false;
         for (int i = 0; i < childs.length; i++) {
-            if (childs[i] == CDD.FALSE)
-                continue;
+            if (childs[i] == CDD.FALSE) {
+				continue;
+			}
 
-            if (cdd.childDominates(i))
-                sb.append(cddToXML(childs[i]));
-            else {
+            if (cdd.childDominates(i)) {
+				sb.append(cddToXML(childs[i]));
+			} else {
                 if (childs[i] != CDD.TRUE) {
                     sb.append("<formulaTree operator = \"AND\">\n");
                     appendDecisionToBuffer(sb, cdd.getDecision(), i);
@@ -734,10 +737,11 @@ public class FormulaJ2XMLConverter {
                     
             }
 
-            if(ordelim)
-                sb.append("</formulaTree>\n");             
-            else
-                ordelim = true;
+            if(ordelim) {
+				sb.append("</formulaTree>\n");
+			} else {
+				ordelim = true;
+			}
 
             clauses++;
         }

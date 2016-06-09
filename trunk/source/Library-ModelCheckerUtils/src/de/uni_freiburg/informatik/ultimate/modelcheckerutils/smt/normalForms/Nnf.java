@@ -32,10 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -57,20 +56,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public class Nnf {
 	
-	protected final Script m_Script;
+	protected final Script mScript;
 	private static final String s_FreshVariableString = "nnf";
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
-	protected final Logger m_Logger;
-	private final NnfTransformerHelper m_NnfTransformerHelper;
-	private List<List<TermVariable>> m_QuantifiedVariables;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	protected final ILogger mLogger;
+	private final NnfTransformerHelper mNnfTransformerHelper;
+	private List<List<TermVariable>> mQuantifiedVariables;
+	
+	public enum QuantifierHandling { CRASH, PULL, KEEP, IS_ATOM }
+	protected final QuantifierHandling mQuantifierHandling;
 	
 	public Nnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			IFreshTermVariableConstructor freshTermVariableConstructor,
+			QuantifierHandling quantifierHandling) {
 		super();
-		m_Script = script;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
-		m_Logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_NnfTransformerHelper = getNnfTransformerHelper(services);
+		mQuantifierHandling = quantifierHandling;
+		mScript = script;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mNnfTransformerHelper = getNnfTransformerHelper(services);
 	}
 	
 	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
@@ -78,22 +82,26 @@ public class Nnf {
 	}
 	
 	public Term transform(Term term) {
-//		assert m_QuantifiedVariables == null;
-		m_QuantifiedVariables = new ArrayList<List<TermVariable>>();
-		List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
-		m_QuantifiedVariables.add(firstQuantifierBlock);
-		Term result = m_NnfTransformerHelper.transform(term);
-		for (int i=0; i<m_QuantifiedVariables.size(); i++) {
-			TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[m_QuantifiedVariables.get(i).size()]);
-			if (variables.length > 0) {
-				int quantor = i%2;
-				assert QuantifiedFormula.EXISTS == 0;
-				assert QuantifiedFormula.FORALL == 1;
-				result = m_Script.quantifier(quantor, variables, result);
-			}
+		assert mQuantifiedVariables == null;
+		if (mQuantifierHandling == QuantifierHandling.PULL) {
+			mQuantifiedVariables = new ArrayList<List<TermVariable>>();
+			final List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
+			mQuantifiedVariables.add(firstQuantifierBlock);
 		}
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT) : "Nnf transformation unsound";
-		m_QuantifiedVariables = null;
+		Term result = mNnfTransformerHelper.transform(term);
+		if (mQuantifierHandling == QuantifierHandling.PULL) {
+			for (int i=0; i<mQuantifiedVariables.size(); i++) {
+				final TermVariable[] variables = mQuantifiedVariables.get(i).toArray(new TermVariable[mQuantifiedVariables.get(i).size()]);
+				if (variables.length > 0) {
+					final int quantor = i%2;
+					assert QuantifiedFormula.EXISTS == 0;
+					assert QuantifiedFormula.FORALL == 1;
+					result = mScript.quantifier(quantor, variables, result);
+				}
+			}
+			mQuantifiedVariables = null;
+		}
+		assert (Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT) : "Nnf transformation unsound";
 		return result;
 	}
 
@@ -109,31 +117,45 @@ public class Nnf {
 		protected void convert(Term term) {
 			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) term; 
-				String functionName = appTerm.getFunction().getName();
+				final ApplicationTerm appTerm = (ApplicationTerm) term; 
+				final String functionName = appTerm.getFunction().getName();
 				if (functionName.equals("and")) {
-					super.convert(term);
+					final Term flattened = Util.and(mScript, appTerm.getParameters());
+					if (SmtUtils.isFunctionApplication(flattened, "and")) {
+						super.convert(flattened);
+					} else {
+						// term was simplified by flattening, top function 
+						// symbol changed, call convert again
+						convert(flattened);
+					}
 					return;
 				} else if (functionName.equals("or")) {
-					super.convert(term);
+					final Term flattened = Util.or(mScript, appTerm.getParameters());
+					if (SmtUtils.isFunctionApplication(flattened, "or")) {
+						super.convert(flattened);
+					} else {
+						// term was simplified by flattening, top function 
+						// symbol changed, call convert again
+						convert(flattened);
+					}
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
-					Term notParam = appTerm.getParameters()[0];
+					final Term notParam = appTerm.getParameters()[0];
 					convertNot(notParam, term);
 					return;
 				} else if (functionName.equals("=>")) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.or(m_Script, negateAllButLast(params)));
+					convert(Util.or(mScript, negateAllButLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
 						SmtUtils.firstParamIsBool(appTerm)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
-						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -144,12 +166,12 @@ public class Nnf {
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
 						convert(SmtUtils.binaryBooleanEquality(
-								m_Script, params[0], params[1]));
+								mScript, params[0], params[1]));
 					}
 				} else if (isXor(appTerm, functionName)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
-						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
@@ -160,20 +182,19 @@ public class Nnf {
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
 						convert(SmtUtils.binaryBooleanNotEquals(
-								m_Script, params[0], params[1]));
+								mScript, params[0], params[1]));
 					}
 				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
-					Term[] params = appTerm.getParameters();
+					final Term[] params = appTerm.getParameters();
 					assert params.length == 3;
-					Term condTerm = params[0];
-					Term ifTerm = params[1];
-					Term elseTerm = params[2];
-					Term condImpliesIf = Util.or(m_Script, Util.not(m_Script, condTerm), ifTerm);
-					Term notCondImpliesElse = Util.or(m_Script, condTerm, elseTerm);
+					final Term condTerm = params[0];
+					final Term ifTerm = params[1];
+					final Term elseTerm = params[2];
+					final Term result = convertIte(condTerm, ifTerm, elseTerm);
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(m_Script, condImpliesIf, notCondImpliesElse));
+					convert(result);
 					return;
 				} else {
 					//consider term as atom
@@ -187,34 +208,60 @@ public class Nnf {
 				//consider term as atom
 				setResult(term);
 			}else if (term instanceof QuantifiedFormula) {
-				QuantifiedFormula qf = (QuantifiedFormula) term;
-				List<TermVariable> variables;
-				if (m_QuantifiedVariables.size()-1 == qf.getQuantifier()) {
-					assert QuantifiedFormula.EXISTS == 0;
-					assert QuantifiedFormula.FORALL == 1;
-					variables = m_QuantifiedVariables.get(m_QuantifiedVariables.size()-1);
-				} else {
-					variables = new ArrayList<TermVariable>();
-					m_QuantifiedVariables.add(variables);
+				switch (mQuantifierHandling) {
+				case CRASH: {
+					throw new UnsupportedOperationException(
+							"quantifier handling set to " + mQuantifierHandling);
 				}
-				Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-				for (TermVariable oldTv : qf.getVariables()) {
-					TermVariable freshTv = m_FreshTermVariableConstructor.
-							constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
-					substitutionMapping.put(oldTv, freshTv);
-					variables.add(freshTv);
+				case IS_ATOM: {
+					// consider quantified formula as atom
+					setResult(term);
+					return;
 				}
-				Term newBody = (new SafeSubstitution(m_Script, substitutionMapping)).transform(qf.getSubformula());
-				// we deliberately call convert() instead of super.convert()
-				// the argument of this call might have been simplified
-				// to a term whose function symbol is neither "and" nor "or"
-				convert(newBody);
-				return;
+				case KEEP: {
+					super.convert(term);
+					return;
+				}
+				case PULL: {
+					final QuantifiedFormula qf = (QuantifiedFormula) term;
+					final List<TermVariable> variables;
+					if (mQuantifiedVariables.size()-1 == qf.getQuantifier()) {
+						assert QuantifiedFormula.EXISTS == 0;
+						assert QuantifiedFormula.FORALL == 1;
+						variables = mQuantifiedVariables.get(mQuantifiedVariables.size()-1);
+					} else {
+						variables = new ArrayList<TermVariable>();
+						mQuantifiedVariables.add(variables);
+					}
+					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+					for (final TermVariable oldTv : qf.getVariables()) {
+						final TermVariable freshTv = mFreshTermVariableConstructor.
+								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
+						substitutionMapping.put(oldTv, freshTv);
+						variables.add(freshTv);
+					}
+					final Term newBody = (new SafeSubstitution(mScript, substitutionMapping)).transform(qf.getSubformula());
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(newBody);
+					return;
+				}
+				default:
+					throw new AssertionError("unknown case");
+				}
 			} else if (term instanceof AnnotatedTerm) {
-				m_Logger.warn("thrown away annotations " + 
+				mLogger.warn("thrown away annotations " + 
 						Arrays.toString(((AnnotatedTerm) term).getAnnotations()));
 				convert(((AnnotatedTerm) term).getSubterm());
 			}
+		}
+
+		private Term convertIte(Term condTerm, Term ifTerm, Term elseTerm) {
+			final Term condImpliesIf = Util.or(mScript, SmtUtils.not(mScript, condTerm), ifTerm);
+			final Term notCondImpliesElse = Util.or(mScript, condTerm, elseTerm);
+			final Term result = Util.and(mScript, condImpliesIf, notCondImpliesElse);
+			return result;
 		}
 
 		/**
@@ -230,27 +277,28 @@ public class Nnf {
 					(functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm));
 		}
 		
+		
 		private void convertNot(Term notParam, Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) notParam; 
-				String functionName = appTerm.getFunction().getName();
-				Term[] params = appTerm.getParameters();
+				final ApplicationTerm appTerm = (ApplicationTerm) notParam; 
+				final String functionName = appTerm.getFunction().getName();
+				final Term[] params = appTerm.getParameters();
 				if (functionName.equals("and")) {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.or(m_Script, negateTerms(params)));
+					convert(Util.or(mScript, negateTerms(params)));
 					return;
 				} else if (functionName.equals("or")) {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(m_Script, negateTerms(params)));
+					convert(Util.and(mScript, negateTerms(params)));
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
-					Term notnotParam = appTerm.getParameters()[0];
+					final Term notnotParam = appTerm.getParameters()[0];
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -260,41 +308,49 @@ public class Nnf {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(m_Script, negateLast(params)));
+					convert(Util.and(mScript, negateLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
 						SmtUtils.firstParamIsBool(appTerm)) {
-					Term[] notParams = appTerm.getParameters();
+					final Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
-						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(Util.not(m_Script, binarized));
+						convert(SmtUtils.not(mScript, binarized));
 					} else {
 						assert notParams.length == 2;
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
 						convert(SmtUtils.binaryBooleanNotEquals(
-								m_Script, notParams[0], notParams[1]));
+								mScript, notParams[0], notParams[1]));
 					}
 				} else if (isXor(appTerm, functionName)) {
-					Term[] notParams = appTerm.getParameters();
+					final Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
-						Term binarized = SmtUtils.binarize(m_Script, appTerm);
+						final Term binarized = SmtUtils.binarize(mScript, appTerm);
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(Util.not(m_Script, binarized));
+						convert(SmtUtils.not(mScript, binarized));
 					} else {
 						assert notParams.length == 2;
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
 						convert(SmtUtils.binaryBooleanEquality(
-								m_Script, notParams[0], notParams[1]));
+								mScript, notParams[0], notParams[1]));
 					}
+				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
+					final Term[] notParams = appTerm.getParameters();
+					assert params.length == 3;
+					final Term condTerm = notParams[0];
+					final Term ifTerm = notParams[1];
+					final Term elseTerm = notParams[2];
+					final Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
+					convertNot(convertedIte, SmtUtils.not(mScript, convertedIte));
 				} else {
 					//consider original term as atom
 					setResult(notTerm);
@@ -307,34 +363,58 @@ public class Nnf {
 				//consider term as atom
 				setResult(notTerm);
 			} else if (notParam instanceof QuantifiedFormula) {
-				throw new UnsupportedOperationException(
-						"NNF transformation does not support QuantifiedFormula");
+				switch (mQuantifierHandling) {
+				case CRASH: {
+					throw new UnsupportedOperationException(
+							"quantifier handling set to " + mQuantifierHandling);
+				}
+				case IS_ATOM: {
+					// consider quantified formula as atom
+					setResult(notParam);
+					return;
+				}
+				case KEEP: {
+					final QuantifiedFormula qf = (QuantifiedFormula) notParam;
+					final int quantor = (qf.getQuantifier() + 1) % 2;
+					final TermVariable[] vars = qf.getVariables();
+					final Term body = SmtUtils.not(mScript, qf.getSubformula());
+					final Term negated = mScript.quantifier(quantor, vars, body);
+					super.convert(negated);
+					return;
+				}
+				case PULL: {
+					throw new UnsupportedOperationException(
+							"cannot pull quantifier from negated formula");
+				}
+				default:
+					throw new AssertionError("unknown quantifier handling");
+				}
 			} else {
 				throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
 			}
 		}
 		
 		private Term[] negateTerms(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length; i++) {
-				newTerms[i] = Util.not(m_Script, terms[i]);
+				newTerms[i] = SmtUtils.not(mScript, terms[i]);
 			}
 			return newTerms;
 		}
 		
 		private Term[] negateLast(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = terms[i];
 			}
-			newTerms[terms.length-1] = Util.not(m_Script, terms[terms.length-1]);
+			newTerms[terms.length-1] = SmtUtils.not(mScript, terms[terms.length-1]);
 			return newTerms;
 		}
 		
 		private Term[] negateAllButLast(Term[] terms) {
-			Term[] newTerms = new Term[terms.length];
+			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
-				newTerms[i] = Util.not(m_Script, terms[i]);
+				newTerms[i] = SmtUtils.not(mScript, terms[i]);
 			}
 			newTerms[terms.length-1] = terms[terms.length-1];
 			return newTerms;
@@ -343,7 +423,7 @@ public class Nnf {
 		
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			Term simplified = SmtUtils.termWithLocalSimplification(m_Script, 
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, 
 					appTerm.getFunction().getName(), 
 					appTerm.getFunction().getIndices(), newArgs);
 			setResult(simplified);

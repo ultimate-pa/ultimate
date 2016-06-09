@@ -1,0 +1,30 @@
+// Author: Christian Schilling, Daniel Tischner, Matthias Heizmann
+// Date: 2016-05-17
+// Bug was fixed
+
+
+print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+//print(reduceNwaDirectSimulation(nwa, false));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a1" "a2" "a3"},
+	returnAlphabet = {"r"},
+	states = {"q1" "q2" "q3" "q4" "qf" "q5"},
+	initialStates = {"q1"},
+	finalStates = {"qf" "q5"},
+	callTransitions = {
+		 ("q1" "c" "qf")
+	},
+	internalTransitions = {
+		 ("qf" "a2" "q2")
+		 ("qf" "a3" "q3")
+		 ("q4" "a1" "q5")
+		 ("q5" "a1" "q5")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "r" "q4")
+		 ("q3" "q1" "r" "qf")
+	}
+);

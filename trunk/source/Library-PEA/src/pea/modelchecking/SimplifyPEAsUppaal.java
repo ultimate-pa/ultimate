@@ -83,20 +83,21 @@ public class SimplifyPEAsUppaal extends SimplifyPEAs {
 			}
 		
 			PropertyConfigurator.configure(ClassLoader.getSystemResource("pea/modelchecking/CompilerLog.config"));
-            PEAJ2XMLConverter converter = new PEAJ2XMLConverter();
-            PEAXML2JConverterWithVarList fileParser = new PEAXML2JConverterWithVarList(false);
-            SimplifyPEAsUppaal simplifier = new SimplifyPEAsUppaal();
-            PhaseEventAutomata[] peas = fileParser.convert(inputfile);
+            final PEAJ2XMLConverter converter = new PEAJ2XMLConverter();
+            final PEAXML2JConverterWithVarList fileParser = new PEAXML2JConverterWithVarList(false);
+            final SimplifyPEAsUppaal simplifier = new SimplifyPEAsUppaal();
+            final PhaseEventAutomata[] peas = fileParser.convert(inputfile);
             PEATestAutomaton product = new PEATestAutomaton(peas[0]);
             
             //Compile model-check formula and generate the appropriate automata.
             if(formulafile != null){
-            	Compiler compiler = new Compiler(false);
-            	ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile,"");
-               	if(peanetList.size() > 1)
-            		simplifier.logger.warn("Test automata with more than one PEA networks\n" +
+            	final Compiler compiler = new Compiler(false);
+            	final ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile,"");
+               	if(peanetList.size() > 1) {
+					simplifier.logger.warn("Test automata with more than one PEA networks\n" +
             				               "are not supported yet.");
-            	PEATestAutomaton[] formulaPEAs = peanetList.get(0);
+				}
+            	final PEATestAutomaton[] formulaPEAs = peanetList.get(0);
             	if(product != null){
                   	for (int i = 0; i < formulaPEAs.length; i++) {
                   		//identifyImplicitBadStates(formulaPEAs[i],SimplifyPEAs.BADSTATESTRING);
@@ -117,21 +118,21 @@ public class SimplifyPEAsUppaal extends SimplifyPEAs {
         	simplifier.logger.info("Parallel composition finished.");
             
 
-            ArrayList[] variables = fileParser.getAdditionalVariables();
-            ArrayList[] types =  fileParser.getTypes();
+            final ArrayList[] variables = fileParser.getAdditionalVariables();
+            final ArrayList[] types =  fileParser.getTypes();
             
             //peas = new PhaseEventAutomata[1];
             //peas[0] = product;
             //Merge variables to one list.
-            ArrayList<String> mergedVariables0 = new ArrayList<String>();
-            ArrayList<String> mergedTypes0 = new ArrayList<String>();
-            ArrayList[] mergedVariables = {mergedVariables0};
-            ArrayList[] mergedTypes = {mergedTypes0};
+            final ArrayList<String> mergedVariables0 = new ArrayList<String>();
+            final ArrayList<String> mergedTypes0 = new ArrayList<String>();
+            final ArrayList[] mergedVariables = {mergedVariables0};
+            final ArrayList[] mergedTypes = {mergedTypes0};
             for (int i = 0; i < variables.length; i++) {
-            	Iterator typeIter = types[i].iterator();
-            	for (Iterator iter = variables[i].iterator(); iter.hasNext();) {
-            		String tempName = (String)iter.next();
-            		String tempType= (String)typeIter.next();
+            	final Iterator typeIter = types[i].iterator();
+            	for (final Iterator iter = variables[i].iterator(); iter.hasNext();) {
+            		final String tempName = (String)iter.next();
+            		final String tempType= (String)typeIter.next();
             		if(!mergedVariables[0].contains(tempName)){
             			mergedVariables0.add(tempName);
             			mergedTypes0.add(tempType);
@@ -151,7 +152,7 @@ public class SimplifyPEAsUppaal extends SimplifyPEAs {
 //            Document result = converter.convert(peas);
 //            simplifier.logger.info("Finished.");
             simplifier.logger.info("Convert to DNF.");
-            J2UPPAALWriter uppaalWriter = new J2UPPAALWriter();
+            final J2UPPAALWriter uppaalWriter = new J2UPPAALWriter();
             uppaalWriter.writePEA2UppaalFile(outputfile, product);
             simplifier.logger.info("Finished.");
         	
@@ -194,7 +195,7 @@ public class SimplifyPEAsUppaal extends SimplifyPEAs {
 //                    outputfile);
 
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
 	}

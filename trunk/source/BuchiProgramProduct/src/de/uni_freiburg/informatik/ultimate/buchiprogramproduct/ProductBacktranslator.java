@@ -31,15 +31,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
 /**
  * 
@@ -66,20 +66,20 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
-		ArrayList<RCFGEdge> newTrace = new ArrayList<>();
-		Map<Integer, ProgramState<Expression>> newValues = new HashMap<>();
-		ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
+		final ArrayList<RCFGEdge> newTrace = new ArrayList<>();
+		final Map<Integer, ProgramState<Expression>> newValues = new HashMap<>();
+		final ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			AtomicTraceElement<RCFGEdge> currentATE = programExecution.getTraceElement(i);
-			RCFGEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
+			final AtomicTraceElement<RCFGEdge> currentATE = programExecution.getTraceElement(i);
+			final RCFGEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
 				// skip this, its not worth it.
 				continue;
 			}
-			newTrace.add((RCFGEdge) mappedEdge);
+			newTrace.add(mappedEdge);
 			addProgramState(i, newValues, programExecution.getProgramState(i));
 			if (oldBranchEncoders != null) {
 				newBranchEncoders.add(oldBranchEncoders[i]);
@@ -105,7 +105,7 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 	}
 
 	public void mapEdges(RCFGEdge newEdge, RCFGEdge originalEdge) {
-		RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
+		final RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
 			// this means we replaced an edge which we already replaced again
 			// with something new, we have to map this to the real original

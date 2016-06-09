@@ -33,19 +33,21 @@ public class NamedAtom extends DPLLAtom {
 	
 	public NamedAtom(Term smtAtom, int assertionstacklevel) {
 		super(smtAtom.hashCode(), assertionstacklevel);
-		this.mSmtAtom = smtAtom;//SMTAffineTerm.cleanup(smtAtom);
+		mSmtAtom = smtAtom;//SMTAffineTerm.cleanup(smtAtom);
 	}
 	
+	@Override
 	public String toString() {
 //		if (!mClean)
 //			cleanup();
 		return SMTAffineTerm.cleanup(mSmtAtom).toString();
 	}
 
+	@Override
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 //		if (!mClean)
 //			cleanup();
-		Term form = SMTAffineTerm.cleanup(mSmtAtom);
+		final Term form = SMTAffineTerm.cleanup(mSmtAtom);
 		return quoted ? smtTheory.annotatedTerm(QUOTED, form) : form;
 	}
 	
@@ -53,6 +55,7 @@ public class NamedAtom extends DPLLAtom {
 		return 0;
 	}
 	
+	@Override
 	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
 //		if (!mClean)
 //			cleanup();

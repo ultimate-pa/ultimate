@@ -28,36 +28,40 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 
-	private final boolean m_Flag;
+	private final boolean mFlag;
 	
 	public FlaggedDoubleDecker(STATE down, STATE up, boolean flag) {
 		super(down, up);
-		m_Flag = flag;
+		mFlag = flag;
 	}
 	
 	public boolean getFlag() {
-		return m_Flag;
+		return mFlag;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + (m_Flag ? 1231 : 1237);
+		result = prime * result + (mFlag ? 1231 : 1237);
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		FlaggedDoubleDecker other = (FlaggedDoubleDecker) obj;
-		if (m_Flag != other.m_Flag)
+		}
+		final FlaggedDoubleDecker other = (FlaggedDoubleDecker) obj;
+		if (mFlag != other.mFlag) {
 			return false;
+		}
 		return true;
 	}
 

@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -44,20 +42,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
-	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
-	private BuchiComplementFKVNwa<LETTER,STATE> m_SndComplemented;
-	private BuchiIntersectNwa<LETTER, STATE> m_Intersect;
-	private NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
-	private final StateFactory<STATE> m_StateFactory;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
+	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
+	private BuchiComplementFKVNwa<LETTER,STATE> mSndComplemented;
+	private BuchiIntersectNwa<LETTER, STATE> mIntersect;
+	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private final StateFactory<STATE> mStateFactory;
 	
 	
 	@Override
@@ -69,26 +68,26 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". First operand " + 
-				m_FstOperand.sizeInformation() + ". Second operand " + 
-				m_SndOperand.sizeInformation();	
+				mFstOperand.sizeInformation() + ". Second operand " + 
+				mSndOperand.sizeInformation();	
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". First operand " + 
-				m_FstOperand.sizeInformation() + ". Second operand " + 
-				m_SndOperand.sizeInformation() + " Result " + 
-				m_Result.sizeInformation() + 
-				" Complement of second has " + m_SndComplemented.size() +
+				mFstOperand.sizeInformation() + ". Second operand " + 
+				mSndOperand.sizeInformation() + " Result " + 
+				mResult.sizeInformation() + 
+				" Complement of second has " + mSndComplemented.size() +
 				" states " +
-				m_SndComplemented.getPowersetStates() + " powerset states" +
-				m_SndComplemented.getRankStates() + " rank states" +
-			" the highest rank that occured is " + m_SndComplemented.getHighesRank();
+				mSndComplemented.getPowersetStates() + " powerset states" +
+				mSndComplemented.getRankStates() + " rank states" +
+			" the highest rank that occured is " + mSndComplemented.getHighesRank();
 	}
 	
 	public int getHighestRank() {
-		return m_SndComplemented.getHighesRank();
+		return mSndComplemented.getHighesRank();
 	}
 	
 	
@@ -97,15 +96,15 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_FstOperand = fstOperand;
-		m_SndOperand = sndOperand;
-		m_StateFactory = m_FstOperand.getStateFactory();
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = mFstOperand.getStateFactory();
+		mStateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
+		mLogger.info(startMessage());
 		constructDifference(Integer.MAX_VALUE, FkvOptimization.HeiMat2);
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -114,25 +113,25 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf, String optimization, int userDefinedMaxRank) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_FstOperand = fstOperand;
-		m_SndOperand = sndOperand;
-		m_StateFactory = sf;
-		m_StateDeterminizer = stateDeterminizer;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = sf;
+		mStateDeterminizer = stateDeterminizer;
+		mLogger.info(startMessage());
 		try {
 			constructDifference(userDefinedMaxRank, FkvOptimization.valueOf(optimization));
-		} catch (OperationCanceledException oce) {
-			throw new OperationCanceledException(getClass());
+		} catch (final AutomataOperationCanceledException oce) {
+			throw new AutomataOperationCanceledException(getClass());
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	private void constructDifference(int userDefinedMaxRank, FkvOptimization optimization) throws AutomataLibraryException {
-		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory, optimization, userDefinedMaxRank);
-		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
+		mSndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, mSndOperand, mStateDeterminizer, mStateFactory, optimization, userDefinedMaxRank);
+		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(mFstOperand, mSndComplemented, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
 	}
 	
 
@@ -144,58 +143,58 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 	
 	
 	
 
 	public BuchiComplementFKVNwa<LETTER, STATE> getSndComplemented() {
-		return m_SndComplemented;
+		return mSndComplemented;
 	}
 
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		boolean underApproximationOfComplement = false;
+		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
-			m_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
-			INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
-			List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-			BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
-			boolean fstOperandEmpty = fstOperandEmptiness.getResult();
+			mLogger.info("Start testing correctness of " + operationName());
+			final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
+			final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+			final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+			final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+			final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
 			if (!fstOperandEmpty) {
 				lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
-			boolean sndOperandEmpty = sndOperandEmptiness.getResult();
+			final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+			final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
 			if (!sndOperandEmpty) {
 				lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
-			boolean resultEmpty = resultEmptiness.getResult();
+			final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+			final boolean resultEmpty = resultEmptiness.getResult();
 			if (!resultEmpty) {
 				lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
 			correct &= (!fstOperandEmpty || resultEmpty);
 			assert correct;
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_FstOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_SndOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, fstOperandOldApi.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, sndOperandOldApi.size()));
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 
-			for (NestedLassoWord<LETTER> nlw : lassoWords) {
+			for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 				correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi, underApproximationOfComplement);
 				assert correct;
 			}
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);
 			}
-			m_Logger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
@@ -204,9 +203,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
 			boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
-		boolean op1 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand1, nlw)).getResult();
-		boolean op2 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand2, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
+		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
+		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		if (res) {
 			correct = op1 && !op2;
 		} else {
