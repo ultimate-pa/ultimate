@@ -57,26 +57,29 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * @date 30.01.2012
  */
 public class CommentParser {
+
+	/**
+	 * Pattern which recognizes ACSL comments.
+	 */
+	private static final String ACSL_PATTERN = "(/\\*@.*@\\*/)|(//@.*)";
+	/**
+	 * Pattern which recognizes ACSL comments.
+	 */
+	private static final String COMMENT_PATTERN = "(/\\*@)|(@\\*/)|(@[^\\*])";
+	
 	/**
 	 * The list of comments.
 	 */
-	private final IASTComment[] commentList;
+	private final IASTComment[] mCommentList;
 	/**
 	 * Map startline numbers of a block to end line numbers.
 	 */
-	private final HashMap<Integer, Integer> functionLineRange;
-	/**
-	 * Pattern which recognizes ACSL comments.
-	 */
-	private final String ACSL_PATTERN = "(/\\*@.*@\\*/)|(//@.*)";
-	/**
-	 * Pattern which recognizes ACSL comments.
-	 */
-	private final String COMMENT_PATTERN = "(/\\*@)|(@\\*/)|(@[^\\*])";
+	private final HashMap<Integer, Integer> mFunctionLineRange;
+
 	/**
 	 * The compiled pattern to use.
 	 */
-	private final Pattern pattern;
+	private final Pattern mPattern;
 	private final ILogger mLogger;
 	private final Dispatcher mDispatcher;
 
@@ -91,9 +94,9 @@ public class CommentParser {
 	 */
 	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, ILogger logger,
 			Dispatcher dispatch) {
-		commentList = comments;
-		functionLineRange = lineRange;
-		pattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
+		mCommentList = comments;
+		mFunctionLineRange = lineRange;
+		mPattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
 		mLogger = logger;
 		mDispatcher = dispatch;
 	}
@@ -115,10 +118,10 @@ public class CommentParser {
 	public List<ACSLNode> processComments() {
 		final StringBuilder sb = new StringBuilder();
 		final ArrayList<ACSLNode> acslList = new ArrayList<ACSLNode>();
-		for (final IASTComment comment : commentList) {
+		for (final IASTComment comment : mCommentList) {
 			sb.append(comment.getComment());
 			// We check if the comment is a ACSL_Comment
-			final Matcher matcher = pattern.matcher(sb);
+			final Matcher matcher = mPattern.matcher(sb);
 			if (matcher.matches()) {
 				// We need to remove comment symbols
 				final StringBuilder input = new StringBuilder();
@@ -150,7 +153,7 @@ public class CommentParser {
 					final ILocation loc = LocationFactory.createACSLLocation(node);
 					mDispatcher.syntaxError(loc, e.getMessageText());
 				} catch (final Exception e) {
-					throw new IllegalArgumentException("Exception should be cached: " + e.getMessage());
+					throw new RuntimeException(e);
 				}
 			}
 			sb.delete(0, sb.length());
@@ -186,8 +189,8 @@ public class CommentParser {
 	private String determineCodePosition(IASTComment comment) {
 		final int start = comment.getFileLocation().getStartingLineNumber();
 		final int end = comment.getFileLocation().getEndingLineNumber();
-		for (final Integer lineStart : functionLineRange.keySet()) {
-			if (start >= lineStart && end <= functionLineRange.get(lineStart)) {
+		for (final Integer lineStart : mFunctionLineRange.keySet()) {
+			if (start >= lineStart && end <= mFunctionLineRange.get(lineStart)) {
 				return "lstart";
 			}
 		}

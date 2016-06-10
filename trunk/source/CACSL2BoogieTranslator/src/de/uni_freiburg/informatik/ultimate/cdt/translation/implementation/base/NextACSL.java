@@ -31,7 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -41,18 +41,17 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
- * @date 28.02.2012
  */
 public class NextACSL {
 	/**
 	 * a list of ACSL comments to hold.
 	 */
-	public ArrayList<ACSLNode> mAcsl;
+	private final List<ACSLNode> mAcsl;
 	/**
 	 * The successor C node as reference, where the ACSL is contained in the
 	 * translation unit.
 	 */
-	public IASTNode mSuccessorCNode;
+	private final IASTNode mSuccessorCNode;
 
 	/**
 	 * Constructor.
@@ -63,9 +62,17 @@ public class NextACSL {
 	 *            the successor C node as reference, where the ACSL is contained
 	 *            in the translation unit.
 	 */
-	public NextACSL(ArrayList<ACSLNode> acsl, IASTNode successorCNode) {
+	public NextACSL(final List<ACSLNode> acsl, final IASTNode successorCNode) {
 		assert acsl != null;
 		mAcsl = acsl;
 		mSuccessorCNode = successorCNode;
+	}
+
+	public List<ACSLNode> getAcsl() {
+		return mAcsl;
+	}
+
+	public IASTNode getSuccessorCNode() {
+		return mSuccessorCNode;
 	}
 }

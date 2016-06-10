@@ -223,41 +223,53 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
- * @date 04.01.2012
  */
 public class MainDispatcher extends Dispatcher {
+
+	private static final boolean DETERMINIZE_NECESSARY_DECLARATIONS = true;
+
 	/**
 	 * The current decorator tree.
 	 */
-	private DecoratorNode decoratorTree;
+	private DecoratorNode mDecoratorTree;
 	/**
 	 * The iterator for the current decorator tree.
 	 */
-	private Iterator<DecoratorNode> decoratorTreeIterator;
+	private Iterator<DecoratorNode> mDecoratorTreeIterator;
 	/**
 	 * Temp variable for next ACSL calculation.
 	 */
-	private DecoratorNode nextACSLBuffer;
+	private DecoratorNode mNextACSLBuffer;
 	/**
 	 * Whether in the C program there is a variable that is declared as a pointer, and that is dereferenced at some
 	 * point.
 	 */
-	private boolean thereAreDereferencedPointerVariables;
+	private boolean mThereAreDereferencedPointerVariables;
 
-	LinkedHashSet<IASTDeclaration> reachableDeclarations;
+	private LinkedHashSet<IASTDeclaration> mReachableDeclarations;
 	/**
 	 * Variables that need some special memory handling.
 	 */
-	private LinkedHashSet<IASTNode> variablesOnHeap;
-	
+	private LinkedHashSet<IASTNode> mVariablesOnHeap;
+
 	private final Set<Set<String>> mNodeLabelsOfAddedWitnesses = new HashSet<>();
 
-	// begin alex
-	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
-	private LinkedHashMap<Integer, String> indexToFunction;
+	private LinkedHashSet<VariableDeclaration> mBoogieDeclarationsOfVariablesOnHeap;
+	private LinkedHashMap<Integer, String> mIndexToFunction;
+
 	protected boolean mBitvectorTranslation;
 	protected boolean mOverapproximateFloatingPointOperations;
 	protected BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
+
+	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
+			final BeforeAfterWitnessInvariantsMapping witnessInvariants, final IUltimateServiceProvider services,
+			final ILogger logger) {
+		super(backtranslator, services, logger);
+		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		mOverapproximateFloatingPointOperations =
+				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+		mWitnessInvariants = witnessInvariants;
+	}
 
 	@Override
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
@@ -265,31 +277,21 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	public LinkedHashMap<Integer, String> getIndexToFunction() {
-		return indexToFunction;
+		return mIndexToFunction;
 	}
 
 	void addBoogieDeclarationOfVariableOnHeap(VariableDeclaration vd) {
-		if (_boogieDeclarationsOfVariablesOnHeap == null) {
-			_boogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<VariableDeclaration>();
+		if (mBoogieDeclarationsOfVariablesOnHeap == null) {
+			mBoogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<VariableDeclaration>();
 		}
-		_boogieDeclarationsOfVariablesOnHeap.add(vd);
+		mBoogieDeclarationsOfVariablesOnHeap.add(vd);
 	}
 
 	boolean getBoogieDeclarationsOfVariablesOnHeapContains(VariableDeclaration vd) {
-		if (_boogieDeclarationsOfVariablesOnHeap == null) {
+		if (mBoogieDeclarationsOfVariablesOnHeap == null) {
 			return false;
 		}
-		return _boogieDeclarationsOfVariablesOnHeap.contains(vd);
-	}
-
-	// end alex
-
-	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants,
-			IUltimateServiceProvider services, ILogger logger) {
-		super(backtranslator, services, logger);
-		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		mOverapproximateFloatingPointOperations = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
-		mWitnessInvariants = witnessInvariants;
+		return mBoogieDeclarationsOfVariablesOnHeap.contains(vd);
 	}
 
 	/**
@@ -300,13 +302,12 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	@Override
 	public boolean isMMRequired() {
-		return !variablesOnHeap.isEmpty() || !mFunctionToIndex.isEmpty()
-				|| thereAreDereferencedPointerVariables;
+		return !mVariablesOnHeap.isEmpty() || !mFunctionToIndex.isEmpty() || mThereAreDereferencedPointerVariables;
 	}
 
 	@Override
 	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return reachableDeclarations;
+		return mReachableDeclarations;
 	}
 
 	/**
@@ -315,7 +316,7 @@ public class MainDispatcher extends Dispatcher {
 	 * @return a set of variables, that have to be handled using the memory model.
 	 */
 	public LinkedHashSet<IASTNode> getVariablesForHeap() {
-		return variablesOnHeap;
+		return mVariablesOnHeap;
 	}
 
 	@Override
@@ -325,40 +326,39 @@ public class MainDispatcher extends Dispatcher {
 
 		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
 
-		variablesOnHeap = new LinkedHashSet<>();
+		mVariablesOnHeap = new LinkedHashSet<>();
 
 		final FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
 		final PreRunner pr = new PreRunner(ftb.getFunctionTable());
 		tu.accept(pr);
 
-		variablesOnHeap.addAll(pr.getVarsForHeap());
+		mVariablesOnHeap.addAll(pr.getVarsForHeap());
 
 		mFunctionToIndex = pr.getFunctionToIndex();
 
-		final boolean useDetNecessaryDeclarations = true;
-		if (useDetNecessaryDeclarations) {
+		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
 			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
 					ftb.getFunctionTable(), mFunctionToIndex);
 			tu.accept(dnd);
 
-			reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
+			mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
 		} else {
-			reachableDeclarations = null;
+			mReachableDeclarations = null;
 		}
 
-		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				reachableDeclarations);
+		final PRDispatcher prd =
+				new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex, mReachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
-		variablesOnHeap.addAll(prd.getVariablesOnHeap());
+		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
 
-		indexToFunction = new LinkedHashMap<>();
+		mIndexToFunction = new LinkedHashMap<>();
 		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
-			indexToFunction.put(en.getValue(), en.getKey());
+			mIndexToFunction.put(en.getValue(), en.getKey());
 		}
 
-		thereAreDereferencedPointerVariables = pr.isMMRequired();
+		mThereAreDereferencedPointerVariables = pr.isMMRequired();
 
 	}
 
@@ -369,8 +369,8 @@ public class MainDispatcher extends Dispatcher {
 		mTypeHandler = new TypeHandler(!mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
-		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, 
-				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mNameHandler);
+		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
+				mOverapproximateFloatingPointOperations, mNameHandler);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler();
 		mReportWarnings = true;
@@ -382,7 +382,7 @@ public class MainDispatcher extends Dispatcher {
 		WitnessInvariant invariantBefore;
 		if (mWitnessInvariants != null) {
 			invariantBefore = mWitnessInvariants.getInvariantsBefore().get(n);
-			witnessInvariantsBefore = translateWitnessInvariant(n, invariantBefore);
+			witnessInvariantsBefore = translateWitnessInvariant(invariantBefore);
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
@@ -390,7 +390,7 @@ public class MainDispatcher extends Dispatcher {
 
 		final Result result;
 		if (n instanceof IASTTranslationUnit) {
-			result = mCHandler.visit(this, ((IASTTranslationUnit) n));
+			result = mCHandler.visit(this, (IASTTranslationUnit) n);
 		} else if (n instanceof IASTSimpleDeclaration) {
 			result = mCHandler.visit(this, (IASTSimpleDeclaration) n);
 		} else if (n instanceof IASTParameterDeclaration) {
@@ -401,13 +401,6 @@ public class MainDispatcher extends Dispatcher {
 			result = mCHandler.visit(this, (IASTDeclarator) n);
 		} else if (n instanceof IASTFunctionDefinition) {
 			result = mCHandler.visit(this, (IASTFunctionDefinition) n);
-		} else if (n instanceof IASTArrayModifier) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTComment) {
-			// TODO : remove? I think they are excluded by the parser anyway?
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTDeclaration) {
-			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTDeclSpecifier) {
 			// Here we decide which further Interface we want to visit, and
 			// call the typeHandler
@@ -424,9 +417,6 @@ public class MainDispatcher extends Dispatcher {
 			} else {
 				result = mCHandler.visit(this, n);
 			}
-		} else if (n instanceof IASTDeclarationListOwner) {
-			// must be after IASTCompositeTypeSpecifier!
-			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTStatement) {
 			if (n instanceof IASTReturnStatement) {
 				result = mCHandler.visit(this, (IASTReturnStatement) n);
@@ -513,50 +503,34 @@ public class MainDispatcher extends Dispatcher {
 			} else {
 				result = mCHandler.visit(this, (IASTExpression) n);
 			}
-		} else if (n instanceof IASTFunctionStyleMacroParameter) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTImplicitNameOwner) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTName) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTPointerOperator) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTPreprocessorMacroExpansion) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTProblem) {
-			result = mCHandler.visit(this, (IASTProblem) n);
-		} else if (n instanceof IASTTypeId) {
-			result = mCHandler.visit(this, n);
-
-			// Indirect implementations of IASTNode in CDT version 7:
 		} else if (n instanceof IASTArrayDeclarator) {
 			result = mCHandler.visit(this, (IASTArrayDeclarator) n);
-		} else if (n instanceof IASTASMDeclaration) {
-			result = mCHandler.visit(this, (IASTASMDeclaration) n);
-		} else if (n instanceof IASTCompositeTypeSpecifier) {
-			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTFieldDeclarator) {
 			result = mCHandler.visit(this, (IASTFieldDeclarator) n);
-		} else if (n instanceof IASTImplicitName) {
-			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTInitializerClause) {
 			result = mCHandler.visit(this, (IASTInitializerClause) n);
 		} else if (n instanceof IASTPointer) {
 			result = mCHandler.visit(this, (IASTPointer) n);
-		} else if (n instanceof IASTPreprocessorMacroDefinition) {
-			result = mCHandler.visit(this, n);
-		} else if (n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-			result = mCHandler.visit(this, n);
 		} else if (n instanceof IASTStandardFunctionDeclarator) {
 			result = mCHandler.visit(this, (IASTStandardFunctionDeclarator) n);
 		} else if (n instanceof IASTProblemDeclaration) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
 			result = mCHandler.visit(this, (IASTProblemDeclaration) n);
+		} else if (n instanceof IASTProblem) {
+			result = mCHandler.visit(this, (IASTProblem) n);
 		} else if (n instanceof IASTProblemTypeId) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
 			result = mCHandler.visit(this, (IASTProblemTypeId) n);
+		} else if (n instanceof IASTArrayModifier || n instanceof IASTComment || n instanceof IASTDeclaration
+				|| n instanceof IASTDeclarationListOwner || n instanceof IASTFunctionStyleMacroParameter
+				|| n instanceof IASTImplicitNameOwner || n instanceof IASTName || n instanceof IASTPointerOperator
+				|| n instanceof IASTPreprocessorMacroExpansion || n instanceof IASTTypeId
+				|| n instanceof IASTCompositeTypeSpecifier || n instanceof IASTPreprocessorMacroDefinition
+				|| n instanceof IASTImplicitName || n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
+			//no specific handling for those types 
+			result = mCHandler.visit(this, n);
 		} else {
 			final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
 			final ILocation loc = LocationFactory.createCLocation(n);
@@ -567,7 +541,7 @@ public class MainDispatcher extends Dispatcher {
 		if (mWitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
 			invariantAfter = mWitnessInvariants.getInvariantsAfter().get(n);
-			witnessInvariantsAfter = translateWitnessInvariant(n, invariantAfter);
+			witnessInvariantsAfter = translateWitnessInvariant(invariantAfter);
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
@@ -611,25 +585,24 @@ public class MainDispatcher extends Dispatcher {
 					final String message = "Found witness invariant but unable to add check " + invariantBefore
 							+ " directly before the following code " + loc;
 					mLogger.warn(message);
-					// throw new AssertionError(message);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					final String message = "Found witness invariant but unable to add check " + invariantAfter
 							+ " directly after the following code " + loc;
 					mLogger.warn(message);
-					// throw new AssertionError(message);
 				}
 			}
 		}
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(IASTNode n, WitnessInvariant invariantBefore) throws AssertionError {
-		// ILocation loca = LocationFactory.createCLocation(n);
+	private List<AssertStatement> translateWitnessInvariant(final WitnessInvariant invariantBefore)
+			throws AssertionError {
 		if (invariantBefore != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";", 0, 0, mLogger);
+				acslNode =
+						Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";", 0, 0, mLogger);
 			} catch (final Exception e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -859,18 +832,13 @@ public class MainDispatcher extends Dispatcher {
 		if (n instanceof PolyIdentifier) {
 			return mAcslHandler.visit(this, n);
 		}
-		if (n instanceof ACSLNode) {
-			return mAcslHandler.visit(this, n);
-		}
-		final String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
-		final ILocation loc = LocationFactory.createACSLLocation(n);
-		throw new UnsupportedSyntaxException(loc, msg);
+		return mAcslHandler.visit(this, n);
 	}
 
 	@Override
 	public Result dispatch(DecoratorNode node) {
-		decoratorTree = node;
-		decoratorTreeIterator = node.iterator();
+		mDecoratorTree = node;
+		mDecoratorTreeIterator = node.iterator();
 		if (node.getCNode() != null) {
 			return dispatch(node.getCNode());
 		}
@@ -880,32 +848,32 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	public NextACSL nextACSLStatement() throws ParseException {
 		DecoratorNode current;
-		if (nextACSLBuffer != null) {
-			current = nextACSLBuffer;
-			nextACSLBuffer = null;
+		if (mNextACSLBuffer != null) {
+			current = mNextACSLBuffer;
+			mNextACSLBuffer = null;
 		} else {
-			if (!decoratorTreeIterator.hasNext()) {
+			if (!mDecoratorTreeIterator.hasNext()) {
 				return null;
 			}
-			current = decoratorTreeIterator.next();
+			current = mDecoratorTreeIterator.next();
 		}
-		while (decoratorTreeIterator.hasNext() && current.getAcslNode() == null) {
+		while (mDecoratorTreeIterator.hasNext() && current.getAcslNode() == null) {
 			// jump over C nodes.
-			current = decoratorTreeIterator.next();
+			current = mDecoratorTreeIterator.next();
 		}
-		if (!decoratorTreeIterator.hasNext() && current.getCNode() != null) {
+		if (!mDecoratorTreeIterator.hasNext() && current.getCNode() != null) {
 			return null;
 		}
 		// current = found ACSL node
 		final ArrayList<ACSLNode> acsl = new ArrayList<ACSLNode>();
 		checkACSLLocation(current);
 		acsl.add(current.getAcslNode());
-		if (!decoratorTreeIterator.hasNext()) {
+		if (!mDecoratorTreeIterator.hasNext()) {
 			return new NextACSL(acsl, null);
 		}
 		// find successor C node with same parent as the found acsl node
-		final Iterator<DecoratorNode> myIterator = decoratorTree.iterator();
-		DecoratorNode cNode = decoratorTree;
+		final Iterator<DecoratorNode> myIterator = mDecoratorTree.iterator();
+		DecoratorNode cNode = mDecoratorTree;
 		while (myIterator.hasNext() && (cNode.getAcslNode() == null || !cNode.equals(current))) {
 			cNode = myIterator.next();
 		}
@@ -921,26 +889,26 @@ public class MainDispatcher extends Dispatcher {
 			successor = null;
 		}
 
-		DecoratorNode nextNode = decoratorTreeIterator.next();
+		DecoratorNode nextNode = mDecoratorTreeIterator.next();
 		// block of ACSL nodes
-		while (decoratorTreeIterator.hasNext() && nextNode.getCNode() == null) {
+		while (mDecoratorTreeIterator.hasNext() && nextNode.getCNode() == null) {
 			// check parent of acsl nodes to be equivalent
 			if (!current.getParent().getCNode().equals(nextNode.getParent().getCNode())) {
 				// parent changed! not one block!
-				assert nextACSLBuffer == null;
+				assert mNextACSLBuffer == null;
 				if (nextNode.getAcslNode() != null) {
-					nextACSLBuffer = nextNode;
+					mNextACSLBuffer = nextNode;
 				}
 				return new NextACSL(acsl, successor);
 			}
 			checkACSLLocation(nextNode);
 			acsl.add(nextNode.getAcslNode());
-			nextNode = decoratorTreeIterator.next();
+			nextNode = mDecoratorTreeIterator.next();
 		}
 		if (nextNode.getAcslNode() != null && current.getParent().getCNode().equals(nextNode.getParent().getCNode())) {
 			acsl.add(nextNode.getAcslNode());
 		} else if (nextNode.getAcslNode() != null) {
-			nextACSLBuffer = nextNode;
+			mNextACSLBuffer = nextNode;
 		}
 		mNextAcsl = new NextACSL(acsl, successor);
 		return new NextACSL(acsl, successor);

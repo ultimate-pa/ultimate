@@ -79,21 +79,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
- * Base class to recursively walk through a Boogie tree, doing transformations.
- * This class changes nothing, but inherited classes may override some of the
- * provided functions. This class will then propagate the changes.
+ * Base class to recursively walk through a Boogie tree, doing transformations. This class changes nothing, but
+ * inherited classes may override some of the provided functions. This class will then propagate the changes.
  * 
- * The boogie declaration is currently read-only, so all changes have to be
- * returned in new objects. Therefore each of this function takes a
- * Boogie-AST-node and returns the same type. If the return value for the
- * children do not change the default methods will return the same value again,
- * so that no new objects are created.
+ * The boogie declaration is currently read-only, so all changes have to be returned in new objects. Therefore each of
+ * this function takes a Boogie-AST-node and returns the same type. If the return value for the children do not change
+ * the default methods will return the same value again, so that no new objects are created.
  * 
- * As an example usage see
- * de.uni_freiburg.informatik.ultimate.boogie.preprocessor.FunctionInliner. Note
- * that the underlying ITypes are not changed by the default implementation. You
- * either need preserve types, run this before type checking, or take care of
- * updating the types yourself.
+ * As an example usage see de.uni_freiburg.informatik.ultimate.boogie.preprocessor.FunctionInliner. Note that the
+ * underlying ITypes are not changed by the default implementation. You either need preserve types, run this before type
+ * checking, or take care of updating the types yourself.
  * 
  * @author Jochen Hoenicke
  */
@@ -175,8 +170,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process an array of AST type. This implementation calls processType on
-	 * all elements
+	 * Process an array of AST type. This implementation calls processType on all elements
 	 * 
 	 * @param types
 	 *            the types to process.
@@ -230,9 +224,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process an array of variable list as it appears in function- and
-	 * variable-specifications. This implementation calls processVarList on all
-	 * elements.
+	 * Process an array of variable list as it appears in function- and variable-specifications. This implementation
+	 * calls processVarList on all elements.
 	 * 
 	 * @param vls
 	 *            the variable lists
@@ -251,9 +244,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process a variable list as it appears in function- and
-	 * variable-specifications. This implementation processes the where clause
-	 * and the type.
+	 * Process a variable list as it appears in function- and variable-specifications. This implementation processes the
+	 * where clause and the type.
 	 * 
 	 * @param vl
 	 *            the variable list
@@ -273,8 +265,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the body of an implementation. Processes the contained variable
-	 * declarations and statements.
+	 * Process the body of an implementation. Processes the contained variable declarations and statements.
 	 * 
 	 * @param body
 	 *            the implementation body.
@@ -295,8 +286,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process a local variable declaration. Global declarations are processed
-	 * by processDeclaration.
+	 * Process a local variable declaration. Global declarations are processed by processDeclaration.
 	 * 
 	 * @param local
 	 *            The local variable declaration.
@@ -316,8 +306,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process array of local variable declarations. This is called for
-	 * implementations.
+	 * Process array of local variable declarations. This is called for implementations.
 	 * 
 	 * @param locals
 	 *            the array of variable declarations
@@ -336,8 +325,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the statements. Calls processStatement for all statements in the
-	 * array.
+	 * Process the statements. Calls processStatement for all statements in the array.
 	 * 
 	 * @param statements
 	 *            the statement to process.
@@ -356,8 +344,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the statement. Calls processExpression for all contained
-	 * expressions and recurses for while and if statements.
+	 * Process the statement. Calls processExpression for all contained expressions and recurses for while and if
+	 * statements.
 	 * 
 	 * @param statement
 	 *            the statement to process.
@@ -400,8 +388,8 @@ public abstract class BoogieTransformer {
 			final VariableLHS[] lhs = call.getLhs();
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);
 			if (args != newArgs || lhs != newLhs) {
-				newStatement = new CallStatement(call.getLocation(), call.isForall(), newLhs, call.getMethodName(),
-						newArgs);
+				newStatement =
+						new CallStatement(call.getLocation(), call.isForall(), newLhs, call.getMethodName(), newArgs);
 			}
 		} else if (statement instanceof IfStatement) {
 			final IfStatement ifstmt = (IfStatement) statement;
@@ -436,8 +424,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the loop invariant specifications. Calls processExpression for
-	 * all loop invariants.
+	 * Process the loop invariant specifications. Calls processExpression for all loop invariants.
 	 * 
 	 * @param specs
 	 *            the invariant specifications to process.
@@ -460,8 +447,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process a left hand side (of an assignement). Recurses for array left
-	 * hand side and calls processExpression for all contained expressions.
+	 * Process a left hand side (of an assignement). Recurses for array left hand side and calls processExpression for
+	 * all contained expressions.
 	 * 
 	 * @param lhs
 	 *            the left hand side to process.
@@ -484,8 +471,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the left hand sides (of an assignment). Calls processLeftHandSide
-	 * for each element in the array.
+	 * Process the left hand sides (of an assignment). Calls processLeftHandSide for each element in the array.
 	 * 
 	 * @param lhs
 	 *            the left hand sides to process.
@@ -504,9 +490,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the left hand sides (of a call or havoc, or modifies
-	 * specification). Default implementation calls processLeftHandSides and
-	 * casts back to VariableLHS.
+	 * Process the left hand sides (of a call or havoc, or modifies specification). Default implementation calls
+	 * processLeftHandSides and casts back to VariableLHS.
 	 * 
 	 * @param lhs
 	 *            the left hand sides to process.
@@ -523,9 +508,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process a procedure specification. Recursively calls processExpression
-	 * for ensures and requires specifications. This must not be called for
-	 * LoopInvariantSpecifications.
+	 * Process a procedure specification. Recursively calls processExpression for ensures and requires specifications.
+	 * This must not be called for LoopInvariantSpecifications.
 	 * 
 	 * @param spec
 	 *            the specification to process.
@@ -561,9 +545,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the procedure specifications. Calls processSpecification for each
-	 * element in the array. This must not be called for
-	 * LoopInvariantSpecifications.
+	 * Process the procedure specifications. Calls processSpecification for each element in the array. This must not be
+	 * called for LoopInvariantSpecifications.
 	 * 
 	 * @param specs
 	 *            the specifications to process.
@@ -582,9 +565,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the attribute. Calls processExpression for all contained
-	 * expressions. This must handle all kinds of attributes, including
-	 * triggers.
+	 * Process the attribute. Calls processExpression for all contained expressions. This must handle all kinds of
+	 * attributes, including triggers.
 	 * 
 	 * @param attr
 	 *            the attribute to process.
@@ -614,8 +596,8 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the attributes. Calls processAttribute for each element in the
-	 * array. This must handle all kinds of attributes, including triggers.
+	 * Process the attributes. Calls processAttribute for each element in the array. This must handle all kinds of
+	 * attributes, including triggers.
 	 * 
 	 * @param attributes
 	 *            the attributes to process.
@@ -634,8 +616,7 @@ public abstract class BoogieTransformer {
 	}
 
 	/**
-	 * Process the expressions. Calls processExpression for each element in the
-	 * array.
+	 * Process the expressions. Calls processExpression for each element in the array.
 	 * 
 	 * @param exprs
 	 *            the expression to process.
@@ -744,15 +725,16 @@ public abstract class BoogieTransformer {
 		} else if (expr instanceof IdentifierExpression) {
 		} else if (expr instanceof WildcardExpression) {
 		} else if (expr instanceof RealLiteral) {
+		} else if (expr == null) {
+			throw new IllegalArgumentException("expression may not be null");
 		} else {
-			throw new AssertionError("unknown expression " + expr.getClass().getName());
+			throw new UnsupportedOperationException("unknown expression " + expr.getClass().getName());
 		}
 
 		if (newExpr == null || newExpr == expr) {
 			/*
-			 * BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral,
-			 * IdentifierExpression and WildcardExpression do not need
-			 * recursion, and recursion can leave the expression unchanged.
+			 * BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral, IdentifierExpression and WildcardExpression
+			 * do not need recursion, and recursion can leave the expression unchanged.
 			 */
 			return expr;
 		} else {

@@ -3196,7 +3196,7 @@ public class CHandler implements ICHandler {
 			IASTNode parent) {
 		if (mAcsl != null) {
 			if (next instanceof IASTTranslationUnit) {
-				for (final ACSLNode globAcsl : mAcsl.mAcsl) {
+				for (final ACSLNode globAcsl : mAcsl.getAcsl()) {
 					if (globAcsl instanceof GlobalLTLInvariant) {
 						final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
 						extractor.run(globAcsl);
@@ -3219,7 +3219,7 @@ public class CHandler implements ICHandler {
 						}
 					}
 				} // TODO: deal with other global ACSL stuff
-			} else if (mAcsl.mSuccessorCNode == null) {
+			} else if (mAcsl.getSuccessorCNode() == null) {
 				if (parent != null && stmt != null && next == null) {
 					// ACSL at the end of a function or at the end of the last statement in a switch that is not
 					// terminated by a break
@@ -3227,7 +3227,7 @@ public class CHandler implements ICHandler {
 					// now
 					// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield a unsafe boogie
 					// program
-					for (final ACSLNode acslNode : mAcsl.mAcsl) {
+					for (final ACSLNode acslNode : mAcsl.getAcsl()) {
 						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
 							return;// handle later ...
 						} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
@@ -3258,9 +3258,9 @@ public class CHandler implements ICHandler {
 				// ACSL for next compound statement -> handle it next call
 				// or in case of translation unit, ACSL in an unexpected
 				// location!
-			} else if (mAcsl.mSuccessorCNode.equals(next)) {
+			} else if (mAcsl.getSuccessorCNode().equals(next)) {
 				assert mContract.isEmpty();
-				for (final ACSLNode acslNode : mAcsl.mAcsl) {
+				for (final ACSLNode acslNode : mAcsl.getAcsl()) {
 					if (stmt != null) {
 						// this means we are in a compound statement
 						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
