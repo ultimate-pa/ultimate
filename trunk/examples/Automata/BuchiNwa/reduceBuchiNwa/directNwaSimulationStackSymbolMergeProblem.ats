@@ -10,9 +10,12 @@
 // {q1, q2} the stacks can be mixed.
 // In particular, the stacks q1.q1, q2.q2, q1.q2, and q2.q1 are all equivalent,
 // which was not the case before merging.
+//
+// Bug fixed at Jun 10, 2016 by Daniel Tischner.
 
 
-print(removeDeadEnds(nwa));
+print(nwa);
+//print(removeDeadEnds(nwa));
 // print(shrinkNwa(removeDeadEnds(nwa)));
 // print(minimizeSevpa(removeDeadEnds(nwa)));
 // print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
