@@ -25,7 +25,7 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 		// TODO Auto-generated constructor stub
 	}
 
-	@Override
+	/*@Override
 	protected PhaseEventAutomata GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
 		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
 		PhaseEventAutomata trapAutomaton = pea;
@@ -74,6 +74,6 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 			//transition.setGuard(transition.getGuard().and(s.negate()));
 		}
 		return trapAutomaton;
-	}
+	}*/
 
 }

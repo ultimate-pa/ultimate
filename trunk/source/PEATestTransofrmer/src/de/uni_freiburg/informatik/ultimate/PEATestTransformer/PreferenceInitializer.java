@@ -13,7 +13,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public static enum PatternTransformerTypes { 
-		None, ClosedWorld, SimplePositiveTest, 
+		None, ClosedWorld, SimplePositiveTest, DeductionMonitor,
 		};
 	/*
 	 * labels for the different preferencess

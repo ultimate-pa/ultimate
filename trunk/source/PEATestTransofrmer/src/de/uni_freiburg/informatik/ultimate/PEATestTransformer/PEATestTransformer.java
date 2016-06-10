@@ -15,15 +15,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import srParse.pattern.PatternType; 
 
 public class PeaTestTransformer implements ISource {
-	List<String> m_FileNames = new ArrayList<String>();
+	private List<String> fileNames = new ArrayList<String>();
 	private boolean previousToolFoundErrors;
 	private SystemInformation sysInfo = new SystemInformation();
 	private IUltimateServiceProvider mServices;
+	private ILogger logger;
 	
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
@@ -35,6 +37,7 @@ public class PeaTestTransformer implements ISource {
 		if (!previousToolFoundErrors) {
 			services.getBacktranslationService().addTranslator(backtranslator);
 		}
+		this.logger = this.mServices.getLoggingService().getLogger(getPluginID());
 	}
 
 	@Override
@@ -80,7 +83,7 @@ public class PeaTestTransformer implements ISource {
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
 		this.sysInfo = new SystemInformation();
-		SplToBoogie parser = new SplToBoogie(mServices);
+		SplToBoogie parser = new SplToBoogie(this.mServices, this.logger);
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();
 		for(File f: files){

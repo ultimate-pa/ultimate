@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
+import pea.CounterTrace;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Transition;
@@ -61,7 +62,8 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	 * Append the automata for the closed world assumption on all variables that are not in the input set
 	 */
 	@Override
-	protected ArrayList<PhaseEventAutomata> postProcess(ArrayList<PatternType> patterns, ArrayList<PhaseEventAutomata> peas) {
+	protected ArrayList<PhaseEventAutomata> postProcess(ArrayList<PatternType> pats, ArrayList<CounterTrace> cts, 
+			ArrayList<PhaseEventAutomata> peas) {
 		//generate closed world automat
 		for(String ident: this.closedWorldCounter.keySet()){
 			Phase phase = new Phase("p0", CDD.TRUE);
@@ -90,7 +92,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 					new ArrayList<String>(){}	//declatrations
 					));
 		}
-		return super.postProcess(patterns, peas);
+		return super.postProcess(pats, cts, peas);
 	}
 	
 	/**
@@ -160,7 +162,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		}
 	}
 
-	@Override
+	/*@Override
 	protected PhaseEventAutomata GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
 		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
 		//collect all variables in the effect
@@ -210,7 +212,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 					));	
 		}
 		return pea;
-	}
+	}*/
 	
 	
 

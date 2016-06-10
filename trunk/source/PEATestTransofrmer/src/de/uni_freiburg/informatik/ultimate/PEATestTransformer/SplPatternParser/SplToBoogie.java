@@ -13,8 +13,10 @@ import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.Simple
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.SimplePositiveTestTranslator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.ClosedWorldTransformator;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.DeductionGuardTransromation;
 import java_cup.runtime.Symbol;
 import pea.PhaseEventAutomata;
 import srParse.ReqParser;
@@ -30,9 +32,11 @@ import srParse.pattern.PatternType;
 public class SplToBoogie {
 	
 	private final IUltimateServiceProvider mService;
+	private final ILogger logger;
 	
-	public SplToBoogie(IUltimateServiceProvider service){
+	public SplToBoogie(IUltimateServiceProvider service, ILogger logger){
 		mService = service;
+		this.logger = logger;
 	}
 	
 	/***
@@ -62,12 +66,15 @@ public class SplToBoogie {
 			.getEnum(PreferenceInitializer.LABEL_TRANSFORMER, PreferenceInitializer.PatternTransformerTypes.class);
 		SystemInformation sysInfo = new SystemInformation(); //TODO: this will be parsed from elsewhere!
 		BasicTransformer patternToPea;
+		logger.debug("Running Transformation mode: "+ ttype.toString());
 		switch(ttype){
 			case None: patternToPea = new BasicTransformer(); 
 					break;
 			case SimplePositiveTest: patternToPea = new SimplePositiveTestTransformer(sysInfo);
 				break;
 			case ClosedWorld: patternToPea = new ClosedWorldTransformator(sysInfo);
+				break;
+			case DeductionMonitor: patternToPea = new DeductionGuardTransromation(this.logger, sysInfo);
 				break;
 			default:
 				throw new UnsupportedOperationException("Non supported test Transformer");
@@ -77,12 +84,15 @@ public class SplToBoogie {
 		//TODO: set parser for peas depending on ttype --> a tranlation type is a combination of pea transformations
 		// and boogie translation
 		BasicTranslator peaToBoogie;
+		logger.debug("Running T mode: "+ ttype.toString());
 		switch(ttype){
 		case None: peaToBoogie = new BasicTranslator(peas); 
 				break;
 		case SimplePositiveTest: peaToBoogie = new SimplePositiveTestTranslator(peas, sysInfo);
 			break;
 		case ClosedWorld: peaToBoogie = new BasicTranslator(peas);
+			break;
+		case DeductionMonitor: peaToBoogie = new BasicTranslator(peas);
 			break;
 		default:
 			throw new UnsupportedOperationException("Non supported test Transformer");
