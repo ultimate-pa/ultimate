@@ -27,10 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Para
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
 
 public class HybridAutomaton extends SpaceExElement {
+	private final String mName;
 	private final Set<String> mGlobalParameters;
 	private final Set<String> mLocalParameters;
 	private final Set<String> mGlobalConstants;
@@ -61,6 +59,7 @@ public class HybridAutomaton extends SpaceExElement {
 			        "The input automaton must be a hybrid automaton, not a system template.");
 		}
 
+		mName = automaton.getId();
 		mLocations = new HashMap<>();
 		mTransitions = new ArrayList<>();
 		mGlobalParameters = new HashSet<>();
@@ -140,7 +139,7 @@ public class HybridAutomaton extends SpaceExElement {
 		mLocations.put(newLoc.getId(), newLoc);
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Added location: " + newLoc);
+			mLogger.debug("[" + mName + "]: Added location: " + newLoc);
 		}
 	}
 
@@ -161,7 +160,23 @@ public class HybridAutomaton extends SpaceExElement {
 		mTransitions.add(newTrans);
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Added transition: " + newTrans);
+			mLogger.debug("[" + mName + "]: Added transition: " + newTrans);
 		}
+	}
+
+	protected String getName() {
+		return mName;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		
+		sb.append(mName).append(": ").append(mGlobalParameters.size() + mLocalParameters.size()).append(" parameters, ")
+		        .append(mGlobalConstants.size() + mLocalConstants.size()).append(" constants, ").append(mLabels.size())
+		        .append(" labels, ").append(mLocations.size()).append(" locataions, ").append(mTransitions.size())
+		        .append(" transitions");
+
+		return sb.toString();
 	}
 }

@@ -99,12 +99,12 @@ public class Transition extends SpaceExElement {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(mSource.getName()).append("(").append(mSource.getId()).append(")").append(" === (").append(mGuard)
-		        .append("); {").append(mUpdate).append("}");
+		sb.append("(").append(mSource.getId()).append(")").append(" === (").append(mGuard).append("); {")
+		        .append(mUpdate).append("}");
 		if (!mLabel.isEmpty()) {
 			sb.append("; Label: ").append(mLabel);
 		}
-		sb.append(" ===> ").append(mTarget.getName()).append("(").append(mTarget.getId()).append(")");
+		sb.append(" ===> ").append("(").append(mTarget.getId()).append(")");
 
 		return sb.toString();
 	}
