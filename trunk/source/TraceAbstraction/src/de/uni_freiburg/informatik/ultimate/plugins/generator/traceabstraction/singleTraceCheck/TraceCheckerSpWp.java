@@ -213,7 +213,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		
 		final NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
-		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core";
+		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " 
+				+ mTrace.length() + " unsat-core size " + unsatCore.size();
 
 		
 		final Set<BoogieVar>[] liveVariables;
