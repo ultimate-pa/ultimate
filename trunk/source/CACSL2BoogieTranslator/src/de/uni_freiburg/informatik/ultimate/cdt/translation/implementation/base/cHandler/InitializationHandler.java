@@ -366,6 +366,8 @@ public class InitializationHandler {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
 						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+						} else {
+							throw new UnsupportedOperationException("UNsopported Floating Type");
 						}
 					} else {
 						main.mCHandler.convert(loc, initializer, lCType);
