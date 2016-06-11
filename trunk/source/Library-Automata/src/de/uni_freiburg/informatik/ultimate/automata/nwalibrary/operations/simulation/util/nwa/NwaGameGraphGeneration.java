@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2269,6 +2270,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private Iterator<VertexDownState<STATE>> constructAllVertexDownStates(final STATE leftUpState,
 			final STATE rightUpState) {
+		// Refuse to construct a set if any of the given up states is bottom,
+		// that are no legal up states.
+		if (leftUpState.equals(mBottom) || rightUpState.equals(mBottom)) {
+			return Collections.emptyIterator();
+		}
 		final Set<STATE> leftDownStates = mNwa.getDownStates(leftUpState);
 		final Set<STATE> rightDownStates = mNwa.getDownStates(rightUpState);
 		final Set<VertexDownState<STATE>> vertexDownStates = new LinkedHashSet<>();
@@ -2430,15 +2436,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						&& sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 					final SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
 					// First we need to validate if the invoking down state
-					// forms a
-					// safe down state.
+					// forms a safe down state.
 					// If the down state is unsafe we do not update summarize
-					// edges.
-					// We do so by first assuming that the down state is
-					// reversely
-					// safe, that is when following outgoing edges to the search
-					// root. The down state then is safe if the computed
-					// source of the summarize edges is a predecessor
+					// edges. We do so by first assuming that the down state is
+					// reversely safe, that is when following outgoing edges to
+					// the search root. The down state then is safe if the
+					// computed source of the summarize edges is a predecessor
 					// of the current vertex.
 					if (!(mGameGraph.hasPredecessors(invokingVertex)
 							&& mGameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges))) {
@@ -2449,11 +2452,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					// Additionally the down state of the current vertex must be
 					// receivable by using the call transition with any down
-					// state
-					// of the summarize edge source vertex.
+					// state of the summarize edge source vertex.
 					// Search for a corresponding down state to validate
-					// safeness of
-					// the invoking down state.
+					// safeness of the invoking down state.
 					// The right down states must be equal, also the left down
 					// state must change to the called state.
 					boolean foundCorrespondingDownState = sourceDownState.getRightDownState()
