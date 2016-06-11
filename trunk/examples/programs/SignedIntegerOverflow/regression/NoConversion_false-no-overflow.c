@@ -7,7 +7,7 @@
 
 int main() {
 	// a conversion to long after the operation does not save the operation
-	// fro producing an overflow
+	// from producing an overflow
 	long x = 2147483647 + 1;
 	printf("%ld\n", x);
 	return 0;

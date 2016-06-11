@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 int main() {
-	int x = -2147483648;
-	int y = -x - 23;
+	int minInt = -2147483647 - 1;
+	int y = -minInt - 23;
 	printf("%d\n", y);
 	return 0;
 }

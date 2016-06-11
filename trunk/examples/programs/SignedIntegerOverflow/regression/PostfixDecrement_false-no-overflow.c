@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 int main() {
-	int x = -2147483648;
+	int x = -2147483647 - 1;
 	x--;
 	printf("%d\n", x);
 	return 0;
