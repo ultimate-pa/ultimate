@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -103,16 +102,21 @@ public class FlowSensitiveFaultLocalizer {
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services,
 			SmtManager smtManager,
-			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
+			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier,
+			boolean doNonFlowSensitiveAnalysis, boolean doFlowSensitiveAnalysis) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
-		doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
-				predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
+		if (doNonFlowSensitiveAnalysis) {
+			doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
+					predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
+		}
 
-		doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg,
-				modGlobVarManager, smtManager);
+		if (doFlowSensitiveAnalysis) {
+			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg,
+					modGlobVarManager, smtManager);
+		}
 	}
 	
 
