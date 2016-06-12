@@ -177,7 +177,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
 
 		// example code, use your own method here
-		return examples.reduceNwaDirectSimulation(automaton, factory);
+		return examples.reduceNwaDelayedSimulation(automaton, factory);
 	}
 
 	/**
