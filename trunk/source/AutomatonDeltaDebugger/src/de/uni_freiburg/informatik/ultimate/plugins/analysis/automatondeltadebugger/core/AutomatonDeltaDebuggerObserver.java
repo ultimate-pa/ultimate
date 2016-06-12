@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
@@ -55,6 +56,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private final ATester<LETTER, STATE> mTester;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersLoop;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersEnd;
+	private final EDebugPolicy mPolicy;
 	private final ILogger mLogger;
 	
 	/**
@@ -62,17 +64,20 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	 * @param tester tester
 	 * @param shrinkersLoop rules to be appplied iteratively
 	 * @param shrinkersEnd rules to be applied once in the end
+	 * @param policy debug policy
 	 */
 	public AutomatonDeltaDebuggerObserver(
 			final IUltimateServiceProvider services,
 			final ATester<LETTER, STATE> tester,
 			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
-			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd) {
+			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd,
+			final EDebugPolicy policy) {
 		mServices = services;
 		mTester = tester;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mShrinkersLoop = shrinkersLoop;
 		mShrinkersEnd = shrinkersEnd;
+		mPolicy = policy;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -111,7 +116,8 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	 * 
 	 * @param automaton input automaton
 	 */
-	private void deltaDebug(INestedWordAutomaton<LETTER, STATE> automaton) {
+	private void deltaDebug(
+			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// automaton factory
 		final AAutomatonFactory<LETTER, STATE> automatonFactory =
 				new NestedWordAutomatonFactory<LETTER, STATE>(automaton,
@@ -124,7 +130,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =
-				debugger.shrink(mShrinkersLoop, mShrinkersEnd);
+				debugger.shrink(mShrinkersLoop, mShrinkersEnd, mPolicy);
 		
 		// print result
 		mLogger.info(

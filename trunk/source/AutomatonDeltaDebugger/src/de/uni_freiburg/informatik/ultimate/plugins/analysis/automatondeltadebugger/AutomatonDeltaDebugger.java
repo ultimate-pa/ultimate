@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
@@ -60,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Ultimate interface to the automaton delta debugger.
  * 
- * NOTE: A user may change the code at three places: <br>
+ * NOTE: A user may change the code at four places: <br>
  * - the tester (which specifies which operation is run, mandatory change)
  * {@link #getGeneralTester()} or
  * {@link #getIOperation(INestedWordAutomaton, StateFactory)} <br>
@@ -68,9 +70,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * {@link #getShrinkersLoop()} <br>
  * - the list of rules to be applied only once in the end (optional change)
  * {@link #getShrinkersEnd()} <br>
+ * - the policy according to which list items are executed (optional change)
+ * {@link #getPolicy()} <br>
  * The class provides some default values here.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	protected ILogger mLogger;
@@ -94,7 +99,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			mLogger.info("Preparing to process automaton...");
 			mObservers.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
 					mServices, getCheckResultTester(), getShrinkersLoop(),
-					getShrinkersEnd()));
+					getShrinkersEnd(), getPolicy()));
 		} else {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
@@ -213,6 +218,15 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		shrinkersEnd.add(new NormalizeStateShrinker<LETTER, STATE>());
 
 		return shrinkersEnd;
+	}
+	
+	/**
+	 * NOTE: Change policy here.
+	 * 
+	 * @return debugger policy
+	 */
+	private EDebugPolicy getPolicy() {
+		return EDebugPolicy.BINARY;
 	}
 
 	@Override
