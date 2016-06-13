@@ -10,4 +10,3 @@ Require-Bundle: Library-UltimateCore,
  Library-UltimateUtil
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Import-Package: de.uni_freiburg.informatik.ultimate.test

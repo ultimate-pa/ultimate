@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.testing;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
