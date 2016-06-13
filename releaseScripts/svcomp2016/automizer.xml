@@ -8,6 +8,19 @@
 
   <rundefinition name="Test">
   </rundefinition>
+  
+  <tasks name="LDV">
+    <include>../../trunk/examples/svcomp/ldv-regression/1_3.c_false-unreach-call.cil.c</include>
+    <include>../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--arcnet--rfc1201.ko-entry_point_false-unreach-call.cil.out.c</include>
+    <include>../../trunk/examples/svcomp/ldv-consumption/32_7a_cilled_false-unreach-call_linux-3.8-rc1-drivers--media--rc--rc-core.ko-main.cil.out.c</include>
+    <include>../../trunk/examples/svcomp/ldv-linux-3.12-rc1/linux-3.12-rc1.tar.xz-144_2a-drivers--staging--media--lirc--lirc_sasem.ko-entry_point_false-unreach-call.cil.out.c</include>
+    <include>../../trunk/examples/svcomp/ldv-regression/mutex_lock_int.c_false-unreach-call.cil.c</include>
+    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+	<option name="32bit"></option>
+	<option name="precise"></option>
+	<option name="--full-output"></option>
+
+  </tasks>
 
   <tasks name="Memsafety Deref">
     <include>../../trunk/examples/svcomp/array-memsafety/diff_usafe_false-valid-deref.i</include>
