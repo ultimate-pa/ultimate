@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExRootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 
 /**
  * Constructs SpaceEx Ultimate model representation.
@@ -16,7 +16,7 @@ public class SpaceExModelBuilder {
 
 	private final SpaceExRootNode mModel;
 
-	public SpaceExModelBuilder(HybridSystem system, ILogger logger) {
+	public SpaceExModelBuilder(HybridModel system, ILogger logger) {
 		mLogger = logger;
 
 		mModel = null;

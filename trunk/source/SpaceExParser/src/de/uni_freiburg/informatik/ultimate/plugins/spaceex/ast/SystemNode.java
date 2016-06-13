@@ -31,13 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.SystemBind;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 public class SystemNode extends SpaceExNode {
 
 	private static final long serialVersionUID = 1L;
 	
-	private final List<SpaceExBind> mBinds;
+	private final List<SystemBind> mBinds;
 	private final ILogger mLogger;
 	
 	public SystemNode(ComponentType component, ILogger logger) {
@@ -46,7 +47,7 @@ public class SystemNode extends SpaceExNode {
 		
 		setName(component.getId());
 		
-		component.getBind().forEach(b -> mBinds.add(new SpaceExBind(b, mLogger)));
+		component.getBind().forEach(b -> mBinds.add(new SystemBind(b, mLogger)));
 		
 		mBinds.forEach(b -> mLogger.debug(b));
 		

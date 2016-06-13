@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.BindType;
 
-public class SpaceExBind {
+public class SystemBind {
 	
 	private final BindType mBind;
 	private final String mBindName;
@@ -46,7 +46,7 @@ public class SpaceExBind {
 	private double mXPosition;
 	private double mYPosition;
 
-	public SpaceExBind(BindType bind, ILogger logger) {
+	public SystemBind(BindType bind, ILogger logger) {
 		mBind = bind;
 		mBindName = bind.getAs();
 		mLogger = logger;

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -188,7 +188,7 @@ public class SpaceExParser implements ISource {
 
 		fis.close();
 		
-		HybridSystem system = new HybridSystem(spaceEx, mLogger);
+		HybridModel system = new HybridModel(spaceEx, mLogger);
 		
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}

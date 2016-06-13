@@ -32,39 +32,43 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 
 /**
- * Class that represents a hybrid system, consisting of multiple concurrently running hybrid automata.
+ * Representation of a hybrid system that contains of multiple hybrid automata.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class HybridSystem {
 
-	private final Map<String, HybridAutomaton> mHybridAutomata;
 	private final ILogger mLogger;
+	private final Map<String, HybridAutomaton> mAutomata;
+	private final Map<String, HybridSystem> mSubSystems;
 
-	public HybridSystem(Sspaceex root, ILogger logger) {
-		mHybridAutomata = new HashMap<>();
+	protected HybridSystem(ComponentType system, Map<String, ComponentType> automata,
+	        Map<String, ComponentType> systems, ILogger logger) {
+		assert !system.getBind().isEmpty() : "System must contain binds";
+
 		mLogger = logger;
+		mAutomata = new HashMap<>();
+		mSubSystems = new HashMap<>();
 
-		// If the components has no binds, it is a hybrid automaton.
-		root.getComponent().stream().filter(c -> c.getBind().isEmpty()).forEach(c -> addHybridAutomaton(c));
-
-		for (final ComponentType component : root.getComponent()) {
-			if (component.getBind().isEmpty()) {
-
+		system.getBind().stream().forEach(b -> {
+			final String comp = b.getComponent();
+			if (systems.containsKey(comp)) {
+				mSubSystems.put(b.getAs(), new HybridSystem(systems.get(comp), automata, systems, mLogger));
+			} else if (automata.containsKey(comp)) {
+				mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger));
 			} else {
-				// The component is a system component that maps variables between systems.
-
+				throw new UnsupportedOperationException(
+		                "The component with name " + comp + " is neither a system nor an automaton component.");
 			}
-		}
+		});
 	}
 
 	private void addHybridAutomaton(ComponentType component) {
 		final HybridAutomaton newAutomaton = new HybridAutomaton(component, mLogger);
-		final HybridAutomaton old = mHybridAutomata.put(component.getId(), newAutomaton);
+		final HybridAutomaton old = mAutomata.put(component.getId(), newAutomaton);
 		if (old != null) {
 			mLogger.warn("A hybrid automaton with name " + old.getName() + " already existed and was replaced.");
 		}
@@ -73,5 +77,4 @@ public class HybridSystem {
 			mLogger.debug("Added hybrid automaton " + newAutomaton);
 		}
 	}
-
 }
