@@ -74,13 +74,14 @@ public class DeductionGuardTransromation extends BasicTransformer {
 					// if the edge targets a state with the last state in the phase, then take the hole invariant including 
 					// seeping, else make a guard that is without seeping.
 					CDD guard = trans.getGuard();
+					logger.warn(trans.getDest().getStateInvariant().toString());
 					if (destinationHasLastPhase){
 						guard = guard.and(
 							this.dmGuard(pats.get(i), trans.getDest().getStateInvariant(), destinationHasLastPhase, false, i));
 					} else {
 						guard = guard.and(
 							this.dmGuard(pats.get(i), targetPhaseConj , destinationHasLastPhase, false, i));
-						logger.warn(guard);
+						
 					}
 					// if p' invariant does not talk about the effect, singal that effect is not set by the req
 			        // ¬δ0 v,ρ | v ∈ effect(ρ) ∧ v ∈ vars(e)
@@ -124,27 +125,13 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	        		this.dmGuard(pattern, ((BoogieBooleanExpressionDecision)invariant.getDecision()).getExpression()
 	        				, hasLastPhase, disjunction, reqNo));
 	        // process children
-	        logger.warn(invariant.toString());
 	        CDD newChild = CDD.FALSE;
 	        List<CDD> conjuncts = new ArrayList<CDD>();
 	        conjuncts.add(CDD.TRUE);
 	        for (int i = 0; i < invariant.getChilds().length; i++) {
-	        	/* newChildren = newChildren.or(dmGuard(pattern, invariant.getChilds()[i], hasLastPhase, true, reqNo));
-	        	 logger.warn("---"+invariant.getChilds()[i].toString());
-	        	//result = result.and(dmGuard(pattern, invariant.getChilds()[i],hasLastPhase,invariant.getChilds().length >1, reqNo)); 
-	        	if (invariant.childDominates(i)) {
-	                // sb.append(childs[i].toString("tex", true));
-	        		if (result == null) result = CDD.FALSE;
-	            	result.or(dmGuard(pattern, invariant.getChilds()[i] ,hasLastPhase, true, reqNo));
-	            } else {
-                    if (invariant.getChilds()[i] != CDD.TRUE) {
-                    	if (result == null) result = CDD.TRUE; 
-                    	result.and(dmGuard(pattern, invariant.getChilds()[i], hasLastPhase,false ,reqNo));
-                    }
-	            }*/
 	            if (invariant.childDominates(i)) {
 	            	conjuncts.add(newChild);
-	            	 newChild = CDD.TRUE;
+	            	newChild = CDD.TRUE;
 	            }
 	            if (invariant.getChilds()[i] != CDD.TRUE) {
 	                newChild = newChild.and(dmGuard(pattern, invariant.getChilds()[i], hasLastPhase, false, reqNo));
@@ -152,13 +139,14 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	                
 	        }
 	        conjuncts.add(newChild);
+	        newChild = CDD.FALSE;
 	        for(CDD conjunct: conjuncts){
 	        	if(conjunct != CDD.TRUE)
-	        		result = result.and(conjunct);
+	        		newChild = newChild.or(conjunct);
 	        }
-	        /*if (newChild != CDD.FALSE){
+	        if (newChild != CDD.FALSE){
 	        	result = result.and(newChild);
-	        }*/
+	        }
 		return result; 
 	}
 	
@@ -202,20 +190,6 @@ public class DeductionGuardTransromation extends BasicTransformer {
 					return new BinaryExpression(id.getLocation(), Operator.LOGICAND, new IdentifierExpression(e.getLocation(), this.READ_GUARD_PREFIX+id.getIdentifier()), 
 							new IdentifierExpression(e.getLocation(), ident+"'" ));
 				}
-	
-				/*if(hasLastPhase && !pattern.isEffect(ident) || !hasLastPhase){
-					Expression readGuard = new IdentifierExpression(e.getLocation(), this.READ_GUARD_PREFIX+id.getIdentifier());
-					if (false){ 		//L0v | v ∈ vars(e)
-						return readGuard;	
-					} else {				//(L0 v ∧ e) | v ∈ vars(e) 
-						return new BinaryExpression(id.getLocation(), Operator.LOGICAND, readGuard, 
-								new IdentifierExpression(e.getLocation(), ident+"'" ));
-					}
-				} else if (hasLastPhase && pattern.isEffect(ident)){
-					//δ0v,ρ | v ∈ effect(ρ) ∧ v ∈ vars(e)δ0
-					return new IdentifierExpression(e.getLocation(), 
-							this.CLOSED_WORLD_PREFIX+id.getIdentifier()+this.CLOSED_WORLD_SEPR+Integer.toString(reqNo));	
-				}*/
 			}
 		}
 		return e;
