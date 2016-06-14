@@ -73,7 +73,11 @@ public class HybridModel {
 		} else {
 			// TODO for the time being, we use the first defined system as default system. Read system name from config
 			// file in the future.
-			new HybridSystem(systems.values().stream().collect(Collectors.toList()).get(0), automata, systems, mLogger);
+			final HybridSystem sys = new HybridSystem(systems.values().stream().collect(Collectors.toList()).get(0),
+			        automata, systems, mLogger);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(sys);
+			}
 		}
 	}
 

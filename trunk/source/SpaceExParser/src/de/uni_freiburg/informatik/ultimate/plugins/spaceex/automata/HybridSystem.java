@@ -28,10 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 /**
  * Representation of a hybrid system that contains of multiple hybrid automata.
@@ -42,23 +45,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 public class HybridSystem {
 
 	private final ILogger mLogger;
+	private final String mName;
 	private final Map<String, HybridAutomaton> mAutomata;
 	private final Map<String, HybridSystem> mSubSystems;
+	private final Set<String> mLocalParameters;
+	private final Set<String> mGlobalParameters;
+	private final Set<String> mLocalConstants;
+	private final Set<String> mGlobalConstants;
+	private final Set<String> mLabels;
 
 	protected HybridSystem(ComponentType system, Map<String, ComponentType> automata,
 	        Map<String, ComponentType> systems, ILogger logger) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
 
 		mLogger = logger;
+		mName = system.getId();
 		mAutomata = new HashMap<>();
 		mSubSystems = new HashMap<>();
+		mLocalParameters = new HashSet<>();
+		mGlobalParameters = new HashSet<>();
+		mLocalConstants = new HashSet<>();
+		mGlobalConstants = new HashSet<>();
+		mLabels = new HashSet<>();
 
+		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
+		        mLocalConstants, mGlobalConstants, mLabels, mLogger));
+		
 		system.getBind().stream().forEach(b -> {
 			final String comp = b.getComponent();
 			if (systems.containsKey(comp)) {
-				mSubSystems.put(b.getAs(), new HybridSystem(systems.get(comp), automata, systems, mLogger));
+				final HybridSystem old = mSubSystems.put(b.getAs(),
+		                new HybridSystem(systems.get(comp), automata, systems, mLogger));
+				if (old != null) {
+					mLogger.warn("A hybrid system with name " + b.getAs() + " already existed and was replaced.");
+				}
 			} else if (automata.containsKey(comp)) {
-				mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger));
+				final HybridAutomaton old = mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger));
+				if (old != null) {
+					mLogger.warn("A hybrid automaton with name " + b.getAs() + " already existed and was replaced.");
+				}
 			} else {
 				throw new UnsupportedOperationException(
 		                "The component with name " + comp + " is neither a system nor an automaton component.");
@@ -66,15 +91,28 @@ public class HybridSystem {
 		});
 	}
 
-	private void addHybridAutomaton(ComponentType component) {
-		final HybridAutomaton newAutomaton = new HybridAutomaton(component, mLogger);
-		final HybridAutomaton old = mAutomata.put(component.getId(), newAutomaton);
-		if (old != null) {
-			mLogger.warn("A hybrid automaton with name " + old.getName() + " already existed and was replaced.");
-		}
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Added hybrid automaton " + newAutomaton);
-		}
+		sb.append("System ").append(mName).append(":\n");
+		sb.append("   Parameters (global):\n");
+		mGlobalParameters.forEach(p -> sb.append("      * ").append(p).append("\n"));
+		sb.append("   Parameters (local):\n");
+		mLocalParameters.forEach(p -> sb.append("      * ").append(p).append("\n"));
+		sb.append("   Constants (global):\n");
+		mGlobalConstants.forEach(p -> sb.append("      * ").append(p).append("\n"));
+		sb.append("   Constants (local):\n");
+		mLocalConstants.forEach(p -> sb.append("      * ").append(p).append("\n"));
+		sb.append("   Labels:\n");
+		mLabels.forEach(p -> sb.append("      * ").append(p).append("\n"));
+
+		sb.append("   Automata:\n");
+		mAutomata.forEach((name, aut) -> sb.append("Automaton ").append(name).append(":\n").append(aut).append("\n"));
+
+		sb.append("   Subsystems:\n");
+		mSubSystems.forEach((name, sys) -> sb.append("System ").append(name).append(":\n").append(sys).append("\n"));
+
+		return sb.toString();
 	}
 }

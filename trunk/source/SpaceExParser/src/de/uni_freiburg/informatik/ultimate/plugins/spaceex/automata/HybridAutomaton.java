@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 public class HybridAutomaton extends SpaceExElement {
 	private final String mName;
@@ -71,7 +71,8 @@ public class HybridAutomaton extends SpaceExElement {
 		mLogger = logger;
 
 		for (final ParamType param : automaton.getParam()) {
-			addParameter(param);
+			HybridSystemHelper.addParameter(param, mLocalParameters, mGlobalParameters, mLocalConstants,
+			        mGlobalConstants, mLabels, mLogger);
 		}
 
 		for (final LocationType loc : automaton.getLocation()) {
@@ -80,49 +81,6 @@ public class HybridAutomaton extends SpaceExElement {
 
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
-		}
-	}
-
-	private void addParameter(ParamType param) {
-		if (mGlobalParameters.contains(param.getName())) {
-			throw new IllegalArgumentException(
-			        "The parameter " + param.getName() + " is already part of the automaton.");
-		}
-
-		final String name = param.getName();
-
-		switch (param.getType()) {
-		case "real":
-			switch (param.getDynamics()) {
-			case "any":
-				if (param.isLocal()) {
-					addParameterToSet(name, mLocalParameters);
-				} else {
-					addParameterToSet(name, mGlobalParameters);
-				}
-				break;
-			case "const":
-				if (param.isLocal()) {
-					addParameterToSet(name, mLocalConstants);
-				} else {
-					addParameterToSet(name, mGlobalConstants);
-				}
-				break;
-			default:
-				throw new UnsupportedOperationException("The parameter type " + param.getType() + " is not supported.");
-			}
-			break;
-		case "label":
-			addParameterToSet(name, mLabels);
-			break;
-		default:
-			throw new IllegalArgumentException("The parameter type " + param.getType() + " is unknown.");
-		}
-	}
-
-	private void addParameterToSet(final String name, Collection<String> collection) {
-		if (!collection.add(name)) {
-			mLogger.warn("The variable with name " + name + " is already present in the set.");
 		}
 	}
 
@@ -171,7 +129,7 @@ public class HybridAutomaton extends SpaceExElement {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(mName).append(": ").append(mGlobalParameters.size() + mLocalParameters.size()).append(" parameters, ")
 		        .append(mGlobalConstants.size() + mLocalConstants.size()).append(" constants, ").append(mLabels.size())
 		        .append(" labels, ").append(mLocations.size()).append(" locataions, ").append(mTransitions.size())
