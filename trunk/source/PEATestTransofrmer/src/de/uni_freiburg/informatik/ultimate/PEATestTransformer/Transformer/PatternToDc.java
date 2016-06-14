@@ -155,6 +155,7 @@ public class PatternToDc {
 	
 	//AbsencePattern (InstAbsPattern)
 	protected CounterTrace GlobalInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(p.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(p),
@@ -163,6 +164,7 @@ public class PatternToDc {
 	}
 	
 	protected CounterTrace BeforeInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(r.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
     		    new CounterTrace.DCPhase(p.and(r.negate())),
@@ -183,6 +185,7 @@ public class PatternToDc {
 	}
 
 	protected CounterTrace AfterInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(r.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(q),
@@ -210,6 +213,7 @@ public class PatternToDc {
     	 ctA = absencePattern(P.and(S.negate()),Q,R, scope);
     	 */
 	protected CounterTrace GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(s.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				    new CounterTrace.DCPhase(),
 				    new CounterTrace.DCPhase(p.and(s.negate())),
@@ -239,6 +243,7 @@ public class PatternToDc {
 	}
 
 	protected CounterTrace AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(s.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(q),

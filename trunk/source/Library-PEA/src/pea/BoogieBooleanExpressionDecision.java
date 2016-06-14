@@ -207,9 +207,8 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	}
 	
 	/**
-	 * Collects variable names and types from the whole boogie expression of this
-	 * decision
-	 * @return map of names of variables and name of type of variable
+	 * Collects variable names and types from the expression.
+	 * @return Map: ident -> type
 	 */
 	public Map<String,String> getVars(){
 		Map<String,String> vars = new HashMap<String,String>();

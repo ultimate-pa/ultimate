@@ -28,7 +28,9 @@ package pea;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 
 
@@ -966,6 +968,31 @@ try_next:
         newDecision = decision.unprime();
 
         return CDD.create(newDecision, newChildren);
+    }
+    
+    /***
+     * Collect Identifiers from the whole CDD
+     * @return
+     * 	set containing all variables in the CDD
+     */
+    public Set<String> getIdents(){
+    	Set<String> idents = new HashSet<String>();
+    	if (this.childs == null){ // empty cdds may happen
+    		return idents;
+    	}
+    	for(CDD child: this.getChilds()){
+    		if(child != null){    		
+    			idents.addAll(child.getIdents());
+    		}
+    	}
+    	if(this.decision == null){
+    		return idents;
+    	} else if(this.decision instanceof BoogieBooleanExpressionDecision){
+    		idents.addAll(((BoogieBooleanExpressionDecision) this.decision).getVars().keySet());
+    	} else {
+    		idents.add(this.decision.getVar());
+    	}
+    	return idents;
     }
 
     // XXX: Testing

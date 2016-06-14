@@ -1,5 +1,8 @@
 package srParse.pattern;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import pea.BooleanDecision;
@@ -24,6 +27,30 @@ public class PatternType
 	public PatternType(){}
 	public PatternType(srParseScope scope){
 		setScope( scope );
+	}
+	
+	protected Set<String> effectVariables = new HashSet<String>();
+	
+	/***
+	 * Requirement has an effect on a set of Variables such as 
+	 * @example:  "After Q, it is always the case that if P holds then S holds". (t;[Q];t;[P && !S];t)
+	 * Effect is S in this case
+	 */
+	public void addEffectVariables(Set<String> idents){
+		this.effectVariables.addAll(idents);
+	}
+	/***
+	 * Determine if a variable name is in the set of variables that are affected by the requirement.
+	 * @param ident
+	 * 	identifier of variable
+	 * @return
+	 * 	true if the Variable's value is determined by this requirements effect.
+	 */
+	public boolean isEffect(String ident){
+		return effectVariables.contains(ident);
+	}
+	public Set<String> getEffectVariabels(){
+		return this.effectVariables;
 	}
 	
 	public int getDuration() {

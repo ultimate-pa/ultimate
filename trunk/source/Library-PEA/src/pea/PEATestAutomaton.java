@@ -124,105 +124,96 @@ public class PEATestAutomaton extends PhaseEventAutomata {
      * final states are given by the product of final states of the test automaton and
      * normal states of the PEA.
      */
-    @Override
+	@Override
 	public PEATestAutomaton parallel(PhaseEventAutomata b) {
-        final List<Phase> newInit = new ArrayList<Phase>();
-        final List<Phase> newFinal = new ArrayList<Phase>();
-        final TreeSet<Phase> oldFinal = getFinalPhases() == null ? null :
-                                new TreeSet<Phase>(Arrays.asList(getFinalPhases()));
-        TreeSet<Phase> bOldFinal = null;
-        
-        final TreeMap<String,Phase> newPhases = new TreeMap<String,Phase>();
-        final boolean bIsTestAutomaton = (b instanceof PEATestAutomaton);
-        if(bIsTestAutomaton){
-            bOldFinal = new TreeSet<Phase>(Arrays.asList(((PEATestAutomaton)b).getFinalPhases()));
-        }
-        
-               
-        
-        class TodoEntry {
-            Phase p1,p2,p;
-            TodoEntry(Phase p1, Phase p2, Phase p) {
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p = p;
-            }
-        }
-        
-        final List<TodoEntry> todo = new LinkedList<TodoEntry>();
+		final List<Phase> newInit = new ArrayList<Phase>();
+		final List<Phase> newFinal = new ArrayList<Phase>();
+		final TreeSet<Phase> oldFinal = getFinalPhases() == null ? null
+				: new TreeSet<Phase>(Arrays.asList(getFinalPhases()));
+		TreeSet<Phase> bOldFinal = null;
 
-        for (int i = 0; i < getInit().length; i++) {
-            for (int j = 0; j < b.getInit().length; j++) {
-            final CDD sinv = getInit()[i].stateInv.and(b.getInit()[j].stateInv);
-            if (sinv != CDD.FALSE) {
-                final CDD cinv = getInit()[i].clockInv.and(b.getInit()[j].clockInv);
-                final Phase p = new Phase(getInit()[i].getName()+TIMES+b.getInit()[j].getName(),
-                        sinv, cinv);
-                if(bIsTestAutomaton &&
-                        oldFinal.contains(getInit()[i]) &&
-                        bOldFinal.contains(b.getInit()[j])){
-                         newFinal.add(p);
-                }else if(!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit()[i])){
-                         newFinal.add(p);
-                }
-                newInit.add(p);
-                newPhases.put(p.getName(), p);
-                todo.add(new TodoEntry(getInit()[i],b.getInit()[j],p));       
-            }
-            }
-        }
+		final TreeMap<String, Phase> newPhases = new TreeMap<String, Phase>();
+		final boolean bIsTestAutomaton = (b instanceof PEATestAutomaton);
+		if (bIsTestAutomaton) {
+			bOldFinal = new TreeSet<Phase>(Arrays.asList(((PEATestAutomaton) b).getFinalPhases()));
+		}
 
-        while (todo.size() > 0) {
-            final TodoEntry entry = todo.remove(0);
-            final Iterator i = entry.p1.transitions.iterator();
-            while (i.hasNext()) {
-            final Transition t1 = (Transition) i.next();
-            final Iterator j = entry.p2.transitions.iterator();
-            while (j.hasNext()) {
-                final Transition t2 = (Transition) j.next();
+		class TodoEntry {
+			Phase p1, p2, p;
 
-                final CDD guard = t1.guard.and(t2.guard);
-                if (guard == CDD.FALSE) {
-					continue;
+			TodoEntry(Phase p1, Phase p2, Phase p) {
+				this.p1 = p1;
+				this.p2 = p2;
+				this.p = p;
+			}
+		}
+
+		final List<TodoEntry> todo = new LinkedList<TodoEntry>();
+
+		for (int i = 0; i < getInit().length; i++) {
+			for (int j = 0; j < b.getInit().length; j++) {
+				final CDD sinv = getInit()[i].stateInv.and(b.getInit()[j].stateInv);
+				if (sinv != CDD.FALSE) {
+					final CDD cinv = getInit()[i].clockInv.and(b.getInit()[j].clockInv);
+					final Phase p = new Phase(getInit()[i].getName() + TIMES + b.getInit()[j].getName(), sinv, cinv);
+					if (bIsTestAutomaton && oldFinal.contains(getInit()[i]) && bOldFinal.contains(b.getInit()[j])) {
+						newFinal.add(p);
+					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit()[i])) {
+						newFinal.add(p);
+					}
+					newInit.add(p);
+					newPhases.put(p.getName(), p);
+					todo.add(new TodoEntry(getInit()[i], b.getInit()[j], p));
 				}
-                final CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
-                if (sinv == CDD.FALSE) {
-					continue;
+			}
+		}
+
+		while (todo.size() > 0) {
+			final TodoEntry entry = todo.remove(0);
+			final Iterator i = entry.p1.transitions.iterator();
+			while (i.hasNext()) {
+				final Transition t1 = (Transition) i.next();
+				final Iterator j = entry.p2.transitions.iterator();
+				while (j.hasNext()) {
+					final Transition t2 = (Transition) j.next();
+
+					final CDD guard = t1.guard.and(t2.guard);
+					if (guard == CDD.FALSE) {
+						continue;
+					}
+					final CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
+					if (sinv == CDD.FALSE) {
+						continue;
+					}
+					final CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
+					final String[] resets = new String[t1.resets.length + t2.resets.length];
+					System.arraycopy(t1.resets, 0, resets, 0, t1.resets.length);
+					System.arraycopy(t2.resets, 0, resets, t1.resets.length, t2.resets.length);
+
+					final Set<String> stoppedClocks = new SimpleSet<String>(
+							t1.dest.stoppedClocks.size() + t2.dest.stoppedClocks.size());
+					stoppedClocks.addAll(t1.dest.stoppedClocks);
+					stoppedClocks.addAll(t2.dest.stoppedClocks);
+
+					final String newname = t1.dest.getName() + TIMES + t2.dest.getName();
+					Phase p = newPhases.get(newname);
+
+					if (p == null) {
+						p = new Phase(newname, sinv, cinv, stoppedClocks);
+						newPhases.put(newname, p);
+						todo.add(new TodoEntry(t1.dest, t2.dest, p));
+						if (bIsTestAutomaton && oldFinal != null && bOldFinal != null && oldFinal.contains(t1.dest)
+								&& bOldFinal.contains(t2.dest)) {
+							newFinal.add(p);
+						} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(t1.dest)) {
+							newFinal.add(p);
+						}
+
+					}
+					entry.p.addTransition(p, guard, resets);
 				}
-                final CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
-                final String[] resets
-                = new String[t1.resets.length + t2.resets.length];
-                System.arraycopy(t1.resets, 0, resets, 0, 
-                         t1.resets.length);
-                System.arraycopy(t2.resets, 0, resets, t1.resets.length, 
-                         t2.resets.length);
-                
-		final Set<String> stoppedClocks = 
-		    new SimpleSet<String>(t1.dest.stoppedClocks.size()+
-					  t2.dest.stoppedClocks.size());
-		stoppedClocks.addAll(t1.dest.stoppedClocks);
-		stoppedClocks.addAll(t2.dest.stoppedClocks);
-		    
-                final String newname = t1.dest.getName()+TIMES+t2.dest.getName();
-                Phase p = newPhases.get(newname);
-
-                if (p == null) {
-		    p = new Phase(newname, sinv, cinv, stoppedClocks);
-                newPhases.put(newname, p);
-                todo.add(new TodoEntry(t1.dest, t2.dest, p));
-                if(bIsTestAutomaton && oldFinal != null && bOldFinal != null &&
-                   oldFinal.contains(t1.dest) &&
-                   bOldFinal.contains(t2.dest)){
-                    newFinal.add(p);
-                }else if(!bIsTestAutomaton && oldFinal != null && oldFinal.contains(t1.dest)){
-                    newFinal.add(p);
-                }
-
-                }
-                entry.p.addTransition(p, guard, resets);
-            }
-            }
-        }
+			}
+		}
     
 
         final Phase[] allPhases = newPhases.values().toArray(new Phase[0]);

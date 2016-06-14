@@ -1,6 +1,12 @@
 package srParse;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
+
+import javax.swing.Spring;
 
 import pea.BooleanDecision;
 import pea.CDD;
@@ -19,6 +25,7 @@ public class srParsePattern {
 	
 	protected static CDD q_cdd_default = BooleanDecision.create("Q");
 	protected static CDD r_cdd_default = BooleanDecision.create("R");
+
 	
 	public int getDuration() {
 		return duration;

@@ -54,5 +54,16 @@ public class BoogieAstSnippet {
 	public static Expression createBooleanExpression(String a, String b){
 		return createBooleanExpression(a,b, BinaryExpression.Operator.COMPEQ);
 	}
+	
+	public static Expression createConjunction(Expression[] conjuncts){
+		if (conjuncts.length == 1) return conjuncts[0];
+		Expression result = new BinaryExpression(createDummyLocation(), BinaryExpression.Operator.LOGICAND,
+				conjuncts[0], conjuncts[1]);
+		for(int i = 2; i < conjuncts.length; i++){
+			result = new BinaryExpression(createDummyLocation(), BinaryExpression.Operator.LOGICAND,
+					result, conjuncts[i]);
+		}
+		return result;
+	}
 
 }
