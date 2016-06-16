@@ -69,6 +69,12 @@ public class SmtUtils {
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
+	
+	/**
+	 * Avoid the construction of "bvadd" with more than two arguments and
+	 * use nested "bvadd" terms instead.
+	 */
+	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
 	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -281,10 +287,33 @@ public class SmtUtils {
 			if (sort.isNumericSort()) {
 				return script.term("+", summands);
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
-				return script.term("bvadd", summands);
+				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
+					return binaryBitvectorSum(script, sort, summands);
+				} else {
+					return script.term("bvadd", summands);
+				}
 			} else {
 				throw new UnsupportedOperationException("unkown sort " + sort);
 			}
+		}
+	}
+	
+	/**
+	 * Construct nested binary "bvadd" terms.  
+	 * @param sort bitvector sort of the arguments (required if summands is empty)
+	 * @param summands bitvector terms that each have the same sort
+	 */
+	public static Term binaryBitvectorSum(final Script script, final Sort sort, final Term... summands) {
+		if (summands.length == 0) {
+			return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
+		} else if (summands.length == 0) {
+			return summands[0];
+		} else {
+			Term result = script.term("bvadd", summands[0], summands[1]);
+			for (int i=2; i<summands.length; i++) {
+				result = script.term("bvadd", result, summands[i]);
+			}
+			return result;
 		}
 	}
 
