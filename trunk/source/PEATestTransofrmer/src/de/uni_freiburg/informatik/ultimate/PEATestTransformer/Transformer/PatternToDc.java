@@ -66,7 +66,7 @@ public class PatternToDc {
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
 				return this.AfterUntilUniversality(pattern, p, q, r, s);			//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterUniversality(pattern, p, q, r, s);					//test []
+				return this.AfterUniversality(pattern, p, q, r, s);					//test [manual]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
 				return this.BetweenUniversality(pattern, p, q, r, s);				//test []
 			} else {throw new UnsupportedOperationException();}
@@ -105,6 +105,7 @@ public class PatternToDc {
 	
 	//Universality Pattern
 	protected CounterTrace GlobalUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(p.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(p.negate()), 
@@ -121,11 +122,12 @@ public class PatternToDc {
 	}
 
 	protected CounterTrace AfterUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		pattern.addEffectVariables(p.getIdents());
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(q),
 			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(p.and(s.negate())),
+			    new CounterTrace.DCPhase(p.negate()),
 			    new CounterTrace.DCPhase()
 			});
 	}
