@@ -9,6 +9,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -48,6 +49,12 @@ public class Cobody {
 		for (ApplicationTerm transition : cobody.transitions) {
 			addTransitionFormula(transition);
 		}
+	}
+	
+	public Body negate() {
+		Body res = new Body();
+		res.mergeCobody(this);
+		return res;
 	}
 
 	private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func,

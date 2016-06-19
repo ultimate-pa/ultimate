@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClause;
 
 public class Body {
 	Cobody cobody;
@@ -24,6 +25,16 @@ public class Body {
 		cobody.addPredicate(literal);
 	}
 
+	public HornClause convertToHornClause(Map<String, HornClausePredicateSymbol> predicates, Theory theory) {
+		Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = this.getBodyPredicateToVars(predicates);
+		assert tt.size() <= 1;
+		HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
+				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
+		return new HornClause(this.getTransitionFormula(theory),
+				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
+				this.getCobodyPredicateToVars(predicates));
+
+	}
 	public boolean setHead(ApplicationTerm literal) {
 		if (head == null) {
 			head = literal;

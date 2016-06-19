@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbui
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -57,6 +57,10 @@ public class HornClauseParserScript extends NoopScript {
 
 	}
 
+	public List<HornClause> getHornClauses() {
+		return mCurrentHornClause;
+	}
+	
 	/**
 	 * Make the necessary settings in the background solver, like set-logic etc.
 	 * 
@@ -132,7 +136,6 @@ public class HornClauseParserScript extends NoopScript {
 
 	private Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getPredicateSymbols(ApplicationTerm term) {
 		HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
-		// FIXME(Mostafa): Put a certain way of checking the predicates.
 		if (mDeclaredPredicateSymbols.contains(term.getFunction().getName())) {
 			ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
 			for (Term par : term.getParameters()) {
@@ -177,13 +180,6 @@ public class HornClauseParserScript extends NoopScript {
 		if (!predicates.containsKey(term.getFunction().getName())) {
 			return term;
 		}
-		/*
-		 * if (term.getFunction().getName().equals("or")) { for (Term literal :
-		 * term.getParameters()) { Term temp =
-		 * getTransitionSymbols((ApplicationTerm) literal); for
-		 * (HornClausePredicateSymbol symbol : temp.keySet()) { res.put(symbol,
-		 * temp.get(symbol)); } } }
-		 */
 		return getTheory().mTrue;
 	}
 
@@ -264,55 +260,30 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		// TODO Go over the asserted formula
-		// - identify the parts of the Horn clause
-		// -- identify the uninterpreted predicates
-		// -- identify the "statement"
-		// - compute a TransFormula from the above
-		//
-		// System.err.println(term);
 		if (term instanceof QuantifiedFormula) {
 
 			QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
-				Body newBody = parseBody(thisTerm.getSubformula());
-				Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = newBody.getBodyPredicateToVars(predicates);
-				assert tt.size() <= 1;
-				HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
-						: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-				mCurrentHornClause.add(new HornClause(newBody.getTransitionFormula(getTheory()),
-						tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
-						newBody.getCobodyPredicateToVars(predicates)));
+				Body body = parseBody(thisTerm.getSubformula());
+				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
 
-				/*
-				 * ApplicationTerm implication = (ApplicationTerm)
-				 * thisTerm.getSubformula();
-				 * System.out.println(implication.toString()); Term cobody =
-				 * implication.getParameters()[0], body =
-				 * implication.getParameters()[1];
-				 * Map<HornClausePredicateSymbol, ArrayList<TermVariable>>
-				 * bodyPredicates = getPredicateSymbols( (ApplicationTerm)
-				 * body); assert bodyPredicates.size() <= 1;
-				 * HornClausePredicateSymbol body_ =
-				 * bodyPredicates.keySet().iterator().hasNext() ?
-				 * bodyPredicates.keySet().iterator().next() : new
-				 * HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-				 * Map<HornClausePredicateSymbol, ArrayList<TermVariable>>
-				 * cobody_ = getPredicateSymbols( (ApplicationTerm) cobody);
-				 * mCurrentHornClause.add(new
-				 * HornClause(getTransitionFormula((ApplicationTerm) cobody),
-				 * bodyPredicates.containsKey(body_) ? bodyPredicates.get(body_)
-				 * : new ArrayList<>(), body_, cobody_));
-				 
-				System.err.println(thisTerm.getSubformula());
-				System.err.println(newBody);
 				System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
-				System.err.println();
-				*/
-
 			}
 		}
 
+		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("not")) {
+			Term nested = ((ApplicationTerm) term).getParameters()[0];
+			if (nested instanceof QuantifiedFormula) {
+				QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
+				if (thisTerm.getQuantifier() == EXISTS) {
+					Cobody cobody = parseCobody(thisTerm.getSubformula());
+					Body body = cobody.negate();
+					mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
+					
+					System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+				}
+			}
+		}
 		// for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN;
 	}
