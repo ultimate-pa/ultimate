@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Para
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
-public class HybridAutomaton extends SpaceExElement {
+public class HybridAutomaton {
 	private final String mName;
 	private final Set<String> mGlobalParameters;
 	private final Set<String> mLocalParameters;
@@ -53,7 +53,7 @@ public class HybridAutomaton extends SpaceExElement {
 
 	private final ILogger mLogger;
 
-	public HybridAutomaton(ComponentType automaton, ILogger logger) {
+	protected HybridAutomaton(ComponentType automaton, ILogger logger) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 			        "The input automaton must be a hybrid automaton, not a system template.");

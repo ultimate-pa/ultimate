@@ -25,17 +25,13 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
-public abstract class SpaceExElement {
-	
-	private String mNote;
-	
-	public final void setNote(String note) {
-		mNote = note;
-	}
-	
-	public final String getNote() {
-		return mNote;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
+
+public class LabelParameter extends ParameterType {
+	protected LabelParameter(ParamType param) {
+		super(ParamTypes.LABEL, param);
+		
 	}
 }

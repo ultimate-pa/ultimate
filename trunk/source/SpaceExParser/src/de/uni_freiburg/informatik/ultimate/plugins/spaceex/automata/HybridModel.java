@@ -32,6 +32,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystemFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 
@@ -45,9 +47,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspa
 public class HybridModel {
 
 	private final ILogger mLogger;
+	private final HybridSystemFactory mHybridSystemFactory;
 
 	public HybridModel(Sspaceex root, ILogger logger) {
 		mLogger = logger;
+
+		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
@@ -73,15 +78,21 @@ public class HybridModel {
 		} else {
 			// TODO for the time being, we use the first defined system as default system. Read system name from config
 			// file in the future.
-			final HybridSystem sys = new HybridSystem(systems.values().stream().collect(Collectors.toList()).get(0),
-			        automata, systems, mLogger);
+			final ComponentType firstSystem = systems.values().stream().collect(Collectors.toList()).get(0);
+			final HybridSystem sys = mHybridSystemFactory.createHybridSystemFromComponent(firstSystem, automata,
+			        systems);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(sys);
 			}
+			
+			// TODO add system to model to be able to create something.
 		}
 	}
 
 	private void createDefaultSystem(Map<String, ComponentType> automata) {
+		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
+
+		// final HybridSystem sys = new HybridSystem(system, automata, systems)
 		// TODO Fill.
 	}
 }

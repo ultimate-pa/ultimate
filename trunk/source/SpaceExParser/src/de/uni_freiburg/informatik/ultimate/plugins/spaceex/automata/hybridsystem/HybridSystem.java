@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,7 +70,7 @@ public class HybridSystem {
 
 		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
 		        mLocalConstants, mGlobalConstants, mLabels, mLogger));
-		
+
 		system.getBind().stream().forEach(b -> {
 			final String comp = b.getComponent();
 			if (systems.containsKey(comp)) {
@@ -95,23 +95,27 @@ public class HybridSystem {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
+		final String indent = "   ";
+
 		sb.append("System ").append(mName).append(":\n");
-		sb.append("   Parameters (global):\n");
-		mGlobalParameters.forEach(p -> sb.append("      * ").append(p).append("\n"));
-		sb.append("   Parameters (local):\n");
-		mLocalParameters.forEach(p -> sb.append("      * ").append(p).append("\n"));
-		sb.append("   Constants (global):\n");
-		mGlobalConstants.forEach(p -> sb.append("      * ").append(p).append("\n"));
-		sb.append("   Constants (local):\n");
-		mLocalConstants.forEach(p -> sb.append("      * ").append(p).append("\n"));
-		sb.append("   Labels:\n");
-		mLabels.forEach(p -> sb.append("      * ").append(p).append("\n"));
+		sb.append(indent).append("Parameters (global):\n");
+		mGlobalParameters.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
+		sb.append(indent).append("Parameters (local):\n");
+		mLocalParameters.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
+		sb.append(indent).append("Constants (global):\n");
+		mGlobalConstants.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
+		sb.append(indent).append("Constants (local):\n");
+		mLocalConstants.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
+		sb.append(indent).append("Labels:\n");
+		mLabels.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
 
-		sb.append("   Automata:\n");
-		mAutomata.forEach((name, aut) -> sb.append("Automaton ").append(name).append(":\n").append(aut).append("\n"));
+		sb.append(indent).append("Automata:\n");
+		mAutomata.forEach((name, aut) -> sb.append(indent).append("Automaton ").append(name).append(":\n")
+		        .append(indent).append(indent).append(aut).append("\n"));
 
-		sb.append("   Subsystems:\n");
-		mSubSystems.forEach((name, sys) -> sb.append("System ").append(name).append(":\n").append(sys).append("\n"));
+		sb.append(indent).append("Subsystems:\n");
+		mSubSystems.forEach((name, sys) -> sb.append(indent).append("System ").append(name).append(":\n").append(indent)
+		        .append(indent).append(sys).append("\n"));
 
 		return sb.toString();
 	}

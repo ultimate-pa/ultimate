@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.SystemBind;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.SystemBind;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 public class SystemNode extends SpaceExNode {
@@ -47,7 +47,7 @@ public class SystemNode extends SpaceExNode {
 		
 		setName(component.getId());
 		
-		component.getBind().forEach(b -> mBinds.add(new SystemBind(b, mLogger)));
+		//component.getBind().forEach(b -> mBinds.add(new SystemBind(b, mLogger)));
 		
 		mBinds.forEach(b -> mLogger.debug(b));
 		

@@ -25,14 +25,14 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 
-public class Location extends SpaceExElement {
+public class Location {
 
 	private final int mId;
 	private final String mName;
@@ -45,15 +45,15 @@ public class Location extends SpaceExElement {
 	private final double mXPos;
 	private final double mYPos;
 
-	public Location(final int id) {
+	protected Location(final int id) {
 		this(id, new StringBuilder().append("loc_").append(id).toString());
 	}
 
-	public Location(final LocationType location) {
+	protected Location(final LocationType location) {
 		this(location.getId(), location.getName());
 	}
 	
-	public Location(final int id, final String name) {
+	protected Location(final int id, final String name) {
 		mName = name;
 		mId = id;
 
@@ -64,43 +64,43 @@ public class Location extends SpaceExElement {
 		mYPos = ((mId * 140) + 60);
 	}
 	
-	public int getId() {
+	protected int getId() {
 		return mId;
 	}
 
-	public String getName() {
+	protected String getName() {
 		return mName;
 	}
 
-	public void setInvariant(final String invariant) {
+	protected void setInvariant(final String invariant) {
 		mInvariant = invariant;
 	}
 
-	public void setFlow(final String flow) {
+	protected void setFlow(final String flow) {
 		mFlow = flow;
 	}
 
-	public String getInvariant() {
+	protected String getInvariant() {
 		return mInvariant;
 	}
 
-	public String getFlow() {
+	protected String getFlow() {
 		return mFlow;
 	}
 
-	public void addOutgoingTransition(final Transition t) {
+	protected void addOutgoingTransition(final Transition t) {
 		mOutgoingTransitions.add(t);
 	}
 
-	public void addIncomingTransition(final Transition t) {
+	protected void addIncomingTransition(final Transition t) {
 		mIncomingTransitions.add(t);
 	}
 	
-	public double getXPos() {
+	protected double getXPos() {
 		return mXPos;
 	}
 	
-	public double getYPos() {
+	protected double getYPos() {
 		return mYPos;
 	}
 	

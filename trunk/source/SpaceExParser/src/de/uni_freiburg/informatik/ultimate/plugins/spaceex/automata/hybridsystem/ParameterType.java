@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 
@@ -36,25 +36,25 @@ public abstract class ParameterType {
 	private boolean mLocal;
 	private final String mName;
 	
-	public ParameterType(ParamTypes type, ParamType param) {
+	protected ParameterType(ParamTypes type, ParamType param) {
 		mType = type;
 		mLocal = param.isLocal();
 		mName = param.getName();
 	}
 	
-	public ParamTypes getType() {
+	protected ParamTypes getType() {
 		return mType;
 	}
 	
-	public void setLocal(boolean local) {
+	protected void setLocal(boolean local) {
 		mLocal = local;
 	}
 	
-	public boolean isLocal() {
+	protected boolean isLocal() {
 		return mLocal;
 	}
 
-	public String getName() {
+	protected String getName() {
 	    return mName;
     }
 }

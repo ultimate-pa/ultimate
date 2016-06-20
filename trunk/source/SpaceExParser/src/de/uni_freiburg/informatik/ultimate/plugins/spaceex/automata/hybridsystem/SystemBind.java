@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class SystemBind {
 	private double mXPosition;
 	private double mYPosition;
 
-	public SystemBind(BindType bind, ILogger logger) {
+	protected SystemBind(BindType bind, ILogger logger) {
 		mBind = bind;
 		mBindName = bind.getAs();
 		mLogger = logger;

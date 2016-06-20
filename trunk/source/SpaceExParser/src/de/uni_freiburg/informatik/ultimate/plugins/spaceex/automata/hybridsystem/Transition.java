@@ -25,9 +25,9 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
-public class Transition extends SpaceExElement {
+public class Transition {
 
 	private String mLabel;
 	private String mGuard;
@@ -44,7 +44,7 @@ public class Transition extends SpaceExElement {
 	 * @param target
 	 *            The target location of the transition.
 	 */
-	public Transition(Location source, Location target) {
+	protected Transition(Location source, Location target) {
 		mSource = source;
 		mTarget = target;
 		mGuard = "";
@@ -55,43 +55,43 @@ public class Transition extends SpaceExElement {
 		target.addIncomingTransition(this);
 	}
 
-	public int getSourceId() {
+	protected int getSourceId() {
 		return mSource.getId();
 	}
 
-	public int getTargetId() {
+	protected int getTargetId() {
 		return mTarget.getId();
 	}
 
-	public void setLabel(String label) {
+	protected void setLabel(String label) {
 		mLabel = label;
 	}
 
-	public String getLabel() {
+	protected String getLabel() {
 		return mLabel;
 	}
 
-	public void setUpdate(final String update) {
+	protected void setUpdate(final String update) {
 		mUpdate = update;
 	}
 
-	public String getUpdate() {
+	protected String getUpdate() {
 		return mUpdate;
 	}
 
-	public void setGuard(final String guard) {
+	protected void setGuard(final String guard) {
 		mGuard = guard;
 	}
 
-	public String getGuard() {
+	protected String getGuard() {
 		return mGuard;
 	}
 
-	public void setSource(final Location location) {
+	protected void setSource(final Location location) {
 		mSource = location;
 	}
 
-	public void setTarget(final Location location) {
+	protected void setTarget(final Location location) {
 		mTarget = location;
 	}
 

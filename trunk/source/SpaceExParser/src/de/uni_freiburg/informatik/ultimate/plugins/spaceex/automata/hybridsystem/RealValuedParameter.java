@@ -25,15 +25,47 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
-/**
- * The possible parameter types of SpaceEX automaton variables.
- * @author greitsch@informatik.uni-freiburg.de
- *
- */
-public enum ParamTypes {
-	REAL,
-	CONST,
-	LABEL,
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
+
+public class RealValuedParameter extends ParameterType {
+
+	public enum Dynamics {
+		ANY, CONST,
+	}
+
+	private Dynamics mDynamics;
+	private boolean mControlled;
+
+	protected RealValuedParameter(ParamType realValuedParam) {
+		super(ParamTypes.REAL, realValuedParam);
+
+		switch (realValuedParam.getDynamics()) {
+		case "any":
+			mDynamics = Dynamics.ANY;
+			break;
+		case "const":
+			mDynamics = Dynamics.CONST;
+			break;
+		default:
+			throw new IllegalArgumentException("The dynamics " + realValuedParam.getDynamics() + " of parameter "
+			        + getName() + " is unknown.");
+		}
+
+		if (realValuedParam.isControlled()) {
+			mControlled = true;
+		} else {
+			mControlled = false;
+		}
+	}
+
+	protected Dynamics getDynamics() {
+		return mDynamics;
+	}
+	
+	protected boolean isControlled() {
+		return mControlled;
+	}
+
 }
