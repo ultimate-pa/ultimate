@@ -34,8 +34,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder</groupId>
-  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder</artifactId>
+  <groupId>de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer</groupId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>
