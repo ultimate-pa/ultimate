@@ -82,16 +82,25 @@ public class DeductionGuardTransromation extends BasicTransformer {
 					// if there is a conjunct that contains only effect variables
 					// this must be an implication and has to be encoded differently
 					CDD[] dnf = targetPhaseConj.toDNF();
+					CDD effectFree = CDD.FALSE;
 					boolean isImplication = false;
 					for(CDD conjunct: dnf){
 						// if both sets are of equal size and the conjunct contains all effect vars (and therefore only effect vars)
 						if(conjunct.getIdents().size() == pats.get(i).getEffectVariabels().size() &&
 								conjunct.getIdents().containsAll(pats.get(i).getEffectVariabels())){
 							isImplication = true;
+						} else {
+							effectFree = effectFree.or(conjunct);
 						}
 					}
-					guard = guard
-							.and(this.dmGuard(pats.get(i),dnf , destinationHasLastPhase, isImplication, i));
+					if (isImplication){
+						guard = guard
+								.and(this.dmGuard(pats.get(i),effectFree.negate().toDNF() , 
+										destinationHasLastPhase, isImplication, i));
+					} else {
+						guard = guard
+								.and(this.dmGuard(pats.get(i),dnf , destinationHasLastPhase, isImplication, i));
+					}
 					// if guard does not talk about R_v then add !R_v (invariant
 					// does not guarantee v)
 					for (String id : pats.get(i).getEffectVariabels()) {
@@ -100,7 +109,7 @@ public class DeductionGuardTransromation extends BasicTransformer {
 							continue;
 						if(destinationHasLastPhase && isImplication){
 							guard = guard.or(BoogieBooleanExpressionDecision
-									.create(BoogieAstSnippet.createIdentifier(dguard+"DF")));
+									.create(BoogieAstSnippet.createIdentifier(dguard+"DF")).negate());
 						} else {
 							guard = guard.and(BoogieBooleanExpressionDecision
 									.create(BoogieAstSnippet.createIdentifier(dguard+"DF")).negate());
@@ -126,30 +135,9 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	 */
 	private CDD dmGuard(PatternType pattern, CDD[] dnf, boolean hasLastPhase, boolean isImplication, int reqNo) {
 		CDD result = CDD.FALSE;
-		if (!hasLastPhase) {
-			// guards of edges not targeting states with an effect (last phase)
 			for (CDD conjunct : dnf) {
-				result = result.or(this.dmGuard(pattern, conjunct, hasLastPhase, false, reqNo));
+				result = result.or(this.dmGuard(pattern, conjunct, hasLastPhase, isImplication, reqNo));
 			}
-		} else {
-			// encode
-			if (isImplication){
-				// TODO: is there a conjunct with only effects of the requirement
-				// then this is an implication
-				// in this case negate all other conjuncts such that only the case
-				// that the effect is active
-				// is allowed.
-				// TODO: works correctly for disjunct, but not for implications.
-				for (CDD conjunct : dnf) {
-					result = result.or(this.dmGuard(pattern, conjunct, hasLastPhase, isImplication, reqNo));
-				}
-			}else{
-				// else continue as normal                          // WORKS
-				for (CDD conjunct : dnf) {
-					result = result.or(this.dmGuard(pattern, conjunct, hasLastPhase, isImplication, reqNo));
-				}
-			}
-		}
 		return result;
 	}
 
@@ -164,11 +152,11 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	
 	        //generate guards from this CDD's decision
 	        CDD result = this.dmGuard(pattern, ((BoogieBooleanExpressionDecision)conjunct.getDecision()).getExpression()
-	        				, hasLastPhase, isImplication, reqNo);
+	        				, hasLastPhase, isImplication, reqNo, conjunct.getChilds()[0] == CDD.FALSE);
 	        // process children
 	        CDD newChild = CDD.TRUE;
 	        for(CDD child: conjunct.getChilds()){
-		    	if (child != CDD.FALSE) {
+		    	if (child != CDD.FALSE && child != CDD.TRUE) {
 		        	newChild = newChild.and(dmGuard(pattern, child, hasLastPhase, false, reqNo));
 		    	}    
 		    }
@@ -179,56 +167,29 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	}
 
 	private CDD dmGuard(PatternType pattern, Expression e, boolean hasLastPhase, boolean isImplication,
-			int reqNo) {
+			int reqNo, boolean negate) {
 		CDD result = BoogieBooleanExpressionDecision.create(e);
+		if (negate){
+			result = result.negate();
+		}
 		for(String ident: result.getIdents()){
+			// do not encode input vars
+			if (this.sysInfo.isInput(ident)){
+				continue;
+			}
 			result = result.and( BoogieBooleanExpressionDecision.create(
 					this.encodeIdentifierExpression(pattern, ident, hasLastPhase, isImplication, reqNo)));
 		}
 		return result;
-		
-		/*if (e instanceof BinaryExpression) {
-			BinaryExpression be = (BinaryExpression) e;
-			switch (((BinaryExpression) e).getOperator()) {
-			case LOGICAND: // logic connectives should not happen here, so error
-			case LOGICOR:
-				throw new RuntimeException("Logic operation implemented as Boogie (instead of CDD)!");
-			default: // all other binary operators are ok
-				new BinaryExpression(be.getLocation(), be.getOperator(),
-						this.dmGuard(pattern, be.getLeft(), hasLastPhase, isImplication, reqNo),
-						this.dmGuard(pattern, be.getRight(), hasLastPhase, isImplication, reqNo));
-			}
-		}
-		if (e instanceof UnaryExpression) { // unary expresions can be passed along
-			return new UnaryExpression(e.getLocation(), ((UnaryExpression) e).getOperator(),
-					this.dmGuard(pattern, ((UnaryExpression) e).getExpr(), hasLastPhase, isImplication, reqNo));
-		}
-		// add read or write monitor variables on the different expressions
-		if (e instanceof IdentifierExpression) {
-			IdentifierExpression id = (IdentifierExpression) e;
-			String ident = id.getIdentifier();
-			// encode only if it is not an input identifier
-			if (!this.sysInfo.isInput(ident)) {
-				return this.encodeIdentifierExpression(pattern, id , hasLastPhase, isImplication, reqNo);
-			} else {
-				return e;
-			}
-		}
-		return e;*/
 	}
 	
 	private Expression encodeIdentifierExpression(PatternType pattern, String ident, boolean hasLastPhase, 
 			boolean isImplication, int reqNo) {
 		if (hasLastPhase){
-			if (isImplication){
-				// TODO:
-				return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), ident);
+			if(pattern.isEffect(ident)){
+				return this.encodeEffectVar(ident, reqNo);
 			} else {
-				if(pattern.isEffect(ident)){
-					return this.encodeEffectVar(ident, reqNo);
-				} else {
-					return this.encodeInternalVar(ident);
-				}
+				return this.encodeInternalVar(ident);
 			}
 		} else {
 			return this.encodeInternalVar(ident);
