@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TreeAutomizer
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;singleton:=true
+Bundle-Version: 0.0.1
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
+ Library-log4j
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+

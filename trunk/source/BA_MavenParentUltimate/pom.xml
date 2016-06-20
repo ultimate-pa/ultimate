@@ -318,6 +318,7 @@
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
 		<module>../HornClauseGraphBuilder</module>
+		<module>../TreeAutomizer</module>
 	</modules>
 
 	<profiles>
