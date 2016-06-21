@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import srParse.pattern.PatternType; 
 
-public class PeaTestTransformer implements ISource {
+public class PeaTestTransformer implements ISource { 
 	private List<String> fileNames = new ArrayList<String>();
 	private boolean previousToolFoundErrors;
 	private SystemInformation sysInfo = new SystemInformation();
@@ -34,7 +34,8 @@ public class PeaTestTransformer implements ISource {
 				CounterExampleResult.class);
 		previousToolFoundErrors = !cex.isEmpty();
 		PeaTestBackTranslator backtranslator = new PeaTestBackTranslator(BoogieASTNode.class, Expression.class, this.sysInfo);
-		if (!previousToolFoundErrors) {
+		if (!previousToolFoundErrors && mServices.getPreferenceProvider(this.getPluginID())
+				.getBoolean(PreferenceInitializer.LABEL_DOBACKTRANSLATE)) {
 			services.getBacktranslationService().addTranslator(backtranslator);
 		}
 		this.logger = this.mServices.getLoggingService().getLogger(getPluginID());

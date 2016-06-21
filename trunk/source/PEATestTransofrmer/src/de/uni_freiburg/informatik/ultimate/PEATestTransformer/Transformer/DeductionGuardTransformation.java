@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -31,14 +32,15 @@ import srParse.pattern.PatternType;
 public class DeductionGuardTransformation implements IPeaTransformer {
 	private SystemInformation sysInfo;
 	private ILogger logger;
+	private PeaSystemModel systemModel;
 	private final static String DEDUCTION_MONITOR_PREFIX = "R'_";
 	private final static String CLOSED_WORLD_SEPR = "_";
 	private final static String READ_GUARD_PREFIX = "L'_";
 	
 	private HashMap<String, HashSet<String>> deductionMonitorVars = new HashMap<String, HashSet<String>>();
 
-	public DeductionGuardTransformation(ILogger logger, SystemInformation sysInfo) {
-		this.sysInfo = sysInfo;
+	public DeductionGuardTransformation(ILogger logger, PeaSystemModel systemModel) {
+		this.systemModel = systemModel;
 		this.logger = logger;
 	}
 
@@ -46,13 +48,13 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * 
 	 */
 	@Override
-	public ArrayList<PhaseEventAutomata> translate(ArrayList<PatternType> pats,
-			ArrayList<CounterTrace> counterTraces, ArrayList<PhaseEventAutomata> peas) {
+	public void translate() {
+		ArrayList<PatternType> pats = this.systemModel.getPattern();
 		// add deduction guard to every edge of the automaton
 		this.logger.info("Beginning DeductionGuard transformation.");
 		for (int i = 0; i < pats.size(); i++) {
-			PhaseEventAutomata pea = peas.get(i);
-			CounterTrace counterTrace = counterTraces.get(i);
+			PhaseEventAutomata pea = this.systemModel.getPeas().get(i);
+			CounterTrace counterTrace = this.systemModel.getCounterTraces().get(i);
 			// get last active phase of counter trace automaton
 			// int lastphase = counterTrace.getPhases().length -3;
 			DCPhase lastPhase = counterTrace.getPhases()[counterTrace.getPhases().length - 3];
@@ -62,10 +64,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					// build conjunct from phase invariants (invariant - seeps)
 					// check if last phase of the allowed prefix of the counter
 					// trace is in the phase
-					DCPhase[] phases = counterTrace.getPhases();
-					PhaseSet activePhases = trans.getDest().getPhaseBits().getPhaseSet(phases);
 					CDD targetPhaseConj = CDD.TRUE;
-					for (DCPhase phase : activePhases.getPhases()) {
+					for (DCPhase phase : this.systemModel.getDcPhases(pea, trans.getDest())) {
 						if (lastPhase == phase) {
 							destinationHasLastPhase = true;
 						}
@@ -142,7 +142,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			}
 			variables.put(READ_GUARD_PREFIX+ident, "bool");
 			phase.addTransition(phase, closedWorldContition, new String[]{});
-			peas.add(new PhaseEventAutomata(
+			this.systemModel.addPea(new PhaseEventAutomata(
 					"CW_" + ident,  			//name
 					new Phase[]{phase}, 		//pahses
 					new Phase[]{phase}, 		//initial pahses
@@ -152,7 +152,6 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					new ArrayList<String>(){}	//declatrations
 					));
 		}
-		return peas;
 	}
 
 	/**
@@ -233,6 +232,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * e.g. "a" -> "(L'_a && a')"
 	 */
 	private Expression encodeInternalVar(String ident){
+		if(!this.deductionMonitorVars.containsKey(ident)){
+			this.deductionMonitorVars.put(ident, new HashSet<String>());
+		}
 		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident);
 	}
 	

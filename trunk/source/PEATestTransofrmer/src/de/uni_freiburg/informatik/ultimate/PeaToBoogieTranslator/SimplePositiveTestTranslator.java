@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -23,15 +24,16 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 	
 	protected ArrayList<PhaseEventAutomata> peas;
 	protected HashSet<Phase> finalPhases = new HashSet<Phase>();
+	protected PeaSystemModel model;
 	
 	private SystemInformation sysInfo;
 
-	public SimplePositiveTestTranslator( ArrayList<CounterTrace> counterTraces, 
-			ArrayList<PhaseEventAutomata> peas, SystemInformation sysInfo) {
-		super(peas);
+	public SimplePositiveTestTranslator(PeaSystemModel model) {
+		super(model);
 		this.sysInfo = sysInfo;
-		this.peas = peas;
-		this.setTargetPhase(counterTraces);
+		this.peas = model.getPeas();
+		this.model = model;
+		this.setTargetPhase(model.getCounterTraces());
 	} 
 	
 	/***
@@ -42,17 +44,7 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 	private void setTargetPhase(ArrayList<CounterTrace> counterTraces){
 		// peas already was altered, patterns has the right number
 		PhaseEventAutomata pea = peas.get(counterTraces.size()-1);
-		CounterTrace counterTrace = counterTraces.get(counterTraces.size()-1);
-		DCPhase lastPhase = counterTrace.getPhases()[counterTrace.getPhases().length - 3];
-		for (Phase loc : pea.getPhases()) {
-			PhaseSet activePhases = loc.getPhaseBits().getPhaseSet(counterTrace.getPhases());
-			for (DCPhase phase : activePhases.getPhases()) {
-				if (lastPhase == phase) {
-					this.finalPhases.add(loc);
-				}
-
-			}
-		}
+		this.finalPhases.addAll( this.model.getFinalPhases(pea));
 	}
 
 	/**
@@ -82,7 +74,7 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 	}
 
 	/**
-	 * Generate phases for one Pea resulting in a cain of if (else) statements. 
+	 * Generate phases for one Pea resulting in a chain of if (else) statements. 
 	 * Additionally in the last requirement a "assert false" is inserted into a final phase.
 	 * @param location
 	 * @param id
@@ -92,9 +84,8 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 	 */
 	protected Statement[] generatePhase(BoogieLocation location, int id, PhaseEventAutomata pea, 
 			HashMap<Phase, ArrayList<Statement>> phaseInvariants){
-			Statement[] ifStatement = new Statement[]{
-					this.generateIfPhaseCounterEquals(location, id, 0, phaseInvariants.get(pea.getPhases()[0]), new Statement[0])};
-			for(int i = 1; i < pea.getPhases().length; i++){
+			Statement[] ifStatement = new Statement[]{};
+			for(int i = 0; i < pea.getPhases().length; i++){
 				ArrayList<Statement> invar = phaseInvariants.get(pea.getPhases()[i]);
 				if(this.finalPhases.contains(pea.getPhases()[i])){
 					invar.add(new AssertStatement(location, new BooleanLiteral(location, false)));

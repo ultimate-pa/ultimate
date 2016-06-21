@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer;
+package de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser;
 
 import pea.CDD;
 import pea.CounterTrace;

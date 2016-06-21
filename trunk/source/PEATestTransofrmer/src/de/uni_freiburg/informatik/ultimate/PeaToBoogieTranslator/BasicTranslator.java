@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -78,8 +79,8 @@ public class BasicTranslator {
 
 	//TODO: deal with state, event, time, pc
 	
-	public BasicTranslator(ArrayList<PhaseEventAutomata> peas){
-		this.peas = peas;
+	public BasicTranslator(PeaSystemModel sysModel){
+		this.peas = sysModel.getPeas();
 		///preparation
 		//collect all variables
 		for(int i =0; i < peas.size(); i++){

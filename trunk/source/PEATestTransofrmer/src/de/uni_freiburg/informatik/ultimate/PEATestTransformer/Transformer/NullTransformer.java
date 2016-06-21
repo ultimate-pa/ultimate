@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import pea.CDD;
 import pea.CounterTrace;
@@ -32,9 +33,8 @@ public class NullTransformer implements IPeaTransformer {
 	 * @param pattern spl pattern
 	 * @return automaton of pattern
 	 */
-	public ArrayList<PhaseEventAutomata> translate(ArrayList<PatternType> pats,
-			ArrayList<CounterTrace> counterTraces, ArrayList<PhaseEventAutomata> peas) {
-		return peas;
+	@Override
+	public void translate() {	
 	}
 
 

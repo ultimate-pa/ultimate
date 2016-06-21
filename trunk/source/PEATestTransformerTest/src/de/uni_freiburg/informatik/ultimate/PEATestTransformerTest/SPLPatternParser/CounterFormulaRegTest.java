@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.PatternToDc;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.PatternToDc;
 import pea.BoogieBooleanExpressionDecision;
 import pea.BooleanDecision;
 import pea.CDD;
