@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.NullTransformer;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.SimplePositiveTestTransformer;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;

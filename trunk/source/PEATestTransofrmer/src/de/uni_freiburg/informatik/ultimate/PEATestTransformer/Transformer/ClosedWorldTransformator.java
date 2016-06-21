@@ -26,7 +26,7 @@ import srParse.pattern.PatternType;
  * @author Langenfeld
  *
  */
-public class ClosedWorldTransformator extends BasicTransformer {
+public class ClosedWorldTransformator extends NullTransformer {
 	
 	private SystemInformation sysInfo;
 	private final static String CLOSED_WORLD_PREFIX = "R_";
@@ -62,7 +62,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	 * Append the automata for the closed world assumption on all variables that are not in the input set
 	 */
 	@Override
-	protected ArrayList<PhaseEventAutomata> postProcess(ArrayList<PatternType> pats, ArrayList<CounterTrace> cts, 
+	public ArrayList<PhaseEventAutomata> translate(ArrayList<PatternType> pats, ArrayList<CounterTrace> cts, 
 			ArrayList<PhaseEventAutomata> peas) {
 		//generate closed world automat
 		for(String ident: this.closedWorldCounter.keySet()){
@@ -92,7 +92,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 					new ArrayList<String>(){}	//declatrations
 					));
 		}
-		return super.postProcess(pats, cts, peas);
+		return peas;
 	}
 	
 	/**

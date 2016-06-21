@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -25,14 +28,16 @@ import pea.Transition;
 import srParse.srParsePattern;
 import srParse.pattern.PatternType;
 
-public class DeductionGuardTransromation extends BasicTransformer {
+public class DeductionGuardTransformation implements IPeaTransformer {
 	private SystemInformation sysInfo;
 	private ILogger logger;
-	private final static String CLOSED_WORLD_PREFIX = "R'_";
+	private final static String DEDUCTION_MONITOR_PREFIX = "R'_";
 	private final static String CLOSED_WORLD_SEPR = "_";
 	private final static String READ_GUARD_PREFIX = "L'_";
+	
+	private HashMap<String, HashSet<String>> deductionMonitorVars = new HashMap<String, HashSet<String>>();
 
-	public DeductionGuardTransromation(ILogger logger, SystemInformation sysInfo) {
+	public DeductionGuardTransformation(ILogger logger, SystemInformation sysInfo) {
 		this.sysInfo = sysInfo;
 		this.logger = logger;
 	}
@@ -41,7 +46,7 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	 * 
 	 */
 	@Override
-	protected ArrayList<PhaseEventAutomata> postProcess(ArrayList<PatternType> pats,
+	public ArrayList<PhaseEventAutomata> translate(ArrayList<PatternType> pats,
 			ArrayList<CounterTrace> counterTraces, ArrayList<PhaseEventAutomata> peas) {
 		// add deduction guard to every edge of the automaton
 		this.logger.info("Beginning DeductionGuard transformation.");
@@ -104,22 +109,49 @@ public class DeductionGuardTransromation extends BasicTransformer {
 					// if guard does not talk about R_v then add !R_v (invariant
 					// does not guarantee v)
 					for (String id : pats.get(i).getEffectVariabels()) {
-						String dguard = this.CLOSED_WORLD_PREFIX + id + this.CLOSED_WORLD_SEPR + Integer.toString(i);
+						String dguard = this.getClosedWorldPrefix(id, i);
 						if (guard.getIdents().contains(dguard))
 							continue;
 						if(destinationHasLastPhase && isImplication){
 							guard = guard.or(BoogieBooleanExpressionDecision
-									.create(BoogieAstSnippet.createIdentifier(dguard+"DF")).negate());
+									.create(BoogieAstSnippet.createIdentifier(dguard)).negate());
 						} else {
 							guard = guard.and(BoogieBooleanExpressionDecision
-									.create(BoogieAstSnippet.createIdentifier(dguard+"DF")).negate());
+									.create(BoogieAstSnippet.createIdentifier(dguard)).negate());
 						}
 					}
 					trans.setGuard(guard);
 				}
 			}
 		}
-		// TODO: add deduction guard automata
+		// Add deduction guard automata 
+		for(String ident: this.deductionMonitorVars.keySet()){
+			Phase phase = new Phase("p0", CDD.TRUE);
+			HashMap<String,String> variables = new HashMap<String,String>();
+			//the variable stays the same
+			//CDD closedWorldContition = CDD.FALSE;
+			CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
+						new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident)
+					).negate();
+			//unless one automata allows it		
+			for(String guardIdent: this.deductionMonitorVars.get(ident)){
+				closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
+							BoogieAstSnippet.createIdentifier(guardIdent, "ClosedWorldAsumption")
+						));
+				variables.put(guardIdent, "bool");	
+			}
+			variables.put(READ_GUARD_PREFIX+ident, "bool");
+			phase.addTransition(phase, closedWorldContition, new String[]{});
+			peas.add(new PhaseEventAutomata(
+					"CW_" + ident,  			//name
+					new Phase[]{phase}, 		//pahses
+					new Phase[]{phase}, 		//initial pahses
+					new ArrayList<String>(){}, 	//clocks
+					variables, 					//variables and types thereof
+					new HashSet<String>(){}, 	//events
+					new ArrayList<String>(){}	//declatrations
+					));
+		}
 		return peas;
 	}
 
@@ -209,8 +241,18 @@ public class DeductionGuardTransromation extends BasicTransformer {
 	 * e.g. "a" -> "R'_a_reqNo"
 	 */
 	private Expression encodeEffectVar(String ident, int reqNo){
-		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.CLOSED_WORLD_PREFIX + ident + 
-				this.CLOSED_WORLD_SEPR + Integer.toString(reqNo));
+		
+		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.getClosedWorldPrefix(ident, reqNo));
+	}
+	
+	protected String getClosedWorldPrefix(String ident, int reqNo){
+		String guardVar = this.DEDUCTION_MONITOR_PREFIX + ident + this.CLOSED_WORLD_SEPR + Integer.toString(reqNo);
+		// book keeping for later generation of deduction monitors
+		if(!this.deductionMonitorVars.containsKey(ident)){
+			this.deductionMonitorVars.put(ident, new HashSet<String>());
+		}
+		this.deductionMonitorVars.get(ident).add(guardVar);
+		return guardVar;
 	}
 	
 	

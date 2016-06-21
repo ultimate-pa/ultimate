@@ -72,18 +72,18 @@ public class BasicTranslator {
 	protected HashMap<Transition, ArrayList<Statement>> transitionBody = new HashMap<Transition, ArrayList<Statement>>();
 
 	//Atomaton this class shall translate
-	private PhaseEventAutomata[] peas;
+	private ArrayList<PhaseEventAutomata> peas;
 	private int id;
 	private BoogieLocation noneLocation = new BoogieLocation(this.fileName,0,0,0,0,false);
 
 	//TODO: deal with state, event, time, pc
 	
-	public BasicTranslator(PhaseEventAutomata[] peas){
+	public BasicTranslator(ArrayList<PhaseEventAutomata> peas){
 		this.peas = peas;
 		///preparation
 		//collect all variables
-		for(int i =0; i < peas.length; i++){
-			this.preProcessVariables(peas[i], i);
+		for(int i =0; i < peas.size(); i++){
+			this.preProcessVariables(peas.get(i), i);
 		}
 		//generate delta variable, that is shared by all automata
 		this.varsByTypeAdd("real", "delta");
@@ -91,15 +91,15 @@ public class BasicTranslator {
 		this.modifiedVariables.add("delta");
 		//TODO: process variables here
 		//collect the initial phases
-		for(int i =0; i < peas.length; i++){
-			this.preProcessInitialEdgesAssume(peas[i], i);
+		for(int i =0; i < peas.size(); i++){
+			this.preProcessInitialEdgesAssume(peas.get(i), i);
 		}
 		///from here on code is generated
 		//make location invariants and transition bodies
-		for(int i =0; i < peas.length; i++){
+		for(int i =0; i < peas.size(); i++){
 			BoogieLocation location = new BoogieLocation(this.fileName,i,i,0,0,false);
-			this.generatePhaseInvariants(peas[i], this.fileName, location);
-			this.generateTransitionBody(peas[i], i, this.fileName, location);
+			this.generatePhaseInvariants(peas.get(i), this.fileName, location);
+			this.generateTransitionBody(peas.get(i), i, this.fileName, location);
 		}
 		//generate boogie
 	}
@@ -166,10 +166,10 @@ public class BasicTranslator {
 		return statements.toArray(new Statement[statements.size()]);
 	}
 	
-	private ArrayList<Statement> generateEdges(BoogieLocation location, PhaseEventAutomata[] peas){
+	private ArrayList<Statement> generateEdges(BoogieLocation location, ArrayList<PhaseEventAutomata> peas){
 		ArrayList<Statement> statements = new ArrayList<Statement>();
-		for(int i = 0; i < peas.length; i++){
-			for(Statement statement: this.generateEdgesPerPea(location, i , peas[i])){
+		for(int i = 0; i < peas.size(); i++){
+			for(Statement statement: this.generateEdgesPerPea(location, i , peas.get(i))){
 				statements.add(statement);
 			}
 		}
@@ -212,10 +212,10 @@ public class BasicTranslator {
 }
 
 	
-	private ArrayList<Statement> generatePhases(BoogieLocation location, PhaseEventAutomata[] peas){
+	private ArrayList<Statement> generatePhases(BoogieLocation location, ArrayList<PhaseEventAutomata> peas){
 		ArrayList<Statement> statements = new ArrayList<Statement>();
-		for(int i = 0; i < peas.length; i++){
-			for(Statement statement: this.generatePhase(location, i , peas[i], this.phaseInvariants)){
+		for(int i = 0; i < peas.size(); i++){
+			for(Statement statement: this.generatePhase(location, i , peas.get(i), this.phaseInvariants)){
 				statements.add(statement);
 			}
 		}
@@ -407,9 +407,9 @@ public class BasicTranslator {
 		return new ModifiesSpecification(location, false, vars.toArray(new VariableLHS[vars.size()]));
 	}
 	
-	protected Statement generateInitialPhaseCounterHavoc(BoogieLocation location, PhaseEventAutomata[] peas){
+	protected Statement generateInitialPhaseCounterHavoc(BoogieLocation location, ArrayList<PhaseEventAutomata> peas){
 		ArrayList<VariableLHS> vars = new ArrayList<VariableLHS>();
-		for(int i = 0; i < peas.length; i++ ){
+		for(int i = 0; i < peas.size(); i++ ){
 			vars.add(new VariableLHS(location, PHASE_COUNTER_PREFIX + i ));
 		}
 		return new HavocStatement(noneLocation, vars.toArray(new VariableLHS[vars.size()]));
@@ -423,7 +423,7 @@ public class BasicTranslator {
 		return new HavocStatement(noneLocation, vars.toArray(new VariableLHS[vars.size()]));
 	}
 	
-	protected Expression generateInitialPhaseAssumptionArgument(BoogieLocation location, PhaseEventAutomata[] peas){
+	protected Expression generateInitialPhaseAssumptionArgument(BoogieLocation location, ArrayList<PhaseEventAutomata> peas){
 		ArrayList<Expression> conjunction = new ArrayList<Expression>();
 		ArrayList<Expression> disjunctsPerPea;
 		for(int key: this.initialEdgesAssume.keySet()){
@@ -431,7 +431,7 @@ public class BasicTranslator {
 			for(Phase phase: this.initialEdgesAssume.get(key)){
 				disjunctsPerPea.add(new BinaryExpression(location, BinaryExpression.Operator.COMPEQ,
 						new IdentifierExpression(location, PHASE_COUNTER_PREFIX+key), 
-						new IntegerLiteral(location, Integer.toString(this.getNoOfPhase(peas[key], phase)))));
+						new IntegerLiteral(location, Integer.toString(this.getNoOfPhase(peas.get(key), phase)))));
 			}
 			conjunction.add(this.generateBinaryLogicExpression(location, disjunctsPerPea, BinaryExpression.Operator.LOGICOR));
 		}
@@ -453,7 +453,7 @@ public class BasicTranslator {
 		return updates;
 	}
 	
-	private Statement generateIfPhaseCounterEquals(BoogieLocation location, int id, int phase, 
+	protected Statement generateIfPhaseCounterEquals(BoogieLocation location, int id, int phase, 
 			ArrayList<Statement> body, Statement[] elseIf){
 		return this.generateIfPhaseCounterEquals(location, id, phase, body.toArray(new Statement[body.size()]), elseIf);
 	}

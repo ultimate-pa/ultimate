@@ -18,6 +18,24 @@ import srParse.pattern.UniversalityPattern;
 
 public class PatternToDc {
 	
+	
+	public CounterTrace translate(PatternType pattern){
+		//get CDDs
+		 
+		CDD q = pattern.getScope().getCdd1(); 
+		CDD r = pattern.getScope().getCdd2();
+		CDD s = null;
+		CDD p = null;
+		if (pattern.getCdds().size() > 1)
+			{
+				s =  pattern.getCdds().get(0);
+				p = pattern.getCdds().get(1);
+			} else {
+				p = pattern.getCdds().get(0);
+			}
+		int t = pattern.getDuration();
+		return this.translate(pattern, p, q, r, s, t);
+	} 
 	/*
 	 * Translates a pattern type into a Counter trace DC Formula
 	 */

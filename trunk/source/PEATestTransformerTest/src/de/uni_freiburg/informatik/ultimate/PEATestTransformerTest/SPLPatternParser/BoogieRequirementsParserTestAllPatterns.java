@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.NullTransformer;
 import java_cup.runtime.Symbol;
 import pea.PhaseEventAutomata;
 import srParse.ReqLexer;

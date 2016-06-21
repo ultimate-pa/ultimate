@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.NullTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -35,7 +35,7 @@ import srParse.pattern.PatternType;
  */
 public class BasicTransformerTest {
 	
-	private BasicTransformer transformer = new BasicTransformer();
+	private NullTransformer transformer = new NullTransformer();
 	
 	@Test
 	public void GlobalInvariantPatternTest(){
