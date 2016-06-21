@@ -41,6 +41,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 
 	public DeductionGuardTransformation(ILogger logger, PeaSystemModel systemModel) {
 		this.systemModel = systemModel;
+		this.sysInfo = this.systemModel.getSystemInformation();
 		this.logger = logger;
 	}
 

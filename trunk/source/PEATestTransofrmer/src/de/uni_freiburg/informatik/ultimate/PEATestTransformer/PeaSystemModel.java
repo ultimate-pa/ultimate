@@ -109,5 +109,8 @@ public class PeaSystemModel {
 	public void addPea(PhaseEventAutomata pea){
 		this.peas.add(pea);
 	}
+	public SystemInformation getSystemInformation(){
+		return this.sysInfo;
+	}
 
 }

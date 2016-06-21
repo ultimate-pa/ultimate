@@ -30,7 +30,7 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 
 	public SimplePositiveTestTranslator(PeaSystemModel model) {
 		super(model);
-		this.sysInfo = sysInfo;
+		this.sysInfo = model.getSystemInformation();
 		this.peas = model.getPeas();
 		this.model = model;
 		this.setTargetPhase(model.getCounterTraces());
