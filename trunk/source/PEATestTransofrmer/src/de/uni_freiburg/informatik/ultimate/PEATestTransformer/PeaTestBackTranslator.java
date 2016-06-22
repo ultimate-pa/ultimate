@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.PEALocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -36,7 +39,7 @@ public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, Boog
 		HashSet<Phase> phase = new HashSet<>();
 
 		//only report states when the loop is reentered, skip if only next codeblock
-		for(int i =0; i < programExecution.getLength(); i++ ){
+		for(int i = 0; i < programExecution.getLength(); i++ ){
 			//programExecution. 
 			BoogieASTNode element = programExecution.getTraceElement(i).getTraceElement();
 			if(element instanceof WhileStatement){
@@ -46,7 +49,8 @@ public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, Boog
 			}
 			
 			if(lastState != programExecution.getProgramState(i) && !findNextLoop){
-				states.add(programExecution.getProgramState(i));
+				ProgramState<Expression> state = programExecution.getProgramState(i);
+				states.add(state);
 				findNextLoop = true;
 			}
 			
@@ -58,6 +62,7 @@ public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, Boog
 		}
 		phases.add(phase);
 		phases.remove(0);
+		assert(states.size() == phases.size());
 		return new PeaTestGeneratorExecution(states, phases , this.sysInfo);
 	}
 

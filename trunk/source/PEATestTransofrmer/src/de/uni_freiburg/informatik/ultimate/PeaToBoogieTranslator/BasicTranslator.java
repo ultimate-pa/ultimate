@@ -75,7 +75,7 @@ public class BasicTranslator {
 	//Atomaton this class shall translate
 	private ArrayList<PhaseEventAutomata> peas;
 	private int id;
-	private BoogieLocation noneLocation = new BoogieLocation(this.fileName,0,0,0,0,false);
+	protected BoogieLocation noneLocation = new BoogieLocation(this.fileName,0,0,0,0,false);
 
 	//TODO: deal with state, event, time, pc
 	

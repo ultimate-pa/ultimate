@@ -11,19 +11,24 @@ import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BoogieBooleanExpressionDecision;
+import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
 import pea.CounterTrace.DCPhase;
 import pea.Decision;
+import pea.EventDecision;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.PhaseSet;
+import pea.RangeDecision;
 import pea.Trace2PEACompiler;
 import pea.Transition;
 import srParse.srParsePattern;
@@ -33,9 +38,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	private SystemInformation sysInfo;
 	private ILogger logger;
 	private PeaSystemModel systemModel;
-	private final static String DEDUCTION_MONITOR_PREFIX = "R'_";
-	private final static String CLOSED_WORLD_SEPR = "_";
-	private final static String READ_GUARD_PREFIX = "L'_";
+	public final static String DEDUCTION_MONITOR_PREFIX = "R_";
+	public final static String CLOSED_WORLD_SEPR = "_";
+	public final static String READ_GUARD_PREFIX = "L_";
 	
 	private HashMap<String, HashSet<String>> deductionMonitorVars = new HashMap<String, HashSet<String>>();
 
@@ -132,12 +137,12 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			//the variable stays the same
 			//CDD closedWorldContition = CDD.FALSE;
 			CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
-						new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident)
+						new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident+"'")
 					).negate();
 			//unless one automata allows it		
 			for(String guardIdent: this.deductionMonitorVars.get(ident)){
 				closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-							BoogieAstSnippet.createIdentifier(guardIdent, "ClosedWorldAsumption")
+							BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
 						));
 				variables.put(guardIdent, "bool");	
 			}
@@ -200,11 +205,13 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 
 	private CDD dmGuard(PatternType pattern, Expression e, boolean hasLastPhase, boolean isImplication,
 			int reqNo, boolean negate) {
-		CDD result = BoogieBooleanExpressionDecision.create(e);
+		//TODO: unhack
+		CDD temp = BoogieBooleanExpressionDecision.create(e);
+		CDD result = BoogieBooleanExpressionDecision.create(this.primeVars(e));
 		if (negate){
 			result = result.negate();
 		}
-		for(String ident: result.getIdents()){
+		for(String ident: temp.getIdents()){
 			// do not encode input vars
 			if (this.sysInfo.isInput(ident)){
 				continue;
@@ -236,7 +243,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		if(!this.deductionMonitorVars.containsKey(ident)){
 			this.deductionMonitorVars.put(ident, new HashSet<String>());
 		}
-		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident);
+		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident + "'");
 	}
 	
 	/**
@@ -255,10 +262,84 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			this.deductionMonitorVars.put(ident, new HashSet<String>());
 		}
 		this.deductionMonitorVars.get(ident).add(guardVar);
-		return guardVar;
+		return guardVar+"'";
+	}
+	
+	protected Expression primeVars(Expression e){
+			if(e instanceof BinaryExpression){
+				BinaryExpression bchild = ((BinaryExpression)e);
+				return new BinaryExpression(e.getLocation(),
+						bchild.getOperator(),
+						this.primeVars(bchild.getLeft()), this.primeVars(bchild.getRight()));
+			}else if(e instanceof UnaryExpression){
+				UnaryExpression bchild = ((UnaryExpression)e);
+				return new UnaryExpression(e.getLocation(),
+						bchild.getOperator(),
+						this.primeVars(bchild.getExpr()));
+			} else if(e instanceof IdentifierExpression){
+				return new IdentifierExpression(e.getLocation(),
+						((IdentifierExpression)e).getIdentifier()+"'");
+			} else {
+				return e;
+			}
 	}
 	
 	
+	public CDD encodeCDD(CDD cdd, int reqNo) {
+		    CDD expr = CDD.FALSE;
+	        
+		    if (cdd == CDD.TRUE) {	         	     	
+	      	    return CDD.TRUE;
+	        }
+	        if (cdd == CDD.FALSE) {
+	            return CDD.FALSE;
+	        }
+	    	CDD[] childs = cdd.getChilds();
+	    	Decision decision = cdd.getDecision();
+	    	cdd = decision.simplify(childs);
+	    	if (cdd == CDD.TRUE) {
+				return CDD.TRUE;
+			}
+	    	if (cdd == CDD.FALSE) {
+				return CDD.FALSE;
+			}
+	    	childs = cdd.getChilds();
+	    	decision = cdd.getDecision();
+	    	
+	        for (int i = 0; i < childs.length; i++) {
+	        	if (childs[i] == CDD.FALSE) {
+	                continue;
+	            }
+	        	CDD childExpr = encodeCDD(childs[i], reqNo);
+	            if (!cdd.childDominates(i)) {
+	            	CDD decisionExpr = BoogieBooleanExpressionDecision
+	            			.create(this.primeVars(((BoogieBooleanExpressionDecision)decision).getExpression()));
+	            	
+	            	if (childExpr == CDD.TRUE) {
+	            		childExpr = decisionExpr;
+	            	} else {
+		            	childExpr = childExpr.and(decisionExpr);
+	            	}
+	            }
+	            //del with self
+	         	if (expr == CDD.FALSE){
+	         		expr = childExpr;
+				} else {
+					// negate thingst that may be alternative to the effect.
+					if (childExpr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())
+							&& expr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
+						expr = childExpr.or(expr);
+					} else if (childExpr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
+						expr.negate();
+					} else if (expr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
+						childExpr.negate();
+					} else {
+						expr = childExpr.or(expr);
+					}
+		        }
+	        }
+	        return expr;	        
+	    }
 	
 	
 	

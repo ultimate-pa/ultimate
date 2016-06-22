@@ -4,12 +4,14 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.PatternToDc;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import pea.CDD;
 import pea.CounterTrace;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.PhaseSet;
 import pea.Trace2PEACompiler;
 import pea.CounterTrace.DCPhase;
+import pea.PEATestAutomaton;
 import srParse.pattern.PatternType;
 
 /**
@@ -52,9 +54,8 @@ public class PeaSystemModel {
 	 */
 	public ArrayList<Phase> getFinalPhases(PhaseEventAutomata pea){
 		ArrayList<Phase> result = new ArrayList<Phase>();
-		int index = this.peas.indexOf(pea);
 		// peas already was altered, patterns has the right number
-		CounterTrace counterTrace = counterTraces.get(index);
+		CounterTrace counterTrace = this.getCounterTrace(pea);
 		DCPhase lastPhase = counterTrace.getPhases()[counterTrace.getPhases().length - 3];
 		for (Phase loc : pea.getPhases()) {
 			PhaseSet activePhases = loc.getPhaseBits().getPhaseSet(counterTrace.getPhases());
@@ -70,8 +71,7 @@ public class PeaSystemModel {
 	
 	public ArrayList<DCPhase> getDcPhases(PhaseEventAutomata pea, Phase phase){
 		ArrayList<DCPhase> result = new ArrayList<DCPhase>();
-		int index = this.peas.indexOf(pea);
-		CounterTrace counterTrace = counterTraces.get(index);
+		CounterTrace counterTrace = this.getCounterTrace(pea);
 		PhaseSet ps = phase.getPhaseBits().getPhaseSet(counterTrace.getPhases());
 		return ps.getPhases();
 	}
@@ -96,6 +96,11 @@ public class PeaSystemModel {
 		}
 		return peas;	
 	}
+	
+	public CDD getViolatingPhaseInvariant(PhaseEventAutomata pea){
+		
+		return null;
+	}
 
 	public ArrayList<PatternType> getPattern(){
 		return this.patterns;
@@ -112,5 +117,34 @@ public class PeaSystemModel {
 	public SystemInformation getSystemInformation(){
 		return this.sysInfo;
 	}
+	public PatternType getPattern(PhaseEventAutomata pea) {
+		int index = this.peas.indexOf(pea);
+		return this.patterns.get(index);
+	}
+	public PatternType getPattern(int reqNo) {
+		return this.patterns.get(reqNo);
+	}
+	public CounterTrace getCounterTrace(PhaseEventAutomata pea){
+		int index = this.peas.indexOf(pea);
+		return this.counterTraces.get(index);
+	}
+	/**
+	 * returns the ith phase of the DC formula of a pea.
+	 * @param pea
+	 * 	the pea the according DC formula is searched
+	 * @param i
+	 * 	the number of the phase (negative numbers start at the end of the DC formula)
+	 * @return
+	 *  the ith phase or the len(phases)-i th phase
+	 */
+	public DCPhase getCounterTracePhase(PhaseEventAutomata pea, int i){
+		DCPhase[] phases = this.getCounterTrace(pea).getPhases();
+		if(i < 0){
+			i = phases.length + i;
+		}
+		return phases[i];
+	}
+
+
 
 }

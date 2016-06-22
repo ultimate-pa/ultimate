@@ -29,15 +29,15 @@ public class PatternType
 		setScope( scope );
 	}
 	
-	protected Set<String> effectVariables = new HashSet<String>();
+	protected CDD effect;
 	
 	/***
 	 * Requirement has an effect on a set of Variables such as 
 	 * @example:  "After Q, it is always the case that if P holds then S holds". (t;[Q];t;[P && !S];t)
 	 * Effect is S in this case
 	 */
-	public void addEffectVariables(Set<String> idents){
-		this.effectVariables.addAll(idents);
+	public void setEffect(CDD effect){
+		this.effect = effect;
 	}
 	/***
 	 * Determine if a variable name is in the set of variables that are affected by the requirement.
@@ -47,10 +47,13 @@ public class PatternType
 	 * 	true if the Variable's value is determined by this requirements effect.
 	 */
 	public boolean isEffect(String ident){
-		return effectVariables.contains(ident);
+		return effect.getIdents().contains(ident);
 	}
 	public Set<String> getEffectVariabels(){
-		return this.effectVariables;
+		return this.effect.getIdents();
+	}
+	public CDD getEffect(){
+		return this.effect;
 	}
 	
 	public int getDuration() {
