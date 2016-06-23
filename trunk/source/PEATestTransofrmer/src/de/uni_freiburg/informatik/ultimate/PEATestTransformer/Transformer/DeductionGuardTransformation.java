@@ -3,35 +3,23 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BoogieBooleanExpressionDecision;
-import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
 import pea.CounterTrace.DCPhase;
-import pea.Decision;
-import pea.EventDecision;
 import pea.Phase;
 import pea.PhaseEventAutomata;
-import pea.PhaseSet;
-import pea.RangeDecision;
-import pea.Trace2PEACompiler;
 import pea.Transition;
-import srParse.srParsePattern;
 import srParse.pattern.PatternType;
 
 public class DeductionGuardTransformation implements IPeaTransformer {
@@ -80,10 +68,6 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						targetPhaseConj = targetPhaseConj.and(phase.getInvariant());
 					}
 					// create guard for edge
-					// if the edge targets a state with the last state in the
-					// phase, then take the hole invariant including
-					// seeping, else make a guard that is without seeping.
-					CDD guard = trans.getGuard();
 					logger.warn(trans.getDest().getStateInvariant().toString()+ " | isfinal: " + Boolean.toString(destinationHasLastPhase));
 					// take the state invariant in the last phase (including
 					// seeping invariants)
@@ -92,42 +76,41 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					}
 					// if there is a conjunct that contains only effect variables
 					// this must be an implication and has to be encoded differently
+					CDD guard = trans.getGuard();
 					CDD[] dnf = targetPhaseConj.toDNF();
-					CDD effectFree = CDD.FALSE;
-					boolean isImplication = false;
+					CDD resultingConjunct = CDD.FALSE;
+					CDD temp = CDD.TRUE;
 					for(CDD conjunct: dnf){
-						// if both sets are of equal size and the conjunct contains all effect vars (and therefore only effect vars)
-						if(conjunct.getIdents().size() == pats.get(i).getEffectVariabels().size() &&
-								conjunct.getIdents().containsAll(pats.get(i).getEffectVariabels())){
-							isImplication = true;
+						temp = CDD.TRUE;
+						if(destinationHasLastPhase){
+							if (this.containsEffect(conjunct, i)){
+								// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
+								CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
+								temp = conjunct.prime().and(l);
+								for(CDD t: dnf){
+									if(!this.containsEffect(t, i)){
+										t = t.negate().prime();
+										temp = temp.and(t);
+									}
+								}
+							} else {
+								// conjunct && !R_effect
+								// may loop on not deducable but not effect triggering variables because it is an implication
+								CDD r = this.encodeDeducedInConjunct(conjunct, i);
+								temp = conjunct.prime().and(r);
+							}
 						} else {
-							effectFree = effectFree.or(conjunct);
+							// conjunct && !R_effect && L_conjunt
+							CDD l = this.encodeWriteInConjunct(conjunct, i, false);
+							CDD r = this.encodeDeducedInConjunct(conjunct, i);
+							temp = conjunct.prime().and(r).and(l);
 						}
+						// add result to new conjunct
+						resultingConjunct = resultingConjunct.or(temp);
 					}
-					if (isImplication){
-						guard = guard
-								.and(this.dmGuard(pats.get(i),effectFree.negate().toDNF() , 
-										destinationHasLastPhase, isImplication, i));
-					} else {
-						guard = guard
-								.and(this.dmGuard(pats.get(i),dnf , destinationHasLastPhase, isImplication, i));
-					}
-					// if guard does not talk about R_v then add !R_v (invariant
-					// does not guarantee v)
-					for (String id : pats.get(i).getEffectVariabels()) {
-						String dguard = this.getClosedWorldPrefix(id, i);
-						if (guard.getIdents().contains(dguard))
-							continue;
-						if(destinationHasLastPhase && isImplication){
-							guard = guard.or(BoogieBooleanExpressionDecision
-									.create(BoogieAstSnippet.createIdentifier(dguard)).negate());
-						} else {
-							guard = guard.and(BoogieBooleanExpressionDecision
-									.create(BoogieAstSnippet.createIdentifier(dguard)).negate());
-						}
-					}
-					trans.setGuard(guard);
+					trans.setGuard(guard.and(resultingConjunct));
 				}
+				
 			}
 		}
 		// Add deduction guard automata 
@@ -159,80 +142,37 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					));
 		}
 	}
-
-	/**
-	 * Recursive method generates guards to incorporate deduction guards into set of peas.
-	 * @param ct
-	 * The counter trace of the pea
-	 * @param invariant
-	 * invariant of the next state, in later iterations part of the invariant that is to be encoded.
-	 * @param hasLastPhase
-	 * @param disjunction
-	 * @return
-	 */
-	private CDD dmGuard(PatternType pattern, CDD[] dnf, boolean hasLastPhase, boolean isImplication, int reqNo) {
-		CDD result = CDD.FALSE;
-			for (CDD conjunct : dnf) {
-				result = result.or(this.dmGuard(pattern, conjunct, hasLastPhase, isImplication, reqNo));
-			}
-		return result;
-	}
-
-	private CDD dmGuard(PatternType pattern, CDD conjunct, boolean hasLastPhase, boolean isImplication, int reqNo) {
-			//end of tree, return 
-			if (conjunct == CDD.TRUE) {
-	            return conjunct;
-	        }
-	        if (conjunct == CDD.FALSE) {
-	            return conjunct;
-	        }
 	
-	        //generate guards from this CDD's decision
-	        CDD result = this.dmGuard(pattern, ((BoogieBooleanExpressionDecision)conjunct.getDecision()).getExpression()
-	        				, hasLastPhase, isImplication, reqNo, conjunct.getChilds()[0] == CDD.FALSE);
-	        // process children
-	        CDD newChild = CDD.TRUE;
-	        for(CDD child: conjunct.getChilds()){
-		    	if (child != CDD.FALSE && child != CDD.TRUE) {
-		        	newChild = newChild.and(dmGuard(pattern, child, hasLastPhase, false, reqNo));
-		    	}    
-		    }
-	        if (newChild != CDD.FALSE){
-	        	result = result.and(newChild);
-	        }
-		return result; 
-	}
-
-	private CDD dmGuard(PatternType pattern, Expression e, boolean hasLastPhase, boolean isImplication,
-			int reqNo, boolean negate) {
-		//TODO: unhack
-		CDD temp = BoogieBooleanExpressionDecision.create(e);
-		CDD result = BoogieBooleanExpressionDecision.create(this.primeVars(e));
-		if (negate){
-			result = result.negate();
-		}
-		for(String ident: temp.getIdents()){
-			// do not encode input vars
-			if (this.sysInfo.isInput(ident)){
+	/*
+	 * L_ ... anotniation
+	 */
+	private CDD encodeWriteInConjunct(CDD conjunct, int reqNo, boolean finalPhase){
+		CDD result = CDD.TRUE;
+		for(String ident: conjunct.getIdents()){
+			if(finalPhase && this.systemModel.getPattern(reqNo).getEffectVariabels().contains(ident)){
+				logger.warn("Effect Variabels:" + this.systemModel.getPattern(reqNo).getEffectVariabels().toString());
+				// do not encode if variable is an effect AND its the last phase
 				continue;
 			}
-			result = result.and( BoogieBooleanExpressionDecision.create(
-					this.encodeIdentifierExpression(pattern, ident, hasLastPhase, isImplication, reqNo)));
+			if(this.sysInfo.isInput(ident)){
+				continue;
+			}
+			CDD temp = BoogieBooleanExpressionDecision.create(this.encodeInternalVar(ident));
+			result = result.and(temp);
 		}
 		return result;
 	}
 	
-	private Expression encodeIdentifierExpression(PatternType pattern, String ident, boolean hasLastPhase, 
-			boolean isImplication, int reqNo) {
-		if (hasLastPhase){
-			if(pattern.isEffect(ident)){
-				return this.encodeEffectVar(ident, reqNo);
-			} else {
-				return this.encodeInternalVar(ident);
-			}
-		} else {
-			return this.encodeInternalVar(ident);
+	/* 
+	 * R_... anotation
+	 */
+	private CDD encodeDeducedInConjunct(CDD conjunct, int reqNo){
+		CDD result = CDD.TRUE;
+		for(String ident: this.systemModel.getPattern(reqNo).getEffectVariabels()){
+			CDD temp = BoogieBooleanExpressionDecision.create(this.encodeEffectVar(ident,reqNo)).negate();
+			result = result.and(temp);
 		}
+		return result;
 	}
 	
 	/**
@@ -250,8 +190,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * Encode an effect of a variable as true
 	 * e.g. "a" -> "R'_a_reqNo"
 	 */
-	private Expression encodeEffectVar(String ident, int reqNo){
-		
+	private Expression encodeEffectVar(String ident, int reqNo){	
 		return new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.getClosedWorldPrefix(ident, reqNo));
 	}
 	
@@ -265,6 +204,22 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		return guardVar+"'";
 	}
 	
+	/**
+	 * Determines if one of the effect variabels is in the cdd.
+	 * @param cdd
+	 * @param reqNo
+	 * @return
+	 * 	true if effect variable in cdd, else false
+	 */
+	private boolean containsEffect(CDD cdd, int reqNo){
+		for(String ident: this.systemModel.getPattern(reqNo).getEffectVariabels()){
+			if(cdd.getIdents().contains(ident)){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	protected Expression primeVars(Expression e){
 			if(e instanceof BinaryExpression){
 				BinaryExpression bchild = ((BinaryExpression)e);
@@ -285,61 +240,6 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	
-	public CDD encodeCDD(CDD cdd, int reqNo) {
-		    CDD expr = CDD.FALSE;
-	        
-		    if (cdd == CDD.TRUE) {	         	     	
-	      	    return CDD.TRUE;
-	        }
-	        if (cdd == CDD.FALSE) {
-	            return CDD.FALSE;
-	        }
-	    	CDD[] childs = cdd.getChilds();
-	    	Decision decision = cdd.getDecision();
-	    	cdd = decision.simplify(childs);
-	    	if (cdd == CDD.TRUE) {
-				return CDD.TRUE;
-			}
-	    	if (cdd == CDD.FALSE) {
-				return CDD.FALSE;
-			}
-	    	childs = cdd.getChilds();
-	    	decision = cdd.getDecision();
-	    	
-	        for (int i = 0; i < childs.length; i++) {
-	        	if (childs[i] == CDD.FALSE) {
-	                continue;
-	            }
-	        	CDD childExpr = encodeCDD(childs[i], reqNo);
-	            if (!cdd.childDominates(i)) {
-	            	CDD decisionExpr = BoogieBooleanExpressionDecision
-	            			.create(this.primeVars(((BoogieBooleanExpressionDecision)decision).getExpression()));
-	            	
-	            	if (childExpr == CDD.TRUE) {
-	            		childExpr = decisionExpr;
-	            	} else {
-		            	childExpr = childExpr.and(decisionExpr);
-	            	}
-	            }
-	            //del with self
-	         	if (expr == CDD.FALSE){
-	         		expr = childExpr;
-				} else {
-					// negate thingst that may be alternative to the effect.
-					if (childExpr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())
-							&& expr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
-						expr = childExpr.or(expr);
-					} else if (childExpr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
-						expr.negate();
-					} else if (expr.getIdents().contains(this.systemModel.getPattern(reqNo).getEffectVariabels())){
-						childExpr.negate();
-					} else {
-						expr = childExpr.or(expr);
-					}
-		        }
-	        }
-	        return expr;	        
-	    }
 	
 	
 	
