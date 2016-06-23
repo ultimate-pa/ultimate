@@ -85,8 +85,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						if(destinationHasLastPhase){
 							if (this.containsEffect(conjunct, i)){
 								// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
-								CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
-								temp = conjunct.prime().and(l);
+								//CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
+								temp = conjunct.prime();//.and(l);
 								for(CDD t: dnf){
 									if(!this.containsEffect(t, i)){
 										t = t.negate().prime();
@@ -101,9 +101,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 							}
 						} else {
 							// conjunct && !R_effect && L_conjunt
-							CDD l = this.encodeWriteInConjunct(conjunct, i, false);
+							//CDD l = this.encodeWriteInConjunct(conjunct, i, false);
 							CDD r = this.encodeDeducedInConjunct(conjunct, i);
-							temp = conjunct.prime().and(r).and(l);
+							temp = conjunct.prime().and(r);//.and(l);
 						}
 						// add result to new conjunct
 						resultingConjunct = resultingConjunct.or(temp);
@@ -113,10 +113,13 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				
 			}
 		}
-		this.generateDeductionAutomatonNextStep();
+		this.generateDeductionAutomatonInstant();
 		
 	}
 	
+	/***
+	 * one state with edge !L*_v || R_v_0 || R_v_1 || ...
+	 */
 	private void generateDeductionAutomatonInstant(){
 		// Add deduction guard automata 
 				for(String ident: this.deductionMonitorVars.keySet()){
@@ -147,6 +150,52 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 							));
 				}
 	}
+	
+	/***
+	 * one state with edge (v == v')|| R_v_0 || R_v_1 || ...
+	 */
+	private void generateDeductionAutomatonInstantValueComp(){
+		// Add deduction guard automata 
+				for(String ident: this.deductionMonitorVars.keySet()){
+					Phase phase = new Phase("p0", CDD.TRUE);
+					HashMap<String,String> variables = new HashMap<String,String>();
+					//the variable stays the same
+					//CDD closedWorldContition = CDD.FALSE;
+					CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
+								new BinaryExpression(new BoogieLocation("",0,0,0,0,false), BinaryExpression.Operator.COMPEQ,  
+										new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident+"'"),
+										new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident)
+										)
+							);
+					//unless one automata allows it		
+					for(String guardIdent: this.deductionMonitorVars.get(ident)){
+						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
+									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
+								));
+						variables.put(guardIdent, "bool");	
+					}
+					variables.put(READ_GUARD_PREFIX+ident, "bool");
+					phase.addTransition(phase, closedWorldContition, new String[]{});
+					this.systemModel.addPea(new PhaseEventAutomata(
+							"CW_" + ident,  			//name
+							new Phase[]{phase}, 		//pahses
+							new Phase[]{phase}, 		//initial pahses
+							new ArrayList<String>(){}, 	//clocks
+							variables, 					//variables and types thereof
+							new HashSet<String>(){}, 	//events
+							new ArrayList<String>(){}	//declatrations
+							));
+				}
+	}
+	
+	/***
+	 * two states     q0{ !L*_v  } , q1{L*_v}
+	 * edge q0->01{ R_v_0 || R_v_1 || ... }
+	 * edge q1->00{ !(R_v_0 || R_v_1 || ...) }
+	 * self loops with same guards as targets.
+	 * 
+	 * L_v is delayed one step by this, thus output can be consumed.
+	 */
 	private void generateDeductionAutomatonNextStep(){
 		// Add deduction guard automata 
 				for(String ident: this.deductionMonitorVars.keySet()){
