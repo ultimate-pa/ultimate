@@ -122,8 +122,20 @@ public class HybridAutomaton {
 		}
 	}
 
-	protected String getName() {
+	public String getName() {
 		return mName;
+	}
+	
+	public Set<String> getGlobalParameters() {
+		return mGlobalParameters;
+	}
+	
+	public Set<String> getGlobalConstants() {
+		return mGlobalConstants;
+	}
+	
+	public Set<String> getLabels() {
+		return mLabels;
 	}
 
 	@Override

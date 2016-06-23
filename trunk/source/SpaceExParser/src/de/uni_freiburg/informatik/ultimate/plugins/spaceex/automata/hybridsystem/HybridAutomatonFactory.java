@@ -27,57 +27,25 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 /**
- * Factory to create {@link HybridSystem} objects.
+ * Factory that creates {@link HybridAutomaton} instances.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public final class HybridSystemFactory {
-
+public class HybridAutomatonFactory {
+	
 	private final ILogger mLogger;
-
-	/**
-	 * Default constructor of the {@link HybridSystem} factory.
-	 * 
-	 * @param logger
-	 */
-	public HybridSystemFactory(final ILogger logger) {
+	
+	public HybridAutomatonFactory(ILogger logger){
 		mLogger = logger;
 	}
-
-	/**
-	 * Creates a new instance of a hybrid system from a given {@link ComponentType}, obtained from parsing a SpaceEx XML
-	 * model description.
-	 * 
-	 * @param system
-	 *            The {@link ComponentType} of the system to create.
-	 * @param automata
-	 *            The parsed automata.
-	 * @param systems
-	 *            The parsed systems.
-	 * @return A new {@link HybridSystem} instance.
-	 */
-	public HybridSystem createHybridSystemFromComponent(final ComponentType system,
-	        final Map<String, ComponentType> automata, final Map<String, ComponentType> systems) {
-		return new HybridSystem(system, automata, systems, mLogger);
-	}
-
-	public HybridSystem createHybridSystem(final String name, final Set<String> globalVariables,
-	        final Set<String> localVariables, final Set<String> globalConstants, final Set<String> localConstants,
-	        final Set<String> labels, final Map<String, HybridAutomaton> automata,
-	        final Map<String, HybridSystem> subsystems, final ILogger logger) {
-		
-		// TODO Add bind
-		
-		return new HybridSystem(name, globalVariables, localVariables, globalConstants, localConstants, labels,
-		        automata, subsystems, logger);
+	
+	public HybridAutomaton createHybridAutomatonFromComponent(final ComponentType automaton) {
+		return new HybridAutomaton(automaton, mLogger);
 	}
 
 }

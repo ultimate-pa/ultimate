@@ -91,6 +91,22 @@ public class HybridSystem {
 		});
 	}
 
+	protected HybridSystem(String name, Set<String> globalVariables, Set<String> localVariables,
+	        Set<String> globalConstants, Set<String> localConstants, Set<String> labels,
+	        Map<String, HybridAutomaton> automata, Map<String, HybridSystem> subsystems, ILogger logger) {
+		mLogger = logger;
+		mName = name;
+		mAutomata = automata;
+		mSubSystems = subsystems;
+		mLocalParameters = localVariables;
+		mGlobalParameters = globalVariables;
+		mLocalConstants = localConstants;
+		mGlobalConstants = globalConstants;
+		mLabels = labels;
+		
+		// TODO Add bind.
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

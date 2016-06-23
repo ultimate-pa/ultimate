@@ -27,11 +27,18 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystemFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
@@ -48,11 +55,14 @@ public class HybridModel {
 
 	private final ILogger mLogger;
 	private final HybridSystemFactory mHybridSystemFactory;
+	private final HybridAutomatonFactory mHybridAutomatonFactory;
+	private final HybridSystem mRootSystem;
 
 	public HybridModel(Sspaceex root, ILogger logger) {
 		mLogger = logger;
 
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
+		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
@@ -74,25 +84,39 @@ public class HybridModel {
 		}
 
 		if (systems.size() == 0) {
-			createDefaultSystem(automata);
+			mRootSystem = createDefaultSystem(automata);
 		} else {
 			// TODO for the time being, we use the first defined system as default system. Read system name from config
 			// file in the future.
 			final ComponentType firstSystem = systems.values().stream().collect(Collectors.toList()).get(0);
-			final HybridSystem sys = mHybridSystemFactory.createHybridSystemFromComponent(firstSystem, automata,
-			        systems);
+			mRootSystem = mHybridSystemFactory.createHybridSystemFromComponent(firstSystem, automata, systems);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(sys);
+				mLogger.debug(mRootSystem);
 			}
-			
-			// TODO add system to model to be able to create something.
 		}
 	}
 
-	private void createDefaultSystem(Map<String, ComponentType> automata) {
+	private HybridSystem createDefaultSystem(Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 
-		// final HybridSystem sys = new HybridSystem(system, automata, systems)
-		// TODO Fill.
+		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
+
+		final HybridAutomaton automaton = mHybridAutomatonFactory
+		        .createHybridAutomatonFromComponent(automatonComponent);
+
+		final Set<String> globalParams = automaton.getGlobalParameters().stream()
+		        .map(g -> (new StringBuilder().append("system_").append(g).toString())).collect(Collectors.toSet());
+		final Set<String> globalConstants = automaton.getGlobalConstants().stream()
+		        .map(gc -> (new StringBuilder().append("system_").append(gc).toString())).collect(Collectors.toSet());
+		final Set<String> labels = automaton.getLabels().stream()
+		        .map(l -> (new StringBuilder().append("system_").append(l).toString())).collect(Collectors.toSet());
+
+		final Map<String, HybridAutomaton> autMap = new HashMap<>();
+		autMap.put(automaton.getName(), automaton);
+
+		// TODO Add bind
+		
+		return mHybridSystemFactory.createHybridSystem("system", globalParams, new HashSet<String>(), globalConstants,
+		        new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), mLogger);
 	}
 }
