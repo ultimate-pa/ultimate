@@ -113,34 +113,79 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				
 			}
 		}
+		this.generateDeductionAutomatonNextStep();
+		
+	}
+	
+	private void generateDeductionAutomatonInstant(){
 		// Add deduction guard automata 
-		for(String ident: this.deductionMonitorVars.keySet()){
-			Phase phase = new Phase("p0", CDD.TRUE);
-			HashMap<String,String> variables = new HashMap<String,String>();
-			//the variable stays the same
-			//CDD closedWorldContition = CDD.FALSE;
-			CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
-						new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident+"'")
-					).negate();
-			//unless one automata allows it		
-			for(String guardIdent: this.deductionMonitorVars.get(ident)){
-				closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-							BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
-						));
-				variables.put(guardIdent, "bool");	
-			}
-			variables.put(READ_GUARD_PREFIX+ident, "bool");
-			phase.addTransition(phase, closedWorldContition, new String[]{});
-			this.systemModel.addPea(new PhaseEventAutomata(
-					"CW_" + ident,  			//name
-					new Phase[]{phase}, 		//pahses
-					new Phase[]{phase}, 		//initial pahses
-					new ArrayList<String>(){}, 	//clocks
-					variables, 					//variables and types thereof
-					new HashSet<String>(){}, 	//events
-					new ArrayList<String>(){}	//declatrations
-					));
-		}
+				for(String ident: this.deductionMonitorVars.keySet()){
+					Phase phase = new Phase("p0", CDD.TRUE);
+					HashMap<String,String> variables = new HashMap<String,String>();
+					//the variable stays the same
+					//CDD closedWorldContition = CDD.FALSE;
+					CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
+								new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident+"'")
+							).negate();
+					//unless one automata allows it		
+					for(String guardIdent: this.deductionMonitorVars.get(ident)){
+						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
+									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
+								));
+						variables.put(guardIdent, "bool");	
+					}
+					variables.put(READ_GUARD_PREFIX+ident, "bool");
+					phase.addTransition(phase, closedWorldContition, new String[]{});
+					this.systemModel.addPea(new PhaseEventAutomata(
+							"CW_" + ident,  			//name
+							new Phase[]{phase}, 		//pahses
+							new Phase[]{phase}, 		//initial pahses
+							new ArrayList<String>(){}, 	//clocks
+							variables, 					//variables and types thereof
+							new HashSet<String>(){}, 	//events
+							new ArrayList<String>(){}	//declatrations
+							));
+				}
+	}
+	private void generateDeductionAutomatonNextStep(){
+		// Add deduction guard automata 
+				for(String ident: this.deductionMonitorVars.keySet()){
+					HashMap<String,String> variables = new HashMap<String,String>();
+					CDD mayRead = BoogieBooleanExpressionDecision.create(
+							new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident +"'")
+							);
+					variables.put(READ_GUARD_PREFIX+ident, "bool");
+					Phase phase0 = new Phase("p0", mayRead.negate());
+					Phase phase1 = new Phase("p1", mayRead);
+					//the variable stays the same
+					//CDD closedWorldContition = CDD.FALSE;
+					CDD closedWorldContition = CDD.FALSE;
+					//unless one automata allows it		
+					for(String guardIdent: this.deductionMonitorVars.get(ident)){
+						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
+									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
+								));
+						variables.put(guardIdent, "bool");	
+					}
+					// stay here if not written
+					phase0.addTransition(phase0, closedWorldContition.negate(), new String[]{});
+					// goto one if written
+					phase1.addTransition(phase1, closedWorldContition, new String[]{});
+					// go back if not written
+					phase1.addTransition(phase0, closedWorldContition.negate(), new String[]{});
+					// stay if written
+					phase0.addTransition(phase1, closedWorldContition, new String[]{});
+					
+					this.systemModel.addPea(new PhaseEventAutomata(
+							"CW_" + ident,  			//name
+							new Phase[]{phase0, phase1}, 		//pahses
+							new Phase[]{phase0}, 		//initial pahses
+							new ArrayList<String>(){}, 	//clocks
+							variables, 					//variables and types thereof
+							new HashSet<String>(){}, 	//events
+							new ArrayList<String>(){}	//declatrations
+							));
+				}
 	}
 	
 	/*
