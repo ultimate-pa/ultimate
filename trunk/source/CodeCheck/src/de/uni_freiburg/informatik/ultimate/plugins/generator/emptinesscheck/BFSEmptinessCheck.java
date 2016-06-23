@@ -68,7 +68,6 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * Search for a nested error path within the graph with the given root. Return null
 	 * if there is none.
 	 * @param root
-	 * @param mLogger 
 	 * @return
 	 */
 	@Override
