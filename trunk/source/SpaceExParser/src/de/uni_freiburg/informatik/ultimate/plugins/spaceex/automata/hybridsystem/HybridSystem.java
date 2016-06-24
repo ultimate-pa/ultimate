@@ -31,8 +31,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.BindType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
@@ -53,6 +55,7 @@ public class HybridSystem {
 	private final Set<String> mLocalConstants;
 	private final Set<String> mGlobalConstants;
 	private final Set<String> mLabels;
+	private final Map<String, Map<String, String>> mBinds;
 
 	protected HybridSystem(ComponentType system, Map<String, ComponentType> automata,
 	        Map<String, ComponentType> systems, ILogger logger) {
@@ -67,6 +70,7 @@ public class HybridSystem {
 		mLocalConstants = new HashSet<>();
 		mGlobalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
+		mBinds = new HashMap<>();
 
 		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
 		        mLocalConstants, mGlobalConstants, mLabels, mLogger));
@@ -88,12 +92,17 @@ public class HybridSystem {
 				throw new UnsupportedOperationException(
 		                "The component with name " + comp + " is neither a system nor an automaton component.");
 			}
+
+			final Map<String, String> binds = b.getMap().stream()
+		            .collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
+			mBinds.put(comp, binds);
 		});
 	}
 
-	protected HybridSystem(String name, Set<String> globalVariables, Set<String> localVariables,
-	        Set<String> globalConstants, Set<String> localConstants, Set<String> labels,
-	        Map<String, HybridAutomaton> automata, Map<String, HybridSystem> subsystems, ILogger logger) {
+	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
+	        final Set<String> globalConstants, final Set<String> localConstants, final Set<String> labels,
+	        final Map<String, HybridAutomaton> automata, final Map<String, HybridSystem> subsystems,
+	        final Map<String, Map<String, String>> binds, final ILogger logger) {
 		mLogger = logger;
 		mName = name;
 		mAutomata = automata;
@@ -103,7 +112,8 @@ public class HybridSystem {
 		mLocalConstants = localConstants;
 		mGlobalConstants = globalConstants;
 		mLabels = labels;
-		
+		mBinds = binds;
+
 		// TODO Add bind.
 	}
 

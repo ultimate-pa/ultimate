@@ -27,14 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
@@ -114,9 +112,17 @@ public class HybridModel {
 		final Map<String, HybridAutomaton> autMap = new HashMap<>();
 		autMap.put(automaton.getName(), automaton);
 
-		// TODO Add bind
+		final Map<String, Map<String, String>> bindsMap = new HashMap<>();
+		final Map<String, String> automatonBind = new HashMap<>();
+
+		globalParams.forEach(p -> automatonBind.put(p, p));
+		globalConstants.forEach(c -> automatonBind.put(c, c));
+		labels.forEach(l -> automatonBind.put(l, l));
+		
+		bindsMap.put(automaton.getName(), automatonBind);
+		
 		
 		return mHybridSystemFactory.createHybridSystem("system", globalParams, new HashSet<String>(), globalConstants,
-		        new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), mLogger);
+		        new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
 	}
 }

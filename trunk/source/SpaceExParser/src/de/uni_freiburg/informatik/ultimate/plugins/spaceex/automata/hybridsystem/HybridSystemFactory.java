@@ -72,12 +72,11 @@ public final class HybridSystemFactory {
 	public HybridSystem createHybridSystem(final String name, final Set<String> globalVariables,
 	        final Set<String> localVariables, final Set<String> globalConstants, final Set<String> localConstants,
 	        final Set<String> labels, final Map<String, HybridAutomaton> automata,
-	        final Map<String, HybridSystem> subsystems, final ILogger logger) {
-		
-		// TODO Add bind
-		
+	        final Map<String, HybridSystem> subsystems, final Map<String, Map<String, String>> binds,
+	        final ILogger logger) {
+
 		return new HybridSystem(name, globalVariables, localVariables, globalConstants, localConstants, labels,
-		        automata, subsystems, logger);
+		        automata, subsystems, binds, logger);
 	}
 
 }
