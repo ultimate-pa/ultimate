@@ -208,7 +208,8 @@ public class TransFormulaLRWithArrayCells {
 			removeArrayInOutVars();
 			
 			mResult.setFormula(result);
-			mResult.addAuxVars(auxVars);
+			final Map<TermVariable, Term> auxVar2Const = mReplacementVarFactory.constructAuxVarMapping(auxVars);
+			mResult.addAuxVars(auxVar2Const);
 	}
 	
 	private void removeArrayInOutVars() {

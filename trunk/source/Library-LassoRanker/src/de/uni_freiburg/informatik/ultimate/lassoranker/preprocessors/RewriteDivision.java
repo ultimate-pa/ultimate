@@ -129,7 +129,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 		final Term formula = new_tf.getFormula();
 		final Term auxTerms = Util.and(script, mauxTerms.toArray(new Term[0]));
 		new_tf.setFormula(Util.and(script, formula, auxTerms));
-		new_tf.addAuxVars(mauxVars.keySet());
+		final Map<TermVariable, Term> auxVar2Const = mVarFactory.constructAuxVarMapping(mauxVars.keySet());
+		new_tf.addAuxVars(auxVar2Const);
 		
 		return new_tf;
 	}

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
@@ -763,14 +764,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
-	private Term renameAuxVarsToCorrespondingConstants(Set<TermVariable> auxVars,
+	private Term renameAuxVarsToCorrespondingConstants(Map<TermVariable, Term> auxVars,
 			Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
-		for (final TermVariable tv : auxVars) {
-			replacees.add(tv);
-			final Term correspondingConstant = mBoogie2Smt.
-					getVariableManager().getCorrespondingConstant(tv); 
+		for (final Entry<TermVariable, Term> entry : auxVars.entrySet()) {
+			final TermVariable auxVarTv = entry.getKey();
+			replacees.add(auxVarTv);
+			final Term correspondingConstant = entry.getValue();
 			replacers.add(correspondingConstant);
 		}
 		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);

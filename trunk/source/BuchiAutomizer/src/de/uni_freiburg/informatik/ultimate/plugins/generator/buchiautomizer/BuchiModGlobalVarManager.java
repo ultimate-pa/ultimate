@@ -104,7 +104,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 				new HashMap<BoogieVar, TermVariable>(without.getInVars());
 		final Map<BoogieVar, TermVariable> outVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		final Set<TermVariable> auxVars = without.getAuxVars();
+		final Map<TermVariable, Term> auxVars = without.getAuxVars();
 		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
 		final Infeasibility infeasibility = without.isInfeasible();
@@ -120,7 +120,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 		}
 		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, false, mBoogie2smt);
+				formula, inVars, outVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;
@@ -135,7 +135,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 				new HashMap<BoogieVar, TermVariable>(without.getInVars());
 		final Map<BoogieVar, TermVariable> outVars = 
 				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		final Set<TermVariable> auxVars = without.getAuxVars();
+		final Map<TermVariable, Term> auxVars = without.getAuxVars();
 		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
 		final Infeasibility infeasibility = without.isInfeasible();
@@ -151,7 +151,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
 		}
 		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, false, mBoogie2smt);
+				formula, inVars, outVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(formula, inVars, outVars, 
 				auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;

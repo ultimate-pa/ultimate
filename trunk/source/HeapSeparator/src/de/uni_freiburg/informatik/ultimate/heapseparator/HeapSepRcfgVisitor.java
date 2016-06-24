@@ -124,7 +124,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		final Map<BoogieVar, TermVariable> newOutVars = as.getUpdatedOutVars();
 	
 		
-		final Set<TermVariable> newAuxVars = tf.getAuxVars();
+		final Map<TermVariable, Term> newAuxVars = tf.getAuxVars();
 		final Set<TermVariable> newBranchEncoders = tf.getBranchEncoders();
 		final Infeasibility newInfeasibility = tf.isInfeasible();
 		final Term newClosedFormula = tf.getClosedFormula();

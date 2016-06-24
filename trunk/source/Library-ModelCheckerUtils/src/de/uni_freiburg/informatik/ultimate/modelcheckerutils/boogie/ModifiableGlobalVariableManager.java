@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -168,10 +169,10 @@ public class ModifiableGlobalVariableManager {
 				glob2oldFormula = Util.and(mBoogie2smt.getScript(), glob2oldFormula, assignment);
 			}
 		}
-		final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
+		final Map<TermVariable, Term> auxVars = Collections.emptyMap(); 
+		final Set<TermVariable> branchEncoders = Collections.emptySet();
 		final Term closedFormula = TransFormula.computeClosedFormula(
-				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, false, mBoogie2smt);
+				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
 				auxVars, branchEncoders,
 				TransFormula.Infeasibility.UNPROVEABLE, closedFormula);
@@ -211,10 +212,10 @@ public class ModifiableGlobalVariableManager {
 				old2globFormula = Util.and(mBoogie2smt.getScript(), old2globFormula, assignment);
 			}			
 		}
-		final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
+		final Map<TermVariable, Term> auxVars = Collections.emptyMap(); 
+		final Set<TermVariable> branchEncoders = Collections.emptySet();
 		final Term closedFormula = TransFormula.computeClosedFormula(
-				old2globFormula, old2globInVars, old2globOutVars, auxVars, false, mBoogie2smt);
+				old2globFormula, old2globInVars, old2globOutVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
 				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 		return result;
