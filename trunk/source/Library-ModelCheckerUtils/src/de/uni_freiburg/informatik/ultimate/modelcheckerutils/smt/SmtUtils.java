@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -258,10 +259,24 @@ public class SmtUtils {
 	 */
 	public static Term indexEqualityImpliesValueEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2,
 			final Term value1, final Term value2) {
-		assert index1.size() == index2.size();
-		final Term indexEquality = Util.and(script, SmtUtils.pairwiseEquality(script, index1, index2));
-		final Term valueEquality = SmtUtils.binaryEquality(script, value1, value2);
-		final Term result = Util.or(script, SmtUtils.not(script, indexEquality), valueEquality);
+		return indexEqualityInequalityImpliesValueEquality(script, index1, index2, Collections.emptyList(), value1, value2);
+	}
+
+	/**
+	 * Construct the following term. (index == equal) & (index != i) & ... (for all i in unequal) ==> (value1 == value2)
+	 *
+	 */
+	public static Term indexEqualityInequalityImpliesValueEquality(final Script script, final ArrayIndex index, final ArrayIndex equal,
+			final Collection<ArrayIndex> unequal, final Term value1, final Term value2) {
+		assert index.size() == equal.size();
+		Term lhs = Util.and(script, SmtUtils.pairwiseEquality(script, index, equal));
+		for (final ArrayIndex i : unequal) {
+			assert index.size() == i.size();
+			final Term eq = Util.and(script, SmtUtils.pairwiseEquality(script, index, i));
+			lhs = Util.and(script, lhs, Util.not(script, eq));
+		}
+		final Term rhs = SmtUtils.binaryEquality(script, value1, value2);
+		final Term result = Util.or(script, SmtUtils.not(script, lhs), rhs);
 		return result;
 	}
 
