@@ -34,27 +34,27 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 
 /**
  * 
- * This test suite automatically generates test cases from the example folder. If you place input files, toolchains and
- * settings files in a folder named regression, they will automatically be picked up.
+ * This test suite automatically generates test cases similar to {@link RegressionTestSuite}, but only for abstract
+ * interpretation (or for analysis techniques that can only show safety).
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class RegressionTestSuite extends AbstractRegressionTestSuite {
+public class UnknownSuccessRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
 
-	public RegressionTestSuite() {
+	public UnknownSuccessRegressionTestSuite() {
 		super();
 		mTimeout = DEFAULT_TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 
-		// exclude paths that match the following regex  
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation)[\\s\\S])*";
+		// exclude paths that match the following regex 
+		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow)[\\s\\S])*";
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
-		return new SafetyCheckTestResultDecider(runDefinition, false);
+		return new SafetyCheckTestResultDecider(runDefinition, true);
 	}
 }
