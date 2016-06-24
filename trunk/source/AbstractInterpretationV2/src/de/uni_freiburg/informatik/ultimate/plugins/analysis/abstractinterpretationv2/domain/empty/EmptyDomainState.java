@@ -38,13 +38,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
- * 
  * This is an abstract state of the {@link EmptyDomain}. It does save variable declarations, but no values or value
  * representations. It is equal to other {@link EmptyDomainState} instances with the same variable declarations.
  * 
  * This state is never bottom but always a fixpoint.
  * 
+ * @param <ACTION>
+ *            The action (i.e., the type of statements or transitions) on which this empty domain should operate.
+ * @param <VARDECL>
+ *            The variable declaration type of the current model.
+ * 
  * @author dietsch@informatik.uni-freiburg.de
+ *
  *
  */
 public final class EmptyDomainState<ACTION, VARDECL>
@@ -56,12 +61,14 @@ public final class EmptyDomainState<ACTION, VARDECL>
 
 	protected EmptyDomainState() {
 		mVarDecls = new HashMap<String, VARDECL>();
-		mId = sId++;
+		sId++;
+		mId = sId;
 	}
 
 	protected EmptyDomainState(Map<String, VARDECL> varDecls) {
 		mVarDecls = varDecls;
-		mId = sId++;
+		sId++;
+		mId = sId;
 	}
 
 	@Override
@@ -140,6 +147,10 @@ public final class EmptyDomainState<ACTION, VARDECL>
 			return false;
 		}
 
+		if (other.equals(this)) {
+			return true;
+		}
+
 		if (other.mVarDecls.size() != mVarDecls.size()) {
 			return false;
 		}
@@ -163,6 +174,22 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return mId;
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		@SuppressWarnings("unchecked")
+		final EmptyDomainState<ACTION, VARDECL> other = (EmptyDomainState<ACTION, VARDECL>) obj;
+		return mId == other.mId;
+	}
+
 	/**
 	 * This method compares if this state contains the same variable declarations than the other state.
 	 * 
@@ -170,7 +197,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	 *            another state
 	 * @return true iff this state has the same variables than other
 	 */
-	protected boolean hasSameVariables(EmptyDomainState<ACTION, VARDECL> other) {
+	boolean hasSameVariables(EmptyDomainState<ACTION, VARDECL> other) {
 		return isEqualTo(other);
 	}
 
