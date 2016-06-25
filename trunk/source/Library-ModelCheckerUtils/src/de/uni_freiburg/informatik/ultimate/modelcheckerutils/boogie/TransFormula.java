@@ -1585,16 +1585,12 @@ public class TransFormula implements Serializable {
 	 * a fresh constant. 
 	 */
 	public static Map<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars, final VariableManager varManager) {
-		if(auxVars.isEmpty()) {
-			return Collections.emptyMap();
-		} else {
-			final Map<TermVariable,Term> result = new HashMap<>();
-			for (final TermVariable auxVar : auxVars) {
-				final Term auxVarConst = varManager.constructFreshConstant(auxVar);
-				result.put(auxVar, auxVarConst);
-			}
-			return result;
+		final Map<TermVariable,Term> result = new HashMap<>();
+		for (final TermVariable auxVar : auxVars) {
+			final Term auxVarConst = varManager.constructFreshConstant(auxVar);
+			result.put(auxVar, auxVarConst);
 		}
+		return result;
 	}
 
 }

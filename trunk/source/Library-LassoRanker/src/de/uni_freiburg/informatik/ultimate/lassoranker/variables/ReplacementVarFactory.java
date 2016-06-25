@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -137,17 +136,13 @@ public class ReplacementVarFactory {
 	 * Given a set of auxVars, construct a map that assigns to auxVar its
 	 * corresponding constant. Construct constant if it does not yet exist.
 	 */
-	public Map<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars) {
-		if(auxVars.isEmpty()) {
-			return Collections.emptyMap();
-		} else {
-			final Map<TermVariable,Term> result = new HashMap<>();
-			for (final TermVariable auxVar : auxVars) {
-				final Term auxVarConst = getOrConstructConstForAuxVar(auxVar);
-				result.put(auxVar, auxVarConst);
-			}
-			return result;
+	public HashMap<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars) {
+		final HashMap<TermVariable,Term> result = new HashMap<>();
+		for (final TermVariable auxVar : auxVars) {
+			final Term auxVarConst = getOrConstructConstForAuxVar(auxVar);
+			result.put(auxVar, auxVarConst);
 		}
+		return result;
 	}
 	
 	
