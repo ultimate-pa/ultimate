@@ -88,11 +88,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * 		states cannot be merged
 	 * @param initialEquivalenceClasses We only try to merge states that are
 	 * 		in one of the equivalence classes
+	 * @throws AutomataOperationCanceledException If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
 			IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState, 
 			final boolean useFinalStateConstraints, final Collection<Set<STATE>> initialEquivalenceClasses)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
 //		if (!new IsDeterministic<>(mServices, operand).getResult()) {
