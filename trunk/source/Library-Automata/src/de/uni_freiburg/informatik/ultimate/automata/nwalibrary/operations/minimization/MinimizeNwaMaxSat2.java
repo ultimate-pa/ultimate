@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,10 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.MaxHornSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.MaxHornSatSolver.VariableStatus;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -73,25 +68,39 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final MaxHornSatSolver<Doubleton<STATE>> mSolver = 
 			new MaxHornSatSolver<Doubleton<STATE>>(mServices);
-	private final Set<Doubleton<STATE>> mProcessedDoubletons = new HashSet<>();
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
+	private final boolean mUseFinalStateConstraints;
 	private int mNumberClauses_Acceptance = 0;
 	private int mNumberClauses_Transitions = 0;
 	private int mNumberClauses_Transitivity = 0;
 	
+	/**
+	 * Constructor that can be called by other classes of the automata
+	 * (but not by the automata script interpreter because there is too much 
+	 * input required) 
+	 * @param addMapOldState2newState Let the class that constructs the quotient
+	 * 		NWA also construct a map that maps states of the operand to
+	 * 		the corresponding state of the result.
+	 * @param useFinalStateConstraints add constraints that final and non-final 
+	 * 		states cannot be merged
+	 * @param initialEquivalenceClasses We only try to merge states that are
+	 * 		in one of the equivalence classes
+	 */
 	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState)
+			IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState, 
+			final boolean useFinalStateConstraints, final Collection<Set<STATE>> initialEquivalenceClasses)
 					throws AutomataLibraryException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
 //		if (!new IsDeterministic<>(mServices, operand).getResult()) {
 //		throw new AssertionError("not deterministic");
 //	}
-		mInitialEquivalenceClasses = 
-				(new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand)).getResult();
+		mUseFinalStateConstraints = useFinalStateConstraints;
+		mInitialEquivalenceClasses = initialEquivalenceClasses;
+
 		mState2EquivalenceClass = new HashMap<>();
 		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			for (final STATE state : equivalenceClass) {
@@ -118,7 +127,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	
 	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
 			IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
-		this(services, stateFactory, operand, false);
+		this(services, stateFactory, operand, false, true, 
+				(new LookaheadPartitionConstructor<LETTER, STATE>(services, operand)).getResult());
 	}
 	
 	private boolean haveSimilarEquivalenceClass(STATE inputState1, STATE inputState2) {
@@ -158,9 +168,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 					mStatePairs.put(states[i], states[j], doubleton);
 					mStatePairs.put(states[j], states[i], doubleton);
 					mSolver.addVariable(doubleton);
-					if (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j])) {
-						mSolver.addHornClause(consArr(doubleton), null);
-						mNumberClauses_Acceptance++;
+					if (mUseFinalStateConstraints) {
+						if (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j])) {
+							mSolver.addHornClause(consArr(doubleton), null);
+							mNumberClauses_Acceptance++;
+						}
 					}
 				}
 			}
