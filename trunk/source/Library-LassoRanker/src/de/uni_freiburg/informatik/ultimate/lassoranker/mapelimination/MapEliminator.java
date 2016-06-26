@@ -196,15 +196,53 @@ public class MapEliminator {
 	private void findIndicesInArrayUpdate(final List<ArrayUpdate> arrayUpdates, final Map<Term, RankVar> inVars, final Map<Term, RankVar> outVars) {
 		final Term oldArray = arrayUpdates.get(0).getOldArray();
 		final Term globalArray = getGlobalTerm(oldArray, inVars, outVars);
+		final HashMap<Term, Term> arrayReplacements = new HashMap<>();
 		for (final ArrayUpdate update : arrayUpdates) {
 			final MultiDimensionalStore store = update.getMultiDimensionalStore();
-			for (final Term t : store.getIndex()) {
+			final ArrayIndex newIndex = replaceIndex(store.getIndex(), arrayReplacements);
+			final Term newValue = replaceTerm(store.getValue(), arrayReplacements);
+			for (final Term t : newIndex) {
 				findIndices(t, inVars, outVars);
 			}
-			findIndices(store.getValue(), inVars, outVars);
-			final ArrayIndex globalIndex = getGlobalArrayIndex(store.getIndex(), inVars, outVars);
+			findIndices(newValue, inVars, outVars);
+			final ArrayIndex globalIndex = getGlobalArrayIndex(newIndex, inVars, outVars);
 			addToMap(globalArray, globalIndex);
+			arrayReplacements.put(update.getNewArray(), store.getStoreTerm());
 		}
+	}
+
+	// This is to replace aux-vars created by SingleUpdateNormalFormTransformer with the their defintion, that doesn't contain aux-vars
+	// TODO: Change SingleUpdateNormalFormTransformer?
+	private Term replaceTerm(final Term term, final Map<Term, Term> arrayReplacements) {
+		if (arrayReplacements.isEmpty()) {
+			return term;
+		}
+		if (term instanceof TermVariable) {
+			if (arrayReplacements.containsKey(term)) {
+				return replaceTerm(arrayReplacements.get(term), arrayReplacements);
+			} else {
+				return term;
+			}
+		}
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm a = (ApplicationTerm) term;
+			final Term[] params = a.getParameters();
+			final int length = params.length;
+			final Term[] newParams = new Term[length];
+			for (int i = 0; i < length; i++) {
+				newParams[i] = replaceTerm(params[i], arrayReplacements);
+			}
+			return mScript.term(a.getFunction().getApplicationString(), newParams);
+		}
+		return term;
+	}
+
+	private ArrayIndex replaceIndex(final ArrayIndex index, final Map<Term, Term> arrayReplacements) {
+		final List<Term> newList = new ArrayList<>();
+		for (final Term t : index) {
+			newList.add(replaceTerm(t, arrayReplacements));
+		}
+		return new ArrayIndex(newList);
 	}
 
 	private void addToMap(final Term globalArray, final ArrayIndex globalIndex) {
@@ -228,7 +266,6 @@ public class MapEliminator {
 	public TransFormulaLR getRewrittenTransFormula(final TransFormula tf) {
 		assert mTransFormulas.contains(tf);
 		final TransFormulaLR newTF = TransFormulaLR.buildTransFormula(tf, mReplacementVarFactory);
-		mAuxVarTerm = mScript.term("true");
 		final Set<Term> assignedVars = new HashSet<>();
 		for (final BoogieVar boogieVar : tf.getAssignedVars()) {
 			assignedVars.add(boogieVar.getTermVariable());
@@ -251,6 +288,7 @@ public class MapEliminator {
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 					mVariableManager, quantified);
 			mAuxVars.clear();
+			mAuxVarTerm = mScript.term("true");
 		}
 		newTF.setFormula(SmtUtils.simplify(mScript, newTerm, mServices));
 		return newTF;
@@ -293,7 +331,7 @@ public class MapEliminator {
 			final String function = a.getFunction().getApplicationString();
 			final Term[] params = a.getParameters();
 			if (function.equals("select")) {
-				return processArrayRead(term, tf);
+				return processArrayRead(term, tf, assignedVars);
 			}
 			if (function.equals("=") && params[0].getSort().isArraySort()) {
 				// Handle array assignment
@@ -324,7 +362,7 @@ public class MapEliminator {
 		return term;
 	}
 
-	private Term processArrayRead(final Term term, final TransFormulaLR tf) {
+	private Term processArrayRead(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars) {
 		final Term globalTerm = getGlobalTerm(term, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
 		final RankVar rv = mReplacementVarFactory.getOrConstuctReplacementVar(globalTerm);
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
@@ -333,25 +371,29 @@ public class MapEliminator {
 		if (SmtUtils.isFunctionApplication(array, "store")) {
 			final SingleUpdateNormalFormTransformer normalForm = new SingleUpdateNormalFormTransformer(term, mScript,
 					new FreshAuxVarGenerator(mReplacementVarFactory));
-			final List<ArrayUpdate> list = normalForm.getArrayUpdates();
-			final int last = list.size() - 1;
+			final List<ArrayUpdate> arrayUpdates = normalForm.getArrayUpdates();
+			final int last = arrayUpdates.size() - 1;
 			final Set<ArrayIndex> processedIndices = new HashSet<>();
 			Term result = mScript.term("true");
 			final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
 			mAuxVars.add(auxVar);
+			final Map<Term, Term> arrayReplacements = new HashMap<>();
+			for (final ArrayUpdate update : arrayUpdates) {
+				arrayReplacements.put(update.getNewArray(), update.getMultiDimensionalStore().getStoreTerm());
+			}
 			for (int i = last; i >= 0; i--) {
-				final ArrayUpdate update = list.get(i);
+				final ArrayUpdate update = arrayUpdates.get(i);
 				final ArrayIndex assignedIndex = update.getIndex();
 				if (processedIndices.contains(assignedIndex)) {
 					continue;
 				}
-				final Term value = update.getValue();
+				final Term value = process(replaceTerm(update.getValue(), arrayReplacements), tf, assignedVars);
 				final Term newTerm = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, index, assignedIndex, processedIndices, auxVar, value);
 				result = Util.and(mScript, result, newTerm);
 				processedIndices.add(assignedIndex);
 			}
-			final Term realArray = list.get(0).getOldArray();
-			final Term selectTerm = processArrayRead(SmtUtils.multiDimensionalSelect(mScript, realArray, index), tf);
+			final Term realArray = arrayUpdates.get(0).getOldArray();
+			final Term selectTerm = processArrayRead(SmtUtils.multiDimensionalSelect(mScript, realArray, index), tf, assignedVars);
 			final Term arrayRead = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, index, index, processedIndices, auxVar, selectTerm);
 			mAuxVarTerm = Util.and(mScript, mAuxVarTerm, result, arrayRead);
 			return auxVar;
@@ -374,27 +416,35 @@ public class MapEliminator {
 	private Term processArrayAssignment(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars) {
 		final SingleUpdateNormalFormTransformer normalForm = new SingleUpdateNormalFormTransformer(term, mScript,
 				new FreshAuxVarGenerator(mReplacementVarFactory));
-		final List<ArrayUpdate> list = normalForm.getArrayUpdates();
+		final List<ArrayUpdate> arrayUpdates = normalForm.getArrayUpdates();
 		Term oldArray;
 		Term newArray;
-		if (list.isEmpty()) {
+		if (arrayUpdates.isEmpty()) {
 			// New / Old array might be "wrong" (isn't important because first loop isn't entered)
 			final Term[] params = ((ApplicationTerm) term).getParameters();
 			oldArray = params[0];
 			newArray = params[1];
 		} else {
-			oldArray = list.get(0).getOldArray();
-			newArray = list.get(list.size() - 1).getNewArray();
+			oldArray = arrayUpdates.get(0).getOldArray();
+			newArray = arrayUpdates.get(arrayUpdates.size() - 1).getNewArray();
+		}
+		final Map<Term, Term> arrayReplacements = new HashMap<>();
+		for (final ArrayUpdate update : arrayUpdates) {
+			arrayReplacements.put(update.getNewArray(), update.getMultiDimensionalStore().getStoreTerm());
 		}
 		final Term globalOldArray = getGlobalTerm(oldArray, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
 		final Term globalNewArray = getGlobalTerm(newArray, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
 		final Set<ArrayIndex> assignedIndices = new HashSet<>();
-		final Set<ArrayIndex> assignedIndicesGlobal = new HashSet<>();
 		Term result = mScript.term("true");
-		for (int i = list.size() - 1; i >= 0; i--) {
-			final ArrayUpdate update = list.get(i);
-			final ArrayIndex assignedIndex = update.getIndex();
-			final Term value = update.getValue();
+		for (int i = arrayUpdates.size() - 1; i >= 0; i--) {
+			final ArrayUpdate update = arrayUpdates.get(i);
+			// The value of the update might contain an aux-var, so replace it and process it then
+			final List<Term> list = new ArrayList<>();
+			for (final Term t : update.getIndex()) {
+				list.add(process(replaceTerm(t, arrayReplacements), tf, assignedVars));
+			}
+			final ArrayIndex assignedIndex = new ArrayIndex(list);
+			final Term value = process(replaceTerm(update.getValue(), arrayReplacements), tf, assignedVars);
 			for (final ArrayIndex globalIndex : mArrayIndices.get(globalNewArray)) {
 				final ArrayIndex index = getLocalIndex(globalIndex, tf, assignedVars, false);
 				if (assignedIndices.contains(index)) {
@@ -413,7 +463,6 @@ public class MapEliminator {
 				result = Util.and(mScript, result, newTerm);
 			}
 			assignedIndices.add(assignedIndex);
-			assignedIndicesGlobal.add(getGlobalArrayIndex(assignedIndex, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping()));
 		}
 		// For un-assigned indices i add: newArray[i] = oldArray[i]
 		for (final ArrayIndex globalIndex : mArrayIndices.get(globalOldArray)) {
@@ -648,7 +697,7 @@ public class MapEliminator {
 			} else if (outVars.containsKey(term)){
 				rv = outVars.get(term);
 			} else {
-				throw new UnsupportedOperationException("The var is neither an in- nor an out-var!");
+				throw new UnsupportedOperationException(term.toString() + " is neither an in- nor an out-var!");
 			}
 			final Term newTerm = rv.getDefinition();
 			mRankVars.put(newTerm, rv);
