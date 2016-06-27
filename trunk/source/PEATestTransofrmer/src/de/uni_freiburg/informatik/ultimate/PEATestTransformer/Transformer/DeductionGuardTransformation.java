@@ -85,8 +85,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						if(destinationHasLastPhase){
 							if (this.containsEffect(conjunct, i)){
 								// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
-								//CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
-								temp = conjunct.prime();//.and(l);
+								CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
+								temp = conjunct.prime().and(l);
 								for(CDD t: dnf){
 									if(!this.containsEffect(t, i)){
 										t = t.negate().prime();
@@ -101,9 +101,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 							}
 						} else {
 							// conjunct && !R_effect && L_conjunt
-							//CDD l = this.encodeWriteInConjunct(conjunct, i, false);
+							CDD l = this.encodeWriteInConjunct(conjunct, i, false);
 							CDD r = this.encodeDeducedInConjunct(conjunct, i);
-							temp = conjunct.prime().and(r);//.and(l);
+							temp = conjunct.prime().and(r).and(l);
 						}
 						// add result to new conjunct
 						resultingConjunct = resultingConjunct.or(temp);
@@ -113,7 +113,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				
 			}
 		}
-		this.generateDeductionAutomatonInstant();
+		this.generateDeductionAutomatonNextStep();
 		
 	}
 	
@@ -200,12 +200,22 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		// Add deduction guard automata 
 				for(String ident: this.deductionMonitorVars.keySet()){
 					HashMap<String,String> variables = new HashMap<String,String>();
+					
 					CDD mayRead = BoogieBooleanExpressionDecision.create(
 							new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident +"'")
 							);
+					// v = v'
+					CDD mayReadSame = mayRead.and(BoogieBooleanExpressionDecision.create(
+							new BinaryExpression(
+									new BoogieLocation("",0,0,0,0,false), BinaryExpression.Operator.COMPEQ,  
+									new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident+"'"),
+									new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident)
+									)
+						));
+					
 					variables.put(READ_GUARD_PREFIX+ident, "bool");
 					Phase phase0 = new Phase("p0", mayRead.negate());
-					Phase phase1 = new Phase("p1", mayRead);
+					Phase phase1 = new Phase("p1", mayReadSame);
 					//the variable stays the same
 					//CDD closedWorldContition = CDD.FALSE;
 					CDD closedWorldContition = CDD.FALSE;
@@ -227,7 +237,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					
 					this.systemModel.addPea(new PhaseEventAutomata(
 							"CW_" + ident,  			//name
-							new Phase[]{phase0, phase1}, 		//pahses
+							new Phase[]{phase0, phase1},//pahses
 							new Phase[]{phase0}, 		//initial pahses
 							new ArrayList<String>(){}, 	//clocks
 							variables, 					//variables and types thereof
