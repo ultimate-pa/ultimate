@@ -59,14 +59,14 @@ import java.util.Set;
 public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	protected final MAP mMap;
 
-	protected abstract MAP newMap();
-
-	protected abstract Set<R> newSet();
-
 	public AbstractRelation() {
 		super();
 		mMap = newMap();
 	}
+	
+	protected abstract MAP newMap();
+
+	protected abstract Set<R> newSet();
 
 	/**
 	 * Add a pair (domainElem, rangeElem) to the relation.

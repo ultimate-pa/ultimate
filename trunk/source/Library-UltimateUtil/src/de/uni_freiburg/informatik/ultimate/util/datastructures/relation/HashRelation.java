@@ -39,12 +39,12 @@ import java.util.Set;
 public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 
 	@Override
-	public Map<D, Set<R>> newMap() {
+	protected Map<D, Set<R>> newMap() {
 		return new HashMap<D, Set<R>>();
 	}
 
 	@Override
-	public Set<R> newSet() {
+	protected Set<R> newSet() {
 		return new HashSet<R>();
 	}
 
