@@ -159,7 +159,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	// private IHoareTripleChecker mHoareTripleChecker;
-	private final boolean mDoFaultLocalization;
+	private final boolean mDoFaultLocalization_NonFlowSensitive;
+	private final boolean mDoFaultLocalization_FlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -212,8 +213,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IPreferenceProvider mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mUnsatCores = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalization = mPrefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
+		mDoFaultLocalization_NonFlowSensitive = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
+		mDoFaultLocalization_FlowSensitive = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
+
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
@@ -399,14 +403,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			mRcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
-			if (mDoFaultLocalization && feasibility == LBool.SAT) {
+			if ((mDoFaultLocalization_NonFlowSensitive || mDoFaultLocalization_FlowSensitive) && feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
 						mPref.interprocedural(), super.mSmtManager, mLogger);
 				final NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample,
 						cfg, mServices, mSmtManager,
-						mModGlobVarManager, predicateUnifier);
+						mModGlobVarManager, predicateUnifier, 
+						mDoFaultLocalization_NonFlowSensitive, mDoFaultLocalization_FlowSensitive);
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");

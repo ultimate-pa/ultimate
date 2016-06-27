@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -272,7 +273,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		return new TransFormula(mBoogie2Smt.getScript().term("true"),
 				new HashMap<BoogieVar, TermVariable>(),
 				outvars,
-				new HashSet<TermVariable>(), 
+				Collections.emptyMap(), 
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				tf.getClosedFormula());
@@ -296,13 +297,13 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
 		}
-		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		for (final TermVariable tv : tf.getAuxVars()) {
-			if (freeVars.contains(tv)) {
-				auxVars.add(tv);
+		final Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
+		for (final Entry<TermVariable, Term> entry : tf.getAuxVars().entrySet()) {
+			if (freeVars.contains(entry.getKey())) {
+				auxVars.put(entry.getKey(), entry.getValue());
 			}
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, mBoogie2Smt);
+		final Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, mBoogie2Smt);
 		
 		return new TransFormula(formula,
 				invars,

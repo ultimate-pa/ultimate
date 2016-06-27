@@ -241,7 +241,7 @@ public class LassoPartitioneer {
 		}
 		final RankVar inVarRankVar = original.getInVarsReverseMapping().get(term);
 		final RankVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
-		final boolean isAuxVar = original.getAuxVars().contains(term);
+		final boolean isAuxVar = original.getAuxVars().keySet().contains(term);
 		assert (isConstant || !isAuxVar || (inVarRankVar == null && outVarRankVar == null)) : "auxVar may neither be inVar nor outVar";
 		assert (isConstant || !(inVarRankVar == null && outVarRankVar == null) || isAuxVar) : "neither inVar nor outVar may be auxVar";
 		if (inVarRankVar != null) {
@@ -251,7 +251,9 @@ public class LassoPartitioneer {
 			transformulaLR.addOutVar(outVarRankVar, term);
 		}
 		if (isAuxVar) {
-			transformulaLR.addAuxVars(Collections.singleton((TermVariable) term));
+			final TermVariable auxVarTv = (TermVariable) term;
+			final Term auxVarConst = transformulaLR.getAuxVars().get(auxVarTv);
+			transformulaLR.addAuxVars(Collections.singletonMap(auxVarTv, auxVarConst));
 		}
 	}
 

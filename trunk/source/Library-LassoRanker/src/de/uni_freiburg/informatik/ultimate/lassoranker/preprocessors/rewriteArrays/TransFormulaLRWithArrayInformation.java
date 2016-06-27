@@ -188,7 +188,7 @@ public class TransFormulaLRWithArrayInformation {
 	private boolean checkSunftranformation(IUltimateServiceProvider services, 
 			ILogger logger, IFreshTermVariableConstructor ftvc, 
 			Boogie2SMT boogie2smt, List<List<ArrayEquality>> arrayEqualities, SingleUpdateNormalFormTransformer[] sunfts) {
-		final TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, logger, ftvc, mScript, mTransFormulaLR, arrayEqualities, sunfts);
+		final TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, logger, ftvc, mReplacementVarFactory, mScript, mTransFormulaLR, arrayEqualities, sunfts);
 		final LBool notStronger = TransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript, boogie2smt.getBoogie2SmtSymbolTable());
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notStronger check is " + notStronger);
@@ -782,7 +782,7 @@ public class TransFormulaLRWithArrayInformation {
 
 
 	private static TransFormulaLR constructTransFormulaLRWInSunf(IUltimateServiceProvider services, 
-			ILogger logger, IFreshTermVariableConstructor ftvc, 
+			ILogger logger, IFreshTermVariableConstructor ftvc, ReplacementVarFactory repVarFactory, 
 			Script script, TransFormulaLR tf, 
 			List<List<ArrayEquality>> arrayEqualities, SingleUpdateNormalFormTransformer... sunfts) {
 		final TransFormulaLR result = new TransFormulaLR(tf);
@@ -801,7 +801,8 @@ public class TransFormulaLRWithArrayInformation {
 			final Set<TermVariable> auxVars = new HashSet<>(sunfts[i].getAuxVars());
 			disjunct = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, disjunct, services, logger, ftvc); 
 			disjuncts.add(disjunct);
-			result.addAuxVars(auxVars);
+			final Map<TermVariable, Term> auxVar2Const = repVarFactory.constructAuxVarMapping(auxVars);
+			result.addAuxVars(auxVar2Const);
 		}
 		final Term resultTerm = SmtUtils.or(script, disjuncts);
 		result.setFormula(resultTerm);

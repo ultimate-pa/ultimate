@@ -30,8 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.BinaryDebug;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.SingleDebug;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 
 /**
@@ -101,17 +104,30 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 * @param automaton automaton
 	 * @param tester tester
 	 * @param factory automaton factory
+	 * @param policy debug policy
 	 * @return new automaton iff automaton could be shrunk
 	 */
-	public INestedWordAutomaton<LETTER, STATE> runBinarySearch(
+	public INestedWordAutomaton<LETTER, STATE> runSearch(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final ATester<LETTER, STATE> tester,
-			final AAutomatonFactory<LETTER, STATE> factory) {
+			final AAutomatonFactory<LETTER, STATE> factory,
+			final EDebugPolicy policy) {
 		mAutomaton = automaton;
 		mFactory = factory;
-		final BinaryDebug<T, LETTER, STATE> binSearch =
-				new BinaryDebug<T, LETTER, STATE>(tester, this);
-		final boolean isReduced = binSearch.run();
+		final ADebug<T, LETTER, STATE> debugger;
+		switch (policy) {
+			case SINGLE:
+				debugger = new SingleDebug<T, LETTER, STATE>(tester, this);
+				break;
+			
+			case BINARY:
+				debugger = new BinaryDebug<T, LETTER, STATE>(tester, this);
+				break;
+			
+			default:
+				throw new IllegalArgumentException("Unknown policy.");
+		}
+		final boolean isReduced = debugger.run();
 		return isReduced ? mAutomaton : null;
 	}
 	

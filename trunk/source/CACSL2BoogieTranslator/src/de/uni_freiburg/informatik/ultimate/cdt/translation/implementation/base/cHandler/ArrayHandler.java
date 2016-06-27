@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
 /**
  * Class that handles translation of arrays.
@@ -69,11 +69,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class ArrayHandler {
 	
-	private final POINTER_CHECKMODE mCheckArrayAccessOffHeap;
+	private final PointerCheckMode mCheckArrayAccessOffHeap;
 
 	public ArrayHandler(final IPreferenceProvider prefs) {
 		mCheckArrayAccessOffHeap = 
-				prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, POINTER_CHECKMODE.class);
+				prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.class);
 	}
 
 	/**
@@ -206,7 +206,7 @@ public class ArrayHandler {
 	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
 			ILocation loc, RValue currentIndex,
 			RValue currentDimension, ExpressionResult exprResult) {
-		if (mCheckArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
+		if (mCheckArrayAccessOffHeap  == PointerCheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}

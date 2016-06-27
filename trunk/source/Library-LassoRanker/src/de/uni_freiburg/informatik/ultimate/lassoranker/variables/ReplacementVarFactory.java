@@ -28,12 +28,15 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
  * Factory for constructing ReplacementVars ensures that for each defining
@@ -50,6 +53,7 @@ public class ReplacementVarFactory {
 			new HashMap<Term, Map<Object, LocalReplacementVar>>();
 	private final Map<String, TermVariable> mAuxVarMapping = 
 			new HashMap<String, TermVariable>();
+	private final ConstructionCache<TermVariable, Term> mAuxVarConstants;
 	/**
 	 * Maps each BoogieVar to a unique BoogieVarWrapper.
 	 */
@@ -59,6 +63,16 @@ public class ReplacementVarFactory {
 	public ReplacementVarFactory(IFreshTermVariableConstructor variableManager) {
 		super();
 		mVariableManager = variableManager;
+		
+		final IValueConstruction<TermVariable, Term> valueConstruction = new IValueConstruction<TermVariable, Term>() {
+			@Override
+			public Term constructValue(TermVariable key) {
+				final Term auxVarConst = mVariableManager.constructFreshTermVariable(key.getName(), key.getSort());
+				return auxVarConst;
+			}
+		};
+		
+		mAuxVarConstants = new ConstructionCache<>(valueConstruction);
 	}
 
 	/**
@@ -108,6 +122,27 @@ public class ReplacementVarFactory {
 			}
 		}
 		return auxVar;
+	}
+	
+	/**
+	 * Construct constant (0-ary function) for an auxVar. 
+	 */
+	public Term getOrConstructConstForAuxVar(TermVariable tv) {
+		final Term auxVarConst = mAuxVarConstants.getOrConstuct(tv);
+		return auxVarConst;
+	}
+	
+	/**
+	 * Given a set of auxVars, construct a map that assigns to auxVar its
+	 * corresponding constant. Construct constant if it does not yet exist.
+	 */
+	public HashMap<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars) {
+		final HashMap<TermVariable,Term> result = new HashMap<>();
+		for (final TermVariable auxVar : auxVars) {
+			final Term auxVarConst = getOrConstructConstForAuxVar(auxVar);
+			result.put(auxVar, auxVarConst);
+		}
+		return result;
 	}
 	
 	

@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.mapelimination.MapEliminator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
@@ -243,10 +242,6 @@ public class CfgBuilder {
 			new LargeBlockEncoding();
 		}
 		
-		final boolean applyMapElimination = false;
-		if (applyMapElimination) {
-			mGraphroot = (new MapEliminator(mServices, mGraphroot)).getRootNode();
-		}
 		return mGraphroot;
 	}
 

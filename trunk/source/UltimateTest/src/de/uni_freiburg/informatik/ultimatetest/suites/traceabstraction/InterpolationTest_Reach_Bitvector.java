@@ -103,6 +103,11 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 		
 		new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		
+		
+		
+//		/*** Special folder for Matthias' LDV tests.
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-false/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
@@ -134,6 +139,7 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf",
 		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf",
 		"automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-MathSAT-IcSpLv-Bitvector.epf",
 	};
 
 	

@@ -319,6 +319,7 @@
 		<module>../HeapSeparator</module>
 		<module>../HornClauseGraphBuilder</module>
 		<module>../PEATestTransofrmer</module>
+		<module>../TreeAutomizer</module>
 	</modules>
 
 	<profiles>

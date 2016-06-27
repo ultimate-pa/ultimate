@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -872,7 +873,7 @@ public class LassoChecker {
 		final Term term = mSmtManager.getScript().term("true");
 		final Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		final Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
-		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
 		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
 		final Infeasibility infeasibility = Infeasibility.UNPROVEABLE;
 		final Term closedFormula = term;

@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -148,7 +151,7 @@ public class SpaceExParser implements ISource {
 				br.close();
 				fr.close();
 			}
-		} catch (Exception e) {
+		} catch (IOException ioe) {
 			return false;
 		}
 
@@ -173,19 +176,21 @@ public class SpaceExParser implements ISource {
 
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 
-		final Marshaller marshaller = jaxContext.createMarshaller();
+//		final Marshaller marshaller = jaxContext.createMarshaller();
 
-		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+//		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
-		final StringWriter streamWriter = new StringWriter();
+//		final StringWriter streamWriter = new StringWriter();
 
-		marshaller.marshal(spaceEx, streamWriter);
+//		marshaller.marshal(spaceEx, streamWriter);
 
-		mLogger.debug(streamWriter.toString());
+//		mLogger.debug(streamWriter.toString());
 
 		fis.close();
-
-		return new SpaceExModelBuilder(spaceEx, mLogger).getModel();
+		
+		HybridModel system = new HybridModel(spaceEx, mLogger);
+		
+		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 
 	@Override

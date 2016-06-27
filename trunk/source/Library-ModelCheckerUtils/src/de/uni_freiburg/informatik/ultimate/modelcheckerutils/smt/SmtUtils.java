@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +70,12 @@ public class SmtUtils {
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
+	
+	/**
+	 * Avoid the construction of "bvadd" with more than two arguments and
+	 * use nested "bvadd" terms instead.
+	 */
+	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
 	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -252,10 +259,24 @@ public class SmtUtils {
 	 */
 	public static Term indexEqualityImpliesValueEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2,
 			final Term value1, final Term value2) {
-		assert index1.size() == index2.size();
-		final Term indexEquality = Util.and(script, SmtUtils.pairwiseEquality(script, index1, index2));
-		final Term valueEquality = SmtUtils.binaryEquality(script, value1, value2);
-		final Term result = Util.or(script, SmtUtils.not(script, indexEquality), valueEquality);
+		return indexEqualityInequalityImpliesValueEquality(script, index1, index2, Collections.emptyList(), value1, value2);
+	}
+
+	/**
+	 * Construct the following term. (index == equal) & (index != i) & ... (for all i in unequal) ==> (value1 == value2)
+	 *
+	 */
+	public static Term indexEqualityInequalityImpliesValueEquality(final Script script, final ArrayIndex index, final ArrayIndex equal,
+			final Collection<ArrayIndex> unequal, final Term value1, final Term value2) {
+		assert index.size() == equal.size();
+		Term lhs = Util.and(script, SmtUtils.pairwiseEquality(script, index, equal));
+		for (final ArrayIndex i : unequal) {
+			assert index.size() == i.size();
+			final Term eq = Util.and(script, SmtUtils.pairwiseEquality(script, index, i));
+			lhs = Util.and(script, lhs, Util.not(script, eq));
+		}
+		final Term rhs = SmtUtils.binaryEquality(script, value1, value2);
+		final Term result = Util.or(script, SmtUtils.not(script, lhs), rhs);
 		return result;
 	}
 
@@ -281,10 +302,33 @@ public class SmtUtils {
 			if (sort.isNumericSort()) {
 				return script.term("+", summands);
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
-				return script.term("bvadd", summands);
+				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
+					return binaryBitvectorSum(script, sort, summands);
+				} else {
+					return script.term("bvadd", summands);
+				}
 			} else {
 				throw new UnsupportedOperationException("unkown sort " + sort);
 			}
+		}
+	}
+	
+	/**
+	 * Construct nested binary "bvadd" terms.  
+	 * @param sort bitvector sort of the arguments (required if summands is empty)
+	 * @param summands bitvector terms that each have the same sort
+	 */
+	public static Term binaryBitvectorSum(final Script script, final Sort sort, final Term... summands) {
+		if (summands.length == 0) {
+			return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
+		} else if (summands.length == 0) {
+			return summands[0];
+		} else {
+			Term result = script.term("bvadd", summands[0], summands[1]);
+			for (int i=2; i<summands.length; i++) {
+				result = script.term("bvadd", result, summands[i]);
+			}
+			return result;
 		}
 	}
 

@@ -151,9 +151,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
@@ -162,6 +159,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -213,9 +213,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -310,7 +310,7 @@ public class CHandler implements ICHandler {
 	private final Stack<String> mInnerMostLoopLabel;
 	private final ILogger mLogger;
 
-	private final CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
+	private final CACSLPreferenceInitializer.UnsignedTreatment mUnsignedTreatment;
 
 	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
 
@@ -337,7 +337,7 @@ public class CHandler implements ICHandler {
 		mNameHandler = nameHandler;
 
 		mUnsignedTreatment = prefs.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT,
-				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
+				CACSLPreferenceInitializer.UnsignedTreatment.class);
 
 		mArrayHandler = new ArrayHandler(prefs);
 		final boolean checkPointerValidity =
@@ -357,9 +357,9 @@ public class CHandler implements ICHandler {
 
 		mGlobAcslExtractors = new ArrayList<>();
 
-		final POINTER_INTEGER_CONVERSION pointerIntegerConversion =
+		final PointerIntegerConversion pointerIntegerConversion =
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-						CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION.class);
+						CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
 			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
@@ -1839,7 +1839,7 @@ public class CHandler implements ICHandler {
 	private void addDivisionByZeroCheck(Dispatcher main, ILocation loc, ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.lrVal.getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
-		if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.IGNORE) {
+		if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.IGNORE) {
 			return;
 		} else if (divisorType.isRealFloatingType()) {
 			// division by zero is defined for real floating types
@@ -1856,9 +1856,9 @@ public class CHandler implements ICHandler {
 			final Expression divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 			final Statement additionalStatement;
-			if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
+			if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSUME) {
 				additionalStatement = new AssumeStatement(loc, divisorNotZero);
-			} else if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSERTandASSUME) {
+			} else if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSERTandASSUME) {
 				additionalStatement = new AssertStatement(loc, divisorNotZero);
 				final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
 				check.addToNodeAnnot(additionalStatement);
@@ -1984,7 +1984,7 @@ public class CHandler implements ICHandler {
 	 */
 	private void addBaseEqualityCheck(Dispatcher main, ILocation loc, Expression leftPtr, Expression rightPtr,
 			ExpressionResult result) {
-		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.IGNORE) {
+		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == PointerCheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}
@@ -3196,7 +3196,7 @@ public class CHandler implements ICHandler {
 			IASTNode parent) {
 		if (mAcsl != null) {
 			if (next instanceof IASTTranslationUnit) {
-				for (final ACSLNode globAcsl : mAcsl.mAcsl) {
+				for (final ACSLNode globAcsl : mAcsl.getAcsl()) {
 					if (globAcsl instanceof GlobalLTLInvariant) {
 						final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
 						extractor.run(globAcsl);
@@ -3219,7 +3219,7 @@ public class CHandler implements ICHandler {
 						}
 					}
 				} // TODO: deal with other global ACSL stuff
-			} else if (mAcsl.mSuccessorCNode == null) {
+			} else if (mAcsl.getSuccessorCNode() == null) {
 				if (parent != null && stmt != null && next == null) {
 					// ACSL at the end of a function or at the end of the last statement in a switch that is not
 					// terminated by a break
@@ -3227,7 +3227,7 @@ public class CHandler implements ICHandler {
 					// now
 					// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield a unsafe boogie
 					// program
-					for (final ACSLNode acslNode : mAcsl.mAcsl) {
+					for (final ACSLNode acslNode : mAcsl.getAcsl()) {
 						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
 							return;// handle later ...
 						} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
@@ -3258,9 +3258,9 @@ public class CHandler implements ICHandler {
 				// ACSL for next compound statement -> handle it next call
 				// or in case of translation unit, ACSL in an unexpected
 				// location!
-			} else if (mAcsl.mSuccessorCNode.equals(next)) {
+			} else if (mAcsl.getSuccessorCNode().equals(next)) {
 				assert mContract.isEmpty();
-				for (final ACSLNode acslNode : mAcsl.mAcsl) {
+				for (final ACSLNode acslNode : mAcsl.getAcsl()) {
 					if (stmt != null) {
 						// this means we are in a compound statement
 						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
@@ -3948,7 +3948,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public UNSIGNED_TREATMENT getUnsignedTreatment() {
+	public UnsignedTreatment getUnsignedTreatment() {
 		return mUnsignedTreatment;
 	}
 

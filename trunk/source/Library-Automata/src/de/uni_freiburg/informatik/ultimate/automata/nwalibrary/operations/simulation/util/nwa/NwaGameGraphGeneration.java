@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
@@ -136,6 +139,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	/**
+	 * If the game graph should only use hard push-over edges between successors
+	 * and predecessors of return-invoking Duplicator vertices. Those are
+	 * push-over edges that get generated if the return-invoking Duplicator
+	 * vertex only has omitted successors. If set to <tt>false</tt>, all
+	 * push-over edges will be generated, regardless of how the successors and
+	 * predecessors look.
+	 */
+	private final boolean mOnlyUseHardPushOverEdges;
+	/**
 	 * Data structure of all spoiler vertices that may end up being a dead end,
 	 * because they can not take a return-transition due to their down state.
 	 */
@@ -191,11 +203,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * source and destination of the edge.
 	 */
 	private final NestedMap2<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> mSrcDestToSummarizeEdges;
-	/**
-	 * If the game graph should use push-over edges between successors and
-	 * predecessors of return-invoking Duplicator vertices.
-	 */
-	private final boolean mUsePushOverEdges;
 
 	/**
 	 * Creates a new generation object that modifies a given graph using a given
@@ -242,7 +249,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mProgressTimer = progressTimer;
 		mGameGraph = gameGraph;
 		mSimulationType = simulationType;
-		mUsePushOverEdges = false;
+		mOnlyUseHardPushOverEdges = true;
 
 		mResultAmountOfStates = 0;
 		mResultAmountOfTransitions = 0;
@@ -272,6 +279,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void computeSafeVertexDownStates() throws AutomataOperationCanceledException {
+		// TODO This method may be obsolete as we might not need those
+		// information in the double decker graph for our definition of
+		// simulation. Apart from this, exactly computing which down states are
+		// correct, could be a complex task. We might not want this.
 		mLogger.debug("Computing which vertex down states are safe.");
 		// Add roots of search to the queue
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new LinkedList<SearchElement<LETTER, STATE>>();
@@ -477,7 +488,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				@SuppressWarnings("unchecked")
 				final IHasVertexDownStates<STATE> searchVertexWithDownStates = (IHasVertexDownStates<STATE>) searchVertex;
 				if (!searchVertexWithDownStates.isVertexDownStateSafe()) {
-					// TODO Do something with that information
+					// TODO Do something with that information or remove the
+					// whole safe-downstate-computation
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("\t\tDownstate is marked unsafe: " + searchElement);
 					}
@@ -880,11 +892,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			areThereRemoveableTransitions = transitionsToRemove != null && !transitionsToRemove.isEmpty();
 		}
 
-		Map<STATE, STATE> input2result = null;
-
 		final StateFactory<STATE> stateFactory = mNwa.getStateFactory();
-		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
-				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(), stateFactory);
+		INestedWordAutomatonOldApi<LETTER, STATE> result = null;
 
 		// Merge states
 		if (areThereMergeableStates) {
@@ -902,19 +911,32 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (final STATE state : mNwa.getStates()) {
 					equivalenceClasses.makeEquivalenceClass(state);
 				}
-				// A pair q0, q1 is similar if it q1 simulates q0 for all down
-				// states.
-				final HashRelation<STATE, STATE> possibleSimilarStates = new HashRelation<>();
-				// A pair q0, q1 is not similar if there is at least one down
-				// state configuration such that q1 does not simulate q0.
-				final HashRelation<STATE, STATE> notSimilarStates = new HashRelation<>();
+				// A pair q0, q1 is similar (regarding matched return words) if
+				// q1 simulates q0 for [bottom, bottom]
+				final HashRelation<STATE, STATE> similarStates = new HashRelation<>();
 				for (final SpoilerVertex<LETTER, STATE> v : mGameGraph.getSpoilerVertices()) {
+					if (!(v instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+						continue;
+					}
+					SpoilerDoubleDeckerVertex<LETTER, STATE> vAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) v;
+					VertexDownState<STATE> downState = vAsSpoilerDD.getVertexDownState();
+					// We are only interested in vertices with [bottom, bottom]
+					// (regarding matched return words)
+					STATE leftDownState = downState.getLeftDownState();
+					STATE rightDownState = downState.getRightDownState();
+					if (leftDownState == null || !leftDownState.equals(mBottom) || rightDownState == null
+							|| !rightDownState.equals(mBottom)) {
+						continue;
+					}
+
 					// All the states we need are from Spoiler
 					boolean considerVertex = true;
 					final STATE state1 = v.getQ0();
 					final STATE state2 = v.getQ1();
 					// For delayed simulation we need to choose between the
 					// vertex with bit set to true or false
+					// TODO Reevaluate this regarding simulation with matched
+					// return words
 					if (mSimulationType == ESimulationType.DELAYED) {
 						if (v.isB()) {
 							considerVertex = mNwa.isFinal(state1) && !mNwa.isFinal(state2);
@@ -924,24 +946,16 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					if (considerVertex && state1 != null && state2 != null) {
 						if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
-							possibleSimilarStates.addPair(state1, state2);
-						} else {
-							notSimilarStates.addPair(state1, state2);
+							similarStates.addPair(state1, state2);
 						}
 					}
 				}
-				// Transform possibleSimilarStates into similarStates
-				for (final STATE state1 : notSimilarStates.getDomain()) {
-					for (final STATE state2 : notSimilarStates.getImage(state1)) {
-						possibleSimilarStates.removePair(state1, state2);
-					}
-				}
 				// Mark states for merge if they simulate each other
-				for (final STATE state1 : possibleSimilarStates.getDomain()) {
-					for (final STATE state2 : possibleSimilarStates.getImage(state1)) {
+				for (final STATE state1 : similarStates.getDomain()) {
+					for (final STATE state2 : similarStates.getImage(state1)) {
 						// Only merge if simulation holds in both directions and
 						// we did not exclude the pair from merge
-						if (possibleSimilarStates.containsPair(state2, state1)) {
+						if (similarStates.containsPair(state2, state1)) {
 							equivalenceClasses.union(state1, state2);
 						}
 					}
@@ -953,147 +967,67 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 			}
 
-			// Calculate initial states
-			final Set<STATE> representativesOfInitials = new HashSet<>();
-			for (final STATE initialState : mNwa.getInitialStates()) {
-				representativesOfInitials.add(equivalenceClasses.find(initialState));
-			}
-			// Calculate final states
-			final Set<STATE> representativesOfFinals = new HashSet<>();
-			for (final STATE finalState : mNwa.getFinalStates()) {
-				representativesOfFinals.add(equivalenceClasses.find(finalState));
-			}
+			Collection<Set<STATE>> equivalenceClassesAsCollection = equivalenceClasses.getAllEquivalenceClasses();
+			// Use a Max-Sat-Solver that minimizes the automaton based on
+			// our simulation results
+			MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa, false,
+					false, equivalenceClassesAsCollection);
+			result = new RemoveUnreachable<LETTER, STATE>(mServices, minimizer.getResult()).getResult();
+			mResultAmountOfStates = result.size();
+			// Count transitions
+			for (STATE state : result.getStates()) {
+				for (@SuppressWarnings("unused")
+				OutgoingInternalTransition<LETTER, STATE> internalTrans : result.internalSuccessors(state)) {
+					increaseResultAmountOfTransitions();
+				}
+				for (@SuppressWarnings("unused")
+				OutgoingCallTransition<LETTER, STATE> callTrans : result.callSuccessors(state)) {
+					increaseResultAmountOfTransitions();
+				}
+				for (@SuppressWarnings("unused")
+				OutgoingReturnTransition<LETTER, STATE> returnTrans : result.returnSuccessors(state)) {
+					increaseResultAmountOfTransitions();
+				}
 
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
-				mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-
-			// Add states
-			input2result = new HashMap<>(mNwa.size());
-			for (final STATE representative : equivalenceClasses.getAllRepresentatives()) {
-				final boolean isInitial = representativesOfInitials.contains(representative);
-				final boolean isFinal = representativesOfFinals.contains(representative);
-				final Set<STATE> eqClass = equivalenceClasses.getEquivalenceClassMembers(representative);
-				final STATE mergedState = stateFactory.minimize(eqClass);
-				result.addState(isInitial, isFinal, mergedState);
-				increaseResultAmountOfStates();
-				for (final STATE eqClassMember : eqClass) {
-					input2result.put(eqClassMember, mergedState);
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/counting");
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		} else {
 			// If there is no merge-able state simply
 			// copy the inputed automaton
+			NestedWordAutomaton<LETTER, STATE> resultAsChangeableAutomaton = new NestedWordAutomaton<>(mServices,
+					mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(), stateFactory);
 			for (final STATE state : mNwa.getStates()) {
+				// Copy states
 				final boolean isInitial = mNwa.isInitial(state);
 				final boolean isFinal = mNwa.isFinal(state);
-				result.addState(isInitial, isFinal, state);
+				resultAsChangeableAutomaton.addState(isInitial, isFinal, state);
 				increaseResultAmountOfStates();
-			}
-		}
 
-		// Add transitions
-		for (final STATE inputSrc : mNwa.getStates()) {
-			STATE resultSrc;
-			if (areThereMergeableStates) {
-				// Only access field if it was initialized
-				resultSrc = input2result.get(inputSrc);
-			} else {
-				resultSrc = inputSrc;
-			}
-			// Internal transitions
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mNwa.internalSuccessors(inputSrc)) {
-				final LETTER a = outTrans.getLetter();
-				final STATE inputDest = outTrans.getSucc();
-				STATE resultDest;
-				if (areThereMergeableStates) {
-					// Only access field if it was initialized
-					resultDest = input2result.get(inputDest);
-				} else {
-					resultDest = inputDest;
-				}
-
-				if (areThereRemoveableTransitions) {
-					// Skip edges that should get removed
-					final Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
-					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
-						result.addInternalTransition(resultSrc, a, resultDest);
-						increaseResultAmountOfTransitions();
-					}
-				} else {
-					// If there is no removable transition simply copy the
-					// inputed automaton
-					result.addInternalTransition(resultSrc, a, resultDest);
+				// Copy transitions
+				for (OutgoingInternalTransition<LETTER, STATE> internalTrans : mNwa.internalSuccessors(state)) {
+					resultAsChangeableAutomaton.addInternalTransition(state, internalTrans.getLetter(),
+							internalTrans.getSucc());
 					increaseResultAmountOfTransitions();
 				}
-			}
-			// Call transitions
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mNwa.callSuccessors(inputSrc)) {
-				final LETTER a = outTrans.getLetter();
-				final STATE inputDest = outTrans.getSucc();
-				STATE resultDest;
-				if (areThereMergeableStates) {
-					// Only access field if it was initialized
-					resultDest = input2result.get(inputDest);
-				} else {
-					resultDest = inputDest;
-				}
-
-				if (areThereRemoveableTransitions) {
-					// Skip edges that should get removed
-					// TODO This data structure needs information about
-					// transition types, or it may not be able to differentiate
-					// between initial and call edge if they share
-					// the same alphabet.
-					final Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
-					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
-						result.addCallTransition(resultSrc, a, resultDest);
-						increaseResultAmountOfTransitions();
-					}
-				} else {
-					// If there is no removable transition simply copy the
-					// inputed automaton
-					result.addCallTransition(resultSrc, a, resultDest);
+				for (OutgoingCallTransition<LETTER, STATE> callTrans : mNwa.callSuccessors(state)) {
+					resultAsChangeableAutomaton.addCallTransition(state, callTrans.getLetter(), callTrans.getSucc());
 					increaseResultAmountOfTransitions();
 				}
-			}
-			// Return transitions
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mNwa.returnSuccessors(inputSrc)) {
-				final LETTER a = outTrans.getLetter();
-				final STATE inputDest = outTrans.getSucc();
-				final STATE inputHierPred = outTrans.getHierPred();
-				STATE resultDest;
-				STATE resultHierPred;
-				if (areThereMergeableStates) {
-					// Only access field if it was initialized
-					resultDest = input2result.get(inputDest);
-					resultHierPred = input2result.get(inputHierPred);
-				} else {
-					resultDest = inputDest;
-					resultHierPred = inputHierPred;
-				}
-
-				if (areThereRemoveableTransitions) {
-					// Skip edges that should get removed
-					// TODO This data structure needs information about
-					// transition types and hierPred, or it may not be able to
-					// differentiate between initial and return edge if
-					// they share the same alphabet.
-					final Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
-					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
-						result.addReturnTransition(resultSrc, resultHierPred, a, resultDest);
-						increaseResultAmountOfTransitions();
-					}
-				} else {
-					// If there is no removable transition simply copy the
-					// inputed automaton
-					result.addReturnTransition(resultSrc, resultHierPred, a, resultDest);
+				for (OutgoingReturnTransition<LETTER, STATE> returnTrans : mNwa.returnSuccessors(state)) {
+					resultAsChangeableAutomaton.addReturnTransition(state, returnTrans.getHierPred(),
+							returnTrans.getLetter(), returnTrans.getSucc());
 					increaseResultAmountOfTransitions();
 				}
+
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/copying");
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
 			}
+			result = resultAsChangeableAutomaton;
 		}
 
 		// Log remaining performance stuff
@@ -1303,6 +1237,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// For delayed simulation we also need to account for
 						// vertices with the bit set to true
 						if (mSimulationType == ESimulationType.DELAYED) {
+							// TODO Something seems to be wrong here. Some edges
+							// that should be generated are not generated. See
+							// bug automata in examples.
 							src = getDuplicatorVertex(fixState, trans.getPred(), leftDownState, rightDownState,
 									trans.getLetter(), true, ETransitionType.CALL, null, null);
 							if (!mNwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest,
@@ -1426,8 +1363,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							}
 
 							// Remember vertex since we need it later for
-							// summarize
-							// edge generation
+							// summarize edge generation
 							if (src instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 								mDuplicatorReturningVertices.add((DuplicatorDoubleDeckerVertex<LETTER, STATE>) src);
 								if (mLogger.isDebugEnabled()) {
@@ -1601,21 +1537,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					final SpoilerVertex<LETTER, STATE> summarizeSrcFalseBit = getSpoilerVertex(leftDownState,
 							rightDownState, destDownState.getLeftDownState(), destDownState.getRightDownState(), false,
 							null, null);
-					// In the standard case this vertex must be able to
-					// reach the destination.
-					boolean canFalseBitReachDestination = true;
+					// We need to check if the vertex can reach the destination.
 					// In delayed simulation there may be up to two sources,
 					// differentiating in the bit, depending on if they can
 					// reach the destination.
-					if (mSimulationType == ESimulationType.DELAYED) {
-						// TODO This check is expensive, there may be better
-						// ways to solve the problem
-						canFalseBitReachDestination = loopDetector.canVertexReachDestination(summarizeSrcFalseBit,
-								summarizeDestAsDD);
-					}
+					// TODO This check is expensive, there may be better
+					// ways to solve the problem
+					boolean canFalseBitReachDestination = loopDetector.canVertexReachDestination(summarizeSrcFalseBit,
+							summarizeDestAsDD);
 
 					// False bit summarize edge
-					if (mSimulationType != ESimulationType.DELAYED || canFalseBitReachDestination) {
+					if (canFalseBitReachDestination) {
 						final SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcFalseBit;
 						if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
 							continue;
@@ -1631,7 +1563,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
 					}
-					// True bit summarize edge
+					// True bit summarize edge, only relevant for delayed
+					// simulation
 					if (mSimulationType == ESimulationType.DELAYED) {
 						final SpoilerVertex<LETTER, STATE> summarizeSrcTrueBit = getSpoilerVertex(leftDownState,
 								rightDownState, destDownState.getLeftDownState(), destDownState.getRightDownState(),
@@ -1709,11 +1642,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 
 			// Add push-over edges that are generated by the return invoker
-			if (mUsePushOverEdges && mSimulationType == ESimulationType.DIRECT) {
+			boolean onlyOmittedSuccessors = false;
+			if (mSimulationType == ESimulationType.DIRECT) {
 				// Care for omitted edges that may occur in direct simulation if
 				// a vertex is directly loosing.
 				if (successorsToProcess == null) {
 					successorsToProcess = new LinkedList<Vertex<LETTER, STATE>>();
+					onlyOmittedSuccessors = true;
 				}
 				final List<Vertex<LETTER, STATE>> omittedSuccessors = mReturnInvokerOmittedSuccessors
 						.get(returnInvoker);
@@ -1731,14 +1666,33 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Create push-over edges for every pair of successors and
 			// predecessors
-			if (mUsePushOverEdges && successorsToProcess != null && predecessorsToProcess != null) {
-				for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
-					for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
-						mGameGraph.addPushOverEdge(pred, succ);
-						mRemovedReturnBridges.addedPushOverEdge(pred, succ);
+			if (successorsToProcess != null && predecessorsToProcess != null) {
+				if (!mOnlyUseHardPushOverEdges) {
+					for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
+						for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
+							mGameGraph.addPushOverEdge(pred, succ);
+							mRemovedReturnBridges.addedPushOverEdge(pred, succ);
 
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("\tAdded pushOver: " + pred + " -> " + succ);
+							if (mLogger.isDebugEnabled()) {
+								mLogger.debug("\tAdded pushOver: " + pred + " -> " + succ);
+							}
+						}
+					}
+				} else if (mSimulationType == ESimulationType.DIRECT && onlyOmittedSuccessors) {
+					// If the Duplicator vertex only had omitted successors, we
+					// need to patch the Duplicator winning sink at the pre
+					// invoker to an win for Spoiler. We do so by adding a
+					// push-over edge to those omitted successors, as they are
+					// directly loosing for Duplicator.
+					// We call such edges 'hard push-over edges'.
+					for (final Vertex<LETTER, STATE> succ : successorsToProcess) {
+						for (final Vertex<LETTER, STATE> pred : predecessorsToProcess) {
+							mGameGraph.addPushOverEdge(pred, succ);
+							mRemovedReturnBridges.addedPushOverEdge(pred, succ);
+
+							if (mLogger.isDebugEnabled()) {
+								mLogger.debug("\tAdded hard-pushOver: " + pred + " -> " + succ);
+							}
 						}
 					}
 				}
@@ -2248,6 +2202,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private Iterator<VertexDownState<STATE>> constructAllVertexDownStates(final STATE leftUpState,
 			final STATE rightUpState) {
+		// Refuse to construct a set if any of the given up states is bottom,
+		// as this are no legal up states.
+		if (leftUpState.equals(mBottom) || rightUpState.equals(mBottom)) {
+			return Collections.emptyIterator();
+		}
 		final Set<STATE> leftDownStates = mNwa.getDownStates(leftUpState);
 		final Set<STATE> rightDownStates = mNwa.getDownStates(rightUpState);
 		final Set<VertexDownState<STATE>> vertexDownStates = new LinkedHashSet<>();
@@ -2255,6 +2214,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			for (final STATE rightDownState : rightDownStates) {
 				vertexDownStates.add(new VertexDownState<>(leftDownState, rightDownState));
 			}
+		}
+		// We want to ensure [bottom, bottom] gets created for every vertex,
+		// since we read simulation results for matched return words from them.
+		if (!leftDownStates.contains(mBottom) || !rightDownStates.contains(mBottom)) {
+			vertexDownStates.add(new VertexDownState<>(mBottom, mBottom));
 		}
 		return vertexDownStates.iterator();
 	}
@@ -2409,15 +2373,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						&& sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 					final SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
 					// First we need to validate if the invoking down state
-					// forms a
-					// safe down state.
+					// forms a safe down state.
 					// If the down state is unsafe we do not update summarize
-					// edges.
-					// We do so by first assuming that the down state is
-					// reversely
-					// safe, that is when following outgoing edges to the search
-					// root. The down state then is safe if the computed
-					// source of the summarize edges is a predecessor
+					// edges. We do so by first assuming that the down state is
+					// reversely safe, that is when following outgoing edges to
+					// the search root. The down state then is safe if the
+					// computed source of the summarize edges is a predecessor
 					// of the current vertex.
 					if (!(mGameGraph.hasPredecessors(invokingVertex)
 							&& mGameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges))) {
@@ -2428,11 +2389,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					// Additionally the down state of the current vertex must be
 					// receivable by using the call transition with any down
-					// state
-					// of the summarize edge source vertex.
+					// state of the summarize edge source vertex.
 					// Search for a corresponding down state to validate
-					// safeness of
-					// the invoking down state.
+					// safeness of the invoking down state.
 					// The right down states must be equal, also the left down
 					// state must change to the called state.
 					boolean foundCorrespondingDownState = sourceDownState.getRightDownState()

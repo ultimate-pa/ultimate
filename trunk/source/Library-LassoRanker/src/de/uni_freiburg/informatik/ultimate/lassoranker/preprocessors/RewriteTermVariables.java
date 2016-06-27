@@ -184,14 +184,15 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 			tf.addOutVar(repVar, newOutVar);
 		}
 		
-		final Set<TermVariable> auxVars = tf.getAuxVars();
+		final Set<TermVariable> auxVars = tf.getAuxVars().keySet();
 		for (final TermVariable tv : auxVars) {
 			if (hasToBeReplaced(tv)) {
 				final TermVariable newAuxVar = mVarFactory.getOrConstructAuxVar(
 						computeTermVariableName(tv.getName(), false, false),
 						mrepVarSort);
+				final Term newAuxVarConst = mVarFactory.getOrConstructConstForAuxVar(newAuxVar);
 				tf.removeAuxVar(tv);
-				tf.addAuxVars(Collections.singleton(newAuxVar));
+				tf.addAuxVars(Collections.singletonMap(newAuxVar, newAuxVarConst));
 			}
 		}
 	}

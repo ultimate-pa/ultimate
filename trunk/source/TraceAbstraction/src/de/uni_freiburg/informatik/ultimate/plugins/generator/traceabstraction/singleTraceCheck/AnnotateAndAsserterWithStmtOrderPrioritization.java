@@ -146,31 +146,23 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			if (rwt.getImage(pps.get(i)).size() >= 2 &&
 					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) != null &&
 					((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) < upperIndex) {
-				final int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i);
+				// the new upper index is the last occurrence of the same location
+				final int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).lower(upperIndex);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
-				// recursively partition the statements within this loop 
+				// we consider the subtrace from i+1 to newUpperIndex as a loop
+				// and apply the partitioning recursively on the subtrace 
 				dfsPartitionStatementsAccordingToDepth(i + 1, newUpperIndex, depth + 1,
 						rwt, depth2Statements ,pps);
-				// If there is no position greater than newUpperIndex, then the statement at position=newUpperIndex
-				// is the loop exit
-				if (((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(newUpperIndex) == null) {
-					addStmtPositionToDepth(depth, depth2Statements, newUpperIndex);
-					i = newUpperIndex + 1;
-				} else { 
-					// Otherwise the statement at position=newUpperIndex is a loop entry, which represents
-					// another loop iteration
-					i = newUpperIndex;	
-				}
-				
+				// continue at the position after the loop
+				i = newUpperIndex;	
 			} else {
 				addStmtPositionToDepth(depth, depth2Statements, i);
 				i++;
 			}
 		}
-		
-		
 	}
-
+	
+	
 	
 	/**
 	 * Add the position 'stmtPos' to the map 'depth2Statements' where the key is the given 'depth'.

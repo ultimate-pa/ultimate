@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool.ModelQuery;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
@@ -55,11 +56,6 @@ public class HornClauseGraphBuilder implements IGenerator {
 	@Override
 	public boolean isGuiRequired() {
 		return false;
-	}
-
-	@Override
-	public ModelQuery getModelQuery() {
-		return null;
 	}
 
 	@Override
@@ -118,4 +114,8 @@ public class HornClauseGraphBuilder implements IGenerator {
 		return null;
 	}
 
+	@Override
+	public ModelQuery getModelQuery() {
+		return ModelQuery.SOURCE;
+	}
 }

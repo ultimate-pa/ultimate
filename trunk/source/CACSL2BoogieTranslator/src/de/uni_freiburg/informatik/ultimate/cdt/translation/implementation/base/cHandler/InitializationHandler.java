@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -366,6 +366,8 @@ public class InitializationHandler {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
 						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+						} else {
+							throw new UnsupportedOperationException("UNsopported Floating Type");
 						}
 					} else {
 						main.mCHandler.convert(loc, initializer, lCType);

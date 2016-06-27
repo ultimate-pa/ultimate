@@ -219,7 +219,7 @@ public class TransFormulaUtils {
 		result = Util.and(script, result, constructEqualitiesForCoinciding(script, tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
-			final TermVariable[] auxVarsArray = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
+			final TermVariable[] auxVarsArray = tf.getAuxVars().keySet().toArray(new TermVariable[tf.getAuxVars().size()]);
 			result = script.quantifier(QuantifiedFormula.EXISTS, auxVarsArray, result);
 		}
 		assert (Arrays.asList(result.getFreeVars()).isEmpty()) : "there must not be a TermVariable left";

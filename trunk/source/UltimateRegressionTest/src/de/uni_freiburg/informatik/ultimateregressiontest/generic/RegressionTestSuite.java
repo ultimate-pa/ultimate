@@ -34,18 +34,23 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 
 /**
  * 
+ * This test suite automatically generates test cases from the example folder. If you place input files, toolchains and
+ * settings files in a folder named regression, they will automatically be picked up.
+ * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
+
 	public RegressionTestSuite() {
 		super();
-		mTimeout = 20 * 1000;
+		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		// match every path not containing CToBoogieTranslation or Backtranslation or lassos or termination or SignedIntegerOverflow
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow)[\\s\\S])*";
+		// exclude paths that match the following regex  
+		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation)[\\s\\S])*";
 	}
 
 	@Override

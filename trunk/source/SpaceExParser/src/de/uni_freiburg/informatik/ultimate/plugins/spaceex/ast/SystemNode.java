@@ -30,18 +30,28 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.SystemBind;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 public class SystemNode extends SpaceExNode {
 
 	private static final long serialVersionUID = 1L;
 	
-	private final List<String> mBinds;
+	private final List<SystemBind> mBinds;
+	private final ILogger mLogger;
 	
-	public SystemNode(ComponentType component) {
+	public SystemNode(ComponentType component, ILogger logger) {
+		mBinds = new ArrayList<>();
+		mLogger = logger;
+		
 		setName(component.getId());
 		
-		mBinds = new ArrayList<String>();
+		//component.getBind().forEach(b -> mBinds.add(new SystemBind(b, mLogger)));
+		
+		mBinds.forEach(b -> mLogger.debug(b));
+		
+//		component.getBind().forEach(b -> b.getMap().forEach(m -> System.out.println(m.getKey() + " --> " + m.getValue())));
 	}
 	
 }
