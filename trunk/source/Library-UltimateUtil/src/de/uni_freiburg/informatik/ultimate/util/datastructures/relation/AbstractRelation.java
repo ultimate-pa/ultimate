@@ -34,43 +34,44 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Object that represents a binary relation (i.e. a set of ordered pairs).
- * Given an element of this relation (d,r)
+ * Object that represents a binary relation (i.e. a set of ordered pairs). Given an element of this relation (d,r)
  * <ul>
- * <li> we call the first entry d the domain element of relation, and
- * <li> we call the second entry r the range element of the relation.
+ * <li>we call the first entry d the domain element of relation, and
+ * <li>we call the second entry r the range element of the relation.
  * </ul>
- * We use a Map from domain elements to sets of range elements to store this
- * relation. Therefore we can directly get
- * <ul> 
- * <li> the set of all domain elements and
- * <li> the set of all range elements for a given domain element.
+ * We use a Map from domain elements to sets of range elements to store this relation. Therefore we can directly get
+ * <ul>
+ * <li>the set of all domain elements and
+ * <li>the set of all range elements for a given domain element.
  * </ul>
- * This is an abstract class that does not define which Map data structure is
- * used.
- *  
+ * This is an abstract class that does not define which Map data structure is used.
+ * 
  * 
  * @author Matthias Heizmann
  *
- * @param <D> Type of the elements that are in the domain of the relation.
- * @param <R> Type of the elements that are in the range of the relation.
- * @param <MAP> Type of Map that is used to store the relation.
+ * @param <D>
+ *            Type of the elements that are in the domain of the relation.
+ * @param <R>
+ *            Type of the elements that are in the range of the relation.
+ * @param <MAP>
+ *            Type of Map that is used to store the relation.
  */
-public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
+public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	protected final MAP mMap;
-	
+
 	protected abstract MAP newMap();
-	
+
 	protected abstract Set<R> newSet();
 
 	public AbstractRelation() {
 		super();
 		mMap = newMap();
 	}
-	
+
 	/**
 	 * Add a pair (domainElem, rangeElem) to the relation.
-	 * @return if this relation did not already contain the specified pair. 
+	 * 
+	 * @return if this relation did not already contain the specified pair.
 	 */
 	public boolean addPair(D domainElem, R rangeElem) {
 		Set<R> rangeElems = mMap.get(domainElem);
@@ -83,7 +84,8 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 
 	/**
 	 * Remove the pair (domainElem, rangeElem) from the relation.
-	 * @return true if the set contained the specified pair. 
+	 * 
+	 * @return true if the set contained the specified pair.
 	 */
 	public boolean removePair(D domainElem, R rangeElem) {
 		final boolean result;
@@ -100,11 +102,10 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	}
 
 	/**
-	 * Add all elements contained in relation rel to this relation.
-	 * Does not reuse sets of the relation rel but constructs new sets if 
-	 * necessary.
+	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
+	 * constructs new sets if necessary.
 	 */
-	public void addAll(AbstractRelation<D,R,?> rel) {
+	public void addAll(AbstractRelation<D, R, ?> rel) {
 		for (final Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
 			Set<R> rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
@@ -114,10 +115,9 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 			rangeElems.addAll(entry.getValue());
 		}
 	}
-	
+
 	/**
-	 * @return true if the pair (domainElem, rangeElem) is contained in the
-	 * relation.
+	 * @return true if the pair (domainElem, rangeElem) is contained in the relation.
 	 */
 	public boolean containsPair(D domainElem, R rangeElem) {
 		final Set<R> rangeElems = mMap.get(domainElem);
@@ -127,18 +127,17 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 			return rangeElems.contains(rangeElem);
 		}
 	}
-	
+
 	/**
-	 * Returns the set of all elements d such that for some r the pair
-	 * (d,r) is in the relation.
+	 * Returns the set of all elements d such that for some r the pair (d,r) is in the relation.
 	 */
 	public Set<D> getDomain() {
 		return mMap.keySet();
 	}
-	
+
 	/**
-	 * Returns the set of all elements r such that for a the given element
-	 * domainElem, the pair (domainElem, r) is in the relation.
+	 * Returns the set of all elements r such that for a the given element domainElem, the pair (domainElem, r) is in
+	 * the relation.
 	 */
 	public Set<R> getImage(D domainElem) {
 		final Set<R> set = mMap.get(domainElem);
@@ -148,7 +147,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 			return Collections.unmodifiableSet(mMap.get(domainElem));
 		}
 	}
-	
+
 	/**
 	 * Returns the number of all pairs contained in this relation.
 	 */
@@ -159,11 +158,9 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 		}
 		return result;
 	}
-	
-	
+
 	/**
-	 * Returns the number of pairs (d,r) such that the first entry d
-	 * coincides with the parameter domainElem.
+	 * Returns the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
 	 */
 	public int numberofPairsWithGivenDomainElement(D domainElem) {
 		if (getDomain().contains(domainElem)) {
@@ -172,23 +169,21 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 			return 0;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return mMap.toString();
 	}
-	
+
 	/**
-	 * Returns a Set view of the pairs contained in this relation. The set is 
-	 * backed by the relation, so changes to the map are reflected in the set, 
-	 * and vice-versa.
-	 * TODO 2016-05-26 Matthias: This method was implemented accidentally and is not
-	 * yet used and was not testet. Remove this warning once this method was
-	 * tested.
+	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
+	 * map are reflected in the set, and vice-versa. TODO 2016-05-26 Matthias: This method was implemented accidentally
+	 * and is not yet used and was not testet. Remove this warning once this method was tested.
+	 * 
 	 * @return a set view of the pairs contained in this relation
 	 */
-	public Set<Map.Entry<D,R>> entrySet() {
-		return new Set<Map.Entry<D,R>>() {
+	public Set<Map.Entry<D, R>> entrySet() {
+		return new Set<Map.Entry<D, R>>() {
 
 			@Override
 			public boolean add(Entry<D, R> arg0) {
@@ -227,7 +222,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 
 			@Override
 			public Iterator<Entry<D, R>> iterator() {
-				return new Iterator<Map.Entry<D,R>>() {
+				return new Iterator<Map.Entry<D, R>>() {
 					private Entry<D, R> mNextEntry;
 					private Iterator<Entry<D, Set<R>>> mOuterIterator;
 					private Iterator<R> mInnerIterator;
@@ -237,8 +232,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 						mOuterIterator = mMap.entrySet().iterator();
 						mNextEntry = constructNext();
 					}
-					
-					
+
 					private Entry<D, R> constructNext() {
 						if (mInnerIterator == null || !mInnerIterator.hasNext()) {
 							if (mOuterIterator.hasNext()) {
@@ -277,7 +271,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 						} else {
 							return null;
 						}
-						
+
 					}
 
 					@Override
@@ -328,8 +322,8 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 			public <T> T[] toArray(T[] a) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			
+
 		};
-		
+
 	}
 }

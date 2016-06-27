@@ -28,23 +28,24 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Implementation of the AbstractRelation that uses a HashMap.
+ * 
  * @author Matthias Heizmann
  */
-public class HashRelation<D,R> extends AbstractRelation<D, R, HashMap<D,Set<R>>> {
+public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 
 	@Override
-	public HashMap<D, Set<R>> newMap() {
+	public Map<D, Set<R>> newMap() {
 		return new HashMap<D, Set<R>>();
 	}
 
 	@Override
-	public HashSet<R> newSet() {
+	public Set<R> newSet() {
 		return new HashSet<R>();
 	}
-
 
 }
