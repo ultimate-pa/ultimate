@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
+ * A worklist item is used by {@link FixpointEngine} to store intermediate results from the effect calculation for one
+ * transition.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -142,9 +144,10 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	 * @return A {@link Deque} that contains pairs of scopes and the corresponding state storage.
 	 */
 	Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getStack() {
-		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr = new ArrayDeque<>();
-		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter = mScopedStorages
-				.descendingIterator();
+		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr =
+				new ArrayDeque<>();
+		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter =
+				mScopedStorages.descendingIterator();
 		// first, add the global storage
 		rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(null, storageIter.next()));
 		if (mScopes == null || mScopes.isEmpty()) {
