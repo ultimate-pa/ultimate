@@ -113,7 +113,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				
 			}
 		}
-		this.generateDeductionAutomatonNextStep();
+		this.generateDeductionAutomatonInstant();
 		
 	}
 	

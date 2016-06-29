@@ -8,6 +8,7 @@ import srParse.srParseScopeAfterUntil;
 import srParse.srParseScopeBefore;
 import srParse.srParseScopeBetween;
 import srParse.srParseScopeGlob;
+import srParse.pattern.BndInvariancePattern;
 import srParse.pattern.BndResponsePattern;
 import srParse.pattern.InstAbsPattern;
 import srParse.pattern.InvariantPattern;
@@ -34,12 +35,12 @@ public class PatternToDc {
 				p = pattern.getCdds().get(0);
 			}
 		int t = pattern.getDuration();
-		return this.translate(pattern, p, q, r, s, t);
+		return this.translate(pattern, q, r,p,s, t);
 	} 
 	/*
 	 * Translates a pattern type into a Counter trace DC Formula
 	 */
-	public CounterTrace translate(PatternType pattern, CDD p, CDD q, CDD r, CDD s, int t){
+	public CounterTrace translate(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
 		//switch pattern x
 		/* scope.contains("Globally")	-> srParseScopeGlobally
 		 * scope.contains("Before")		-> srParseScopeBefore
@@ -50,69 +51,78 @@ public class PatternToDc {
 		if(pattern instanceof InvariantPattern){
 			// ... it is always the case that if s holds then p holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalInvariantPattern(pattern, p, q, r, s);			//test []
+				return this.GlobalInvariantPattern(pattern, q, r, p, s);			//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeInvariantPattern(pattern, p, q, r, s);			//test []
+				return this.BeforeInvariantPattern(pattern, q, r, p, s);			//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInvariantPattern(pattern, p, q, r, s);		//test []
+				return this.AfterUntilInvariantPattern(pattern, q, r, p, s);		//test [manual]
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterInvariantPattern(pattern, p, q, r, s);				//test []
+				return this.AfterInvariantPattern(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenInvariantPattern(pattern, p, q, r, s);			//test []
+				return this.BetweenInvariantPattern(pattern, q, r, p, s);			//test []
 			} else {throw new UnsupportedOperationException();}
 			
 		} else if (pattern instanceof InstAbsPattern){
 			// ... it is never the case that s holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalInstAbsPattern(pattern, p, q, r, s);				//test []
+				return this.GlobalInstAbsPattern(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeInstAbsPattern(pattern, p, q, r, s);				//test []
+				return this.BeforeInstAbsPattern(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInstAbsPattern(pattern, p, q, r, s);			//test []
+				return this.AfterUntilInstAbsPattern(pattern, q, r, p, s);			//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterInstAbsPattern(pattern, p, q, r, s);				//test []
+				return this.AfterInstAbsPattern(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenInstAbsPattern(pattern, p, q, r, s);				//test []
+				return this.BetweenInstAbsPattern(pattern, q, r, p, s);				//test []
 			} else {throw new UnsupportedOperationException();}
 			
 		} else if (pattern instanceof UniversalityPattern){
 			// ... it is always the case that s holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalUniversality(pattern, p, q, r, s);				//test []
+				return this.GlobalUniversality(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeUniversality(pattern, p, q, r, s);				//test []
+				return this.BeforeUniversality(pattern, q, r, p, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilUniversality(pattern, p, q, r, s);			//test [manual]
+				return this.AfterUntilUniversality(pattern, q, r, p, s);			//test [manual]
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterUniversality(pattern, p, q, r, s);					//test [manual]
+				return this.AfterUniversality(pattern, q, r, p, s);					//test [manual]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenUniversality(pattern, p, q, r, s);				//test []
-			} else {throw new UnsupportedOperationException();}
+				return this.BetweenUniversality(pattern, q, r, p, s);				//test []
+			} else {
+				throw new UnsupportedOperationException();}
+			
+		} else if (pattern instanceof BndInvariancePattern){
+			// ... it is always the case that if p holds after at most c time units.
+			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
+				return this.GlobalBndInvariancePattern(pattern, q, r, p, s, t);			//test []
+			} else {
+				throw new UnsupportedOperationException();}
 	
 		} else if (pattern instanceof BndResponsePattern){
-			// ... it is never the case that s holds.
+			// ... it is always the case that if p holds after at most c time units.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
-				return this.GlobalBndResponsePattern(pattern, p, q, r, s, t);			//test []
-			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				//return this.BeforeBndResponsPattern(pattern, p, q, r, s);				//test []
-				return null;
-			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				//return this.AfterUntilBndResponsPattern(pattern, p, q, r, s);			//test []
-				return null;
-			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				//return this.AfterBndResponsPattern(pattern, p, q, r, s);				//test []
-				return null;
-			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				//return this.BetweenBndResponsPattern(pattern, p, q, r, s);			//test []
-				return null;
-			} else {throw new UnsupportedOperationException();}
+				return this.GlobalBndResponsePattern(pattern, q, r, p, s, t);			//test []
+			} else {
+				throw new UnsupportedOperationException();}
 			
 		} else {
 			throw new UnsupportedOperationException("Pattern not implemented");
 		}
 	}
 	
-	protected CounterTrace GlobalBndResponsePattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s, int t){ 
+		protected CounterTrace GlobalBndInvariancePattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
+		pattern.setEffect(s);
+		return new CounterTrace(new CounterTrace.DCPhase[] {
+			    new CounterTrace.DCPhase(),
+			    new CounterTrace.DCPhase(p),
+			    new CounterTrace.DCPhase(CounterTrace.BOUND_LESS, t),
+			    new CounterTrace.DCPhase(s.negate()),
+			    new CounterTrace.DCPhase()
+			});
+	}
+	
+	protected CounterTrace GlobalBndResponsePattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
+		pattern.setEffect(s);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(p.and(s.negate())),
@@ -122,7 +132,7 @@ public class PatternToDc {
 	}
 	
 	//Universality Pattern
-	protected CounterTrace GlobalUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace GlobalUniversality(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(p);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
@@ -131,7 +141,7 @@ public class PatternToDc {
 			});
 	}
 
-	protected CounterTrace BeforeUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BeforeUniversality(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(q.negate()),
 			    new CounterTrace.DCPhase(q.negate().and(p)),
@@ -139,7 +149,7 @@ public class PatternToDc {
 			});
 	}
 
-	protected CounterTrace AfterUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterUniversality(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(p);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
@@ -150,7 +160,7 @@ public class PatternToDc {
 			});
 	}
 
-	protected CounterTrace BetweenUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BetweenUniversality(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(q.and(r.negate())),
@@ -162,7 +172,7 @@ public class PatternToDc {
 			});
 	}
 
-	protected CounterTrace AfterUntilUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterUntilUniversality(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(p);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
@@ -175,7 +185,7 @@ public class PatternToDc {
 
 	
 	//AbsencePattern (InstAbsPattern)
-	protected CounterTrace GlobalInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace GlobalInstAbsPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(p);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
@@ -184,7 +194,7 @@ public class PatternToDc {
 			});
 	}
 	
-	protected CounterTrace BeforeInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BeforeInstAbsPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(r);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
@@ -195,7 +205,7 @@ public class PatternToDc {
     		 });    	
 	}
 	
-	protected CounterTrace AfterUntilInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterUntilInstAbsPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 	               	    new CounterTrace.DCPhase(),
 	               	    new CounterTrace.DCPhase(q.and(r.negate())),
@@ -205,7 +215,7 @@ public class PatternToDc {
 	               	});   
 	}
 
-	protected CounterTrace AfterInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterInstAbsPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(r);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
@@ -216,7 +226,7 @@ public class PatternToDc {
 	    	});    	
 	}
 	
-	protected CounterTrace BetweenInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BetweenInstAbsPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		return new CounterTrace(new CounterTrace.DCPhase[] {
     	  	    new CounterTrace.DCPhase(),
     	   	    new CounterTrace.DCPhase(q.and(r.negate())),
@@ -233,7 +243,7 @@ public class PatternToDc {
 	/* public PhaseEventAutomata invariantPattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
     	 ctA = absencePattern(P.and(S.negate()),Q,R, scope);
     	 */
-	protected CounterTrace GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace GlobalInvariantPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(s);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 				    new CounterTrace.DCPhase(),
@@ -242,7 +252,7 @@ public class PatternToDc {
 				});
 	}
 	
-	protected CounterTrace BeforeInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BeforeInvariantPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		//Before R it is always the case that if p holds then s holds as well.
 		return new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
@@ -253,7 +263,8 @@ public class PatternToDc {
     		 });    	
 	}
 	
-	protected CounterTrace AfterUntilInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterUntilInvariantPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
+		pattern.setEffect(s);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
            	    new CounterTrace.DCPhase(),
            	    new CounterTrace.DCPhase(q.and(r.negate())),
@@ -263,7 +274,7 @@ public class PatternToDc {
            	});    	
 	}
 
-	protected CounterTrace AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace AfterInvariantPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		pattern.setEffect(s);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
@@ -274,7 +285,7 @@ public class PatternToDc {
 	    	});    	
 	}
 	
-	protected CounterTrace BetweenInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected CounterTrace BetweenInvariantPattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s){ 
 		return new CounterTrace(new CounterTrace.DCPhase[] {
     	  	    new CounterTrace.DCPhase(),
     	   	    new CounterTrace.DCPhase(q.and(r.negate())),
