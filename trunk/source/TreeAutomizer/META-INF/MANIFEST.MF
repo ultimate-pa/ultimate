@@ -8,4 +8,5 @@ Require-Bundle: Library-UltimateCore,
  Library-log4j
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script
 

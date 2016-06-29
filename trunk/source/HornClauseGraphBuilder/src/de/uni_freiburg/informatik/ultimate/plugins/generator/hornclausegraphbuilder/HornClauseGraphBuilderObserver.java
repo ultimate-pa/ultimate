@@ -27,9 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;
 
+import java.util.List;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClause;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer

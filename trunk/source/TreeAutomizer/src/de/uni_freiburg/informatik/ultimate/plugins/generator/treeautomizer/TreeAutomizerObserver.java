@@ -27,9 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
+import java.util.List;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClause;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -57,6 +63,11 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		// TODO Auto-generated method stub
+
+		Map<String, IAnnotations> st = root.getPayload().getAnnotations();
+		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
+		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
+		
 		return false;
 	}
 	

@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.printer.Activator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -38,7 +41,7 @@ public class HornClauseParserScript extends NoopScript {
 	private final String mLogic;
 	private final Settings mSolverSettings;
 	private HashSet<String> mDeclaredPredicateSymbols;
-	private ArrayList<HornClause> mCurrentHornClause;
+	private List<HornClause> mCurrentHornClause;
 	private ArrayList<Term> mcurrentPredicateAtoms;
 	private ArrayList<Term> mcurrentTransitionAtoms;
 	private Map<String, HornClausePredicateSymbol> predicates;
@@ -57,8 +60,10 @@ public class HornClauseParserScript extends NoopScript {
 
 	}
 
-	public List<HornClause> getHornClauses() {
-		return mCurrentHornClause;
+	public IElement getHornClauses() {
+		Payload payload = new Payload();
+		payload.getAnnotations().put("HoRNClauses", new HornAnnot(mCurrentHornClause));
+		return new HornClauseAST(payload);
 	}
 	
 	/**
