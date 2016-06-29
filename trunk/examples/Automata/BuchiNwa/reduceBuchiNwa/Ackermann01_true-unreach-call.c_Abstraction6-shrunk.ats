@@ -3,9 +3,9 @@
 // Author: Christian Schilling
 // Date: 2016-06-12
 
-// print(nwa);
-reduceNwaDelayedSimulation(removeDeadEnds(nwa), false);
-// print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+//print(nwa);
+//reduceNwaDelayedSimulation(removeDeadEnds(nwa), false);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2"},

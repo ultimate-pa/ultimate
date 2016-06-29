@@ -40,10 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
  * a-transition. The bit encodes extra information if needed.
  * 
- * This object extends regular DuplicatorVertices by giving it a down state.
- * Both, the left and right, states are interpreted as up states and can have
- * one down state each. Thus a vertex represents a combination of double decker
- * states.
+ * This object extends regular DuplicatorVertices by giving it extra information
+ * that only occur in Nwa Game Graphs, like sinks.
  * 
  * @author Daniel Tischner
  * 
@@ -52,18 +50,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE>
-		implements IHasVertexDownStates<STATE> {
+public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
 
-	/**
-	 * If the down state configuration is marked as safe.
-	 */
-	private boolean mIsVertexDownStateSafe;
 	/**
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
-	private final DuplicatorWinningSink<LETTER, STATE> mSink;
+	private final IWinningSink mSink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
 	 * vertex for such, <tt>null</tt> if not set.
@@ -74,10 +67,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * return transition.
 	 */
 	private final ETransitionType mTransitionType;
-	/**
-	 * Down state configuration of the vertex.
-	 */
-	private final VertexDownState<STATE> mVertexDownState;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -85,8 +74,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * 
-	 * The double decker information first is blank after construction.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -98,15 +85,13 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            The state duplicator is at, interpreted as up state
 	 * @param a
 	 *            The letter spoiler used before
-	 * @param vertexDownState
-	 *            The vertexDownState of the vertex
 	 * @param transitionType
 	 *            The type of the transition, i.e. if it stands for an internal,
 	 *            call or return transition
 	 */
-	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final VertexDownState<STATE> vertexDownState, final ETransitionType transitionType) {
-		this(priority, b, q0, q1, a, vertexDownState, transitionType, null, null);
+	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
+			final ETransitionType transitionType) {
+		this(priority, b, q0, q1, a, transitionType, null, null);
 	}
 
 	/**
@@ -116,8 +101,75 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
 	 * 
-	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link ETransitionType#SINK} one can set
+	 * If the used transition is of type {@link ETransitionType#SINK} one can
+	 * set <tt>sink</tt> to distinguish between similar sinks.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param a
+	 *            The letter spoiler used before
+	 * @param transitionType
+	 *            The type of the transition, i.e. if it stands for an internal,
+	 *            call or return transition
+	 * @param sink
+	 *            The sink this vertex belongs to if it is generated as a shadow
+	 *            vertex for such.
+	 */
+	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
+			final ETransitionType transitionType, final IWinningSink sink) {
+		this(priority, b, q0, q1, a, transitionType, null, sink);
+	}
+
+	/**
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
+	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
+	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
+	 * q1 and must try to also use an a-transition. The bit encodes extra
+	 * information if needed.
+	 * 
+	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
+	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
+	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param a
+	 *            The letter spoiler used before
+	 * @param transitionType
+	 *            The type of the transition, i.e. if it stands for an internal,
+	 *            call or return transition
+	 * @param summarizeEdge
+	 *            The summarize edge this vertex belongs to if it is generated
+	 *            as a shadow vertex.
+	 */
+	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
+			final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+		this(priority, b, q0, q1, a, transitionType, summarizeEdge, null);
+	}
+
+	/**
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
+	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
+	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
+	 * q1 and must try to also use an a-transition. The bit encodes extra
+	 * information if needed.
+	 * 
+	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
+	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
+	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If
+	 * the used transition is of type {@link ETransitionType#SINK} one can set
 	 * <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
@@ -130,84 +182,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            The state duplicator is at, interpreted as up state
 	 * @param a
 	 *            The letter spoiler used before
-	 * @param vertexDownState
-	 *            The vertexDownState of the vertex
-	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
-	 * @param sink
-	 *            The sink this vertex belongs to if it is generated as a shadow
-	 *            vertex for such.
-	 */
-	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final VertexDownState<STATE> vertexDownState, final ETransitionType transitionType,
-			final DuplicatorWinningSink<LETTER, STATE> sink) {
-		this(priority, b, q0, q1, a, vertexDownState, transitionType, null, sink);
-	}
-
-	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
-	 * 
-	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY} or
-	 * {@link ETransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
-	 * to distinguish between similar summarize edges.
-	 * 
-	 * @param priority
-	 *            The priority of the vertex
-	 * @param b
-	 *            The extra bit of the vertex
-	 * @param q0
-	 *            The state spoiler is at, interpreted as up state
-	 * @param q1
-	 *            The state duplicator is at, interpreted as up state
-	 * @param a
-	 *            The letter spoiler used before
-	 * @param vertexDownState
-	 *            The vertexDownState of the vertex
-	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
-	 * @param summarizeEdge
-	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex.
-	 */
-	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final VertexDownState<STATE> vertexDownState, final ETransitionType transitionType,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		this(priority, b, q0, q1, a, vertexDownState, transitionType, summarizeEdge, null);
-	}
-
-	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
-	 * 
-	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY} or
-	 * {@link ETransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
-	 * to distinguish between similar summarize edges. If the used transition is
-	 * of type {@link ETransitionType#SINK} one can set <tt>sink</tt> to
-	 * distinguish between similar sinks.
-	 * 
-	 * @param priority
-	 *            The priority of the vertex
-	 * @param b
-	 *            The extra bit of the vertex
-	 * @param q0
-	 *            The state spoiler is at, interpreted as up state
-	 * @param q1
-	 *            The state duplicator is at, interpreted as up state
-	 * @param a
-	 *            The letter spoiler used before
-	 * @param vertexDownState
-	 *            The vertexDownState of the vertex
 	 * @param transitionType
 	 *            The type of the transition, i.e. if it stands for an internal,
 	 *            call or return transition
@@ -218,12 +192,10 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            The sink this vertex belongs to if it is generated as a shadow
 	 *            vertex for such.
 	 */
-	private DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final VertexDownState<STATE> vertexDownState, final ETransitionType transitionType,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge, final DuplicatorWinningSink<LETTER, STATE> sink) {
+	private DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
+			final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final IWinningSink sink) {
 		super(priority, b, q0, q1, a);
-		mVertexDownState = vertexDownState;
-		mIsVertexDownStateSafe = false;
 		mTransitionType = transitionType;
 		mSummarizeEdge = summarizeEdge;
 		mSink = sink;
@@ -242,17 +214,10 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		if (!super.equals(obj)) {
 			return false;
 		}
-		if (!(obj instanceof DuplicatorDoubleDeckerVertex)) {
+		if (!(obj instanceof DuplicatorNwaVertex)) {
 			return false;
 		}
-		final DuplicatorDoubleDeckerVertex<?, ?> other = (DuplicatorDoubleDeckerVertex<?, ?>) obj;
-		if (mVertexDownState == null) {
-			if (other.mVertexDownState != null) {
-				return false;
-			}
-		} else if (!mVertexDownState.equals(other.mVertexDownState)) {
-			return false;
-		}
+		final DuplicatorNwaVertex<?, ?> other = (DuplicatorNwaVertex<?, ?>) obj;
 		if (mSink == null) {
 			if (other.mSink != null) {
 				return false;
@@ -293,9 +258,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			sb.append(getLetter());
 		}
 		sb.append("<" + getPriority() + ">");
-		sb.append("{");
-		sb.append(mVertexDownState.toString());
-		sb.append("}");
 		return sb.toString();
 	}
 
@@ -307,7 +269,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
 	 */
-	public DuplicatorWinningSink<LETTER, STATE> getSink() {
+	public IWinningSink getSink() {
 		return mSink;
 	}
 
@@ -336,75 +298,16 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#getVertexDownState()
-	 */
-	@Override
-	public VertexDownState<STATE> getVertexDownState() {
-		return mVertexDownState;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((mVertexDownState == null) ? 0 : mVertexDownState.hashCode());
 		result = prime * result + ((mSink == null) ? 0 : mSink.hashCode());
 		result = prime * result + ((mSummarizeEdge == null) ? 0 : mSummarizeEdge.hashCode());
 		result = prime * result + ((mTransitionType == null) ? 0 : mTransitionType.hashCode());
 		return result;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#hasVertexDownState(java.lang.
-	 * Object, java.lang.Object)
-	 */
-	@Override
-	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
-		return hasVertexDownState(new VertexDownState<STATE>(leftDownState, rightDownState));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#hasVertexDownState(de.
-	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.VertexDownState)
-	 */
-	@Override
-	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return mVertexDownState.equals(vertexDownState);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#isVertexDownStateSafe()
-	 */
-	@Override
-	public Boolean isVertexDownStateSafe() {
-		return mIsVertexDownStateSafe;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.util.nwa.IHasVertexDownStates#setVertexDownStateSafe(boolean)
-	 */
-	@Override
-	public void setVertexDownStateSafe(final boolean isSafe) {
-		mIsVertexDownStateSafe = isSafe;
 	}
 
 	/*
@@ -427,9 +330,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			sb.append(getLetter());
 		}
 		sb.append("<" + getPriority() + ">");
-		sb.append("{");
-		sb.append(mVertexDownState.toString());
-		sb.append("}");
 
 		sb.append("),p:").append(getPriority()).append(",pm:").append(pm);
 		sb.append(">");

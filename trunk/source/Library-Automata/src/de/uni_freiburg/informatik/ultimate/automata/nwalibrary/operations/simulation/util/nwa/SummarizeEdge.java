@@ -53,29 +53,29 @@ public final class SummarizeEdge<LETTER, STATE> {
 	/**
 	 * Destination of the edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mDest;
+	private final SpoilerNwaVertex<LETTER, STATE> mDest;
 	/**
 	 * The first duplicator shadow vertex to create a valid edge.
 	 */
-	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> mDuplicatorEntryShadow;
+	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorEntryShadow;
 	/**
 	 * The second duplicator shadow vertex to create a valid edge.
 	 */
-	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> mDuplicatorExitShadow;
+	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorExitShadow;
 	/**
 	 * Spoiler vertex that invoked creating the summarize edge. This is the
 	 * spoiler vertex that used the corresponding return edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSpoilerInvoker;
+	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerInvoker;
 
 	/**
 	 * Spoilers shadow vertex to create a valid edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSpoilerShadow;
+	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerShadow;
 	/**
 	 * Source of the edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSrc;
+	private final SpoilerNwaVertex<LETTER, STATE> mSrc;
 
 	/**
 	 * Creates a new summarize edge with given source and destination vertices.
@@ -88,18 +88,16 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            Spoiler vertex that invoked creating the summarize edge. This
 	 *            is the spoiler vertex that used the corresponding return edge.
 	 */
-	public SummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerInvoker) {
+	public SummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final SpoilerNwaVertex<LETTER, STATE> dest,
+			final SpoilerNwaVertex<LETTER, STATE> spoilerInvoker) {
 		mSrc = src;
 		mDest = dest;
 		mSpoilerInvoker = spoilerInvoker;
-		mDuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				new VertexDownState<STATE>(null, null), ETransitionType.SUMMARIZE_ENTRY, this);
-		mSpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null,
-				new VertexDownState<STATE>(null, null), this);
-		mDuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				new VertexDownState<STATE>(null, null), ETransitionType.SUMMARIZE_EXIT, this);
+		mDuplicatorEntryShadow = new DuplicatorNwaVertex<LETTER, STATE>(2, false, null, null, null,
+				ETransitionType.SUMMARIZE_ENTRY, this);
+		mSpoilerShadow = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
+		mDuplicatorExitShadow = new DuplicatorNwaVertex<LETTER, STATE>(2, false, null, null, null,
+				ETransitionType.SUMMARIZE_EXIT, this);
 	}
 
 	/**
@@ -118,7 +116,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * 
 	 * @return The first shadow vertex
 	 */
-	public DuplicatorDoubleDeckerVertex<LETTER, STATE> getEntryShadowVertex() {
+	public DuplicatorNwaVertex<LETTER, STATE> getEntryShadowVertex() {
 		return mDuplicatorEntryShadow;
 	}
 
@@ -129,7 +127,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * 
 	 * @return The first shadow vertex
 	 */
-	public DuplicatorDoubleDeckerVertex<LETTER, STATE> getExitShadowVertex() {
+	public DuplicatorNwaVertex<LETTER, STATE> getExitShadowVertex() {
 		return mDuplicatorExitShadow;
 	}
 
@@ -140,7 +138,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * 
 	 * @return The first shadow vertex
 	 */
-	public SpoilerDoubleDeckerVertex<LETTER, STATE> getMiddleShadowVertex() {
+	public SpoilerNwaVertex<LETTER, STATE> getMiddleShadowVertex() {
 		return mSpoilerShadow;
 	}
 
@@ -169,7 +167,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * 
 	 * @return The spoiler vertex that invoked creating the summarize edge
 	 */
-	public SpoilerDoubleDeckerVertex<LETTER, STATE> getSpoilerInvoker() {
+	public SpoilerNwaVertex<LETTER, STATE> getSpoilerInvoker() {
 		return mSpoilerInvoker;
 	}
 
