@@ -38,7 +38,7 @@ import org.junit.Test;
 public class IntervalDomainArithmeticMultTest {
 
 	@Test
-	public void testIntervalSimpleMult() {
+	public void testIntervalPositiveMult() {
 		
 		// Interval [10, 20]
 		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
