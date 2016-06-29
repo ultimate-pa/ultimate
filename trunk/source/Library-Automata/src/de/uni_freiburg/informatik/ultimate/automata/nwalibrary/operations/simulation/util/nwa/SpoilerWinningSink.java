@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 /**
- * Represents a sink that is winning for Duplicator. If such a sink exists with
+ * Represents a sink that is winning for Spoiler. If such a sink exists with
  * <tt>sinkEntry</tt> it means that one can move from that vertex into a sink
- * with priority 0, which is winning for Duplicator. In detail such a sink is
- * <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink -> ...</b>.
- * Where <tt>SpoilerSink</tt> has a priority of 0.
+ * with priority 1, which is winning for Spoiler. In detail such a sink is
+ * <b>sinkEntry -> SpoilerSink -> DuplicatorSink -> SpoilerSink -> ...</b>.
+ * Where <tt>SpoilerSink</tt> has a priority of 1.
  * 
  * @author Daniel Tischner
  *
@@ -40,12 +40,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink {
+public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink {
 
 	/**
-	 * The priority that is winning for Duplicator.
+	 * The priority that is winning for Spoiler.
 	 */
-	private final static int DUPLICATOR_WINNING_PRIORITY = 0;
+	private final static int SPOILER_WINNING_PRIORITY = 1;
+
 	/**
 	 * The duplicator vertex of this sink.
 	 */
@@ -53,7 +54,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink 
 	/**
 	 * The entry vertex of this sink.
 	 */
-	private final SpoilerNwaVertex<LETTER, STATE> mSinkEntry;
+	private final DuplicatorNwaVertex<LETTER, STATE> mSinkEntry;
 	/**
 	 * The spoiler vertex of this sink.
 	 */
@@ -65,11 +66,11 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink 
 	 * @param sinkEntry
 	 *            The vertex where the sink starts
 	 */
-	public DuplicatorWinningSink(final SpoilerNwaVertex<LETTER, STATE> sinkEntry) {
+	public SpoilerWinningSink(final DuplicatorNwaVertex<LETTER, STATE> sinkEntry) {
 		mSinkEntry = sinkEntry;
+		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(SPOILER_WINNING_PRIORITY, false, null, null, this);
 		mDuplicatorSink = new DuplicatorNwaVertex<LETTER, STATE>(2, false, null, null, null, ETransitionType.SINK,
 				this);
-		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(DUPLICATOR_WINNING_PRIORITY, false, null, null, this);
 	}
 
 	/**
@@ -89,7 +90,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink 
 	 */
 	@Override
 	public int getPriority() {
-		return DUPLICATOR_WINNING_PRIORITY;
+		return SPOILER_WINNING_PRIORITY;
 	}
 
 	/**
@@ -97,7 +98,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink 
 	 * 
 	 * @return The entry vertex of this sink.
 	 */
-	public SpoilerNwaVertex<LETTER, STATE> getSinkEntry() {
+	public DuplicatorNwaVertex<LETTER, STATE> getSinkEntry() {
 		return mSinkEntry;
 	}
 

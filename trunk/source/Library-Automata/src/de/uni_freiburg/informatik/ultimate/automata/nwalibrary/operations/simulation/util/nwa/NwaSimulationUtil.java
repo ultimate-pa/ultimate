@@ -119,9 +119,9 @@ public final class NwaSimulationUtil {
 					continue;
 				}
 				// Ignore call predecessors
-				if (pred instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
-					DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
-					if (predAsDD.getTransitionType() == ETransitionType.CALL) {
+				if (pred instanceof DuplicatorNwaVertex<?, ?>) {
+					DuplicatorNwaVertex<LETTER, STATE> predAsNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
+					if (predAsNwa.getTransitionType() == ETransitionType.CALL) {
 						continue;
 					}
 				}

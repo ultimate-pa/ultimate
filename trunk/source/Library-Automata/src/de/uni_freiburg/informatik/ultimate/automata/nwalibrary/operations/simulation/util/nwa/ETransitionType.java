@@ -47,7 +47,7 @@ public enum ETransitionType {
 	RETURN,
 	/**
 	 * Type for auxiliary transitions that represent the a sink that is winning
-	 * for duplicator.
+	 * for a given player.
 	 */
 	SINK,
 	/**

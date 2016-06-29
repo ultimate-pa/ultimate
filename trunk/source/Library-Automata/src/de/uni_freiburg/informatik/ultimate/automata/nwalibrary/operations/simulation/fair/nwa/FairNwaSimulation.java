@@ -33,7 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -140,16 +139,5 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 		// Dummy result
 		setResult(getGameGraph().generateAutomatonFromGraph());
 		// TODO Implement some different stuff
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.ASimulation#simulationHook()
-	 */
-	@Override
-	protected void simulationHook() throws AutomataOperationCanceledException {
-		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
 	}
 }
