@@ -120,18 +120,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final IAbstractState<?, CodeBlock, IBoogieVar> currentPreState = states.get(i);
 			final CodeBlock currentTrans = transitionList.get(i);
 
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("PreState   " + currentPreState.toLogString());
-				mLogger.debug("Transition " + currentTrans );
-			}
-
 			final List<IAbstractState> result =
-					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans );
+					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans);
 
 			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb =
-						new StringBuilder(AbsIntPrefInitializer.INDENT).append(AbsIntPrefInitializer.INDENT)
-								.append(currentDomain.getClass().getSimpleName()).append(": ");
+				final StringBuilder sb = new StringBuilder(AbsIntPrefInitializer.DINDENT)
+						.append(currentDomain.getClass().getSimpleName()).append(": ");
 				result.stream().map(a -> a.toLogString())
 						.forEach(a -> mLogger.debug(new StringBuilder(sb).append("post: ").append(a)));
 			}
@@ -233,24 +227,14 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 		assert !states.isEmpty();
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(states.stream().sequential().map(a -> a.toLogString()).reduce("", (a, b) -> a + "; " + b));
-		}
-
 		Term assumeTerm = null;
 		for (int i = 0; i < states.size(); i++) {
 			if (i == index) {
 				continue;
 			}
 			final IAbstractState<?, CodeBlock, IBoogieVar> state = states.get(i);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("the " + i + "-th state is " + state.toLogString());
-			}
 
 			final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("the " + i + "-th stateTerm is " + stateTerm);
-			}
 			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
 		}
 
@@ -268,9 +252,9 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		mTransformulaBuilder.addTransitionFormulas(result, transition.getPreceedingProcedure());
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("created new transition for domain " + index);
-			mLogger.debug("term:       " + assumeTerm.toStringDirect());
-			mLogger.debug("transition: " + result);
+			mLogger.debug(AbsIntPrefInitializer.INDENT + " Created new transition for domain " + index);
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " term:       " + assumeTerm.toStringDirect());
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " transition: " + result);
 		}
 
 		return result;

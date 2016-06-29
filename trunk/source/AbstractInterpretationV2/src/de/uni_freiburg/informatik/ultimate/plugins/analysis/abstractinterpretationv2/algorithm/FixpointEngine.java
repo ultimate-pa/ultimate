@@ -407,12 +407,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.collect(Collectors.toList());
 	}
 
-	
-
 	private List<STATE> merge(final IAbstractStateBinaryOperator<STATE> mergeOp, final List<STATE> postStates) {
 		return Collections.singletonList(postStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).get());
 	}
-
 
 	/**
 	 * Check if we are entering or leaving a scope and if so, create or delete it.
@@ -459,12 +456,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
-			mLogger.debug(prefix + " Scope widening sequence for " + getTransitionString(currentAction)
-					+ " (MaxUnwindings=" + mMaxUnwindings + ")");
-			mLogger.debug(prefix + " Stack");
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Scope widening sequence for "
+					+ getTransitionString(currentAction) + " (MaxUnwindings=" + mMaxUnwindings + ")");
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Stack");
 			stackAtCallLocation.stream().sequential().map(a -> a.getFirst())
-					.map(a -> a == null ? "[G]" : getTransitionString(a)).map(a -> prefix + a).forEach(mLogger::debug);
+					.map(a -> a == null ? "[G]" : getTransitionString(a)).map(a -> AbsIntPrefInitializer.TINDENT + a)
+					.forEach(mLogger::debug);
 		}
 
 		// get all stack items in the correct order that contain only calls to the current scope
@@ -478,10 +475,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
-			mLogger.debug(prefix + "Relevant stack states");
-			relevantStackItems.stream().sequential().map(a -> prefix
-					+ (a.getFirst() == null ? "[G]" : getHashCodeString(a.getFirst())) + " " + a.getSecond().toString())
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Relevant stack states");
+			relevantStackItems.stream().sequential()
+					.map(a -> AbsIntPrefInitializer.TINDENT
+							+ (a.getFirst() == null ? "[G]" : getHashCodeString(a.getFirst())) + " "
+							+ a.getSecond().toString())
 					.forEach(mLogger::debug);
 		}
 
@@ -489,14 +487,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				relevantStackItems.stream().sequential().map(a -> a.getSecond().getAbstractPostStates(currentAction))
 						.flatMap(a -> a.stream().sequential()).collect(Collectors.toList());
 		if (orderedStates.isEmpty()) {
-			//this is the first occurrence of this action, so we cannot widen 
+			// this is the first occurrence of this action, so we cannot widen
 			return null;
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
-			mLogger.debug(prefix + "Ordered states " + getHashCodeString(currentAction));
-			orderedStates.stream().sequential().forEach(a -> mLogger.debug(prefix + getStateString(a)));
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Ordered states " + getHashCodeString(currentAction));
+			orderedStates.stream().sequential()
+					.forEach(a -> mLogger.debug(AbsIntPrefInitializer.TINDENT + getStateString(a)));
 		}
 
 		// select the last state
@@ -508,8 +506,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final STATE lastState = orderedStates.get(orderedStates.size() - 2);
 
 		if (mLogger.isDebugEnabled()) {
-			final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
-			mLogger.debug(prefix + "Selected " + lastState.hashCode());
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Selected " + lastState.hashCode());
 		}
 		return lastState;
 	}
@@ -610,15 +607,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	private StringBuilder getLogMessageLeaveScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(AbsIntPrefInitializer.INDENT)
-				.append(" Transition [").append(successorItem.getAction().hashCode())
-				.append("] leaves scope (new depth=").append(successorItem.getCallStackDepth()).append(")");
+		return new StringBuilder().append(AbsIntPrefInitializer.DINDENT).append(" Transition [")
+				.append(successorItem.getAction().hashCode()).append("] leaves scope (new depth=")
+				.append(successorItem.getCallStackDepth()).append(")");
 	}
 
 	private StringBuilder getLogMessageEnterScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(AbsIntPrefInitializer.INDENT)
-				.append(" Transition [").append(successorItem.getAction().hashCode())
-				.append("] enters scope (new depth=").append(successorItem.getCallStackDepth()).append(")");
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Transition [")
+				.append(successorItem.getAction().hashCode()).append("] enters scope (new depth=")
+				.append(successorItem.getCallStackDepth()).append(")");
 	}
 
 	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
