@@ -1016,10 +1016,27 @@ public class IntervalDomainValue {
 			throw new UnsupportedOperationException("Cannot determine minimum for bottom state");
 		}
 
-		// TODO fix for lower bound is infty.
 		final List<IntervalValue> values = new ArrayList<>(4);
+
+		if (getLower().isInfinity()
+				&& ((!other.getLower().isInfinity()) && other.getLower().getValue().signum() != 0)) {
+			// -\infty * val = -\infty, if val != 0
+			return new IntervalValue();
+		}
+		if (other.getLower().isInfinity() && ((!getLower().isInfinity()) && getLower().getValue().signum() != 0)) {
+			// val * -\infty = -\infty, if val != 0
+			return new IntervalValue();
+		}
 		values.add(IntervalValue.multiply(getLower(), other.getLower()));
+
+		if (getLower().isInfinity() && (!other.getUpper().isInfinity() && other.getUpper().getValue().signum() != 0)) {
+			return new IntervalValue();
+		}
 		values.add(IntervalValue.multiply(getLower(), other.getUpper()));
+
+		if (other.getLower().isInfinity() && (!getUpper().isInfinity()) && getUpper().getValue().signum() != 0) {
+			return new IntervalValue();
+		}
 		values.add(IntervalValue.multiply(getUpper(), other.getLower()));
 		values.add(IntervalValue.multiply(getUpper(), other.getUpper()));
 
@@ -1087,10 +1104,10 @@ public class IntervalDomainValue {
 				return new IntervalDomainValue(true);
 			}
 
-			final IntervalDomainValue negZero =
-					new IntervalDomainValue(other.getLower(), new IntervalValue(new BigDecimal(-1)));
-			final IntervalDomainValue posZero =
-					new IntervalDomainValue(new IntervalValue(BigDecimal.ONE), other.getUpper());
+			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
+					new IntervalValue(new BigDecimal(-1)));
+			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
+					other.getUpper());
 
 			final IntervalDomainValue resultNeg = divideInternally(negZero);
 			final IntervalDomainValue resultPos = divideInternally(posZero);
