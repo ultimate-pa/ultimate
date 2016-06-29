@@ -31,6 +31,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -81,15 +82,21 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		if (mStorage.isEmpty()) {
 			return "{}";
 		}
-		final StringBuilder sb = new StringBuilder('{');
-		for (final Entry<?, Deque<STATE>> entry : mStorage.entrySet()) {
+		final StringBuilder sb = new StringBuilder().append('{');
+		final Set<Entry<LOCATION, Deque<STATE>>> entries = mStorage.entrySet();
+		for (final Entry<?, Deque<STATE>> entry : entries) {
 			sb.append(entry.getKey().toString()).append("=[");
-			if (!entry.getValue().isEmpty()) {
-				for (final STATE state : entry.getValue()) {
-					sb.append(state.toLogString()).append(',');
-				}
+			for (final STATE state : entry.getValue()) {
+				sb.append('[').append(state.hashCode()).append("] ");
+				sb.append(state.toLogString()).append(", ");
 			}
-			sb.append(']');
+			if (!entry.getValue().isEmpty()) {
+				sb.delete(sb.length() - 2, sb.length());
+			}
+			sb.append("], ");
+		}
+		if (!entries.isEmpty()) {
+			sb.delete(sb.length() - 2, sb.length());
 		}
 		sb.append('}');
 		return sb.toString();
