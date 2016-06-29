@@ -103,12 +103,19 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/congruence.bpl",
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-			
-			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
+
+			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
 			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/unary-minus-bug.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
