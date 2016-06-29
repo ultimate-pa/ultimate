@@ -341,6 +341,9 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			        newTrueExpression, newFalseExpression);
 			return newExp;
 		} else if (operator == Operator.ARITHPLUS || operator == Operator.ARITHMINUS) {
+
+			// x + -y ==> x - y
+			// x - -y ==> x + y
 			if (expr.getRight() instanceof UnaryExpression) {
 				final UnaryExpression rightHandExpression = (UnaryExpression) expr.getRight();
 				if (rightHandExpression.getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
@@ -359,6 +362,15 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				}
 			}
 
+			// -x + y ==> y - x
+			if (operator == Operator.ARITHPLUS && expr.getLeft() instanceof UnaryExpression
+			        && ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
+				return new BinaryExpression(expr.getLocation(), Operator.ARITHMINUS, expr.getRight(),
+				        ((UnaryExpression) expr.getLeft()).getExpr());
+			}
+
+			// x - x ==> 0
+			// x + x ==> 2x
 			if (expr.getLeft() instanceof IdentifierExpression && expr.getRight() instanceof IdentifierExpression) {
 				final IdentifierExpression left = (IdentifierExpression) expr.getLeft();
 				final IdentifierExpression right = (IdentifierExpression) expr.getRight();
@@ -368,6 +380,21 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					        ? new BinaryExpression(expr.getLocation(), Operator.ARITHMUL,
 					                new IntegerLiteral(expr.getLocation(), "2"), left)
 					        : new IntegerLiteral(expr.getLocation(), "0"));
+				}
+			}
+
+			// -x - x ==> -2x
+			if (expr.getLeft() instanceof UnaryExpression
+			        && ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE
+			        && expr.getRight() instanceof IdentifierExpression) {
+				final UnaryExpression leftUnary = (UnaryExpression) expr.getLeft();
+				final IdentifierExpression rightIdentifier = (IdentifierExpression) expr.getRight();
+				if (leftUnary.getExpr() instanceof IdentifierExpression && ((IdentifierExpression) leftUnary.getExpr())
+				        .getIdentifier().equals(rightIdentifier.getIdentifier())) {
+					return new BinaryExpression(expr.getLocation(), Operator.ARITHMUL,
+					        new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.ARITHNEGATIVE,
+					                new IntegerLiteral(expr.getLocation(), "2")),
+					        rightIdentifier);
 				}
 			}
 		}
