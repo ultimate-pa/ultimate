@@ -457,12 +457,6 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), expr.getType(), newOp,
 				        newLeft, newRight);
 
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-					        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-					        .append(BoogiePrettyPrinter.print(newExp)));
-				}
-
 				return newExp;
 			} else if (expr.getExpr() instanceof UnaryExpression) {
 				final UnaryExpression unexp = (UnaryExpression) expr.getExpr();
