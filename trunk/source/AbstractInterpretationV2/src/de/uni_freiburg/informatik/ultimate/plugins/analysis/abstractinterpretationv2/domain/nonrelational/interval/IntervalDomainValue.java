@@ -1016,6 +1016,7 @@ public class IntervalDomainValue {
 			throw new UnsupportedOperationException("Cannot determine minimum for bottom state");
 		}
 
+		// TODO fix for lower bound is infty.
 		final List<IntervalValue> values = new ArrayList<>(4);
 		values.add(IntervalValue.multiply(getLower(), other.getLower()));
 		values.add(IntervalValue.multiply(getLower(), other.getUpper()));

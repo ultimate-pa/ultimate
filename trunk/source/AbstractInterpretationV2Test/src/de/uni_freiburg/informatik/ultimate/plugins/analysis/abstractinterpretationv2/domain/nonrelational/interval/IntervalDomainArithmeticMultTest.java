@@ -111,4 +111,18 @@ public class IntervalDomainArithmeticMultTest {
 		// Expected Interval [-\infty, \infty]
 		assertTrue(HelperFunctions.computeMultiplicationResult(interval1, interval5, expectedResult));
 	}
+	
+	@Test
+	public void testNegInfiniteIntervalMult() {
+		// Interval [-\infty, -1]
+		final IntervalDomainValue interval1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(-1));
+		
+		//Interval [1, 1]
+		final IntervalDomainValue interval2 = HelperFunctions.createInterval(1, 1);
+		
+		// Expected: [-\infty, -1]
+		final IntervalDomainValue expected = new IntervalDomainValue(new IntervalValue(), new IntervalValue(-1));
+		
+		assertTrue(HelperFunctions.computeMultiplicationResult(interval1, interval2, expected));
+	}
 }
