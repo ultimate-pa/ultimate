@@ -60,7 +60,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	private final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation mAncestorComputation;
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	
-	NestedWordAutomatonFilteredStates(AutomataLibraryServices services,
+	public NestedWordAutomatonFilteredStates(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
 			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) 
 					throws AutomataOperationCanceledException {

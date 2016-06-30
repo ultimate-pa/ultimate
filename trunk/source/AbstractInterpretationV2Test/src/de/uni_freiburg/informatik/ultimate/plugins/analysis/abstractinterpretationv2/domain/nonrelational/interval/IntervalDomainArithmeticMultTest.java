@@ -124,5 +124,14 @@ public class IntervalDomainArithmeticMultTest {
 		final IntervalDomainValue expected = new IntervalDomainValue(new IntervalValue(), new IntervalValue(-1));
 		
 		assertTrue(HelperFunctions.computeMultiplicationResult(interval1, interval2, expected));
+		
+		// Interval [-2, -1]
+		final IntervalDomainValue interval3 = HelperFunctions.createInterval(-2, -1);
+		
+		// Expected: [1, \infty]
+		final IntervalDomainValue expected2 = new IntervalDomainValue(new IntervalValue(1), new IntervalValue());
+		
+		assertTrue(HelperFunctions.computeMultiplicationResult(interval1, interval3, expected2));
+		
 	}
 }
