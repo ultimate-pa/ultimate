@@ -96,15 +96,15 @@ public class PatternToDc {
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndInvariancePattern(pattern, q, r, p, s, t);			//test []
 			} else {
-				throw new UnsupportedOperationException();}
-	
+				throw new UnsupportedOperationException();
+			}
 		} else if (pattern instanceof BndResponsePattern){
 			// ... it is always the case that if p holds after at most c time units.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndResponsePattern(pattern, q, r, p, s, t);			//test []
 			} else {
-				throw new UnsupportedOperationException();}
-			
+				throw new UnsupportedOperationException();
+			}	
 		} else {
 			throw new UnsupportedOperationException("Pattern not implemented");
 		}

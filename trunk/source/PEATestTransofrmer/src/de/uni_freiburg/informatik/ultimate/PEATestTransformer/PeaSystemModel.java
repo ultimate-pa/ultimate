@@ -57,10 +57,11 @@ public class PeaSystemModel {
 		// peas already was altered, patterns has the right number
 		CounterTrace counterTrace = this.getCounterTrace(pea);
 		DCPhase lastPhase = counterTrace.getPhases()[counterTrace.getPhases().length - 3];
+		DCPhase veryLastPhase = counterTrace.getPhases()[counterTrace.getPhases().length - 2];
 		for (Phase loc : pea.getPhases()) {
 			PhaseSet activePhases = loc.getPhaseBits().getPhaseSet(counterTrace.getPhases());
 			for (DCPhase phase : activePhases.getPhases()) {
-				if (lastPhase == phase) {
+				if (lastPhase == phase || veryLastPhase == phase) {
 					result.add(loc);
 				}
 
@@ -68,6 +69,19 @@ public class PeaSystemModel {
 		}
 		return result;
 	}
+	
+	public boolean phaseIsUpperBoundFinal(PhaseEventAutomata pea, Phase phase){
+		ArrayList<Phase> finalPhases = this.getFinalPhases(pea);
+		// decide trivial cases (not final, no clock invar)
+		if (phase.getClockInvariant() == CDD.TRUE) return false;
+		if (!finalPhases.contains(phase)) return false;
+		// is original pattern a >= pattern?
+		for(DCPhase p: this.getCounterTrace(pea).getPhases()){
+			if(p.getBoundType() >= CounterTrace.BOUND_GREATEREQUAL) return true;
+		}
+		return false;
+	}
+
 	
 	public ArrayList<DCPhase> getDcPhases(PhaseEventAutomata pea, Phase phase){
 		ArrayList<DCPhase> result = new ArrayList<DCPhase>();
@@ -98,7 +112,6 @@ public class PeaSystemModel {
 	}
 	
 	public CDD getViolatingPhaseInvariant(PhaseEventAutomata pea){
-		
 		return null;
 	}
 
