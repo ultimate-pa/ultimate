@@ -55,7 +55,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
-	private final IWinningSink mSink;
+	private final IWinningSink<LETTER, STATE> mSink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
 	 * vertex for such, <tt>null</tt> if not set.
@@ -102,7 +102,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 *            vertex for such.
 	 */
 	public SpoilerNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final IWinningSink sink) {
+			final IWinningSink<LETTER, STATE> sink) {
 		this(priority, b, q0, q1, null, sink);
 	}
 
@@ -153,7 +153,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 *            vertex for such.
 	 */
 	private SpoilerNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge, final IWinningSink sink) {
+			final SummarizeEdge<LETTER, STATE> summarizeEdge, final IWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1);
 		mSummarizeEdge = summarizeEdge;
 		mSink = sink;
@@ -218,7 +218,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * 
 	 * @return The sink this vertex belongs to or <tt>null</tt> if not set.
 	 */
-	public IWinningSink getSink() {
+	public IWinningSink<LETTER, STATE> getSink() {
 		return mSink;
 	}
 

@@ -56,7 +56,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
-	private final IWinningSink mSink;
+	private final IWinningSink<LETTER, STATE> mSink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
 	 * vertex for such, <tt>null</tt> if not set.
@@ -122,7 +122,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 *            vertex for such.
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
-			final ETransitionType transitionType, final IWinningSink sink) {
+			final ETransitionType transitionType, final IWinningSink<LETTER, STATE> sink) {
 		this(priority, b, q0, q1, a, transitionType, null, sink);
 	}
 
@@ -194,7 +194,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 */
 	private DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
 			final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
-			final IWinningSink sink) {
+			final IWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
 		mTransitionType = transitionType;
 		mSummarizeEdge = summarizeEdge;
@@ -269,7 +269,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
 	 */
-	public IWinningSink getSink() {
+	public IWinningSink<LETTER, STATE> getSink() {
 		return mSink;
 	}
 

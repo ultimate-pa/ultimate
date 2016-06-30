@@ -32,8 +32,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * 
  * @author Daniel Tischner
  *
+ * @param <LETTER>
+ *            Letter class of nwa automaton
+ * @param <STATE>
+ *            State class of nwa automaton
  */
-public interface IWinningSink {
+public interface IWinningSink<LETTER, STATE> {
 	/**
 	 * Gets the priority of the sink, which determines the winning player.
 	 * 

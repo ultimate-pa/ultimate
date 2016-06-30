@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+
 /**
  * Represents a sink that is winning for Spoiler. If such a sink exists with
  * <tt>sinkEntry</tt> it means that one can move from that vertex into a sink
@@ -40,7 +42,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink {
+public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink<LETTER, STATE> {
+
+	/**
+	 * Singleton instance of this class.
+	 */
+	private static SpoilerWinningSink<?, ?> mInstance = null;
 
 	/**
 	 * The priority that is winning for Spoiler.
@@ -48,29 +55,68 @@ public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink {
 	private final static int SPOILER_WINNING_PRIORITY = 1;
 
 	/**
+	 * Gets an instance to a sink.
+	 * 
+	 * @param graph
+	 *            The game graph this sink belongs to
+	 * @return An instance to a sink.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <LETTER, STATE> SpoilerWinningSink<LETTER, STATE> getInstance(final AGameGraph<LETTER, STATE> graph) {
+		// Create an instance of not already existent
+		if (mInstance == null) {
+			mInstance = new SpoilerWinningSink<LETTER, STATE>(graph);
+		}
+
+		// Try to cast to the current parameters
+		SpoilerWinningSink<LETTER, STATE> castedInstance = null;
+		try {
+			castedInstance = (SpoilerWinningSink<LETTER, STATE>) mInstance;
+		} catch (ClassCastException e) {
+			// If not possible, create a new instance
+			castedInstance = new SpoilerWinningSink<LETTER, STATE>(graph);
+			mInstance = castedInstance;
+		}
+		return castedInstance;
+	}
+
+	/**
 	 * The duplicator vertex of this sink.
 	 */
 	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorSink;
+
 	/**
-	 * The entry vertex of this sink.
+	 * The game graph this sink belongs to.
 	 */
-	private final DuplicatorNwaVertex<LETTER, STATE> mSinkEntry;
+	private final AGameGraph<LETTER, STATE> mGraph;
+
 	/**
 	 * The spoiler vertex of this sink.
 	 */
 	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerSink;
 
 	/**
-	 * Creates a new sink which starts at <tt>sinkEntry</tt>.
+	 * Creates a new sink that connects itself to the game graph.
+	 * 
+	 * @param graph
+	 *            The game graph this sink belongs to
+	 */
+	private SpoilerWinningSink(final AGameGraph<LETTER, STATE> graph) {
+		mGraph = graph;
+		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(SPOILER_WINNING_PRIORITY, false, null, null, this);
+		mDuplicatorSink = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
+				null, null, null, ETransitionType.SINK, this);
+		addToGraph();
+	}
+
+	/**
+	 * Connects the given vertex to this sink.
 	 * 
 	 * @param sinkEntry
-	 *            The vertex where the sink starts
+	 *            Sink entry to connect
 	 */
-	public SpoilerWinningSink(final DuplicatorNwaVertex<LETTER, STATE> sinkEntry) {
-		mSinkEntry = sinkEntry;
-		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(SPOILER_WINNING_PRIORITY, false, null, null, this);
-		mDuplicatorSink = new DuplicatorNwaVertex<LETTER, STATE>(2, false, null, null, null, ETransitionType.SINK,
-				this);
+	public void connectToEntry(final DuplicatorNwaVertex<LETTER, STATE> sinkEntry) {
+		mGraph.addEdge(sinkEntry, mSpoilerSink);
 	}
 
 	/**
@@ -94,21 +140,25 @@ public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink {
 	}
 
 	/**
-	 * Gets the entry vertex of this sink.
-	 * 
-	 * @return The entry vertex of this sink.
-	 */
-	public DuplicatorNwaVertex<LETTER, STATE> getSinkEntry() {
-		return mSinkEntry;
-	}
-
-	/**
 	 * Gets the spoiler vertex of this sink.
 	 * 
 	 * @return The entry vertex of this sink.
 	 */
 	public SpoilerNwaVertex<LETTER, STATE> getSpoilerAuxiliarySink() {
 		return mSpoilerSink;
+	}
+
+	/**
+	 * Adds this sink to the game graph.
+	 */
+	private void addToGraph() {
+		// Add auxiliary vertices
+		mGraph.addSpoilerVertex(mSpoilerSink);
+		mGraph.addDuplicatorVertex(mDuplicatorSink);
+
+		// Add edges
+		mGraph.addEdge(mSpoilerSink, mDuplicatorSink);
+		mGraph.addEdge(mDuplicatorSink, mSpoilerSink);
 	}
 
 }
