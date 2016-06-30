@@ -291,7 +291,7 @@ public class StringFactory extends StateFactory<String> {
 
 	@Override
 	public String createDoubleDeckerContent(String down, String up) {
-		return "<" + down + "," + up + ">"; 
+		return "<" + down + "," + up + ">";
 	}
 
 	@Override

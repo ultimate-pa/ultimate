@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -61,6 +61,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.GameAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.GameAutomatonLetter;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -187,6 +191,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final ESimulationType mSimulationType;
 	/**
+	 * Data structure of all Spoiler vertices that are predecessor of a
+	 * Duplicator calling vertex. They are used for summarize edge generation.
+	 */
+	private final HashSet<SpoilerNwaVertex<LETTER, STATE>> mSpoilerCallPredecessors;
+	/**
 	 * Map of all summarize edges of the graph. Provides a fast access via
 	 * source and destinations of the edge.
 	 */
@@ -231,6 +240,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
 		mAutomatonStatesToGraphSpoilerVertex = new HashMap<>();
 		mDuplicatorReturningVertices = new HashSet<>();
+		mSpoilerCallPredecessors = new HashSet<>();
 		mPossibleSpoilerDeadEnd = new HashSet<>();
 		mPossibleNonReturnDuplicatorDeadEnd = new HashSet<>();
 		mDuplicatorDirectlyLosesInSpoiler = new HashSet<>();
@@ -279,7 +289,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final HashMap<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>, Integer> searchPriorities = new HashMap<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
 		final HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge = new HashMap<>();
-
 		// Every vertex can maximal be added '3 * out-degree' times to the queue
 		// TODO Performance impact of BigInteger is to high for a safety check.
 		// This event may not even be possible for correct game graphs. In this
@@ -287,7 +296,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final BigInteger maxAmountOfSearches = BigInteger.valueOf(mGameGraph.getSize()).pow(2)
 				.multiply(BigInteger.valueOf(3));
 		final BigInteger searchCounter = BigInteger.ZERO;
-
 		// Add starting elements
 		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
 				.entrySet()) {
@@ -308,7 +316,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						searchQueue.add(searchElement);
 					}
 				}
-
 				// Memorize invoker element for detection of
 				// corresponding summarize edges
 				invokerToSummarizeEdge.put(new Pair<>(spoilerInvoker, invokingState), summarizeEdge);
@@ -322,14 +329,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final Vertex<LETTER, STATE> searchTarget = searchElement.getTarget();
 			final SummarizeEdge<LETTER, STATE> searchSummarizeEdge = searchElement.getSummarizeEdge();
 			final STATE searchDuplicatorChoice = searchElement.getDuplicatorChoice();
-
 			boolean isSearchVertexDuplicatorNwa = false;
 			DuplicatorNwaVertex<LETTER, STATE> searchVertexAsDuplicatorNwa = null;
 			if (searchVertex instanceof DuplicatorNwaVertex) {
 				searchVertexAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) searchVertex;
 				isSearchVertexDuplicatorNwa = true;
 			}
-
 			// Calculate search priority of element by using the priorities of
 			// successors
 			int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
@@ -1104,14 +1109,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
 		// Create the game automaton, we will use it for summarize computation
-		NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = createGameAutomaton();
-		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithSummaries = new RemoveUnreachable<>(
+		NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = createGameAutomaton();
+		NestedWordAutomatonReachableStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithSummaries = new RemoveUnreachable<>(
 				mServices, gameAutomaton).getResult();
 
 		// Retrieve all single summary edge sources
 		List<SpoilerVertex<LETTER, STATE>> summarySources = new LinkedList<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>> summariesOfSource = gameAutomatonWithSummaries
+			Iterable<SummaryReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>> summariesOfSource = gameAutomatonWithSummaries
 					.returnSummarySuccessor(spoilerVertex);
 			if (summariesOfSource.iterator().hasNext()) {
 				summarySources.add(spoilerVertex);
@@ -1124,14 +1129,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// the automaton
 			Set<SpoilerVertex<LETTER, STATE>> initialSet = new HashSet<>();
 			initialSet.add(summarySource);
-			NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
+			NestedWordAutomatonFilteredStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
 					mServices, gameAutomaton, gameAutomaton.getStates(), initialSet, Collections.emptySet());
 
 			// Determizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> determinizedGameAutomaton = new Determinize<>(
+			INestedWordAutomatonOldApi<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> determinizedGameAutomaton = new Determinize<>(
 					mServices, gameAutomatonFiltered.getStateFactory(), gameAutomatonFiltered).getResult();
-			NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithMergedSummaries = new RemoveUnreachable<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
+			NestedWordAutomatonReachableStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithMergedSummaries = new RemoveUnreachable<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
 					mServices, determinizedGameAutomaton).getResult();
 
 			// The initial game state must be a singleton and is the source of
@@ -1146,7 +1151,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			NestedMap2<STATE, STATE, Set<SpoilerVertex<LETTER, STATE>>> choiceToSpoilerInvoker = new NestedMap2<>();
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summary edges
-			for (SummaryReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> summary : gameAutomatonWithMergedSummaries
+			for (SummaryReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> summary : gameAutomatonWithMergedSummaries
 					.returnSummarySuccessor(mergedSummarySource)) {
 				SpoilerVertex<LETTER, STATE> summaryDestination = summary.getSucc();
 				if (summaryDestination.equals(mAuxiliaryGameState)) {
@@ -1165,7 +1170,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 					// Compute all spoilerInvoker for this choice
 					Set<SpoilerVertex<LETTER, STATE>> allSpoilerInvoker = new HashSet<>();
-					for (IncomingReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> returnTrans : gameAutomatonWithMergedSummaries
+					for (IncomingReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> returnTrans : gameAutomatonWithMergedSummaries
 							.returnPredecessors(summaryDestination)) {
 						allSpoilerInvoker.add(returnTrans.getLinPred());
 					}
@@ -1612,12 +1617,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// can not take a return-transition due to their down state.
 		// Such vertices need to form a instant win for Duplicator.
 		boolean hasInternalSuccessors = mNwa.internalSuccessors(leftState).iterator().hasNext();
+		boolean hasCallSuccessors = mNwa.callSuccessors(leftState).iterator().hasNext();
 		// Do this in the order of the most unlikely events,
 		// reduces computation time
 		if (!hasInternalSuccessors) {
 			boolean hasReturnSuccessors = mNwa.returnSuccessors(leftState).iterator().hasNext();
 			if (!hasReturnSuccessors) {
-				boolean hasCallSuccessors = mNwa.callSuccessors(leftState).iterator().hasNext();
 				if (!hasCallSuccessors) {
 					mPossibleSpoilerDeadEnd.add(spoilerVertex);
 					if (mLogger.isDebugEnabled()) {
@@ -1625,6 +1630,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 				}
 			}
+		}
+		// Memorize Spoiler vertices that are predecessor of Duplicator calling
+		// vertices.
+		if (hasCallSuccessors) {
+			mSpoilerCallPredecessors.add(spoilerVertex);
 		}
 		// Remember the vertex if direct simulation and it is directly losing
 		// for Duplicator
@@ -1848,14 +1858,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * 
 	 * @return A game automaton that is used for summarize edge computation
 	 */
-	private NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> createGameAutomaton() {
-		Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
-		Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
-		Set<GameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
+	private NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> createGameAutomaton() {
+		Set<GameAutomatonLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
+		Set<GameAutomatonLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
+		Set<GameAutomatonLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
 
-		// TODO How to get such a state factory?
-		NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = new NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
-				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet, null);
+		NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = new NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
+				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet,
+				new GameAutomatonFactory<>(mNwa.getStateFactory()));
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)
@@ -1896,7 +1906,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// to the game automaton
 					gameAutomaton.addState(true, false, spoilerVertex);
 					gameAutomaton.addState(true, false, spoilerSucc);
-					GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorSucc.getLetter(),
+					GameAutomatonLetter<LETTER, STATE> letter = new GameAutomatonLetter<>(duplicatorSucc.getLetter(),
 							duplicatorSucc.getQ0());
 					ETransitionType transType = duplicatorSucc.getTransitionType();
 					if (transType.equals(ETransitionType.INTERNAL)) {
@@ -1926,16 +1936,16 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			gameAutomaton.addState(true, false, spoilerVertex);
 			gameAutomaton.addState(true, false, mAuxiliaryGameState);
 
-			for (GameLetter<LETTER, STATE> internalLetter : internalGameAlphabet) {
+			for (GameAutomatonLetter<LETTER, STATE> internalLetter : internalGameAlphabet) {
 				gameAutomaton.addInternalTransition(spoilerVertex, internalLetter, mAuxiliaryGameState);
 			}
-			for (GameLetter<LETTER, STATE> callLetter : callGameAlphabet) {
+			for (GameAutomatonLetter<LETTER, STATE> callLetter : callGameAlphabet) {
 				gameAutomaton.addCallTransition(spoilerVertex, callLetter, mAuxiliaryGameState);
 			}
-			for (GameLetter<LETTER, STATE> returnLetter : returnGameAlphabet) {
-				// TODO Well, this would be enormously expensive, re-think.
-				for (SpoilerVertex<LETTER, STATE> gameHierPred : gameAutomaton.getStates()) {
-					gameAutomaton.addReturnTransition(spoilerVertex, gameHierPred, returnLetter, mAuxiliaryGameState);
+			for (GameAutomatonLetter<LETTER, STATE> returnLetter : returnGameAlphabet) {
+				for (SpoilerVertex<LETTER, STATE> possibleGameHierPred : mSpoilerCallPredecessors) {
+					gameAutomaton.addReturnTransition(spoilerVertex, possibleGameHierPred, returnLetter,
+							mAuxiliaryGameState);
 				}
 			}
 		}

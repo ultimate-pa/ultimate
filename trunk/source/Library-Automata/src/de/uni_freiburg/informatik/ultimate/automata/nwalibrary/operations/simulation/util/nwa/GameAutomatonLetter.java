@@ -39,7 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class GameLetter<LETTER, STATE> {
+public final class GameAutomatonLetter<LETTER, STATE> {
 
 	/**
 	 * The letter used by Spoiler.
@@ -60,7 +60,7 @@ public final class GameLetter<LETTER, STATE> {
 	 * @param state
 	 *            Destination of Spoiler
 	 */
-	public GameLetter(final LETTER letter, final STATE state) {
+	public GameAutomatonLetter(final LETTER letter, final STATE state) {
 		mLetter = letter;
 		mState = state;
 	}
@@ -78,10 +78,10 @@ public final class GameLetter<LETTER, STATE> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof GameLetter)) {
+		if (!(obj instanceof GameAutomatonLetter)) {
 			return false;
 		}
-		GameLetter<?, ?> other = (GameLetter<?, ?>) obj;
+		GameAutomatonLetter<?, ?> other = (GameAutomatonLetter<?, ?>) obj;
 		if (mLetter == null) {
 			if (other.mLetter != null) {
 				return false;
