@@ -31,8 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -270,7 +268,7 @@ public class IntervalDomainValue {
 		}
 
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
-				|| (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
+		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
 
 	/**
@@ -388,7 +386,7 @@ public class IntervalDomainValue {
 		}
 
 		return (mLower.isInfinity() || mLower.getValue().signum() <= 0)
-				&& (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
+		        && (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
 	}
 
 	/**
@@ -692,7 +690,7 @@ public class IntervalDomainValue {
 
 		// [a; b] % [c; d] = [a; b], when (0 <= a) and (b < c)
 		if (!mLower.isInfinity() && !absDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-				&& mUpper.compareTo(absDivisor.mLower) < 0) {
+		        && mUpper.compareTo(absDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
@@ -780,7 +778,7 @@ public class IntervalDomainValue {
 		}
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
-				new IntervalValue(getLower().getValue().negate()));
+		        new IntervalValue(getLower().getValue().negate()));
 	}
 
 	/**
@@ -884,7 +882,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -918,7 +916,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -951,7 +949,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -987,7 +985,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1008,43 +1006,166 @@ public class IntervalDomainValue {
 	 * @return min(ac, ad, bc, bd).
 	 */
 	private IntervalValue computeMinMult(final IntervalDomainValue other) {
+
+		IntervalValue returnValue = new IntervalValue();
+		boolean valuePresent = false;
+
 		// If both intervals are infinite, the minimum is \infty.
 		if (isInfinity() && other.isInfinity()) {
 			return new IntervalValue();
 		}
-		if (isBottom() || other.isBottom()) {
-			throw new UnsupportedOperationException("Cannot determine minimum for bottom state");
+
+		// Compute a*c
+		if (getLower().isInfinity()) {
+			if (!other.getLower().isInfinity()) {
+
+				// -\infty * val = -\infty, if val > 0.
+				if (other.getLower().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// -\infty * val = 0, if val = 0.
+				if (other.getLower().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+
+			// 0 * anything = 0.
+			if (getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
+			} else {
+				if (other.getLower().isInfinity()) {
+
+					// val * -\infty = -\infty, if val > 0
+					if (getLower().getValue().signum() > 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue,
+					        getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
+					valuePresent = true;
+				}
+			}
 		}
 
-		final List<IntervalValue> values = new ArrayList<>(4);
+		// Compute a*d
+		if (getLower().isInfinity()) {
 
-		if (getLower().isInfinity()
-				&& ((!other.getLower().isInfinity()) && other.getLower().getValue().signum() != 0)) {
-			// -\infty * val = -\infty, if val != 0
-			return new IntervalValue();
-		}
-		if (other.getLower().isInfinity() && ((!getLower().isInfinity()) && getLower().getValue().signum() != 0)) {
-			// val * -\infty = -\infty, if val != 0
-			return new IntervalValue();
-		}
-		values.add(IntervalValue.multiply(getLower(), other.getLower()));
+			// -\infty * \infty = -\infty
+			if (other.getUpper().isInfinity()) {
+				return new IntervalValue();
+			}
 
-		if (getLower().isInfinity() && (!other.getUpper().isInfinity() && other.getUpper().getValue().signum() != 0)) {
-			return new IntervalValue();
-		}
-		values.add(IntervalValue.multiply(getLower(), other.getUpper()));
+			// -\infty * val = -\infty, if val > 0
+			if (other.getUpper().getValue().signum() > 0) {
+				return new IntervalValue();
+			}
 
-		if (other.getLower().isInfinity() && (!getUpper().isInfinity()) && getUpper().getValue().signum() != 0) {
-			return new IntervalValue();
-		}
-		values.add(IntervalValue.multiply(getUpper(), other.getLower()));
-		values.add(IntervalValue.multiply(getUpper(), other.getUpper()));
+			// anything * 0 = 0.
+			if (other.getUpper().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
+			}
+		} else {
 
-		return values.stream().min((a, b) -> a.compareTo(b)).get();
+			// 0 * anything = 0
+			if (getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
+			} else {
+				if (other.getUpper().isInfinity()) {
+
+					// val * \infty = -\infty, if val < 0
+					if (getLower().getValue().signum() < 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue,
+					        getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
+					valuePresent = true;
+				}
+			}
+		}
+
+		// Compute b*c
+		if (getUpper().isInfinity()) {
+
+			// \infty * -\infty = -\infty
+			if (other.getLower().isInfinity()) {
+				return new IntervalValue();
+			}
+
+			// \infty * val = -\infty, if val < 0
+			if (other.getLower().getValue().signum() < 0) {
+				return new IntervalValue();
+			}
+
+			// \infty * 0 = 0
+			if (other.getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
+			}
+		} else {
+			if (other.getLower().isInfinity()) {
+				// val * -\infty = -\infty, if val > 0
+				if (getUpper().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * anything = 0
+				if (getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
+				        valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b * d
+		if (getUpper().isInfinity()) {
+			if (!other.getUpper().isInfinity()) {
+
+				// \infty * val = -\infty, if val < 0
+				if (other.getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				if (other.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+			if (other.getUpper().isInfinity()) {
+				// val * \infty = -\infty, if val < 0
+				if (getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * \infty = 0
+				if (getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
+				        valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		assert valuePresent;
+		return returnValue;
 	}
 
 	private IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) <= 0) {
 				return new IntervalValue(newValue);
@@ -1057,7 +1178,7 @@ public class IntervalDomainValue {
 	}
 
 	private IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) >= 0) {
 				return new IntervalValue(newValue);
@@ -1105,9 +1226,9 @@ public class IntervalDomainValue {
 			}
 
 			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
-					new IntervalValue(new BigDecimal(-1)));
+			        new IntervalValue(new BigDecimal(-1)));
 			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
-					other.getUpper());
+			        other.getUpper());
 
 			final IntervalDomainValue resultNeg = divideInternally(negZero);
 			final IntervalDomainValue resultPos = divideInternally(posZero);
