@@ -72,29 +72,13 @@ public final class SearchElement<LETTER, STATE> {
 	}
 
 	/**
-	 * Extracts the vertex double decker representation from a given search
-	 * element.
-	 * 
-	 * @param searchElement
-	 *            Search element to extract from
-	 * @return The vertex double decker representation of the given search
-	 *         element.
+	 * The target vertex of this element.
 	 */
-	public static <LETTER, STATE> VertexDoubleDecker<STATE> extractVertexDoubleDecker(
-			final SearchElement<LETTER, STATE> searchElement) {
-		final Vertex<LETTER, STATE> vertex = searchElement.getVertex();
-		final VertexUpState<STATE> upState = new VertexUpState<STATE>(vertex.getQ0(), vertex.getQ1());
-		return new VertexDoubleDecker<>(upState, searchElement.getDownState());
-	}
-
+	private final Vertex<LETTER, STATE> mTarget;
 	/**
-	 * The down state of this element.
+	 * Vertex that was used right before this search element.
 	 */
-	private final VertexDownState<STATE> mDownState;
-	/**
-	 * Vertex down state that was used right before this search element.
-	 */
-	private final VertexDownState<STATE> mHistory;
+	private final Vertex<LETTER, STATE> mHistory;
 	/**
 	 * Summarize edge this element corresponds to.
 	 */
@@ -103,6 +87,10 @@ public final class SearchElement<LETTER, STATE> {
 	 * The vertex of this element.
 	 */
 	private final Vertex<LETTER, STATE> mVertex;
+	/**
+	 * The choice Duplicator made in the summarize edge for this element.
+	 */
+	private final STATE mDuplicatorChoice;
 
 	/**
 	 * Creates a new search element with a given vertex and a down state.
@@ -113,31 +101,17 @@ public final class SearchElement<LETTER, STATE> {
 	 * @param downState
 	 *            Down state for this element
 	 */
-	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState) {
-		this(vertex, downState, null, null);
+	public SearchElement(final Vertex<LETTER, STATE> vertex, Vertex<LETTER, STATE> target) {
+		this(vertex, target, null, null, null);
 	}
 
-	/**
-	 * Creates a new search element with a given vertex, a down state, a history
-	 * element and the corresponding summarize edge. Together they form a double
-	 * decker vertex.
-	 * 
-	 * @param vertex
-	 *            Vertex for this element
-	 * @param downState
-	 *            Down state for this element
-	 * @param history
-	 *            Vertex down state that was used right before this search
-	 *            element
-	 * @param summarizeEdge
-	 *            Summarize edge this element corresponds to
-	 */
-	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState,
-			final VertexDownState<STATE> history, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+	public SearchElement(final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> target,
+			final Vertex<LETTER, STATE> history, SummarizeEdge<LETTER, STATE> summarizeEdge, STATE duplicatorChoice) {
 		mVertex = vertex;
-		mDownState = downState;
+		mTarget = target;
 		mHistory = history;
 		mSummarizeEdge = summarizeEdge;
+		mDuplicatorChoice = duplicatorChoice;
 	}
 
 	/*
@@ -157,11 +131,11 @@ public final class SearchElement<LETTER, STATE> {
 			return false;
 		}
 		final SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
-		if (mDownState == null) {
-			if (other.mDownState != null) {
+		if (mTarget == null) {
+			if (other.mTarget != null) {
 				return false;
 			}
-		} else if (!mDownState.equals(other.mDownState)) {
+		} else if (!mTarget.equals(other.mTarget)) {
 			return false;
 		}
 		if (mVertex == null) {
@@ -175,22 +149,20 @@ public final class SearchElement<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the down state.
+	 * Gets the target.
 	 * 
-	 * @return The down state
+	 * @return The target
 	 */
-	public VertexDownState<STATE> getDownState() {
-		return mDownState;
+	public Vertex<LETTER, STATE> getTarget() {
+		return mTarget;
 	}
 
 	/**
-	 * Gets the vertex down state that was used right before this search
-	 * element.
+	 * Gets the vertex that was used right before this search element.
 	 * 
-	 * @return The vertex down state that was used right before this search
-	 *         element.
+	 * @return The vertex that was used right before this search element.
 	 */
-	public VertexDownState<STATE> getHistory() {
+	public Vertex<LETTER, STATE> getHistory() {
 		return mHistory;
 	}
 
@@ -202,6 +174,16 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
 		return mSummarizeEdge;
+	}
+
+	/**
+	 * Gets the choice Duplicator take for this summarize edge.
+	 * 
+	 * @return The choice Duplicator take for this summarize edge, or
+	 *         <tt>null</tt> if not set.
+	 */
+	public STATE getDuplicatorChoice() {
+		return mDuplicatorChoice;
 	}
 
 	/**
@@ -222,7 +204,7 @@ public final class SearchElement<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mDownState == null) ? 0 : mDownState.hashCode());
+		result = prime * result + ((mTarget == null) ? 0 : mTarget.hashCode());
 		result = prime * result + ((mVertex == null) ? 0 : mVertex.hashCode());
 		return result;
 	}
@@ -234,6 +216,6 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "SearchElement [mDownState=" + mDownState + ", mVertex=" + mVertex + "]";
+		return "SearchElement [mTarget=" + mTarget + ", mVertex=" + mVertex + "]";
 	}
 }
