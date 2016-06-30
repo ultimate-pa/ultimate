@@ -1,0 +1,171 @@
+/**
+ * JavaCC file
+ */
+
+
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(FTAParser)
+package de.uni_muenster.cs.sev.lethal.parser.fta;
+
+import java.io.ByteArrayInputStream;
+import java.util.*;
+import de.uni_muenster.cs.sev.lethal.symbol.common.RankedSymbol;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.*;
+import de.uni_muenster.cs.sev.lethal.symbol.special.*;
+import de.uni_muenster.cs.sev.lethal.states.*;
+import de.uni_muenster.cs.sev.lethal.utils.*;
+import de.uni_muenster.cs.sev.lethal.tree.standard.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import de.uni_muenster.cs.sev.lethal.treeautomata.easy.*;
+
+import java.util.List;
+
+/**
+ * Parser for finite tree automata
+ * @author Philipp
+ */
+public class FTAParser {
+	private static FTAParser parser = new FTAParser(new ByteArrayInputStream(new byte[]{}));
+	
+	public static EasyFTA parseString(String s) throws ParseException{
+		parser.ReInit(new ByteArrayInputStream(s.getBytes()));
+		return parser.fta();
+	}
+	
+	public static EasyFTA parseStrings(List<String> ruleStrings) throws ParseException{
+		StringBuffer sb = new StringBuffer();
+		for (String s : ruleStrings){
+			sb.append(s);
+			sb.append('\n');
+		}
+		parser.ReInit(new ByteArrayInputStream(sb.toString().getBytes()));
+		return parser.fta();
+	}
+
+}
+PARSER_END(FTAParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:    ( ["a"-"z","A"-"Z","_", "'", "<",">", "0"-"9", "#"] )+ > |
+    < FIN_MARK: [ "\u00b0", "%", "!"] > |
+    <LINE_END_COMMENT: "//" (~["\n"])* >
+}
+
+EasyFTA fta() :
+{
+	EasyFTARule rule;
+	List<EasyFTARule> rules = new ArrayList<EasyFTARule>();
+	EasyFTAEpsRule epsRule;
+	List<EasyFTAEpsRule> epsRules = new ArrayList<EasyFTAEpsRule>();
+	Set<State> finalStates = new HashSet<State>();
+}
+{
+(  ( LOOKAHEAD(2) rule = ftaRule(finalStates) {rules.add(rule);} | epsRule = ftaEpsRule(finalStates) {epsRules.add(epsRule);} )? ( <LINE_END_COMMENT> )?
+	( "\n" ( LOOKAHEAD(2) rule = ftaRule(finalStates) {rules.add(rule);}  | epsRule = ftaEpsRule(finalStates) {epsRules.add(epsRule);} )? ( <LINE_END_COMMENT> )? )* ) <EOF> 
+	{ return new EasyFTA(rules, epsRules, finalStates); }
+}
+
+EasyFTAEpsRule ftaEpsRule(Set<State> finalStates) :
+{
+	State srcState;
+	State dstState;
+}
+{
+	srcState = state(finalStates) "=>" dstState = state(finalStates)
+	{return new EasyFTAEpsRule(srcState, dstState );}
+}
+
+
+EasyFTARule ftaRule(Set<State> finalStates) :
+{
+	Pair<RankedSymbol, List<State>> func;
+	State dstState;
+}
+{
+	func = function(finalStates) "->" dstState = state(finalStates)
+	{return new EasyFTARule(func.getFirst(), func.getSecond(), dstState );}
+}
+
+Pair<RankedSymbol, List<State>> function(Set<State> finalStates) :
+{
+	String symbolName = null;
+	RankedSymbol symbol; // = null;
+	State state;
+	String stateName;
+	List<State> ruleStates = new ArrayList<State>();
+}
+{
+	(
+		//(symbolName=<NAME>.image | <NIL> {symbol = Nil.getNil();} | <CONS> {symbol = Cons.getCons();} )
+		symbolName=<NAME>.image
+		(
+			"("
+				( state = state(finalStates) {ruleStates.add(state);}
+					(
+						","  state = state(finalStates) {ruleStates.add(state);}
+					)*
+				)? 
+			")"
+		)?
+	)
+	{
+		//if (symbol == null)
+		symbol = new StdNamedRankedSymbol(symbolName, ruleStates.size());
+		return new Pair<RankedSymbol, List<State>>(symbol,ruleStates);
+	}
+}
+
+
+State state(Set<State> finalStates) : 
+{
+	Object name;
+	
+	String finMark = null;
+}
+{
+	( name=subState() ) ( finMark=<FIN_MARK>.image )*
+	
+	{
+		State state = StateFactory.getStateFactory().makeState(name);
+		if (finMark != null) finalStates.add(state);
+		return state;
+	}
+}
+
+String subState() :
+{
+	String s;
+	String stateName;
+}
+{
+	(
+		( s=<NAME>.image {stateName=s;} 
+			| "[" s = stateSeq() "]" {stateName = "[" + s + "]";} 
+			| "(" s = stateSeq() ")" {stateName = "(" + s + ")";} 
+			| "{" s = stateSeq() "}" {stateName = "{" + s + "}";}
+		)
+		[ s = subState()  {stateName+=s;}]
+	)
+	{
+		return stateName;
+	}
+}
+
+String stateSeq() :
+{
+	String s;
+	String seqName;
+}
+{
+	(
+		s = subState() {seqName=s;}
+		( "," s = subState() {seqName+=","+s;} )*
+	)
+	{return seqName;}
+}

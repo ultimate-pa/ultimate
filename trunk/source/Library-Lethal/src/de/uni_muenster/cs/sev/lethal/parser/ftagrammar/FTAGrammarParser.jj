@@ -1,0 +1,131 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(FTAGrammarParser)
+package de.uni_muenster.cs.sev.lethal.parser.ftagrammar;
+
+import java.io.ByteArrayInputStream;
+import java.util.*;
+import de.uni_muenster.cs.sev.lethal.symbol.common.*;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.*;
+import de.uni_muenster.cs.sev.lethal.tree.common.*;
+import de.uni_muenster.cs.sev.lethal.tree.standard.*;
+import de.uni_muenster.cs.sev.lethal.grammars.*;
+import de.uni_muenster.cs.sev.lethal.grammars.generic.*;
+import de.uni_muenster.cs.sev.lethal.treeautomata.easy.*;
+import de.uni_muenster.cs.sev.lethal.states.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import de.uni_muenster.cs.sev.lethal.utils.*;
+
+import java.util.List;
+
+/**
+ * Parser for tree grammars
+ * @author Sezar
+ */
+public class FTAGrammarParser{
+  
+  private static FTAGrammarParser parser = new FTAGrammarParser(new ByteArrayInputStream(new byte[]{}));
+
+  public static EasyFTA parseString(String s) throws ParseException{
+	parser.ReInit(new ByteArrayInputStream((s+ "\n").getBytes()));
+	return parser.grammar();
+  }
+
+  public static Set<String> nonTerminalNames(String s){
+		String name;
+		HashSet<String> names = new HashSet<String>();
+		for (String line : s.split("\n")){
+			int i = line.indexOf("=");
+			if (i < 0) {
+				name = line.trim();
+			} else {
+				name = line.substring(0,i).trim();
+			}
+			if (name.length() != 0) names.add(name);
+		}
+		return names;
+	}
+
+}
+
+PARSER_END(FTAGrammarParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < SYMBOL:   ( ["a"-"z","A"-"Z","_", "'", "<", ">", "0"-"9"] )+ > | 
+    <LINE_END_COMMENT: "//" (~["\n"])* >
+}
+
+EasyFTA grammar() :
+{
+    State startSymbol;
+	GenRTGRule<RankedSymbol,State > rule;
+	List<GenRTGRule<RankedSymbol,State >> rules = new ArrayList<GenRTGRule<RankedSymbol,State> >();
+	Set<State> states = new HashSet<State>();
+	Set<State> finalStates = new HashSet<State>();
+}
+{
+	//Need to include comment and \n in every choice otherwise LOOKAHEAD doesn't work
+	(LOOKAHEAD(4) startSymbol = nonTerminal() {finalStates.add(startSymbol);} (<LINE_END_COMMENT>)? "\n" | rule = rules(states) {rules.add(rule);}  (<LINE_END_COMMENT>)? "\n" |  (<LINE_END_COMMENT>)? "\n")*
+	<EOF>
+	{
+	  RTG<RankedSymbol,State> g = new GenRTG<RankedSymbol,State >(finalStates, rules);
+	  return new EasyFTA(g, new StateBuilder<Object>());}
+}
+
+GenRTGRule<RankedSymbol,State > rules(Set<State> states):
+{
+	State left;
+	Tree<BiSymbol<RankedSymbol, State>>  right;
+}
+{
+	( left = nonTerminal() ("::=" | ":=" | "=") right = tree(){states.add(left); return new GenRTGRule(left, right);} )
+}
+
+Tree<BiSymbol<RankedSymbol, State>> tree():
+{
+    Tree<BiSymbol<RankedSymbol, State>> subtree;
+	ArrayList<Tree<BiSymbol<RankedSymbol, State>>> subtrees = new ArrayList<Tree<BiSymbol<RankedSymbol, State>>>();
+	String terminalName = null;
+	State nonTerminal = null;
+}
+{
+	nonTerminal = nonTerminal() 
+	{
+		return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,State>)new LeafSymbol<RankedSymbol,State>(nonTerminal));
+	}
+	| 
+	(
+		terminalName=<SYMBOL>.image
+		(
+			"("
+			(
+				subtree = tree() {subtrees.add(subtree);} 
+				(
+					"," subtree = tree() {subtrees.add(subtree);} 
+				)* 
+			)? 
+			")" 
+		)?
+	)
+	{
+		return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,State>)new InnerSymbol<RankedSymbol,State>(new StdNamedRankedSymbol(terminalName, subtrees.size())), subtrees);
+	}
+	
+}
+
+NamedState<String> nonTerminal() :
+{
+	String name;
+}
+{
+	("#"|"$") ( name = <SYMBOL>.image ) {return StateFactory.getStateFactory().makeState(name);}
+}

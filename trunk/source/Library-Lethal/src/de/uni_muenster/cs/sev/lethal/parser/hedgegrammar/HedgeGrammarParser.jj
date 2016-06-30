@@ -1,0 +1,239 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+	JDK_VERSION = "1.5";
+	STATIC = false;
+}
+PARSER_BEGIN(HedgeGrammarParser)
+package de.uni_muenster.cs.sev.lethal.parser.hedgegrammar;
+
+import de.uni_muenster.cs.sev.lethal.hedgegrammar.*;
+import java.util.*;
+import java.io.ByteArrayInputStream;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.StdNamedUnrankedSymbol;
+import de.uni_muenster.cs.sev.lethal.symbol.common.UnrankedSymbol;
+
+/**
+ * Hedge grammar parser
+ * @author Philipp
+ */
+public class HedgeGrammarParser {
+	
+	private static HedgeGrammarParser parser = new HedgeGrammarParser(new ByteArrayInputStream(new byte[]{}));
+	
+	public static EasyHedgeGrammar parseString(String s) throws ParseException{
+		//System.out.println(nonTerminalNames(s));
+		parser.ReInit(new ByteArrayInputStream((s+ "\n").getBytes()));
+		return parser.grammar();
+	}
+	
+	public static Set<String> nonTerminalNames(String s){
+		String name;
+		HashSet<String> names = new HashSet<String>();
+		for (String line : s.split("\n")){
+			int i = line.indexOf("::=");
+			if (i < 0) {
+				name = line.trim();
+			} else {
+				name = line.substring(0,i).trim();
+			}
+			if (name.length() != 0) names.add(name);
+		}
+		return names;
+	}
+	
+		private static List<String> stringRange(String startName, String endName) throws ParseException{
+		List<String> names = new ArrayList<String>();
+		names.add(startName);
+		
+		if (endName != null){
+			if (startName.length() != endName.length()) throw new ParseException("Ranges only support equal length names");
+			StringBuffer currentName = new StringBuffer(startName);
+			while (!currentName.toString().equals(endName)){
+				for (int pos = 0; pos < startName.length(); pos++){
+					if (startName.charAt(pos) != endName.charAt(pos)){
+						if (currentName.charAt(pos) < endName.charAt(pos)){
+							currentName.setCharAt(pos, (char)(currentName.charAt(pos) + 1));
+							names.add(currentName.toString());
+							break;
+						} else {
+							currentName.setCharAt(pos, startName.charAt(pos));
+						}
+					}
+				}
+			}
+		}
+		return names;
+	}
+}
+PARSER_END(HedgeGrammarParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:   ( ["a"-"z","A"-"Z","_", "'", "<", ">", "0"-"9"] )+ > |
+    < RSTART: ( "{" ( ["0"-"9"] )* ) > |
+    < REND:   ( "," ( ["0"-"9"] )* "}" ) > |
+    < LINE_END_COMMENT: "//" (~["\n"])* >
+}
+
+
+
+EasyHedgeGrammar grammar() :
+{
+	Nonterminal<UnrankedSymbol> startSymbol;
+	List<GrammarRule<UnrankedSymbol>> lineRules;
+	Set<GrammarRule<UnrankedSymbol>> rules = new HashSet<GrammarRule<UnrankedSymbol>>();
+	Set<Nonterminal<UnrankedSymbol>> startSymbols = new HashSet<Nonterminal<UnrankedSymbol>>();
+}
+{
+	//Need to include \n in every choice otherwise LOOKAHEAD doesn't work
+	( LOOKAHEAD(4) startSymbol = nonTerminal() {startSymbols.add(startSymbol);} (<LINE_END_COMMENT>)? "\n" | lineRules = rules() {rules.addAll(lineRules);} (<LINE_END_COMMENT>)? "\n" | (<LINE_END_COMMENT>)? "\n")*
+	<EOF>
+	{return new EasyHedgeGrammar(rules, startSymbols);}
+}
+
+List<GrammarRule<UnrankedSymbol>> rules() :
+{
+	Nonterminal<UnrankedSymbol> left;
+	List<Function<UnrankedSymbol>> right;
+	List<GrammarRule<UnrankedSymbol>> rules = new ArrayList<GrammarRule<UnrankedSymbol>>();
+}
+{
+	( left = nonTerminal() ("::=" | ":=" | "=") right = functionList() )
+	{
+		for (Function<UnrankedSymbol> func : right){
+			rules.add(new GrammarRule<UnrankedSymbol>(left, func.getTerminal(), func.getExpression()));
+		}
+		return rules;
+	}
+}
+
+
+GrammarExpression expression() :
+{
+	GrammarExpression<UnrankedSymbol> leftExp;
+	GrammarExpression<UnrankedSymbol> rightExp = null;
+	String smin;
+	String smax;
+	int min = 1;
+	int max = -1;
+	boolean boundsGiven = false;
+	boolean disj = false;
+}
+{
+	(leftExp = nonTerminal() | leftExp = functionAlternation() | "(" leftExp = expression() ")" )
+	(
+		( smin=<RSTART>.image smax=<REND>.image) {
+			min = (smin.length() > 1 ? Integer.valueOf(smin.substring(1,smin.length())) : 0);
+			max = (smax.length() > 2 ? Integer.valueOf(smax.substring(1,smax.length()-1)) : -1);
+			boundsGiven=true;
+		}
+		| ( "*" {min=0;max=-1;boundsGiven=true;} )
+		| ( "+" {min=1;max=-1;boundsGiven=true;} )
+		| ( "?" {min=0;max=1 ;boundsGiven=true;} )
+	)?
+	
+	(
+		"|" rightExp = expression() {disj = true;}
+		| "," rightExp = expression() {disj = false;} 
+	)?
+	
+	{
+		if (!boundsGiven) min = max = 1;
+		if (min != 1 || max != 1) {
+ 			leftExp = new Range<UnrankedSymbol>(min,max, leftExp);
+ 		}
+	 	
+	 	if (rightExp != null){
+	 		if (disj) {
+	 			return new Alternation<UnrankedSymbol>(leftExp, rightExp);
+	 		} else {
+	 			return new Concatenation<UnrankedSymbol>(leftExp, rightExp);
+	 		}
+	 	} else {
+	 		return leftExp;
+	 	}
+ 	}
+}
+
+GrammarExpression<UnrankedSymbol> functionAlternation() :
+{
+	List<Function<UnrankedSymbol>> functions = null;
+}
+{
+	( functions = functionList() )
+	{
+		GrammarExpression<UnrankedSymbol> exp = functions.remove(0);
+		for (Function<UnrankedSymbol> func : functions){
+			exp = new Alternation(exp, func);
+		}
+		return exp;
+	}
+}
+
+List<Function<UnrankedSymbol>> functionList() :
+{
+	List<Terminal<UnrankedSymbol>> terminals;
+	GrammarExpression<UnrankedSymbol> exp = new Epsilon();
+}
+{
+	( terminals = terminals() ( "(" ( exp = expression() )? ")" )? )
+	
+	{
+		List<Function<UnrankedSymbol>> result = new ArrayList<Function<UnrankedSymbol>>(); 
+		for (Terminal terminal : terminals){
+			result.add(new Function<UnrankedSymbol>(terminal, exp));
+		}
+		return result;
+	} 
+}
+
+List<Terminal<UnrankedSymbol>> terminals() :
+{
+	Terminal<UnrankedSymbol> terminal = null;
+	List<Terminal<UnrankedSymbol>> terminals = new ArrayList<Terminal<UnrankedSymbol>>();
+}
+{
+	( terminal = terminal() {terminals.add(terminal);} | "[" terminals = terminalSet() "]" )
+	{
+		return terminals;
+	}
+	
+}
+
+List<Terminal<UnrankedSymbol>> terminalSet() :
+{
+	String startName;
+	String endName = null;
+	List<Terminal<UnrankedSymbol>> terminals = null;
+}
+{
+	(startName = <NAME>.image ( "-" endName = <NAME>.image )? ( "," terminals = terminalSet() )? )
+	{
+		if (terminals == null) terminals = new ArrayList<Terminal<UnrankedSymbol>>();
+		for (String name : stringRange(startName,endName)){
+			terminals.add(new Terminal<UnrankedSymbol>(new StdNamedUnrankedSymbol(name)));
+		}
+		return terminals;
+	}
+}
+
+Terminal<UnrankedSymbol> terminal() :
+{
+	String name;
+}
+{
+	name = <NAME>.image {return new Terminal<UnrankedSymbol>(new StdNamedUnrankedSymbol(name));}
+}
+
+Nonterminal<UnrankedSymbol> nonTerminal() :
+{
+	String name;
+}
+{
+	("#" | "$") ( name=<NAME>.image ) {return new Nonterminal<UnrankedSymbol>(name);}
+}
