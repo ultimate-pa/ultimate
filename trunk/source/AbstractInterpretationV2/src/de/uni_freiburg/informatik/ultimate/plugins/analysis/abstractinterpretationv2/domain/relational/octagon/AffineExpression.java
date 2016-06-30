@@ -192,29 +192,39 @@ public class AffineExpression {
 	 * @return OneVarForm of this affine expression or null.
 	 */
 	public TwoVarForm getTwoVarForm() {
-		if (mCoefficients.size() != 2) {
+		final int distinctVars = mCoefficients.size();
+		if (distinctVars < 1 || distinctVars > 2) {
 			return null;
 		}
-		final List<String> vars = new ArrayList<>(2);
-		final List<BigDecimal> coefficients = new ArrayList<>(2);
+		final List<String> vars = new ArrayList<>(distinctVars);
+		final List<BigDecimal> coefficients = new ArrayList<>(distinctVars);
 		mCoefficients.entrySet().forEach(entry -> {
 			vars.add(entry.getKey());
 			coefficients.add(entry.getValue());
 		});
-		for (final BigDecimal d : coefficients) {
-			if (d.abs().compareTo(BigDecimal.ONE) != 0) {
-				return null;
+		if (distinctVars == 2) {
+			for (final BigDecimal coefficient : coefficients) {
+				if (coefficient.abs().compareTo(BigDecimal.ONE) != 0) {
+					return null;
+				}
 			}
+		} else if (coefficients.get(0).abs().compareTo(NumUtil.TWO) != 0) { // && distinctVars == 1
+			return null;
 		}
 		final TwoVarForm twoVarForm = new TwoVarForm();
 		twoVarForm.var1 = vars.get(0);
-		twoVarForm.var2 = vars.get(1);
 		twoVarForm.negVar1 = coefficients.get(0).signum() < 0;
-		twoVarForm.negVar2 = coefficients.get(1).signum() < 0;
+		if (distinctVars == 1) {
+			twoVarForm.var2 = twoVarForm.var1;
+			twoVarForm.negVar2 = twoVarForm.negVar1;
+		} else {
+			twoVarForm.var2 = vars.get(1);
+			twoVarForm.negVar2 = coefficients.get(1).signum() < 0;
+		}
 		twoVarForm.constant = new OctValue(mConstant);
 		return twoVarForm;
 	}
-
+	
 	/**
 	 * Creates a new affine expression that is the sum of this and another affine expression.
 	 *
