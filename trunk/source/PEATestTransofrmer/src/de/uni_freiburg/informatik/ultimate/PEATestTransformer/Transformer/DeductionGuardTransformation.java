@@ -74,47 +74,60 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					if (destinationHasLastPhase) {
 						targetPhaseConj = trans.getDest().getStateInvariant();
 					}
-					// if there is a conjunct that contains only effect variables
-					// this must be an implication and has to be encoded differently
+					
+					
+					
+					
+					
 					CDD guard = trans.getGuard();
-					CDD[] dnf = targetPhaseConj.toDNF();
-					CDD resultingConjunct = CDD.FALSE;
-					CDD temp = CDD.TRUE;
-					for(CDD conjunct: dnf){
-						temp = CDD.TRUE;
-						if(destinationHasLastPhase){
-							if (this.containsEffect(conjunct, i)){
-								// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
-								CDD l = this.encodeWriteInConjunct(targetPhaseConj, i, true);
-								temp = conjunct.prime().and(l);
-								for(CDD t: dnf){
-									if(!this.containsEffect(t, i)){
-										t = t.negate().prime();
-										temp = temp.and(t);
-									}
-								}
-							} else {
-								// conjunct && !R_effect
-								// may loop on not deducable but not effect triggering variables because it is an implication
-								CDD r = this.encodeDeducedInConjunct(conjunct, i);
-								temp = conjunct.prime().and(r);
-							}
-						} else {
-							// conjunct && !R_effect && L_conjunt
-							CDD l = this.encodeWriteInConjunct(conjunct, i, false);
-							CDD r = this.encodeDeducedInConjunct(conjunct, i);
-							temp = conjunct.prime().and(r).and(l);
-						}
-						// add result to new conjunct
-						resultingConjunct = resultingConjunct.or(temp);
-					}
-					trans.setGuard(guard.and(resultingConjunct));
-				}
-				
+					// untimed or final and timed which means that this must set an effect (and an R_v)
+					CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destinationHasLastPhase, i);
+					guard = guard.and(deductionGuard);
+					trans.setGuard(guard);
+				}			
 			}
 		}
-		this.generateDeductionAutomatonInstant();
-		
+		this.generateDeductionAutomatonInstant();	
+	}
+	
+	
+	/**
+	 * Transforms an invariant of a target state into the annotation deciding if the state can be entered
+	 * because the model can currently deduce the values of all necessary variables.
+	 */
+	private CDD transormInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, int reqNo){
+		CDD[] dnf = invariant.toDNF();
+		CDD resultingConjunct = CDD.FALSE;
+		CDD temp = CDD.TRUE;
+		for(CDD conjunct: dnf){
+			temp = CDD.TRUE;
+			if(destinationHasLastPhase){
+				if (this.containsEffect(conjunct, reqNo)){
+					// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
+					CDD l = this.encodeReadConjunct(invariant, reqNo, true);
+					temp = conjunct.prime().and(l);
+					for(CDD t: dnf){
+						if(!this.containsEffect(t, reqNo)){
+							t = t.negate().prime();
+							temp = temp.and(t);
+						}
+					}
+				} else {
+					// conjunct && !R_effect
+					// may loop on not deducable but not effect triggering variables because it is an implication
+					CDD r = this.encodeNotDeducedInConjunct(conjunct, reqNo);
+					temp = conjunct.prime().and(r);
+				}
+			} else {
+				// conjunct && !R_effect && L_conjunt
+				CDD l = this.encodeReadConjunct(conjunct, reqNo, false);
+				CDD r = this.encodeNotDeducedInConjunct(conjunct, reqNo);
+				temp = conjunct.prime().and(r).and(l);
+			}
+			// add result to new conjunct
+			resultingConjunct = resultingConjunct.or(temp);
+		}
+		return resultingConjunct;
 	}
 	
 	/***
@@ -250,7 +263,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	/*
 	 * L_ ... anotniation
 	 */
-	private CDD encodeWriteInConjunct(CDD conjunct, int reqNo, boolean finalPhase){
+	private CDD encodeReadConjunct(CDD conjunct, int reqNo, boolean finalPhase){
 		CDD result = CDD.TRUE;
 		for(String ident: conjunct.getIdents()){
 			if(finalPhase && this.systemModel.getPattern(reqNo).getEffectVariabels().contains(ident)){
@@ -270,7 +283,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	/* 
 	 * R_... anotation
 	 */
-	private CDD encodeDeducedInConjunct(CDD conjunct, int reqNo){
+	private CDD encodeNotDeducedInConjunct(CDD conjunct, int reqNo){
 		CDD result = CDD.TRUE;
 		for(String ident: this.systemModel.getPattern(reqNo).getEffectVariabels()){
 			CDD temp = BoogieBooleanExpressionDecision.create(this.encodeEffectVar(ident,reqNo)).negate();
@@ -309,7 +322,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	/**
-	 * Determines if one of the effect variabels is in the cdd.
+	 * Determines if one of the effect variabels or its primed version is in the cdd.
 	 * @param cdd
 	 * @param reqNo
 	 * @return
@@ -318,6 +331,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	private boolean containsEffect(CDD cdd, int reqNo){
 		for(String ident: this.systemModel.getPattern(reqNo).getEffectVariabels()){
 			if(cdd.getIdents().contains(ident)){
+				return true;
+			}
+			if(cdd.getIdents().contains(ident+"'")){
 				return true;
 			}
 		}
