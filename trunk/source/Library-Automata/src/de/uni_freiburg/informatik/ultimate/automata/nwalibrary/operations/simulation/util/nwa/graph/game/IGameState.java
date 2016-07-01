@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2015-2016 Daniel Tischner
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,19 +24,15 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.summarycomputation;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
-
-public class SummaryComputationSpoilerVertex<LETTER, STATE> implements ISummaryComputationWrapperState {
-	
-	private final SpoilerVertex<LETTER, STATE> mSpoilerVertex;
-
-	public SummaryComputationSpoilerVertex(SpoilerVertex<LETTER, STATE> spoilerVertex) {
-		super();
-		mSpoilerVertex = spoilerVertex;
-	}
-	
-	
+/**
+ * Represents a state in a game automaton. Such a state may represent a
+ * SpoilerVertex in a Nwa game graph.
+ * 
+ * @author Daniel Tischner
+ *
+ */
+public interface IGameState {
 
 }

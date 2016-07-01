@@ -45,6 +45,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions,

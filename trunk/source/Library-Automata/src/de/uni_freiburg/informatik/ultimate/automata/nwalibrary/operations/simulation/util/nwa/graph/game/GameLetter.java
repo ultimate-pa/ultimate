@@ -24,7 +24,9 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 
 /**
  * Represents a letter in a game automaton. Such a letter is a pair
@@ -39,7 +41,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class GameAutomatonLetter<LETTER, STATE> {
+public final class GameLetter<LETTER, STATE> {
 
 	/**
 	 * The letter used by Spoiler.
@@ -49,6 +51,10 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 	 * The destination of Spoiler.
 	 */
 	private final STATE mState;
+	/**
+	 * The transition type represented by this game letter.
+	 */
+	private final ETransitionType mTransitionType;
 
 	/**
 	 * Creates a game letter for a given letter and state. They represent the
@@ -59,10 +65,13 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 	 *            Letter used by Spoiler
 	 * @param state
 	 *            Destination of Spoiler
+	 * @param transitionType
+	 *            The transition type represented by this game letter
 	 */
-	public GameAutomatonLetter(final LETTER letter, final STATE state) {
+	public GameLetter(final LETTER letter, final STATE state, final ETransitionType transitionType) {
 		mLetter = letter;
 		mState = state;
+		mTransitionType = transitionType;
 	}
 
 	/*
@@ -78,10 +87,10 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof GameAutomatonLetter)) {
+		if (!(obj instanceof GameLetter)) {
 			return false;
 		}
-		GameAutomatonLetter<?, ?> other = (GameAutomatonLetter<?, ?>) obj;
+		GameLetter<?, ?> other = (GameLetter<?, ?>) obj;
 		if (mLetter == null) {
 			if (other.mLetter != null) {
 				return false;
@@ -94,6 +103,9 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 				return false;
 			}
 		} else if (!mState.equals(other.mState)) {
+			return false;
+		}
+		if (mTransitionType != other.mTransitionType) {
 			return false;
 		}
 		return true;
@@ -117,6 +129,15 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 		return mState;
 	}
 
+	/**
+	 * Gets the transition type represented by this game letter.
+	 * 
+	 * @return The transition type represented by this game letter
+	 */
+	public ETransitionType getTransitionType() {
+		return mTransitionType;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -128,6 +149,7 @@ public final class GameAutomatonLetter<LETTER, STATE> {
 		int result = 1;
 		result = prime * result + ((mLetter == null) ? 0 : mLetter.hashCode());
 		result = prime * result + ((mState == null) ? 0 : mState.hashCode());
+		result = prime * result + ((mTransitionType == null) ? 0 : mTransitionType.hashCode());
 		return result;
 	}
 

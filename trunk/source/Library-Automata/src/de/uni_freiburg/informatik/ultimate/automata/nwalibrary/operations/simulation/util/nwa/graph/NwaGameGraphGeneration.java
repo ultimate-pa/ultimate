@@ -62,9 +62,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.GameAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.GameAutomatonLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameDoubleDeckerSet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameLetter;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSinkState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -119,7 +123,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Auxiliary game state, is used at summarize edge computation for pointing
 	 * to dead-end return vertices.
 	 */
-	private final SpoilerVertex<LETTER, STATE> mAuxiliaryGameState;
+	private final GameSinkState mAuxiliaryGameState;
 	/**
 	 * Provides a fast access to all Spoiler vertices that are directly losing
 	 * for Duplicator, if he moves in. The set is only used if the simulation
@@ -247,7 +251,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mSrcDestToSummarizeEdges = new NestedMap2<>();
 		mEntryToSink = new HashMap<>();
 		mRemovedReturnBridges = new GameGraphChanges<>();
-		mAuxiliaryGameState = new SpoilerVertex<LETTER, STATE>(2, false, null, null);
+		mAuxiliaryGameState = new GameSinkState();
 		mLogger = logger;
 		mProgressTimer = progressTimer;
 		mGameGraph = gameGraph;
@@ -1109,87 +1113,108 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
 		// Create the game automaton, we will use it for summarize computation
-		NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = createGameAutomaton();
-		NestedWordAutomatonReachableStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithSummaries = new RemoveUnreachable<>(
+		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
 				mServices, gameAutomaton).getResult();
 
 		// Retrieve all single summary edge sources
-		List<SpoilerVertex<LETTER, STATE>> summarySources = new LinkedList<>();
+		List<GameSpoilerNwaVertex<LETTER, STATE>> summarySources = new LinkedList<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			Iterable<SummaryReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>> summariesOfSource = gameAutomatonWithSummaries
-					.returnSummarySuccessor(spoilerVertex);
+			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+				continue;
+			}
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
+			GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+
+			Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource = gameAutomatonWithSummaries
+					.returnSummarySuccessor(gameNwaVertex);
 			if (summariesOfSource.iterator().hasNext()) {
-				summarySources.add(spoilerVertex);
+				summarySources.add(gameNwaVertex);
 			}
 		}
 		// Retrieve the merged summary edges for the game graph that start at
 		// the given source
-		for (SpoilerVertex<LETTER, STATE> summarySource : summarySources) {
+		for (GameSpoilerNwaVertex<LETTER, STATE> summarySource : summarySources) {
 			// We make summarySource the only intial game state and determize
 			// the automaton
-			Set<SpoilerVertex<LETTER, STATE>> initialSet = new HashSet<>();
+			Set<IGameState> initialSet = new HashSet<>();
 			initialSet.add(summarySource);
-			NestedWordAutomatonFilteredStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
+			NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<>(
 					mServices, gameAutomaton, gameAutomaton.getStates(), initialSet, Collections.emptySet());
 
 			// Determizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			INestedWordAutomatonOldApi<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> determinizedGameAutomaton = new Determinize<>(
+			INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<>(
 					mServices, gameAutomatonFiltered.getStateFactory(), gameAutomatonFiltered).getResult();
-			NestedWordAutomatonReachableStates<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithMergedSummaries = new RemoveUnreachable<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
+			NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
 					mServices, determinizedGameAutomaton).getResult();
+			IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
 			// The initial game state must be a singleton and is the source of
 			// the summary edges we are interested in
-			Set<SpoilerVertex<LETTER, STATE>> initialStates = gameAutomatonWithMergedSummaries.getInitialStates();
+			Set<IGameState> initialStates = gameAutomatonWithMergedSummaries.getInitialStates();
 			if (initialStates.size() > 1) {
 				throw new IllegalStateException(
 						"Expected only one initial state after determizing the game automaton.");
 			}
-			SpoilerVertex<LETTER, STATE> mergedSummarySource = initialStates.iterator().next();
+			IGameState mergedSummarySourceAsGameState = initialStates.iterator().next();
+			if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
+				throw new IllegalStateException(
+						"Expected cast possible, something seems to be wrong with the game graph.");
+			}
+			GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
+			Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
+			if (mergedSummarySourceUpStates.size() > 1) {
+				throw new IllegalStateException(
+						"Expected only one up state after determizing the game automaton at summary source.");
+			}
+			IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
+			if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
+				throw new IllegalStateException(
+						"Expected cast possible, something seems to be wrong with the game graph.");
+			}
+			@SuppressWarnings("unchecked")
+			SpoilerNwaVertex<LETTER, STATE> mergedSummarySource = ((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState)
+					.getSpoilerNwaVertex();
+
 			Map<STATE, Set<STATE>> spoilerToDuplicatorChoices = new HashMap<>();
-			NestedMap2<STATE, STATE, Set<SpoilerVertex<LETTER, STATE>>> choiceToSpoilerInvoker = new NestedMap2<>();
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summary edges
-			for (SummaryReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> summary : gameAutomatonWithMergedSummaries
-					.returnSummarySuccessor(mergedSummarySource)) {
-				SpoilerVertex<LETTER, STATE> summaryDestination = summary.getSucc();
-				if (summaryDestination.equals(mAuxiliaryGameState)) {
+			for (SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
+					.returnSummarySuccessor(mergedSummarySourceAsGameState)) {
+				IGameState summaryDestinationAsGameState = summary.getSucc();
+				GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
+				Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
+
+				if (summaryDestinationUpStates.contains(mAuxiliaryGameState)) {
 					runsInDuplicatorDeadEnd = true;
 				} else {
-					// Add the summary to Duplicators choices for this merged
-					// summary
-					STATE spoilerTarget = summaryDestination.getQ0();
-					STATE duplicatorTarget = summaryDestination.getQ1();
-					if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
-						spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+					for (IGameState summaryDestinationUpState : summaryDestinationUpStates) {
+						@SuppressWarnings("unchecked")
+						SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
+								.getSpoilerNwaVertex();
+						// Add the summary to Duplicators choices for this
+						// merged summary
+						STATE spoilerTarget = summaryDestination.getQ0();
+						STATE duplicatorTarget = summaryDestination.getQ1();
+						if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
+							spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+						}
+						Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
+						choices.add(duplicatorTarget);
+						spoilerToDuplicatorChoices.put(spoilerTarget, choices);
 					}
-					Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
-					choices.add(duplicatorTarget);
-					spoilerToDuplicatorChoices.put(spoilerTarget, choices);
-
-					// Compute all spoilerInvoker for this choice
-					Set<SpoilerVertex<LETTER, STATE>> allSpoilerInvoker = new HashSet<>();
-					for (IncomingReturnTransition<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> returnTrans : gameAutomatonWithMergedSummaries
-							.returnPredecessors(summaryDestination)) {
-						allSpoilerInvoker.add(returnTrans.getLinPred());
-					}
-					choiceToSpoilerInvoker.put(spoilerTarget, duplicatorTarget, allSpoilerInvoker);
 				}
 			}
 			// Patch the source to a winning sink for Spoiler
 			if (runsInDuplicatorDeadEnd) {
-				if (mergedSummarySource instanceof SpoilerNwaVertex<?, ?>) {
-					addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
-				}
+				addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
 			}
 			// Create and add the merged summaries
 			for (Entry<STATE, Set<STATE>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
-				if (mergedSummarySource instanceof SpoilerNwaVertex<?, ?>) {
-					STATE spoilerChoice = choiceEntry.getKey();
-					addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
-							choiceEntry.getValue(), choiceToSpoilerInvoker.get(spoilerChoice));
-				}
+				STATE spoilerChoice = choiceEntry.getKey();
+				addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
+						choiceEntry.getValue());
 			}
 		}
 
@@ -1591,6 +1616,80 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
+	 * Adds a given edge to the given game automaton, if not already existent.
+	 * 
+	 * @param src
+	 *            Source game state of the edge to add
+	 * @param letter
+	 *            Letter of the edge to add
+	 * @param dest
+	 *            Destination game state of the edge to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addEdgeToGameAutomaton(final IGameState src, final GameLetter<LETTER, STATE> letter,
+			final IGameState dest, final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		ETransitionType transType = letter.getTransitionType();
+		if (transType.equals(ETransitionType.INTERNAL)) {
+			if (!gameAutomaton.containsInternalTransition(src, letter, dest)) {
+				gameAutomaton.addInternalTransition(src, letter, dest);
+			}
+		} else if (transType.equals(ETransitionType.CALL)) {
+			if (!gameAutomaton.containsCallTransition(src, letter, dest)) {
+				gameAutomaton.addCallTransition(src, letter, dest);
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"The transition type of the game letter is not supported by this operation.");
+		}
+	}
+
+	/**
+	 * Adds a given return edge to the given game automaton, if not already
+	 * existent.
+	 * 
+	 * @param src
+	 *            Source game state of the edge to add
+	 * @param hierPred
+	 *            The hierPred of this return edge
+	 * @param letter
+	 *            Letter of the edge to add
+	 * @param dest
+	 *            Destination game state of the edge to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addEdgeToGameAutomaton(final IGameState src, final IGameState hierPred,
+			final GameLetter<LETTER, STATE> letter, final IGameState dest,
+			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		ETransitionType transType = letter.getTransitionType();
+		if (transType.equals(ETransitionType.RETURN)) {
+			if (!gameAutomaton.containsReturnTransition(src, hierPred, letter, dest)) {
+				gameAutomaton.addReturnTransition(src, hierPred, letter, dest);
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"The transition type of the game letter is not supported by this operation.");
+		}
+	}
+
+	/**
+	 * Adds a given game state to the given game automaton, if not already
+	 * existent. The state will be initial and not final.
+	 * 
+	 * @param gameState
+	 *            Game state to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addGameStateToGameAutomaton(final IGameState gameState,
+			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		if (!gameAutomaton.contains(gameState)) {
+			gameAutomaton.addState(true, false, gameState);
+		}
+	}
+
+	/**
 	 * Generates and adds the spoiler vertex represented by the arguments. Also
 	 * increases global infinity bound and possibly adds the vertex to some data
 	 * structures.
@@ -1708,20 +1807,19 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            The choice Spoiler did take for this summarize edge
 	 * @param duplicatorChoices
 	 *            Choices Duplicator can make, determine the sub-summarize edges
-	 * @param duplicatorChoiceToSpoilerInvoker
-	 *            A map that connects all duplicator choices with their Spoiler
-	 *            invoker
 	 * @param map
 	 *            The Spoiler vertex that invoked creating this summarize edge.
 	 *            This is the predecessor of the Duplicator returning vertex.
 	 */
 	private void addSummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices,
-			final Map<STATE, Set<SpoilerVertex<LETTER, STATE>>> duplicatorChoiceToSpoilerInvoker) {
+			final Set<STATE> duplicatorChoices) {
+		// TODO We may need invoker information for correct priority search. We
+		// also might be able to revert returningBridgeRemoval and then do the
+		// search.
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,
-					duplicatorChoices, duplicatorChoiceToSpoilerInvoker, mGameGraph);
+					duplicatorChoices, mGameGraph);
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
 
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
@@ -1798,8 +1896,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter used for returning
 	 * @return
 	 */
-	private Iterable<SpoilerVertex<LETTER, STATE>> computeAllGameHierPreds(final SpoilerVertex<LETTER, STATE> src,
-			final SpoilerVertex<LETTER, STATE> dest, final LETTER returnLetter) {
+	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(
+			final SpoilerVertex<LETTER, STATE> src, final SpoilerVertex<LETTER, STATE> dest,
+			final LETTER returnLetter) {
 		return computeAllGameHierPreds(src.getQ0(), src.getQ1(), dest.getQ0(), dest.getQ1(), returnLetter);
 	}
 
@@ -1819,9 +1918,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter used for returning
 	 * @return
 	 */
-	private Iterable<SpoilerVertex<LETTER, STATE>> computeAllGameHierPreds(final STATE spoilerSrc,
+	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(final STATE spoilerSrc,
 			final STATE duplicatorSrc, final STATE spoilerDest, final STATE duplicatorDest, final LETTER returnLetter) {
-		Set<SpoilerVertex<LETTER, STATE>> gameHierPreds = new LinkedHashSet<>();
+		Set<GameSpoilerNwaVertex<LETTER, STATE>> gameHierPreds = new LinkedHashSet<>();
 		Set<STATE> spoilerHierPreds = new HashSet<>();
 		Set<STATE> duplicatorHierPreds = new HashSet<>();
 
@@ -1844,7 +1943,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			for (STATE duplicatorHierPred : duplicatorHierPreds) {
 				SpoilerVertex<LETTER, STATE> representingHierPred = getSpoilerVertex(spoilerHierPred,
 						duplicatorHierPred, false, null, null);
-				gameHierPreds.add(representingHierPred);
+				if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+					gameHierPreds
+							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
+				}
 			}
 		}
 
@@ -1858,20 +1960,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * 
 	 * @return A game automaton that is used for summarize edge computation
 	 */
-	private NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> createGameAutomaton() {
-		Set<GameAutomatonLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
-		Set<GameAutomatonLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
-		Set<GameAutomatonLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
+	private NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton() {
+		Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
+		Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
+		Set<GameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
 
-		NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = new NestedWordAutomaton<GameAutomatonLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
-				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet,
-				new GameAutomatonFactory<>(mNwa.getStateFactory()));
+		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(mServices,
+				internalGameAlphabet, callGameAlphabet, returnGameAlphabet, new GameFactory());
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)
-		List<Pair<SpoilerVertex<LETTER, STATE>, DuplicatorVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd = new LinkedList<>();
+		List<Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd = new LinkedList<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			Set<Vertex<LETTER, STATE>> firstSuccessors = mGameGraph.getSuccessors(spoilerVertex);
+			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+				continue;
+			}
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
+
+			Set<Vertex<LETTER, STATE>> firstSuccessors = mGameGraph.getSuccessors(spoilerNwaVertex);
 			if (firstSuccessors == null) {
 				// Spoiler dead-end, not possible since patched before.
 				continue;
@@ -1881,46 +1987,52 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// This should not be possible in a correct game graph.
 					continue;
 				}
-				DuplicatorNwaVertex<LETTER, STATE> duplicatorSucc = (DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
-				Set<Vertex<LETTER, STATE>> secondSuccessors = mGameGraph.getSuccessors(duplicatorSucc);
+				DuplicatorNwaVertex<LETTER, STATE> duplicatorNwaSucc = (DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
+				Set<Vertex<LETTER, STATE>> secondSuccessors = mGameGraph.getSuccessors(duplicatorNwaSucc);
 				if (secondSuccessors == null) {
 					// Duplicator dead-end, only possible for some return
 					// vertices.
-					if (duplicatorSucc.getTransitionType().equals(ETransitionType.RETURN)) {
+					if (duplicatorNwaSucc.getTransitionType().equals(ETransitionType.RETURN)) {
 						// We later add (spoilerVertex -> duplicatorSucc ->
 						// mAuxiliaryGameState) for every letter of the alphabet
-						runningInDuplicatorDeadEnd.add(new Pair<>(spoilerVertex, duplicatorSucc));
-					} else {
-						// This case is not possible since patched before.
-						continue;
+						runningInDuplicatorDeadEnd.add(new Pair<>(spoilerNwaVertex, duplicatorNwaSucc));
 					}
+					continue;
 				}
 				for (Vertex<LETTER, STATE> secondSuccessor : secondSuccessors) {
-					if (!(secondSuccessor instanceof SpoilerVertex<?, ?>)) {
+					if (!(secondSuccessor instanceof SpoilerNwaVertex<?, ?>)) {
 						// This should not be possible in a correct game graph.
 						continue;
 					}
-					SpoilerVertex<LETTER, STATE> spoilerSucc = (SpoilerVertex<LETTER, STATE>) secondSuccessor;
+					SpoilerNwaVertex<LETTER, STATE> spoilerNwaSucc = (SpoilerNwaVertex<LETTER, STATE>) secondSuccessor;
 
 					// We add (spoilerVertex -> duplicatorSucc -> spoilerSucc)
 					// to the game automaton
-					gameAutomaton.addState(true, false, spoilerVertex);
-					gameAutomaton.addState(true, false, spoilerSucc);
-					GameAutomatonLetter<LETTER, STATE> letter = new GameAutomatonLetter<>(duplicatorSucc.getLetter(),
-							duplicatorSucc.getQ0());
-					ETransitionType transType = duplicatorSucc.getTransitionType();
+					GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+					GameSpoilerNwaVertex<LETTER, STATE> gameNwaSucc = new GameSpoilerNwaVertex<>(spoilerNwaSucc);
+
+					addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+					addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+					addGameStateToGameAutomaton(gameNwaSucc, gameAutomaton);
+					ETransitionType transType = duplicatorNwaSucc.getTransitionType();
 					if (transType.equals(ETransitionType.INTERNAL)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.INTERNAL);
 						internalGameAlphabet.add(letter);
-						gameAutomaton.addInternalTransition(spoilerVertex, letter, spoilerSucc);
+						addEdgeToGameAutomaton(gameNwaVertex, letter, gameNwaSucc, gameAutomaton);
 					} else if (transType.equals(ETransitionType.CALL)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.CALL);
 						callGameAlphabet.add(letter);
-						gameAutomaton.addCallTransition(spoilerVertex, letter, spoilerSucc);
+						addEdgeToGameAutomaton(gameNwaVertex, letter, gameNwaSucc, gameAutomaton);
 					} else if (transType.equals(ETransitionType.RETURN)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.RETURN);
 						returnGameAlphabet.add(letter);
-						Iterable<SpoilerVertex<LETTER, STATE>> gameHierPreds = computeAllGameHierPreds(spoilerVertex,
-								spoilerSucc, duplicatorSucc.getLetter());
-						for (SpoilerVertex<LETTER, STATE> gameHierPred : gameHierPreds) {
-							gameAutomaton.addReturnTransition(spoilerVertex, gameHierPred, letter, spoilerSucc);
+						Iterable<GameSpoilerNwaVertex<LETTER, STATE>> gameHierPreds = computeAllGameHierPreds(
+								spoilerNwaVertex, spoilerNwaSucc, duplicatorNwaSucc.getLetter());
+						for (GameSpoilerNwaVertex<LETTER, STATE> gameHierPred : gameHierPreds) {
+							addEdgeToGameAutomaton(gameNwaVertex, gameHierPred, letter, gameNwaSucc, gameAutomaton);
 						}
 					}
 				}
@@ -1930,22 +2042,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Add pairs that run into a Duplicator dead end by (spoilerVertex ->
 		// duplicatorSucc -> mAuxiliaryGameState) for every letter of the
 		// alphabet
-		for (Pair<SpoilerVertex<LETTER, STATE>, DuplicatorVertex<LETTER, STATE>> runsInDuplicatorDeadEnd : runningInDuplicatorDeadEnd) {
-			SpoilerVertex<LETTER, STATE> spoilerVertex = runsInDuplicatorDeadEnd.getFirst();
+		for (Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>> runsInDuplicatorDeadEnd : runningInDuplicatorDeadEnd) {
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = runsInDuplicatorDeadEnd.getFirst();
 
-			gameAutomaton.addState(true, false, spoilerVertex);
-			gameAutomaton.addState(true, false, mAuxiliaryGameState);
+			GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
 
-			for (GameAutomatonLetter<LETTER, STATE> internalLetter : internalGameAlphabet) {
-				gameAutomaton.addInternalTransition(spoilerVertex, internalLetter, mAuxiliaryGameState);
+			addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+			addGameStateToGameAutomaton(mAuxiliaryGameState, gameAutomaton);
+
+			for (GameLetter<LETTER, STATE> internalLetter : internalGameAlphabet) {
+				addEdgeToGameAutomaton(gameNwaVertex, internalLetter, mAuxiliaryGameState, gameAutomaton);
 			}
-			for (GameAutomatonLetter<LETTER, STATE> callLetter : callGameAlphabet) {
-				gameAutomaton.addCallTransition(spoilerVertex, callLetter, mAuxiliaryGameState);
+			for (GameLetter<LETTER, STATE> callLetter : callGameAlphabet) {
+				addEdgeToGameAutomaton(gameNwaVertex, callLetter, mAuxiliaryGameState, gameAutomaton);
 			}
-			for (GameAutomatonLetter<LETTER, STATE> returnLetter : returnGameAlphabet) {
-				for (SpoilerVertex<LETTER, STATE> possibleGameHierPred : mSpoilerCallPredecessors) {
-					gameAutomaton.addReturnTransition(spoilerVertex, possibleGameHierPred, returnLetter,
-							mAuxiliaryGameState);
+			for (GameLetter<LETTER, STATE> returnLetter : returnGameAlphabet) {
+				for (SpoilerNwaVertex<LETTER, STATE> possibleGameHierPred : mSpoilerCallPredecessors) {
+					GameSpoilerNwaVertex<LETTER, STATE> possibleGameHierPredGameState = new GameSpoilerNwaVertex<>(
+							possibleGameHierPred);
+					addEdgeToGameAutomaton(gameNwaVertex, possibleGameHierPredGameState, returnLetter,
+							mAuxiliaryGameState, gameAutomaton);
 				}
 			}
 		}

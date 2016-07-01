@@ -71,12 +71,6 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mChoiceToSpoilerAux;
 	/**
-	 * A map that connects each Duplicator choice to its Spoiler vertices that
-	 * invoked creating this sub-summarize edge. This are the predecessor of the
-	 * Duplicator returning vertices.
-	 */
-	private final Map<STATE, Set<SpoilerVertex<LETTER, STATE>>> mChoiceToSpoilerInvoker;
-	/**
 	 * Destinations of the edge, accessible by their Duplicator choices.
 	 */
 	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mDestinations;
@@ -115,19 +109,12 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @param duplicatorChoices
 	 *            Choices Duplicator can take, where the key of the map is
 	 *            Spoilers choice.
-	 * @param duplicatorChoiceToSpoilerInvoker
-	 *            A map that connects each Duplicator choice to its Spoiler
-	 *            vertices that invoked creating this sub-summarize edge. This
-	 *            are the predecessor of the Duplicator returning vertices.
 	 * @param graph
 	 *            The game graph to add the edge to
 	 */
 	public SummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices,
-			final Map<STATE, Set<SpoilerVertex<LETTER, STATE>>> choiceToSpoilerInvoker,
-			final AGameGraph<LETTER, STATE> graph) {
+			final Set<STATE> duplicatorChoices, final AGameGraph<LETTER, STATE> graph) {
 		mGraph = graph;
-		mChoiceToSpoilerInvoker = choiceToSpoilerInvoker;
 		mSrc = src;
 		mSpoilerChoice = spoilerChoice;
 		mDuplicatorChoices = duplicatorChoices;
@@ -202,20 +189,6 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	public STATE getSpoilerChoice() {
 		return mSpoilerChoice;
-	}
-
-	/**
-	 * Gets the Spoiler vertices that invoked creating this sub-summarize edge.
-	 * This are the predecessor of the Duplicator returning vertices.
-	 * 
-	 * @param duplicatorChoice
-	 *            Specifies the sub-summarize edge
-	 * @return The Spoiler vertices that invoked creating this sub-summarize
-	 *         edge. This are the predecessor of the Duplicator returning
-	 *         vertices.
-	 */
-	public Set<SpoilerVertex<LETTER, STATE>> getSpoilerInvokerForChoice(final STATE duplicatorChoice) {
-		return mChoiceToSpoilerInvoker.get(duplicatorChoice);
 	}
 
 	/**
