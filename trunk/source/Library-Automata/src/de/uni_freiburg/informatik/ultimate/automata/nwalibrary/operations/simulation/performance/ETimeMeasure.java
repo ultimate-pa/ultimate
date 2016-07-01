@@ -62,5 +62,10 @@ public enum ETimeMeasure {
 	 * The time the simulation only took, this is the overall time minus the
 	 * time to build the graph and the result.
 	 */
-	SIMULATION_ONLY
+	SIMULATION_ONLY,
+	/**
+	 * The time solving the Max-Sat problem at nwa game graph resulting
+	 * automaton generation took.
+	 */
+	SOLVE_MAX_SAT
 }

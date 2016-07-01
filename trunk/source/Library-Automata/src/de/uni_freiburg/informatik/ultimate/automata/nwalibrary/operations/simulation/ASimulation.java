@@ -244,7 +244,10 @@ public abstract class ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
+		// Only set the size of the game graph if not already done by another instance
+		if (mPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES) == SimulationPerformance.NO_COUNTING_RESULT) {
+			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
+		}
 		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
 
 		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
