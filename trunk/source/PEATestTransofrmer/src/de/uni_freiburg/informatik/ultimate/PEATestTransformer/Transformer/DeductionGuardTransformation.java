@@ -90,8 +90,11 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						guard = guard.and(this.encodeReadConjunct(guard, i, true));
 						guard = guard.and(this.encodeNotDeducedInConjunct(i));
 					} else {
+						// if timer is running supress read guards on edges
+						boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
+								this.systemModel.phaseIsUpperBoundFinal(pea, dest);
 						// untimed or final and timed which means that this must set an effect (and an R_v)
-						CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destFinal, i);
+						CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed);
 						guard = guard.and(deductionGuard);
 					}
 					trans.setGuard(guard);
@@ -106,7 +109,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * Transforms an invariant of a target state into the annotation deciding if the state can be entered
 	 * because the model can currently deduce the values of all necessary variables.
 	 */
-	private CDD transormInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, int reqNo){
+	private CDD transormInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, int reqNo, boolean timed){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
@@ -116,6 +119,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				if (this.containsEffect(conjunct, reqNo)){
 					// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
 					CDD l = this.encodeReadConjunct(invariant, reqNo, true);
+					if (timed) l = CDD.TRUE; //TODO: HACK
 					temp = conjunct.prime().and(l);
 					for(CDD t: dnf){
 						if(!this.containsEffect(t, reqNo)){
@@ -132,6 +136,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			} else {
 				// conjunct && !R_effect && L_conjunt
 				CDD l = this.encodeReadConjunct(conjunct, reqNo, false);
+				if (timed) l = CDD.TRUE; //TODO: HACK
 				CDD r = this.encodeNotDeducedInConjunct(reqNo);
 				temp = conjunct.prime().and(r).and(l);
 			}
