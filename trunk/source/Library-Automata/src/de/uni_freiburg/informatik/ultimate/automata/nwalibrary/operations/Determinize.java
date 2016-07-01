@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -25,6 +26,8 @@
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -82,6 +85,20 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.mOperand = input;
 		mLogger.info(startMessage());
 		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
+		mLogger.info(exitMessage());
+	}
+	
+	public Determinize(AutomataLibraryServices services,
+			StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> input, Set<STATE> predefinedInitials) throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.mStateFactory = stateFactory;
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory, predefinedInitials);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
 		mLogger.info(exitMessage());
 	}

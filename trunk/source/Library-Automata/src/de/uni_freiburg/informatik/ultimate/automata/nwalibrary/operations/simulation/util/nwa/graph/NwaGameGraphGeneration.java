@@ -1118,7 +1118,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				mServices, gameAutomaton).getResult();
 
 		// Retrieve all single summary edge sources
-		List<GameSpoilerNwaVertex<LETTER, STATE>> summarySources = new LinkedList<>();
+		Set<IGameState> summarySources = new HashSet<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
 			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
 				continue;
@@ -1133,40 +1133,34 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		}
 		// Retrieve the merged summary edges for the game graph that start at
-		// the given source
-		for (GameSpoilerNwaVertex<LETTER, STATE> summarySource : summarySources) {
-			// We make summarySource the only intial game state and determize
-			// the automaton
-			Set<IGameState> initialSet = new HashSet<>();
-			initialSet.add(summarySource);
-			NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<>(
-					mServices, gameAutomaton, gameAutomaton.getStates(), initialSet, Collections.emptySet());
+		// the given source.
+		// We make all summarySources the only intial game states and determize
+		// the automaton.
 
-			// Determizing is very expensive, it is the dominant part of the
-			// whole algorithm
-			INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<>(
-					mServices, gameAutomatonFiltered.getStateFactory(), gameAutomatonFiltered).getResult();
-			NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
-					mServices, determinizedGameAutomaton).getResult();
-			IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
+		// Determinizing is very expensive, it is the dominant part of the
+		// whole algorithm
+		INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<GameLetter<LETTER, STATE>, IGameState>(
+				mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
+						.getResult();
+		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
+				mServices, determinizedGameAutomaton).getResult();
+		IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
-			// The initial game state must be a singleton and is the source of
-			// the summary edges we are interested in
-			Set<IGameState> initialStates = gameAutomatonWithMergedSummaries.getInitialStates();
-			if (initialStates.size() > 1) {
-				throw new IllegalStateException(
-						"Expected only one initial state after determizing the game automaton.");
-			}
-			IGameState mergedSummarySourceAsGameState = initialStates.iterator().next();
+		// The initial game states are the source of
+		// the summary edges we are interested in
+		for (IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
 			if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
 				throw new IllegalStateException(
 						"Expected cast possible, something seems to be wrong with the game graph.");
 			}
 			GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
+
+			// We are only interested in sources where the down state is the
+			// empty stack symbol
 			Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
 			if (mergedSummarySourceUpStates.size() > 1) {
 				throw new IllegalStateException(
-						"Expected only one up state after determizing the game automaton at summary source.");
+						"Expected only one up state after determizing the game automaton at summary sources.");
 			}
 			IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
 			if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
@@ -1185,7 +1179,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				IGameState summaryDestinationAsGameState = summary.getSucc();
 				GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
 				Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
-
+				
+				// TODO There are emtpy summDests, thus upStates is null, NPE. What does that mean, how to handle?
 				if (summaryDestinationUpStates.contains(mAuxiliaryGameState)) {
 					runsInDuplicatorDeadEnd = true;
 				} else {
