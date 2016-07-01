@@ -286,7 +286,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void computeSummarizeEdgePriorities() throws AutomataOperationCanceledException {
-		mLogger.debug("Computing priorities of summarize edges.");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Computing priorities of summarize edges.");
+		}
 		// XXX Rework this
 		/*
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
@@ -884,7 +886,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							trans.getLetter(), false, ETransitionType.INTERNAL, null, null);
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+						addEdge(duplicatorSrc, spoilerDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 
@@ -899,7 +901,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 						}
 						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+							addEdge(duplicatorSrc, spoilerDest);
 							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 						}
 					}
@@ -909,7 +911,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.INTERNAL, null, null);
 					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+						addEdge(spoilerSrc, duplicatorDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 
@@ -921,14 +923,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
 							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
 						if (mNwa.isFinal(edgeDest)) {
 							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
@@ -960,7 +962,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// using the edge
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+						addEdge(duplicatorSrc, spoilerDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 
@@ -978,7 +980,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 						}
 						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+							addEdge(duplicatorSrc, spoilerDest);
 							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 						}
 					}
@@ -990,7 +992,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.CALL, null, null);
 					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+						addEdge(spoilerSrc, duplicatorDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 					// For delayed simulation we also need to account for
@@ -1001,14 +1003,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
 							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
 						if (mNwa.isFinal(edgeDest)) {
 							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
@@ -1038,7 +1040,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							trans.getLetter(), false, ETransitionType.RETURN, null, null);
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+						addEdge(duplicatorSrc, spoilerDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 
@@ -1053,7 +1055,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 						}
 						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
+							addEdge(duplicatorSrc, spoilerDest);
 							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 						}
 					}
@@ -1064,7 +1066,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.RETURN, null, null);
 					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+						addEdge(spoilerSrc, duplicatorDest);
 						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 					}
 					// For delayed simulation we also need to account for
@@ -1075,14 +1077,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (getAmountOfBitsForSpoilerVertices(trans.getLinPred(), fixState) > 1) {
 							spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, true, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
 						if (mNwa.isFinal(edgeDest)) {
 							spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
 							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
+								addEdge(spoilerSrc, duplicatorDest);
 								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 							}
 						}
@@ -1112,6 +1114,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Generating summarize edges.");
+		}
 		// Create the game automaton, we will use it for summarize computation
 		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
 		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
@@ -1146,6 +1151,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				mServices, determinizedGameAutomaton).getResult();
 		IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
+		// XXX Debug output, remove it
+		mLogger.debug(determinizedGameAutomaton);
+
 		// The initial game states are the source of
 		// the summary edges we are interested in
 		for (IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
@@ -1179,8 +1187,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				IGameState summaryDestinationAsGameState = summary.getSucc();
 				GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
 				Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
-				
-				// TODO There are emtpy summDests, thus upStates is null, NPE. What does that mean, how to handle?
+
+				// If the destination up states are null, then the destination
+				// is empty. This is the case if the source is not total,
+				// because Determinize makes the automaton total. We can just
+				// ignore this event and continue.
+				if (summaryDestinationUpStates == null) {
+					continue;
+				}
+
 				if (summaryDestinationUpStates.contains(mAuxiliaryGameState)) {
 					runsInDuplicatorDeadEnd = true;
 				} else {
@@ -1413,8 +1428,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Right state
 	 * @param bit
 	 *            Extra bit of the vertex
-	 * @param transType
-	 *            Type of the transition
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the
 	 *            vertex does not belong to one. This is used for special
@@ -1814,7 +1827,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,
-					duplicatorChoices, mGameGraph);
+					duplicatorChoices, this);
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
 
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
@@ -2027,6 +2040,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						Iterable<GameSpoilerNwaVertex<LETTER, STATE>> gameHierPreds = computeAllGameHierPreds(
 								spoilerNwaVertex, spoilerNwaSucc, duplicatorNwaSucc.getLetter());
 						for (GameSpoilerNwaVertex<LETTER, STATE> gameHierPred : gameHierPreds) {
+							addGameStateToGameAutomaton(gameHierPred, gameAutomaton);
 							addEdgeToGameAutomaton(gameNwaVertex, gameHierPred, letter, gameNwaSucc, gameAutomaton);
 						}
 					}
@@ -2055,6 +2069,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (SpoilerNwaVertex<LETTER, STATE> possibleGameHierPred : mSpoilerCallPredecessors) {
 					GameSpoilerNwaVertex<LETTER, STATE> possibleGameHierPredGameState = new GameSpoilerNwaVertex<>(
 							possibleGameHierPred);
+					addGameStateToGameAutomaton(possibleGameHierPredGameState, gameAutomaton);
 					addEdgeToGameAutomaton(gameNwaVertex, possibleGameHierPredGameState, returnLetter,
 							mAuxiliaryGameState, gameAutomaton);
 				}
@@ -2246,6 +2261,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		} else {
 			mGameGraph.addDuplicatorVertex(vertex);
 		}
+	}
+
+	/**
+	 * Adds the given edge to the graph and all corresponding internal fields.
+	 * 
+	 * @param src
+	 *            Source of the edge to add
+	 * @param dest
+	 *            Destination of the edge to add
+	 */
+	protected void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		mGameGraph.addEdge(src, dest);
 	}
 
 	/**

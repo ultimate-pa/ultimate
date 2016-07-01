@@ -94,7 +94,7 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	public void doSimulation() throws AutomataOperationCanceledException {
 		super.doSimulation();
 
-		getLogger().debug(getGameGraph().toAtsFormat());
+		// getLogger().debug(getGameGraph().toAtsFormat());
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff

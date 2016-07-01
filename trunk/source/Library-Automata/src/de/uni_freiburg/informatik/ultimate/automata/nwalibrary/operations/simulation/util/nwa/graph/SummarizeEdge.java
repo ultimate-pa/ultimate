@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 
@@ -85,9 +84,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final Set<STATE> mDuplicatorChoices;
 	/**
-	 * The game graph this edge belongs to.
+	 * The game graph generation object this edge belongs to.
 	 */
-	private final AGameGraph<LETTER, STATE> mGraph;
+	private final NwaGameGraphGeneration<LETTER, STATE> mGraphGeneration;
 	/**
 	 * The choice Spoiler did make for this summarize edge, used as identifier.
 	 */
@@ -109,12 +108,12 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @param duplicatorChoices
 	 *            Choices Duplicator can take, where the key of the map is
 	 *            Spoilers choice.
-	 * @param graph
-	 *            The game graph to add the edge to
+	 * @param graphGeneration
+	 *            The game graph generation object to add the edge to
 	 */
 	public SummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices, final AGameGraph<LETTER, STATE> graph) {
-		mGraph = graph;
+			final Set<STATE> duplicatorChoices, final NwaGameGraphGeneration<LETTER, STATE> graphGeneration) {
+		mGraphGeneration = graphGeneration;
 		mSrc = src;
 		mSpoilerChoice = spoilerChoice;
 		mDuplicatorChoices = duplicatorChoices;
@@ -221,24 +220,24 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private void addToGameGraph() {
 		// Add entry vertices
-		mGraph.addDuplicatorVertex(mDuplicatorAux);
+		mGraphGeneration.addDuplicatorVertex(mDuplicatorAux);
 		// Connect it to the source
-		mGraph.addEdge(mSrc, mDuplicatorAux);
+		mGraphGeneration.addEdge(mSrc, mDuplicatorAux);
 
 		for (STATE choice : mDuplicatorChoices) {
 			SpoilerNwaVertex<LETTER, STATE> spoilerAux = mChoiceToSpoilerAux.get(choice);
 			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = mChoiceToDuplicatorAux.get(choice);
 
 			// Add auxiliary vertices
-			mGraph.addSpoilerVertex(spoilerAux);
-			mGraph.addDuplicatorVertex(duplicatorAux);
+			mGraphGeneration.addSpoilerVertex(spoilerAux);
+			mGraphGeneration.addDuplicatorVertex(duplicatorAux);
 
 			// Add edges between them
-			mGraph.addEdge(mDuplicatorAux, spoilerAux);
-			mGraph.addEdge(spoilerAux, duplicatorAux);
+			mGraphGeneration.addEdge(mDuplicatorAux, spoilerAux);
+			mGraphGeneration.addEdge(spoilerAux, duplicatorAux);
 
 			// Connect them to the destinations
-			mGraph.addEdge(duplicatorAux, mDestinations.get(choice));
+			mGraphGeneration.addEdge(duplicatorAux, mDestinations.get(choice));
 		}
 	}
 
@@ -256,7 +255,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 					this);
 			mChoiceToDuplicatorAux.put(choice, duplicatorAux);
 
-			SpoilerVertex<LETTER, STATE> dest = mGraph.getSpoilerVertex(mSpoilerChoice, choice, false);
+			SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, false, null,
+					null);
 			if (dest instanceof SpoilerNwaVertex<?, ?>) {
 				mDestinations.put(choice, (SpoilerNwaVertex<LETTER, STATE>) dest);
 			}
