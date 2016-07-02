@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
@@ -153,9 +152,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 		// Set values for compatibility with non nwa graph
 		final SimulationPerformance performance = mGeneration.getSimulationPerformance();
 		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
-		setBuechiAmountOfStates(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
-		setBuechiAmountOfTransitions(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));
-		setGraphAmountOfEdges(performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_EDGES));
 	}
 
 	/**

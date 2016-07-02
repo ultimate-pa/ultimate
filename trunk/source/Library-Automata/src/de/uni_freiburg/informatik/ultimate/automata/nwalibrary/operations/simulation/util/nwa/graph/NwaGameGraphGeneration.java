@@ -302,6 +302,19 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Computing priorities of summarize edges.");
 		}
+		// XXX Temporary fix
+		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
+				.entrySet()) {
+			final SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
+			// In direct simulation every edge will have a priority of zero,
+			// since nearly every vertex has a priority of zero.
+			if (mSimulationType == ESimulationType.DIRECT) {
+				// Do not add something to the queue and finish
+				// the method by that
+				summarizeEdge.setAllPriorities(0);
+			}
+		}
+
 		// XXX Rework this
 		/*
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
@@ -868,7 +881,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		generateVertices();
 		generateRegularEdges();
-		patchDeadEnds();
+		patchGraph();
 
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.GENERATE_SUMMARIZE_EDGES);
 		generateSummarizeEdges();
@@ -1138,6 +1151,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			if (summariesOfSource.iterator().hasNext()) {
 				summarySources.add(gameNwaVertex);
 			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateSummarizeEdges/all summary sources");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 		// Retrieve the merged summary edges for the game graph that start at
 		// the given source.
@@ -1149,6 +1169,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<GameLetter<LETTER, STATE>, IGameState>(
 				mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
 						.getResult();
+		mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
+				determinizedGameAutomaton.size());
 		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
 				mServices, determinizedGameAutomaton).getResult();
 		IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
@@ -1214,6 +1236,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						spoilerToDuplicatorChoices.put(spoilerTarget, choices);
 					}
 				}
+
+				// If operation was canceled, for example from the
+				// Ultimate framework
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateSummarizeEdges/each summary");
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
 			}
 			// Patch the source to a winning sink for Spoiler
 			if (runsInDuplicatorDeadEnd) {
@@ -1274,6 +1303,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 					}
 				}
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateSummarizeEdges/delete return vertices");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 	}
@@ -1458,7 +1494,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void patchDeadEnds() throws AutomataOperationCanceledException {
+	public void patchGraph() throws AutomataOperationCanceledException {
 		// Patch Spoiler vertices that are directly losing for Duplicator in
 		// direct simulation
 		for (SpoilerNwaVertex<LETTER, STATE> spoilerVertex : mDuplicatorDirectlyLosesInSpoiler) {
@@ -1843,9 +1879,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
 
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
+			int currentAmountOfSubSummarize = mSimulationPerformance
+					.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES);
+			if (currentAmountOfSubSummarize == SimulationPerformance.NO_COUNTING_RESULT) {
+				currentAmountOfSubSummarize = 0;
+			}
 			mSimulationPerformance.setCountingMeasure(ECountingMeasure.SUB_SUMMARIZE_EDGES,
-					mSimulationPerformance.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES)
-							+ duplicatorChoices.size());
+					currentAmountOfSubSummarize + duplicatorChoices.size());
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("\tAdded summarizeEdge: " + src + " -" + spoilerChoice + "-> " + duplicatorChoices);
@@ -1982,8 +2022,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * changed by using {@link NestedWordAutomatonFilteredStates} as a wrapper.
 	 * 
 	 * @return A game automaton that is used for summarize edge computation
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	private NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton() {
+	private NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+			throws AutomataOperationCanceledException {
 		Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
 		Set<GameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
@@ -2059,6 +2103,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							addEdgeToGameAutomaton(gameNwaVertex, gameHierPred, letter, gameNwaSucc, gameAutomaton);
 						}
 					}
+				}
+
+				// If operation was canceled, for example from the
+				// Ultimate framework
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateSummarizeEdges/create game automaton");
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}

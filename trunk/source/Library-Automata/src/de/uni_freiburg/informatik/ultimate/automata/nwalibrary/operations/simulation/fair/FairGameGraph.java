@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.EGameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.GameGraphChanges;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -87,14 +86,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
 	/**
-	 * Amount of states the inputed buechi automata has.
-	 */
-	private int mBuechiAmountOfStates;
-	/**
-	 * Amount of transitions the inputed buechi automata has.
-	 */
-	private int mBuechiAmountOfTransitions;
-	/**
 	 * Data structure that allows a fast access to all transitions of the buechi
 	 * automaton.<br/>
 	 * Gets used for example by {@link #hasBuechiTransition(Triple)}.
@@ -114,10 +105,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * of an equivalence class then get merged to one state.
 	 */
 	private final UnionFind<STATE> mEquivalenceClasses;
-	/**
-	 * Amount of edges the game graph has.
-	 */
-	private int mGraphAmountOfEdges;
 	/**
 	 * Time duration building the graph took in milliseconds.
 	 */
@@ -169,10 +156,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Since there are often no remove-able transitions we first initiate it
 		// when we actually need it
 		mTransitionsToRemove = null;
-		mBuechiAmountOfStates = 0;
-		mBuechiAmountOfTransitions = 0;
 		mGraphBuildTime = 0;
-		mGraphAmountOfEdges = 0;
 	}
 
 	/**
@@ -205,8 +189,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
 				mBuechi.getInternalAlphabet(), null, null, getStateFactory());
 
-		int resultAmountOfStates = 0;
-
 		// Merge states
 		if (areThereMergeableStates) {
 			// Calculate initial states
@@ -236,7 +218,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				final Set<STATE> eqClass = mEquivalenceClasses.getEquivalenceClassMembers(representative);
 				final STATE mergedState = getStateFactory().minimize(eqClass);
 				result.addState(isInitial, isFinal, mergedState);
-				resultAmountOfStates++;
 				for (final STATE eqClassMember : eqClass) {
 					input2result.put(eqClassMember, mergedState);
 				}
@@ -248,11 +229,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				final boolean isInitial = mBuechi.isInitial(state);
 				final boolean isFinal = mBuechi.isFinal(state);
 				result.addState(isInitial, isFinal, state);
-				resultAmountOfStates++;
 			}
 		}
-
-		int resultAmountOfTransitions = 0;
 
 		// Add transitions
 		for (final STATE inputSrc : mBuechi.getStates()) {
@@ -279,13 +257,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					final Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
 					if (!mTransitionsToRemove.contains(transAsTriple)) {
 						result.addInternalTransition(resultSrc, a, resultDest);
-						resultAmountOfTransitions++;
 					}
 				} else {
 					// If there is no removable transition simply copy the
 					// inputed automaton
 					result.addInternalTransition(resultSrc, a, resultDest);
-					resultAmountOfTransitions++;
 				}
 
 			}
@@ -302,13 +278,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		if (performance != null) {
 			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
 			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, mGraphBuildTime);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
-					mBuechiAmountOfStates - resultAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
-					mBuechiAmountOfTransitions - resultAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, mBuechiAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, mBuechiAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, mGraphAmountOfEdges);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -335,8 +304,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Generate vertices
 		for (final STATE leftState : buechi.getStates()) {
-			mBuechiAmountOfStates++;
-
 			for (final STATE rightState : buechi.getStates()) {
 				// Generate Spoiler vertices (leftState, rightState)
 				final int priority = calculatePriority(leftState, rightState);
@@ -372,8 +339,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Generate edges
 		for (final STATE edgeDest : buechi.getStates()) {
 			for (final IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
-				mBuechiAmountOfTransitions++;
-
 				for (final STATE fixState : buechi.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
@@ -381,7 +346,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
-						mGraphAmountOfEdges++;
 					}
 
 					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
@@ -389,7 +353,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
-						mGraphAmountOfEdges++;
 					}
 
 					// If operation was canceled, for example from the
@@ -781,28 +744,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Increases the internal counter of the amount of buechi states by one.
-	 */
-	protected void increaseBuechiAmountOfStates() {
-		mBuechiAmountOfStates++;
-	}
-
-	/**
-	 * Increases the internal counter of the amount of buechi transitions by
-	 * one.
-	 */
-	protected void increaseBuechiAmountOfTransitions() {
-		mBuechiAmountOfTransitions++;
-	}
-
-	/**
-	 * Increases the internal counter of the amount of graph edges by one.
-	 */
-	protected void increaseGraphAmountOfEdges() {
-		mGraphAmountOfEdges++;
-	}
-
-	/**
 	 * Marks two given states merge-able.<br/>
 	 * This unions the internal equivalence classes of the two given states. The
 	 * equivalence classes indicate which states are merge-able. All states in a
@@ -909,36 +850,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		changes.removedBuechiTransition(src, a, dest);
 
 		return changes;
-	}
-
-	/**
-	 * Sets the internal counter of the amount of buechi states.
-	 * 
-	 * @param amount
-	 *            Amount of buechi states.
-	 */
-	protected void setBuechiAmountOfStates(final int amount) {
-		mBuechiAmountOfStates = amount;
-	}
-
-	/**
-	 * Sets the internal counter of the amount of buechi transitions.
-	 * 
-	 * @param amount
-	 *            Amount of buechi transitions.
-	 */
-	protected void setBuechiAmountOfTransitions(final int amount) {
-		mBuechiAmountOfTransitions = amount;
-	}
-
-	/**
-	 * Sets the internal counter of the amount of graph edges.
-	 * 
-	 * @param amount
-	 *            Amount of graph edges.
-	 */
-	protected void setGraphAmountOfEdges(final int amount) {
-		mGraphAmountOfEdges = amount;
 	}
 
 	/**

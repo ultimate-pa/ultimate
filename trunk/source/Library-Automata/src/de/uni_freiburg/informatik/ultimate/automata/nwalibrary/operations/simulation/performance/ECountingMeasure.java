@@ -34,13 +34,69 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  */
 public enum ECountingMeasure {
 	/**
+	 * Size of the alphabet the automaton has before simulation.
+	 */
+	BUCHI_ALPHABET_SIZE,
+	/**
+	 * Size of the call alphabet the automaton has before simulation.
+	 */
+	BUCHI_ALPHABET_SIZE_CALL,
+	/**
+	 * Size of the internal alphabet the automaton has before simulation.
+	 */
+	BUCHI_ALPHABET_SIZE_INTERNAL,
+	/**
+	 * Size of the return alphabet the automaton has before simulation.
+	 */
+	BUCHI_ALPHABET_SIZE_RETURN,
+	/**
+	 * Amount of nondeterministic states the automaton has before simulation.
+	 */
+	BUCHI_NONDETERMINISTIC_STATES,
+	/**
 	 * Amount of states the automaton has before simulation.
 	 */
 	BUCHI_STATES,
 	/**
+	 * The call transition density the automaton has before simulation
+	 * multiplied with 1000, then rounded.
+	 */
+	BUCHI_TRANSITION_CALL_DENSITY_THOUSAND,
+	/**
+	 * The transition density the automaton has before simulation multiplied
+	 * with 1000, then rounded.
+	 */
+	BUCHI_TRANSITION_DENSITY_THOUSAND,
+	/**
+	 * The internal transition density the automaton has before simulation
+	 * multiplied with 1000, then rounded.
+	 */
+	BUCHI_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+	/**
+	 * The return transition density the automaton has before simulation
+	 * multiplied with 1000, then rounded.
+	 */
+	BUCHI_TRANSITION_RETURN_DENSITY_THOUSAND,
+	/**
 	 * Amount of transitions the automaton has before simulation.
 	 */
 	BUCHI_TRANSITIONS,
+	/**
+	 * Amount of call transitions the automaton has before simulation.
+	 */
+	BUCHI_TRANSITIONS_CALL,
+	/**
+	 * Amount of internal transitions the automaton has before simulation.
+	 */
+	BUCHI_TRANSITIONS_INTERNAL,
+	/**
+	 * Amount of return transitions the automaton has before simulation.
+	 */
+	BUCHI_TRANSITIONS_RETURN,
+	/**
+	 * The amount of states the determinized game automaton has
+	 */
+	DETERMINIZED_GAME_AUTOMATON_STATES,
 	/**
 	 * Amount of merge attempts that where aborted.
 	 */
@@ -70,6 +126,66 @@ public enum ECountingMeasure {
 	 */
 	REMOVED_TRANSITIONS,
 	/**
+	 * Size of the alphabet the automaton has after simulation.
+	 */
+	RESULT_ALPHABET_SIZE,
+	/**
+	 * Size of the call alphabet the automaton has after simulation.
+	 */
+	RESULT_ALPHABET_SIZE_CALL,
+	/**
+	 * Size of the internal alphabet the automaton has after simulation.
+	 */
+	RESULT_ALPHABET_SIZE_INTERNAL,
+	/**
+	 * Size of the return alphabet the automaton has after simulation.
+	 */
+	RESULT_ALPHABET_SIZE_RETURN,
+	/**
+	 * Amount of nondeterministic states the automaton has after simulation.
+	 */
+	RESULT_NONDETERMINISTIC_STATES,
+	/**
+	 * Amount of states the automaton has after simulation.
+	 */
+	RESULT_STATES,
+	/**
+	 * The call transition density the automaton has after simulation multiplied
+	 * with 1000, then rounded.
+	 */
+	RESULT_TRANSITION_CALL_DENSITY_THOUSAND,
+	/**
+	 * The transition density the automaton has after simulation multiplied with
+	 * 1000, then rounded.
+	 */
+	RESULT_TRANSITION_DENSITY_THOUSAND,
+	/**
+	 * The internal transition density the automaton has after simulation
+	 * multiplied with 1000, then rounded.
+	 */
+	RESULT_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+	/**
+	 * The return transition density the automaton has after simulation
+	 * multiplied with 1000, then rounded.
+	 */
+	RESULT_TRANSITION_RETURN_DENSITY_THOUSAND,
+	/**
+	 * Amount of transitions the automaton has after simulation.
+	 */
+	RESULT_TRANSITIONS,
+	/**
+	 * Amount of call transitions the automaton has after simulation.
+	 */
+	RESULT_TRANSITIONS_CALL,
+	/**
+	 * Amount of internal transitions the automaton has after simulation.
+	 */
+	RESULT_TRANSITIONS_INTERNAL,
+	/**
+	 * Amount of return transitions the automaton has after simulation.
+	 */
+	RESULT_TRANSITIONS_RETURN,
+	/**
 	 * Amount of SCCs the game graph has.
 	 */
 	SCCS,
@@ -84,5 +200,5 @@ public enum ECountingMeasure {
 	/**
 	 * Amount of summarize edges a nwa game graph has.
 	 */
-	SUMMARIZE_EDGES
+	SUMMARIZE_EDGES,
 }

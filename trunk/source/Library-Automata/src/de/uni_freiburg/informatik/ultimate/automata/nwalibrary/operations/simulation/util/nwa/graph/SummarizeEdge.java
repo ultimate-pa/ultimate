@@ -119,8 +119,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 		mSrc = src;
 		mSpoilerChoice = spoilerChoice;
 		mDuplicatorChoices = duplicatorChoices;
-		mDuplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false, null,
-				null, null, ETransitionType.SUMMARIZE_ENTRY, this);
+		mDuplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
+				spoilerChoice, null, null, ETransitionType.SUMMARIZE_ENTRY, this);
 
 		mDestinations = new HashMap<>();
 		mChoiceToSpoilerAux = new HashMap<>();
@@ -248,12 +248,12 @@ public final class SummarizeEdge<LETTER, STATE> {
 	private void initInternalMaps() {
 		for (STATE choice : mDuplicatorChoices) {
 			SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, false, null,
-					null, this);
+					choice, this);
 			mChoiceToSpoilerAux.put(choice, spoilerAux);
 
 			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(
-					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false, null, null, null, ETransitionType.SUMMARIZE_EXIT,
-					this);
+					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false, null, choice, null,
+					ETransitionType.SUMMARIZE_EXIT, this);
 			mChoiceToDuplicatorAux.put(choice, duplicatorAux);
 
 			SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, false, null,
