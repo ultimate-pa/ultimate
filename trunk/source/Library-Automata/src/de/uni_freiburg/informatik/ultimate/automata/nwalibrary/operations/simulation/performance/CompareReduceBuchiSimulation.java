@@ -148,6 +148,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
 		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
 		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
+		tables.add(new Pair<>("longerThanOneSecondNames", ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {

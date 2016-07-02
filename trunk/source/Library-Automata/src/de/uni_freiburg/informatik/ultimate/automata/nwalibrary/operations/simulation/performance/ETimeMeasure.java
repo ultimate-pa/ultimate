@@ -46,6 +46,10 @@ public enum ETimeMeasure {
 	 */
 	BUILD_SCC,
 	/**
+	 * The time needed for computing which vertex down states are safe.
+	 */
+	COMPUTE_SAFE_VERTEX_DOWN_STATES,
+	/**
 	 * The time computing priorities for summarize edges took in nwa game graph
 	 * generation.
 	 */
