@@ -317,6 +317,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// the method by that
 				summarizeEdge.setAllPriorities(0);
 			}
+			// XXX Temporary debugging line, remove it afterwards!
+			if (mSimulationType == ESimulationType.DELAYED) {
+				// Very destructive but preserves correctness
+				summarizeEdge.setAllPriorities(1);
+			}
 		}
 
 		/*
@@ -1160,7 +1165,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 		// Retrieve the merged summary edges for the game graph that start at
 		// the given source.
-		// We make all summarySources the only intial game states and determize
+		// We make all summarySources the only initial game states and determinize
 		// the automaton.
 
 		// Determinizing is very expensive, it is the dominant part of the
@@ -1215,25 +1220,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				if (summaryDestinationUpStates == null) {
 					continue;
 				}
-
-				if (summaryDestinationUpStates.contains(mAuxiliaryGameState)) {
-					runsInDuplicatorDeadEnd = true;
-				} else {
-					for (IGameState summaryDestinationUpState : summaryDestinationUpStates) {
-						@SuppressWarnings("unchecked")
-						SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
-								.getSpoilerNwaVertex();
-						// Add the summary to Duplicators choices for this
-						// merged summary
-						STATE spoilerTarget = summaryDestination.getQ0();
-						STATE duplicatorTarget = summaryDestination.getQ1();
-						if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
-							spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
-						}
-						Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
-						choices.add(duplicatorTarget);
-						spoilerToDuplicatorChoices.put(spoilerTarget, choices);
+				
+				for (IGameState summaryDestinationUpState : summaryDestinationUpStates) {
+					if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
+						runsInDuplicatorDeadEnd = true;
+						continue;
 					}
+					
+					@SuppressWarnings("unchecked")
+					SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
+							.getSpoilerNwaVertex();
+					// Add the summary to Duplicators choices for this
+					// merged summary
+					STATE spoilerTarget = summaryDestination.getQ0();
+					STATE duplicatorTarget = summaryDestination.getQ1();
+					if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
+						spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+					}
+					Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
+					choices.add(duplicatorTarget);
+					spoilerToDuplicatorChoices.put(spoilerTarget, choices);
 				}
 
 				// If operation was canceled, for example from the
@@ -1342,7 +1348,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// priority one that has the bit set to true.
 				if (mSimulationType == ESimulationType.DELAYED) {
 					if (priority == 1) {
-						addSpoilerVertexHelper(priority, true, leftState, rightState);
+						addSpoilerVertexHelper(1, true, leftState, rightState);
 					}
 				}
 
@@ -2012,6 +2018,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					gameHierPreds
 							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
 				}
+				// In delayed simulation we also need to account for the bit set to true
+				if (mSimulationType.equals(ESimulationType.DELAYED)) {
+					representingHierPred = getSpoilerVertex(spoilerHierPred, duplicatorHierPred, true, null, null);
+					if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+						gameHierPreds
+								.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
+					}
+				}
 			}
 		}
 
@@ -2065,6 +2079,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// We later add (spoilerVertex -> duplicatorSucc ->
 						// mAuxiliaryGameState) for every letter of the alphabet
 						runningInDuplicatorDeadEnd.add(new Pair<>(spoilerNwaVertex, duplicatorNwaSucc));
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("\tRuns into DD dead end: " + spoilerNwaVertex + " -> " + duplicatorNwaSucc);
+						}
 					}
 					continue;
 				}
