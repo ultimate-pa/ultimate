@@ -154,7 +154,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		System.out.println("Processing data...");
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
 		tables.add(new Pair<>("instanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null)));
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false)));
 		tables.add(new Pair<>("instanceTimePartitioning",
 				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("instanceAlgoWork",
@@ -170,8 +170,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
 		tables.add(new Pair<>("longerThanOneSecondNames",
 				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
-		tables.add(new Pair<>("directInstanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT)));
+		tables.add(new Pair<>("directFilteredInstanceFullComparison",
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {
@@ -843,7 +843,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
 			// Removed states
 			if (methodResult != null) {
-				final int removedStates = mOperand.size() - methodResult.size();
+				final int removedStates = operand.size() - methodResult.size();
 				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states
@@ -855,7 +855,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
 			// Removed states
 			if (methodResult != null) {
-				final int removedStates = mOperand.size() - methodResult.size();
+				final int removedStates = operand.size() - methodResult.size();
 				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states

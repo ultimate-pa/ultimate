@@ -209,8 +209,5 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				stateFactory, reachableOperand);
 		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
-		// TODO Disabled because of runtime errors, resolve and enable again
-//		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, true, getServices(), timeOutMillis,
-//				stateFactory, reachableOperand);
 	}
 }

@@ -542,12 +542,16 @@ public final class ComparisonTables {
 	 * @param simulationType
 	 *            The simulation type interested in, or <tt>null</tt> if
 	 *            interested in all results
+	 * @param filtered
+	 *            If the result should not contain results where the input
+	 *            automaton has an empty size, at least one of the methods timed
+	 *            out or an OutOfMemory-Error occurred.
 	 * @return A table in a tsv-like format, specified by
 	 *         {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceFullComparisonTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
-			final ESimulationType simulationType) {
+			final ESimulationType simulationType, final boolean filtered) {
 		final List<String> table = new LinkedList<>();
 		if (performanceEntries.isEmpty()) {
 			return table;
@@ -577,6 +581,15 @@ public final class ComparisonTables {
 				// type, if set
 				if (simulationType != null && !type.equals(simulationType)) {
 					continue;
+				}
+				if (filtered) {
+					// If filtering, we are not interested in this comparison if
+					// the automaton is empty, a simulation had OOM or timed out
+					int size = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
+					if (performanceOfSimulation.hasTimedOut() || performanceOfSimulation.isOutOfMemory() || size == 0
+							|| size == SimulationPerformance.NO_COUNTING_RESULT) {
+						break;
+					}
 				}
 
 				// Fix fields
