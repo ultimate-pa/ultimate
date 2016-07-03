@@ -113,7 +113,8 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
 					progressMeasureText = "inf";
 				}
-				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + " = " + progressMeasureText);
+				getLogger().debug("\t(" + vertex.isB() + "," + vertex.getQ0() + "," + vertex.getQ1() + ") = "
+						+ progressMeasureText);
 			}
 		}
 	}

@@ -97,8 +97,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 			return false;
 		}
 		@SuppressWarnings("rawtypes")
-		final
-		DuplicatorVertex other = (DuplicatorVertex) obj;
+		final DuplicatorVertex other = (DuplicatorVertex) obj;
 		if (a == null) {
 			if (other.a != null) {
 				return false;
@@ -126,7 +125,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 */
 	@Override
 	public String getName() {
-		return getQ0() + "," + getQ1() + "," + getLetter();
+		return isB() + "," + getQ0() + "," + getQ1() + "," + getLetter();
 	}
 
 	/*

@@ -34,7 +34,9 @@ import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
@@ -56,10 +58,6 @@ public final class RandomNwaBenchmarkCreator {
 	 * printed.
 	 */
 	public static final int LOG_EVERY = 50;
-	/**
-	 * Converts a value, if added with, to a float value.
-	 */
-	private static final float ADD_TO_FLOAT = 0.0f;
 	/**
 	 * The lower bound for a value that can be interpreted as percentage.
 	 */
@@ -84,11 +82,11 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	public static void main(final String[] args) throws IOException {
 		final int n = 10;
-		final int k = 3;
-		final int acceptanceInPerc = 100;
-		final int totalityInternalInPerc = 5;
-		final int totalityCallInPerc = 5;
-		final int totalityReturnInPerc = 5;
+		final int k = 2;
+		final float acceptanceInPerc = 50;
+		final float totalityInternalInPerc = 5;
+		final float totalityCallInPerc = 2;
+		final float totalityReturnInPerc = 0.2f;
 		final int amount = 1000;
 		boolean operationSwitchUseCompareReduce = false;
 
@@ -117,7 +115,7 @@ public final class RandomNwaBenchmarkCreator {
 	 * The percentage of how many states should be accepting, between 0 and 100
 	 * (both inclusive).
 	 */
-	private final int mAcceptance;
+	private final float mAcceptance;
 	/**
 	 * The size of the alphabet generated Nwa automata should have.
 	 */
@@ -126,18 +124,18 @@ public final class RandomNwaBenchmarkCreator {
 	 * The percentage of how many call transitions each state should be have,
 	 * between 0 and 100 (both inclusive).
 	 */
-	private final int mCallTotality;
+	private final float mCallTotality;
 	/**
 	 * The percentage of how many internal transitions each state should be
 	 * have, between 0 and 100 (both inclusive).
 	 */
-	private final int mInternalTotality;
+	private final float mInternalTotality;
 	private String mPreamble;
 	/**
 	 * The percentage of how many return transitions each state should be have,
 	 * between 0 and 100 (both inclusive).
 	 */
-	private final int mReturnTotality;
+	private final float mReturnTotality;
 
 	/**
 	 * The services object used for automata creation.
@@ -173,8 +171,8 @@ public final class RandomNwaBenchmarkCreator {
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
-	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final int acceptance,
-			final int internalTotality, final int callTotality, final int returnTotality)
+	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final float acceptance,
+			final float internalTotality, final float callTotality, final float returnTotality)
 					throws IllegalArgumentException {
 		mSize = size;
 		mAlphabetSize = alphabetSize;
@@ -234,7 +232,7 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	public void createAndSaveABenchmark(final int amount, final File pathToSaveBenchmark, final int logEvery)
 			throws IOException {
-		NestedWordAutomaton<String, String> nwa;
+		NestedWordAutomaton<String, String> nwa = null;
 
 		final double internalTotalityDouble = percentageToDouble(mInternalTotality);
 		final double callTotalityDouble = percentageToDouble(mCallTotality);
@@ -266,6 +264,12 @@ public final class RandomNwaBenchmarkCreator {
 			fw.write(mPreamble + nwa);
 			fw.close();
 		}
+		
+		// Print some debug information
+		Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
+		System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+		System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
+		System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
 	}
 
 	/**
@@ -291,7 +295,7 @@ public final class RandomNwaBenchmarkCreator {
 	 *             If the given value is no percentage, i.e. not between 0 and
 	 *             100 (both inclusive)
 	 */
-	private int ensureIsPercentage(int percentage) throws IllegalArgumentException {
+	private float ensureIsPercentage(final float percentage) throws IllegalArgumentException {
 		if (percentage < PERC_LOWER_BOUND || percentage > PERC_UPPER_BOUND) {
 			throw new IllegalArgumentException("The given value is no percentage: " + percentage);
 		}
@@ -306,7 +310,7 @@ public final class RandomNwaBenchmarkCreator {
 	 *            Value between 0 and 100 (both inclusive).
 	 * @return The corresponding value between 0.0 and 1.0
 	 */
-	private double percentageToDouble(final int percentage) {
-		return (percentage + ADD_TO_FLOAT) / PERC_TO_DOUBLE;
+	private double percentageToDouble(final float percentage) {
+		return percentage / PERC_TO_DOUBLE;
 	}
 }

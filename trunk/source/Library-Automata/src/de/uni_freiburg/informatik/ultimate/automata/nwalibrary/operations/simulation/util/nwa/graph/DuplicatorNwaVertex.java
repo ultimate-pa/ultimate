@@ -248,7 +248,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	@Override
 	public String getName() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getQ0() + "," + getQ1() + ",");
+		sb.append(isB() + "," + getQ0() + "," + getQ1() + ",");
 		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
 		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {

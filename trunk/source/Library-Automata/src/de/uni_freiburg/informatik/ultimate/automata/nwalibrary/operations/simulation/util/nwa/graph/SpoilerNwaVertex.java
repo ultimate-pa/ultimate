@@ -202,7 +202,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	@Override
 	public String getName() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getQ0() + "," + getQ1());
+		sb.append(isB() + "," + getQ0() + "," + getQ1());
 		if (mSummarizeEdge != null) {
 			sb.append("[SMiddle/").append(mSummarizeEdge.hashCode() + "]");
 		}

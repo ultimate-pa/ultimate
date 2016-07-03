@@ -131,11 +131,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	/**
 	 * Constant for representing no value in the plot format.
 	 */
-	private final static String PLOT_NO_VALUE = "NO_VALUE";
+	private final static String PLOT_NO_VALUE = "--";
 	/**
 	 * Separator that is used in plot files.
 	 */
-	private final static String PLOT_SEPARATOR = ";";
+	private final static String PLOT_SEPARATOR = "\t";
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
