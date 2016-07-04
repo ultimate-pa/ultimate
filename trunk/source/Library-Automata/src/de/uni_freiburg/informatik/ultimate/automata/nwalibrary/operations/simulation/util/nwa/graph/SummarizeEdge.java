@@ -28,10 +28,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 
 /**
@@ -57,6 +60,10 @@ public final class SummarizeEdge<LETTER, STATE> {
 
 	public final static int NO_PRIORITY = -1;
 	/**
+	 * Destinations of the edge, accessible by their Duplicator choices.
+	 */
+	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mChoiceToDestination;
+	/**
 	 * Provides a fast access to the Duplicator auxiliary vertices that
 	 * represent the choice of Duplicator after Spoiler has made a decision.
 	 * Those vertices are connected to the destinations and represent the exit
@@ -70,9 +77,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mChoiceToSpoilerAux;
 	/**
-	 * Destinations of the edge, accessible by their Duplicator choices.
+	 * Spoiler invoker of the edge, accessible by their Duplicator choices.
 	 */
-	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mDestinations;
+	private final Map<STATE, Set<SpoilerNwaVertex<LETTER, STATE>>> mChoiceToSpoilerInvokers;
 
 	/**
 	 * The Duplicator auxiliary vertex that represents the choice of Spoiler. It
@@ -122,9 +129,10 @@ public final class SummarizeEdge<LETTER, STATE> {
 		mDuplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
 				spoilerChoice, null, null, ETransitionType.SUMMARIZE_ENTRY, this);
 
-		mDestinations = new HashMap<>();
+		mChoiceToDestination = new HashMap<>();
 		mChoiceToSpoilerAux = new HashMap<>();
 		mChoiceToDuplicatorAux = new HashMap<>();
+		mChoiceToSpoilerInvokers = new HashMap<>();
 
 		initInternalMaps();
 	}
@@ -151,8 +159,49 @@ public final class SummarizeEdge<LETTER, STATE> {
 			mGraphGeneration.addEdge(spoilerAux, duplicatorAux);
 
 			// Connect them to the destinations
-			mGraphGeneration.addEdge(duplicatorAux, mDestinations.get(choice));
+			mGraphGeneration.addEdge(duplicatorAux, mChoiceToDestination.get(choice));
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof SummarizeEdge)) {
+			return false;
+		}
+		SummarizeEdge<?, ?> other = (SummarizeEdge<?, ?>) obj;
+		if (mDuplicatorChoices == null) {
+			if (other.mDuplicatorChoices != null) {
+				return false;
+			}
+		} else if (!mDuplicatorChoices.equals(other.mDuplicatorChoices)) {
+			return false;
+		}
+		if (mSpoilerChoice == null) {
+			if (other.mSpoilerChoice != null) {
+				return false;
+			}
+		} else if (!mSpoilerChoice.equals(other.mSpoilerChoice)) {
+			return false;
+		}
+		if (mSrc == null) {
+			if (other.mSrc != null) {
+				return false;
+			}
+		} else if (!mSrc.equals(other.mSrc)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -164,7 +213,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return Returns the destination of the given sub-summarize edge
 	 */
 	public SpoilerNwaVertex<LETTER, STATE> getDestination(final STATE duplicatorChoice) {
-		return mDestinations.get(duplicatorChoice);
+		return mChoiceToDestination.get(duplicatorChoice);
 	}
 
 	/**
@@ -173,7 +222,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The destinations of the edge
 	 */
 	public Collection<SpoilerNwaVertex<LETTER, STATE>> getDestinations() {
-		return mDestinations.values();
+		return mChoiceToDestination.values();
 	}
 
 	/**
@@ -218,6 +267,33 @@ public final class SummarizeEdge<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the spoiler invokers of the given sub-summarize edge.
+	 * 
+	 * @param duplicatorChoice
+	 *            The choice duplicator did make, determines the sub-summarize
+	 *            edge
+	 * @return Returns the spoiler invokers of the given sub-summarize edge
+	 */
+	public Set<SpoilerNwaVertex<LETTER, STATE>> getSpoilerInvokers(final STATE duplicatorChoice) {
+		return mChoiceToSpoilerInvokers.get(duplicatorChoice);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mDuplicatorChoices == null) ? 0 : mDuplicatorChoices.hashCode());
+		result = prime * result + ((mSpoilerChoice == null) ? 0 : mSpoilerChoice.hashCode());
+		result = prime * result + ((mSrc == null) ? 0 : mSrc.hashCode());
+		return result;
+	}
+
+	/**
 	 * Sets the priorities of all sub-summarize edges.
 	 * 
 	 * @param priority
@@ -247,19 +323,56 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private void initInternalMaps() {
 		for (STATE choice : mDuplicatorChoices) {
+			// Spoiler auxiliary that holds the priority
 			SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, false, null,
 					choice, this);
 			mChoiceToSpoilerAux.put(choice, spoilerAux);
 
+			// Duplicator auxiliary that is the end
 			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(
 					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false, null, choice, null,
 					ETransitionType.SUMMARIZE_EXIT, this);
 			mChoiceToDuplicatorAux.put(choice, duplicatorAux);
 
+			// Destination
 			SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, false, null,
 					null);
 			if (dest instanceof SpoilerNwaVertex<?, ?>) {
-				mDestinations.put(choice, (SpoilerNwaVertex<LETTER, STATE>) dest);
+				mChoiceToDestination.put(choice, (SpoilerNwaVertex<LETTER, STATE>) dest);
+			}
+
+			// Spoiler invoker
+			AGameGraph<LETTER, STATE> graph = mGraphGeneration.getGameGraph();
+			for (Vertex<LETTER, STATE> pred : graph.getPredecessors(dest)) {
+				if (!(pred instanceof DuplicatorNwaVertex<?, ?>)) {
+					throw new IllegalStateException(
+							"Expected cast to be possible, something seems to be wrong with the game graph.");
+				}
+				DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
+				// We are only interested in return-predecessor
+				if (!predAsDuplicatorNwa.getTransitionType().equals(ETransitionType.RETURN)) {
+					continue;
+				}
+				// We do not consider return-predecessor that have no predecessor
+				Set<Vertex<LETTER, STATE>> possibleSpoilerInvokers = graph.getPredecessors(predAsDuplicatorNwa);
+				if (possibleSpoilerInvokers == null) {
+					continue;
+				}
+				for (Vertex<LETTER, STATE> possibleSpoilerInvoker : possibleSpoilerInvokers) {
+					if (!(possibleSpoilerInvoker instanceof SpoilerNwaVertex<?, ?>)) {
+						throw new IllegalStateException(
+								"Expected cast to be possible, something seems to be wrong with the game graph.");
+					}
+					SpoilerNwaVertex<LETTER, STATE> spoilerInvokerAsSpoilerNwa = (SpoilerNwaVertex<LETTER, STATE>) possibleSpoilerInvoker;
+
+					// Add the invoker to the list
+					Set<SpoilerNwaVertex<LETTER, STATE>> spoilerInvokers = mChoiceToSpoilerInvokers.get(choice);
+					if (spoilerInvokers == null) {
+						spoilerInvokers = new HashSet<>();
+					}
+					spoilerInvokers.add(spoilerInvokerAsSpoilerNwa);
+					mChoiceToSpoilerInvokers.put(choice, spoilerInvokers);
+				}
 			}
 		}
 	}

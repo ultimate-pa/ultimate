@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Element for a breadth-first search that computes the priority of a given
@@ -46,74 +42,58 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SearchElement<LETTER, STATE> {
 	/**
-	 * Computes and returns the summarize edge which corresponds to a double
-	 * decker, given by a vertex and its down state. If the double decker does
-	 * not directly corresponds to an edge, it assumes that the double decker
-	 * corresponds to the previous summarize edge.
-	 * 
-	 * @param vertex
-	 *            Vertex to compute its corresponding summarize edge
-	 * @param downState
-	 *            Down state of the vertex to compute its corresponding
-	 *            summarize edge
-	 * @param previousEdge
-	 *            Summarize edge the predecessor of this double decker
-	 *            corresponded to, <tt>null</tt> if there is no.
-	 * @return The summarize edge corresponding to the given double decker,
-	 *         <tt>previousEdge</tt> if there is no.
+	 * The choice Duplicator made in the summarize edge for this element,
+	 * specifies the sub-summarize edge.
 	 */
-	public static <LETTER, STATE> SummarizeEdge<LETTER, STATE> computeSummarizeEdge(final Vertex<LETTER, STATE> vertex,
-			final SpoilerVertex<LETTER, STATE> downState, final SummarizeEdge<LETTER, STATE> previousEdge,
-			final Map<Pair<Vertex<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge) {
-		SummarizeEdge<LETTER, STATE> correspondingSummarizeEdge = invokerToSummarizeEdge
-				.get(new Pair<>(vertex, downState));
-		if (correspondingSummarizeEdge == null) {
-			correspondingSummarizeEdge = previousEdge;
-		}
-		return correspondingSummarizeEdge;
-	}
-
-	/**
-	 * The target vertex of this element.
-	 */
-	private final Vertex<LETTER, STATE> mTarget;
+	private final STATE mDuplicatorChoice;
 	/**
 	 * Vertex that was used right before this search element.
 	 */
 	private final Vertex<LETTER, STATE> mHistory;
 	/**
+	 * The origin vertex of this element.
+	 */
+	private final Vertex<LETTER, STATE> mOrigin;
+	/**
 	 * Summarize edge this element corresponds to.
 	 */
 	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
-	 * The vertex of this element.
+	 * The target vertex of this element.
+	 */
+	private final Vertex<LETTER, STATE> mTarget;
+	/**
+	 * The current vertex of this element.
 	 */
 	private final Vertex<LETTER, STATE> mVertex;
-	/**
-	 * The choice Duplicator made in the summarize edge for this element.
-	 */
-	private final STATE mDuplicatorChoice;
 
 	/**
-	 * Creates a new search element with a given vertex and a down state.
-	 * Together they form a double decker vertex.
+	 * Creates a new search element with the given elements.
 	 * 
 	 * @param vertex
-	 *            Vertex for this element
-	 * @param downState
-	 *            Down state for this element
+	 *            The vertex this element represents
+	 * @param target
+	 *            The target vertex this element is searching
+	 * @param history
+	 *            The vertex that was used right before this element,
+	 *            <tt>null</tt> if there is no.
+	 * @param summarizeEdge
+	 *            The summarize edge this element belongs to
+	 * @param duplicatorChoice
+	 *            The choice Duplicator makes in the summarize edge, specifies
+	 *            the sub-summarize edge
+	 * @param origin
+	 *            The origin of this search element
 	 */
-	public SearchElement(final Vertex<LETTER, STATE> vertex, Vertex<LETTER, STATE> target) {
-		this(vertex, target, null, null, null);
-	}
-
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> target,
-			final Vertex<LETTER, STATE> history, SummarizeEdge<LETTER, STATE> summarizeEdge, STATE duplicatorChoice) {
+			final Vertex<LETTER, STATE> history, SummarizeEdge<LETTER, STATE> summarizeEdge, STATE duplicatorChoice,
+			final Vertex<LETTER, STATE> origin) {
 		mVertex = vertex;
 		mTarget = target;
 		mHistory = history;
 		mSummarizeEdge = summarizeEdge;
 		mDuplicatorChoice = duplicatorChoice;
+		mOrigin = origin;
 	}
 
 	/*
@@ -132,7 +112,28 @@ public final class SearchElement<LETTER, STATE> {
 		if (!(obj instanceof SearchElement)) {
 			return false;
 		}
-		final SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
+		SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
+		if (mDuplicatorChoice == null) {
+			if (other.mDuplicatorChoice != null) {
+				return false;
+			}
+		} else if (!mDuplicatorChoice.equals(other.mDuplicatorChoice)) {
+			return false;
+		}
+		if (mHistory == null) {
+			if (other.mHistory != null) {
+				return false;
+			}
+		} else if (!mHistory.equals(other.mHistory)) {
+			return false;
+		}
+		if (mSummarizeEdge == null) {
+			if (other.mSummarizeEdge != null) {
+				return false;
+			}
+		} else if (!mSummarizeEdge.equals(other.mSummarizeEdge)) {
+			return false;
+		}
 		if (mTarget == null) {
 			if (other.mTarget != null) {
 				return false;
@@ -146,17 +147,19 @@ public final class SearchElement<LETTER, STATE> {
 			}
 		} else if (!mVertex.equals(other.mVertex)) {
 			return false;
+		} else if (!mOrigin.equals(other.mOrigin)) {
+			return false;
 		}
 		return true;
 	}
 
 	/**
-	 * Gets the target.
+	 * Gets the choice Duplicator take for this summarize edge.
 	 * 
-	 * @return The target
+	 * @return The choice Duplicator take for this summarize edge
 	 */
-	public Vertex<LETTER, STATE> getTarget() {
-		return mTarget;
+	public STATE getDuplicatorChoice() {
+		return mDuplicatorChoice;
 	}
 
 	/**
@@ -169,23 +172,30 @@ public final class SearchElement<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the origin.
+	 * 
+	 * @return The origin
+	 */
+	public Vertex<LETTER, STATE> getOrigin() {
+		return mOrigin;
+	}
+
+	/**
 	 * Gets the summarize edge this element corresponds to.
 	 * 
-	 * @return The summarize edge this element corresponds to or <tt>null</tt>
-	 *         if not set.
+	 * @return The summarize edge this element corresponds to
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
 		return mSummarizeEdge;
 	}
 
 	/**
-	 * Gets the choice Duplicator take for this summarize edge.
+	 * Gets the target.
 	 * 
-	 * @return The choice Duplicator take for this summarize edge, or
-	 *         <tt>null</tt> if not set.
+	 * @return The target
 	 */
-	public STATE getDuplicatorChoice() {
-		return mDuplicatorChoice;
+	public Vertex<LETTER, STATE> getTarget() {
+		return mTarget;
 	}
 
 	/**
@@ -206,8 +216,12 @@ public final class SearchElement<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((mDuplicatorChoice == null) ? 0 : mDuplicatorChoice.hashCode());
+		result = prime * result + ((mHistory == null) ? 0 : mHistory.hashCode());
+		result = prime * result + ((mSummarizeEdge == null) ? 0 : mSummarizeEdge.hashCode());
 		result = prime * result + ((mTarget == null) ? 0 : mTarget.hashCode());
 		result = prime * result + ((mVertex == null) ? 0 : mVertex.hashCode());
+		result = prime * result + ((mOrigin == null) ? 0 : mOrigin.hashCode());
 		return result;
 	}
 
@@ -218,6 +232,7 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "SearchElement [mTarget=" + mTarget + ", mVertex=" + mVertex + "]";
+		return "SearchElement [mDuplicatorChoice=" + mDuplicatorChoice + ", mHistory=" + mHistory + ", mSummarizeEdge="
+				+ mSummarizeEdge + ", mTarget=" + mTarget + ", mVertex=" + mVertex + ", mOrigin=" + mOrigin + "]";
 	}
 }
