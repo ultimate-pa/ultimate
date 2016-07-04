@@ -210,12 +210,12 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
 				inputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_THOUSAND,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_THOUSAND,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_THOUSAND,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1_000_000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1_000_000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1_000_000));
 
 		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
 
@@ -233,12 +233,12 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
 				outputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_THOUSAND,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_THOUSAND,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_THOUSAND,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1_000_000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1_000_000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1_000_000));
 	}
 
 	/**

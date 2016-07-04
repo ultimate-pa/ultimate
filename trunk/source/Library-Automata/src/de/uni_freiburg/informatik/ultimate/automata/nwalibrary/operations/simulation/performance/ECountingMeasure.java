@@ -59,24 +59,24 @@ public enum ECountingMeasure {
 	BUCHI_STATES,
 	/**
 	 * The call transition density the automaton has before simulation
-	 * multiplied with 1000, then rounded.
+	 * multiplied with 1_000_000, then rounded.
 	 */
-	BUCHI_TRANSITION_CALL_DENSITY_THOUSAND,
+	BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 	/**
 	 * The transition density the automaton has before simulation multiplied
-	 * with 1000, then rounded.
+	 * with 1_000_000, then rounded.
 	 */
-	BUCHI_TRANSITION_DENSITY_THOUSAND,
+	BUCHI_TRANSITION_DENSITY_MILLION,
 	/**
 	 * The internal transition density the automaton has before simulation
-	 * multiplied with 1000, then rounded.
+	 * multiplied with 1_000_000, then rounded.
 	 */
-	BUCHI_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+	BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
 	 * The return transition density the automaton has before simulation
-	 * multiplied with 1000, then rounded.
+	 * multiplied with 1_000_000, then rounded.
 	 */
-	BUCHI_TRANSITION_RETURN_DENSITY_THOUSAND,
+	BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
 	 * Amount of transitions the automaton has before simulation.
 	 */
@@ -151,24 +151,24 @@ public enum ECountingMeasure {
 	RESULT_STATES,
 	/**
 	 * The call transition density the automaton has after simulation multiplied
-	 * with 1000, then rounded.
+	 * with 1_000_000, then rounded.
 	 */
-	RESULT_TRANSITION_CALL_DENSITY_THOUSAND,
+	RESULT_TRANSITION_CALL_DENSITY_MILLION,
 	/**
 	 * The transition density the automaton has after simulation multiplied with
-	 * 1000, then rounded.
+	 * 1_000_000, then rounded.
 	 */
-	RESULT_TRANSITION_DENSITY_THOUSAND,
+	RESULT_TRANSITION_DENSITY_MILLION,
 	/**
 	 * The internal transition density the automaton has after simulation
-	 * multiplied with 1000, then rounded.
+	 * multiplied with 1_000_000, then rounded.
 	 */
-	RESULT_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+	RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
 	 * The return transition density the automaton has after simulation
-	 * multiplied with 1000, then rounded.
+	 * multiplied with 1_000_000, then rounded.
 	 */
-	RESULT_TRANSITION_RETURN_DENSITY_THOUSAND,
+	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
 	 * Amount of transitions the automaton has after simulation.
 	 */

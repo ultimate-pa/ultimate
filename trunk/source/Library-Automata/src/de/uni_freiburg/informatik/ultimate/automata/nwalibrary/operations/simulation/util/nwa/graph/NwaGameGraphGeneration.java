@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Hep;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -306,30 +307,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Computing priorities of summarize edges.");
 		}
-		// XXX Temporary fix
-		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
-				.entrySet()) {
-			final SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
-			// In direct simulation every edge will have a priority of zero,
-			// since nearly every vertex has a priority of zero.
-			if (mSimulationType == ESimulationType.DIRECT) {
-				// Do not add something to the queue and finish
-				// the method by that
-				summarizeEdge.setAllPriorities(0);
-			}
-			// XXX Temporary debugging line, remove it afterwards!
-			if (mSimulationType == ESimulationType.DELAYED) {
-				// Very destructive but preserves correctness
-				summarizeEdge.setAllPriorities(1);
-			}
-		}
 
-		/*
-		// XXX Rework this
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
-		final HashMap<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>, Integer> searchPriorities = new HashMap<>();
+		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, STATE, Integer> vertexToSubSummarizeToSearchPriority = new NestedMap3<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
-		final HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge = new HashMap<>();
+
 		// Every vertex can maximal be added '3 * out-degree' times to the queue
 		// TODO Performance impact of BigInteger is to high for a safety check.
 		// This event may not even be possible for correct game graphs. In this
@@ -337,6 +319,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final BigInteger maxAmountOfSearches = BigInteger.valueOf(mGameGraph.getSize()).pow(2)
 				.multiply(BigInteger.valueOf(3));
 		final BigInteger searchCounter = BigInteger.ZERO;
+
 		// Add starting elements
 		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
 				.entrySet()) {
@@ -350,18 +333,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			} else {
 				final Vertex<LETTER, STATE> edgeSource = summarizeEdge.getSource();
 				for (STATE duplicatorChoice : summarizeEdge.getDuplicatorChoices()) {
-					for (SpoilerVertex<LETTER, STATE> spoilerInvoker : summarizeEdge
-							.getSpoilerInvokerForChoice(duplicatorChoice)) {
+					// We are now iterating every sub-summarize edge
+					// Find out all SpoilerInvoker and create search elements
+					for (SpoilerNwaVertex<LETTER, STATE> spoilerInvoker : summarizeEdge
+							.getSpoilerInvokers(duplicatorChoice)) {
 						final SearchElement<LETTER, STATE> searchElement = new SearchElement<LETTER, STATE>(
-								spoilerInvoker, edgeSource, null, summarizeEdge, duplicatorChoice);
+								spoilerInvoker, edgeSource, null, summarizeEdge, duplicatorChoice, spoilerInvoker);
 						searchQueue.add(searchElement);
 					}
 				}
-				// Memorize invoker element for detection of
-				// corresponding summarize edges
-				invokerToSummarizeEdge.put(new Pair<>(spoilerInvoker, invokingState), summarizeEdge);
 			}
 		}
+
 		// Start the search
 		while (!searchQueue.isEmpty() && searchCounter.compareTo(maxAmountOfSearches) <= 0) {
 			searchCounter.add(BigInteger.ONE);
@@ -370,6 +353,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final Vertex<LETTER, STATE> searchTarget = searchElement.getTarget();
 			final SummarizeEdge<LETTER, STATE> searchSummarizeEdge = searchElement.getSummarizeEdge();
 			final STATE searchDuplicatorChoice = searchElement.getDuplicatorChoice();
+			final Vertex<LETTER, STATE> searchOrigin = searchElement.getOrigin();
+			final Vertex<LETTER, STATE> searchHistory = searchElement.getHistory();
+
 			boolean isSearchVertexDuplicatorNwa = false;
 			DuplicatorNwaVertex<LETTER, STATE> searchVertexAsDuplicatorNwa = null;
 			if (searchVertex instanceof DuplicatorNwaVertex) {
@@ -402,7 +388,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					if (succ == null) {
 						continue;
 					}
-					if (succ instanceof DuplicatorNwaVertex) {
+					if (succ instanceof DuplicatorNwaVertex<?, ?>) {
 						// Successor is duplicator vertex
 						final DuplicatorNwaVertex<LETTER, STATE> succAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) succ;
 						final ETransitionType transitionType = succAsDuplicatorNwa.getTransitionType();
@@ -423,16 +409,28 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							// summarizeEdgeDestinationPriority) as priority
 							// candidate
 							final SummarizeEdge<LETTER, STATE> summarizeEdge = succAsDuplicatorNwa.getSummarizeEdge();
-							// TODO Duplicator must have a choice at this point
-							final Vertex<LETTER, STATE> destination = summarizeEdge.getDestination();
-							int summarizeEdgePriority = summarizeEdge.getPriority();
+
+							// TODO What to do if the summarize edge does not
+							// belong to the history vertex?
+							// Ignore the summarize edge if it does not belong
+							// to the history vertex
+							if (!summarizeEdge.getDestinations().contains(searchHistory)) {
+								continue;
+							}
+
+							// Determine the choice of Duplicator via the
+							// history element
+							final STATE duplicatorChoiceHistory = searchHistory.getQ1();
+							final Vertex<LETTER, STATE> destination = summarizeEdge
+									.getDestination(duplicatorChoiceHistory);
+							int summarizeEdgePriority = summarizeEdge.getPriority(duplicatorChoiceHistory);
 							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
 								// If summarize edge has no priority yet, use
 								// the neutral element 2.
 								summarizeEdgePriority = 2;
 							}
-							final Integer destinationSearchPriority = searchPriorities
-									.get(new Pair<>(destination, searchTarget));
+							final Integer destinationSearchPriority = vertexToSubSummarizeToSearchPriority
+									.get(destination, searchSummarizeEdge, searchDuplicatorChoice);
 							if (destinationSearchPriority == null
 									|| destinationSearchPriority == SummarizeEdge.NO_PRIORITY) {
 								continue;
@@ -443,18 +441,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							// of using the fake vertices, which are used to
 							// model the summarize edge.
 							succ = destination;
-						} else if (transitionType == ETransitionType.CALL) {
-							// Left down state changes by using
-							// 'spoiler -call-> duplicator'
-							final VertexDownState<STATE> downState = new VertexDownState<>(searchVertex.getQ0(),
-									searchDownState.getRightDownState());
-							final Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
-							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
-								continue;
-							}
-							succPriority = succSearchPriority;
 						} else {
-							final Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchTarget));
+							final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
+									searchSummarizeEdge, searchDuplicatorChoice);
 							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
 								continue;
 							}
@@ -469,18 +458,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 									|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
 								// Ignore return and special edges
 								break;
-							} else if (transitionType == ETransitionType.CALL) {
-								// Right down state changes by using
-								// 'duplicator -call-> spoiler'
-								final VertexDownState<STATE> downState = new VertexDownState<>(
-										searchDownState.getLeftDownState(), searchVertex.getQ1());
-								final Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
-								if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
-									continue;
-								}
-								succPriority = succSearchPriority;
 							} else {
-								final Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchTarget));
+								final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
+										searchSummarizeEdge, searchDuplicatorChoice);
 								if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
 									continue;
 								}
@@ -490,7 +470,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					// Evaluate the priority of the current successor
 					// Differentiate between non-loop and loop vertices
-					if (!loopDetector.isLoopVertex(succ, searchSummarizeEdge.getSpoilerInvoker(), searchVertex)) {
+					if (!loopDetector.isLoopVertex(succ, searchOrigin, searchVertex)) {
 						// Search for the optimal value under all successors.
 						// If that is not present try to increase to 2 until
 						// optimal value is reached.
@@ -563,8 +543,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Put the search priority for the vertex and decide whether to
 			// continue the search for this element
-			final Integer previousSearchPriorityValue = searchPriorities.put(new Pair<>(searchVertex, searchTarget),
-					searchPriority);
+			final Integer previousSearchPriorityValue = vertexToSubSummarizeToSearchPriority.put(searchVertex,
+					searchSummarizeEdge, searchDuplicatorChoice, searchPriority);
 			boolean continueSearch = false;
 			// Continue search if a search priority is new for the
 			// vertex or if values have changed.
@@ -577,14 +557,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 				// If search element is a duplicator vertex that uses a call
 				// transition, then update the priority of the corresponding
-				// summarize edges, if existent.
+				// summarize edges, if existent and possibly stop the search for
+				// this element.
 				if (isSearchVertexDuplicatorNwa) {
 					final ETransitionType transitionType = searchVertexAsDuplicatorNwa.getTransitionType();
 					if (transitionType == ETransitionType.CALL) {
-						updateCorrespondingSummarizeEdge(searchElement, searchPriority);
+						// Search for the target under its predecessors
+						Set<Vertex<LETTER, STATE>> predecessors = mGameGraph.getPredecessors(searchVertex);
+						if (predecessors != null && predecessors.contains(searchTarget)) {
+							// If found, set the priority and abort the current
+							// search
+							searchSummarizeEdge.setPriority(searchDuplicatorChoice, searchPriority);
+							continueSearch = false;
+						}
 					}
 				}
 			}
+
 			// If search should be continued, add predecessors to the queue
 			if (continueSearch) {
 				final Set<Vertex<LETTER, STATE>> predecessors = mGameGraph.getPredecessors(searchVertex);
@@ -602,38 +591,16 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 									|| transitionType == ETransitionType.SUMMARIZE_ENTRY) {
 								// Ignore return and special edges
 								continue;
-							} else if (transitionType == ETransitionType.CALL) {
-								// Right down state changes by using
-								// 'duplicator -call-> spoiler'
-								final VertexDownState<STATE> downState = predAsDuplicatorNwa.getVertexDownState();
-								// Create a search element for corresponding
-								// correct double decker.
-								if (downState.getLeftDownState().equals(searchDownState.getLeftDownState())) {
-									final SummarizeEdge<LETTER, STATE> correspondingEdge = SearchElement
-											.computeSummarizeEdge(pred, downState, searchSummarizeEdge,
-													invokerToSummarizeEdge);
-									searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState, searchDownState,
-											correspondingEdge));
-								}
 							} else if (transitionType == ETransitionType.SUMMARIZE_EXIT) {
 								// Follow summarize edge to the source and use
-								// this vertex if the edge belongs to the
-								// current down state configuration
+								// this vertex
 								final Vertex<LETTER, STATE> source = predAsDuplicatorNwa.getSummarizeEdge().getSource();
-								if (source instanceof SpoilerNwaVertex) {
-									final SpoilerNwaVertex<LETTER, STATE> sourceAsSpoilerNwa = (SpoilerNwaVertex<LETTER, STATE>) source;
-									if (sourceAsSpoilerNwa.hasVertexDownState(searchDownState)) {
-										searchQueue.add(new SearchElement<LETTER, STATE>(source, searchDownState,
-												searchDownState, searchSummarizeEdge));
-									}
-								}
+								searchQueue.add(new SearchElement<LETTER, STATE>(source, searchTarget, searchVertex,
+										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							} else {
-								// Only add the vertex if the edge belongs to
-								// the current down state configuration
-								if (predAsDuplicatorNwa.hasVertexDownState(searchDownState)) {
-									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
-											searchDownState, searchSummarizeEdge));
-								}
+								// Create a search element
+								searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchTarget, searchVertex,
+										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							}
 						} else {
 							// Predecessor is spoiler vertex
@@ -644,32 +611,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 										|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
 									// Ignore return and special edges
 									break;
-								} else if (transitionType == ETransitionType.CALL) {
-									if (pred instanceof SpoilerNwaVertex) {
-										final SpoilerNwaVertex<LETTER, STATE> predAsSpoilerNwa = (SpoilerNwaVertex<LETTER, STATE>) pred;
-										// Left down state changes by using
-										// 'spoiler -call-> duplicator'
-										final VertexDownState<STATE> downState = predAsSpoilerNwa.getVertexDownState();
-										// Create a search element for
-										// corresponding correct double decker.
-										if (downState.getRightDownState().equals(searchDownState.getRightDownState())) {
-											final SummarizeEdge<LETTER, STATE> correspondingEdge = SearchElement
-													.computeSummarizeEdge(pred, downState, searchSummarizeEdge,
-															invokerToSummarizeEdge);
-											searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
-													searchDownState, correspondingEdge));
-										}
-									}
 								} else {
-									// Only add the vertex if the edge belongs
-									// to the current down state configuration
-									if (pred instanceof SpoilerNwaVertex) {
-										final SpoilerNwaVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerNwaVertex<LETTER, STATE>) pred;
-										if (predAsSpoilerDD.hasVertexDownState(searchDownState)) {
-											searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
-													searchDownState, searchSummarizeEdge));
-										}
-									}
+									// Create a search element
+									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchTarget, searchVertex,
+											searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 								}
 							}
 						}
@@ -687,7 +632,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			throw new IllegalStateException(
 					"Computing summarize edge priorities could not be done. The process detected a live lock and aborted.");
 		}
-		*/
 	}
 
 	/**
@@ -1165,7 +1109,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 		// Retrieve the merged summary edges for the game graph that start at
 		// the given source.
-		// We make all summarySources the only initial game states and determinize
+		// We make all summarySources the only initial game states and
+		// determinize
 		// the automaton.
 
 		// Determinizing is very expensive, it is the dominant part of the
@@ -1220,13 +1165,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				if (summaryDestinationUpStates == null) {
 					continue;
 				}
-				
+
 				for (IGameState summaryDestinationUpState : summaryDestinationUpStates) {
 					if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
 						runsInDuplicatorDeadEnd = true;
 						continue;
 					}
-					
+
 					@SuppressWarnings("unchecked")
 					SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
 							.getSpoilerNwaVertex();
@@ -1285,8 +1230,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// allowed in a legal game graph.
 					// They need to form a legal instant win for Duplicator.
 					if (!mGameGraph.hasSuccessors(pred) && pred instanceof SpoilerNwaVertex<?, ?>) {
-						final SpoilerNwaVertex<LETTER, STATE> preAsNwa = (SpoilerNwaVertex<LETTER, STATE>) pred;
-						addDuplicatorWinningSink(preAsNwa);
+						final SpoilerNwaVertex<LETTER, STATE> predAsNwa = (SpoilerNwaVertex<LETTER, STATE>) pred;
+						// If we are in delayed simulation and the bit is set to
+						// true, Spoiler is winning
+						if (mSimulationType.equals(ESimulationType.DELAYED) && predAsNwa.isB()) {
+							addSpoilerWinningSinkExtended(predAsNwa);
+						} else {
+							addDuplicatorWinningSink(predAsNwa);
+						}
 					}
 				}
 			}
@@ -1790,7 +1741,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		if (mSimulationType.equals(ESimulationType.DIRECT) && doesLoseInDirectSim(leftState, rightState)) {
 			mDuplicatorDirectlyLosesInSpoiler.add(spoilerVertex);
 		}
-		// Remember the vertex if delayed simulation, the right state is final and the bit is set to true
+		// Remember the vertex if delayed simulation, the right state is final
+		// and the bit is set to true
 		if (mSimulationType.equals(ESimulationType.DELAYED) && bit && mNwa.isFinal(rightState)) {
 			// Such vertices should end up also being dead ends
 			mPossibleSpoilerDeadEnd.add(spoilerVertex);
@@ -2018,12 +1970,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					gameHierPreds
 							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
 				}
-				// In delayed simulation we also need to account for the bit set to true
+				// In delayed simulation we also need to account for the bit set
+				// to true
 				if (mSimulationType.equals(ESimulationType.DELAYED)) {
 					representingHierPred = getSpoilerVertex(spoilerHierPred, duplicatorHierPred, true, null, null);
 					if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
-						gameHierPreds
-								.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
+						gameHierPreds.add(
+								new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
 					}
 				}
 			}
@@ -2232,75 +2185,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Updates the priority of the summarize edge corresponding to the given
-	 * objects, if the current down state is safe.
-	 * 
-	 * @param invoker
-	 *            Element corresponding to the duplicator vertex that uses the
-	 *            call which invoked the summarize edge
-	 * @param priorityToSet
-	 *            Priority to set for the summarize edge
-	 */
-	private void updateCorrespondingSummarizeEdge(final SearchElement<LETTER, STATE> invoker, int priorityToSet) {
-		// XXX Rework this
-
-		// We need to compute which summarize edges correspond to the current
-		// vertex.
-		// We do so by using the to the summarize edge corresponding target
-		// configuration. This is exactly the target the current
-		// configuration leads to after using the outgoing call edge.
-		// We access this by using the history element of the search element.
-		final Vertex<LETTER, STATE> invokingVertex = invoker.getVertex();
-		final Vertex<LETTER, STATE> historyTarget = invoker.getHistory();
-		final Vertex<LETTER, STATE> invokingTarget = invoker.getTarget();
-		// The corresponding target defines the source of the corresponding
-		// edges. If the target is (q0, q1) then all corresponding summarize
-		// edges have (q0, q1) as source.
-		int bound = 1;
-		// In delayed simulation there may be up to two sources, differentiating
-		// in the bit, depending on if they are predecessors of the invoker.
-		if (mSimulationType == ESimulationType.DELAYED) {
-			bound = 2;
-		}
-		for (int i = 0; i < bound; i++) {
-			// First use the false bit. In other cases also try the true bit.
-			final boolean bitToUse = i != 0;
-			// The source gets determined by the historyTarget.
-			final Vertex<LETTER, STATE> sourceOfSummarizeEdges = historyTarget;
-			if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerNwaVertex<?, ?>) {
-				final SpoilerNwaVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerNwaVertex<LETTER, STATE>) sourceOfSummarizeEdges;
-				// First we need to validate if the invoking down state
-				// forms a safe down state.
-				// If the down state is unsafe we do not update summarize
-				// edges. We do so by first assuming that the down state is
-				// reversely safe, that is when following outgoing edges to
-				// the search root. The down state then is safe if the
-				// computed source of the summarize edges is a predecessor
-				// of the current vertex.
-				if (!(mGameGraph.hasPredecessors(invokingVertex)
-						&& mGameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges))) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("\t\tIs no pred: " + sourceOfSummarizeEdges + ", for: " + invokingVertex);
-					}
-					return;
-				}
-				// Now update the priority of all
-				// corresponding summarize edges
-				final Map<Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> destToEdges = mSrcDestToSummarizeEdges
-						.get(sourceOfSummarizeEdgeAsSpoilerDD);
-				if (destToEdges != null) {
-					for (final SummarizeEdge<LETTER, STATE> summarizeEdge : destToEdges.values()) {
-						summarizeEdge.setPriority(invoker.getDuplicatorChoice(), priorityToSet);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
 	 * Adds a given duplicator vertex to the graph and all corresponding
 	 * internal fields.
 	 * 
@@ -2348,6 +2232,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		} else {
 			mGameGraph.addSpoilerVertex(vertex);
 		}
+	}
+
+	/**
+	 * Gets the game graph that uses this generation object.
+	 * 
+	 * @return The game graph that uses this generation object.
+	 */
+	protected AGameGraph<LETTER, STATE> getGameGraph() {
+		return mGameGraph;
 	}
 
 	/**

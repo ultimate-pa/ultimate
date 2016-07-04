@@ -154,7 +154,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		System.out.println("Processing data...");
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
 		tables.add(new Pair<>("instanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false)));
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false)));
 		tables.add(new Pair<>("instanceTimePartitioning",
 				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("instanceAlgoWork",
@@ -171,7 +171,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		tables.add(new Pair<>("longerThanOneSecondNames",
 				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
 		tables.add(new Pair<>("directFilteredInstanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true)));
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {
