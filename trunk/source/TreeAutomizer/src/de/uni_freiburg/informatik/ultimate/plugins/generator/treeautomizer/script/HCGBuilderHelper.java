@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -7,8 +7,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.preferences.HornClauseGraphBuilderPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
 public class HCGBuilderHelper {
 
@@ -30,13 +30,13 @@ public class HCGBuilderHelper {
 				String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final SolverMode solverMode = prefs
-					.getEnum(HornClauseGraphBuilderPreferenceInitializer.LABEL_Solver, SolverMode.class);
+					.getEnum(TreeAutomizerPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
 			final String commandExternalSolver = prefs
-					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverCommand);
+					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverCommand);
 
 			mLogicForExternalSolver = prefs
-					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverLogic);
+					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverLogic);
 
 			mSolverSettings = SolverBuilder.constructSolverSettings(
 					filename, solverMode, commandExternalSolver, false, null);

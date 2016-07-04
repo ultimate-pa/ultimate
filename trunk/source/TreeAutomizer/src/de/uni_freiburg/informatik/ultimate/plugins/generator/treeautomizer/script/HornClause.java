@@ -1,11 +1,12 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
 
 /**
  * This is our internal representation of a Horn clause.
@@ -49,6 +50,18 @@ public class HornClause {
 	HornClausePredicateSymbol mHeadPredicate;
 	
 	Term mTransitionFormula;
+	
+	public Term getTransitionFormula() {
+		return mTransitionFormula;
+	}
+	
+	public HornClausePredicateSymbol getHeadPredicate() {
+		return mHeadPredicate;
+	}
+	
+	public Set<HornClausePredicateSymbol> getTailPredicates() {
+		return mBodyPredToTermVariables.keySet();
+	}
 	
 	public HornClause(Term transitionFormula, ArrayList<TermVariable> bodyVars, HornClausePredicateSymbol body, Map<HornClausePredicateSymbol, ArrayList<TermVariable>> cobody) {
 		mTransitionFormula = transitionFormula;

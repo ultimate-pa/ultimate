@@ -27,17 +27,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClause;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClause;
 
 /**
+ * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class TreeAutomizerObserver implements IUnmanagedObserver {
@@ -45,13 +50,13 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void finish() throws Throwable {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -62,14 +67,23 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		// TODO Auto-generated method stub
-
+		
 		Map<String, IAnnotations> st = root.getPayload().getAnnotations();
 		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
 		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
+
+		TreeAutomatonBU<Term, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
+		for (HornClause clause : hornClauses) {
+			List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
+			tail.addAll(clause.getTailPredicates());
+			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
+		}
+		//System.err.println(tree.DebugString());
+		// TODO(amin): Add initial and final states.
+		//tree.addFinalState(state);
+		//tree.addInitialState(state);
 		return false;
 	}
-	
 
 }

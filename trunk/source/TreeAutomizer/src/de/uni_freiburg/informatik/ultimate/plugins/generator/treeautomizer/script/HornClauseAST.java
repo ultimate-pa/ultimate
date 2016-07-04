@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
 
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;

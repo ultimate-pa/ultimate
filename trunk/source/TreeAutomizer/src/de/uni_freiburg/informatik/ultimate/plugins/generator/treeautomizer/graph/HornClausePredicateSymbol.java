@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.graph;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses.

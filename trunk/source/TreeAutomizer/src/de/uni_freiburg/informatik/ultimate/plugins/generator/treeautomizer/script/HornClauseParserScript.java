@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,9 +27,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.graph.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.terms.Body;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.terms.Cobody;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Body;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Cobody;
 
 public class HornClauseParserScript extends NoopScript {
 
@@ -272,7 +272,7 @@ public class HornClauseParserScript extends NoopScript {
 				Body body = parseBody(thisTerm.getSubformula());
 				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
 
-				System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
 
@@ -285,7 +285,7 @@ public class HornClauseParserScript extends NoopScript {
 					Body body = cobody.negate();
 					mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
 					
-					System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}
 			}
 		}

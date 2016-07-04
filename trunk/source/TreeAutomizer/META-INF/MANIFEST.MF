@@ -5,8 +5,12 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.treea
 Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j
+ Library-log4j,
+ de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script
+Import-Package: de.uni_freiburg.informatik.ultimate.logic,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
 
