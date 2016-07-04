@@ -870,8 +870,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
 				inputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_THOUSAND,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1000));
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
 		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
@@ -884,8 +884,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
 				outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
 		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_THOUSAND,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1000));
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
 
 		// General metrics
 		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());

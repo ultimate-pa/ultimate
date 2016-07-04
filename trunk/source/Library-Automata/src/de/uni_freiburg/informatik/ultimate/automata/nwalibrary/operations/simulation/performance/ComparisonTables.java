@@ -546,12 +546,15 @@ public final class ComparisonTables {
 	 *            If the result should not contain results where the input
 	 *            automaton has an empty size, at least one of the methods timed
 	 *            out or an OutOfMemory-Error occurred.
+	 * @param filterOnlyNwa
+	 *            If the result should only contain nested word automaton, this
+	 *            removes every automaton which has no return transitions
 	 * @return A table in a tsv-like format, specified by
 	 *         {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceFullComparisonTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
-			final ESimulationType simulationType, final boolean filtered) {
+			final ESimulationType simulationType, final boolean filtered, final boolean filterOnlyNwa) {
 		final List<String> table = new LinkedList<>();
 		if (performanceEntries.isEmpty()) {
 			return table;
@@ -588,6 +591,13 @@ public final class ComparisonTables {
 					int size = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 					if (performanceOfSimulation.hasTimedOut() || performanceOfSimulation.isOutOfMemory() || size == 0
 							|| size == SimulationPerformance.NO_COUNTING_RESULT) {
+						break;
+					}
+				}
+				if (filterOnlyNwa) {
+					// In this case every automaton that has no return transitions should get removed
+					int returnTransitions = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
+					if (returnTransitions == 0 || returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
 						break;
 					}
 				}
