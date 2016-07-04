@@ -24,14 +24,12 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,6 +59,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.LoopDetector;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameDoubleDeckerSet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameLetter;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSinkState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -92,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            State class of nwa automaton
  */
 public final class NwaGameGraphGeneration<LETTER, STATE> {
+
 	/**
 	 * The priority of Duplicator vertices, it is a constant.
 	 */
@@ -103,7 +111,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * spoiler used before, bit, type of transition, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Hep<STATE, STATE, LETTER, Boolean, ETransitionType, SummarizeEdge<LETTER, STATE>, IWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> mAutomatonStatesToGraphDuplicatorVertex;
-
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
@@ -111,23 +118,29 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * summarize edge, sink)</b>.
 	 */
 	private final HashMap<Quin<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, IWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> mAutomatonStatesToGraphSpoilerVertex;
+
 	/**
 	 * Auxiliary game state, is used at summarize edge computation for pointing
 	 * to dead-end return vertices.
 	 */
-	private final SpoilerVertex<LETTER, STATE> mAuxiliaryGameState;
+	private final GameSinkState mAuxiliaryGameState;
 	/**
 	 * Provides a fast access to all Spoiler vertices that are directly losing
 	 * for Duplicator, if he moves in. The set is only used if the simulation
 	 * type is direct simulation.
 	 */
 	private final HashSet<SpoilerNwaVertex<LETTER, STATE>> mDuplicatorDirectlyLosesInSpoiler;
+
 	/**
 	 * Data structure of all duplicator vertices that have the transition type
 	 * {@link ETransitionType#RETURN}. They are used for summarize edge
 	 * generation.
 	 */
 	private final HashSet<DuplicatorNwaVertex<LETTER, STATE>> mDuplicatorReturningVertices;
+	/**
+	 * Instance of a Duplicator winning sink, <tt>null</tt> if not used.
+	 */
+	private DuplicatorWinningSink<LETTER, STATE> mDuplicatorWinningSink;
 	/**
 	 * Map of all winning sinks of the graph. Provides a fast access via the
 	 * sink entry.
@@ -187,6 +200,19 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final ESimulationType mSimulationType;
 	/**
+	 * Data structure of all Spoiler vertices that are predecessor of a
+	 * Duplicator calling vertex. They are used for summarize edge generation.
+	 */
+	private final HashSet<SpoilerNwaVertex<LETTER, STATE>> mSpoilerCallPredecessors;
+	/**
+	 * Instance of a Spoiler winning sink, <tt>null</tt> if not used.
+	 */
+	private SpoilerWinningSink<LETTER, STATE> mSpoilerWinningSink;
+	/**
+	 * Instance of an extended Spoiler winning sink, <tt>null</tt> if not used.
+	 */
+	private SpoilerWinningSinkExtended<LETTER, STATE> mSpoilerWinningSinkExtended;
+	/**
 	 * Map of all summarize edges of the graph. Provides a fast access via
 	 * source and destinations of the edge.
 	 */
@@ -231,18 +257,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
 		mAutomatonStatesToGraphSpoilerVertex = new HashMap<>();
 		mDuplicatorReturningVertices = new HashSet<>();
+		mSpoilerCallPredecessors = new HashSet<>();
 		mPossibleSpoilerDeadEnd = new HashSet<>();
 		mPossibleNonReturnDuplicatorDeadEnd = new HashSet<>();
 		mDuplicatorDirectlyLosesInSpoiler = new HashSet<>();
 		mSrcDestToSummarizeEdges = new NestedMap2<>();
 		mEntryToSink = new HashMap<>();
 		mRemovedReturnBridges = new GameGraphChanges<>();
-		mAuxiliaryGameState = new SpoilerVertex<LETTER, STATE>(2, false, null, null);
+		mAuxiliaryGameState = new GameSinkState();
 		mLogger = logger;
 		mProgressTimer = progressTimer;
 		mGameGraph = gameGraph;
 		mSimulationType = simulationType;
 		mUsePushOverEdges = false;
+
+		mSpoilerWinningSink = null;
+		mSpoilerWinningSinkExtended = null;
+		mDuplicatorWinningSink = null;
 
 		mResultAmountOfStates = 0;
 		mResultAmountOfTransitions = 0;
@@ -272,14 +303,33 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void computeSummarizeEdgePriorities() throws AutomataOperationCanceledException {
-		mLogger.debug("Computing priorities of summarize edges.");
-		// XXX Rework this
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Computing priorities of summarize edges.");
+		}
+		// XXX Temporary fix
+		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
+				.entrySet()) {
+			final SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
+			// In direct simulation every edge will have a priority of zero,
+			// since nearly every vertex has a priority of zero.
+			if (mSimulationType == ESimulationType.DIRECT) {
+				// Do not add something to the queue and finish
+				// the method by that
+				summarizeEdge.setAllPriorities(0);
+			}
+			// XXX Temporary debugging line, remove it afterwards!
+			if (mSimulationType == ESimulationType.DELAYED) {
+				// Very destructive but preserves correctness
+				summarizeEdge.setAllPriorities(1);
+			}
+		}
+
 		/*
+		// XXX Rework this
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
 		final HashMap<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>, Integer> searchPriorities = new HashMap<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
 		final HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge = new HashMap<>();
-
 		// Every vertex can maximal be added '3 * out-degree' times to the queue
 		// TODO Performance impact of BigInteger is to high for a safety check.
 		// This event may not even be possible for correct game graphs. In this
@@ -287,7 +337,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final BigInteger maxAmountOfSearches = BigInteger.valueOf(mGameGraph.getSize()).pow(2)
 				.multiply(BigInteger.valueOf(3));
 		final BigInteger searchCounter = BigInteger.ZERO;
-
 		// Add starting elements
 		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
 				.entrySet()) {
@@ -308,7 +357,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						searchQueue.add(searchElement);
 					}
 				}
-
 				// Memorize invoker element for detection of
 				// corresponding summarize edges
 				invokerToSummarizeEdge.put(new Pair<>(spoilerInvoker, invokingState), summarizeEdge);
@@ -322,14 +370,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final Vertex<LETTER, STATE> searchTarget = searchElement.getTarget();
 			final SummarizeEdge<LETTER, STATE> searchSummarizeEdge = searchElement.getSummarizeEdge();
 			final STATE searchDuplicatorChoice = searchElement.getDuplicatorChoice();
-
 			boolean isSearchVertexDuplicatorNwa = false;
 			DuplicatorNwaVertex<LETTER, STATE> searchVertexAsDuplicatorNwa = null;
 			if (searchVertex instanceof DuplicatorNwaVertex) {
 				searchVertexAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) searchVertex;
 				isSearchVertexDuplicatorNwa = true;
 			}
-
 			// Calculate search priority of element by using the priorities of
 			// successors
 			int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
@@ -738,11 +784,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 
 			Collection<Set<STATE>> equivalenceClassesAsCollection = equivalenceClasses.getAllEquivalenceClasses();
+
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
+			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa, false,
 					false, equivalenceClassesAsCollection);
+			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<LETTER, STATE>(mServices, minimizer.getResult()).getResult();
+
 			mResultAmountOfStates = result.size();
 			// TODO One of the operations should provide a #transition method,
 			// counting it manually is a, for metrics only, not acceptable
@@ -803,13 +853,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			result = resultAsChangeableAutomaton;
 		}
 
-		// Log remaining performance stuff
-		mSimulationPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
-				mSimulationPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES) - mResultAmountOfStates);
-		mSimulationPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
-				mSimulationPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS)
-						- mResultAmountOfTransitions);
-
 		// If operation was canceled, for example from the
 		// Ultimate framework
 		if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
@@ -840,7 +883,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		generateVertices();
 		generateRegularEdges();
-		patchDeadEnds();
+		patchGraph();
 
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.GENERATE_SUMMARIZE_EDGES);
 		generateSummarizeEdges();
@@ -867,31 +910,31 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		for (final STATE edgeDest : mNwa.getStates()) {
 			// Edges generated by internal transitions
 			for (final IncomingInternalTransition<LETTER, STATE> trans : mNwa.internalPredecessors(edgeDest)) {
-				mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS);
-
 				for (final STATE fixState : mNwa.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> duplicatorSrc = getDuplicatorVertex(fixState, trans.getPred(),
 							trans.getLetter(), false, ETransitionType.INTERNAL, null, null);
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						addEdge(duplicatorSrc, spoilerDest);
 					}
 
 					// For delayed simulation we also need to account for
-					// vertices with the bit set to true
+					// source vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
 						duplicatorSrc = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), true,
 								ETransitionType.INTERNAL, null, null);
-						if (!mNwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
-						} else {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
-						}
-						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						if (duplicatorSrc != null) {
+							// The destination needs to have
+							// the bit set to false if Duplicators destination
+							// is final
+							if (mNwa.isFinal(edgeDest)) {
+								spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+							}
+							if (spoilerDest != null) {
+								addEdge(duplicatorSrc, spoilerDest);
+							}
 						}
 					}
 
@@ -899,29 +942,27 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					Vertex<LETTER, STATE> spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.INTERNAL, null, null);
-					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+					if (spoilerSrc != null) {
+						// In delayed simulation the destination needs to have
+						// the bit set to true if Spoilers destination is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
+									ETransitionType.INTERNAL, null, null);
+						}
+						if (duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
+						}
 					}
 
 					// For delayed simulation we also need to account for
-					// vertices with the bit set to true
+					// source vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
+						spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
 						duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
 								ETransitionType.INTERNAL, null, null);
-						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
-							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
-						}
-						if (mNwa.isFinal(edgeDest)) {
-							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
+						// If the Spoiler source does exist, we connect it
+						if (spoilerSrc != null && duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
 						}
 					}
 
@@ -940,68 +981,59 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			// Edges generated by call transitions
 			for (final IncomingCallTransition<LETTER, STATE> trans : mNwa.callPredecessors(edgeDest)) {
-				mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS);
-
 				// Calling is possible regardless of the stack
 				for (final STATE fixState : mNwa.getStates()) {
 					// Duplicator edges q1 -c-> q2 : (x, q1, c) -> (x, q2)
 					Vertex<LETTER, STATE> duplicatorSrc = getDuplicatorVertex(fixState, trans.getPred(),
 							trans.getLetter(), false, ETransitionType.CALL, null, null);
-					// Right down state changes to duplicators state before
-					// using the edge
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						addEdge(duplicatorSrc, spoilerDest);
 					}
 
 					// For delayed simulation we also need to account for
-					// vertices with the bit set to true
+					// source vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
-						// TODO Something seems to be wrong here. Some edges
-						// that should be generated are not generated. See
-						// bug automata in examples.
 						duplicatorSrc = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), true,
 								ETransitionType.CALL, null, null);
-						if (!mNwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
-						} else {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
-						}
-						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						if (duplicatorSrc != null) {
+							// The destination needs to have the bit set to
+							// false if Duplicators destination is final
+							if (mNwa.isFinal(edgeDest)) {
+								spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+							}
+							if (spoilerDest != null) {
+								addEdge(duplicatorSrc, spoilerDest);
+							}
 						}
 					}
 
 					// Spoiler edges q1 -c-> q2 : (q1, x) -> (q2, x, c)
 					Vertex<LETTER, STATE> spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
-					// Left down state changes to spoilers state before
-					// using the edge
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.CALL, null, null);
-					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+					if (spoilerSrc != null) {
+						// In delayed simulation the destination needs to have
+						// the bit set to true if Spoilers destination is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
+									ETransitionType.CALL, null, null);
+						}
+						if (duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
+						}
 					}
+
 					// For delayed simulation we also need to account for
-					// vertices with the bit set to true
+					// source vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
+						spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
 						duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
 								ETransitionType.CALL, null, null);
-						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
-							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
-						}
-						if (mNwa.isFinal(edgeDest)) {
-							spoilerSrc = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
+						// If the Spoiler source does exist, we connect it
+						if (spoilerSrc != null && duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
 						}
 					}
 
@@ -1021,31 +1053,30 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			// Edges generated by return transitions
 			for (final IncomingReturnTransition<LETTER, STATE> trans : mNwa.returnPredecessors(edgeDest)) {
-				mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS);
-
 				for (final STATE fixState : mNwa.getStates()) {
 					// Duplicator edges q1 -r/q0-> q2 : (x, q1, r/q0) -> (x, q2)
 					Vertex<LETTER, STATE> duplicatorSrc = getDuplicatorVertex(fixState, trans.getLinPred(),
 							trans.getLetter(), false, ETransitionType.RETURN, null, null);
 					Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (duplicatorSrc != null && spoilerDest != null) {
-						mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						addEdge(duplicatorSrc, spoilerDest);
 					}
 
 					// For delayed simulation we also need to account for
-					// vertices with the bit set to true
+					// source vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
 						duplicatorSrc = getDuplicatorVertex(fixState, trans.getLinPred(), trans.getLetter(), true,
 								ETransitionType.RETURN, null, null);
-						if (!mNwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
-						} else {
-							spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
-						}
-						if (duplicatorSrc != null && spoilerDest != null) {
-							mGameGraph.addEdge(duplicatorSrc, spoilerDest);
-							mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						spoilerDest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						if (duplicatorSrc != null) {
+							// The destination needs to have the bit set to
+							// false if Duplicators destination is final
+							if (mNwa.isFinal(edgeDest)) {
+								spoilerDest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+							}
+							if (spoilerDest != null) {
+								addEdge(duplicatorSrc, spoilerDest);
+							}
 						}
 					}
 
@@ -1054,28 +1085,27 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							null);
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.RETURN, null, null);
-					if (spoilerSrc != null && duplicatorDest != null) {
-						mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-						mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+					if (spoilerSrc != null) {
+						// In delayed simulation the destination needs to have
+						// the bit set to true if Spoilers destination is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
+									ETransitionType.RETURN, null, null);
+						}
+						if (duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
+						}
 					}
+
 					// For delayed simulation we also need to account for
 					// vertices with the bit set to true
 					if (mSimulationType == ESimulationType.DELAYED) {
+						spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, true, null, null);
 						duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
 								ETransitionType.RETURN, null, null);
-						if (getAmountOfBitsForSpoilerVertices(trans.getLinPred(), fixState) > 1) {
-							spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, true, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
-						}
-						if (mNwa.isFinal(edgeDest)) {
-							spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
-							if (spoilerSrc != null && duplicatorDest != null) {
-								mGameGraph.addEdge(spoilerSrc, duplicatorDest);
-								mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
-							}
+						// If the Spoiler source does exist, we connect it
+						if (spoilerSrc != null && duplicatorDest != null) {
+							addEdge(spoilerSrc, duplicatorDest);
 						}
 					}
 
@@ -1103,57 +1133,105 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Generating summarize edges.");
+		}
 		// Create the game automaton, we will use it for summarize computation
-		NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = createGameAutomaton();
-		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithSummaries = new RemoveUnreachable<>(
+		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
 				mServices, gameAutomaton).getResult();
 
 		// Retrieve all single summary edge sources
-		List<SpoilerVertex<LETTER, STATE>> summarySources = new LinkedList<>();
+		Set<IGameState> summarySources = new HashSet<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>> summariesOfSource = gameAutomatonWithSummaries
-					.returnSummarySuccessor(spoilerVertex);
+			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+				continue;
+			}
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
+			GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+
+			Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource = gameAutomatonWithSummaries
+					.returnSummarySuccessor(gameNwaVertex);
 			if (summariesOfSource.iterator().hasNext()) {
-				summarySources.add(spoilerVertex);
+				summarySources.add(gameNwaVertex);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateSummarizeEdges/all summary sources");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 		// Retrieve the merged summary edges for the game graph that start at
-		// the given source
-		for (SpoilerVertex<LETTER, STATE> summarySource : summarySources) {
-			// We make summarySource the only intial game state and determize
-			// the automaton
-			Set<SpoilerVertex<LETTER, STATE>> initialSet = new HashSet<>();
-			initialSet.add(summarySource);
-			NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonFiltered = new NestedWordAutomatonFilteredStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
-					mServices, gameAutomaton, gameAutomaton.getStates(), initialSet, Collections.emptySet());
+		// the given source.
+		// We make all summarySources the only initial game states and determinize
+		// the automaton.
 
-			// Determizing is very expensive, it is the dominant part of the
-			// whole algorithm
-			INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> determinizedGameAutomaton = new Determinize<>(
-					mServices, gameAutomatonFiltered.getStateFactory(), gameAutomatonFiltered).getResult();
-			NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomatonWithMergedSummaries = new RemoveUnreachable<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
-					mServices, determinizedGameAutomaton).getResult();
+		// Determinizing is very expensive, it is the dominant part of the
+		// whole algorithm
+		INestedWordAutomatonOldApi<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<GameLetter<LETTER, STATE>, IGameState>(
+				mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
+						.getResult();
+		mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
+				determinizedGameAutomaton.size());
+		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
+				mServices, determinizedGameAutomaton).getResult();
+		IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
-			// The initial game state must be a singleton and is the source of
-			// the summary edges we are interested in
-			Set<SpoilerVertex<LETTER, STATE>> initialStates = gameAutomatonWithMergedSummaries.getInitialStates();
-			if (initialStates.size() > 1) {
+		// The initial game states are the source of
+		// the summary edges we are interested in
+		for (IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
+			if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
 				throw new IllegalStateException(
-						"Expected only one initial state after determizing the game automaton.");
+						"Expected cast possible, something seems to be wrong with the game graph.");
 			}
-			SpoilerVertex<LETTER, STATE> mergedSummarySource = initialStates.iterator().next();
+			GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
+
+			// We are only interested in sources where the down state is the
+			// empty stack symbol
+			Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
+			if (mergedSummarySourceUpStates.size() > 1) {
+				throw new IllegalStateException(
+						"Expected only one up state after determizing the game automaton at summary sources.");
+			}
+			IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
+			if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
+				throw new IllegalStateException(
+						"Expected cast possible, something seems to be wrong with the game graph.");
+			}
+			@SuppressWarnings("unchecked")
+			SpoilerNwaVertex<LETTER, STATE> mergedSummarySource = ((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState)
+					.getSpoilerNwaVertex();
+
 			Map<STATE, Set<STATE>> spoilerToDuplicatorChoices = new HashMap<>();
-			NestedMap2<STATE, STATE, Set<SpoilerVertex<LETTER, STATE>>> choiceToSpoilerInvoker = new NestedMap2<>();
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summary edges
-			for (SummaryReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> summary : gameAutomatonWithMergedSummaries
-					.returnSummarySuccessor(mergedSummarySource)) {
-				SpoilerVertex<LETTER, STATE> summaryDestination = summary.getSucc();
-				if (summaryDestination.equals(mAuxiliaryGameState)) {
-					runsInDuplicatorDeadEnd = true;
-				} else {
-					// Add the summary to Duplicators choices for this merged
-					// summary
+			for (SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
+					.returnSummarySuccessor(mergedSummarySourceAsGameState)) {
+				IGameState summaryDestinationAsGameState = summary.getSucc();
+				GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
+				Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
+
+				// If the destination up states are null, then the destination
+				// is empty. This is the case if the source is not total,
+				// because Determinize makes the automaton total. We can just
+				// ignore this event and continue.
+				if (summaryDestinationUpStates == null) {
+					continue;
+				}
+				
+				for (IGameState summaryDestinationUpState : summaryDestinationUpStates) {
+					if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
+						runsInDuplicatorDeadEnd = true;
+						continue;
+					}
+					
+					@SuppressWarnings("unchecked")
+					SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
+							.getSpoilerNwaVertex();
+					// Add the summary to Duplicators choices for this
+					// merged summary
 					STATE spoilerTarget = summaryDestination.getQ0();
 					STATE duplicatorTarget = summaryDestination.getQ1();
 					if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
@@ -1162,29 +1240,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
 					choices.add(duplicatorTarget);
 					spoilerToDuplicatorChoices.put(spoilerTarget, choices);
+				}
 
-					// Compute all spoilerInvoker for this choice
-					Set<SpoilerVertex<LETTER, STATE>> allSpoilerInvoker = new HashSet<>();
-					for (IncomingReturnTransition<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> returnTrans : gameAutomatonWithMergedSummaries
-							.returnPredecessors(summaryDestination)) {
-						allSpoilerInvoker.add(returnTrans.getLinPred());
-					}
-					choiceToSpoilerInvoker.put(spoilerTarget, duplicatorTarget, allSpoilerInvoker);
+				// If operation was canceled, for example from the
+				// Ultimate framework
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateSummarizeEdges/each summary");
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 			// Patch the source to a winning sink for Spoiler
 			if (runsInDuplicatorDeadEnd) {
-				if (mergedSummarySource instanceof SpoilerNwaVertex<?, ?>) {
-					addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
-				}
+				addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
 			}
 			// Create and add the merged summaries
 			for (Entry<STATE, Set<STATE>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
-				if (mergedSummarySource instanceof SpoilerNwaVertex<?, ?>) {
-					STATE spoilerChoice = choiceEntry.getKey();
-					addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
-							choiceEntry.getValue(), choiceToSpoilerInvoker.get(spoilerChoice));
-				}
+				STATE spoilerChoice = choiceEntry.getKey();
+				addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
+						choiceEntry.getValue());
 			}
 		}
 
@@ -1236,6 +1309,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 				}
 			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateSummarizeEdges/delete return vertices");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 	}
 
@@ -1251,8 +1331,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		int duplicatorPriority = DUPLICATOR_PRIORITY;
 
 		for (final STATE leftState : mNwa.getStates()) {
-			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.BUCHI_STATES);
-
 			for (final STATE rightState : mNwa.getStates()) {
 				// Generate Spoiler vertices (leftState, rightState)
 				final int priority = calculatePriority(leftState, rightState);
@@ -1270,7 +1348,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// priority one that has the bit set to true.
 				if (mSimulationType == ESimulationType.DELAYED) {
 					if (priority == 1) {
-						addSpoilerVertexHelper(priority, true, leftState, rightState);
+						addSpoilerVertexHelper(1, true, leftState, rightState);
 					}
 				}
 
@@ -1388,8 +1466,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Right state
 	 * @param bit
 	 *            Extra bit of the vertex
-	 * @param transType
-	 *            Type of the transition
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the
 	 *            vertex does not belong to one. This is used for special
@@ -1421,7 +1497,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void patchDeadEnds() throws AutomataOperationCanceledException {
+	public void patchGraph() throws AutomataOperationCanceledException {
 		// Patch Spoiler vertices that are directly losing for Duplicator in
 		// direct simulation
 		for (SpoilerNwaVertex<LETTER, STATE> spoilerVertex : mDuplicatorDirectlyLosesInSpoiler) {
@@ -1574,14 +1650,92 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	private void addDuplicatorWinningSink(final SpoilerNwaVertex<LETTER, STATE> sinkEntry) {
 		// Only add if not already existent
 		if (mEntryToSink.get(sinkEntry) == null) {
-			final DuplicatorWinningSink<LETTER, STATE> sink = DuplicatorWinningSink.getInstance(mGameGraph);
-			mEntryToSink.put(sinkEntry, sink);
+			if (mDuplicatorWinningSink == null) {
+				mDuplicatorWinningSink = new DuplicatorWinningSink<>(mGameGraph);
+				mDuplicatorWinningSink.addToGraph();
+			}
 
-			sink.connectToEntry(sinkEntry);
+			mEntryToSink.put(sinkEntry, mDuplicatorWinningSink);
+
+			mDuplicatorWinningSink.connectToEntry(sinkEntry);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("\tAdded duplicatorWinningSink: " + sinkEntry);
+				mLogger.debug("\tAdded to duplicatorWinningSink: " + sinkEntry);
 			}
+		}
+	}
+
+	/**
+	 * Adds a given edge to the given game automaton, if not already existent.
+	 * 
+	 * @param src
+	 *            Source game state of the edge to add
+	 * @param letter
+	 *            Letter of the edge to add
+	 * @param dest
+	 *            Destination game state of the edge to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addEdgeToGameAutomaton(final IGameState src, final GameLetter<LETTER, STATE> letter,
+			final IGameState dest, final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		ETransitionType transType = letter.getTransitionType();
+		if (transType.equals(ETransitionType.INTERNAL)) {
+			if (!gameAutomaton.containsInternalTransition(src, letter, dest)) {
+				gameAutomaton.addInternalTransition(src, letter, dest);
+			}
+		} else if (transType.equals(ETransitionType.CALL)) {
+			if (!gameAutomaton.containsCallTransition(src, letter, dest)) {
+				gameAutomaton.addCallTransition(src, letter, dest);
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"The transition type of the game letter is not supported by this operation.");
+		}
+	}
+
+	/**
+	 * Adds a given return edge to the given game automaton, if not already
+	 * existent.
+	 * 
+	 * @param src
+	 *            Source game state of the edge to add
+	 * @param hierPred
+	 *            The hierPred of this return edge
+	 * @param letter
+	 *            Letter of the edge to add
+	 * @param dest
+	 *            Destination game state of the edge to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addEdgeToGameAutomaton(final IGameState src, final IGameState hierPred,
+			final GameLetter<LETTER, STATE> letter, final IGameState dest,
+			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		ETransitionType transType = letter.getTransitionType();
+		if (transType.equals(ETransitionType.RETURN)) {
+			if (!gameAutomaton.containsReturnTransition(src, hierPred, letter, dest)) {
+				gameAutomaton.addReturnTransition(src, hierPred, letter, dest);
+			}
+		} else {
+			throw new IllegalArgumentException(
+					"The transition type of the game letter is not supported by this operation.");
+		}
+	}
+
+	/**
+	 * Adds a given game state to the given game automaton, if not already
+	 * existent. The state will be initial and not final.
+	 * 
+	 * @param gameState
+	 *            Game state to add
+	 * @param gameAutomaton
+	 *            Game automaton to add to
+	 */
+	private void addGameStateToGameAutomaton(final IGameState gameState,
+			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		if (!gameAutomaton.contains(gameState)) {
+			gameAutomaton.addState(true, false, gameState);
 		}
 	}
 
@@ -1612,12 +1766,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// can not take a return-transition due to their down state.
 		// Such vertices need to form a instant win for Duplicator.
 		boolean hasInternalSuccessors = mNwa.internalSuccessors(leftState).iterator().hasNext();
+		boolean hasCallSuccessors = mNwa.callSuccessors(leftState).iterator().hasNext();
 		// Do this in the order of the most unlikely events,
 		// reduces computation time
 		if (!hasInternalSuccessors) {
 			boolean hasReturnSuccessors = mNwa.returnSuccessors(leftState).iterator().hasNext();
 			if (!hasReturnSuccessors) {
-				boolean hasCallSuccessors = mNwa.callSuccessors(leftState).iterator().hasNext();
 				if (!hasCallSuccessors) {
 					mPossibleSpoilerDeadEnd.add(spoilerVertex);
 					if (mLogger.isDebugEnabled()) {
@@ -1626,10 +1780,20 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 			}
 		}
+		// Memorize Spoiler vertices that are predecessor of Duplicator calling
+		// vertices.
+		if (hasCallSuccessors) {
+			mSpoilerCallPredecessors.add(spoilerVertex);
+		}
 		// Remember the vertex if direct simulation and it is directly losing
 		// for Duplicator
 		if (mSimulationType.equals(ESimulationType.DIRECT) && doesLoseInDirectSim(leftState, rightState)) {
 			mDuplicatorDirectlyLosesInSpoiler.add(spoilerVertex);
+		}
+		// Remember the vertex if delayed simulation, the right state is final and the bit is set to true
+		if (mSimulationType.equals(ESimulationType.DELAYED) && bit && mNwa.isFinal(rightState)) {
+			// Such vertices should end up also being dead ends
+			mPossibleSpoilerDeadEnd.add(spoilerVertex);
 		}
 	}
 
@@ -1648,13 +1812,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	private void addSpoilerWinningSink(final DuplicatorNwaVertex<LETTER, STATE> sinkEntry) {
 		// Only add if not already existent
 		if (mEntryToSink.get(sinkEntry) == null) {
-			final SpoilerWinningSink<LETTER, STATE> sink = SpoilerWinningSink.getInstance(mGameGraph);
-			mEntryToSink.put(sinkEntry, sink);
+			if (mSpoilerWinningSink == null) {
+				mSpoilerWinningSink = new SpoilerWinningSink<>(mGameGraph);
+				mSpoilerWinningSink.addToGraph();
+			}
 
-			sink.connectToEntry(sinkEntry);
+			mEntryToSink.put(sinkEntry, mSpoilerWinningSink);
+
+			mSpoilerWinningSink.connectToEntry(sinkEntry);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("\tAdded spoilerWinningSink: " + sinkEntry);
+				mLogger.debug("\tAdded to spoilerWinningSink: " + sinkEntry);
 			}
 		}
 	}
@@ -1674,13 +1842,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	private void addSpoilerWinningSinkExtended(final SpoilerNwaVertex<LETTER, STATE> sinkEntry) {
 		// Only add if not already existent
 		if (mEntryToSink.get(sinkEntry) == null) {
-			final SpoilerWinningSinkExtended<LETTER, STATE> sink = SpoilerWinningSinkExtended.getInstance(mGameGraph);
-			mEntryToSink.put(sinkEntry, sink);
+			if (mSpoilerWinningSinkExtended == null) {
+				mSpoilerWinningSinkExtended = new SpoilerWinningSinkExtended<>(mGameGraph);
+				mSpoilerWinningSinkExtended.addToGraph();
+			}
 
-			sink.connectToEntry(sinkEntry);
+			mEntryToSink.put(sinkEntry, mSpoilerWinningSinkExtended);
+
+			mSpoilerWinningSinkExtended.connectToEntry(sinkEntry);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("\tAdded spoilerWinningSinkExtended: " + sinkEntry);
+				mLogger.debug("\tAdded to spoilerWinningSinkExtended: " + sinkEntry);
 			}
 		}
 	}
@@ -1698,23 +1870,30 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            The choice Spoiler did take for this summarize edge
 	 * @param duplicatorChoices
 	 *            Choices Duplicator can make, determine the sub-summarize edges
-	 * @param duplicatorChoiceToSpoilerInvoker
-	 *            A map that connects all duplicator choices with their Spoiler
-	 *            invoker
 	 * @param map
 	 *            The Spoiler vertex that invoked creating this summarize edge.
 	 *            This is the predecessor of the Duplicator returning vertex.
 	 */
 	private void addSummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices,
-			final Map<STATE, Set<SpoilerVertex<LETTER, STATE>>> duplicatorChoiceToSpoilerInvoker) {
+			final Set<STATE> duplicatorChoices) {
+		// TODO We may need invoker information for correct priority search. We
+		// also might be able to revert returningBridgeRemoval and then do the
+		// search.
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,
-					duplicatorChoices, duplicatorChoiceToSpoilerInvoker, mGameGraph);
+					duplicatorChoices, this);
+			summarizeEdge.addToGameGraph();
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
 
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
+			int currentAmountOfSubSummarize = mSimulationPerformance
+					.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES);
+			if (currentAmountOfSubSummarize == SimulationPerformance.NO_COUNTING_RESULT) {
+				currentAmountOfSubSummarize = 0;
+			}
+			mSimulationPerformance.setCountingMeasure(ECountingMeasure.SUB_SUMMARIZE_EDGES,
+					currentAmountOfSubSummarize + duplicatorChoices.size());
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("\tAdded summarizeEdge: " + src + " -" + spoilerChoice + "-> " + duplicatorChoices);
@@ -1788,8 +1967,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter used for returning
 	 * @return
 	 */
-	private Iterable<SpoilerVertex<LETTER, STATE>> computeAllGameHierPreds(final SpoilerVertex<LETTER, STATE> src,
-			final SpoilerVertex<LETTER, STATE> dest, final LETTER returnLetter) {
+	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(
+			final SpoilerVertex<LETTER, STATE> src, final SpoilerVertex<LETTER, STATE> dest,
+			final LETTER returnLetter) {
 		return computeAllGameHierPreds(src.getQ0(), src.getQ1(), dest.getQ0(), dest.getQ1(), returnLetter);
 	}
 
@@ -1809,9 +1989,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter used for returning
 	 * @return
 	 */
-	private Iterable<SpoilerVertex<LETTER, STATE>> computeAllGameHierPreds(final STATE spoilerSrc,
+	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(final STATE spoilerSrc,
 			final STATE duplicatorSrc, final STATE spoilerDest, final STATE duplicatorDest, final LETTER returnLetter) {
-		Set<SpoilerVertex<LETTER, STATE>> gameHierPreds = new LinkedHashSet<>();
+		Set<GameSpoilerNwaVertex<LETTER, STATE>> gameHierPreds = new LinkedHashSet<>();
 		Set<STATE> spoilerHierPreds = new HashSet<>();
 		Set<STATE> duplicatorHierPreds = new HashSet<>();
 
@@ -1834,7 +2014,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			for (STATE duplicatorHierPred : duplicatorHierPreds) {
 				SpoilerVertex<LETTER, STATE> representingHierPred = getSpoilerVertex(spoilerHierPred,
 						duplicatorHierPred, false, null, null);
-				gameHierPreds.add(representingHierPred);
+				if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+					gameHierPreds
+							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
+				}
+				// In delayed simulation we also need to account for the bit set to true
+				if (mSimulationType.equals(ESimulationType.DELAYED)) {
+					representingHierPred = getSpoilerVertex(spoilerHierPred, duplicatorHierPred, true, null, null);
+					if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+						gameHierPreds
+								.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
+					}
+				}
 			}
 		}
 
@@ -1847,21 +2038,29 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * changed by using {@link NestedWordAutomatonFilteredStates} as a wrapper.
 	 * 
 	 * @return A game automaton that is used for summarize edge computation
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	private NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> createGameAutomaton() {
+	private NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+			throws AutomataOperationCanceledException {
 		Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
 		Set<GameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
 
-		// TODO How to get such a state factory?
-		NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> gameAutomaton = new NestedWordAutomaton<GameLetter<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>(
-				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet, null);
+		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(mServices,
+				internalGameAlphabet, callGameAlphabet, returnGameAlphabet, new GameFactory());
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)
-		List<Pair<SpoilerVertex<LETTER, STATE>, DuplicatorVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd = new LinkedList<>();
+		List<Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd = new LinkedList<>();
 		for (SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			Set<Vertex<LETTER, STATE>> firstSuccessors = mGameGraph.getSuccessors(spoilerVertex);
+			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+				continue;
+			}
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
+
+			Set<Vertex<LETTER, STATE>> firstSuccessors = mGameGraph.getSuccessors(spoilerNwaVertex);
 			if (firstSuccessors == null) {
 				// Spoiler dead-end, not possible since patched before.
 				continue;
@@ -1871,48 +2070,65 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// This should not be possible in a correct game graph.
 					continue;
 				}
-				DuplicatorNwaVertex<LETTER, STATE> duplicatorSucc = (DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
-				Set<Vertex<LETTER, STATE>> secondSuccessors = mGameGraph.getSuccessors(duplicatorSucc);
+				DuplicatorNwaVertex<LETTER, STATE> duplicatorNwaSucc = (DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
+				Set<Vertex<LETTER, STATE>> secondSuccessors = mGameGraph.getSuccessors(duplicatorNwaSucc);
 				if (secondSuccessors == null) {
 					// Duplicator dead-end, only possible for some return
 					// vertices.
-					if (duplicatorSucc.getTransitionType().equals(ETransitionType.RETURN)) {
+					if (duplicatorNwaSucc.getTransitionType().equals(ETransitionType.RETURN)) {
 						// We later add (spoilerVertex -> duplicatorSucc ->
 						// mAuxiliaryGameState) for every letter of the alphabet
-						runningInDuplicatorDeadEnd.add(new Pair<>(spoilerVertex, duplicatorSucc));
-					} else {
-						// This case is not possible since patched before.
-						continue;
+						runningInDuplicatorDeadEnd.add(new Pair<>(spoilerNwaVertex, duplicatorNwaSucc));
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("\tRuns into DD dead end: " + spoilerNwaVertex + " -> " + duplicatorNwaSucc);
+						}
 					}
+					continue;
 				}
 				for (Vertex<LETTER, STATE> secondSuccessor : secondSuccessors) {
-					if (!(secondSuccessor instanceof SpoilerVertex<?, ?>)) {
+					if (!(secondSuccessor instanceof SpoilerNwaVertex<?, ?>)) {
 						// This should not be possible in a correct game graph.
 						continue;
 					}
-					SpoilerVertex<LETTER, STATE> spoilerSucc = (SpoilerVertex<LETTER, STATE>) secondSuccessor;
+					SpoilerNwaVertex<LETTER, STATE> spoilerNwaSucc = (SpoilerNwaVertex<LETTER, STATE>) secondSuccessor;
 
 					// We add (spoilerVertex -> duplicatorSucc -> spoilerSucc)
 					// to the game automaton
-					gameAutomaton.addState(true, false, spoilerVertex);
-					gameAutomaton.addState(true, false, spoilerSucc);
-					GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorSucc.getLetter(),
-							duplicatorSucc.getQ0());
-					ETransitionType transType = duplicatorSucc.getTransitionType();
+					GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+					GameSpoilerNwaVertex<LETTER, STATE> gameNwaSucc = new GameSpoilerNwaVertex<>(spoilerNwaSucc);
+
+					addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+					addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+					addGameStateToGameAutomaton(gameNwaSucc, gameAutomaton);
+					ETransitionType transType = duplicatorNwaSucc.getTransitionType();
 					if (transType.equals(ETransitionType.INTERNAL)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.INTERNAL);
 						internalGameAlphabet.add(letter);
-						gameAutomaton.addInternalTransition(spoilerVertex, letter, spoilerSucc);
+						addEdgeToGameAutomaton(gameNwaVertex, letter, gameNwaSucc, gameAutomaton);
 					} else if (transType.equals(ETransitionType.CALL)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.CALL);
 						callGameAlphabet.add(letter);
-						gameAutomaton.addCallTransition(spoilerVertex, letter, spoilerSucc);
+						addEdgeToGameAutomaton(gameNwaVertex, letter, gameNwaSucc, gameAutomaton);
 					} else if (transType.equals(ETransitionType.RETURN)) {
+						GameLetter<LETTER, STATE> letter = new GameLetter<>(duplicatorNwaSucc.getLetter(),
+								duplicatorNwaSucc.getQ0(), ETransitionType.RETURN);
 						returnGameAlphabet.add(letter);
-						Iterable<SpoilerVertex<LETTER, STATE>> gameHierPreds = computeAllGameHierPreds(spoilerVertex,
-								spoilerSucc, duplicatorSucc.getLetter());
-						for (SpoilerVertex<LETTER, STATE> gameHierPred : gameHierPreds) {
-							gameAutomaton.addReturnTransition(spoilerVertex, gameHierPred, letter, spoilerSucc);
+						Iterable<GameSpoilerNwaVertex<LETTER, STATE>> gameHierPreds = computeAllGameHierPreds(
+								spoilerNwaVertex, spoilerNwaSucc, duplicatorNwaSucc.getLetter());
+						for (GameSpoilerNwaVertex<LETTER, STATE> gameHierPred : gameHierPreds) {
+							addGameStateToGameAutomaton(gameHierPred, gameAutomaton);
+							addEdgeToGameAutomaton(gameNwaVertex, gameHierPred, letter, gameNwaSucc, gameAutomaton);
 						}
 					}
+				}
+
+				// If operation was canceled, for example from the
+				// Ultimate framework
+				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+					mLogger.debug("Stopped in generateSummarizeEdges/create game automaton");
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}
@@ -1920,22 +2136,27 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Add pairs that run into a Duplicator dead end by (spoilerVertex ->
 		// duplicatorSucc -> mAuxiliaryGameState) for every letter of the
 		// alphabet
-		for (Pair<SpoilerVertex<LETTER, STATE>, DuplicatorVertex<LETTER, STATE>> runsInDuplicatorDeadEnd : runningInDuplicatorDeadEnd) {
-			SpoilerVertex<LETTER, STATE> spoilerVertex = runsInDuplicatorDeadEnd.getFirst();
+		for (Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>> runsInDuplicatorDeadEnd : runningInDuplicatorDeadEnd) {
+			SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = runsInDuplicatorDeadEnd.getFirst();
 
-			gameAutomaton.addState(true, false, spoilerVertex);
-			gameAutomaton.addState(true, false, mAuxiliaryGameState);
+			GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+
+			addGameStateToGameAutomaton(gameNwaVertex, gameAutomaton);
+			addGameStateToGameAutomaton(mAuxiliaryGameState, gameAutomaton);
 
 			for (GameLetter<LETTER, STATE> internalLetter : internalGameAlphabet) {
-				gameAutomaton.addInternalTransition(spoilerVertex, internalLetter, mAuxiliaryGameState);
+				addEdgeToGameAutomaton(gameNwaVertex, internalLetter, mAuxiliaryGameState, gameAutomaton);
 			}
 			for (GameLetter<LETTER, STATE> callLetter : callGameAlphabet) {
-				gameAutomaton.addCallTransition(spoilerVertex, callLetter, mAuxiliaryGameState);
+				addEdgeToGameAutomaton(gameNwaVertex, callLetter, mAuxiliaryGameState, gameAutomaton);
 			}
 			for (GameLetter<LETTER, STATE> returnLetter : returnGameAlphabet) {
-				// TODO Well, this would be enormously expensive, re-think.
-				for (SpoilerVertex<LETTER, STATE> gameHierPred : gameAutomaton.getStates()) {
-					gameAutomaton.addReturnTransition(spoilerVertex, gameHierPred, returnLetter, mAuxiliaryGameState);
+				for (SpoilerNwaVertex<LETTER, STATE> possibleGameHierPred : mSpoilerCallPredecessors) {
+					GameSpoilerNwaVertex<LETTER, STATE> possibleGameHierPredGameState = new GameSpoilerNwaVertex<>(
+							possibleGameHierPred);
+					addGameStateToGameAutomaton(possibleGameHierPredGameState, gameAutomaton);
+					addEdgeToGameAutomaton(gameNwaVertex, possibleGameHierPredGameState, returnLetter,
+							mAuxiliaryGameState, gameAutomaton);
 				}
 			}
 		}
@@ -1966,34 +2187,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		}
 		return doesLose;
-	}
-
-	/**
-	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game
-	 * graph with representation (q0, q1). Since there can be such vertices with
-	 * the extra bit false and true the returned value is between zero and two.
-	 * 
-	 * @param q0
-	 *            The state spoiler is at
-	 * @param q1
-	 *            The state duplicator is at
-	 * @return The amount of {@link SpoilerVertex} objects that exist in the
-	 *         game graph with representation (q0, q1, [downQ0, downQ1]). Since
-	 *         there can be such vertices with the extra bit false and true the
-	 *         returned value is between zero and two.
-	 */
-	private int getAmountOfBitsForSpoilerVertices(final STATE q0, final STATE q1) {
-		int amount = 0;
-
-		if (getSpoilerVertex(q0, q1, false, null, null) != null) {
-			amount++;
-		}
-
-		if (getSpoilerVertex(q0, q1, true, null, null) != null) {
-			amount++;
-		}
-
-		return amount;
 	}
 
 	/**
@@ -2125,6 +2318,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		} else {
 			mGameGraph.addDuplicatorVertex(vertex);
 		}
+	}
+
+	/**
+	 * Adds the given edge to the graph and all corresponding internal fields.
+	 * 
+	 * @param src
+	 *            Source of the edge to add
+	 * @param dest
+	 *            Destination of the edge to add
+	 */
+	protected void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		mGameGraph.addEdge(src, dest);
 	}
 
 	/**

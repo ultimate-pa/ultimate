@@ -34,16 +34,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.INwaGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.INwaGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.NwaGameGraphGeneration;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -151,9 +150,6 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 		// Set values for compatibility with non nwa graph
 		final SimulationPerformance performance = mGeneration.getSimulationPerformance();
 		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
-		setBuechiAmountOfStates(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
-		setBuechiAmountOfTransitions(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));
-		setGraphAmountOfEdges(performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_EDGES));
 	}
 
 	/**

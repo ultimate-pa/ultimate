@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,22 +24,35 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game;
 
 /**
- * Interface for game graphs that get built upon nwa automata.
+ * This game automaton state represents an empty stack symbol.
  * 
  * @author Daniel Tischner
  *
- * @param <LETTER>
- *            Letter class of nwa automaton
- * @param <STATE>
- *            State class of nwa automaton
  */
-public interface INwaGameGraph<LETTER, STATE> {
+public final class GameEmptyState implements IGameState {
+
 	/**
-	 * Undoes changes that where made for removing return vertices and their
-	 * edges.
+	 * The string representation of this empty state symbol.
 	 */
-	public void undoRemovedReturnBridgesChanges();
+	private static final String mRepresentation = "€";
+
+	/**
+	 * Creates a new game automaton empty stack symbol.
+	 */
+	public GameEmptyState() {
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return mRepresentation;
+	}
 }

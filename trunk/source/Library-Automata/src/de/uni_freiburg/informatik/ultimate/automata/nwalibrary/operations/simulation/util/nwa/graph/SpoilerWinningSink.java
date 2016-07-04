@@ -24,15 +24,16 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 
 /**
  * Represents a sink that is winning for Spoiler. If such a sink exists with
  * <tt>sinkEntry</tt> it means that one can move from that vertex into a sink
  * with priority 1, which is winning for Spoiler. In detail such a sink is
- * <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink -> ...</b>.
+ * <b>sinkEntry -> SpoilerSink -> DuplicatorSink -> SpoilerSink -> ...</b>.
  * Where <tt>SpoilerSink</tt> has a priority of 1.
  * 
  * @author Daniel Tischner
@@ -42,42 +43,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinningSink<LETTER, STATE> {
-
-	/**
-	 * Singleton instance of this class.
-	 */
-	private static SpoilerWinningSinkExtended<?, ?> mInstance = null;
+public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink<LETTER, STATE> {
 
 	/**
 	 * The priority that is winning for Spoiler.
 	 */
 	private final static int SPOILER_WINNING_PRIORITY = 1;
-	/**
-	 * Gets an instance to a sink.
-	 * 
-	 * @param graph The game graph this sink belongs to
-	 * @return An instance to a sink.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <LETTER, STATE> SpoilerWinningSinkExtended<LETTER, STATE> getInstance(
-			final AGameGraph<LETTER, STATE> graph) {
-		// Create an instance of not already existent
-		if (mInstance == null) {
-			mInstance = new SpoilerWinningSinkExtended<LETTER, STATE>(graph);
-		}
-
-		// Try to cast to the current parameters
-		SpoilerWinningSinkExtended<LETTER, STATE> castedInstance = null;
-		try {
-			castedInstance = (SpoilerWinningSinkExtended<LETTER, STATE>) mInstance;
-		} catch (ClassCastException e) {
-			// If not possible, create a new instance
-			castedInstance = new SpoilerWinningSinkExtended<LETTER, STATE>(graph);
-			mInstance = castedInstance;
-		}
-		return castedInstance;
-	}
 
 	/**
 	 * The duplicator vertex of this sink.
@@ -88,23 +59,38 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	 * The game graph this sink belongs to.
 	 */
 	private final AGameGraph<LETTER, STATE> mGraph;
+
 	/**
 	 * The spoiler vertex of this sink.
 	 */
 	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerSink;
 
 	/**
-	 * Creates a new sink that connects itself to the game graph.
+	 * Creates a new sink that initially is not connected to the game graph.
+	 * Therefore {@link #addToGraph()} must be used. Multiple entries can be
+	 * added using {@link #connectToEntry(DuplicatorNwaVertex)}.
 	 * 
 	 * @param graph
 	 *            The game graph this sink belongs to
 	 */
-	private SpoilerWinningSinkExtended(final AGameGraph<LETTER, STATE> graph) {
+	public SpoilerWinningSink(final AGameGraph<LETTER, STATE> graph) {
 		mGraph = graph;
 		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(SPOILER_WINNING_PRIORITY, false, null, null, this);
 		mDuplicatorSink = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
 				null, null, null, ETransitionType.SINK, this);
-		addToGraph();
+	}
+
+	/**
+	 * Adds this sink to the game graph.
+	 */
+	public void addToGraph() {
+		// Add auxiliary vertices
+		mGraph.addSpoilerVertex(mSpoilerSink);
+		mGraph.addDuplicatorVertex(mDuplicatorSink);
+
+		// Add edges
+		mGraph.addEdge(mSpoilerSink, mDuplicatorSink);
+		mGraph.addEdge(mDuplicatorSink, mSpoilerSink);
 	}
 
 	/**
@@ -113,10 +99,10 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	 * @param sinkEntry
 	 *            Sink entry to connect
 	 */
-	public void connectToEntry(final SpoilerNwaVertex<LETTER, STATE> sinkEntry) {
-		mGraph.addEdge(sinkEntry, mDuplicatorSink);
+	public void connectToEntry(final DuplicatorNwaVertex<LETTER, STATE> sinkEntry) {
+		mGraph.addEdge(sinkEntry, mSpoilerSink);
 	}
-	
+
 	/**
 	 * Gets the duplicator vertex of this sink.
 	 * 
@@ -144,19 +130,6 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	 */
 	public SpoilerNwaVertex<LETTER, STATE> getSpoilerAuxiliarySink() {
 		return mSpoilerSink;
-	}
-
-	/**
-	 * Adds this sink to the game graph.
-	 */
-	private void addToGraph() {
-		// Add auxiliary vertices
-		mGraph.addDuplicatorVertex(mDuplicatorSink);
-		mGraph.addSpoilerVertex(mSpoilerSink);
-
-		// Add edges
-		mGraph.addEdge(mDuplicatorSink, mSpoilerSink);
-		mGraph.addEdge(mSpoilerSink, mDuplicatorSink);
 	}
 
 }

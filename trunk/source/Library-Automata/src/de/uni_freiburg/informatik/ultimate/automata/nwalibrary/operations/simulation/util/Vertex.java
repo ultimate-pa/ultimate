@@ -139,9 +139,8 @@ public class Vertex<LETTER, STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		@SuppressWarnings("rawtypes")
 		final
-		Vertex other = (Vertex) obj;
+		Vertex<?, ?> other = (Vertex<?, ?>) obj;
 		if (b != other.b) {
 			return false;
 		}

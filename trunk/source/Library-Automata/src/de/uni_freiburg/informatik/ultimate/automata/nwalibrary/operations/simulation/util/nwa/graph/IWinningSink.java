@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,52 +24,24 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 /**
- * Types of time measures.
+ * Represents a sink that is winning for a given player. The winning player is
+ * specified by {@link #getPriority()}.
  * 
  * @author Daniel Tischner
  *
+ * @param <LETTER>
+ *            Letter class of nwa automaton
+ * @param <STATE>
+ *            State class of nwa automaton
  */
-public enum ETimeMeasure {
+public interface IWinningSink<LETTER, STATE> {
 	/**
-	 * The time building the game graph took.
+	 * Gets the priority of the sink, which determines the winning player.
+	 * 
+	 * @return The priority of the sink, which determines the winning player.
 	 */
-	BUILD_GRAPH,
-	/**
-	 * The time building the result automaton took.
-	 */
-	BUILD_RESULT,
-	/**
-	 * The time building the SCC took.
-	 */
-	BUILD_SCC,
-	/**
-	 * The time needed for computing which vertex down states are safe.
-	 */
-	COMPUTE_SAFE_VERTEX_DOWN_STATES,
-	/**
-	 * The time computing priorities for summarize edges took in nwa game graph
-	 * generation.
-	 */
-	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
-	/**
-	 * The time generating summarize edges took in nwa game graph generation.
-	 */
-	GENERATE_SUMMARIZE_EDGES,
-	/**
-	 * The overall time an operation took.
-	 */
-	OVERALL,
-	/**
-	 * The time the simulation only took, this is the overall time minus the
-	 * time to build the graph and the result.
-	 */
-	SIMULATION_ONLY,
-	/**
-	 * The time solving the Max-Sat problem at nwa game graph resulting
-	 * automaton generation took.
-	 */
-	SOLVE_MAX_SAT
+	public int getPriority();
 }

@@ -120,6 +120,31 @@ public class AffineExpressionTest {
 		assertMod("x", "x", null); // x could be 0
 	}
 	
+	@Test
+	public void testTwoVar() {
+		AffineExpression.TwoVarForm tvf;
+
+		tvf = ae("-1a + z + -1.5").getTwoVarForm();
+		Assert.assertNotNull("TwoVarForm not recognized", tvf);
+		Assert.assertEquals("a", tvf.var1);
+		Assert.assertEquals("z", tvf.var2);
+		Assert.assertEquals(true, tvf.negVar1);
+		Assert.assertEquals(false, tvf.negVar2);
+		Assert.assertTrue(tvf.constant.compareTo(OctValue.parse("-1.5")) == 0);
+		
+		tvf = ae("2y + 4").getTwoVarForm();
+		Assert.assertNotNull("TwoVarForm not recognized", tvf);
+		Assert.assertEquals("y", tvf.var1);
+		Assert.assertEquals("y", tvf.var2);
+		Assert.assertEquals(false, tvf.negVar1);
+		Assert.assertEquals(false, tvf.negVar2);
+		Assert.assertTrue(tvf.constant.compareTo(new OctValue(4)) == 0);
+		
+		Assert.assertNull(ae("-2.5x").getTwoVarForm());
+
+		Assert.assertNull(ae("x + 2y").getTwoVarForm());
+	}
+	
 	private void assertDivReal(String a, String b, String expected) {
 		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), false));
 	}

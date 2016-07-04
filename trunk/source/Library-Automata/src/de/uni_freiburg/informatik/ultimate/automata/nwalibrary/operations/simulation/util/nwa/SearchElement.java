@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -61,8 +63,8 @@ public final class SearchElement<LETTER, STATE> {
 	 *         <tt>previousEdge</tt> if there is no.
 	 */
 	public static <LETTER, STATE> SummarizeEdge<LETTER, STATE> computeSummarizeEdge(final Vertex<LETTER, STATE> vertex,
-			final VertexDownState<STATE> downState, final SummarizeEdge<LETTER, STATE> previousEdge,
-			final Map<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge) {
+			final SpoilerVertex<LETTER, STATE> downState, final SummarizeEdge<LETTER, STATE> previousEdge,
+			final Map<Pair<Vertex<LETTER, STATE>, SpoilerVertex<LETTER, STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge) {
 		SummarizeEdge<LETTER, STATE> correspondingSummarizeEdge = invokerToSummarizeEdge
 				.get(new Pair<>(vertex, downState));
 		if (correspondingSummarizeEdge == null) {

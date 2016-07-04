@@ -30,7 +30,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -94,7 +95,7 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	public void doSimulation() throws AutomataOperationCanceledException {
 		super.doSimulation();
 
-		getLogger().debug(getGameGraph().toAtsFormat());
+		// getLogger().debug(getGameGraph().toAtsFormat());
 
 		// TODO Remove debug stuff when finished
 		// Print some debug stuff
@@ -112,8 +113,21 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
 					progressMeasureText = "inf";
 				}
-				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + " = " + progressMeasureText);
+				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + ") = " + progressMeasureText);
 			}
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.ASimulation#retrieveGeneralAutomataPerformance()
+	 */
+	@Override
+	protected void retrieveGeneralAutomataPerformance() {
+		super.retrieveGeneralAutomataPerformance();
+		NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(getSimulationPerformance(),
+				getGameGraph().getAutomaton(), getResult(), getGameGraph().getServices());
 	}
 }

@@ -80,7 +80,7 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 */
 	@Override
 	public String getName() {
-		return getQ0() + "," + getQ1();
+		return isB() + "," + getQ0() + "," + getQ1();
 	}
 
 	/*

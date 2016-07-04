@@ -24,9 +24,10 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 
 /**
  * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
@@ -247,7 +248,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	@Override
 	public String getName() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getQ0() + "," + getQ1() + ",");
+		sb.append(isB() + "," + getQ0() + "," + getQ1() + ",");
 		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
 		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {

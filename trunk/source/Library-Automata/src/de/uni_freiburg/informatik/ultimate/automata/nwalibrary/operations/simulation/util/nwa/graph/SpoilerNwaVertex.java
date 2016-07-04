@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 
@@ -202,7 +202,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	@Override
 	public String getName() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getQ0() + "," + getQ1());
+		sb.append(isB() + "," + getQ0() + "," + getQ1());
 		if (mSummarizeEdge != null) {
 			sb.append("[SMiddle/").append(mSummarizeEdge.hashCode() + "]");
 		}

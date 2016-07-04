@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,24 +24,34 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game;
 
 /**
- * Represents a sink that is winning for a given player. The winning player is
- * specified by {@link #getPriority()}.
+ * This game automaton state represents a sink state.
  * 
  * @author Daniel Tischner
  *
- * @param <LETTER>
- *            Letter class of nwa automaton
- * @param <STATE>
- *            State class of nwa automaton
  */
-public interface IWinningSink<LETTER, STATE> {
+public final class GameSinkState implements IGameState {
 	/**
-	 * Gets the priority of the sink, which determines the winning player.
-	 * 
-	 * @return The priority of the sink, which determines the winning player.
+	 * The string representation of this sink state.
 	 */
-	public int getPriority();
+	private static final String mRepresentation = "∅SinkState";
+
+	/**
+	 * Creates a new game automaton sink state.
+	 */
+	public GameSinkState() {
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return mRepresentation;
+	}
 }

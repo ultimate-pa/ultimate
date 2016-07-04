@@ -192,7 +192,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * update by ignoring the bounds of its own SCC as soon as its their turn
 	 * because a successor of a neighboring SCC has reached infinity.
 	 */
-	private HashSet<Vertex<LETTER, STATE>> mpokedFromNeighborSCC;
+	private HashSet<Vertex<LETTER, STATE>> mPokedFromNeighborSCC;
 	/**
 	 * A collection of sets which contains states of the buechi automaton that
 	 * may be merge-able. States which are not in the same set are definitely
@@ -244,7 +244,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		mLogger = getLogger();
 		mPossibleEquivalentClasses = processEquivalenceClasses(possibleEquivalentClasses);
-		mpokedFromNeighborSCC = null;
+		mPokedFromNeighborSCC = null;
 		mNotSimulatingNonTrivialVertices = new HashSet<>();
 		mCurrentChanges = null;
 
@@ -435,7 +435,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, mGame.getSize());
+		
+		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
 				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
@@ -540,7 +541,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes)
 			throws AutomataOperationCanceledException {
 		if (isUsingSCCs()) {
-			mpokedFromNeighborSCC = new HashSet<>();
+			mPokedFromNeighborSCC = new HashSet<>();
 			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(mGame);
@@ -860,7 +861,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// Ignore bounds of own SCC if vertex was poked
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
-			if (isUsingSCCs() && mpokedFromNeighborSCC.contains(workingVertex)) {
+			if (isUsingSCCs() && mPokedFromNeighborSCC.contains(workingVertex)) {
 				usedSCCForNeighborCalculation = null;
 				if (debugSimulation) {
 					mLogger.debug("\t\tVertex was poked.");
@@ -956,7 +957,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				if (isUsingSCCs() && !scc.contains(pred)) {
 					final boolean hasNewlyReachedInfinity = currentProgressMeasure >= localInfinity
 							&& oldProgressMeasure < localInfinity;
-					pokePossible = hasNewlyReachedInfinity && !mpokedFromNeighborSCC.contains(pred);
+					pokePossible = hasNewlyReachedInfinity && !mPokedFromNeighborSCC.contains(pred);
 
 					if (debugSimulation) {
 						mLogger.debug("\t\t\tPoke possible for pred: " + pred);
@@ -996,7 +997,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							// It has no better alternative,
 							// adding to working list or poking
 							if (pokePossible) {
-								mpokedFromNeighborSCC.add(pred);
+								mPokedFromNeighborSCC.add(pred);
 
 								if (debugSimulation) {
 									mLogger.debug("\t\t\tPred has no better alternative, poking.");
@@ -1025,7 +1026,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						// progress measure,
 						// adding to working list or poking
 						if (pokePossible) {
-							mpokedFromNeighborSCC.add(pred);
+							mPokedFromNeighborSCC.add(pred);
 
 							if (debugSimulation) {
 								mLogger.debug("\t\t\tPred is spoiler, poking.");
@@ -1042,8 +1043,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Update poked set if worked a poked vertex
-			if (isUsingSCCs() && mpokedFromNeighborSCC.contains(workingVertex)) {
-				mpokedFromNeighborSCC.remove(workingVertex);
+			if (isUsingSCCs() && mPokedFromNeighborSCC.contains(workingVertex)) {
+				mPokedFromNeighborSCC.remove(workingVertex);
 			}
 
 			// If operation was canceled, for example from the
@@ -1084,7 +1085,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// could then be correct).
 		final boolean isDeadEnd = !mGame.hasSuccessors(vertex);
 		final boolean hasPriorityOne = mGame.getPriority(vertex) == 1;
-		final boolean isPokedVertex = isUsingSCCs() && mpokedFromNeighborSCC.contains(vertex);
+		final boolean isPokedVertex = isUsingSCCs() && mPokedFromNeighborSCC.contains(vertex);
 		final boolean isNonTrivialAddedVertex = mAttemptingChanges && mCurrentChanges != null
 				&& mCurrentChanges.isAddedVertex(vertex) && mGame.getPriority(vertex) != 0;
 		final boolean isVertexInvolvedInEdgeChanges = mAttemptingChanges && mCurrentChanges != null
@@ -1103,7 +1104,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		if (isUsingSCCs()) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			// Ignore bounds of own SCC if vertex was poked
-			if (mpokedFromNeighborSCC.contains(vertex)) {
+			if (mPokedFromNeighborSCC.contains(vertex)) {
 				usedSCCForNeighborCalculation = null;
 			}
 			final int oldC = vertex.getC();

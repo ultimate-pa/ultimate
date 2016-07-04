@@ -51,6 +51,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final NestedWordAutomaton<LETTER, STATE> mCache;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final StateFactory<STATE> mStateFactory;
+	private final Set<STATE> mPredefinedInitials;
 	
 	private final Map<STATE,DeterminizedState<LETTER, STATE>> mres2det =
 			new HashMap<STATE,DeterminizedState<LETTER, STATE>>();
@@ -60,7 +61,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	public DeterminizeNwa(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
-			StateFactory<STATE> sf) {
+			StateFactory<STATE> sf, Set<STATE> predefinedInitials) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -68,16 +69,38 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		mStateFactory = sf;
 		mCache = new NestedWordAutomaton<LETTER, STATE>(mServices, operand.getInternalAlphabet(), 
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), sf);
+		mPredefinedInitials = predefinedInitials;
 
 	}
 	
+	
+	public DeterminizeNwa(AutomataLibraryServices services,
+			INestedWordAutomatonSimple<LETTER, STATE> operand, 
+			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
+			StateFactory<STATE> sf) {
+		this(services, operand, stateDeterminizer, sf, null);
+	}
+	
 	private void constructInitialState() {
-		final DeterminizedState<LETTER, STATE> initialDet = 
-				mStateDeterminizer.initialState();
-		final STATE initialState = mStateDeterminizer.getState(initialDet);
-		mdet2res.put(initialDet, initialState);
-		mres2det.put(initialState, initialDet);
-		mCache.addState(true, initialDet.containsFinal(), initialState);
+		if (mPredefinedInitials == null) {
+			final DeterminizedState<LETTER, STATE> initialDet = 
+					mStateDeterminizer.initialState();
+			final STATE initialState = mStateDeterminizer.getState(initialDet);
+			mdet2res.put(initialDet, initialState);
+			mres2det.put(initialState, initialDet);
+			mCache.addState(true, initialDet.containsFinal(), initialState);
+		} else {
+			// add singleton DoubleDecker for each initial state of operand
+			for (final STATE initialOperand : mPredefinedInitials) {
+				final DeterminizedState<LETTER,STATE> initialDet =
+						new DeterminizedState<LETTER,STATE>(mOperand);
+				initialDet.addPair(mOperand.getEmptyStackState(), initialOperand, mOperand);
+				final STATE initialState = mStateDeterminizer.getState(initialDet);
+				mdet2res.put(initialDet, initialState);
+				mres2det.put(initialState, initialDet);
+				mCache.addState(true, initialDet.containsFinal(), initialState);
+			}
+		}
 	}
 	
 	private STATE getOrConstructState(DeterminizedState<LETTER, STATE> detState) {

@@ -42,9 +42,12 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -244,8 +247,8 @@ public abstract class ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
-		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+
+		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
@@ -845,6 +848,52 @@ public abstract class ASimulation<LETTER, STATE> {
 			polledVertex.setInWL(false);
 		}
 		return polledVertex;
+	}
+
+	/**
+	 * Retrieves general performance data of the input and output automaton.
+	 * Saves the data in the current internal performance object.
+	 */
+	protected void retrieveGeneralAutomataPerformance() {
+		AGameGraph<LETTER, STATE> graph = getGameGraph();
+		AutomataLibraryServices services = graph.getServices();
+		INestedWordAutomatonOldApi<LETTER, STATE> input = graph.getAutomaton();
+
+		// Input automaton
+		Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+		int inputStates = inputAnalyzer.getNumberOfStates();
+		int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+				inputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_THOUSAND,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1000));
+
+		// Output automaton
+		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
+		int outputStates = outputAnalyzer.getNumberOfStates();
+		int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+				outputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_THOUSAND,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1000));
+
+		// General metrics
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
 	}
 
 	/**

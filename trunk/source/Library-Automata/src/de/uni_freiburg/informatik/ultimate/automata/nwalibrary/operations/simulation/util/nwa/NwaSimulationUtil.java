@@ -30,11 +30,20 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -165,6 +174,71 @@ public final class NwaSimulationUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Retrieves general performance data of the input and output nwa automaton.
+	 * Saves the data in the given internal performance object. Only nwa
+	 * specific information are saved, thus it can be used together with the
+	 * more general version of {@link ASimulation}.
+	 * 
+	 * @param simulationPerformance
+	 *            Performance object to save the data in
+	 * @param input
+	 *            The input nwa automaton
+	 * @param result
+	 *            The resulting nwa automaton
+	 * @param services
+	 *            The service object used by the framework
+	 */
+	public static <LETTER, STATE> void retrieveGeneralNwaAutomataPerformance(
+			final SimulationPerformance simulationPerformance, final INestedWordAutomatonOldApi<LETTER, STATE> input,
+			final INestedWordAutomatonOldApi<LETTER, STATE> result, final AutomataLibraryServices services) {
+		Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.CALL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.RETURN));
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
+				inputAnalyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
+				inputAnalyzer.getNumberOfTransitions(ESymbolType.CALL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
+				inputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_THOUSAND,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_THOUSAND,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1000));
+
+		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.CALL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.RETURN));
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
+				outputAnalyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_CALL,
+				outputAnalyzer.getNumberOfTransitions(ESymbolType.CALL));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
+				outputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
+
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_THOUSAND,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_THOUSAND,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1000));
+		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_THOUSAND,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1000));
 	}
 
 	/**
