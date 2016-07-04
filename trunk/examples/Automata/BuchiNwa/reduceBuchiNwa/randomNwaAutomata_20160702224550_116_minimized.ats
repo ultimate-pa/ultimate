@@ -1,23 +1,24 @@
 // Random nwa automaton dumped by RandomNwaBenchmarkCreator at 2016/07/02 22:45:50
 // Author: Daniel Tischner
 
-reduceNwaDelayedSimulation(removeDeadEnds(nwa), false);
+//print(nwa);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
 
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {"a1" "a3" },
-	internalAlphabet = {"a1" "a3" },
-	returnAlphabet = {"a1" "a3" },
-	states = {"q_1" "qf_1" "q0_1" "qf_2" },
-	initialStates = {"q0_1" },
-	finalStates = {"qf_1" "qf_2" },
+	callAlphabet = {"c"},
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r"},
+	states = {"q2" "q1" "q0" "q3" },
+	initialStates = {"q0" },
+	finalStates = {"q1" "q3" },
 	callTransitions = {
-		 ("qf_1" "a3" "q_1")
+		 ("q1" "c" "q2")
 	},
 	internalTransitions = {
-		 ("q0_1" "a1" "qf_1")
+		 ("q0" "a" "q1")
 	},
 	returnTransitions = {
-		 ("q_1" "qf_1" "a1" "qf_2")
+		 ("q2" "q1" "r" "q3")
 	}
 );
