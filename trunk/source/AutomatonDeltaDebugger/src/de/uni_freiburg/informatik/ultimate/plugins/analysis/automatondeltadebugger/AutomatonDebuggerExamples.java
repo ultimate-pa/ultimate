@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
@@ -120,7 +121,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final StateFactory<STATE> factory) throws Throwable {
 		return new ReduceNwaDelayedSimulation<LETTER, STATE>(
 				new AutomataLibraryServices(mServices), factory,
-				new RemoveUnreachable<LETTER, STATE>(
+				new RemoveDeadEnds<LETTER, STATE>(
 						new AutomataLibraryServices(mServices), automaton)
 								.getResult(),
 				false);
