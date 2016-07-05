@@ -122,8 +122,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final IAbstractStateBinaryOperator<STATE> mergeOp = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		worklist.add(
-				createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider, mMaxParallelStates)));
+		worklist.add(createInitialWorklistItem(start,
+				new SummaryMap<>(mergeOp, mTransitionProvider, mMaxParallelStates, mLogger)));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -334,6 +334,19 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			return Collections.emptyList();
 		}
 
+		final List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> successorItems =
+				createSuccessorItems(successors, currentItem, postState);
+
+		if (mLogger.isDebugEnabled()) {
+			successorItems.stream().forEach(item -> mLogger.debug(getLogMessageAddTransition(item)));
+		}
+
+		return successorItems;
+	}
+
+	private List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> createSuccessorItems(
+			final Collection<ACTION> successors, final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final STATE postState) {
 		final Set<ACTION> callSuccessors =
 				successors.stream().filter(a -> mTransitionProvider.isEnteringScope(a)).collect(Collectors.toSet());
 
@@ -343,38 +356,39 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.filter(a -> !callSuccessors.contains(a) && !mTransitionProvider.isSummaryWithImplementation(a))
 				.map(succ -> new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(postState, succ, currentItem))
 				.collect(Collectors.toList());
-		if (!callSuccessors.isEmpty()) {
-			// if there are call successors, we have to create additional successors for them
-			for (final ACTION callSuccessor : callSuccessors) {
-				final ACTION summarySuccessor = successors.stream()
-						.filter(a -> mTransitionProvider.isSummaryForCall(a, callSuccessor)).findAny().get();
-				final STATE summaryPostState = currentItem.getSummaryPostState(summarySuccessor, postState);
-				if (summaryPostState == null) {
-					// we do not have a usable summary for this call, we have to use it as-it
-					successorItems.add(
-							new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(postState, callSuccessor, currentItem));
-				} else {
-					// we have a usable summary for this call
-					// instead of using the call, we add the successors of the summary:
-					final Collection<ACTION> summarySuccessorSuccessors =
-							mTransitionProvider.getSuccessors(summarySuccessor, currentItem.getCurrentScope());
-					for (final ACTION sss : summarySuccessorSuccessors) {
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary "
-									+ getStateString(summaryPostState) + " instead of " + getStateString(postState)
-									+ " via " + getTransitionString(sss));
-						}
-						successorItems.add(
-								new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(summaryPostState, sss, currentItem));
-					}
-				}
+
+		if (callSuccessors.isEmpty()) {
+			return successorItems;
+		}
+
+		// if there are call successors, we have to create additional successors for them
+		for (final ACTION callSuccessor : callSuccessors) {
+			final ACTION summarySuccessor = successors.stream()
+					.filter(a -> mTransitionProvider.isSummaryForCall(a, callSuccessor)).findAny().get();
+			final STATE summaryPostState = currentItem.getSummaryPostState(summarySuccessor, postState);
+			if (summaryPostState == null) {
+				// we do not have a usable summary for this call, we have to use it as-it
+				successorItems
+						.add(new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(postState, callSuccessor, currentItem));
+				continue;
 			}
-		}
 
-		if (mLogger.isDebugEnabled()) {
-			successorItems.stream().forEach(item -> mLogger.debug(getLogMessageAddTransition(item)));
-		}
+			// we have a usable summary for this call
+			// instead of using the call, we add the successors of the summary:
+			final Collection<ACTION> summarySuccessorSuccessors =
+					mTransitionProvider.getSuccessors(summarySuccessor, currentItem.getCurrentScope());
+			for (final ACTION sss : summarySuccessorSuccessors) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary "
+							+ LoggingHelper.getStateString(summaryPostState) + " instead of "
+							+ LoggingHelper.getStateString(postState) + " for call "
+							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider));
+				}
+				successorItems
+						.add(new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(summaryPostState, sss, currentItem));
+			}
 
+		}
 		return successorItems;
 	}
 
@@ -418,25 +432,30 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	 * @param mergeOp
 	 */
 	private List<STATE> prepareScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			List<STATE> postStates, final IAbstractStateBinaryOperator<STATE> mergeOp) {
+			final List<STATE> postStates, final IAbstractStateBinaryOperator<STATE> mergeOp) {
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
 			currentItem.addScope(action);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageEnterScope(currentItem));
 			}
+			return postStates;
 		} else if (mTransitionProvider.isLeavingScope(action, currentItem.getCurrentScope())) {
-			if (postStates.size() > 1) {
+			List<STATE> newPostStates = postStates;
+			if (newPostStates.size() > 1) {
 				// we have to merge because we want to save a summary state
-				postStates = merge(mergeOp, postStates);
+				newPostStates = merge(mergeOp, newPostStates);
 			}
-			currentItem.saveSummary(postStates.get(0));
+			currentItem.saveSummary(newPostStates.get(0));
 			currentItem.removeCurrentScope();
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageLeaveScope(currentItem));
 			}
+			return newPostStates;
+		} else {
+			return postStates;
 		}
-		return postStates;
+
 	}
 
 	private STATE getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
@@ -457,11 +476,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Scope widening sequence for "
-					+ getTransitionString(currentAction) + " (MaxUnwindings=" + mMaxUnwindings + ")");
+					+ LoggingHelper.getTransitionString(currentAction, mTransitionProvider) + " (MaxUnwindings="
+					+ mMaxUnwindings + ")");
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Stack");
 			stackAtCallLocation.stream().sequential().map(a -> a.getFirst())
-					.map(a -> a == null ? "[G]" : getTransitionString(a)).map(a -> AbsIntPrefInitializer.TINDENT + a)
-					.forEach(mLogger::debug);
+					.map(a -> a == null ? "[G]" : LoggingHelper.getTransitionString(a, mTransitionProvider))
+					.map(a -> AbsIntPrefInitializer.TINDENT + a).forEach(mLogger::debug);
 		}
 
 		// get all stack items in the correct order that contain only calls to the current scope
@@ -478,7 +498,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Relevant stack states");
 			relevantStackItems.stream().sequential()
 					.map(a -> AbsIntPrefInitializer.TINDENT
-							+ (a.getFirst() == null ? "[G]" : getHashCodeString(a.getFirst())) + " "
+							+ (a.getFirst() == null ? "[G]" : LoggingHelper.getHashCodeString(a.getFirst())) + " "
 							+ a.getSecond().toString())
 					.forEach(mLogger::debug);
 		}
@@ -492,9 +512,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Ordered states " + getHashCodeString(currentAction));
+			mLogger.debug(
+					AbsIntPrefInitializer.DINDENT + "Ordered states " + LoggingHelper.getHashCodeString(currentAction));
 			orderedStates.stream().sequential()
-					.forEach(a -> mLogger.debug(AbsIntPrefInitializer.TINDENT + getStateString(a)));
+					.forEach(a -> mLogger.debug(AbsIntPrefInitializer.TINDENT + LoggingHelper.getStateString(a)));
 		}
 
 		// select the last state
@@ -559,9 +580,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 		final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
 		mLogger.debug(prefix + reason);
-		mLogger.debug(prefix + "Before: " + before.stream().sequential().map(s -> getStateString(s))
+		mLogger.debug(prefix + "Before: " + before.stream().sequential().map(s -> LoggingHelper.getStateString(s))
 				.reduce(new StringBuilder(), (a, b) -> a.append(b)).toString());
-		mLogger.debug(prefix + "After: " + after.stream().sequential().map(s -> getStateString(s))
+		mLogger.debug(prefix + "After: " + after.stream().sequential().map(s -> LoggingHelper.getStateString(s))
 				.reduce(new StringBuilder(), (a, b) -> a.append(b)).toString());
 	}
 
@@ -602,12 +623,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private StringBuilder getLogMessagePostIsSubsumed(final STATE subState, final STATE superState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-				.append(" Skipping all successors because post state ").append(getStateString(subState))
-				.append(" is subsumed by pre-existing state ").append(getStateString(superState));
+				.append(" Skipping all successors because post state ").append(LoggingHelper.getStateString(subState))
+				.append(" is subsumed by pre-existing state ").append(LoggingHelper.getStateString(superState));
 	}
 
 	private StringBuilder getLogMessageLeaveScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
-		return new StringBuilder().append(AbsIntPrefInitializer.DINDENT).append(" Transition [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Transition [")
 				.append(successorItem.getAction().hashCode()).append("] leaves scope (new depth=")
 				.append(successorItem.getCallStackDepth()).append(")");
 	}
@@ -646,7 +667,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOCATION loopHead,
 			final STATE state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
-				.append(" (").append(loopCounterValue).append("), saving ").append(getStateString(state));
+				.append(" (").append(loopCounterValue).append("), saving ").append(LoggingHelper.getStateString(state));
 	}
 
 	private StringBuilder getLogMessageLeaveLoop(final int loopCounterValue, final LOCATION loopHead) {
@@ -659,9 +680,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final STATE preState = currentItem.getPreState();
 		final ACTION current = currentItem.getAction();
 		final int depth = currentItem.getCallStackDepth();
-		final String preStateString = preState == null ? "NULL" : getStateString(preState).toString();
-		return getTransitionString(current).append(" processing for pre state ").append(preStateString)
-				.append(" (depth=").append(depth).append(")");
+		final String preStateString = preState == null ? "NULL" : LoggingHelper.getStateString(preState).toString();
+		return LoggingHelper.getTransitionString(current, mTransitionProvider).append(" processing for pre state ")
+				.append(preStateString).append(" (depth=").append(depth).append(")");
 	}
 
 	private StringBuilder
@@ -669,25 +690,5 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding [")
 				.append(newTransition.getPreState().hashCode()).append("]").append(" --[")
 				.append(newTransition.getAction().hashCode()).append("]->");
-	}
-
-	private StringBuilder getStateString(final STATE current) {
-		return addHashCodeString(new StringBuilder(), current).append(' ').append(current.toLogString());
-	}
-
-	private StringBuilder getTransitionString(final ACTION current) {
-		return addHashCodeString(new StringBuilder(), current).append(' ')
-				.append(mTransitionProvider.toLogString(current));
-	}
-
-	private StringBuilder getHashCodeString(final Object current) {
-		return addHashCodeString(new StringBuilder(), current);
-	}
-
-	private StringBuilder addHashCodeString(final StringBuilder builder, final Object current) {
-		if (current == null) {
-			return builder.append("[?]");
-		}
-		return builder.append('[').append(current.hashCode()).append(']');
 	}
 }
