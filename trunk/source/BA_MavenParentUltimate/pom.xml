@@ -138,14 +138,6 @@
 			</snapshots>
 		</repository>
 		<repository>
-			<id>eclipse-luna</id>
-			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/luna</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
 			<url>https://maven.java.net/content/repositories/releases/javax/</url>
