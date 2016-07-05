@@ -3,14 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: TreeAutomizer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-log4j,
- de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Import-Package: de.uni_freiburg.informatik.ultimate.logic,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
- de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
+Require-Bundle: Library-UltimateCore,
+ Library-UltimateModel,
+ Library-log4j,
+ Library-SMTLIB,
+ de.uni_freiburg.informatik.ultimate.automata,
+ Library-ModelCheckerUtils
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
-
