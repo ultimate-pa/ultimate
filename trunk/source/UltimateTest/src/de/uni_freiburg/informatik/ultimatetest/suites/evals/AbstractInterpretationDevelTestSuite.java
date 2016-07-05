@@ -59,6 +59,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
@@ -104,15 +106,18 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
 
-			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
-			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
+//			"examples/programs/abstractInterpretation/regression/division-zero-1.bpl",
+//			"examples/programs/abstractInterpretation/regression/division-inequality-bug.bpl",
+//			"examples/programs/abstractInterpretation/regression/division-inequality-bug-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+//			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
 //			"examples/programs/abstractInterpretation/regression/unary-minus-bug.bpl",
@@ -134,8 +139,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		// return 30 * 1000 * 1000;
-		return 30 * 1000;
+//		 return 30 * 1000 * 1000;
+		return 10* 60 * 1000;
 		// return 60 * 1000 * 10;
 	}
 
