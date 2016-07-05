@@ -140,9 +140,8 @@ public class AbstractInterpretationRunner {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton");
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
-					new AbstractInterpretationAutomatonGenerator(mServices, abstraction, mAbsIntResult, predUnifier,
-							smtManager).getResult();
+			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationPredicateAutomatonGenerator(
+					mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
 			return aiInterpolAutomaton;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());

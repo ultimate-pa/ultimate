@@ -21,7 +21,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationAutomatonGenerator {
+public class AbstractInterpretationPredicateAutomatonGenerator
+        implements IAbstractInterpretationAutomatonGenerator<CodeBlock, IPredicate> {
 
 	private static final boolean CANNIBALIZE = false;
 	private static final long PRINT_PREDS_LIMIT = 30;
@@ -31,10 +32,10 @@ public class AbstractInterpretationAutomatonGenerator {
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final SmtManager mSmtManager;
 
-	public AbstractInterpretationAutomatonGenerator(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predUnifier, final SmtManager smtManager) {
+	public AbstractInterpretationPredicateAutomatonGenerator(final IUltimateServiceProvider services,
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+	        final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -42,17 +43,18 @@ public class AbstractInterpretationAutomatonGenerator {
 		mResult = getTermAutomaton(oldAbstraction, aiResult.getTerms(), predUnifier);
 	}
 
+	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mResult;
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
-			final PredicateUnifier predicateUnifier) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
+	        final PredicateUnifier predicateUnifier) {
 		mLogger.info("Creating automaton from AI predicates (Cannibalize=" + CANNIBALIZE + ").");
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 		final Set<IPredicate> predicates = new HashSet<>();
 		result.addState(true, false, predicateUnifier.getTruePredicate());
 		predicates.add(predicateUnifier.getTruePredicate());
@@ -75,11 +77,11 @@ public class AbstractInterpretationAutomatonGenerator {
 
 		if (PRINT_PREDS_LIMIT < predicates.size()) {
 			mLogger.info("Using " + predicates.size() + " predicates from AI: " + String.join(",",
-					predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-					+ "...");
+			        predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+			        + "...");
 		} else {
 			mLogger.info("Using " + predicates.size() + " predicates from AI: "
-					+ String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
+			        + String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		return result;
