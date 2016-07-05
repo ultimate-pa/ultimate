@@ -368,6 +368,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final STATE summaryPostState = currentItem.getSummaryPostState(summarySuccessor, postState);
 			if (summaryPostState == null) {
 				// we do not have a usable summary for this call, we have to use it as-it
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(AbsIntPrefInitializer.INDENT + " No summary available for "
+							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider));
+				}
 				successorItems
 						.add(new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(postState, callSuccessor, currentItem));
 				continue;
@@ -379,10 +383,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					mTransitionProvider.getSuccessors(summarySuccessor, currentItem.getCurrentScope());
 			for (final ACTION sss : summarySuccessorSuccessors) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary "
-							+ LoggingHelper.getStateString(summaryPostState) + " instead of "
-							+ LoggingHelper.getStateString(postState) + " for call "
+					mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary for "
 							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider));
+					mLogger.debug(
+							AbsIntPrefInitializer.DINDENT + " Using " + LoggingHelper.getStateString(summaryPostState));
+					mLogger.debug(
+							AbsIntPrefInitializer.DINDENT + " Instead of " + LoggingHelper.getStateString(postState));
 				}
 				successorItems
 						.add(new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(summaryPostState, sss, currentItem));
