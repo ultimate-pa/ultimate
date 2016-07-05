@@ -48,6 +48,8 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
 	private final StateFactory<STATE> mStateFactory;
+	private final boolean mNondeterministicTransitions;
+	private final boolean mNondeterministicInitials;
 	
 	
 	@Override
@@ -80,9 +82,20 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mTotalized = new TotalizeNwa<LETTER, STATE>(input, mStateFactory);
 		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mTotalized);
 		mResult = !mTotalized.nonDeterminismInInputDetected();
+		mNondeterministicTransitions = mTotalized.nondeterministicTransitionsDetected();
+		mNondeterministicInitials = mTotalized.nondeterministicInitialsDetected();
 		mLogger.info(exitMessage());
 	}
 	
+
+	public boolean hasNondeterministicTransitions() {
+		return mNondeterministicTransitions;
+	}
+
+
+	public boolean hasNondeterministicInitials() {
+		return mNondeterministicInitials;
+	}
 
 
 	@Override
