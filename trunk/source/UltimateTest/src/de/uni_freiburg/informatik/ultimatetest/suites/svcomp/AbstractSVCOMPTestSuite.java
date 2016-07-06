@@ -84,7 +84,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases == null) {
 			final List<SVCOMPTestDefinition> testDefs = getTestDefinitions();
-			final File svcompRootDir = getSVCOMP15RootDirectory();
+			final File svcompRootDir = getSVCOMPRootDirectory();
 
 			final Collection<File> setFiles = getAllSetFiles(svcompRootDir);
 			final Collection<File> allInputFiles = getAllPotentialInputFiles(svcompRootDir);
@@ -258,18 +258,18 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	}
 
 	/**
-	 * Override this if you want to use some special place for your SVCOMP15 repository. We default to
+	 * Override this if you want to use some special place for your SVCOMP repository. We default to
 	 * trunk/examples/svcomp .
 	 */
-	protected File getSVCOMP15RootDirectory() {
+	protected File getSVCOMPRootDirectory() {
 		final String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(TestUtil.getPathFromTrunk("examples/svcomp"));
 		return new File(svcompRootDir);
 	}
 
 	/**
-	 * Supply your test definitions here
+	 * Supply your test definitions here.
 	 * 
-	 * @return
+	 * @return A list of test definitions. 
 	 */
 	protected abstract List<SVCOMPTestDefinition> getTestDefinitions();
 
@@ -314,17 +314,11 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	}
 
 	private Collection<File> getAllSetFiles(File rootdir) {
-		return getFilesRecursively(rootdir, new String[] { ".*\\.set" });
+		return TestUtil.getFilesRegex(rootdir, new String[] { ".*\\.set" });
 	}
 
 	private Collection<File> getAllPotentialInputFiles(File rootdir) {
-		return getFilesRecursively(rootdir, new String[] { ".*\\.c", ".*\\.i" });
-	}
-
-	private Collection<File> getFilesRecursively(File rootdir, String[] regex) {
-		final ArrayList<File> singleFiles = new ArrayList<File>();
-		singleFiles.addAll(TestUtil.getFilesRegex(rootdir, regex));
-		return singleFiles;
+		return TestUtil.getFilesRegex(rootdir, new String[] { ".*\\.c", ".*\\.i" });
 	}
 
 	/**
