@@ -83,15 +83,15 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-ext.set
 		//@formatter:on
 
-//		rtr.addAll(getForAll("ControlFlow"));
+		rtr.addAll(getForAll("ControlFlow"));
 		rtr.addAll(getForAll("Simple"));
-		// rtr.addAll(getForAll("ECA", 10));
+		rtr.addAll(getForAll("ECA", 10));
 		rtr.addAll(getForAll("DeviceDriversLinux64", 50));
 		rtr.addAll(getForAll("Loops"));
 		rtr.addAll(getForAll("Recursive"));
 		rtr.addAll(getForAll("ArraysReach"));
-		// rtr.addAll(getForAll("ProductLines", 10));
-		// rtr.addAll(getForAll("Sequentialized", 10));
+		rtr.addAll(getForAll("ProductLines", 10));
+		rtr.addAll(getForAll("Sequentialized", 10));
 
 		return rtr;
 	}
@@ -132,6 +132,8 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf", timeout, limit));
 
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-64bit-Automizer_Default.epf",
 		// timeout, limit));
