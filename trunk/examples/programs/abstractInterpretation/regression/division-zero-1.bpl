@@ -1,4 +1,5 @@
-//#Safe
+//#Unsafe
+//Shows Boogie division by zero semantics: Division by zero can be any result. 
 
 procedure ULTIMATE.start()
 {
