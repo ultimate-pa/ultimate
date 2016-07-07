@@ -168,12 +168,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mStartNode = startNode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.interfaces.visitor. IRCFGVisitor
-	 * #visitNode(de.uni_freiburg.informatik.ultimate.blockencoding.model .MinimizedNode)
-	 */
 	@Override
 	public void visitNode(MinimizedNode node) {
 		mVisitedEdges.clear();
@@ -185,9 +179,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			mRefNodeMap.put(node, mStartNode);
 		}
 
-		// if (!mServices.getProgressMonitorService().continueProcessing()) {
-		// return;
-		// }
 		// Start recursion here
 		internalVisitNode(node);
 	}
@@ -210,7 +201,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// We now get the Edges according to the rating!
 		final ArrayList<IMinimizedEdge> edgeList = getEdgesAccordingToRating(node);
 		// if edgeList has no entries, we reached an end of the graph
-		if (edgeList.size() == 0) {
+		if (edgeList.isEmpty()) {
 			return;
 		}
 		for (final IMinimizedEdge edge : edgeList) {
@@ -228,7 +219,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				// Now we create a converted CodeBlock-edge
 				// We add one first sequential composed list level
 				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
-				mLogger.info("Start Conversion of new minimized edge:");
 				if (edge.getRating() instanceof DisjunctVariablesRating
 						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
 					final Integer[] ratingValues = (Integer[]) edge.getRating().getRatingValueContainer().getValue();
@@ -261,10 +251,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					mLogger.debug("Formula not converted, probably due to timeout.");
 				}
 				// now we print out all edges which we added more than two times
-				for (final IMinimizedEdge key : mCheckForMultipleFormula.keySet()) {
-					if (mCheckForMultipleFormula.get(key) >= 2) {
-						mLogger.error("Edge: " + key + " Occurence: " + mCheckForMultipleFormula.get(key));
+				for (final Entry<IMinimizedEdge, Integer> entry : mCheckForMultipleFormula.entrySet()) {
+					if (entry.getValue() < 2) {
+						continue;
 					}
+					mLogger.error("Edge: " + entry.getKey() + " Occurence: " + entry.getValue());
 				}
 				// Since we convert function by function, we do not need to
 				// follow Call- and Return-Edges
@@ -338,7 +329,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
-			for (final Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {
+			for (final Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations()
+					.entrySet()) {
 				newNode.getPayload().getAnnotations().put(annots.getKey(), annots.getValue());
 			}
 			mRefNodeMap.put(node, newNode);
@@ -466,13 +458,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			if (edge instanceof DisjunctionEdge) {
 				final ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
 				for (final CodeBlock cb : recConvEdges) {
-					if (!(cb instanceof SequentialComposition)) {
-						// if we have no code block, we have to remove the
-						// created lists on the stack
-						if (!mSeqComposedBlocks.pop().isEmpty()) {
-							throw new IllegalArgumentException(
-									"It is not allowed to pop " + "non empty lists, from the stack");
-						}
+					if (!(cb instanceof SequentialComposition) && !mSeqComposedBlocks.pop().isEmpty()) {
+						throw new IllegalArgumentException(
+								"It is not allowed to pop " + "non empty lists, from the stack");
 					}
 					if (cb instanceof GotoEdge) {
 						composeEdges.add(replaceGotoEdge(cb, null));
@@ -561,13 +549,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private CodeBlock replaceGotoEdge(CodeBlock gotoEdge, CodeBlock secondGotoEdge) {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
-			replacement = mCbf.constructStatementSequence(null, null,
-					new AssumeStatement(gotoEdge.getPayload().getLocation(),
+			replacement =
+					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
-			replacement = mCbf.constructStatementSequence(null, null,
-					new AssumeStatement(gotoEdge.getPayload().getLocation(),
+			replacement =
+					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
