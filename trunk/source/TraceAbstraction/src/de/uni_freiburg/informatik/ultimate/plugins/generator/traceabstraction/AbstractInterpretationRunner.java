@@ -96,9 +96,14 @@ public class AbstractInterpretationRunner {
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
-					.runOnPathProgram((NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer,
-							mServices);
+			if (mLogger.isDebugEnabled()) {
+				for (final CodeBlock trans : pathProgramSet) {
+					mLogger.debug("[" + trans.hashCode() + "] " + trans);
+				}
+			}
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
+					AbstractInterpreter.runOnPathProgram((NestedRun<CodeBlock, IPredicate>) currentCex,
+							currentAbstraction, mRoot, timer, mServices);
 			mAbsIntResult = result;
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
@@ -135,8 +140,9 @@ public class AbstractInterpretationRunner {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton");
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
-					mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
+			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
+					new AbstractInterpretationAutomatonGenerator(mServices, abstraction, mAbsIntResult, predUnifier,
+							smtManager).getResult();
 			return aiInterpolAutomaton;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
@@ -147,8 +153,8 @@ public class AbstractInterpretationRunner {
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
 			final RefineFunction refineFun) throws AutomataLibraryException {
 		mLogger.info("Refining with AI automaton anyways");
-		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = constructInterpolantAutomaton(
-				predUnifier, smtManager, abstraction, cex);
+		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
+				constructInterpolantAutomaton(predUnifier, smtManager, abstraction, cex);
 		refine(predUnifier, aiInterpolAutomaton, cex, refineFun);
 	}
 
