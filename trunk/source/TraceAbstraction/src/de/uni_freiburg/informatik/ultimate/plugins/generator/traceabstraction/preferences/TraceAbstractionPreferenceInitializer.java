@@ -98,6 +98,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Boolean>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION, DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, PreferenceType.Boolean),
 
@@ -134,6 +135,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
+	public static final String LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION = "Use path program construction from abstract interpretation predicates";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = "Non-flow-sensitive error trace relevance analysis";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = "Flow-sensitive error trace relevance analysis";
 
@@ -183,6 +185,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
 	public static final boolean DEF_USE_ABSTRACT_INTERPRETATION = false;
+	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = false;
 
