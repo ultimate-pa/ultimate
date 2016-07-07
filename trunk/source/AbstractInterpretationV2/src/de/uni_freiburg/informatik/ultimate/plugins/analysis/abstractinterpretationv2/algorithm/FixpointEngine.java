@@ -39,13 +39,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -69,7 +66,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> mDomain;
-	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
+	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
@@ -78,30 +75,27 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
 
-	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
-			final FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> params) {
-		assert timer != null;
-		assert services != null;
-		assert params != null;
-
-		mTimer = timer;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	public FixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> params) {
+		if (params == null || !params.isValid()) {
+			throw new IllegalArgumentException("invalid params");
+		}
+		mTimer = params.getTimer();
+		mLogger = params.getLogger();
 		mTransitionProvider = params.getTransitionProvider();
 		mStateStorage = params.getStorage();
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
 		mLoopDetector = params.getLoopDetector();
 		mDebugHelper = params.getDebugHelper();
-
-		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+		mMaxUnwindings = params.getMaxUnwindings();
+		mMaxParallelStates = params.getMaxParallelStates();
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 			final Boogie2SMT bpl2smt,
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
-		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName());
+		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
+				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
@@ -318,7 +312,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem,
 			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap) {
-		final STATE preState = mVarProvider.defineVariablesBefore(elem, mDomain.createFreshState());
+		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
 		return new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(preState, elem, mStateStorage, summaryMap);
 	}
 

@@ -100,8 +100,8 @@ public final class AbstractInterpreter {
 	 * Suppress all exceptions except {@link OutOfMemoryError}, {@link ToolchainCanceledException},
 	 * {@link IllegalArgumentException}. Produce no results.
 	 * 
-	 * @return
 	 */
+	@SuppressWarnings("squid:S1166")
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runSilently(final RootNode root,
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services) {
@@ -125,6 +125,7 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on a path program constructed from a counterexample.
 	 * 
 	 */
+	@SuppressWarnings("squid:S1166")
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runOnPathProgram(
 			final NestedRun<CodeBlock, ?> counterexample,
 			final INestedWordAutomatonOldApi<CodeBlock, ?> currentAutomata, final RootNode root,
@@ -213,16 +214,15 @@ public final class AbstractInterpreter {
 
 		final RcfgDebugHelper<STATE, LOC> debugHelper = new RcfgDebugHelper<STATE, LOC>(rootAnnot, services);
 		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression> params =
-				new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression>().addDomain(domain)
-						.addLoopDetector(loopDetector)
-						.addStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(),
+				new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression>(services).setDomain(domain)
+						.setLoopDetector(loopDetector)
+						.setStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(),
 								services, transitionProvider))
-						.addTransitionProvider(transitionProvider)
-						.addVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
-						.addDebugHelper(debugHelper);
+						.setTransitionProvider(transitionProvider)
+						.setVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
+						.setDebugHelper(debugHelper).setTimer(timer);
 
-		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC, Expression> fxpe =
-				new FixpointEngine<>(services, timer, params);
+		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC, Expression> fxpe = new FixpointEngine<>(params);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> result =
@@ -270,17 +270,17 @@ public final class AbstractInterpreter {
 			final CodeBlock initial = iter.next();
 
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
-					new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>()
-							.addDomain(domain).addLoopDetector(loopDetector)
-							.addStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint>(
+					new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(services)
+							.setDomain(domain).setLoopDetector(loopDetector)
+							.setStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint>(
 									domain.getMergeOperator(), services, transitionProvider))
-							.addTransitionProvider(transitionProvider)
-							.addVariableProvider(new RcfgVariableProvider<STATE, ProgramPoint>(symbolTable,
+							.setTransitionProvider(transitionProvider)
+							.setVariableProvider(new RcfgVariableProvider<>(symbolTable,
 									boogieVarTable, services))
-							.addDebugHelper(new RcfgDebugHelper<>(rootAnnot, services));
+							.setDebugHelper(new RcfgDebugHelper<>(rootAnnot, services)).setTimer(timer);
 
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> fxpe =
-					new FixpointEngine<>(services, timer, params);
+					new FixpointEngine<>(params);
 			result = fxpe.run(initial, script, bpl2smt, result);
 		}
 		if (result == null) {
