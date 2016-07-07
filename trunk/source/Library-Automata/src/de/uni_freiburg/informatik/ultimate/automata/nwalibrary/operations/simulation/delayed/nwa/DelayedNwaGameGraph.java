@@ -167,8 +167,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 			final boolean bit) {
 		throw new UnsupportedOperationException(
 				"Use getDuplicatorVertex(q0, q1, a, bit, transType, summarizeEdge, sink) instead.");
-		// TODO Can later be removed but for now
-		// it should throw an Exception for problem detection.
 	}
 
 	/**
@@ -182,8 +180,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	@Override
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
-		// TODO Can later be removed but for now
-		// it should throw an Exception for problem detection.
 	}
 
 	/*

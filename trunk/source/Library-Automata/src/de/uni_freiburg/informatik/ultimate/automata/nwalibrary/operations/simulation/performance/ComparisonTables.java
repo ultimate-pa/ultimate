@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -92,14 +94,13 @@ public final class ComparisonTables {
 
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
-		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Work measure
-		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES
-				+ "(&Oslash;)";
-		header += separator + ETimeMeasure.OVERALL + "(&Oslash;)";
-		header += separator + ECountingMeasure.SIMULATION_STEPS + "(&Oslash;)";
-		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES + "(&Oslash;)";
-		header += separator + ECountingMeasure.REMOVED_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES;
+		header += separator + ETimeMeasure.OVERALL;
+		header += separator + ECountingMeasure.SIMULATION_STEPS;
+		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES;
+		header += separator + ECountingMeasure.REMOVED_STATES;
 		table.add(header);
 
 		// Rows of table
@@ -223,11 +224,26 @@ public final class ComparisonTables {
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
+	 * @param simulationType
+	 *            The simulation type interested in, or <tt>null</tt> if
+	 *            interested in all results
+	 * @param filtered
+	 *            If the result should not contain results where the input
+	 *            automaton has an empty size, at least one of the methods timed
+	 *            out or an OutOfMemory-Error occurred.
+	 * @param filterOnlyNwa
+	 *            If the result should only contain nested word automaton, this
+	 *            removes every automaton which has no return transitions
+	 * @param convertTransitionDensityToDouble
+	 *            Converts transition density values from Integer back to
+	 *            Double.
 	 * @return A table in a tsv-like format, specified by
 	 *         {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createAveragedSimulationFullComparisonTable(
-			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
+			final ESimulationType simulationType, final boolean filtered, final boolean filterOnlyNwa,
+			final boolean convertTransitionDensityToDouble) {
 		final List<String> table = new LinkedList<>();
 		if (performanceEntries.isEmpty()) {
 			return table;
@@ -242,23 +258,59 @@ public final class ComparisonTables {
 		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (final ETimeMeasure measure : timeMeasures) {
-			header += separator + measure + "(&Oslash;)";
+			header += separator + measure;
 		}
 		final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
 		for (final ECountingMeasure measure : countingMeasures) {
-			header += separator + measure + "(&Oslash;)";
+			header += separator + measure;
 		}
 		table.add(header);
 
 		// Rows of table
 		for (final Entry<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
+			if (simulationType != null && entry.getKey().getFirst() != simulationType) {
+				// If we are interested in a explicit simulation, ignore other
+				// results
+				continue;
+			}
+
 			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+
+			Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
+			if (filtered || filterOnlyNwa) {
+				for (final SimulationPerformance performance : entry.getValue()) {
+					if (filtered) {
+						// If filtering, we are not interested in this
+						// comparison if
+						// the automaton is empty, a simulation had OOM or timed
+						// out
+						int size = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
+						if (performance.hasTimedOut() || performance.isOutOfMemory() || size == 0
+								|| size == SimulationPerformance.NO_COUNTING_RESULT) {
+							ignoreThisPerformance.put(performance, true);
+						}
+					}
+					if (filterOnlyNwa) {
+						// In this case every automaton that has no return
+						// transitions should get removed
+						int returnTransitions = performance
+								.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
+						if (returnTransitions == 0 || returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
+							ignoreThisPerformance.put(performance, true);
+						}
+					}
+				}
+			}
 
 			for (final ETimeMeasure measure : timeMeasures) {
 				long sumOfAllValues = 0;
 				int amountOfValues = 0;
 				for (final SimulationPerformance performance : entry.getValue()) {
+					if (ignoreThisPerformance.get(performance) != null && ignoreThisPerformance.get(performance)) {
+						continue;
+					}
+
 					final long value = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 					if (value != SimulationPerformance.NO_TIME_RESULT) {
 						sumOfAllValues += value;
@@ -281,16 +333,31 @@ public final class ComparisonTables {
 				long sumOfAllValues = 0;
 				int amountOfValues = 0;
 				for (final SimulationPerformance performance : entry.getValue()) {
+					if (ignoreThisPerformance.get(performance) != null && ignoreThisPerformance.get(performance)) {
+						continue;
+					}
+
 					final long value = performance.getCountingMeasureResult(measure);
 					if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 						sumOfAllValues += value;
 					}
 					amountOfValues++;
 				}
+
 				final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
 				String valueAsString = averageOfValues + "";
 				if (averageOfValues == 0) {
 					valueAsString = NO_VALUE;
+				}
+				if (convertTransitionDensityToDouble) {
+					Double sumOfAllValuesAsDouble = convertTransitionDensityToDouble(measure, sumOfAllValues);
+					if (sumOfAllValuesAsDouble != null) {
+						final double averageOfValuesAsDouble = sumOfAllValuesAsDouble / amountOfValues;
+						valueAsString = averageOfValuesAsDouble + "";
+						if (averageOfValuesAsDouble == 0.0) {
+							valueAsString = NO_VALUE;
+						}
+					}
 				}
 				row += separator + valueAsString;
 			}
@@ -326,15 +393,15 @@ public final class ComparisonTables {
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
 		// Amount of Buechi states
-		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Overall time first
-		header += separator + ETimeMeasure.OVERALL + "(&Oslash;)";
+		header += separator + ETimeMeasure.OVERALL;
 		// Other time measures
 		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (final ETimeMeasure measure : timeMeasures) {
 			if (!measure.equals(ETimeMeasure.OVERALL)) {
-				header += separator + measure + "(%)(&Oslash;)";
+				header += separator + measure;
 			}
 		}
 		table.add(header);
@@ -549,12 +616,16 @@ public final class ComparisonTables {
 	 * @param filterOnlyNwa
 	 *            If the result should only contain nested word automaton, this
 	 *            removes every automaton which has no return transitions
+	 * @param convertTransitionDensityToDouble
+	 *            Converts transition density values from Integer back to
+	 *            Double.
 	 * @return A table in a tsv-like format, specified by
 	 *         {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceFullComparisonTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
-			final ESimulationType simulationType, final boolean filtered, final boolean filterOnlyNwa) {
+			final ESimulationType simulationType, final boolean filtered, final boolean filterOnlyNwa,
+			final boolean convertTransitionDensityToDouble) {
 		final List<String> table = new LinkedList<>();
 		if (performanceEntries.isEmpty()) {
 			return table;
@@ -595,8 +666,10 @@ public final class ComparisonTables {
 					}
 				}
 				if (filterOnlyNwa) {
-					// In this case every automaton that has no return transitions should get removed
-					int returnTransitions = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
+					// In this case every automaton that has no return
+					// transitions should get removed
+					int returnTransitions = performanceOfSimulation
+							.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
 					if (returnTransitions == 0 || returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
 						break;
 					}
@@ -623,9 +696,17 @@ public final class ComparisonTables {
 				}
 				for (final ECountingMeasure measure : countingMeasures) {
 					final int value = performanceOfSimulation.getCountingMeasureResult(measure);
+
 					String valueAsString = value + "";
 					if (value == SimulationPerformance.NO_COUNTING_RESULT) {
 						valueAsString = NO_VALUE;
+					} else {
+						if (convertTransitionDensityToDouble) {
+							Double valueAsDouble = convertTransitionDensityToDouble(measure, value);
+							if (valueAsDouble != null) {
+								valueAsString = valueAsDouble + "";
+							}
+						}
 					}
 					row += separator + valueAsString;
 				}
@@ -976,6 +1057,33 @@ public final class ComparisonTables {
 			}
 		}
 		return simulationToPerformances;
+	}
+
+	/**
+	 * Converts the given value to a double format if the given measure is a
+	 * transition density measure.
+	 * 
+	 * @param measure
+	 *            Current measure
+	 * @param sumOfAllValues
+	 *            Value to convert
+	 * @return The given value in a double format if the given measure is a
+	 *         transition density measure or <tt>null</tt> if it is not.
+	 */
+	private static Double convertTransitionDensityToDouble(final ECountingMeasure measure, final long sumOfAllValues) {
+		if (measure == ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION
+				|| measure == ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION
+				|| measure == ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION
+				|| measure == ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION
+				|| measure == ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION
+				|| measure == ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION
+				|| measure == ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION
+				|| measure == ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION) {
+			double million = 1_000_000.0;
+			return (sumOfAllValues + 0.0) / million;
+		} else {
+			return null;
+		}
 	}
 
 	/**

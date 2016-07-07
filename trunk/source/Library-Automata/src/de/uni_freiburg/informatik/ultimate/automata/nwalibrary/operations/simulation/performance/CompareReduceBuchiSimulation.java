@@ -153,25 +153,32 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		System.out.println("Processing data...");
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
-		tables.add(new Pair<>("instanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false)));
-		tables.add(new Pair<>("instanceTimePartitioning",
-				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("instanceAlgoWork",
-				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationFullComparison",
-				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationTimePartitioning",
-				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationAlgoWork",
-				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
-		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
-		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
-		tables.add(new Pair<>("longerThanOneSecondNames",
-				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("instanceFullComparison",
+//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, false)));
+//		tables.add(new Pair<>("instanceTimePartitioning",
+//				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("instanceAlgoWork",
+//				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("averagedSimulationFullComparison",
+//				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("averagedSimulationTimePartitioning",
+//				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("averagedSimulationAlgoWork",
+//				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("longerThanOneSecondNames",
+//				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+		
 		tables.add(new Pair<>("directFilteredInstanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true)));
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+		tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
+		tables.add(new Pair<>("directFilteredAverageFullComparison",
+		ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+		tables.add(new Pair<>("delayedFilteredAverageFullComparison",
+				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {

@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -35,8 +37,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -56,11 +63,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -139,7 +141,6 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
-		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	/*
@@ -151,12 +152,54 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		// Simply returns true in any case. The only method that currently
-		// exists for checking the result needs very long and we do not want to
-		// slow progress.
-		final boolean correct = true;
-		mLogger.info("Finished testing correctness of " + operationName());
+		getLogger().info("Start testing correctness of " + operationName());
+		boolean correct = true;
+
+		AutomataLibraryServices services = getServices();
+		INestedWordAutomatonOldApi<LETTER, STATE> operand = getOperand();
+		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
+
+		// This is a semi-test, if it returns false, the result can also be
+		// correct though
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, operand, result)).getResult();
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, result, operand)).getResult();
+
+		// Try using some random lasso-words to prove a possible incorrectness
+		if (!correct) {
+			List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+
+			correct = true;
+			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
+				boolean op = checkAcceptance(nestedLassoWord, operand, false);
+				boolean res = checkAcceptance(nestedLassoWord, result, false);
+				correct &= (op == res);
+			}
+		}
+		getLogger().info("Finished testing correctness of " + operationName());
+
+		// We may assume the result is correct as the chance of it being not
+		// covered by the test is comparable small
 		return correct;
 	}
 
@@ -169,5 +212,25 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	@Override
 	public String operationName() {
 		return "reduceNwaFairSimulation";
+	}
+
+	/**
+	 * @see {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV#checkAcceptance
+	 *      BuchiComplementFKV#checkAcceptance}
+	 */
+	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw, INestedWordAutomatonOldApi<LETTER, STATE> operand,
+			boolean underApproximationOfComplement) throws AutomataLibraryException {
+		AutomataLibraryServices services = getServices();
+		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
+
+		final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(services, result, nlw)).getResult();
+		boolean correct;
+		if (underApproximationOfComplement) {
+			correct = !res || op;
+		} else {
+			correct = op ^ res;
+		}
+		return correct;
 	}
 }

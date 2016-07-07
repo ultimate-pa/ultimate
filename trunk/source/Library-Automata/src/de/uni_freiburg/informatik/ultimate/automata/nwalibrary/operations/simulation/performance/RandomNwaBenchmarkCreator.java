@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 public final class RandomNwaBenchmarkCreator {
 
 	/**
-	 * Default path where the Nwa automata benchmark set gets saved if not other
+	 * Default path where the Nwa automata benchmark set gets saved if no other
 	 * path is specified.
 	 */
 	public static final File DEFAULT_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
@@ -81,12 +81,12 @@ public final class RandomNwaBenchmarkCreator {
 	 *             If an I/O-Exception occurred
 	 */
 	public static void main(final String[] args) throws IOException {
-		final int n = 10;
+		final int n = 50;
 		final int k = 2;
 		final float acceptanceInPerc = 50;
-		final float totalityInternalInPerc = 5;
-		final float totalityCallInPerc = 2;
-		final float totalityReturnInPerc = 0.2f;
+		final float totalityInternalInPerc = 1;
+		final float totalityCallInPerc = 0.15f;
+		final float totalityReturnInPerc = 0.003f;
 		final int amount = 1000;
 		boolean operationSwitchUseCompareReduce = false;
 
@@ -226,7 +226,7 @@ public final class RandomNwaBenchmarkCreator {
 	 *            The path where the automata should get saved
 	 * @param logEvery
 	 *            Amount of generated automata after which a logging message
-	 *            gets printed in {@link System#out}
+	 *            gets printed to {@link System#out}
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -256,6 +256,14 @@ public final class RandomNwaBenchmarkCreator {
 
 			nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
 					returnTotalityDouble, acceptanceDouble).getResult();
+			
+			if (i == 1) {
+				// Print some debug information
+				Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
+				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+				System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
+				System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
+			}
 
 			final String fileNamePost = "_" + i;
 			File automatonFile = new File(pathToSaveBenchmark, fileName + fileNamePost + fileFormat);
@@ -264,12 +272,6 @@ public final class RandomNwaBenchmarkCreator {
 			fw.write(mPreamble + nwa);
 			fw.close();
 		}
-		
-		// Print some debug information
-		Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
-		System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
-		System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
-		System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
 	}
 
 	/**

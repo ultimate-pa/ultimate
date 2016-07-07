@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -181,14 +180,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final GameGraphChanges<LETTER, STATE> mRemovedReturnBridges;
 	/**
-	 * Amount of states the result automaton has.
-	 */
-	private int mResultAmountOfStates;
-	/**
-	 * Amount of transitions the result automaton has.
-	 */
-	private int mResultAmountOfTransitions;
-	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices mServices;
@@ -276,8 +267,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mSpoilerWinningSinkExtended = null;
 		mDuplicatorWinningSink = null;
 
-		mResultAmountOfStates = 0;
-		mResultAmountOfTransitions = 0;
 		mSimulationPerformance = new SimulationPerformance(simulationType, false);
 	}
 
@@ -285,12 +274,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Clears all internal data structures of this object.
 	 */
 	public void clear() {
+		mAutomatonStatesToGraphDuplicatorVertex.clear();
+		mAutomatonStatesToGraphSpoilerVertex.clear();
 		mPossibleSpoilerDeadEnd.clear();
 		mPossibleNonReturnDuplicatorDeadEnd.clear();
 		mDuplicatorReturningVertices.clear();
 		mEntryToSink.clear();
 		mSrcDestToSummarizeEdges.clear();
 		mDuplicatorDirectlyLosesInSpoiler.clear();
+		mSpoilerCallPredecessors.clear();
 	}
 
 	/**
@@ -311,14 +303,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
 		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, STATE, Integer> vertexToSubSummarizeToSearchPriority = new NestedMap3<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
-
-		// Every vertex can maximal be added '3 * out-degree' times to the queue
-		// TODO Performance impact of BigInteger is to high for a safety check.
-		// This event may not even be possible for correct game graphs. In this
-		// case, remove it after verification.
-		final BigInteger maxAmountOfSearches = BigInteger.valueOf(mGameGraph.getSize()).pow(2)
-				.multiply(BigInteger.valueOf(3));
-		final BigInteger searchCounter = BigInteger.ZERO;
 
 		// Add starting elements
 		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
@@ -346,8 +330,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		// Start the search
-		while (!searchQueue.isEmpty() && searchCounter.compareTo(maxAmountOfSearches) <= 0) {
-			searchCounter.add(BigInteger.ONE);
+		while (!searchQueue.isEmpty()) {
 			final SearchElement<LETTER, STATE> searchElement = searchQueue.poll();
 			final Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
 			final Vertex<LETTER, STATE> searchTarget = searchElement.getTarget();
@@ -628,10 +611,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 			}
 		}
-		if (searchCounter.compareTo(maxAmountOfSearches) > 0) {
-			throw new IllegalStateException(
-					"Computing summarize edge priorities could not be done. The process detected a live lock and aborted.");
-		}
 	}
 
 	/**
@@ -695,8 +674,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					final STATE state2 = v.getQ1();
 					// For delayed simulation we need to choose between the
 					// vertex with bit set to true or false
-					// TODO Reevaluate this regarding simulation with matched
-					// return words
 					if (mSimulationType == ESimulationType.DELAYED) {
 						if (v.isB()) {
 							considerVertex = mNwa.isFinal(state1) && !mNwa.isFinal(state2);
@@ -736,33 +713,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					false, equivalenceClassesAsCollection);
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<LETTER, STATE>(mServices, minimizer.getResult()).getResult();
-
-			mResultAmountOfStates = result.size();
-			// TODO One of the operations should provide a #transition method,
-			// counting it manually is a, for metrics only, not acceptable
-			// overhead.
-			// Count transitions
-			for (STATE state : result.getStates()) {
-				for (@SuppressWarnings("unused")
-				OutgoingInternalTransition<LETTER, STATE> internalTrans : result.internalSuccessors(state)) {
-					increaseResultAmountOfTransitions();
-				}
-				for (@SuppressWarnings("unused")
-				OutgoingCallTransition<LETTER, STATE> callTrans : result.callSuccessors(state)) {
-					increaseResultAmountOfTransitions();
-				}
-				for (@SuppressWarnings("unused")
-				OutgoingReturnTransition<LETTER, STATE> returnTrans : result.returnSuccessors(state)) {
-					increaseResultAmountOfTransitions();
-				}
-
-				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
-					mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/counting");
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
-			}
 		} else {
-			// If there is no merge-able state simply
+			// If there are no merge-able states simply
 			// copy the inputed automaton
 			NestedWordAutomaton<LETTER, STATE> resultAsChangeableAutomaton = new NestedWordAutomaton<>(mServices,
 					mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(), stateFactory);
@@ -771,22 +723,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				final boolean isInitial = mNwa.isInitial(state);
 				final boolean isFinal = mNwa.isFinal(state);
 				resultAsChangeableAutomaton.addState(isInitial, isFinal, state);
-				increaseResultAmountOfStates();
 
 				// Copy transitions
 				for (OutgoingInternalTransition<LETTER, STATE> internalTrans : mNwa.internalSuccessors(state)) {
 					resultAsChangeableAutomaton.addInternalTransition(state, internalTrans.getLetter(),
 							internalTrans.getSucc());
-					increaseResultAmountOfTransitions();
 				}
 				for (OutgoingCallTransition<LETTER, STATE> callTrans : mNwa.callSuccessors(state)) {
 					resultAsChangeableAutomaton.addCallTransition(state, callTrans.getLetter(), callTrans.getSucc());
-					increaseResultAmountOfTransitions();
 				}
 				for (OutgoingReturnTransition<LETTER, STATE> returnTrans : mNwa.returnSuccessors(state)) {
 					resultAsChangeableAutomaton.addReturnTransition(state, returnTrans.getHierPred(),
 							returnTrans.getLetter(), returnTrans.getSucc());
-					increaseResultAmountOfTransitions();
 				}
 
 				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
@@ -1110,8 +1058,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Retrieve the merged summary edges for the game graph that start at
 		// the given source.
 		// We make all summarySources the only initial game states and
-		// determinize
-		// the automaton.
+		// determinize the automaton.
 
 		// Determinizing is very expensive, it is the dominant part of the
 		// whole algorithm
@@ -1129,7 +1076,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		for (IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
 			if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
 				throw new IllegalStateException(
-						"Expected cast possible, something seems to be wrong with the game graph.");
+						"Expected cast to be possible, something seems to be wrong with the game graph.");
 			}
 			GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
 
@@ -1143,7 +1090,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
 			if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
 				throw new IllegalStateException(
-						"Expected cast possible, something seems to be wrong with the game graph.");
+						"Expected cast to be possible, something seems to be wrong with the game graph.");
 			}
 			@SuppressWarnings("unchecked")
 			SpoilerNwaVertex<LETTER, STATE> mergedSummarySource = ((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState)
@@ -1828,9 +1775,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private void addSummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
 			final Set<STATE> duplicatorChoices) {
-		// TODO We may need invoker information for correct priority search. We
-		// also might be able to revert returningBridgeRemoval and then do the
-		// search.
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,
@@ -2153,21 +2097,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private boolean hasDownState(final STATE upState, final STATE downState) {
 		return mNwa.getDownStates(upState).contains(downState);
-	}
-
-	/**
-	 * Increases the internal counter of the amount of result states by one.
-	 */
-	private void increaseResultAmountOfStates() {
-		mResultAmountOfStates++;
-	}
-
-	/**
-	 * Increases the internal counter of the amount of result transitions by
-	 * one.
-	 */
-	private void increaseResultAmountOfTransitions() {
-		mResultAmountOfTransitions++;
 	}
 
 	/**
