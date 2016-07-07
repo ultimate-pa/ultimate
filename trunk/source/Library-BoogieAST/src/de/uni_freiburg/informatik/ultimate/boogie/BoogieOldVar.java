@@ -42,45 +42,35 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
-	
+
 	private BoogieNonOldVar mNonOldVar;
-	
 	private final int mHashCode;
 
-	
-	public BoogieOldVar(String identifier, IType iType, 
-			boolean oldvar,
-			TermVariable tv,
-			ApplicationTerm defaultConstant,
-			ApplicationTerm primedContant) {
+	public BoogieOldVar(final String identifier, final IType iType, final boolean oldvar, final TermVariable tv,
+			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
 		mHashCode = computeHashCode();
 	}
-	
+
 	@Override
 	public boolean isOldvar() {
 		return true;
 	}
 
-	
 	public BoogieNonOldVar getNonOldVar() {
 		return mNonOldVar;
 	}
-
 
 	public void setNonOldVar(BoogieNonOldVar nonOldVar) {
 		mNonOldVar = nonOldVar;
 	}
 
-
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
+		result = prime * result + ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
 		result = prime * result + (isOldvar() ? 1231 : 1237);
-		result = prime * result
-				+ ((getProcedure() == null) ? 0 : getProcedure().hashCode());
+		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
 		return result;
 	}
 
@@ -88,8 +78,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 	public int hashCode() {
 		return mHashCode;
 	}
-	
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -121,8 +110,4 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 		}
 		return true;
 	}
-	
-
-	
-
 }
