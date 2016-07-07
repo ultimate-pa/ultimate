@@ -33,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -123,23 +125,23 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		// - add old locals from the scope we are returning to
 		// - add globals that were masked by this scope from the scope we are returning to
 
-		final String source = action.getPreceedingProcedure();
-		final String target = action.getSucceedingProcedure();
+		final String sourceProc = action.getPreceedingProcedure();
+		final String targetProc = action.getSucceedingProcedure();
 		final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
 
-		if (source != null) {
+		if (sourceProc != null) {
 			// we need masked globals from the old scope, so we have to determine which globals are masked
-			varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(source));
+			varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(sourceProc));
 		}
-		if (target != null) {
+		if (targetProc != null) {
 			// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
 			// mask them again
-			varsNeededFromOldScope.putAll(getLocalVariables(target));
+			varsNeededFromOldScope.putAll(getLocalVariables(targetProc));
 		}
 
 		STATE rtr = localPreState;
 		// in any case, we have to remove all local variables from the state
-		rtr = removeLocals(rtr, source);
+		rtr = removeLocals(rtr, sourceProc);
 
 		if (varsNeededFromOldScope.isEmpty()) {
 			// we do not need information from the old scope, so we are finished
@@ -181,9 +183,12 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		// and add all the ones from the new scope (thus also automatically masking globals)
 		final String remove = action.getPreceedingProcedure();
 		final String add = action.getSucceedingProcedure();
-		STATE rtr = localPreState;
+
 		// remove current locals
-		rtr = removeLocals(rtr, remove);
+		STATE rtr = removeLocals(localPreState, remove);
+		
+		//TODO: replace old old variables with fresh ones 
+		
 		// remove globals that will be masked by the new scope
 		final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add);
 		if (!masked.isEmpty()) {
@@ -216,7 +221,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	 * Get all global variables that are masked by the specified procedure.
 	 * 
 	 * @param procedure
-	 * @return
+	 *            the name of the masking procedure.
+	 * @return A map from variable name to {@link IBoogieVar}.
 	 */
 	private Map<String, IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
@@ -235,6 +241,16 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			}
 		}
 
+		return rtr;
+	}
+
+	private Map<String, IBoogieVar> getOldVars() {
+		final DeclarationInformation sc = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final Map<String, IBoogieVar> rtr = new HashMap<>();
+		for (final Entry<String, BoogieNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
+			final BoogieVar oldVar = mBoogieVarTable.getBoogieVar(entry.getKey(), sc, true);
+			rtr.put("old("+oldVar.getIdentifier()+")", oldVar);
+		}
 		return rtr;
 	}
 
