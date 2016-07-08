@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -58,9 +59,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaCombinator;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
@@ -794,6 +797,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
 		case NWA_MAX_SAT:
+		case NWA_MAX_SAT2:
+		case RAQ_DIRECT_SIMULATION:
 		case NWA_COMBINATOR:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
@@ -942,6 +947,31 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 				break;
 			}
+			case NWA_MAX_SAT2: {
+				final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement, 
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstraction);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						minimizeOp.getResult())).getResult();
+				if (mComputeHoareAnnotation) {
+					throw new AssertionError("Hoare annotation and NWA_MAX_SAT2 incompatible");
+				}
+				break;
+			}
+			case RAQ_DIRECT_SIMULATION: {
+				final ReduceNwaDirectSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement, 
+						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) newAbstraction);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						minimizeOp.getResult())).getResult();
+				if (mComputeHoareAnnotation) {
+					throw new AssertionError("Hoare annotation and RAQ_DIRECT_SIMULATION incompatible");
+				}
+				break;
+			}
+			
 			case NONE:
 				minimized = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
 				break;
