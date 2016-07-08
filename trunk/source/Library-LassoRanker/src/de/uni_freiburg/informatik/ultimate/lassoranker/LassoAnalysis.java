@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPrepro
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEquality;
@@ -312,13 +313,20 @@ public class LassoAnalysis {
 	 */
 	protected LassoPreprocessor[] getPreProcessors(
 			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
+		final boolean useOldMapElimination = !true; 
+		final LassoPreprocessor mapElimination;
+		if (useOldMapElimination) {
+			mapElimination = new RewriteArrays2(true, mstem_transition, mloop_transition, mModifiableGlobalsAtHonda, 
+					mServices, mArrayIndexSupportingInvariants, mBoogie2SMT, lassoBuilder.getReplacementVarFactory());
+		} else {
+			mapElimination = new RewriteArraysMapElimination(mstem_transition, mloop_transition, mServices, mBoogie2SMT);
+		}
 		return new LassoPreprocessor[] {
 				new StemAndLoopPreprocessor(mold_script, new MatchInOutVars(mBoogie2SMT.getVariableManager())),
 				new StemAndLoopPreprocessor(mold_script, new AddAxioms(lassoBuilder.getReplacementVarFactory(), maxioms)),
 				new StemAndLoopPreprocessor(mold_script, new CommuHashPreprocessor(mServices)),
 				mpreferences.enable_partitioneer ? new LassoPartitioneerPreprocessor(mold_script, mServices, mBoogie2SMT) : null,
-				new RewriteArrays2(true, mstem_transition, mloop_transition, mModifiableGlobalsAtHonda, 
-						mServices, mArrayIndexSupportingInvariants, mBoogie2SMT, lassoBuilder.getReplacementVarFactory()),
+				mapElimination,
 				new StemAndLoopPreprocessor(mold_script, new MatchInOutVars(mBoogie2SMT.getVariableManager())),
 				mpreferences.enable_partitioneer ? new LassoPartitioneerPreprocessor(mold_script, mServices, mBoogie2SMT) : null,
 				new StemAndLoopPreprocessor(mold_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
