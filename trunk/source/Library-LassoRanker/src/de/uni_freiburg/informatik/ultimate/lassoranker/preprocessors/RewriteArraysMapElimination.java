@@ -80,8 +80,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		// TODO: Only basic version, do other things like IndexSupportingInvariantAnalysis
 		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(mStem, mLoop));
-		final TransFormulaLR newStem = elim.getRewrittenTransFormula(mStem);
-		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(mLoop);
+		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(mStem);
+		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(mLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
 	}
