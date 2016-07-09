@@ -369,7 +369,7 @@ public class CHandler implements ICHandler {
 			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment,
 					inRange, pointerIntegerConversion);
 		}
-		mPostProcessor = new PostProcessor(main, mLogger, mExpressionTranslation);
+		mPostProcessor = new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer =
 				new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, mExpressionTranslation, main.getTypeSizes());
 		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer,

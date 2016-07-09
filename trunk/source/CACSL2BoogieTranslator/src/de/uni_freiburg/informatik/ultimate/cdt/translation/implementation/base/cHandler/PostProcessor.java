@@ -101,6 +101,7 @@ public class PostProcessor {
 	private final ILogger mLogger;
 	
 	private final AExpressionTranslation mExpressionTranslation;
+	private final boolean mOverapproximateFloatingPointOperations;
 
 	/*
 	 * Decides if the PostProcessor declares the special function that we use for
@@ -111,12 +112,16 @@ public class PostProcessor {
 
 	/**
 	 * Constructor.
+	 * @param overapproximateFloatingPointOperations 
 	 */
-	public PostProcessor(Dispatcher dispatcher, ILogger logger, AExpressionTranslation expressionTranslation) {
+	public PostProcessor(Dispatcher dispatcher, ILogger logger, 
+			AExpressionTranslation expressionTranslation, 
+			boolean overapproximateFloatingPointOperations) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
+		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 	}
 
 
@@ -165,7 +170,7 @@ public class PostProcessor {
 					typeHandler));
 
 			if ((typeHandler).areFloatingTypesNeeded()) {
-				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler));
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, true));
 			}
 
 		}
@@ -576,22 +581,25 @@ public class PostProcessor {
 	 * @return
 	 */
 	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
-			TypeSizes typesizes, TypeHandler typeHandler) {
+			TypeSizes typesizes, TypeHandler typeHandler, boolean overapproximateFloat) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
-		//Roundingmodes, for now RNE hardcoded
 		
-		final Attribute[] attributesRM = new Attribute[1];
-		attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
-		final String identifierRM = "RoundingMode";
-		final String[] typeParamsRM = new String[0];
-		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
-		
-		final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
-		final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
-		
-		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
-		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRTZ}, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+		if (!overapproximateFloat) {
+			//Roundingmodes, for now RNE hardcoded
+
+			final Attribute[] attributesRM = new Attribute[1];
+			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
+			final String identifierRM = "RoundingMode";
+			final String[] typeParamsRM = new String[0];
+			decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+
+			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
+			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
+
+			decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+			decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRTZ}, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+		}
 		
 		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
@@ -599,11 +607,15 @@ public class PostProcessor {
 			
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
-				final Attribute[] attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
-				final int bytesize = typesizes.getSize(cPrimitive);
-				final int[] indices = new int[2];
-				switch (bytesize) {
+				final Attribute[] attributes;
+				if (overapproximateFloat) {
+					attributes = new Attribute[0];
+				} else {
+					attributes = new Attribute[2];
+					attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
+					final int bytesize = typesizes.getSize(cPrimitive);
+					final int[] indices = new int[2];
+					switch (bytesize) {
 					case 4:
 						indices[0] = 8;
 						indices[1] = 24;
@@ -619,18 +631,16 @@ public class PostProcessor {
 						break;
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+					}
+					attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
+							new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
+									new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				}
-				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
-						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
-											new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
-				
 			}
 		}	
-			
-			
 		return decls;
 	}
 			

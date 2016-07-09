@@ -37,8 +37,8 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -202,6 +202,7 @@ public abstract class AExpressionTranslation {
 	public abstract RValue translateFloatingLiteral(ILocation loc, String val);
 	
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
+	
 	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive inputPrimitive, BigInteger zero) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
@@ -446,7 +447,7 @@ public abstract class AExpressionTranslation {
 	
 	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
 	
-	protected String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
+	protected String declareBinaryFloatComparisonOverApprox(ILocation loc, CPrimitive type) {
 		final String functionName = "someBinary" + type.toString() +"ComparisonOperation";
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -613,4 +614,29 @@ public abstract class AExpressionTranslation {
 	public abstract Expression getRoundingMode();
 	
 	public abstract Expression createFloatingPointClassificationFunction(ILocation loc, String name);
+	
+	
+	public RValue constructOverapproximationFloatLiteral(ILocation loc, String val, CPrimitive type) {
+		final String functionName = "floatingLiteral_" + makeBoogieIdentifierSuffix(val);
+		final String prefixedFunctionName = "~" + functionName;
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
+					new Expression[] { new StringLiteral(loc, functionName) });
+			final Attribute[] attributes = new Attribute[] { attribute };
+			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
+		}
+		final Expression expr = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {});
+		return new RValue(expr, type);
+	}
+
+	/**
+	 * Translate string representation of a C literal to a string 
+	 * representation that is allowed in Boogie identifiers.
+	 * @param val string representation of C literal
+	 * @return
+	 */
+	private String makeBoogieIdentifierSuffix(String val) {
+		return val;
+	}
 }

@@ -749,7 +749,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	@Override
 	public Expression constructBinaryEqualityExpression_Floating(ILocation loc, int nodeOperator, Expression exp1,
 			CType type1, Expression exp2, CType type2) {
-		final String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, (CPrimitive) type1);
+		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
 	}
 

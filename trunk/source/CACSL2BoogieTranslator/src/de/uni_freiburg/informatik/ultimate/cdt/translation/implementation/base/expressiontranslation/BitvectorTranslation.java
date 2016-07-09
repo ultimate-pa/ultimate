@@ -111,9 +111,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		declareFloatingPointConstructors(loc);
 		final RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
-		return rVal;
+		if (mOverapproximateFloatingPointOperations) {
+			return super.constructOverapproximationFloatLiteral(loc, val, (CPrimitive) rVal.getCType());
+		} else {
+			declareFloatingPointConstructors(loc);
+			return rVal;
+		}
 	}
 	
 	@Override
@@ -510,41 +514,47 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 		
-		Expression result;
-		boolean isNegated = false;
-		final String funcname;
-		switch (nodeOperator) {
-		case IASTBinaryExpression.op_equals:
-			funcname = "fp.eq";
-			break;
-		case IASTBinaryExpression.op_notequals:
-			funcname = "fp.eq";
-			isNegated = true;
-			break;			
-		case IASTBinaryExpression.op_greaterEqual:
-			funcname = "fp.geq";
-			break;
-		case IASTBinaryExpression.op_greaterThan:
-			funcname = "fp.gt";
-			break;
-		case IASTBinaryExpression.op_lessEqual:
-			funcname = "fp.leq";
-			break;
-		case IASTBinaryExpression.op_lessThan:
-			funcname = "fp.lt";
-			break;
-		default:
-			throw new AssertionError("unknown operation " + nodeOperator);
+		if (mOverapproximateFloatingPointOperations) {
+			final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+		} else {
+
+			Expression result;
+			boolean isNegated = false;
+			final String funcname;
+			switch (nodeOperator) {
+			case IASTBinaryExpression.op_equals:
+				funcname = "fp.eq";
+				break;
+			case IASTBinaryExpression.op_notequals:
+				funcname = "fp.eq";
+				isNegated = true;
+				break;			
+			case IASTBinaryExpression.op_greaterEqual:
+				funcname = "fp.geq";
+				break;
+			case IASTBinaryExpression.op_greaterThan:
+				funcname = "fp.gt";
+				break;
+			case IASTBinaryExpression.op_lessEqual:
+				funcname = "fp.leq";
+				break;
+			case IASTBinaryExpression.op_lessThan:
+				funcname = "fp.lt";
+				break;
+			default:
+				throw new AssertionError("unknown operation " + nodeOperator);
+			}
+
+			declareFloatingPointFunction(loc, funcname, funcname + type1.toString(), true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
+			//TODO: evaluate possiblities for boogiefunctionnames
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{exp1, exp2});
+
+			if (isNegated) {
+				result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
+			}
+			return result;
 		}
-		
-		declareFloatingPointFunction(loc, funcname, funcname + type1.toString(), true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
-		//TODO: evaluate possiblities for boogiefunctionnames
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{exp1, exp2});
-		
-		if (isNegated) {
-			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
-		}
-		return result;
 	}
 
 	@Override
