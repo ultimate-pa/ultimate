@@ -2,7 +2,9 @@
 // Date: 2016-07-09
 // Spoiler can force Duplicator to move to s7 which is non-accepting.
 // Our implementation does not detect this.
-
+// The last days I presumed that this is a bug of our approach.
+// However, I am starting to realize that there is some hope that it is not
+// a bug, but a feature.
 
 
 //print(nwa);
