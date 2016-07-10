@@ -503,7 +503,7 @@ public abstract class AExpressionTranslation {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
 		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		final Expression oldExpression = rexp.lrVal.getValue();
-		final IdentifierExpression roundingMode = new IdentifierExpression(null, "RTZ");
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
 		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
