@@ -170,7 +170,7 @@ public class PostProcessor {
 					typeHandler));
 
 			if ((typeHandler).areFloatingTypesNeeded()) {
-				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, true));
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations));
 			}
 
 		}
