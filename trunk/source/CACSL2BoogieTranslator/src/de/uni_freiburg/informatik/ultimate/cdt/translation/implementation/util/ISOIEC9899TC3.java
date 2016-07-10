@@ -299,33 +299,7 @@ public final class ISOIEC9899TC3 {
 			final Expression[] indices;
 			final Attribute[] attributes;
 			
-			if (suffixFreeValue.equals("NAN") || suffixFreeValue.equals("nan")) {
-				assert false : "This is dead code";
-				functionName = "NaN";
-				arguments = new Expression[]{eb, sb};
-			} else if (suffixFreeValue.equals("INFINITY")) {
-				assert false : "This is dead code";
-				indices = new Expression[]{eb, sb};
-				if (fps.getExponent() == 8) {
-					functionName = "infinityFloat";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
-				} else if (fps.getExponent() == 11) {
-					functionName = "infinityDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
-				} else if (fps.getExponent() == 15) {
-					functionName = "infinityLongDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
-				} else {
-					throw new IllegalArgumentException();
-				}
-				arguments = new Expression[]{};
-			} else if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
+			if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
 				indices = new Expression[]{eb, sb};
 				if (fps.getExponent() == 8) {
 					functionName = "zeroFloat";
