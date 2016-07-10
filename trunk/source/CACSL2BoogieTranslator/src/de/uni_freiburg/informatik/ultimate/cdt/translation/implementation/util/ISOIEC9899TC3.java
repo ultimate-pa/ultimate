@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class holds methods, that help translating constants.
@@ -197,41 +198,41 @@ public final class ISOIEC9899TC3 {
 			Expression roundingMode) {
 		if (bitvectorTranslation) {
 			String value = val;
-			String floatType = null;
+			
 			if (roundingMode != null) {
 				if (!(roundingMode instanceof IdentifierExpression)) {
 					throw new IllegalArgumentException("not a rounding Mode");
 				}
 			}
 
-			// if there is a float-suffix: throw it away
-			for (final String s : SUFFIXES_FLOAT) {
-				if (val.endsWith(s)) {
-					value = val.substring(0, val.length() - s.length());
-					floatType = s;
-				}
-			}
 			
+			final String floatSuffix;
+			String suffixFreeValue;
+			{
+				final Pair<String, String> pair = checkForFloatSuffix(value);
+				suffixFreeValue = pair.getFirst();
+				floatSuffix = pair.getSecond();
+			}
 
 			
 			// convert literal in hex form to decimal form
-			if (value.startsWith("0x") || value.startsWith("0X")) {
-				value = value.substring(2);
+			if (suffixFreeValue.startsWith("0x") || suffixFreeValue.startsWith("0X")) {
+				suffixFreeValue = suffixFreeValue.substring(2);
 				int suffixLength = -1;
 				String hexExponentValue = null;
 				
 				// extract exponent value of the hex literal
-				if (value.contains("p")) {
-					hexExponentValue = value.substring(value.indexOf("p") + 1);
-					value = value.substring(0, value.indexOf("p"));
+				if (suffixFreeValue.contains("p")) {
+					hexExponentValue = suffixFreeValue.substring(suffixFreeValue.indexOf("p") + 1);
+					suffixFreeValue = suffixFreeValue.substring(0, suffixFreeValue.indexOf("p"));
 				}
 				
-				if (value.contains(".")) {
-					final int dotPosition = value.indexOf(".");
-					suffixLength = value.substring(dotPosition + 1).length();
-					value = value.substring(0, dotPosition) + value.substring(dotPosition + 1);
+				if (suffixFreeValue.contains(".")) {
+					final int dotPosition = suffixFreeValue.indexOf(".");
+					suffixLength = suffixFreeValue.substring(dotPosition + 1).length();
+					suffixFreeValue = suffixFreeValue.substring(0, dotPosition) + suffixFreeValue.substring(dotPosition + 1);
 				}
-				BigInteger hexValueToDecimalValue = new BigInteger(value, 16);
+				BigInteger hexValueToDecimalValue = new BigInteger(suffixFreeValue, 16);
 				BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
 				
 				if (hexExponentValue != null) {
@@ -250,12 +251,12 @@ public final class ISOIEC9899TC3 {
 				if (suffixLength != -1) {
 					hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal(Math.pow(16, suffixLength)));
 				}
-				value = hexValueBigDecimal.toString();
-			} else if (value.contains("e")) {				
+				suffixFreeValue = hexValueBigDecimal.toString();
+			} else if (suffixFreeValue.contains("e")) {				
 				// if value contains e calculate the number according to it
-				final int eLocatation = value.indexOf("e");
-				final String floatString = value.substring(0, eLocatation);
-				String exponentString = value.substring(eLocatation + 1, value.length());
+				final int eLocatation = suffixFreeValue.indexOf("e");
+				final String floatString = suffixFreeValue.substring(0, eLocatation);
+				String exponentString = suffixFreeValue.substring(eLocatation + 1, suffixFreeValue.length());
 				BigDecimal base = new BigDecimal(floatString);
 				if (exponentString.startsWith("0")) {
 					while (exponentString.startsWith("0")) {
@@ -281,20 +282,20 @@ public final class ISOIEC9899TC3 {
 						exponentValue--;						
 					}
 				}
-				value = base.toString();
+				suffixFreeValue = base.toString();
 			}
 			
-			final BigDecimal floatVal = new BigDecimal(value);
+			final BigDecimal floatVal = new BigDecimal(suffixFreeValue);
 			
 			
 			
 			// Set floatIndices depending on the value of the val
 			final CPrimitive resultType;
-			if (floatType == null || floatType.equals("d") || floatType.equals("D")) {
+			if (floatSuffix == null || floatSuffix.equals("d") || floatSuffix.equals("D")) {
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
-			} else if (floatType.equals("f") || floatType.equals("F")) {
+			} else if (floatSuffix.equals("f") || floatSuffix.equals("F")) {
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
-			} else if (floatType.equals("l") || floatType.equals("L")) {
+			} else if (floatSuffix.equals("l") || floatSuffix.equals("L")) {
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
 				throw new IllegalArgumentException("not a float type");
@@ -308,10 +309,10 @@ public final class ISOIEC9899TC3 {
 			final Expression[] indices;
 			final Attribute[] attributes;
 			
-			if (value.equals("NAN") || value.equals("nan")) {
+			if (suffixFreeValue.equals("NAN") || suffixFreeValue.equals("nan")) {
 				functionName = "NaN";
 				arguments = new Expression[]{eb, sb};
-			} else if (value.equals("INFINITY")) {
+			} else if (suffixFreeValue.equals("INFINITY")) {
 				indices = new Expression[]{eb, sb};
 				if (fps.getExponent() == 8) {
 					functionName = "infinityFloat";
@@ -422,6 +423,26 @@ public final class ISOIEC9899TC3 {
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
+	}
+	
+	/**
+	 * Check if value has float suffix.
+	 * Return Pair whose first entry is a suffix-free float value and whose
+	 * second entry is the float suffix. Use null as second if floatSuffix is 
+	 * null.
+	 */
+	private static Pair<String, String> checkForFloatSuffix(final String floatValue) {
+		// if there is a float-suffix: throw it away
+		for (final String s : SUFFIXES_FLOAT) {
+			if (floatValue.endsWith(s)) {
+				final String suffixFreeValue = floatValue.substring(0, floatValue.length() - s.length());
+				final String floatSuffix = s;
+				return new Pair<String, String>(suffixFreeValue, floatSuffix);
+			}
+		}
+		final String suffixFreeValue = floatValue;
+		final String floatSuffix = null;
+		return new Pair<String, String>(suffixFreeValue, floatSuffix);
 	}
 
 	/**
