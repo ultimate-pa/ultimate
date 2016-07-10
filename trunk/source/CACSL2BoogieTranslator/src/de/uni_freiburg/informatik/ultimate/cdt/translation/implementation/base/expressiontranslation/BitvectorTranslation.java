@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes.FloatingPointSize;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -66,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -111,12 +115,84 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		final RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, mTypeSizes, mFunctionDeclarations, getRoundingMode());
+		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
 		if (mOverapproximateFloatingPointOperations) {
-			return super.constructOverapproximationFloatLiteral(loc, val, (CPrimitive) rVal.getCType());
+			return super.constructOverapproximationFloatLiteral(loc, val, fpl.getCPrimitive());
 		} else {
 			declareFloatingPointConstructors(loc);
-			return rVal;
+			
+			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(fpl.getCPrimitive().getType());
+			final Expression[] arguments;
+			final String functionName;
+			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
+			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
+			final Expression[] indices;
+			final Attribute[] attributes;
+			
+			if (fpl.getDecimalRepresenation().compareTo(BigDecimal.ZERO) == 0) {
+				indices = new Expression[]{eb, sb};
+				if (fps.getExponent() == 8) {
+					functionName = "zeroFloat";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
+				} else if (fps.getExponent() == 11) {
+					functionName = "zeroDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
+				} else if (fps.getExponent() == 15) {
+					functionName = "zeroLongDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				arguments = new Expression[] {};
+			} else {
+				if (fpl.getCPrimitive().getType() == PRIMITIVE.FLOAT){
+					functionName = "declareFloat";
+				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.DOUBLE) {
+					functionName = "declareDouble";
+				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.LONGDOUBLE) {
+					functionName = "declareLongDouble";
+				} else {
+					throw new IllegalArgumentException();
+				}
+				final Expression realValue = new RealLiteral(loc, fpl.getDecimalRepresenation().toString());
+				arguments = new Expression[] {getRoundingMode(), realValue};
+				
+				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
+				 * before it can be used
+				 * 
+				 * final BigDecimal twoPointZero = new BigDecimal("2.0");
+				 * // calculate exponent value and value of the significant
+				 * while (floatVal.compareTo(twoPointZero) == 1) {
+				 *  	floatVal = floatVal.divide(twoPointZero);
+				 *  	exponentValue++;
+				 * }
+				 * String floatValString = floatVal.toString();
+				 * if (floatValString.contains(".")) {
+				 *  	floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
+				 * }
+				 * if (resultType.toString().equals("FLOAT")){
+				 * 	functionName = "declareFloat";
+				 * } else if (resultType.toString().equals("DOUBLE")) {
+				 *  	functionName = "declareDouble";
+				 * } else if (resultType.toString().equals("LONGDOUBLE")) {
+				 *  	functionName = "declareLongDouble";
+				 * } else {
+				 *  	throw new IllegalArgumentException();
+				 * }
+				 * exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+				 * significant = new BitvecLiteral(loc, floatValString, significantLength);
+				 * arguments = new Expression[]{sign, exponent, significant};
+				 */
+			}
+			
+			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
+			return new RValue(func, fpl.getCPrimitive());
 		}
 	}
 	

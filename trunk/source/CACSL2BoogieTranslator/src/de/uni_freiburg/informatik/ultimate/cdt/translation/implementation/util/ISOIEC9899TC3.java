@@ -35,22 +35,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes.FloatingPointSize;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -181,145 +172,30 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Parses Integer constants according to <a
+	 * Parses FloatingPoint constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.2.
-	 * 
-	 * @param val
-	 *            the value to parse
 	 * @param loc
 	 *            the location
-	 * @return the parsed value
+	 * @param val
+	 *            the value to parse (as it occurs in the C program)
+	 * 
+	 * @return Our representation of a floating point literal
 	 */
-	public static final RValue handleFloatConstant(String val, ILocation loc,
-			boolean bitvectorTranslation, 
-			TypeSizes typeSizeConstants,
-			FunctionDeclarations functionDeclarations,
-			Expression roundingMode) {
-		if (bitvectorTranslation) {
-			String value = val;
-			
-			if (roundingMode != null) {
-				if (!(roundingMode instanceof IdentifierExpression)) {
-					throw new IllegalArgumentException("not a rounding Mode");
-				}
-			}
-
-			
-			final String floatSuffix;
-			String suffixFreeValue;
-			{
-				final Pair<String, String> pair = checkForFloatSuffix(value);
-				suffixFreeValue = pair.getFirst();
-				floatSuffix = pair.getSecond();
-			}
-
-			
-			final BigDecimal floatVal = getDecimalForm(suffixFreeValue);
-			
-			
-			
-			final CPrimitive resultType = determineTypeFromSuffix(floatSuffix);
-			
-			final FloatingPointSize fps = typeSizeConstants.getFloatingPointSize(resultType.getType());
-			final Expression[] arguments;
-			final String functionName;
-			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
-			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
-			final Expression[] indices;
-			final Attribute[] attributes;
-			
-			if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
-				indices = new Expression[]{eb, sb};
-				if (fps.getExponent() == 8) {
-					functionName = "zeroFloat";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
-				} else if (fps.getExponent() == 11) {
-					functionName = "zeroDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
-				} else if (fps.getExponent() == 15) {
-					functionName = "zeroLongDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
-				} else {
-					throw new IllegalArgumentException();
-				}
-				arguments = new Expression[] {};
-			} else {
-				if (resultType.toString().equals("FLOAT")){
-					functionName = "declareFloat";
-				} else if (resultType.toString().equals("DOUBLE")) {
-					functionName = "declareDouble";
-				} else if (resultType.toString().equals("LONGDOUBLE")) {
-					functionName = "declareLongDouble";
-				} else {
-					throw new IllegalArgumentException();
-				}
-				final Expression realValue = new RealLiteral(loc, floatVal.toString());
-				arguments = new Expression[] {roundingMode, realValue};
-				
-				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
-				 * before it can be used
-				 * 
-				 * final BigDecimal twoPointZero = new BigDecimal("2.0");
-				 * // calculate exponent value and value of the significant
-				 * while (floatVal.compareTo(twoPointZero) == 1) {
-				 *  	floatVal = floatVal.divide(twoPointZero);
-				 *  	exponentValue++;
-				 * }
-				 * String floatValString = floatVal.toString();
-				 * if (floatValString.contains(".")) {
-				 *  	floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
-				 * }
-				 * if (resultType.toString().equals("FLOAT")){
-				 * 	functionName = "declareFloat";
-				 * } else if (resultType.toString().equals("DOUBLE")) {
-				 *  	functionName = "declareDouble";
-				 * } else if (resultType.toString().equals("LONGDOUBLE")) {
-				 *  	functionName = "declareLongDouble";
-				 * } else {
-				 *  	throw new IllegalArgumentException();
-				 * }
-				 * exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-				 * significant = new BitvecLiteral(loc, floatValString, significantLength);
-				 * arguments = new Expression[]{sign, exponent, significant};
-				 */
-			}
-			
-			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
-			return new RValue(func, resultType);
-			
-		} else {
-			String value = val;
-			// if there is a float-suffix: throw it away
-			for (final String s : SUFFIXES_FLOAT) {
-				if (val.endsWith(s)) {
-					value = val.substring(0, val.length() - s.length());
-					final String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-			}
-			try {
-				// check for integer-prefix.
-				if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
-					// val is a hexadecimal-constant!
-					//FIXME: --> is removing the + in front of the exponent enough??
-					value = Double.valueOf(value.replaceAll("\\+", "")).toString();
-				} else {
-					Double.valueOf(value); //using double for good measure..
-				}
-				return new RValue(new RealLiteral(loc, value), new CPrimitive(PRIMITIVE.FLOAT));
-			} catch (final NumberFormatException nfe) {
-				final String msg = "Unable to translate float!";
-				throw new IncorrectSyntaxException(loc, msg);
-			}
+	public static final FloatingPointLiteral handleFloatConstant(final String value, ILocation loc) {
+		final String floatSuffix;
+		String suffixFreeValue;
+		{
+			final Pair<String, String> pair = checkForFloatSuffix(value);
+			suffixFreeValue = pair.getFirst();
+			floatSuffix = pair.getSecond();
 		}
+		final BigDecimal resultValue = getDecimalForm(suffixFreeValue);
+		final CPrimitive resultType = determineTypeFromSuffix(floatSuffix);
+		final FloatingPointLiteral result = new FloatingPointLiteral(resultValue, resultType);
+		return result;
 	}
+
 
 	/**
 	 * Given a suffix-free decimal value, compute a BigDecimal representation of
@@ -595,5 +471,24 @@ public final class ISOIEC9899TC3 {
 		throw new IllegalArgumentException("Unable to represent " + ic.getValue() 
 			+ " using any of the given types. This is probably undefined"
 			+ " or we need extended integer types. See 6.4.4.1 in the C standard");
+	}
+	
+	
+	public static class FloatingPointLiteral {
+		private final BigDecimal mDecimalRepresenation;
+		private final CPrimitive mCPrimitive;
+		public FloatingPointLiteral(BigDecimal decimalRepresenation, CPrimitive cPrimitive) {
+			super();
+			mDecimalRepresenation = decimalRepresenation;
+			mCPrimitive = cPrimitive;
+		}
+		public BigDecimal getDecimalRepresenation() {
+			return mDecimalRepresenation;
+		}
+		public CPrimitive getCPrimitive() {
+			return mCPrimitive;
+		}
+		
+		
 	}
 }
