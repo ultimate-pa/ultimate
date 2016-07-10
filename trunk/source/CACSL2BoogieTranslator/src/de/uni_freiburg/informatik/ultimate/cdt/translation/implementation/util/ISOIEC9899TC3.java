@@ -35,7 +35,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -199,8 +198,8 @@ public final class ISOIEC9899TC3 {
 		if (bitvectorTranslation) {
 			String value = val;
 			String floatType = null;
-			int exponentLength = 0;
-			int significantLength = 0;
+			final int exponentLength;
+			final int significantLength;
 			if (roundingMode != null) {
 				if (!(roundingMode instanceof IdentifierExpression)) {
 					throw new IllegalArgumentException("not a rounding Mode");
