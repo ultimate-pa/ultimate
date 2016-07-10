@@ -727,8 +727,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
 		final Expression[] indices = new Expression[]{new IntegerLiteral(loc, exponent), new IntegerLiteral(loc, significant)};
-		final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-				new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+		final Attribute[] attributes;
+		if (mOverapproximateFloatingPointOperations) {
+			attributes = new Attribute[0];
+		} else {
+			attributes = new Attribute[]{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+					new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+		}
 		final ASTType asttype = new NamedType(loc, typeName, new ASTType[0]);
 		final ASTType paramType = new PrimitiveType(loc, SFO.INT);
 		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype, paramType, paramType);
