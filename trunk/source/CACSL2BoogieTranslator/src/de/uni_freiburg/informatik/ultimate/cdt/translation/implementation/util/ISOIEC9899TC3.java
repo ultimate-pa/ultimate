@@ -289,17 +289,7 @@ public final class ISOIEC9899TC3 {
 			
 			
 			
-			// Set floatIndices depending on the value of the val
-			final CPrimitive resultType;
-			if (floatSuffix == null || floatSuffix.equals("d") || floatSuffix.equals("D")) {
-				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
-			} else if (floatSuffix.equals("f") || floatSuffix.equals("F")) {
-				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
-			} else if (floatSuffix.equals("l") || floatSuffix.equals("L")) {
-				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
-			} else {
-				throw new IllegalArgumentException("not a float type");
-			}
+			final CPrimitive resultType = determineTypeFromSuffix(floatSuffix);
 			
 			final FloatingPointSize fps = typeSizeConstants.getFloatingPointSize(resultType.getType());
 			final Expression[] arguments;
@@ -423,6 +413,25 @@ public final class ISOIEC9899TC3 {
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 		}
+	}
+
+	/**
+	 * Determine the type of a real floating type from the given float suffix.
+	 * @param floatSuffix either "d", "D", "f", "F", "l", "L"
+	 */
+	private static CPrimitive determineTypeFromSuffix(final String floatSuffix) {
+		// Set floatIndices depending on the value of the val
+		final CPrimitive resultType;
+		if (floatSuffix == null || floatSuffix.equals("d") || floatSuffix.equals("D")) {
+			resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
+		} else if (floatSuffix.equals("f") || floatSuffix.equals("F")) {
+			resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
+		} else if (floatSuffix.equals("l") || floatSuffix.equals("L")) {
+			resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
+		} else {
+			throw new IllegalArgumentException("not a float type");
+		}
+		return resultType;
 	}
 	
 	/**
