@@ -697,9 +697,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			
-			Attribute[] attributes = null;
+			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
-			ASTType[] params;
 			final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			if (newType.isFloatingType() && !newType.getType().equals(SFO.REAL)) {
 				final int[] indices = new int[2];
@@ -726,7 +725,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					throw new AssertionError("unhandled case");
 				}
 			}
-			params = new ASTType[]{roundingMode, paramASTType};
+			final ASTType[] params = new ASTType[]{roundingMode, paramASTType};
 			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
 			
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, params);
