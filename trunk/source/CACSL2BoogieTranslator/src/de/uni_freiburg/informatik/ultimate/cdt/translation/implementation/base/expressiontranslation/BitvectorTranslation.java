@@ -412,23 +412,32 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		resultASTType = mTypeHandler.ctype2asttype(loc, result);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
 	}
+	
+	
 	/**
 	 * Generate the attributes for the Boogie code that make sure that we
-	 * translate to the desired SMT functions.
+	 * either 
+	 * - translate to the desired SMT functions, or 
+	 * - let Ultimate overapproximate 
 	 */
 	private Attribute[] generateAttributes(ILocation loc, String smtlibFunctionName, int[] indices) {
 		Attribute[] attributes;
-		if (indices == null) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
-		    attributes = new Attribute[] { attribute };
+		if (mOverapproximateFloatingPointOperations) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName ) });
+			attributes = new Attribute[] { attribute };
 		} else {
-		    final Expression[] literalIndices = new IntegerLiteral[indices.length];
-		    for (int i = 0; i < indices.length; ++i) {
-		    	literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
-		    }
-		    final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
-		    final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
-		    attributes = new Attribute[] { attribute1, attribute2 };
+			if (indices == null) {
+				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+				attributes = new Attribute[] { attribute };
+			} else {
+				final Expression[] literalIndices = new IntegerLiteral[indices.length];
+				for (int i = 0; i < indices.length; ++i) {
+					literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
+				}
+				final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+				final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
+				attributes = new Attribute[] { attribute1, attribute2 };
+			}
 		}
 		return attributes;
 	}
@@ -739,37 +748,30 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
 		final String functionName;
 		final String suffixedFunctionName;
-		final String typeName;
-		final String exponent;
-		final String significant;
+		final CPrimitive type;
 		if (name.equals("NAN") || name.equals("nan")) {
 			functionName = "NaN";
 			suffixedFunctionName = "NaN_d";
-			typeName = "C_DOUBLE";
-			exponent = "11";
-			significant = "53";
+			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
 			functionName = "+oo";
 			suffixedFunctionName = "+oo_d";
-			typeName = "C_DOUBLE";
-			exponent = "11";
-			significant = "53";
+			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("nanl")){
 			functionName = "NaN";
 			suffixedFunctionName = "NaN_l";
-			typeName = "C_LONGDOUBLE";
-			exponent = "15";
-			significant = "113";
+			type = new CPrimitive(PRIMITIVE.LONGDOUBLE);
 		} else if (name.equals("nanf")){
 			functionName = "NaN";
 			suffixedFunctionName = "NaN_f";
-			typeName = "C_FLOAT";
-			exponent = "5";
-			significant = "11";
+			type = new CPrimitive(PRIMITIVE.FLOAT);
 		} else {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
-		final Expression[] indices = new Expression[]{new IntegerLiteral(loc, exponent), new IntegerLiteral(loc, significant)};
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
+		final Expression[] indices = new Expression[]{
+				new IntegerLiteral(loc, String.valueOf(fps.getExponent())), 
+				new IntegerLiteral(loc, String.valueOf(fps.getSignificant()))};
 		final Attribute[] attributes;
 		if (mOverapproximateFloatingPointOperations) {
 			attributes = new Attribute[0];
@@ -777,12 +779,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			attributes = new Attribute[]{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
 					new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
 		}
-		final ASTType asttype = new NamedType(loc, typeName, new ASTType[0]);
-		final ASTType paramType = new PrimitiveType(loc, SFO.INT);
-		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype, paramType, paramType);
+		final ASTType asttype = mTypeHandler.ctype2asttype(loc, type);
+		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype);
 		
-		final FunctionApplication func = 	new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, indices);
-		return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
+		final FunctionApplication func = new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, new Expression[]{});
+		return new ExpressionResult(new RValue(func, type));
 	}
 
 	@Override
