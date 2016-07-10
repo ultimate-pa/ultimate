@@ -376,6 +376,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			// function already declared
 			return;
 		}
+		final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 		if (isRounded) {
 			final ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
@@ -385,10 +386,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				paramASTTypes[counter] = mTypeHandler.ctype2asttype(loc, cType);
 				counter += 1;
 			}
-			final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultASTType, paramASTTypes);
 		}  else {
-			final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 		}
 	}
