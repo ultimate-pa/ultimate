@@ -198,7 +198,7 @@ public class TypeSizes {
 		switch (cPrimitive) {
 		case FLOAT: {
 			final int sizeof = getSize(cPrimitive);  
-			if (sizeof == 8) {
+			if (sizeof == 4) {
 				result = new FloatingPointSize(24, 8);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
@@ -216,7 +216,7 @@ public class TypeSizes {
 		break;
 		case LONGDOUBLE: {
 			final int sizeof = getSize(cPrimitive);  
-			if (sizeof == 8) {
+			if (sizeof == 12 || sizeof == 16) {
 				result = new FloatingPointSize(113, 15);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
