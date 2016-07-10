@@ -124,12 +124,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(fpl.getCPrimitive().getType());
 			final Expression[] arguments;
 			final String functionName;
-			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
-			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
-			final Expression[] indices;
-			final Attribute[] attributes;
 			
 			if (fpl.getDecimalRepresenation().compareTo(BigDecimal.ZERO) == 0) {
+				final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
+				final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
+				final Expression[] indices;
+				final Attribute[] attributes;
 				indices = new Expression[]{eb, sb};
 				if (fps.getExponent() == 8) {
 					functionName = "zeroFloat";
