@@ -162,33 +162,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				}
 				final Expression realValue = new RealLiteral(loc, fpl.getDecimalRepresenation().toString());
 				arguments = new Expression[] {getRoundingMode(), realValue};
-				
-				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
-				 * before it can be used
-				 * 
-				 * final BigDecimal twoPointZero = new BigDecimal("2.0");
-				 * // calculate exponent value and value of the significant
-				 * while (floatVal.compareTo(twoPointZero) == 1) {
-				 *  	floatVal = floatVal.divide(twoPointZero);
-				 *  	exponentValue++;
-				 * }
-				 * String floatValString = floatVal.toString();
-				 * if (floatValString.contains(".")) {
-				 *  	floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
-				 * }
-				 * if (resultType.toString().equals("FLOAT")){
-				 * 	functionName = "declareFloat";
-				 * } else if (resultType.toString().equals("DOUBLE")) {
-				 *  	functionName = "declareDouble";
-				 * } else if (resultType.toString().equals("LONGDOUBLE")) {
-				 *  	functionName = "declareLongDouble";
-				 * } else {
-				 *  	throw new IllegalArgumentException();
-				 * }
-				 * exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-				 * significant = new BitvecLiteral(loc, floatValString, significantLength);
-				 * arguments = new Expression[]{sign, exponent, significant};
-				 */
 			}
 			
 			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
