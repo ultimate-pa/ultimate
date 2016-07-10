@@ -584,22 +584,31 @@ public class PostProcessor {
 			TypeSizes typesizes, TypeHandler typeHandler, boolean overapproximateFloat) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
-		
-		if (!overapproximateFloat) {
-			//Roundingmodes, for now RNE hardcoded
-
-			final Attribute[] attributesRM = new Attribute[1];
+		//Roundingmodes, for now RNE hardcoded
+		final Attribute[] attributesRM;
+		if (overapproximateFloat) {
+			attributesRM = new Attribute[0];
+		} else {
+			attributesRM = new Attribute[1];
 			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
-			final String identifierRM = "RoundingMode";
-			final String[] typeParamsRM = new String[0];
-			decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+		}
+		final String identifierRM = "RoundingMode";
+		final String[] typeParamsRM = new String[0];
+		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
 
+		final Attribute[] attributesRNE;
+		final Attribute[] attributesRTZ;
+		if (overapproximateFloat) {
+			attributesRNE = new Attribute[0];
+			attributesRTZ = new Attribute[0];
+		} else {
 			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
 			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
-
-			decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
-			decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRTZ}, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+			attributesRNE = new Attribute[]{attributeRNE};
+			attributesRTZ = new Attribute[]{attributeRTZ};
 		}
+		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
 		
 		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
