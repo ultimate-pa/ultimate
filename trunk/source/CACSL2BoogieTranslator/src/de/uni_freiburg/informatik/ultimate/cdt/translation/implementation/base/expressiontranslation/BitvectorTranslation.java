@@ -700,7 +700,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
-			if (newType.isFloatingType() && !newType.getType().equals(SFO.REAL)) {
+			if (newType.isFloatingType()) {
 				final int[] indices = new int[2];
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
 				indices[0] = fps.getExponent();
@@ -711,6 +711,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					attributes = generateAttributes(loc, "to_fp", indices);
 				}
 			} else {
+				
+				final String conversionFunction;
+				
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.INT)) {
 					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
 				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.LONG) || newType.getType().equals(CPrimitive.PRIMITIVE.LONGLONG)) {
