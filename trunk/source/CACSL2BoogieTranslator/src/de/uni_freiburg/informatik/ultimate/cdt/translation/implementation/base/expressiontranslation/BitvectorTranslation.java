@@ -80,12 +80,15 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	private final boolean mOverapproximateFloatingPointOperations;
 	private final Expression mRoundingMode;
+	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";
+	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
+	public static final String BOOGIE_ROUNDING_MODE_RTZ = "RoundingMode_RTZ";
 
 	public BitvectorTranslation(TypeSizes mTypeSizeConstants, ITypeHandler typeHandler, 
 			PointerIntegerConversion pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion);
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
-		final IdentifierExpression roundingMode = new IdentifierExpression(null, "RNE");
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
 		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		mRoundingMode = roundingMode;
 	}
@@ -377,7 +380,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 			int counter = 1;
-			paramASTTypes[0] = new NamedType(loc,"RoundingMode", new ASTType[0]);
+			paramASTTypes[0] = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			for (final CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = mTypeHandler.ctype2asttype(loc, cType);
 				counter += 1;
@@ -396,7 +399,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
 		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, result);
 		Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{8, 24});
-		paramASTTypes[0] = new NamedType(loc, "RoundingMode", new ASTType[0]);
+		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
 		
@@ -693,7 +696,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			Attribute[] attributes = null;
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			ASTType[] params;
-			final ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
+			final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			if (newType.isFloatingType() && !newType.getType().equals(SFO.REAL)) {
 				final int[] indices = new int[2];
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.FLOAT)) {

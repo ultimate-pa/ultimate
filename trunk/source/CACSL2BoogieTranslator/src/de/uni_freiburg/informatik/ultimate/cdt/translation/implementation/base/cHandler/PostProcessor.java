@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -589,12 +590,12 @@ public class PostProcessor {
 		if (overapproximateFloat) {
 			attributesRM = new Attribute[0];
 		} else {
+			final String smtlibRmIdentifier = "RoundingMode";
 			attributesRM = new Attribute[1];
-			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
+			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, smtlibRmIdentifier)});
 		}
-		final String identifierRM = "RoundingMode";
 		final String[] typeParamsRM = new String[0];
-		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+		decls.add(new TypeDeclaration(loc, attributesRM, false, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, typeParamsRM));
 
 		final Attribute[] attributesRNE;
 		final Attribute[] attributesRTZ;
@@ -607,8 +608,10 @@ public class PostProcessor {
 			attributesRNE = new Attribute[]{attributeRNE};
 			attributesRTZ = new Attribute[]{attributeRTZ};
 		}
-		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
-		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
+		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RNE}, 
+				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
+		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ}, 
+				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
 		
 		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
