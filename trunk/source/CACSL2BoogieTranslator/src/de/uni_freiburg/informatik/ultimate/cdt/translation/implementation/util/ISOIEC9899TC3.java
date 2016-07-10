@@ -300,9 +300,11 @@ public final class ISOIEC9899TC3 {
 			final Attribute[] attributes;
 			
 			if (suffixFreeValue.equals("NAN") || suffixFreeValue.equals("nan")) {
+				assert false : "This is dead code";
 				functionName = "NaN";
 				arguments = new Expression[]{eb, sb};
 			} else if (suffixFreeValue.equals("INFINITY")) {
+				assert false : "This is dead code";
 				indices = new Expression[]{eb, sb};
 				if (fps.getExponent() == 8) {
 					functionName = "infinityFloat";
