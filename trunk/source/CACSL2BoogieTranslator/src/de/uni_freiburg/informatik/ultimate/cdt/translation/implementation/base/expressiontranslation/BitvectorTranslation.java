@@ -128,27 +128,19 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			if (fpl.getDecimalRepresenation().compareTo(BigDecimal.ZERO) == 0) {
 				final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
 				final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
-				final Expression[] indices;
-				final Attribute[] attributes;
-				indices = new Expression[]{eb, sb};
+				final Expression[] indices = new Expression[]{eb, sb};
+				final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+						new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
 				if (fps.getExponent() == 8) {
 					functionName = "zeroFloat";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
 				} else if (fps.getExponent() == 11) {
 					functionName = "zeroDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
 				} else if (fps.getExponent() == 15) {
 					functionName = "zeroLongDouble";
-					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-					mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
 				} else {
 					throw new IllegalArgumentException();
 				}
+				mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, fpl.getCPrimitive());
 				arguments = new Expression[] {};
 			} else {
 				if (fpl.getCPrimitive().getType() == PRIMITIVE.FLOAT){
