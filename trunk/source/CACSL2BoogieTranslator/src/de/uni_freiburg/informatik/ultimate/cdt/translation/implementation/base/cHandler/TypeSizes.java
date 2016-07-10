@@ -189,4 +189,65 @@ public class TypeSizes {
 		maxValue = maxValue.subtract(BigInteger.ONE);
 		return maxValue;
 	}
+	
+	/**
+	 * @return FloatingPointSize of a float, double, or long double.
+	 */
+	public FloatingPointSize getFloatingPointSize(PRIMITIVE cPrimitive) {
+		final FloatingPointSize result;
+		switch (cPrimitive) {
+		case FLOAT: {
+			final int sizeof = getSize(cPrimitive);  
+			if (sizeof == 8) {
+				result = new FloatingPointSize(24, 8);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		}
+		break;
+		case DOUBLE: {
+			final int sizeof = getSize(cPrimitive);  
+			if (sizeof == 8) {
+				result = new FloatingPointSize(53, 11);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		} 
+		break;
+		case LONGDOUBLE: {
+			final int sizeof = getSize(cPrimitive);  
+			if (sizeof == 8) {
+				result = new FloatingPointSize(113, 15);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		}
+		break;
+		default:
+			throw new IllegalArgumentException("not real floating type " + cPrimitive);
+		}
+		return result;
+	}
+	
+	/**
+	 * The size of a real floating point type is defined by a significant
+	 * and an exponent.
+	 */
+	public class FloatingPointSize {
+		final int mSignificant;
+		final int mExponent;
+		public FloatingPointSize(int significant, int exponent) {
+			super();
+			mSignificant = significant;
+			mExponent = exponent;
+		}
+		public int getSignificant() {
+			return mSignificant;
+		}
+		public int getExponent() {
+			return mExponent;
+		}
+		
+		
+	}
 }
