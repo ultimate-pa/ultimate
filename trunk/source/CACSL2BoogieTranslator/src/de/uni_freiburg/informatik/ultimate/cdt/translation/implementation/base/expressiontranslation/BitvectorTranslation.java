@@ -719,8 +719,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 32 });
 				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || newType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
 					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 64 });
-				} else if (newType.getType().equals(SFO.REAL)) {
-					attributes = generateAttributes(loc, "fp.to_real", null);
 				} else {
 					throw new AssertionError("unhandled case");
 				}
