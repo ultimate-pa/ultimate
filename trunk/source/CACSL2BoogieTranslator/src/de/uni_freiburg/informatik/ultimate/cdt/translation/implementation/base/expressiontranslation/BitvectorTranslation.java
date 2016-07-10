@@ -705,26 +705,23 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
 				indices[0] = fps.getExponent();
 				indices[1] = fps.getSignificant();
-				if (oldType.getType().equals(CPrimitive.PRIMITIVE.UINT) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || oldType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
+				if (oldType.isUnsigned()) {
 					attributes = generateAttributes(loc, "to_fp_unsigned", indices);
 				} else {
 					attributes = generateAttributes(loc, "to_fp", indices);
 				}
-			} else {
-				
+			} else if (newType.isIntegerType()) {
 				final String conversionFunction;
-				
-				if (newType.getType().equals(CPrimitive.PRIMITIVE.INT)) {
-					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
-				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.LONG) || newType.getType().equals(CPrimitive.PRIMITIVE.LONGLONG)) {
-					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 64 });
-				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.UINT)) {
-					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 32 });
-				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.ULONG) || newType.getType().equals(CPrimitive.PRIMITIVE.ULONGLONG)) {
-					attributes = generateAttributes(loc, "fp.to_ubv", new int[] { 64 });
+				if (newType.isUnsigned()) {
+					conversionFunction = "fp.to_ubv";
 				} else {
-					throw new AssertionError("unhandled case");
+					conversionFunction = "fp.to_sbv";
 				}
+				final Integer bytesize = mTypeSizes.getSize(newType.getType());
+				final int bitsize = bytesize * 8;
+				attributes = generateAttributes(loc, conversionFunction, new int[] { bitsize });
+			} else {
+				throw new AssertionError("unhandled case");
 			}
 			final ASTType[] params = new ASTType[]{roundingMode, paramASTType};
 			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
