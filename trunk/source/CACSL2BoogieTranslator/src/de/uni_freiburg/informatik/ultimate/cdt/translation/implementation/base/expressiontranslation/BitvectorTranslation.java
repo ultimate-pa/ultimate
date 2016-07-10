@@ -131,11 +131,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				final Expression[] indices = new Expression[]{eb, sb};
 				final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
 						new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-				if (fps.getExponent() == 8) {
+				if (fpl.getCPrimitive().getType() == PRIMITIVE.FLOAT) {
 					functionName = "zeroFloat";
-				} else if (fps.getExponent() == 11) {
+				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.DOUBLE) {
 					functionName = "zeroDouble";
-				} else if (fps.getExponent() == 15) {
+				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.LONGDOUBLE) {
 					functionName = "zeroLongDouble";
 				} else {
 					throw new IllegalArgumentException();
