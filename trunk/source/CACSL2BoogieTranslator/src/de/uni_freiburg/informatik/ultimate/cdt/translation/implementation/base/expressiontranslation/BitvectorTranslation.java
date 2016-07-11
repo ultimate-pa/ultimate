@@ -405,7 +405,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{fps.getExponent(), fps.getSignificant()});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
+		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
 	}
 	
 	
