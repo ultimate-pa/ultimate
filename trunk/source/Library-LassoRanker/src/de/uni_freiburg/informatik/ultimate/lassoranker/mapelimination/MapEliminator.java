@@ -92,6 +92,9 @@ public class MapEliminator {
 	private Term mAuxVarTerm;
 	private final Set<TermVariable> mAuxVars;
 
+	// Stores information, for which select-terms aux-vars have already been created (to avoid duplicates)
+	private final Map<Term, TermVariable> mSelectToAuxVars;
+
 	// Stores information about the arrays that get assigned to another array (then these arrays have the same indices)
 	private final List<Term> mSharedIndicesLeft;
 	private final List<Term> mSharedIndicesRight;
@@ -117,9 +120,13 @@ public class MapEliminator {
 		mSharedIndicesRight = new ArrayList<>();
 		mTransFormulas = transformulas;
 		mAuxVars = new HashSet<>();
+		mSelectToAuxVars = new HashMap<>();
 		initialize();
 	}
 
+	/**
+	 * Finds the array accesses in the transformulas and merges the indices if necessary
+	 */
 	private void initialize() {
 		for (final TransFormula tf : mTransFormulas) {
 			final TransFormulaLR newTF = TransFormulaLR.buildTransFormula(tf, mReplacementVarFactory);
@@ -231,24 +238,26 @@ public class MapEliminator {
 		for (final BoogieVar boogieVar : tf.getAssignedVars()) {
 			assignedVars.add(boogieVar.getTermVariable());
 		}
-		Term newTerm = newTF.getFormula();
 		// Handle havoc's first
+		Term havocTerms = mScript.term("true");
 		for (final Term global : getHavocedIndices(newTF)) {
-			final Term havocTerm = processIndexAssignment(newTF, global, assignedVars);
-			newTerm = Util.and(mScript, newTerm, havocTerm);
+			final Term newHavocTerm = processIndexAssignment(newTF, global, assignedVars);
+			havocTerms = Util.and(mScript, havocTerms, newHavocTerm);
 		}
 		for (final Term global : getHavocedArrays(newTF)) {
-			final Term havocTerm = processArrayHavoc(newTF, global, assignedVars);
-			newTerm = Util.and(mScript, newTerm, havocTerm);
+			final Term newHavocTerm = processArrayHavoc(newTF, global, assignedVars);
+			havocTerms = Util.and(mScript, havocTerms, newHavocTerm);
 		}
 		// Process other terms
-		newTerm = process(newTerm, newTF, assignedVars);
+		final Term processedTerm = process(newTF.getFormula(), newTF, assignedVars);
+		Term newTerm = Util.and(mScript, processedTerm, havocTerms);
 		if (!mAuxVars.isEmpty()) {
 			// If aux-vars have been created, eliminate them
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars, Util.and(mScript, newTerm, mAuxVarTerm));
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 					mVariableManager, quantified);
 			mAuxVars.clear();
+			mSelectToAuxVars.clear();
 			mAuxVarTerm = mScript.term("true");
 		}
 		newTF.setFormula(SmtUtils.simplify(mScript, newTerm, mServices));
@@ -367,17 +376,38 @@ public class MapEliminator {
 			return auxVar;
 		} else {
 			final TermVariable var = getFreshTermVar(globalTerm);
-			if (containsInVarsOnly(term, tf)) {
+			if (containsOnlyOneVarType(term, tf, true)) {
 				if (!tf.getInVars().containsKey(rv)) {
 					tf.addInVar(rv, var);
 				}
 				return tf.getInVars().get(rv);
-			} else {
+			}
+			if (containsOnlyOneVarType(term, tf, false)) {
 				if (!tf.getOutVars().containsKey(rv)) {
 					tf.addOutVar(rv, var);
 				}
 				return tf.getOutVars().get(rv);
 			}
+			// If the term contains "mixed" vars, aux-vars are introduced
+			if (!mSelectToAuxVars.containsKey(term)) {
+				final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
+				mAuxVars.add(auxVar);
+				mSelectToAuxVars.put(term, auxVar);
+				final ArrayIndex globalIndex = getGlobalArrayIndex(index, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
+				if (tf.getInVarsReverseMapping().containsKey(array)) {
+					final ArrayIndex inVarIndex = getLocalIndex(globalIndex, tf, assignedVars, true);
+					final Term inVarSelect = getLocalVar(term, tf, assignedVars, true);
+					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, inVarIndex, auxVar, inVarSelect);
+					mAuxVarTerm = Util.and(mScript, mAuxVarTerm, newTerm);
+				}
+				if (tf.getOutVarsReverseMapping().containsKey(array)) {
+					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, tf, assignedVars, true);
+					final Term outVarSelect = getLocalVar(term, tf, assignedVars, true);
+					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, outVarIndex, auxVar, outVarSelect);
+					mAuxVarTerm = Util.and(mScript, mAuxVarTerm, newTerm);
+				}
+			}
+			return mSelectToAuxVars.get(term);
 		}
 	}
 
@@ -699,17 +729,29 @@ public class MapEliminator {
 		return new ArrayIndex(list);
 	}
 
-	private boolean containsInVarsOnly(final Term term, final TransFormulaLR tf) {
+	/**
+	 * Check if the given {@code term} only contains in- or out-vars
+	 *
+	 * @param term A SMT-Term to be checked
+	 * @param tf A TransFormulaLR
+	 * @param inVar Switch between in- and out-vars
+	 * @return {@code true}, iff the given {@code term} only contains one type of vars (in- or out-vars, depending on {@code inVar})
+	 */
+	private boolean containsOnlyOneVarType(final Term term, final TransFormulaLR tf, final boolean inVar) {
 		if (term instanceof ConstantTerm) {
 			return true;
 		}
 		if (term instanceof TermVariable) {
-			return tf.getInVarsReverseMapping().containsKey(term);
+			if (inVar) {
+				return tf.getInVarsReverseMapping().containsKey(term);
+			} else {
+				return tf.getOutVarsReverseMapping().containsKey(term);
+			}
 		}
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			for (final Term t : applicationTerm.getParameters()) {
-				if (!containsInVarsOnly(t, tf)) {
+				if (!containsOnlyOneVarType(t, tf, inVar)) {
 					return false;
 				}
 			}
