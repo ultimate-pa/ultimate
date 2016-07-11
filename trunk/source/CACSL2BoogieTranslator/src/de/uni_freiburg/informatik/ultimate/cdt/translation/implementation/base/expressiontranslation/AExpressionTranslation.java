@@ -639,4 +639,46 @@ public abstract class AExpressionTranslation {
 	private String makeBoogieIdentifierSuffix(String val) {
 		return val;
 	}
+
+	/**
+	 * Check if id is number classification macro according to
+	 * 7.12.6 of C11.
+	 */
+	public boolean isNumberClassificationMacro(String cId) {
+		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") || 
+				cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL") || 
+				cId.equals("FP_NORMAL");
+	}
+
+	/**
+	 * Translate number classification macros according to
+	 * 7.12.6 of C11. Although the standard allows any distinct integers,
+	 * we take 0,1,2,3,4 because gcc on Matthias' Linux system uses
+	 * these numbers.
+	 */
+	public ExpressionResult handleNumberClassificationMacro(ILocation loc, String cId) {
+		final int number;
+		switch (cId) {
+		case "FP_NAN": 
+			number = 0; 
+			break;
+		case "FP_INFINITE":
+			number = 1;
+			break;
+		case "FP_ZERO": 
+			number = 2;
+			break;
+		case "FP_SUBNORMAL": 
+			number = 3;
+			break;
+		case "FP_NORMAL": 
+			number = 4;
+			break;
+		default:
+			throw new IllegalArgumentException("no number classification macro " + cId);
+		}
+		final CPrimitive type = new CPrimitive(PRIMITIVE.INT);
+		final Expression expr = constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
+		return new ExpressionResult(new RValue(expr, type));
+	}
 }
