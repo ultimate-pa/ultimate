@@ -34,7 +34,7 @@ NestedWordAutomaton nwa = (
 		 ("m3" "a" "m5")
 		 
 		 ("atv1" "a" "atv0")
-  		 ("s6" "b" "s0")
+  		 ("s6" "a" "s0")
 		 ("s7" "a" "s0")
 	},
 	returnTransitions = {
