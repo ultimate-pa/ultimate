@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Summarize edge that summarizes transitions representing moves on the same
@@ -62,24 +63,24 @@ public final class SummarizeEdge<LETTER, STATE> {
 	/**
 	 * Destinations of the edge, accessible by their Duplicator choices.
 	 */
-	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mChoiceToDestination;
+	private final Map<Pair<STATE, Boolean>, SpoilerNwaVertex<LETTER, STATE>> mChoiceToDestination;
 	/**
 	 * Provides a fast access to the Duplicator auxiliary vertices that
 	 * represent the choice of Duplicator after Spoiler has made a decision.
 	 * Those vertices are connected to the destinations and represent the exit
 	 * of a summary path.
 	 */
-	private final Map<STATE, DuplicatorNwaVertex<LETTER, STATE>> mChoiceToDuplicatorAux;
+	private final Map<Pair<STATE, Boolean>, DuplicatorNwaVertex<LETTER, STATE>> mChoiceToDuplicatorAux;
 	/**
 	 * Provides a fast access to the Spoiler auxiliary vertices that represent
 	 * the choice of Duplicator after Spoiler has made a decision. Those
 	 * vertices also hold the priority of the summary path.
 	 */
-	private final Map<STATE, SpoilerNwaVertex<LETTER, STATE>> mChoiceToSpoilerAux;
+	private final Map<Pair<STATE, Boolean>, SpoilerNwaVertex<LETTER, STATE>> mChoiceToSpoilerAux;
 	/**
 	 * Spoiler invoker of the edge, accessible by their Duplicator choices.
 	 */
-	private final Map<STATE, Set<SpoilerNwaVertex<LETTER, STATE>>> mChoiceToSpoilerInvokers;
+	private final Map<Pair<STATE, Boolean>, Set<SpoilerNwaVertex<LETTER, STATE>>> mChoiceToSpoilerInvokers;
 
 	/**
 	 * The Duplicator auxiliary vertex that represents the choice of Spoiler. It
@@ -87,9 +88,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorAux;
 	/**
-	 * Choices Duplicator can take, where the key of the map is Spoilers choice.
+	 * Choices Duplicator can take with the bit it leads to.
 	 */
-	private final Set<STATE> mDuplicatorChoices;
+	private final Set<Pair<STATE, Boolean>> mDuplicatorChoices;
 	/**
 	 * The game graph generation object this edge belongs to.
 	 */
@@ -115,13 +116,12 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @param spoilerChoice
 	 *            The choice Spoiler did take for this summarize edge
 	 * @param duplicatorChoices
-	 *            Choices Duplicator can take, where the key of the map is
-	 *            Spoilers choice.
+	 *            Choices Duplicator can take with the bit it leads to
 	 * @param graphGeneration
 	 *            The game graph generation object to add the edge to
 	 */
 	public SummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices, final NwaGameGraphGeneration<LETTER, STATE> graphGeneration) {
+			final Set<Pair<STATE, Boolean>> duplicatorChoices, final NwaGameGraphGeneration<LETTER, STATE> graphGeneration) {
 		mGraphGeneration = graphGeneration;
 		mSrc = src;
 		mSpoilerChoice = spoilerChoice;
@@ -146,9 +146,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 		// Connect it to the source
 		mGraphGeneration.addEdge(mSrc, mDuplicatorAux);
 
-		for (STATE choice : mDuplicatorChoices) {
-			SpoilerNwaVertex<LETTER, STATE> spoilerAux = mChoiceToSpoilerAux.get(choice);
-			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = mChoiceToDuplicatorAux.get(choice);
+		for (Pair<STATE, Boolean> choiceEntry : mDuplicatorChoices) {
+			SpoilerNwaVertex<LETTER, STATE> spoilerAux = mChoiceToSpoilerAux.get(choiceEntry);
+			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = mChoiceToDuplicatorAux.get(choiceEntry);
 
 			// Add auxiliary vertices
 			mGraphGeneration.addSpoilerVertex(spoilerAux);
@@ -159,7 +159,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 			mGraphGeneration.addEdge(spoilerAux, duplicatorAux);
 
 			// Connect them to the destinations
-			mGraphGeneration.addEdge(duplicatorAux, mChoiceToDestination.get(choice));
+			mGraphGeneration.addEdge(duplicatorAux, mChoiceToDestination.get(choiceEntry));
 		}
 	}
 
@@ -212,7 +212,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            edge
 	 * @return Returns the destination of the given sub-summarize edge
 	 */
-	public SpoilerNwaVertex<LETTER, STATE> getDestination(final STATE duplicatorChoice) {
+	public SpoilerNwaVertex<LETTER, STATE> getDestination(final Pair<STATE, Boolean> duplicatorChoice) {
 		return mChoiceToDestination.get(duplicatorChoice);
 	}
 
@@ -232,7 +232,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return All choices that Duplicator can make in this summarize edge.
 	 *         Identifies all sub-summarize edges.
 	 */
-	public Set<STATE> getDuplicatorChoices() {
+	public Set<Pair<STATE, Boolean>> getDuplicatorChoices() {
 		return mDuplicatorChoices;
 	}
 
@@ -244,7 +244,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            edge
 	 * @return Returns the priority of the given sub-summarize edge
 	 */
-	public int getPriority(final STATE duplicatorChoice) {
+	public int getPriority(final Pair<STATE, Boolean> duplicatorChoice) {
 		return mChoiceToSpoilerAux.get(duplicatorChoice).getPriority();
 	}
 
@@ -274,7 +274,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            edge
 	 * @return Returns the spoiler invokers of the given sub-summarize edge
 	 */
-	public Set<SpoilerNwaVertex<LETTER, STATE>> getSpoilerInvokers(final STATE duplicatorChoice) {
+	public Set<SpoilerNwaVertex<LETTER, STATE>> getSpoilerInvokers(final Pair<STATE, Boolean> duplicatorChoice) {
 		return mChoiceToSpoilerInvokers.get(duplicatorChoice);
 	}
 
@@ -314,7 +314,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @param priority
 	 *            The priority to set
 	 */
-	public void setPriority(final STATE duplicatorChoice, final int priority) {
+	public void setPriority(final Pair<STATE, Boolean> duplicatorChoice, final int priority) {
 		mChoiceToSpoilerAux.get(duplicatorChoice).setPriority(priority);
 	}
 
@@ -322,23 +322,26 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * Initializes the internal maps.
 	 */
 	private void initInternalMaps() {
-		for (STATE choice : mDuplicatorChoices) {
+		for (Pair<STATE, Boolean> choiceEntry : mDuplicatorChoices) {
+			STATE choice = choiceEntry.getFirst();
+			boolean choiceBit = choiceEntry.getSecond();
+			
 			// Spoiler auxiliary that holds the priority
-			SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, false, null,
+			SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, choiceBit, null,
 					choice, this);
-			mChoiceToSpoilerAux.put(choice, spoilerAux);
+			mChoiceToSpoilerAux.put(choiceEntry, spoilerAux);
 
 			// Duplicator auxiliary that is the end
 			DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(
-					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false, null, choice, null,
+					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, choiceBit, null, choice, null,
 					ETransitionType.SUMMARIZE_EXIT, this);
-			mChoiceToDuplicatorAux.put(choice, duplicatorAux);
+			mChoiceToDuplicatorAux.put(choiceEntry, duplicatorAux);
 
 			// Destination
-			SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, false, null,
+			SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, choiceBit, null,
 					null);
 			if (dest instanceof SpoilerNwaVertex<?, ?>) {
-				mChoiceToDestination.put(choice, (SpoilerNwaVertex<LETTER, STATE>) dest);
+				mChoiceToDestination.put(choiceEntry, (SpoilerNwaVertex<LETTER, STATE>) dest);
 			}
 
 			// Spoiler invoker
@@ -366,12 +369,12 @@ public final class SummarizeEdge<LETTER, STATE> {
 					SpoilerNwaVertex<LETTER, STATE> spoilerInvokerAsSpoilerNwa = (SpoilerNwaVertex<LETTER, STATE>) possibleSpoilerInvoker;
 
 					// Add the invoker to the list
-					Set<SpoilerNwaVertex<LETTER, STATE>> spoilerInvokers = mChoiceToSpoilerInvokers.get(choice);
+					Set<SpoilerNwaVertex<LETTER, STATE>> spoilerInvokers = mChoiceToSpoilerInvokers.get(choiceEntry);
 					if (spoilerInvokers == null) {
 						spoilerInvokers = new HashSet<>();
 					}
 					spoilerInvokers.add(spoilerInvokerAsSpoilerNwa);
-					mChoiceToSpoilerInvokers.put(choice, spoilerInvokers);
+					mChoiceToSpoilerInvokers.put(choiceEntry, spoilerInvokers);
 				}
 			}
 		}

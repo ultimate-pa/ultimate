@@ -214,7 +214,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Map of all summarize edges of the graph. Provides a fast access via
 	 * source and destinations of the edge.
 	 */
-	private final NestedMap2<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> mSrcDestToSummarizeEdges;
+	private final NestedMap2<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<Pair<STATE, Boolean>>>, SummarizeEdge<LETTER, STATE>> mSrcDestToSummarizeEdges;
 	/**
 	 * If the game graph should use push-over edges between successors and
 	 * predecessors of return-invoking Duplicator vertices. If set to
@@ -314,11 +314,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
-		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, STATE, Integer> vertexToSubSummarizeToSearchPriority = new NestedMap3<>();
+		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, Pair<STATE, Boolean>, Integer> vertexToSubSummarizeToSearchPriority = new NestedMap3<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
 
 		// Add starting elements
-		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<STATE>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
+		for (final Triple<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<Pair<STATE, Boolean>>>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : mSrcDestToSummarizeEdges
 				.entrySet()) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
 			// In direct simulation every edge will have a priority of zero,
@@ -329,13 +329,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				summarizeEdge.setAllPriorities(0);
 			} else {
 				final Vertex<LETTER, STATE> edgeSource = summarizeEdge.getSource();
-				for (STATE duplicatorChoice : summarizeEdge.getDuplicatorChoices()) {
+				for (Pair<STATE, Boolean> duplicatorChoiceEntry : summarizeEdge.getDuplicatorChoices()) {
 					// We are now iterating every sub-summarize edge
 					// Find out all SpoilerInvoker and create search elements
 					for (SpoilerNwaVertex<LETTER, STATE> spoilerInvoker : summarizeEdge
-							.getSpoilerInvokers(duplicatorChoice)) {
+							.getSpoilerInvokers(duplicatorChoiceEntry)) {
 						final SearchElement<LETTER, STATE> searchElement = new SearchElement<LETTER, STATE>(
-								spoilerInvoker, edgeSource, null, summarizeEdge, duplicatorChoice, spoilerInvoker);
+								spoilerInvoker, edgeSource, null, summarizeEdge, duplicatorChoiceEntry, spoilerInvoker);
 						searchQueue.add(searchElement);
 					}
 				}
@@ -348,7 +348,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
 			final Vertex<LETTER, STATE> searchTarget = searchElement.getTarget();
 			final SummarizeEdge<LETTER, STATE> searchSummarizeEdge = searchElement.getSummarizeEdge();
-			final STATE searchDuplicatorChoice = searchElement.getDuplicatorChoice();
+			final Pair<STATE, Boolean> searchDuplicatorChoice = searchElement.getDuplicatorChoice();
 			final Vertex<LETTER, STATE> searchOrigin = searchElement.getOrigin();
 			final Vertex<LETTER, STATE> searchHistory = searchElement.getHistory();
 
@@ -417,9 +417,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							// Determine the choice of Duplicator via the
 							// history element
 							final STATE duplicatorChoiceHistory = searchHistory.getQ1();
-							final Vertex<LETTER, STATE> destination = summarizeEdge
-									.getDestination(duplicatorChoiceHistory);
-							int summarizeEdgePriority = summarizeEdge.getPriority(duplicatorChoiceHistory);
+							final boolean choiceBitHistory = searchHistory.isB();
+							final Pair<STATE, Boolean> choiceHistory = new Pair<>(duplicatorChoiceHistory,
+									choiceBitHistory);
+							final Vertex<LETTER, STATE> destination = summarizeEdge.getDestination(choiceHistory);
+							int summarizeEdgePriority = summarizeEdge.getPriority(choiceHistory);
 							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
 								// If summarize edge has no priority yet, use
 								// the neutral element 2.
@@ -1447,7 +1449,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			SpoilerNwaVertex<LETTER, STATE> mergedSummarySource = ((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState)
 					.getSpoilerNwaVertex();
 
-			Map<STATE, Set<STATE>> spoilerToDuplicatorChoices = new HashMap<>();
+			Map<STATE, Set<Pair<STATE, Boolean>>> spoilerToDuplicatorChoices = new HashMap<>();
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summary edges
 			for (SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
@@ -1477,11 +1479,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// merged summary
 					STATE spoilerTarget = summaryDestination.getQ0();
 					STATE duplicatorTarget = summaryDestination.getQ1();
+					boolean bitTarget = summaryDestination.isB();
 					if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
 						spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
 					}
-					Set<STATE> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
-					choices.add(duplicatorTarget);
+					Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
+					choices.add(new Pair<>(duplicatorTarget, bitTarget));
 					spoilerToDuplicatorChoices.put(spoilerTarget, choices);
 				}
 
@@ -1497,7 +1500,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
 			}
 			// Create and add the merged summaries
-			for (Entry<STATE, Set<STATE>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
+			for (Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
 				STATE spoilerChoice = choiceEntry.getKey();
 				addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
 						choiceEntry.getValue());
@@ -2130,13 +2133,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @param spoilerChoice
 	 *            The choice Spoiler did take for this summarize edge
 	 * @param duplicatorChoices
-	 *            Choices Duplicator can make, determine the sub-summarize edges
-	 * @param map
-	 *            The Spoiler vertex that invoked creating this summarize edge.
-	 *            This is the predecessor of the Duplicator returning vertex.
+	 *            Choices Duplicator can make with the bit it leads to,
+	 *            determine the sub-summarize edges
 	 */
 	private void addSummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<STATE> duplicatorChoices) {
+			final Set<Pair<STATE, Boolean>> duplicatorChoices) {
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
 			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,

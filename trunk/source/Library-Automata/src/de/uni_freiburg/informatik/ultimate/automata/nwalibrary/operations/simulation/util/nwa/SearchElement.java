@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SummarizeEdge;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Element for a breadth-first search that computes the priority of a given
@@ -45,7 +46,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * The choice Duplicator made in the summarize edge for this element,
 	 * specifies the sub-summarize edge.
 	 */
-	private final STATE mDuplicatorChoice;
+	private final Pair<STATE, Boolean> mDuplicatorChoice;
 	/**
 	 * Vertex that was used right before this search element.
 	 */
@@ -86,8 +87,8 @@ public final class SearchElement<LETTER, STATE> {
 	 *            The origin of this search element
 	 */
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> target,
-			final Vertex<LETTER, STATE> history, SummarizeEdge<LETTER, STATE> summarizeEdge, STATE duplicatorChoice,
-			final Vertex<LETTER, STATE> origin) {
+			final Vertex<LETTER, STATE> history, SummarizeEdge<LETTER, STATE> summarizeEdge,
+			Pair<STATE, Boolean> duplicatorChoice, final Vertex<LETTER, STATE> origin) {
 		mVertex = vertex;
 		mTarget = target;
 		mHistory = history;
@@ -158,7 +159,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * 
 	 * @return The choice Duplicator take for this summarize edge
 	 */
-	public STATE getDuplicatorChoice() {
+	public Pair<STATE, Boolean> getDuplicatorChoice() {
 		return mDuplicatorChoice;
 	}
 
