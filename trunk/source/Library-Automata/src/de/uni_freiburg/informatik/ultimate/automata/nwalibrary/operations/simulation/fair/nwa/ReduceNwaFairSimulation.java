@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that reduces a given nwa automaton by using {@link FairSimulation}.
@@ -105,7 +105,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
+		this(services, stateFactory, operand, useSCCs,
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
 	}
 
 	/**
@@ -140,7 +141,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 						possibleEquivalentClasses,
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+								stateFactory, possibleEquivalentClasses)));
 	}
 
 	/*

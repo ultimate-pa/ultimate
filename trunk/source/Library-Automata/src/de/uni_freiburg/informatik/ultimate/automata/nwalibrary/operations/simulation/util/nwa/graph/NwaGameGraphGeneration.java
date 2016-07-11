@@ -160,6 +160,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	/**
+	 * A collection of sets which contains states of the an automaton that may
+	 * be merge-able. States which are not in the same set are definitely not
+	 * merge-able which is used as an optimization for the game graph.
+	 */
+	private final Collection<Set<STATE>> mPossibleEquivalenceClasses;
+	/**
 	 * Data structure of all duplicator vertices that may end up being a dead
 	 * end and are not using a return transition.
 	 */
@@ -236,14 +242,19 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Simulation method to use for graph generation. Supported types
 	 *            are {@link ESimulationType#DIRECT DIRECT} and
 	 *            {@link ESimulationType#FAIR FAIR}.
+	 * @param possibleEquivalenceClasses
+	 *            A collection of sets which contains states of an automaton
+	 *            that may be merge-able. States which are not in the same set
+	 *            are definitely not merge-able which is used as an optimization
+	 *            for the game graph
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
-			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType)
-					throws AutomataOperationCanceledException {
+			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType,
+			final Collection<Set<STATE>> possibleEquivalenceClasses) {
 		mServices = services;
 		mNwa = nwa;
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
@@ -268,6 +279,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mDuplicatorWinningSink = null;
 
 		mSimulationPerformance = new SimulationPerformance(simulationType, false);
+
+		mPossibleEquivalenceClasses = possibleEquivalenceClasses;
 	}
 
 	/**
@@ -773,8 +786,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.BUILD_GRAPH);
 
-		generateVertices();
-		generateRegularEdges();
+		generateGraphBase();
 		patchGraph();
 
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.GENERATE_SUMMARIZE_EDGES);
@@ -791,12 +803,351 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates the regular edges of the game graph from the input automaton.
+	 * Generates the vertices and regular of the game graph from the input
+	 * automaton.
 	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
+	public void generateGraphBase() throws AutomataOperationCanceledException {
+		mLogger.debug("Generating graph base.");
+		int duplicatorPriority = DUPLICATOR_PRIORITY;
+
+		// We generate the graph on the fly by starting with all initial
+		// reachable states first
+		Queue<Vertex<LETTER, STATE>> workingList = new LinkedList<>();
+		for (final Set<STATE> possibleEquivalenceClass : mPossibleEquivalenceClasses) {
+			for (final STATE leftState : possibleEquivalenceClass) {
+				for (final STATE rightState : possibleEquivalenceClass) {
+					// Generate initial Spoiler vertices (leftState, rightState)
+					final int priority = calculatePriority(leftState, rightState);
+
+					// In delayed simulation we always generate the vertex with
+					// priority zero. Conditionally we also add a vertex with
+					// priority one.
+					if (mSimulationType == ESimulationType.DELAYED) {
+						Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(0, false, leftState, rightState);
+						if (initialVertex != null) {
+							workingList.add(initialVertex);
+						}
+					} else {
+						Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(priority, false, leftState,
+								rightState);
+						if (initialVertex != null) {
+							workingList.add(initialVertex);
+						}
+					}
+
+					// In delayed simulation we may also add a vertex with
+					// priority one that has the bit set to true.
+					if (mSimulationType == ESimulationType.DELAYED) {
+						if (priority == 1) {
+							Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(1, true, leftState,
+									rightState);
+							if (initialVertex != null) {
+								workingList.add(initialVertex);
+							}
+						}
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+						mLogger.debug("Stopped in generateGameGraphFromAutomaton/generating initial vertices");
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
+				}
+				// Generate an equivalence class for every state from
+				// the nwa automaton, if fair simulation
+				makeEquivalenceClass(leftState);
+			}
+		}
+
+		// Next we process the queue until all reachable vertices of the game
+		// graph are generated
+		while (!workingList.isEmpty()) {
+			Vertex<LETTER, STATE> workingVertex = workingList.poll();
+			// If the vertex already has successors then we already processed it
+			if (mGameGraph.hasSuccessors(workingVertex)) {
+				continue;
+			}
+			if (workingVertex instanceof SpoilerNwaVertex<?, ?>) {
+				// Working with a Spoiler vertex
+				SpoilerNwaVertex<LETTER, STATE> spoilerVertex = (SpoilerNwaVertex<LETTER, STATE>) workingVertex;
+				STATE leftState = spoilerVertex.getQ0();
+				STATE rightState = spoilerVertex.getQ1();
+
+				// Vertices and edges generated by internal transitions
+				for (OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(leftState)) {
+					boolean bitForDestination = spoilerVertex.isB();
+
+					STATE edgeDest = trans.getSucc();
+					LETTER letter = trans.getLetter();
+
+					// Spoiler edges q0 -a-> q2 : (q0, q1) -> (q2, q1, a)
+					Vertex<LETTER, STATE> spoilerSrc = spoilerVertex;
+
+					// In delayed simulation the destination needs to have
+					// the bit set to true if Spoilers destination is final,
+					// else we use the same as the source has.
+					if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+						bitForDestination = true;
+					}
+					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, rightState, letter,
+							bitForDestination, ETransitionType.INTERNAL, null, null);
+					// Generate Duplicator vertices (q2, q1, a) if not existent
+					if (duplicatorDest == null) {
+						duplicatorDest = addDuplicatorVertexHelper(duplicatorPriority, bitForDestination, edgeDest,
+								rightState, letter, ETransitionType.INTERNAL);
+						if (duplicatorDest != null) {
+							workingList.add(duplicatorDest);
+						}
+					}
+
+					// Add the edge
+					if (duplicatorDest != null) {
+						addEdge(spoilerSrc, duplicatorDest);
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+						mLogger.debug("Stopped in generateGameGraphFromAutomaton/generating spoiler internal edges");
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
+				}
+
+				// Vertices and edges generated by call transitions
+				for (OutgoingCallTransition<LETTER, STATE> trans : mNwa.callSuccessors(leftState)) {
+					boolean bitForDestination = spoilerVertex.isB();
+
+					STATE edgeDest = trans.getSucc();
+					LETTER letter = trans.getLetter();
+
+					// Spoiler edges q0 -c-> q2 : (q0, q1) -> (q2, q1, c)
+					Vertex<LETTER, STATE> spoilerSrc = spoilerVertex;
+
+					// In delayed simulation the destination needs to have
+					// the bit set to true if Spoilers destination is final,
+					// else we use the same as the source has.
+					if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+						bitForDestination = true;
+					}
+					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, rightState, letter,
+							bitForDestination, ETransitionType.CALL, null, null);
+					// Generate Duplicator vertices (q2, q1, c) if not existent
+					if (duplicatorDest == null) {
+						duplicatorDest = addDuplicatorVertexHelper(duplicatorPriority, bitForDestination, edgeDest,
+								rightState, letter, ETransitionType.CALL);
+						if (duplicatorDest != null) {
+							workingList.add(duplicatorDest);
+						}
+					}
+
+					// Add the edge
+					if (duplicatorDest != null) {
+						addEdge(spoilerSrc, duplicatorDest);
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+						mLogger.debug("Stopped in generateGameGraphFromAutomaton/generating spoiler call edges");
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
+				}
+
+				// Vertices and edges generated by return transitions
+				for (OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(leftState)) {
+					boolean bitForDestination = spoilerVertex.isB();
+
+					STATE edgeDest = trans.getSucc();
+					LETTER letter = trans.getLetter();
+
+					// Spoiler edges q0 -r/q3-> q2 : (q0, q1) -> (q2, q1, r/q3)
+					Vertex<LETTER, STATE> spoilerSrc = spoilerVertex;
+
+					// In delayed simulation the destination needs to have
+					// the bit set to true if Spoilers destination is final,
+					// else we use the same as the source has.
+					if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+						bitForDestination = true;
+					}
+					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, rightState, letter,
+							bitForDestination, ETransitionType.RETURN, null, null);
+					// Generate Duplicator vertices (q2, q1, r) if not existent
+					if (duplicatorDest == null) {
+						duplicatorDest = addDuplicatorVertexHelper(duplicatorPriority, bitForDestination, edgeDest,
+								rightState, letter, ETransitionType.RETURN);
+						if (duplicatorDest != null) {
+							workingList.add(duplicatorDest);
+						}
+					}
+
+					// Add the edge
+					if (duplicatorDest != null) {
+						addEdge(spoilerSrc, duplicatorDest);
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+						mLogger.debug("Stopped in generateGameGraphFromAutomaton/generating spoiler return edges");
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
+				}
+			} else if (workingVertex instanceof DuplicatorNwaVertex<?, ?>) {
+				// Working with a Duplicator vertex
+				DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex = (DuplicatorNwaVertex<LETTER, STATE>) workingVertex;
+				STATE leftState = duplicatorVertex.getQ0();
+				STATE rightState = duplicatorVertex.getQ1();
+				LETTER letter = duplicatorVertex.getLetter();
+				ETransitionType transType = duplicatorVertex.getTransitionType();
+
+				// Vertices and edges generated by internal transitions
+				if (transType == ETransitionType.INTERNAL) {
+					for (OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(rightState,
+							letter)) {
+						boolean bitForDestination = duplicatorVertex.isB();
+
+						STATE edgeDest = trans.getSucc();
+
+						// Duplicator edges q1 -a-> q2 : (q0, q1, a) -> (q0, q2)
+						Vertex<LETTER, STATE> duplicatorSrc = duplicatorVertex;
+
+						// In delayed simulation the destination needs to have
+						// the bit set to false if Duplicators destination
+						// is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							bitForDestination = false;
+						}
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
+						// Generate Spoiler vertices (q0, q2) if not existent
+						if (spoilerDest == null) {
+							int priority = calculatePriority(leftState, edgeDest);
+							spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+							if (spoilerDest != null) {
+								workingList.add(spoilerDest);
+							}
+						}
+
+						// Add the edge
+						if (spoilerDest != null) {
+							addEdge(duplicatorSrc, spoilerDest);
+						}
+
+						// If operation was canceled, for example from the
+						// Ultimate framework
+						if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+							mLogger.debug(
+									"Stopped in generateGameGraphFromAutomaton/generating duplicator internal edges");
+							throw new AutomataOperationCanceledException(this.getClass());
+						}
+					}
+				}
+
+				// Vertices and edges generated by call transitions
+				if (transType == ETransitionType.CALL) {
+					for (OutgoingCallTransition<LETTER, STATE> trans : mNwa.callSuccessors(rightState, letter)) {
+						boolean bitForDestination = duplicatorVertex.isB();
+
+						STATE edgeDest = trans.getSucc();
+
+						// Duplicator edges q1 -c-> q2 : (q0, q1, c) -> (q0, q2)
+						Vertex<LETTER, STATE> duplicatorSrc = duplicatorVertex;
+
+						// In delayed simulation the destination needs to have
+						// the bit set to false if Duplicators destination
+						// is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							bitForDestination = false;
+						}
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
+						// Generate Spoiler vertices (q0, q2) if not existent
+						if (spoilerDest == null) {
+							int priority = calculatePriority(leftState, edgeDest);
+							spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+							if (spoilerDest != null) {
+								workingList.add(spoilerDest);
+							}
+						}
+
+						// Add the edge
+						if (spoilerDest != null) {
+							addEdge(duplicatorSrc, spoilerDest);
+						}
+
+						// If operation was canceled, for example from the
+						// Ultimate framework
+						if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+							mLogger.debug("Stopped in generateGameGraphFromAutomaton/generating duplicator call edges");
+							throw new AutomataOperationCanceledException(this.getClass());
+						}
+					}
+				}
+
+				// Vertices and edges generated by return transitions
+				if (transType == ETransitionType.RETURN) {
+					for (OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(rightState, letter)) {
+						boolean bitForDestination = duplicatorVertex.isB();
+
+						STATE edgeDest = trans.getSucc();
+
+						// Duplicator edges q1 -r/q3-> q2 : (q0, q1, r/q3) ->
+						// (q0, q2)
+						Vertex<LETTER, STATE> duplicatorSrc = duplicatorVertex;
+
+						// In delayed simulation the destination needs to have
+						// the bit set to false if Duplicators destination
+						// is final
+						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
+							bitForDestination = false;
+						}
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
+						// Generate Spoiler vertices (q0, q2) if not existent
+						if (spoilerDest == null) {
+							int priority = calculatePriority(leftState, edgeDest);
+							spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+							if (spoilerDest != null) {
+								workingList.add(spoilerDest);
+							}
+						}
+
+						// Add the edge
+						if (spoilerDest != null) {
+							addEdge(duplicatorSrc, spoilerDest);
+						}
+
+						// If operation was canceled, for example from the
+						// Ultimate framework
+						if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+							mLogger.debug(
+									"Stopped in generateGameGraphFromAutomaton/generating duplicator return edges");
+							throw new AutomataOperationCanceledException(this.getClass());
+						}
+					}
+				}
+			}
+		}
+
+		// Increase by one, global infinity is amount of priority one + 1
+		mGameGraph.increaseGlobalInfinity();
+	}
+
+	/**
+	 * Generates the regular edges of the game graph from the input automaton.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 * @deprecated The operation does not support the usage of an initial
+	 *             partition, use {@link #generateGraphBase()} instead.
+	 */
+	@Deprecated
 	public void generateRegularEdges() throws AutomataOperationCanceledException {
 		mLogger.debug("Generating regular edges.");
 		for (final STATE edgeDest : mNwa.getStates()) {
@@ -1223,7 +1574,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
+	 * @deprecated The operation does not support the usage of an initial
+	 *             partition, use {@link #generateGraphBase()} instead.
 	 */
+	@Deprecated
 	public void generateVertices() throws AutomataOperationCanceledException {
 		mLogger.debug("Generating vertices.");
 		int duplicatorPriority = DUPLICATOR_PRIORITY;
@@ -1491,9 +1845,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter of the vertices
 	 * @param type
 	 *            Type of the vertices
+	 * @return The generated and added Duplicator vertex or <tt>null</tt> if not
+	 *         created
 	 */
-	private void addDuplicatorVertexHelper(final int priority, final boolean bit, final STATE leftState,
-			final STATE rightState, final LETTER letter, final ETransitionType type) {
+	private DuplicatorNwaVertex<LETTER, STATE> addDuplicatorVertexHelper(final int priority, final boolean bit,
+			final STATE leftState, final STATE rightState, final LETTER letter, final ETransitionType type) {
 
 		// For returning duplicator vertices, it may often be requested to
 		// add existent vertices again. This may cause problems, because of
@@ -1530,7 +1886,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 				}
 			}
+			return duplicatorVertex;
 		}
+		return null;
 	}
 
 	/**
@@ -1650,9 +2008,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Left state of the vertex
 	 * @param rightState
 	 *            Right state of the vertex
+	 * @return The generated and added Spoiler vertex or <tt>null</tt> if not
+	 *         created
 	 */
-	private void addSpoilerVertexHelper(final int priority, final boolean bit, final STATE leftState,
-			final STATE rightState) {
+	private SpoilerNwaVertex<LETTER, STATE> addSpoilerVertexHelper(final int priority, final boolean bit,
+			final STATE leftState, final STATE rightState) {
 		SpoilerNwaVertex<LETTER, STATE> spoilerVertex = new SpoilerNwaVertex<>(priority, bit, leftState, rightState);
 		addSpoilerVertex(spoilerVertex);
 		// Increase the infinity bound for every such vertex
@@ -1694,6 +2054,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Such vertices should end up also being dead ends
 			mPossibleSpoilerDeadEnd.add(spoilerVertex);
 		}
+
+		return spoilerVertex;
 	}
 
 	/**

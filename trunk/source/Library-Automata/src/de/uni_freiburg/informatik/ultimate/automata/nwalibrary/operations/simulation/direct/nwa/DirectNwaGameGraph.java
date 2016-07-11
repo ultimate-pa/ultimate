@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
+import java.util.Collection;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -91,6 +94,11 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 *            generated.
 	 * @param stateFactory
 	 *            State factory used for state creation
+	 * @param possibleEquivalenceClasses
+	 *            A collection of sets which contains states of an
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the game graph
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -98,7 +106,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	@SuppressWarnings("unchecked")
 	public DirectNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
-			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
@@ -109,7 +117,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.DIRECT);
+				ESimulationType.DIRECT, possibleEquivalenceClasses);
 	}
 
 	/*

@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.BuchiReduce;
 
 /**
@@ -104,12 +107,42 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, useSCCs,
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
+	}
+
+	/**
+	 * Creates a new nwa reduce object that starts reducing the given nwa
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The nwa automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param possibleEquivalenceClasses
+	 *            A collection of sets which contains states of an automaton
+	 *            that may be merge-able. States which are not in the same set
+	 *            are definitely not merge-able which is used as an optimization
+	 *            for the game graph
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DelayedNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+								stateFactory, possibleEquivalenceClasses)));
 	}
 
 	/*

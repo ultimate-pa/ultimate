@@ -198,7 +198,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * may be merge-able. States which are not in the same set are definitely
 	 * not merge-able which is used as an optimization for the simulation.
 	 */
-	private final Map<STATE, Set<STATE>> mPossibleEquivalentClasses;
+	private final Map<STATE, Set<STATE>> mPossibleEquivalenceClasses;
 
 	/**
 	 * True if the simulation was aborted early because its already known that
@@ -226,7 +226,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
-	 * @param possibleEquivalentClasses
+	 * @param possibleEquivalenceClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -238,12 +238,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses,
 			final FairGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
 		mLogger = getLogger();
-		mPossibleEquivalentClasses = processEquivalenceClasses(possibleEquivalentClasses);
+		mPossibleEquivalenceClasses = processEquivalenceClasses(possibleEquivalenceClasses);
 		mPokedFromNeighborSCC = null;
 		mNotSimulatingNonTrivialVertices = new HashSet<>();
 		mCurrentChanges = null;
@@ -645,22 +645,22 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Processes a given collection of possible equivalent classes into a data
 	 * structure that has a faster access for single states.
 	 * 
-	 * @param possibleEquivalentClasses
+	 * @param possibleEquivalenceClasses
 	 *            Collection to process
 	 * @return Data structure with a fast access for state to its equivalent
 	 *         class
 	 */
-	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalentClasses) {
+	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalenceClasses) {
 		Map<STATE, Set<STATE>> result;
-		if (possibleEquivalentClasses.isEmpty()) {
+		if (possibleEquivalenceClasses.isEmpty()) {
 			result = Collections.emptyMap();
 		} else {
 			result = new HashMap<>();
 		}
 
-		for (final Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
-			for (final STATE state : possibleEquivalentClass) {
-				result.put(state, possibleEquivalentClass);
+		for (final Set<STATE> possibleEquivalenceClass : possibleEquivalenceClasses) {
+			for (final STATE state : possibleEquivalenceClass) {
+				result.put(state, possibleEquivalenceClass);
 			}
 		}
 
@@ -768,8 +768,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws AutomataOperationCanceledException {
 		// Optimize the attempted merge if we have information about equivalence
 		// classes of the states
-		if (!mPossibleEquivalentClasses.isEmpty()) {
-			final Set<STATE> equivalenceClass = mPossibleEquivalentClasses.get(firstState);
+		if (!mPossibleEquivalenceClasses.isEmpty()) {
+			final Set<STATE> equivalenceClass = mPossibleEquivalenceClasses.get(firstState);
 			// If the states are not in the same equivalence class we already
 			// know that the merge can not be possible
 			if (equivalenceClass != null && !equivalenceClass.contains(secondState)) {
