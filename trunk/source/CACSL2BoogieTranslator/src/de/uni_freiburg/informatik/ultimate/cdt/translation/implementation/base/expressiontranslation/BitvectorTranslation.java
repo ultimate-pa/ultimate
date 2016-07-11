@@ -393,24 +393,19 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	private void declareFloatingPointConstructors(ILocation loc) {
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.FLOAT), "declareFloat");
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.DOUBLE), "declareDouble");
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.LONGDOUBLE), "declareLongDouble");
+	}
+	
+	private void declareFloatingPointConstructor(ILocation loc, final CPrimitive type, final String functionName) {
 		final ASTType[] paramASTTypes = new ASTType[2];
-		
-		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
-		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, result);
-		Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{8, 24});
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
+		final Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{fps.getExponent(), fps.getSignificant()});
+		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
-		
-		result = new CPrimitive(PRIMITIVE.DOUBLE);
-		attributes = generateAttributes(loc, "to_fp", new int[]{11, 53});
-		resultASTType = mTypeHandler.ctype2asttype(loc, result);
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareDouble", attributes, resultASTType, paramASTTypes);
-		
-		result = new CPrimitive(PRIMITIVE.LONGDOUBLE);
-		attributes = generateAttributes(loc, "to_fp", new int[]{15, 113});
-		resultASTType = mTypeHandler.ctype2asttype(loc, result);
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
 	}
 	
 	
