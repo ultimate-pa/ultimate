@@ -62,11 +62,9 @@ public class SplToBoogie {
 		//TODO: correctly parse system information
 		PeaSystemModel model = new PeaSystemModel(this.logger, new SystemInformation(), patterns);
 		
-		
-		
 		PatternTransformerTypes ttype =  mService.getPreferenceProvider(Activator.PLUGIN_ID)
 			.getEnum(PreferenceInitializer.LABEL_TRANSFORMER, PreferenceInitializer.PatternTransformerTypes.class);
-		this.logger.debug("Running Transformation mode: "+ ttype.toString());
+		this.logger.info("Running Transformation mode: "+ ttype.toString());
 		IPeaTransformer peaTransformer;
 		switch(ttype){
 			case None: peaTransformer = new NullTransformer(); 

@@ -74,7 +74,15 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 			conjunction.add(this.generateBinaryLogicExpression(location, disjunctsPerPea, BinaryExpression.Operator.LOGICOR));
 		}
 		for(String var: this.vars){
-			conjunction.add(this.sysInfo.getInitialAssignmentPredicate(var));
+			//only fix input vars, rest will normalize from there on
+			if(this.sysInfo.isInput(var)){
+				conjunction.add(this.sysInfo.getInitialAssignmentPredicate(var));
+			}
+			//TODO: find nicer way to recognize the helper variables
+			if(var.startsWith(DeductionGuardTransformation.DEDUCTION_MONITOR_PREFIX) ||
+					var.startsWith(DeductionGuardTransformation.READ_GUARD_PREFIX)){
+				conjunction.add(this.sysInfo.getInitialAssignmentPredicate(var));
+			}
 		}
 		return this.generateBinaryLogicExpression(location, conjunction, BinaryExpression.Operator.LOGICAND);
 	}

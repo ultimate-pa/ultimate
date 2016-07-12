@@ -33,6 +33,7 @@ public class SystemInformation {
 		this.outputVariables.add(ident);
 	}
 	
+	
 	//TODO: this is a hack and should really check if the variable is not in the inputs
 	public boolean isInput(String ident) {
 		return ident.startsWith("I");
@@ -41,6 +42,7 @@ public class SystemInformation {
 	public boolean isOutput(String ident) {
 		return ident.startsWith("O");
 	}
+	
 	public boolean isInternal(String ident) {
 		return !this.isInput(ident) && !this.isOutput(ident);
 	}

@@ -424,10 +424,17 @@ public class BasicTranslator {
 		return new HavocStatement(noneLocation, vars.toArray(new VariableLHS[vars.size()]));
 	}
 	
+	/**
+	 * generate "assume pc== 0 ... " statements for initialization of the autmoata.
+	 * @param location
+	 * @param peas
+	 * @return
+	 */
 	protected Expression generateInitialPhaseAssumptionArgument(BoogieLocation location, ArrayList<PhaseEventAutomata> peas){
 		ArrayList<Expression> conjunction = new ArrayList<Expression>();
 		ArrayList<Expression> disjunctsPerPea;
 		for(int key: this.initialEdgesAssume.keySet()){
+			// eges for initial states
 			disjunctsPerPea = new ArrayList<Expression>();
 			for(Phase phase: this.initialEdgesAssume.get(key)){
 				disjunctsPerPea.add(new BinaryExpression(location, BinaryExpression.Operator.COMPEQ,

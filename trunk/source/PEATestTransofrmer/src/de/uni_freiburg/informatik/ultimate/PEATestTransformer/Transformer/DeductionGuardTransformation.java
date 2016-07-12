@@ -130,8 +130,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				} else {
 					// conjunct && !R_effect
 					// may loop on not deducable but not effect triggering variables because it is an implication
-					CDD r = this.encodeNotDeducedInConjunct( reqNo);
-					temp = conjunct.prime().and(r);
+					CDD r = this.encodeNotDeducedInConjunct(reqNo);
+					temp = r;
 				}
 			} else {
 				// conjunct && !R_effect && L_conjunt

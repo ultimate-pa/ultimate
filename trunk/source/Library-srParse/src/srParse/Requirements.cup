@@ -209,7 +209,7 @@ pattern ::=
 /* which PatternType should I use for this????
   | expression:p EVENTUALLY HOLDS
       {: 
-	     RESULT = new PatternType();
+	     RESULT = new ResponsePattern();
          RESULT.setPattern(RESULT.new ());
          RESULT.mergeCDDs(buildVec(p));
       :} 
