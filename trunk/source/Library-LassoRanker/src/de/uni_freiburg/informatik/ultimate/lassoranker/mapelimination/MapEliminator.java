@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -68,7 +66,7 @@ public class MapEliminator {
 	private final IFreshTermVariableConstructor mVariableManager;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
-	private final Collection<TransFormula> mTransFormulas;
+	private final Collection<TransFormulaLR> mTransFormulas;
 
 	// Maps the indices to the tuples, which contain it
 	private final Map<Term, Set<ArrayIndex>> mIndicesToTuples;
@@ -102,7 +100,7 @@ public class MapEliminator {
 	/**
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
 	 */
-	public MapEliminator(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, final Collection<TransFormula> transformulas) {
+	public MapEliminator(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, final Collection<TransFormulaLR> transformulas) {
 		super();
 		mServices = services;
 		mScript = boogie2smt.getScript();
@@ -128,9 +126,8 @@ public class MapEliminator {
 	 * Finds the array accesses in the transformulas and merges the indices if necessary
 	 */
 	private void initialize() {
-		for (final TransFormula tf : mTransFormulas) {
-			final TransFormulaLR newTF = TransFormulaLR.buildTransFormula(tf, mReplacementVarFactory);
-			findIndices(newTF.getFormula(), newTF.getInVarsReverseMapping(), newTF.getOutVarsReverseMapping());
+		for (final TransFormulaLR tf : mTransFormulas) {
+			findIndices(tf.getFormula(), tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
 		}
 		// Merge indices of mSharedIndices (maybe get transitivity?)
 		for (int i = 0; i < mSharedIndicesLeft.size(); i++) {
@@ -231,12 +228,12 @@ public class MapEliminator {
 	 * @param tf The old TransFormula, which might contain arrays accesses
 	 * @return A TransFormulaLR, where array accesses are replaced by ReplacementVars
 	 */
-	public TransFormulaLR getArrayFreeTransFormula(final TransFormula tf) {
+	public TransFormulaLR getArrayFreeTransFormula(final TransFormulaLR tf) {
 		assert mTransFormulas.contains(tf);
-		final TransFormulaLR newTF = TransFormulaLR.buildTransFormula(tf, mReplacementVarFactory);
+		final TransFormulaLR newTF = tf;
 		final Set<Term> assignedVars = new HashSet<>();
-		for (final BoogieVar boogieVar : tf.getAssignedVars()) {
-			assignedVars.add(boogieVar.getTermVariable());
+		for (final RankVar rv : tf.getAssignedVars()) {
+			assignedVars.add(rv.getDefinition());
 		}
 		// Handle havoc's first
 		Term havocTerms = mScript.term("true");
