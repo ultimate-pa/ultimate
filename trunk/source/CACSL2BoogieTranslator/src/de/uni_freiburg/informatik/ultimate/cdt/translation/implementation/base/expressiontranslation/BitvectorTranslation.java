@@ -124,7 +124,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		} else {
 			declareFloatingPointConstructors(loc);
 			
-			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(fpl.getCPrimitive().getType());
+			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(fpl.getCPrimitive());
 			final Expression[] arguments;
 			final String functionName;
 			
@@ -402,7 +402,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final ASTType[] paramASTTypes = new ASTType[2];
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 		final Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{fps.getExponent(), fps.getSignificant()});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
@@ -691,7 +691,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			if (newType.isFloatingType()) {
 				final int[] indices = new int[2];
-				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
+				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType);
 				indices[0] = fps.getExponent();
 				indices[1] = fps.getSignificant();
 				if (oldType.isUnsigned()) {
@@ -743,7 +743,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		} else {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 		final Expression[] indices = new Expression[]{
 				new IntegerLiteral(loc, String.valueOf(fps.getExponent())), 
 				new IntegerLiteral(loc, String.valueOf(fps.getSignificant()))};
@@ -809,5 +809,28 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, null); 
 		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, attributes, new PrimitiveType(loc, SFO.BOOL), ASTparam);
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, null);
+	}
+
+	@Override
+	public RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments) {
+		if (cFunctionName.equals("sqrt")) {
+			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
+					((CPrimitive) arguments[0].getCType()).getType() != PRIMITIVE.DOUBLE) {
+				throw new IllegalArgumentException();
+			}
+			final String prefixedFunctionName = "~" + cFunctionName;
+			final String smtLibFunctionName = "fp.sqrt";
+			final CPrimitive resultType = new CPrimitive(PRIMITIVE.DOUBLE);
+			if (!getFunctionDeclarations().getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+				final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
+				final ASTType astResultType = mTypeHandler.ctype2asttype(loc, resultType);
+				final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
+				final ASTType astParamType = mTypeHandler.ctype2asttype(loc, (CPrimitive) arguments[0].getCType());
+				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astResultType, roundingMode, astParamType);
+			}
+			final Expression expr = new FunctionApplication(loc, prefixedFunctionName, new Expression[]{getRoundingMode(), arguments[0].getValue()});
+			return new RValue(expr, resultType);
+		}
+		throw new UnsupportedOperationException("not yet supported float operation " + cFunctionName);
 	}
 }

@@ -910,7 +910,14 @@ public class FunctionHandler {
 			mCallGraph.get(mCurrentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
 
 			return result;
-
+		} else if (methodName.equals("sqrt")) {
+			assert arguments.length == 1;
+			final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			final RValue rvalue = mExpressionTranslation.constructOtherFloatOperation(loc, methodName, (RValue) arg.lrVal);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
+			result.lrVal = rvalue;
+			return result;
 		} else {
 			return null;
 		}
