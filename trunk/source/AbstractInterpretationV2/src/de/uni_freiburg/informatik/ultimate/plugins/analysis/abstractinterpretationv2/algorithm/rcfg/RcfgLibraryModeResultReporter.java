@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
+public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock>, VARDECL>
 		extends RcfgResultReporter<STATE, VARDECL> {
 
 	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {

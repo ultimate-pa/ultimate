@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+final class SummaryMap<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	private final Map<ACTION, Set<Pair<STATE, STATE>>> mSummaries;
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;

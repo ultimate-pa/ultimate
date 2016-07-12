@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,12 +62,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, IBoogieVar> {
+public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock> {
 
 	private static int sId;
 	private final int mId;
 
-	private final Map<String, IBoogieVar> mVariablesMap;
+	private final Set<IBoogieVar> mVariables;
 	private final Map<String, Set<Expression>> mVarExprMap;
 	private final Set<Expression> mExprSet;
 	private final Map<String, Set<Expression>> mPtrReadintMap;
@@ -74,7 +75,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	private final boolean mIsFixpoint;
 
 	protected VPDomainState() {
-		mVariablesMap = new HashMap<String, IBoogieVar>();
+		mVariables = new HashSet<>();
 		mVarExprMap = new HashMap<String, Set<Expression>>();
 		mExprSet = new HashSet<Expression>();
 		mPtrReadintMap = new HashMap<String, Set<Expression>>();
@@ -83,9 +84,9 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		mId = sId;
 	}
 
-	protected VPDomainState(Map<String, IBoogieVar> variablesMap, Map<String, Set<Expression>> varExprMap,
+	protected VPDomainState(Set<IBoogieVar> variablesMap, Map<String, Set<Expression>> varExprMap,
 			Set<Expression> exprSet, Map<String, Set<Expression>> ptrReadintMap, boolean isFixpoint) {
-		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
+		mVariables = variablesMap;
 		mVarExprMap = new HashMap<String, Set<Expression>>(varExprMap);
 		mExprSet = new HashSet<Expression>(exprSet);
 		mPtrReadintMap = new HashMap<String, Set<Expression>>(ptrReadintMap);
@@ -106,98 +107,62 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		return mVarExprMap;
 	}
 
-	public Set<String> getVariablesSet() {
-		return mVariablesMap.keySet();
-	}
-
 	@Override
-	public VPDomainState addVariable(String name, IBoogieVar variable) {
-		assert name != null;
+	public VPDomainState addVariable(IBoogieVar variable) {
 		assert variable != null;
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		final IBoogieVar old = newVarMap.put(name, variable);
-		if (old != null) {
+		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
+		if (!newVarMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names must be disjoint.");
 		}
-
-		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-		// mVarExprMap);
-		//
-		// newExprMap.put(name, new HashSet<Expression>());
-
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
-	public VPDomainState removeVariable(String name, IBoogieVar variable) {
-		assert name != null;
+	public VPDomainState removeVariable(IBoogieVar variable) {
 		assert variable != null;
-
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		// newVarMap.remove(name);
-		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-		// mVarExprMap);
-
-		// newExprMap.remove(name);
-
+		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
+		newVarMap.remove(variable);
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
-	public VPDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public VPDomainState addVariables(Collection<IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-		// mVarExprMap);
+		final Set<IBoogieVar> newVarMap = new HashSet<IBoogieVar>(mVariables);
 
-		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			final IBoogieVar old = newVarMap.put(entry.getKey(), entry.getValue());
-			if (old != null) {
+		for (final IBoogieVar entry : variables) {
+			if (!newVarMap.add(entry)) {
 				throw new UnsupportedOperationException("Variable names must be disjoint.");
 			}
-			// newExprMap.put(entry.getKey(), new HashSet<Expression>());
 		}
 
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
-	public VPDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public VPDomainState removeVariables(Collection<IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-		// mVarExprMap);
-
-		// for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-		// newVarMap.remove(entry.getKey());
-		// newExprMap.remove(entry.getKey());
-		// }
-
+		final Set<IBoogieVar> newVarMap = new HashSet<IBoogieVar>(mVariables);
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
-		return mVariablesMap.containsKey(name);
+	public boolean containsVariable(IBoogieVar var) {
+		return mVariables.contains(var);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return mVariablesMap.isEmpty();
+		return mVariables.isEmpty();
 	}
 
 	@Override
 	public boolean isBottom() {
-		// for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
-		// if (entry.getValue().getResult() == Values.BOTTOM) {
-		// return true;
-		// }
-		// }
 		return false;
 	}
 
@@ -206,7 +171,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	public VPDomainState setFixpoint(boolean value) {
-		return new VPDomainState(mVariablesMap, mVarExprMap, mExprSet, mPtrReadintMap, value);
+		return new VPDomainState(mVariables, mVarExprMap, mExprSet, mPtrReadintMap, value);
 	}
 
 	/**
@@ -279,13 +244,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			return false;
 		}
 
-		if (other.mVariablesMap.size() != mVariablesMap.size()) {
+		if (other.mVariables.size() != mVariables.size()) {
 			return false;
 		}
 
-		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
-			final IBoogieVar otherType = other.mVariablesMap.get(entry.getKey());
-			if (!entry.getValue().equals(otherType)) {
+		for (final IBoogieVar entry : mVariables) {
+			if (!other.mVariables.contains(entry)) {
 				return false;
 			}
 		}
@@ -307,13 +271,13 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			newPtrReadinMap.put(key, new HashSet<Expression>(mPtrReadintMap.get(key)));
 		}
 
-		return new VPDomainState(new HashMap<String, IBoogieVar>(mVariablesMap), newExprMap,
-				new HashSet<Expression>(mExprSet), newPtrReadinMap, mIsFixpoint);
+		return new VPDomainState(new HashSet<IBoogieVar>(mVariables), newExprMap, new HashSet<Expression>(mExprSet),
+				newPtrReadinMap, mIsFixpoint);
 	}
 
 	@Override
-	public Map<String, IBoogieVar> getVariables() {
-		return Collections.unmodifiableMap(mVariablesMap);
+	public Set<IBoogieVar> getVariables() {
+		return Collections.unmodifiableSet(mVariables);
 	}
 
 	protected Map<String, Set<Expression>> getExpressionMap() {
@@ -323,8 +287,6 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	protected void setExpressionMap(Map<String, Set<Expression>> exprMap) {
 
 		assert exprMap != null;
-		// assert mVariablesMap.containsKey(name);
-		// assert mVarPartitionMap.containsKey(name);
 
 		mVarExprMap.clear();
 
@@ -343,8 +305,6 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	protected void setPtrReadinMap(Map<String, Set<Expression>> ptrReadinMap) {
 
 		assert ptrReadinMap != null;
-		// assert mVariablesMap.containsKey(name);
-		// assert mVarPartitionMap.containsKey(name);
 
 		mPtrReadintMap.clear();
 
@@ -377,49 +337,13 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		}
 	}
 
-	/**
-	 * Intersects {@link this} with another {@link VPDomainState} by intersecting each value of each variable.
-	 * 
-	 * @param other
-	 *            The other state to intersect with.
-	 * @return A new state which corresponds to the intersection.
-	 */
-	// protected VPDomainState intersect(VPDomainState other) {
-	// assert hasSameVariables(other);
-	//
-	// final VPDomainState newState = (VPDomainState) this.copy();
-	//
-	// for (final Entry<String, IBoogieVar> variable : mVariablesMap.entrySet()) {
-	// final String key = variable.getKey();
-	// newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
-	// }
-	//
-	// return newState;
-	// }
-
-	// public void setToBottom() {
-	// for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
-	// entry.setValue(new VPDomainValue(Values.BOTTOM));
-	// }
-	// }
-
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return script.term("true");
 	}
 
-	// @Override
-	// public IBoogieVar getVariableType(String name) {
-	// assert name != null;
-	// assert mVariablesMap.containsKey(name);
-	//
-	// return mVariablesMap.get(name);
-	// }
-
 	@Override
 	public VPDomainState patch(final VPDomainState dominator) {
-		// throw new UnsupportedOperationException("not yet implemented");
-		// TODO
 		return dominator;
 	}
 
@@ -449,20 +373,6 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		}
 		return result;
 	}
-
-	// public void putToSameGroup(String identifier1, String identifier2) {
-	// Map<String, String> groupInfo = generateVarGroupInfo(mVarPartitionMap);
-	//
-	// String group1 = groupInfo.get(identifier1);
-	// String group2 = groupInfo.get(identifier2);
-	//
-	// if (!group1.equals(group2)) {
-	//
-	// mVarPartitionMap.get(group1).addAll(mVarPartitionMap.get(group2));
-	// mVarPartitionMap.remove(group2);
-	// reIndexGroups(mVarPartitionMap);
-	// }
-	// }
 
 	/**
 	 * Re-index the partition group, in case there's a whole group that had been remove, and that index will be skip.
@@ -509,20 +419,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			if (max.compareTo(new Integer(next)) < 0) {
 				max = new Integer(next);
 			}
-			// indexList.add(new Integer(keySetIter.next()));
 		}
-
-		// Collections.sort(indexList);
-		// int maxIndex = indexList.get(indexList.size()).intValue();
-		// Integer result = new Integer(maxIndex + 1);
-
 		return new Integer((max.intValue() + 1)).toString();
-	}
-
-	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

@@ -47,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalConditionalEvaluator
-        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
-	private final Set<String> mVariables;
+	private final Set<IBoogieVar> mVariables;
 
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mConditionEvaluator;
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mNegatedConditionEvaluator;
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mIfEvaluator;
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mElseEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mConditionEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mNegatedConditionEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mIfEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mElseEvaluator;
 
 	protected IntervalConditionalEvaluator() {
 		mVariables = new HashSet<>();
@@ -130,7 +130,7 @@ public class IntervalConditionalEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
 		} else if (mConditionEvaluator == null) {
@@ -146,7 +146,7 @@ public class IntervalConditionalEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariables;
 	}
 

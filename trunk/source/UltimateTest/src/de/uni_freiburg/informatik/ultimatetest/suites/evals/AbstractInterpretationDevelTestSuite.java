@@ -58,6 +58,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			//### BPL 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
@@ -67,9 +68,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
@@ -103,10 +104,13 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/congruence.bpl",
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
+//			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
+//			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
 
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/bla.bpl",
 //			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
 //			"examples/programs/abstractInterpretation/regression/division-zero-1.bpl",
 //			"examples/programs/abstractInterpretation/regression/division-inequality-bug.bpl",
@@ -118,7 +122,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 //			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
 //			"examples/programs/abstractInterpretation/regression/unary-minus-bug.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
@@ -139,9 +143,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-//		 return 30 * 1000 * 1000;
-		return 10* 60 * 1000;
-		// return 60 * 1000 * 10;
+		 return 30 * 1000 * 1000;
+//		return 30 * 1000;
+//		 return 60 * 1000 * 10;
 	}
 
 	@Override

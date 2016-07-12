@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignDomainState implements IAbstractState<SignDomainState, CodeBlock, IBoogieVar> {
+public class SignDomainState implements IAbstractState<SignDomainState, CodeBlock> {
 
 	private static int sId;
 	private final int mId;

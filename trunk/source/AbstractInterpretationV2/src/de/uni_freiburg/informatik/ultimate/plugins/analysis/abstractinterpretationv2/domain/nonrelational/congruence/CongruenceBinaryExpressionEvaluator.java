@@ -51,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 
 public class CongruenceBinaryExpressionEvaluator
-        implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
-	private final Set<String> mVariableSet;
+	private final Set<IBoogieVar> mVariableSet;
 	private final ILogger mLogger;
 	private final int mMaxParallelStates;
 
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mLeftSubEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -78,10 +78,10 @@ public class CongruenceBinaryExpressionEvaluator
 		final List<IEvaluationResult<CongruenceDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<CongruenceDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -202,7 +202,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -218,7 +218,7 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariableSet;
 	}
 

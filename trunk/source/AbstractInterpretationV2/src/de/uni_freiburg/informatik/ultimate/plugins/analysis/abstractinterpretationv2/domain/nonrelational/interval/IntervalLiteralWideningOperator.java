@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
@@ -62,16 +61,15 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
 
-		final List<String> boolsToWiden = new ArrayList<>();
+		final List<IBoogieVar> boolsToWiden = new ArrayList<>();
 		final List<BooleanValue.Value> boolValues = new ArrayList<>();
-		final List<String> varsToWiden = new ArrayList<>();
+		final List<IBoogieVar> varsToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> varValues = new ArrayList<>();
-		final List<String> arraysToWiden = new ArrayList<>();
+		final List<IBoogieVar> arraysToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> arrayValues = new ArrayList<>();
 
-		for (final Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
-			final String var = entry.getKey();
-			final IBoogieVar type = entry.getValue();
+		for (final IBoogieVar var : first.getVariables()) {
+			final IBoogieVar type = var;
 
 			if (type.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
@@ -117,11 +115,11 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			}
 		}
 
-		final String[] vars = varsToWiden.toArray(new String[varsToWiden.size()]);
+		final IBoogieVar[] vars = varsToWiden.toArray(new IBoogieVar[varsToWiden.size()]);
 		final IntervalDomainValue[] vals = varValues.toArray(new IntervalDomainValue[varValues.size()]);
-		final String[] bools = boolsToWiden.toArray(new String[boolsToWiden.size()]);
+		final IBoogieVar[] bools = boolsToWiden.toArray(new IBoogieVar[boolsToWiden.size()]);
 		final BooleanValue.Value[] boolVals = boolValues.toArray(new BooleanValue.Value[boolValues.size()]);
-		final String[] arrays = arraysToWiden.toArray(new String[arraysToWiden.size()]);
+		final IBoogieVar[] arrays = arraysToWiden.toArray(new IBoogieVar[arraysToWiden.size()]);
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
 
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);

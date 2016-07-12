@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceSingletonBooleanExpressionEvaluator
-        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
 	private final BooleanValue mBooleanValue;
 
@@ -72,7 +72,7 @@ public class CongruenceSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 

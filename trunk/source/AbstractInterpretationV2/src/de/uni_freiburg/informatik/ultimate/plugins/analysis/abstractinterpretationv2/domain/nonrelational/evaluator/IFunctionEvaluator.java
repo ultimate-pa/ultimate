@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
-        extends IEvaluator<VALUE, STATE, ACTION, VARDECL> {
+public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL>
+        extends IEvaluator<VALUE, STATE, ACTION> {
 
 	/**
 	 * @return The number of input parameters of the function.

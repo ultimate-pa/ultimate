@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
+public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock>, VARDECL>
 		implements IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> {
 
 	protected final IUltimateServiceProvider mServices;

@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
-		extends IEvaluator<VALUE, STATE, ACTION, VARDECL> {
+public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION>, ACTION>
+		extends IEvaluator<VALUE, STATE, ACTION> {
 
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.

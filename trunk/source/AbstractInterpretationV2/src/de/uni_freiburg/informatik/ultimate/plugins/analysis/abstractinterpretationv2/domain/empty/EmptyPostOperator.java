@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -40,20 +40,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  */
 public final class EmptyPostOperator<ACTION, VARDECL>
-        implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+        implements IAbstractPostOperator<EmptyDomainState<ACTION>, ACTION, VARDECL> {
 
 	@Override
-	public List<EmptyDomainState<ACTION, VARDECL>> apply(EmptyDomainState<ACTION, VARDECL> oldstate, ACTION concrete) {
-		final List<EmptyDomainState<ACTION, VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashMap<>(oldstate.getVariables())));
+	public List<EmptyDomainState<ACTION>> apply(EmptyDomainState<ACTION> oldstate, ACTION concrete) {
+		final List<EmptyDomainState<ACTION>> returnList = new ArrayList<>();
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
 		return returnList;
 	}
 
 	@Override
-	public List<EmptyDomainState<ACTION, VARDECL>> apply(EmptyDomainState<ACTION, VARDECL> oldstate,
-	        EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, ACTION transition) {
-		final List<EmptyDomainState<ACTION, VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables())));
+	public List<EmptyDomainState<ACTION>> apply(EmptyDomainState<ACTION> oldstate,
+	        EmptyDomainState<ACTION> oldstateWithFreshVariables, ACTION transition) {
+		final List<EmptyDomainState<ACTION>> returnList = new ArrayList<>();
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables())));
 		return returnList;
 	}
 }

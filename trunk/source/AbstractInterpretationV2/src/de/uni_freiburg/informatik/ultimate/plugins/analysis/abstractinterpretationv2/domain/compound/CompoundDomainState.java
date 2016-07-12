@@ -30,8 +30,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,13 +54,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock> {
 
 	private static int sId;
 
 	private final IUltimateServiceProvider mServices;
 
-	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
+	private final List<IAbstractState<?, CodeBlock>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 
@@ -75,7 +76,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
-			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
+			final List<IAbstractState<?, CodeBlock>> abstractStateList) {
 		sId++;
 		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
@@ -88,37 +89,32 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public CompoundDomainState addVariable(String name, IBoogieVar variable) {
-		return performStateOperation(state -> state.addVariable(name, variable));
+	public CompoundDomainState addVariable(IBoogieVar variable) {
+		return performStateOperation(state -> state.addVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState removeVariable(String name, IBoogieVar variable) {
-		return performStateOperation(state -> state.removeVariable(name, variable));
+	public CompoundDomainState removeVariable(IBoogieVar variable) {
+		return performStateOperation(state -> state.removeVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public CompoundDomainState addVariables(Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.addVariables(variables));
 	}
 
 	@Override
-	public CompoundDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public CompoundDomainState removeVariables(Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.removeVariables(variables));
 	}
 
 	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
-		return mAbstractStates.get(0).getVariableDeclarationType(name);
+	public boolean containsVariable(IBoogieVar var) {
+		return mAbstractStates.get(0).containsVariable(var);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
-		return mAbstractStates.get(0).containsVariable(name);
-	}
-
-	@Override
-	public Map<String, IBoogieVar> getVariables() {
+	public Set<IBoogieVar> getVariables() {
 		return mAbstractStates.get(0).getVariables();
 	}
 
@@ -126,7 +122,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public CompoundDomainState patch(CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock>> returnList = new ArrayList<>();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			returnList.add(patchInternally(mAbstractStates.get(i), dominator.mAbstractStates.get(i)));
 		}
@@ -179,7 +175,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final IAbstractState<?, CodeBlock, IBoogieVar> state : mAbstractStates) {
+		for (final IAbstractState<?, CodeBlock> state : mAbstractStates) {
 			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
 		}
 
@@ -195,7 +191,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private CompoundDomainState performStateOperation(
-			Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
+			Function<IAbstractState<?, CodeBlock>, IAbstractState<?, CodeBlock>> state) {
 		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
@@ -204,7 +200,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return mDomainList;
 	}
 
-	protected List<IAbstractState<?, CodeBlock, IBoogieVar>> getAbstractStatesList() {
+	protected List<IAbstractState<?, CodeBlock>> getAbstractStatesList() {
 		return mAbstractStates;
 	}
 
@@ -226,8 +222,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private SubsetResult isStrictSubsetOf(final SubsetResult current,
-			final IAbstractState<?, CodeBlock, IBoogieVar> aState,
-			final IAbstractState<?, CodeBlock, IBoogieVar> bState) {
+			final IAbstractState<?, CodeBlock> aState,
+			final IAbstractState<?, CodeBlock> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
 		switch (current) {
 		case EQUAL:

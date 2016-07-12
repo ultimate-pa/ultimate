@@ -43,27 +43,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any variable declaration.
  */
 public class EmptyDomain<ACTION, VARDECL, EXPRESSION>
-        implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+        implements IAbstractDomain<EmptyDomainState<ACTION>, ACTION, VARDECL, EXPRESSION> {
 
-	private IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> mEqualityProvider;
+	private IEqualityProvider<EmptyDomainState<ACTION>, ACTION, VARDECL, EXPRESSION> mEqualityProvider;
 
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
-		return new EmptyDomainState<ACTION, VARDECL>();
+	public EmptyDomainState<ACTION> createFreshState() {
+		return new EmptyDomainState<ACTION>();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION>> getWideningOperator() {
 		return new EmptyOperator<>();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getMergeOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION>> getMergeOperator() {
 		return new EmptyOperator<>();
 	}
 
 	@Override
-	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
+	public IAbstractPostOperator<EmptyDomainState<ACTION>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
 
@@ -74,18 +74,18 @@ public class EmptyDomain<ACTION, VARDECL, EXPRESSION>
 	}
 
 	@Override
-	public IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> getEqualityProvider() {
+	public IEqualityProvider<EmptyDomainState<ACTION>, ACTION, VARDECL, EXPRESSION> getEqualityProvider() {
 		if (mEqualityProvider == null) {
-			mEqualityProvider = new IEqualityProvider<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION>() {
+			mEqualityProvider = new IEqualityProvider<EmptyDomainState<ACTION>, ACTION, VARDECL, EXPRESSION>() {
 
 				@Override
-				public boolean isDefinitelyEqual(EmptyDomainState<ACTION, VARDECL> state, EXPRESSION first,
+				public boolean isDefinitelyEqual(EmptyDomainState<ACTION> state, EXPRESSION first,
 			            EXPRESSION second) {
 					return false;
 				}
 
 				@Override
-				public boolean isDefinitelyNotEqual(EmptyDomainState<ACTION, VARDECL> state, EXPRESSION first,
+				public boolean isDefinitelyNotEqual(EmptyDomainState<ACTION> state, EXPRESSION first,
 			            EXPRESSION second) {
 					return false;
 				}

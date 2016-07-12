@@ -48,11 +48,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalUnaryExpressionEvaluator
-        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
 	private final ILogger mLogger;
 
-	protected IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mSubEvaluator;
 	protected Operator mOperator;
 
 	protected IntervalUnaryExpressionEvaluator(final ILogger logger) {
@@ -98,7 +98,7 @@ public class IntervalUnaryExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 
@@ -106,7 +106,7 @@ public class IntervalUnaryExpressionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
 

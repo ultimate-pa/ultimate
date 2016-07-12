@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL> {
 
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action

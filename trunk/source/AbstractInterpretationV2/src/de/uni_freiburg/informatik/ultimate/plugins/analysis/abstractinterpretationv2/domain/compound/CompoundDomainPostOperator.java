@@ -106,18 +106,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	public List<CompoundDomainState> apply(CompoundDomainState oldstate, CodeBlock transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> states = oldstate.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock>> states = oldstate.getAbstractStatesList();
 		final List<IAbstractDomain> domains = oldstate.getDomainList();
 		assert domains.size() == states.size();
 
 		final List<CodeBlock> transitionList = createTransitionList(transition, states);
 		assert transitionList.size() == domains.size();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
 			final IAbstractDomain currentDomain = domains.get(i);
-			final IAbstractState<?, CodeBlock, IBoogieVar> currentPreState = states.get(i);
+			final IAbstractState<?, CodeBlock> currentPreState = states.get(i);
 			final CodeBlock currentTrans = transitionList.get(i);
 
 			final List<IAbstractState> result =
@@ -191,7 +191,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @return
 	 */
 	private List<CodeBlock> createTransitionList(final CodeBlock transition,
-			final List<IAbstractState<?, CodeBlock, IBoogieVar>> states) {
+			final List<IAbstractState<?, CodeBlock>> states) {
 
 		final List<CodeBlock> returnList = new ArrayList<>();
 
@@ -222,7 +222,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param transition
 	 * @return
 	 */
-	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock, IBoogieVar>> states,
+	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock>> states,
 			final int index, final CodeBlock transition) {
 
 		assert !states.isEmpty();
@@ -232,7 +232,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (i == index) {
 				continue;
 			}
-			final IAbstractState<?, CodeBlock, IBoogieVar> state = states.get(i);
+			final IAbstractState<?, CodeBlock> state = states.get(i);
 
 			final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
 			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
@@ -265,8 +265,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			CompoundDomainState stateAfterLeaving, CodeBlock transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> afterStates = stateAfterLeaving.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock>> afterStates = stateAfterLeaving.getAbstractStatesList();
 		final List<IAbstractDomain> domainsBefore = stateBeforeLeaving.getDomainList();
 		final List<IAbstractDomain> domainsAfter = stateAfterLeaving.getDomainList();
 
@@ -274,7 +274,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		assert beforeStates.size() == afterStates.size();
 		assert domainsBefore.size() == beforeStates.size();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domainsBefore.size(); i++) {
 			final List<IAbstractState> result = applyInternally(beforeStates.get(i), afterStates.get(i),
@@ -301,13 +301,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return returnStates;
 	}
 
-	private static List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> currentState,
+	private static List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock> currentState,
 			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
-	private List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> first,
-			final IAbstractState<?, CodeBlock, IBoogieVar> second, final IAbstractPostOperator postOperator,
+	private List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock> first,
+			final IAbstractState<?, CodeBlock> second, final IAbstractPostOperator postOperator,
 			final CodeBlock transition) {
 		return postOperator.apply(first, second, transition);
 	}

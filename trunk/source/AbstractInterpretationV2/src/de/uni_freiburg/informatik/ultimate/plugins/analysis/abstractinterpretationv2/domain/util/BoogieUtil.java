@@ -17,11 +17,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 public class BoogieUtil {
 
 	/**
-	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables
-	 * a boogie type.
+	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
+	 * boogie type.
 	 * 
-	 * @param identifier the identifier of the variable
-	 * @param type the type of the variable
+	 * @param identifier
+	 *            the identifier of the variable
+	 * @param type
+	 *            the type of the variable
 	 * @return {@link IBoogieVar} according to the given identifier and {@link IType}
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -42,17 +44,22 @@ public class BoogieUtil {
 			public ApplicationTerm getDefaultConstant() {
 				throw new UnsupportedOperationException("Temporary IBoogieVars dont have default constants.");
 			}
+
+			@Override
+			public String toString() {
+				return BoogieUtil.class.getSimpleName() + "Temporary:" + identifier;
+			}
 		};
 	}
 
 	/**
-     * Determines if a {@link IdentifierExpression} references a variable or constant.
-     * {@link IdentifierExpression} can also reference functions or procedures.
-     * In that case, this method will return {@code false}.
-     * 
-     * @param ie {@link IdentifierExpression}
-     * @return expression references a variable or constant
-     */
+	 * Determines if a {@link IdentifierExpression} references a variable or constant. {@link IdentifierExpression} can
+	 * also reference functions or procedures. In that case, this method will return {@code false}.
+	 * 
+	 * @param ie
+	 *            {@link IdentifierExpression}
+	 * @return expression references a variable or constant
+	 */
 	public static boolean isVariable(IdentifierExpression ie) {
 		final DeclarationInformation di = ie.getDeclarationInformation();
 		switch (di.getStorageClass()) {
@@ -71,7 +78,7 @@ public class BoogieUtil {
 			throw new IllegalArgumentException("Unknown storage class: " + di.getStorageClass());
 		}
 	}
-	
+
 	public static boolean isGlobal(IBoogieVar ibv) {
 		if (ibv instanceof BoogieVar) {
 			return ((BoogieVar) ibv).isGlobal();

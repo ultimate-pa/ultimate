@@ -50,15 +50,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceSingletonVariableExpressionEvaluator
-        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+		implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
-	private final Set<String> mVariableSet;
+	private final Set<IBoogieVar> mVariableSet;
 
 	private boolean mContainsBoolean = false;
 
-	private final String mVariableName;
+	private final IBoogieVar mVariableName;
 
-	public CongruenceSingletonVariableExpressionEvaluator(final String variableName) {
+	public CongruenceSingletonVariableExpressionEvaluator(final IBoogieVar variableName) {
 		mVariableName = variableName;
 		mVariableSet = new HashSet<>();
 		mVariableSet.add(variableName);
@@ -72,7 +72,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 		CongruenceDomainValue val;
 		BooleanValue returnBool = new BooleanValue();
 
-		final IBoogieVar type = currentState.getVariableDeclarationType(mVariableName);
+		final IBoogieVar type = mVariableName;
 		if (type.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
@@ -84,7 +84,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 				val = currentState.getValue(mVariableName);
 
 				assert val != null : "The variable with name " + mVariableName
-				        + " has not been found in the current abstract state.";
+						+ " has not been found in the current abstract state.";
 			}
 		} else if (type.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
@@ -94,8 +94,8 @@ public class CongruenceSingletonVariableExpressionEvaluator
 		}
 
 		if (val.isBottom() || returnBool.isBottom()) {
-			returnList.add(
-			        new CongruenceDomainEvaluationResult(CongruenceDomainValue.createBottom(), new BooleanValue(Value.BOTTOM)));
+			returnList.add(new CongruenceDomainEvaluationResult(CongruenceDomainValue.createBottom(),
+					new BooleanValue(Value.BOTTOM)));
 		} else {
 			returnList.add(new CongruenceDomainEvaluationResult(val, returnBool));
 		}
@@ -110,13 +110,13 @@ public class CongruenceSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
-		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
+				"A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariableSet;
 	}
 
@@ -127,14 +127,14 @@ public class CongruenceSingletonVariableExpressionEvaluator
 
 	@Override
 	public String toString() {
-		return mVariableName;
+		return mVariableName.getIdentifier();
 	}
 
 	@Override
 	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
-	        final CongruenceDomainState currentState) {
+			final CongruenceDomainState currentState) {
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
-		
+
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));
 		} else {

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
+public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock>, LOCATION>
 		implements IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, LOCATION> {
 
 	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
@@ -113,8 +113,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				accumulator = state;
 			} else {
 				accumulator = mMergeOperator.apply(state, accumulator);
-				assert accumulator.getVariables().keySet()
-						.equals(state.getVariables().keySet()) : "states have different variables";
+				assert accumulator.getVariables().equals(state.getVariables()) : "states have different variables";
 			}
 			iterator.remove();
 		}
@@ -134,8 +133,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		final Deque<STATE> newStates = new ArrayDeque<STATE>(states.size());
 		while (iterator.hasNext()) {
 			final STATE newState = wideningOp.apply(operand, iterator.next());
-			assert newState.getVariables().keySet()
-					.equals(operand.getVariables().keySet()) : "states have different variables";
+			assert newState.getVariables().equals(operand.getVariables()) : "states have different variables";
 			assert newState != null;
 			iterator.remove();
 			newStates.addFirst(newState);

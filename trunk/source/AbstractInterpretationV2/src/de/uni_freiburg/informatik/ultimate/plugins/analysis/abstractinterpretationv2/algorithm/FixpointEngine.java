@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION, EXPRESSION> {
+public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION, EXPRESSION> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;

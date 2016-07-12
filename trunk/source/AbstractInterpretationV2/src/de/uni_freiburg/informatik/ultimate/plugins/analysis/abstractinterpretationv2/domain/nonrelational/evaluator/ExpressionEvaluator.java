@@ -39,16 +39,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION>, ACTION> {
 
-	private final Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>> mEvaluators;
-	private IEvaluator<VALUE, STATE, ACTION, VARDECL> mRootEvaluator;
+	private final Stack<IEvaluator<VALUE, STATE, ACTION>> mEvaluators;
+	private IEvaluator<VALUE, STATE, ACTION> mRootEvaluator;
 
 	/**
 	 * The default constructor.
 	 */
 	public ExpressionEvaluator() {
-		mEvaluators = new Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>>();
+		mEvaluators = new Stack<IEvaluator<VALUE, STATE, ACTION>>();
 		mRootEvaluator = null;
 	}
 
@@ -59,7 +59,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	 * 
 	 * @param evaluator
 	 */
-	public void addEvaluator(IEvaluator<VALUE, STATE, ACTION, VARDECL> evaluator) {
+	public void addEvaluator(IEvaluator<VALUE, STATE, ACTION> evaluator) {
 
 		// TODO Insert sanity checks to be on the safe side.
 
@@ -94,7 +94,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	 * 
 	 * @return
 	 */
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> getRootEvaluator() {
+	public IEvaluator<VALUE, STATE, ACTION> getRootEvaluator() {
 		return mRootEvaluator;
 	}
 

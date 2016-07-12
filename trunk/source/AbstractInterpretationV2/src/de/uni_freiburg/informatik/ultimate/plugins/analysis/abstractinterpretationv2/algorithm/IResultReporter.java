@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IResultReporter<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	void reportPossibleError(AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex);
 

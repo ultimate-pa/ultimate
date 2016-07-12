@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
+public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION>
 		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;

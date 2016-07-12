@@ -49,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonVariableExpressionEvaluator
-        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
-	private final Set<String> mVariableSet;
-	private final String mVariableName;
+	private final Set<IBoogieVar> mVariableSet;
+	private final IBoogieVar mVariableName;
 
 	private boolean mContainsBoolean = false;
 
-	public IntervalSingletonVariableExpressionEvaluator(final String variableName) {
+	public IntervalSingletonVariableExpressionEvaluator(final IBoogieVar variableName) {
 		mVariableName = variableName;
 		mVariableSet = new HashSet<>();
 		mVariableSet.add(variableName);
@@ -70,9 +70,8 @@ public class IntervalSingletonVariableExpressionEvaluator
 		IntervalDomainValue val;
 		BooleanValue returnBool = new BooleanValue();
 
-		final IBoogieVar type = currentState.getVariableDeclarationType(mVariableName);
-		if (type.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+		if (mVariableName.getIType() instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) mVariableName.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				val = new IntervalDomainValue();
@@ -84,7 +83,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 				assert val != null : "The variable with name " + mVariableName
 				        + " has not been found in the current abstract state.";
 			}
-		} else if (type.getIType() instanceof ArrayType) {
+		} else if (mVariableName.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
 			val = currentState.getValue(mVariableName);
 		} else {
@@ -109,13 +108,13 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariableSet;
 	}
 
@@ -126,7 +125,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 	@Override
 	public String toString() {
-		return mVariableName;
+		return mVariableName.getIdentifier();
 	}
 
 	@Override

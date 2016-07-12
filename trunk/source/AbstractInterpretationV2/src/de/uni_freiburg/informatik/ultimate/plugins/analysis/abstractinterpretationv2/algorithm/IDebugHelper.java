@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	/**
 	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {/\ postStates} holds.

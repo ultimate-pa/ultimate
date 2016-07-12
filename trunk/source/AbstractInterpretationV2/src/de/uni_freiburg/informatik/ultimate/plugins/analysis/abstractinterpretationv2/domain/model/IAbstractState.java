@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -42,15 +44,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * Note that {@link FixpointEngine} assumes that all operations on an instance of {@link IAbstractState} do not change
  * this instance.
  * 
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- *
+ * @param <STATE>
+ *            The actual type of the abstract state.
  * @param <ACTION>
  *            Any action type.
- * @param <VARDECL>
- *            Any variable declaration type.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION>, ACTION> {
 
 	/**
 	 * {@link FixpointEngine} will call this method to add a variable to the set of variables of an abstract state s.t.
@@ -58,13 +60,11 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * All variable names are unique.
 	 * 
-	 * @param name
-	 *            The name of the variable that should be added.
 	 * @param variable
-	 *            An object that describes the type of the variable.
+	 *            An {@link IBoogieVar} that represents the variable.
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variable.
 	 */
-	STATE addVariable(final String name, final VARDECL variable);
+	STATE addVariable(final IBoogieVar variable);
 
 	/**
 	 * {@link FixpointEngine} will call this method to remove a variable from the set of variables of an abstract state
@@ -74,23 +74,21 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * A variable will only be removed if it was added before.
 	 * 
-	 * @param name
-	 *            The name of the variable that should be removed.
 	 * @param variable
-	 *            An object that describes the type of the variable. This should be equal to the object that was added
-	 *            previously.
+	 *            An {@link IBoogieVar} that represents the variable.
+	 * 
 	 * @return A new abstract state that is a copy of this instance except that the removed variable is missing.
 	 */
-	STATE removeVariable(final String name, final VARDECL variable);
+	STATE removeVariable(final IBoogieVar variable);
 
 	/**
-	 * Adds multiple variables at once (see {@link #addVariable(String, Object)} for details).
+	 * Adds multiple variables at once (see {@link #addVariable(IBoogieVar)} for details).
 	 * 
 	 * @param variables
-	 *            A {@link Map} describing all the variables that have to be added.
+	 *            A {@link Set} describing all the variables that have to be added.
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variables.
 	 */
-	STATE addVariables(final Map<String, VARDECL> variables);
+	STATE addVariables(final Collection<IBoogieVar> variables);
 
 	/**
 	 * Remove multiple variables at once (see {@link #removeVariable(String, Object)} for details).
@@ -100,30 +98,21 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A new abstract state that is a copy of this instance except that all the variables defined by
 	 *         <code>variables</code> are missing.
 	 */
-	STATE removeVariables(final Map<String, VARDECL> variables);
-
-	/**
-	 * Returns the declaration type of the given variable.
-	 * 
-	 * @param name
-	 *            The variable to get the type of.
-	 * @return The variable declaration type of the variable.
-	 */
-	VARDECL getVariableDeclarationType(final String name);
+	STATE removeVariables(final Collection<IBoogieVar> variables);
 
 	/**
 	 * Check if a given variable exists in the abstract state.
 	 * 
-	 * @param name
-	 *            The name of the variable.
+	 * @param var
+	 *            The {@link IBoogieVar} that should be tested.
 	 * @return true if the variable exists, false otherwise.
 	 */
-	boolean containsVariable(final String name);
+	boolean containsVariable(final IBoogieVar var);
 
 	/**
-	 * @return an unmodifiable {@link Map} containing all variables declared in this state.
+	 * @return an unmodifiable {@link Set} containing all variables declared in this state.
 	 */
-	Map<String, VARDECL> getVariables();
+	Set<IBoogieVar> getVariables();
 
 	/**
 	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the

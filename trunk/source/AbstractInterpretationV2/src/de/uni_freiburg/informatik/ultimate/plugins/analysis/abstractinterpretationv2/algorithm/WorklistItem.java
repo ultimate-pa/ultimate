@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+final class WorklistItem<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	private final STATE mPreState;
 	private final ACTION mAction;

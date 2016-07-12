@@ -52,7 +52,7 @@ public class IntervalFunctionEvaluator
 	private final String mName;
 	private final int mInParamCount;
 
-	private final List<IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
+	private final List<IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock>> mInputParamEvaluators;
 
 	protected IntervalFunctionEvaluator(final String name, final int numInParams) {
 		mName = name;
@@ -73,7 +73,7 @@ public class IntervalFunctionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -82,7 +82,7 @@ public class IntervalFunctionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return new HashSet<>();
 	}
 

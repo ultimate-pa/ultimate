@@ -203,7 +203,7 @@ public final class AbstractInterpreter {
 				transProvider, transProvider, rootAnnot);
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC>
+	private static <STATE extends IAbstractState<STATE, CodeBlock>, LOC>
 			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(final CodeBlock initial,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
@@ -244,7 +244,7 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	private static <STATE extends IAbstractState<STATE, CodeBlock>>
 			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
 			run(final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable,
@@ -378,7 +378,7 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
+	private static <STATE extends IAbstractState<STATE, CodeBlock>, VARDECL>
 			IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
 		if (isSilent) {

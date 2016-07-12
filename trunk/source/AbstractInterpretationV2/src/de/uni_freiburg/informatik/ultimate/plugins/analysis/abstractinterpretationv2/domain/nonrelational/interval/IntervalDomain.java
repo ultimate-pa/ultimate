@@ -56,11 +56,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar, Expression> {
 
-	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
 	private final RootAnnot mRootAnnotation;
+	private final BoogieSymbolTable mSymbolTable;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
@@ -68,13 +68,13 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	private IEqualityProvider<IntervalDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-	        final LiteralCollection literalCollector, final IUltimateServiceProvider services,
-	        final RootAnnot rootAnnotation) {
+			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
+			final RootAnnot rootAnnotation) {
 		mLogger = logger;
-		mSymbolTable = symbolTable;
 		mLiteralCollection = literalCollector;
 		mServices = services;
 		mRootAnnotation = rootAnnotation;
+		mSymbolTable = symbolTable;
 	}
 
 	@Override
@@ -91,15 +91,15 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
 				mWideningOperator = new IntervalSimpleWideningOperator();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-				final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
-				        mLiteralCollection);
+				final IAbstractStateBinaryOperator<IntervalDomainState> rtr =
+						new IntervalLiteralWideningOperator(mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
 				mWideningOperator = rtr;
 			} else {
 				throw new UnsupportedOperationException(
-				        "The widening operator " + wideningOperator + " is not implemented.");
+						"The widening operator " + wideningOperator + " is not implemented.");
 			}
 		}
 
@@ -117,7 +117,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	@Override
 	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, mServices);
+			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable,
+					mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		}
 		return mPostOperator;
 	}

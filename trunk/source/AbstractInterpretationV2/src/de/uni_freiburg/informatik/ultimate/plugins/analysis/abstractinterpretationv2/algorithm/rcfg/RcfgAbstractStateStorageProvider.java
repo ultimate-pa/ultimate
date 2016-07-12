@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
+public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock>, LOCATION>
 		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
 	private final Map<LOCATION, Deque<STATE>> mStorage;

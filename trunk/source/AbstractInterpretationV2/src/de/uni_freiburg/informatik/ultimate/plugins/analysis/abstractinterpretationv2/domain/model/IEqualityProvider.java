@@ -43,7 +43,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @param <EXPRESSION>
  *            The type of the expressions of this equality provider.
  */
-public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, EXPRESSION> {
 
 	/**
 	 * Checks whether two expressions over a given abstract state are equal, i.e. whether they evaluate to the same

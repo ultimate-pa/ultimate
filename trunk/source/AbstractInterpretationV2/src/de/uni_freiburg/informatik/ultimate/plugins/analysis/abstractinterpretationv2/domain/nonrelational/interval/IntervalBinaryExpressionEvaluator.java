@@ -45,15 +45,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class IntervalBinaryExpressionEvaluator
-        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
-	private final Set<String> mVariableSet;
+	private final Set<IBoogieVar> mVariableSet;
 	private final ILogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelStates;
 
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
-	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mLeftSubEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -74,10 +74,10 @@ public class IntervalBinaryExpressionEvaluator
 		final List<IEvaluationResult<IntervalDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<IntervalDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -223,7 +223,7 @@ public class IntervalBinaryExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -239,7 +239,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariableSet;
 	}
 

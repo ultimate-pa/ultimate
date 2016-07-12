@@ -49,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 
 public class CongruenceConditionalEvaluator
-        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
-	private final Set<String> mVariables;
+	private final Set<IBoogieVar> mVariables;
 
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mConditionEvaluator;
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mNegatedConditionEvaluator;
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mIfEvaluator;
-	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mElseEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mConditionEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mNegatedConditionEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mIfEvaluator;
+	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mElseEvaluator;
 
 	protected CongruenceConditionalEvaluator() {
 		mVariables = new HashSet<>();
@@ -131,7 +131,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
 		} else if (mConditionEvaluator == null) {
@@ -147,7 +147,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariables;
 	}
 

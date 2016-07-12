@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, EXPRESSION> {
 
 	/**
 	 * @return A new state of the current abstract domain.

@@ -35,6 +35,7 @@ import java.math.RoundingMode;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
 /**
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainValue {
+public class IntervalDomainValue implements INonrelationalValue<IntervalDomainValue> {
 
 	private IntervalValue mLower;
 	private IntervalValue mUpper;
@@ -127,6 +128,7 @@ public class IntervalDomainValue {
 	 * 
 	 * @return A new {@link IntervalDomainValue} which is the deep copy of <code>this</code>.
 	 */
+	@Override
 	public IntervalDomainValue copy() {
 		if (mIsBottom) {
 			return new IntervalDomainValue(true);
@@ -223,6 +225,7 @@ public class IntervalDomainValue {
 	 * @return <code>true</code> if and only if <code>this</code> and other are both bottom, or if the lower and upper
 	 *         bounds are the same. <code>false</code> otherwise.
 	 */
+	@Override
 	public boolean isEqualTo(final IntervalDomainValue other) {
 		if (other == null) {
 			return false;
@@ -281,6 +284,7 @@ public class IntervalDomainValue {
 	 *            The other value to compare to.
 	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
 	 */
+	@Override
 	public boolean isContainedIn(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -414,6 +418,7 @@ public class IntervalDomainValue {
 	 *            The other interval to intersect with.
 	 * @return A new {@link IntervalDomainValue} representing the result of the intersection.
 	 */
+	@Override
 	public IntervalDomainValue intersect(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -478,6 +483,7 @@ public class IntervalDomainValue {
 	 *            The other interval to merge with.
 	 * @return A new interval which is the result of merging this with other.
 	 */
+	@Override
 	public IntervalDomainValue merge(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -544,6 +550,7 @@ public class IntervalDomainValue {
 	/**
 	 * @return <code>true</code> if and only if the value is bottom, <code>false</code> otherwise.
 	 */
+	@Override
 	public boolean isBottom() {
 		return mIsBottom;
 	}
@@ -798,6 +805,7 @@ public class IntervalDomainValue {
 	 *            The term of the variable to use.
 	 * @return A Term corresponding to the value.
 	 */
+	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
 		assert sort.isNumericSort();
 		if (isBottom()) {

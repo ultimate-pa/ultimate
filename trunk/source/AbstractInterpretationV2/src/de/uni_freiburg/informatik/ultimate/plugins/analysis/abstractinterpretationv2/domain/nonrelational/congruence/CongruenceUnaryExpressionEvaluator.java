@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceUnaryExpressionEvaluator
-        implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
 	private final ILogger mLogger;
 
-	protected IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> mSubEvaluator;
 	protected Operator mOperator;
 
 	protected CongruenceUnaryExpressionEvaluator(final ILogger logger) {
@@ -99,7 +99,7 @@ public class CongruenceUnaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 

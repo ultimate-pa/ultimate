@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -55,15 +54,15 @@ public class CompoundDomainMergeOperator implements IAbstractStateBinaryOperator
 
 	@Override
 	public CompoundDomainState apply(CompoundDomainState first, CompoundDomainState second) {
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> firstStates = first.getAbstractStatesList();
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> secondStates = second.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock>> firstStates = first.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock>> secondStates = second.getAbstractStatesList();
 		assert firstStates.size() == secondStates.size();
 		assert first.getDomainList().size() == second.getDomainList().size();
 
 		final List<IAbstractDomain> domains = first.getDomainList();
 		assert domains.size() == firstStates.size();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock>> returnStates = new ArrayList<>();
 
 		for (int i = 0; i < firstStates.size(); i++) {
 			returnStates

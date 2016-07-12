@@ -72,7 +72,8 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 			final String evaluatorType = prefs.getString(CongruenceDomainPreferences.LABEL_EVALUATOR_TYPE);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			final CongruenceDomainStatementProcessor stmtProcessor = new CongruenceDomainStatementProcessor(mLogger,
-					mSymbolTable, evaluatorType, maxParallelStates);
+					mSymbolTable, mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable(), evaluatorType,
+					maxParallelStates);
 			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, stmtProcessor);
 		}
 		return mPostOperator;

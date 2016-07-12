@@ -107,7 +107,7 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieVar other = (BoogieVar) obj;
+		final BoogieNonOldVar other = (BoogieNonOldVar) obj;
 		if (getIdentifier() == null) {
 			if (other.getIdentifier() != null) {
 				return false;
@@ -127,8 +127,4 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 		}
 		return true;
 	}
-	
-
-	
-
 }

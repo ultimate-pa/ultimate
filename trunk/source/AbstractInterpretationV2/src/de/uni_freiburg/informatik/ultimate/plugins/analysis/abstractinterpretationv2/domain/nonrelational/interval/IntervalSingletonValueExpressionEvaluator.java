@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonValueExpressionEvaluator
-        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
 	private final IntervalDomainValue mValue;
 
@@ -76,14 +76,14 @@ public class IntervalSingletonValueExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+	public Set<IBoogieVar> getVarIdentifiers() {
+		return new HashSet<>();
 	}
 
 	@Override

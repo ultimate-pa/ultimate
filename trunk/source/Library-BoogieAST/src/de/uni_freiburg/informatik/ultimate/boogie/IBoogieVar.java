@@ -9,9 +9,9 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  *
  */
 public interface IBoogieVar {
-	public String getIdentifier();
+	String getIdentifier();
 
-	public IType getIType();
+	IType getIType();
 
-	public ApplicationTerm getDefaultConstant();
+	ApplicationTerm getDefaultConstant();
 }

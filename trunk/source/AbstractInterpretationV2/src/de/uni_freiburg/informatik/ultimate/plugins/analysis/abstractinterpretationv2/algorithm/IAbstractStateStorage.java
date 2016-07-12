@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	List<STATE> getAbstractPostStates(ACTION transition);
 

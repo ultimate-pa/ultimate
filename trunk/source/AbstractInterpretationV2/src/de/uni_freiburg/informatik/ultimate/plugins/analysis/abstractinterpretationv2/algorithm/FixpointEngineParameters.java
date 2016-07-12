@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION, EXPRESSION> {
+public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION, EXPRESSION> {
 
 	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStorage;

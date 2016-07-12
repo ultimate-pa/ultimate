@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +53,7 @@ public class CongruenceFunctionEvaluator
 	private final String mName;
 	private final int mInParamCount;
 
-	private final List<IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
+	private final List<IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock>> mInputParamEvaluators;
 
 	protected CongruenceFunctionEvaluator(final String name, final int numInParams) {
 		mName = name;
@@ -73,7 +73,7 @@ public class CongruenceFunctionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -82,8 +82,8 @@ public class CongruenceFunctionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
-		return new HashSet<>();
+	public Set<IBoogieVar> getVarIdentifiers() {
+		return Collections.emptySet();
 	}
 
 	@Override

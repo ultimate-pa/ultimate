@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceSingletonValueExpressionEvaluator
-        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
 	private final CongruenceDomainValue mValue;
 
@@ -76,7 +76,7 @@ public class CongruenceSingletonValueExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
