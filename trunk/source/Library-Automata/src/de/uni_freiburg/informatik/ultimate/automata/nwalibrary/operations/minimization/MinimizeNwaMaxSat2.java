@@ -124,8 +124,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
 		final UnionFind<STATE> resultingEquivalenceClasses = constructEquivalenceClasses();
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(mServices,
-				mStateFactory, mOperand, resultingEquivalenceClasses, addMapOldState2newState);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand,
+						resultingEquivalenceClasses, addMapOldState2newState);
 		mResult = quotientNwaConstructor.getResult();
 	}
 
