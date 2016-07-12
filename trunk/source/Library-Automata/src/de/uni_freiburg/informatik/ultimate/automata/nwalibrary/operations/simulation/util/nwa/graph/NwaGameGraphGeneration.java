@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
@@ -1412,6 +1413,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// the given source.
 		// We make all summarySources the only initial game states and
 		// determinize the automaton.
+
+		// TODO Resolve problems in IsDeterministic
+		boolean alreadyWasDeterministic = !new IsDeterministic<>(mServices, gameAutomatonWithSummaries)
+				.hasNondeterministicTransitions();
+		if (alreadyWasDeterministic) {
+			mSimulationPerformance.setCountingMeasure(ECountingMeasure.ALREADY_WAS_DETERMINISTIC, 1);
+		}
 
 		// Determinizing is very expensive, it is the dominant part of the
 		// whole algorithm
