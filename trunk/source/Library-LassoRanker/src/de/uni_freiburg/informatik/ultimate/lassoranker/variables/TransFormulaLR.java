@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
@@ -291,6 +293,33 @@ public class TransFormulaLR implements Serializable {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * compute the assigned/updated variables. A variable is updated by this
+     * transition if it occurs as outVar and
+     * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	private HashSet<RankVar> computeAssignedVars() {
+		final HashSet<RankVar> assignedVars = new HashSet<RankVar>();
+		for (final RankVar var : moutVars.keySet()) {
+			assert (moutVars.get(var) != null);
+			if (moutVars.get(var) != minVars.get(var)) {
+				assignedVars.add(var);
+			}
+		}
+		return assignedVars;
+	}
+	
+	/**
+	 * @return the set of assigned/updated variables. A variable is updated by 
+	 * this transition if it occurs as outVar and
+     * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	public Set<RankVar> getAssignedVars() {
+		return Collections.unmodifiableSet(computeAssignedVars());
 	}
 	
 	/**
