@@ -118,10 +118,8 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			mLogger.info("Start testing correctness of " + operationName());
 			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
-			// should have same number of states as old determinization
 			final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
-			correct &= (resultDD.size() == mResult.size());
 			// should recognize same language as old computation
 			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD, mResult, sf) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, resultDD, sf) == null);

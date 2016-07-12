@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,6 +53,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final StateFactory<STATE> mStateFactory;
 	private final Set<STATE> mPredefinedInitials;
+	private final boolean mMakeAutomatonTotal = false;
 	
 	private final Map<STATE,DeterminizedState<LETTER, STATE>> mres2det =
 			new HashMap<STATE,DeterminizedState<LETTER, STATE>>();
@@ -209,17 +211,50 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		return mOperand.getInternalAlphabet();
+		if (mMakeAutomatonTotal) {
+			return getInternalAlphabet();
+		} else {
+			final Set<LETTER> result = new HashSet<LETTER>();
+			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			for (STATE down : detState.getDownStates()) {
+				for (STATE up : detState.getUpStates(down)) {
+					result.addAll(mOperand.lettersInternal(up));
+				}
+			}
+			return result;
+		}
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		return mOperand.getCallAlphabet();
+		if (mMakeAutomatonTotal) {
+			return getInternalAlphabet();
+		} else {
+			final Set<LETTER> result = new HashSet<LETTER>();
+			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			for (STATE down : detState.getDownStates()) {
+				for (STATE up : detState.getUpStates(down)) {
+					result.addAll(mOperand.lettersCall(up));
+				}
+			}
+			return result;
+		}
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		return mOperand.getReturnAlphabet();
+		if (mMakeAutomatonTotal) {
+			return getInternalAlphabet();
+		} else {
+			final Set<LETTER> result = new HashSet<LETTER>();
+			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			for (STATE down : detState.getDownStates()) {
+				for (STATE up : detState.getUpStates(down)) {
+					result.addAll(mOperand.lettersReturn(up));
+				}
+			}
+			return result;
+		}
 	}
 
 
@@ -241,7 +276,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		for (final LETTER letter : getInternalAlphabet()) {
+		for (final LETTER letter : lettersInternal(state)) {
 			internalSuccessors(state, letter);
 		}
 		return mCache.internalSuccessors(state);
@@ -265,7 +300,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		for (final LETTER letter : getCallAlphabet()) {
+		for (final LETTER letter : lettersCall(state)) {
 			callSuccessors(state, letter);
 		}
 		return mCache.callSuccessors(state);
@@ -293,7 +328,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		for (final LETTER letter : getReturnAlphabet()) {
+		for (final LETTER letter : lettersReturn(state)) {
 			returnSucccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
