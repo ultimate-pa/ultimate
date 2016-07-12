@@ -10,8 +10,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -27,9 +30,8 @@ public class AbstractInterpretationPathProgramGenerator
 	private final Boogie2SMT mBoogie2Smt;
 
 	public AbstractInterpretationPathProgramGenerator(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-	        final PredicateUnifier predUnifier, final SmtManager smtManager,
-	        final IRun<CodeBlock, IPredicate> currentCounterexample) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
+	        final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
@@ -70,7 +72,15 @@ public class AbstractInterpretationPathProgramGenerator
 
 			// Add transition
 			final CodeBlock currentSymbol = mCurrentCounterExample.getSymbol(cexI);
-			result.addInternalTransition(prevState, currentSymbol, currentState);
+			if (currentSymbol instanceof Call) {
+				result.addCallTransition(prevState, currentSymbol, currentState);
+			} else if (currentSymbol instanceof Return) {
+				final IPredicate heirState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
+				result.addState(false, false, heirState);
+				result.addReturnTransition(prevState, heirState, currentSymbol, currentState);
+			} else {
+				result.addInternalTransition(prevState, currentSymbol, currentState);
+			}
 		}
 
 		if (result.getFinalStates().isEmpty() || !predicates.contains(falsePred)) {
