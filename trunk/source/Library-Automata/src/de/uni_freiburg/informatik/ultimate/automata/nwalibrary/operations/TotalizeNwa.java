@@ -71,6 +71,9 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		mOperand = operand;
 		mStateFactory = sf;
 		mSinkState = sf.createSinkStateContent();
+		if (mSinkState == null) {
+			throw new NullPointerException("sink state must not be null");
+		}
 	}
 	
 	
