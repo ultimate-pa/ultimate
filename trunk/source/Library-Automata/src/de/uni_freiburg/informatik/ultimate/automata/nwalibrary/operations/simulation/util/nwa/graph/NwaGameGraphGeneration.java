@@ -1384,6 +1384,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 		// Create the game automaton, we will use it for summarize computation
 		NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		// TODO Remove debugging stuff
+		debugInfoRemoveMe(gameAutomaton);
 		NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
 				mServices, gameAutomaton).getResult();
 
@@ -2430,6 +2432,58 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		return gameAutomaton;
+	}
+
+	/**
+	 * Prints debug information about the transition distribution of the given
+	 * game automaton.
+	 * 
+	 * @param gameAutomaton
+	 *            Game automaton to analyze
+	 */
+	private void debugInfoRemoveMe(final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+		// TODO Remove this method after debugging
+		int regularInternal = 0;
+		int regularCall = 0;
+		int regularReturn = 0;
+		int auxInternal = 0;
+		int auxCall = 0;
+		int auxReturn = 0;
+		for (IGameState state : gameAutomaton.getStates()) {
+			for (OutgoingInternalTransition<GameLetter<LETTER, STATE>, IGameState> internalTrans : gameAutomaton
+					.internalSuccessors(state)) {
+				if (internalTrans.getSucc().equals(mAuxiliaryGameState)) {
+					auxInternal++;
+				} else {
+					regularInternal++;
+				}
+			}
+			for (OutgoingCallTransition<GameLetter<LETTER, STATE>, IGameState> callTrans : gameAutomaton
+					.callSuccessors(state)) {
+				if (callTrans.getSucc().equals(mAuxiliaryGameState)) {
+					auxCall++;
+				} else {
+					regularCall++;
+				}
+			}
+			for (OutgoingReturnTransition<GameLetter<LETTER, STATE>, IGameState> returnTrans : gameAutomaton
+					.returnSuccessors(state)) {
+				if (returnTrans.getSucc().equals(mAuxiliaryGameState)) {
+					auxReturn++;
+				} else {
+					regularReturn++;
+				}
+			}
+		}
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("#Reg. Internal: " + regularInternal);
+			mLogger.debug("#Reg. Call: " + regularCall);
+			mLogger.debug("#Reg. Return: " + regularReturn);
+			mLogger.debug("#Aux. Internal: " + auxInternal);
+			mLogger.debug("#Aux. Call: " + auxCall);
+			mLogger.debug("#Aux. Return: " + auxReturn);
+		}
 	}
 
 	/**
