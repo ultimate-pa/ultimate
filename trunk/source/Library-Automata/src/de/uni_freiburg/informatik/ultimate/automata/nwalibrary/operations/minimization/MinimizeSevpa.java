@@ -1378,6 +1378,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(Object o) {
+		    if (o == null) {
+		      return false;
+		    }
 			if (o.getClass() == this.getClass()) {
 				return mId == ((EquivalenceClass)o).mId;
 			}
