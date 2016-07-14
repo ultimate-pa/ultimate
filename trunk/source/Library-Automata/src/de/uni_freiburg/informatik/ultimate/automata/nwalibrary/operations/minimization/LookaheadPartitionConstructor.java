@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -44,17 +45,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Detect non-mergeable states quickly.
  * Construct a partition of an automaton's states such that all elements of a
- * equivalence class are potential candidates for merging states without
- * changing the language. This means that each pair whose two elements are in
- * different equivalence classes cannot be used to merge states without
- * changing the language.
- * WARNING: The result is only correct, if the input automaton did not had any
+ * block are potential candidates for merging states without changing the
+ * language. This means that each pair of states whose two elements are in
+ * different blocks is considered unmergeable.
+ * 
+ * WARNING: The result is only correct if the input automaton did not have any
  * dead-end states.
+ * 
  * We detect non-mergeable states as follows.
- * A pair of states is non-mergeable if both do not have the same outgoing
- * internal symbols.
- * A pair of states is non-mergeable if both do not have the same outgoing
- * call symbols.
+ * A pair of states is non-mergeable if
+ * <br>
+ * - both states do not have the same outgoing internal symbols
+ * <br>
+ * - both states do not have the same outgoing call symbols,
+ * <br>
+ * - only one state is accepting (used only when respective option is set),
+ * <br>
+ * - the respective successors for each internal and call symbol under which
+ *   both states are deterministic are mergeable.
  *
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
@@ -213,17 +221,20 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 				}
 			}
 			
+			assert ((! hasChanged) || (partition.size() < newPartition.size())) :
+				"Inconsistent partition refinement.";
+			assert partitionsConsistency(partition, newPartition);
 			partition = newPartition;
 		}
 		
 		return partition;
 	}
-	
+
 	private boolean splitLetterSuccessors(
 			final Map<STATE, Set<STATE>> state2block, final Set<STATE> block,
 			final LETTER letter, final Set<Set<STATE>> partition,
 			final boolean isInternal) {
-		final Map<Set<STATE>, Set<STATE>> targetBlock2state = new HashMap<>();
+		final Map<Set<STATE>, Set<STATE>> targetBlock2states = new HashMap<>();
 		for (final STATE state : block) {
 			final STATE targetState = getSuccessor(letter, state, isInternal);
 			if (targetState == null) {
@@ -231,26 +242,58 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 				return false;
 			}
 			final Set<STATE> targetBlock = state2block.get(targetState);
-			Set<STATE> states = targetBlock2state.get(targetBlock);
+			Set<STATE> states = targetBlock2states.get(targetBlock);
 			if (states == null) {
 				states = new LinkedHashSet<STATE>();
-				targetBlock2state.put(targetBlock, states);
+				targetBlock2states.put(targetBlock, states);
 			}
 			states.add(state);
 		}
 		
 		// modify the partition since all states are deterministic wrt. letter
 		boolean result = false;
-		for (final Set<STATE> newBlock : targetBlock2state.values()) {
-			final boolean isNewBlock = partition.add(newBlock);
-			if (isNewBlock) {
-				result = true;
-				// update map
+		for (final Set<STATE> newStates : targetBlock2states.values()) {
+			final boolean isNewBlock = ! partition.contains(newStates);
+			if (! isNewBlock) {
+				continue;
+			}
+			Map<Set<STATE>, Set<STATE>> oldBlock2newBlock =
+					new HashMap<>();
+			
+			for (final STATE state : newStates) {
+				final Set<STATE> oldBlock = state2block.get(state);
+				Set<STATE> newBlock = oldBlock2newBlock.get(oldBlock);
+				if (newBlock == null) {
+					newBlock = new LinkedHashSet<>();
+					oldBlock2newBlock.put(oldBlock, newBlock);
+				}
+				newBlock.add(state);
+			}
+			
+			for (final Entry<Set<STATE>, Set<STATE>> entry :
+					oldBlock2newBlock.entrySet()) {
+				final Set<STATE> oldBlock = entry.getKey();
+				final Set<STATE> newBlock = entry.getValue();
+				assert (! newBlock.isEmpty());
+				partition.add(newBlock);
 				for (final STATE state : newBlock) {
-					final Set<STATE> oldBlock = state2block.put(state, newBlock);
+					state2block.put(state, newBlock);
+				}
+				final Set<STATE> newOldBlock =
+						new LinkedHashSet<>(oldBlock.size());
+				for (final STATE oldState : oldBlock) {
+					if (! newBlock.contains(oldState)) {
+						newOldBlock.add(oldState);
+						state2block.put(oldState, newOldBlock);
+					}
+				}
+				if (! newOldBlock.isEmpty()) {
 					partition.remove(oldBlock);
+					partition.add(newOldBlock);
 				}
 			}
+			
+			result = true;
 		}
 		return result;
 	}
@@ -273,6 +316,43 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 				? ((OutgoingInternalTransition<LETTER, STATE>) trans).getSucc()
 				: ((OutgoingCallTransition<LETTER, STATE>) trans).getSucc();
 		return targetState;
+	}
+	
+	private boolean partitionsConsistency(final Set<Set<STATE>> partition1,
+			final Set<Set<STATE>> partition2) {
+		final Set<STATE> states = new LinkedHashSet<>();
+		for (final Set<STATE> block : partition1) {
+			if (block.isEmpty()) {
+				// empty block
+				return false;
+			}
+			for (final STATE state : block) {
+				final boolean wasNew = states.add(state);
+				if (! wasNew) {
+					// duplicate state in partition 1
+					return false;
+				}
+			}
+		}
+		
+		for (final Set<STATE> block : partition2) {
+			if (block.isEmpty()) {
+				// empty block
+				return false;
+			}
+			for (final STATE state : block) {
+				final boolean wasPresent = states.remove(state);
+				if (! wasPresent) {
+					/*
+					 * duplicate state in partition 2 or different states in
+					 * two partitions
+					 */
+					return false;
+				}
+			}
+		}
+		
+		return true;
 	}
 	
 	private static class OutgoingInCaSymbols<LETTER> {
@@ -303,6 +383,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
+			@SuppressWarnings("unchecked")
 			final OutgoingInCaSymbols<LETTER> other =
 					(OutgoingInCaSymbols<LETTER>) obj;
 			if (mCall == null) {
