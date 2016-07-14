@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SetOfDoubletons;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -96,7 +95,7 @@ public class MapEliminator {
 	private final Map<Term, TermVariable> mSelectToAuxVars;
 
 	// Stores information about the arrays that get assigned to another array (then these arrays have the same indices)
-	private final SetOfDoubletons<Term> mSharedIndices;
+	private final Set<Doubleton<Term>> mSharedIndices;
 
 	/**
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
@@ -118,7 +117,7 @@ public class MapEliminator {
 		mTransFormulas = transformulas;
 		mAuxVars = new HashSet<>();
 		mSelectToAuxVars = new HashMap<>();
-		mSharedIndices = new SetOfDoubletons<>();
+		mSharedIndices = new HashSet<>();
 		initialize();
 	}
 
@@ -138,10 +137,10 @@ public class MapEliminator {
 			return;
 		}
 		for (final TransFormulaLR tf : mTransFormulas) {
-			findIndices(tf.getFormula(), tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
+			findIndices(tf.getFormula(), tf);
 		}
 		// Merge indices of mSharedIndices (maybe get transitivity?)
-		for (final Doubleton<Term> doubleton : mSharedIndices.elements()) {
+		for (final Doubleton<Term> doubleton : mSharedIndices) {
 			final Term array1 = doubleton.getOneElement();
 			final Term array2 = doubleton.getOtherElement();
 			if (!mArrayIndices.containsKey(array1)) {
@@ -159,52 +158,50 @@ public class MapEliminator {
 	 * A recursive method that finds arrays / indices in the given {@code term} and stores it in the maps
 	 *
 	 * @param term A SMT-Term
-	 * @param inVars Mapping from SMT-inVars to RankVars
-	 * @param outVars Mapping from SMT-outVars to RankVars
+	 * @param transformula A TransFormulaLR (needed to get the global definitions of the term)
 	 */
-	private void findIndices(final Term term, final Map<Term, RankVar> inVars, final Map<Term, RankVar> outVars) {
+	private void findIndices(final Term term, final TransFormulaLR transformula) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;
 			final String function = a.getFunction().getApplicationString();
 			final Term[] params = a.getParameters();
-			if (function.equals("=") && params[0].getSort().isArraySort() || function.equals("store")) {
+			if ("=".equals(function) && params[0].getSort().isArraySort() || "store".equals(function)) {
 				// Get relations of different arrays (the indices need to be shared then)
 				final ArrayWrite arrayWrite = new ArrayWrite(term);
-				findIndicesArrayWrite(arrayWrite, inVars, outVars);
-				final Term newArray = getGlobalTerm(arrayWrite.getNewArray(), inVars, outVars);
-				final Term oldArray = getGlobalTerm(arrayWrite.getOldArray(), inVars, outVars);
+				findIndicesArrayWrite(arrayWrite, transformula);
+				final Term newArray = getGlobalTerm(arrayWrite.getNewArray(), transformula);
+				final Term oldArray = getGlobalTerm(arrayWrite.getOldArray(), transformula);
 				if (newArray != oldArray) {
-					mSharedIndices.addDoubleton(new Doubleton<Term>(oldArray, newArray));
+					mSharedIndices.add(new Doubleton<Term>(oldArray, newArray));
 				}
-			} else if (function.equals("select")) {
+			} else if ("select".equals(function)) {
 				final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
 				final ArrayIndex index = select.getIndex();
 				for (final Term t : index) {
-					findIndices(t, inVars, outVars);
+					findIndices(t, transformula);
 				}
 				final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
-				findIndicesArrayWrite(arrayWrite, inVars, outVars);
+				findIndicesArrayWrite(arrayWrite, transformula);
 				final Term array = arrayWrite.getOldArray();
-				final Term globalArray = getGlobalTerm(array, inVars, outVars);
-				final ArrayIndex globalIndex = getGlobalArrayIndex(index, inVars, outVars);
+				final Term globalArray = getGlobalTerm(array, transformula);
+				final ArrayIndex globalIndex = getGlobalIndex(index, transformula);
 				addToMap(globalArray, globalIndex);
 			} else {
 				for (final Term t : params) {
-					findIndices(t, inVars, outVars);
+					findIndices(t, transformula);
 				}
 			}
 		}
 	}
 
-	private void findIndicesArrayWrite(final ArrayWrite araryWrite, final Map<Term, RankVar> inVars, final Map<Term, RankVar> outVars) {
-		final Term oldArray = araryWrite.getOldArray();
-		final Term globalArray = getGlobalTerm(oldArray, inVars, outVars);
+	private void findIndicesArrayWrite(final ArrayWrite araryWrite, final TransFormulaLR transformula) {
+		final Term globalArray = getGlobalTerm(araryWrite.getOldArray(), transformula);
 		for (final MultiDimensionalStore store : araryWrite.getStoreList()) {
 			for (final Term t : store.getIndex()) {
-				findIndices(t, inVars, outVars);
+				findIndices(t, transformula);
 			}
-			findIndices(store.getValue(), inVars, outVars);
-			final ArrayIndex globalIndex = getGlobalArrayIndex(store.getIndex(), inVars, outVars);
+			findIndices(store.getValue(), transformula);
+			final ArrayIndex globalIndex = getGlobalIndex(store.getIndex(), transformula);
 			addToMap(globalArray, globalIndex);
 		}
 	}
@@ -235,18 +232,18 @@ public class MapEliminator {
 	 * <p>
 	 * The given TransFormula has to be in the collection given to the constructor
 	 *
-	 * @param tf The old TransFormula, which might contain arrays accesses
+	 * @param transformula The old TransFormula, which might contain arrays accesses
 	 * @return A TransFormulaLR, where array accesses are replaced by ReplacementVars
 	 */
-	public TransFormulaLR getArrayFreeTransFormula(final TransFormulaLR tf) {
-		assert mTransFormulas.contains(tf);
-		final TransFormulaLR newTF = new TransFormulaLR(tf);
+	public TransFormulaLR getArrayFreeTransFormula(final TransFormulaLR transformula) {
+		assert mTransFormulas.contains(transformula);
+		final TransFormulaLR newTF = new TransFormulaLR(transformula);
 		// Check if the transformula has to be handled. If not, simply return a copy of the old transformula
 		if (mArrayIndices.isEmpty() || !containsArray(newTF) && !containsIndexAssignment(newTF)) {
 			return newTF;
 		}
 		final Set<Term> assignedVars = new HashSet<>();
-		for (final RankVar rv : tf.getAssignedVars()) {
+		for (final RankVar rv : transformula.getAssignedVars()) {
 			assignedVars.add(rv.getDefinition());
 		}
 		// Handle havoc's first
@@ -275,13 +272,13 @@ public class MapEliminator {
 		return newTF;
 	}
 
-	private Set<Term> getHavocedArrays(final TransFormulaLR tf) {
+	private Set<Term> getHavocedArrays(final TransFormulaLR transformula) {
 		final Set<Term> result = new HashSet<>();
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final Term array : mArrayIndices.keySet()) {
 			final RankVar rankVar = mRankVars.get(array);
-			final Term inVar = tf.getInVars().get(rankVar);
-			final Term outVar = tf.getOutVars().get(rankVar);
+			final Term inVar = transformula.getInVars().get(rankVar);
+			final Term outVar = transformula.getOutVars().get(rankVar);
 			if (inVar != outVar && !freeVars.contains(outVar)) {
 				result.add(array);
 			}
@@ -289,15 +286,15 @@ public class MapEliminator {
 		return result;
 	}
 
-	private Set<Term> getHavocedIndices(final TransFormulaLR tf) {
+	private Set<Term> getHavocedIndices(final TransFormulaLR transformula) {
 		final Set<Term> result = new HashSet<>();
 		final Set<Term> vars = new HashSet<>(mIndicesToTuples.keySet());
 		vars.addAll(mVariableInExpressions.keySet());
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final Term var : vars) {
 			final RankVar rankVar = mRankVars.get(var);
-			final Term inVar = tf.getInVars().get(rankVar);
-			final Term outVar = tf.getOutVars().get(rankVar);
+			final Term inVar = transformula.getInVars().get(rankVar);
+			final Term outVar = transformula.getOutVars().get(rankVar);
 			if (inVar != outVar && !freeVars.contains(outVar)) {
 				result.add(var);
 			}
@@ -309,37 +306,37 @@ public class MapEliminator {
 	 * A recursive method, that returns an array-free term, which replaces {@code term} and adds the neeeded in-/out-vars to {@code tf}
 	 *
 	 * @param term The term to be replaced
-	 * @param tf The new TransFormulaLR (in-/out-vars are added)
+	 * @param transformula The new TransFormulaLR (in-/out-vars are added)
 	 * @param assignedVars A set of vars, that have been assigned
 	 * @return A new array-free term
 	 */
-	private Term process(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars) {
+	private Term process(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;
 			final String function = a.getFunction().getApplicationString();
-			final Term[] params = a.getParameters();
-			if (function.equals("select")) {
-				return processArrayRead(term, tf, assignedVars);
+			if ("select".equals(function)) {
+				return processArrayRead(term, transformula, assignedVars);
 			}
-			if (function.equals("=") && params[0].getSort().isArraySort()) {
+			final Term[] params = a.getParameters();
+			if ("=".equals(function) && params[0].getSort().isArraySort()) {
 				// Handle array assignment
-				return processArrayAssignment(term, tf, assignedVars);
+				return processArrayAssignment(term, transformula, assignedVars);
 			}
 			// Process recursively
 			final int length = params.length;
 			final Term[] newParams = new Term[length];
 			for (int i = 0; i < length; i++) {
-				newParams[i] = process(params[i], tf, assignedVars);
+				newParams[i] = process(params[i], transformula, assignedVars);
 			}
 			final Term newTerm = mScript.term(function, newParams);
-			if (function.equals("=")) {
+			if ("=".equals(function)) {
 				// Check if an index is assigned
 				for (final Term t : newParams) {
-					if (tf.getOutVarsReverseMapping().containsKey(t)) {
-						final Term var = tf.getOutVarsReverseMapping().get(t).getDefinition();
+					if (transformula.getOutVarsReverseMapping().containsKey(t)) {
+						final Term var = transformula.getOutVarsReverseMapping().get(t).getDefinition();
 						if (assignedVars.contains(var)) {
 							// Handle index assignment
-							return Util.and(mScript, newTerm, processIndexAssignment(tf, var, assignedVars));
+							return Util.and(mScript, newTerm, processIndexAssignment(transformula, var, assignedVars));
 						}
 					}
 
@@ -350,17 +347,17 @@ public class MapEliminator {
 		return term;
 	}
 
-	private ArrayIndex processArrayIndex(final ArrayIndex arrayIndex, final TransFormulaLR tf, final Set<Term> assignedVars) {
+	private ArrayIndex processArrayIndex(final ArrayIndex arrayIndex, final TransFormulaLR transformula, final Set<Term> assignedVars) {
 		final List<Term> list = new ArrayList<>();
 		for (final Term t : arrayIndex) {
-			list.add(process(t, tf, assignedVars));
+			list.add(process(t, transformula, assignedVars));
 		}
 		return new ArrayIndex(list);
 	}
 
-	private Term processArrayRead(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars) {
-		final Term globalTerm = getGlobalTerm(term, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
-		final RankVar rv = mReplacementVarFactory.getOrConstuctReplacementVar(globalTerm);
+	private Term processArrayRead(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars) {
+		final Term globalTerm = getGlobalTerm(term, transformula);
+		final RankVar rankVar = mReplacementVarFactory.getOrConstuctReplacementVar(globalTerm);
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 		final Term array = multiDimensionalSelect.getArray();
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
@@ -371,49 +368,49 @@ public class MapEliminator {
 			final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
 			mAuxVars.add(auxVar);
 			for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), tf, assignedVars);
+				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars);
 				if (processedIndices.contains(assignedIndex)) {
 					continue;
 				}
-				final Term value = process(store.getValue(), tf, assignedVars);
+				final Term value = process(store.getValue(), transformula, assignedVars);
 				final Term newTerm = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, index, assignedIndex, processedIndices, auxVar, value);
 				result = Util.and(mScript, result, newTerm);
 				processedIndices.add(assignedIndex);
 			}
 			final Term realArray = arrayWrite.getOldArray();
-			final Term selectTerm = processArrayRead(SmtUtils.multiDimensionalSelect(mScript, realArray, index), tf, assignedVars);
+			final Term selectTerm = processArrayRead(SmtUtils.multiDimensionalSelect(mScript, realArray, index), transformula, assignedVars);
 			final Term arrayRead = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, index, index, processedIndices, auxVar, selectTerm);
 			mAuxVarTerm = Util.and(mScript, mAuxVarTerm, result, arrayRead);
 			return auxVar;
 		} else {
 			final TermVariable var = getFreshTermVar(globalTerm);
-			if (containsOnlyOneVarType(term, tf, true)) {
-				if (!tf.getInVars().containsKey(rv)) {
-					tf.addInVar(rv, var);
+			if (containsOnlyOneVarType(term, transformula, true)) {
+				if (!transformula.getInVars().containsKey(rankVar)) {
+					transformula.addInVar(rankVar, var);
 				}
-				return tf.getInVars().get(rv);
+				return transformula.getInVars().get(rankVar);
 			}
-			if (containsOnlyOneVarType(term, tf, false)) {
-				if (!tf.getOutVars().containsKey(rv)) {
-					tf.addOutVar(rv, var);
+			if (containsOnlyOneVarType(term, transformula, false)) {
+				if (!transformula.getOutVars().containsKey(rankVar)) {
+					transformula.addOutVar(rankVar, var);
 				}
-				return tf.getOutVars().get(rv);
+				return transformula.getOutVars().get(rankVar);
 			}
 			// If the term contains "mixed" vars, aux-vars are introduced
 			if (!mSelectToAuxVars.containsKey(term)) {
 				final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				mSelectToAuxVars.put(term, auxVar);
-				final ArrayIndex globalIndex = getGlobalArrayIndex(index, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
-				if (tf.getInVarsReverseMapping().containsKey(array)) {
-					final ArrayIndex inVarIndex = getLocalIndex(globalIndex, tf, assignedVars, true);
-					final Term inVarSelect = getLocalVar(term, tf, assignedVars, true);
+				final ArrayIndex globalIndex = getGlobalIndex(index, transformula);
+				if (transformula.getInVarsReverseMapping().containsKey(array)) {
+					final ArrayIndex inVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, true);
+					final Term inVarSelect = getLocalVar(term, transformula, assignedVars, true);
 					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, inVarIndex, auxVar, inVarSelect);
 					mAuxVarTerm = Util.and(mScript, mAuxVarTerm, newTerm);
 				}
-				if (tf.getOutVarsReverseMapping().containsKey(array)) {
-					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, tf, assignedVars, true);
-					final Term outVarSelect = getLocalVar(term, tf, assignedVars, true);
+				if (transformula.getOutVarsReverseMapping().containsKey(array)) {
+					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, true);
+					final Term outVarSelect = getLocalVar(term, transformula, assignedVars, true);
 					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, outVarIndex, auxVar, outVarSelect);
 					mAuxVarTerm = Util.and(mScript, mAuxVarTerm, newTerm);
 				}
@@ -422,27 +419,27 @@ public class MapEliminator {
 		}
 	}
 
-	private Term processArrayAssignment(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars) {
+	private Term processArrayAssignment(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
 		final Term oldArray = arrayWrite.getOldArray();
 		final Term newArray = arrayWrite.getNewArray();
-		final Term globalOldArray = getGlobalTerm(oldArray, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
-		final Term globalNewArray = getGlobalTerm(newArray, tf.getInVarsReverseMapping(), tf.getOutVarsReverseMapping());
+		final Term globalOldArray = getGlobalTerm(oldArray, transformula);
+		final Term globalNewArray = getGlobalTerm(newArray, transformula);
 		final Set<ArrayIndex> assignedIndices = new HashSet<>();
 		Term result = mScript.term("true");
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), tf, assignedVars);
+			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars);
 			if (assignedIndices.contains(assignedIndex)) {
 				continue;
 			}
-			final Term value = process(store.getValue(), tf, assignedVars);
+			final Term value = process(store.getValue(), transformula, assignedVars);
 			for (final ArrayIndex globalIndex : mArrayIndices.get(globalNewArray)) {
-				final ArrayIndex index = getLocalIndex(globalIndex, tf, assignedVars, false);
+				final ArrayIndex index = getLocalIndex(globalIndex, transformula, assignedVars, false);
 				if (assignedIndices.contains(index)) {
 					continue;
 				}
 				final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, globalNewArray, globalIndex);
-				final Term var = getLocalVar(selectTerm, tf, assignedVars, false);
+				final Term var = getLocalVar(selectTerm, transformula, assignedVars, false);
 				final Term newTerm = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, index, assignedIndex, assignedIndices, var, value);
 				result = Util.and(mScript, result, newTerm);
 			}
@@ -452,27 +449,27 @@ public class MapEliminator {
 		for (final ArrayIndex globalIndex : mArrayIndices.get(globalOldArray)) {
 			final Term selectNew = SmtUtils.multiDimensionalSelect(mScript, globalNewArray, globalIndex);
 			final Term selectOld = SmtUtils.multiDimensionalSelect(mScript, globalOldArray, globalIndex);
-			final boolean oldIsInVar = tf.getInVarsReverseMapping().containsKey(oldArray);
-			final Term varOld =  getLocalVar(selectOld, tf, assignedVars, oldIsInVar);
-			final boolean newIsInVar = tf.getInVarsReverseMapping().containsKey(newArray);
-			final Term varNew =  getLocalVar(selectNew, tf, assignedVars, newIsInVar);
+			final boolean oldIsInVar = transformula.getInVarsReverseMapping().containsKey(oldArray);
+			final Term varOld =  getLocalVar(selectOld, transformula, assignedVars, oldIsInVar);
+			final boolean newIsInVar = transformula.getInVarsReverseMapping().containsKey(newArray);
+			final Term varNew =  getLocalVar(selectNew, transformula, assignedVars, newIsInVar);
 			if (!oldIsInVar) {
 				// If in the out-vars, look if also an index (needs to be processed then)
-				result = Util.and(mScript, result, processIndexAssignment(tf, selectOld, assignedVars));
+				result = Util.and(mScript, result, processIndexAssignment(transformula, selectOld, assignedVars));
 			}
 			if (!newIsInVar) {
 				// If in the out-vars, look if also an index (needs to be processed then)
-				result = Util.and(mScript, result, processIndexAssignment(tf, selectNew, assignedVars));
+				result = Util.and(mScript, result, processIndexAssignment(transformula, selectNew, assignedVars));
 			}
-			final ArrayIndex indexIn = getLocalIndex(globalIndex, tf, assignedVars, true);
-			final ArrayIndex indexOut = getLocalIndex(globalIndex, tf, assignedVars, false);
+			final ArrayIndex indexIn = getLocalIndex(globalIndex, transformula, assignedVars, true);
+			final ArrayIndex indexOut = getLocalIndex(globalIndex, transformula, assignedVars, false);
 			final Term newTerm = SmtUtils.indexEqualityInequalityImpliesValueEquality(mScript, indexOut, indexIn, assignedIndices, varNew, varOld);
 			result = Util.and(mScript, result, newTerm);
 		}
 		return result;
 	}
 
-	private Term processArrayHavoc(final TransFormulaLR tf, final Term globalArray, final Set<Term> assignedVars) {
+	private Term processArrayHavoc(final TransFormulaLR transformula, final Term globalArray, final Set<Term> assignedVars) {
 		Term result = mScript.term("true");
 		if (!mArrayIndices.containsKey(globalArray)) {
 			return result;
@@ -482,54 +479,45 @@ public class MapEliminator {
 			final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, globalArray, index);
 			final RankVar rankVar = mReplacementVarFactory.getOrConstuctReplacementVar(selectTerm);
 			final Term var = getFreshTermVar(selectTerm);
-			tf.addOutVar(rankVar, var);
+			transformula.addOutVar(rankVar, var);
 			// The havoced array cells might also be indices!
-			result = Util.and(mScript, result, processIndexAssignment(tf, selectTerm, assignedVars));
+			result = Util.and(mScript, result, processIndexAssignment(transformula, selectTerm, assignedVars));
 		}
 		return result;
 	}
 
-	private Term processIndexAssignment(final TransFormulaLR tf, final Term assignedTerm, final Set<Term> assignedVars) {
+	private Term processIndexAssignment(final TransFormulaLR transformula, final Term assignedTerm, final Set<Term> assignedVars) {
 		Term result = mScript.term("true");
 		if (mIndicesToTuples.containsKey(assignedTerm)) {
-			final Set<Term> havocedArrays = getHavocedArrays(tf);
-			final Set<Term> newAssignedVars = new HashSet<>(assignedVars);
+			final Set<Term> havocedArrays = getHavocedArrays(transformula);
 			for (final ArrayIndex globalIndexWritten : mIndicesToTuples.get(assignedTerm)) {
-				final ArrayIndex indexWrittenIn = getLocalIndex(globalIndexWritten, tf, assignedVars, true);
-				final ArrayIndex indexWrittenOut = getLocalIndex(globalIndexWritten, tf, assignedVars, false);
+				final ArrayIndex indexWrittenIn = getLocalIndex(globalIndexWritten, transformula, assignedVars, true);
+				final ArrayIndex indexWrittenOut = getLocalIndex(globalIndexWritten, transformula, assignedVars, false);
 				for (final Term array : mTupleToArray.get(globalIndexWritten)) {
 					if (havocedArrays.contains(array)) {
 						continue;
 					}
 					final Term selectWritten = SmtUtils.multiDimensionalSelect(mScript, array, globalIndexWritten);
-					// Workaround to force different in and out-vars
-					newAssignedVars.add(array);
-					final Term written = getLocalVar(selectWritten, tf, newAssignedVars, false);
-					final Term writtenOld = getLocalVar(selectWritten, tf, newAssignedVars, true);
+					// The replacement-vars of the array have changed, therefore add the array to the assignedVars
+					assignedVars.add(array);
+					final Term written = getLocalVar(selectWritten, transformula, assignedVars, false);
+					final Term writtenOld = getLocalVar(selectWritten, transformula, assignedVars, true);
 					for (final ArrayIndex globalIndexRead : mArrayIndices.get(array)) {
 						if (globalIndexWritten == globalIndexRead) {
 							continue;
 						}
-						// If written to array or an index use out-var, otherwise in-var (needs to be determined this way)
-						boolean assigned = false;
-						if (assignedVars.contains(array)) {
-							assigned = true;
-						} else {
-							for (final Term t : globalIndexRead) {
-								if (assignedVars.contains(t)) {
-									assigned = true;
-									break;
-								}
-							}
-						}
+						// Compare with the other indices (in- and out-var-version)
 						final Term selectRead = SmtUtils.multiDimensionalSelect(mScript, array, globalIndexRead);
-						final Term read = getLocalVar(selectRead, tf, assignedVars, false);
-						final ArrayIndex indexRead = getLocalIndex(globalIndexRead, tf, assignedVars, !assigned);
-						final Term assignment = SmtUtils.indexEqualityImpliesValueEquality(mScript, indexWrittenOut, indexRead, written, read);
-						result = Util.and(mScript, result, assignment);
+						final Term readIn = getLocalVar(selectRead, transformula, assignedVars, true);
+						final Term readOut = getLocalVar(selectRead, transformula, assignedVars, false);
+						final ArrayIndex indexReadIn = getLocalIndex(globalIndexRead, transformula, assignedVars, true);
+						final ArrayIndex indexReadOut = getLocalIndex(globalIndexRead, transformula, assignedVars, false);
+						final Term assignmentIn = SmtUtils.indexEqualityImpliesValueEquality(mScript, indexWrittenOut, indexReadIn, written, readIn);
+						final Term assignmentOut = SmtUtils.indexEqualityImpliesValueEquality(mScript, indexWrittenOut, indexReadOut, written, readOut);
+						result = Util.and(mScript, result, assignmentIn, assignmentOut);
 					}
 					// The assigned cells might also be indices!
-					final Term indexAssignment = processIndexAssignment(tf, selectWritten, assignedVars);
+					final Term indexAssignment = processIndexAssignment(transformula, selectWritten, assignedVars);
 					result = Util.and(mScript, result, indexAssignment);
 					// If it is not written to the array, add the unchanged property if the index didn't change
 					// (If written to the array, there is a stronger unchanged-condition)
@@ -547,21 +535,21 @@ public class MapEliminator {
 		for (final Term globalVar : mVariableInExpressions.get(assignedTerm)) {
 			// Force different in and out-vars
 			final RankVar rankVar = mReplacementVarFactory.getOrConstuctReplacementVar(globalVar);
-			if (!tf.getInVars().containsKey(rankVar)) {
-				tf.addInVar(rankVar, getFreshTermVar(globalVar));
+			if (!transformula.getInVars().containsKey(rankVar)) {
+				transformula.addInVar(rankVar, getFreshTermVar(globalVar));
 			}
-			if (!tf.getOutVars().containsKey(rankVar)) {
-				tf.addOutVar(rankVar, getFreshTermVar(globalVar));
+			if (!transformula.getOutVars().containsKey(rankVar)) {
+				transformula.addOutVar(rankVar, getFreshTermVar(globalVar));
 			}
-			final Term lhs = getLocalVar(globalVar, tf, assignedVars, false);
-			final Term rhs = getOutVarDefintion(globalVar, tf);
+			final Term lhs = getLocalVar(globalVar, transformula, assignedVars, false);
+			final Term rhs = getOutVarDefintion(globalVar, transformula);
 			final Term assignment = SmtUtils.binaryEquality(mScript, lhs, rhs);
-			result = Util.and(mScript, result, assignment, processIndexAssignment(tf, globalVar, assignedVars));
+			result = Util.and(mScript, result, assignment, processIndexAssignment(transformula, globalVar, assignedVars));
 		}
 		return result;
 	}
 
-	private Term getLocalVar(final Term term, final TransFormulaLR tf, final Set<Term> assignedVars, final boolean inVar) {
+	private Term getLocalVar(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars, final boolean returnInVar) {
 		if (term instanceof ConstantTerm) {
 			return term;
 		}
@@ -579,53 +567,54 @@ public class MapEliminator {
 			}
 		}
 		final Term var = getFreshTermVar(term);
-		if (!tf.getInVars().containsKey(rankVar)) {
-			tf.addInVar(rankVar, var);
+		if (!transformula.getInVars().containsKey(rankVar)) {
+			transformula.addInVar(rankVar, var);
 		}
-		if (!tf.getOutVars().containsKey(rankVar)) {
+		if (!transformula.getOutVars().containsKey(rankVar)) {
 			if (assignedArray) {
-				tf.addOutVar(rankVar, getFreshTermVar(term));
+				transformula.addOutVar(rankVar, getFreshTermVar(term));
 			} else {
-				tf.addOutVar(rankVar, var);
+				transformula.addOutVar(rankVar, var);
 			}
 
 		}
-		if (inVar) {
-			return tf.getInVars().get(rankVar);
+		if (returnInVar) {
+			return transformula.getInVars().get(rankVar);
 		} else {
-			return tf.getOutVars().get(rankVar);
+			return transformula.getOutVars().get(rankVar);
 		}
 	}
 
-	private ArrayIndex getLocalIndex(final ArrayIndex globalIndex, final TransFormulaLR tf, final Set<Term> assignedVars, final boolean inVar) {
+	private ArrayIndex getLocalIndex(final ArrayIndex globalIndex, final TransFormulaLR transformula, final Set<Term> assignedVars,
+			final boolean returnInVar) {
 		final List<Term> list = new ArrayList<>();
 		for (final Term t : globalIndex) {
-			list.add(getLocalVar(t, tf, assignedVars, inVar));
+			list.add(getLocalVar(t, transformula, assignedVars, returnInVar));
 		}
 		return new ArrayIndex(list);
 	}
 
-	private Term getOutVarDefintion(final Term term, final TransFormulaLR tf) {
+	private Term getOutVarDefintion(final Term term, final TransFormulaLR transformula) {
 		if (term instanceof ConstantTerm) {
 			return term;
 		}
 		if (term instanceof TermVariable) {
 			final RankVar rankVar  = mRankVars.get(term);
 			final Term var = getFreshTermVar(term);
-			if (!tf.getInVars().containsKey(rankVar)) {
-				tf.addInVar(rankVar, var);
+			if (!transformula.getInVars().containsKey(rankVar)) {
+				transformula.addInVar(rankVar, var);
 			}
-			if (!tf.getOutVars().containsKey(rankVar)) {
-				tf.addOutVar(rankVar, var);
+			if (!transformula.getOutVars().containsKey(rankVar)) {
+				transformula.addOutVar(rankVar, var);
 			}
-			return tf.getOutVars().get(rankVar);
+			return transformula.getOutVars().get(rankVar);
 		}
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;
 			final int length = a.getParameters().length;
 			final Term[] newParams = new Term[length];
 			for (int i = 0; i < length; i++) {
-				newParams[i] = getOutVarDefintion(a.getParameters()[i], tf);
+				newParams[i] = getOutVarDefintion(a.getParameters()[i], transformula);
 			}
 			return mScript.term(a.getFunction().getApplicationString(), newParams);
 		}
@@ -638,32 +627,32 @@ public class MapEliminator {
 	}
 
 	private String niceTermString(final Term term) {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder stringBuilder = new StringBuilder();
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
-			sb.append(select.getArray().toString()).append('[');
+			stringBuilder.append(select.getArray().toString()).append('[');
 			final ArrayIndex index = select.getIndex();
 			for (int i = 0; i < index.size(); i++) {
-				sb.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
+				stringBuilder.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
 			}
-			return sb.toString();
+			return stringBuilder.toString();
 		}
 		return term.toString();
 	}
 
 	// Get the global definition of a term and add the information about the contained vars to a hash-map
-	private Term getGlobalTerm(final Term term, final Map<Term, RankVar> inVars, final Map<Term, RankVar> outVars) {
+	private Term getGlobalTerm(final Term term, final TransFormulaLR transformula) {
 		if (term instanceof TermVariable) {
-			RankVar rv;
-			if (inVars.containsKey(term)) {
-				rv = inVars.get(term);
-			} else if (outVars.containsKey(term)){
-				rv = outVars.get(term);
+			RankVar rankVar;
+			if (transformula.getInVarsReverseMapping().containsKey(term)) {
+				rankVar = transformula.getInVarsReverseMapping().get(term);
+			} else if (transformula.getOutVarsReverseMapping().containsKey(term)){
+				rankVar = transformula.getOutVarsReverseMapping().get(term);
 			} else {
 				throw new UnsupportedOperationException(term.toString() + " is neither an in- nor an out-var!");
 			}
-			final Term newTerm = rv.getDefinition();
-			mRankVars.put(newTerm, rv);
+			final Term newTerm = rankVar.getDefinition();
+			mRankVars.put(newTerm, rankVar);
 			return newTerm;
 		}
 		if (term instanceof ApplicationTerm) {
@@ -672,21 +661,21 @@ public class MapEliminator {
 			final Term[] newParams = new Term[length];
 			final Set<Term> varsContained = new HashSet<>();
 			for (int i = 0; i < length; i++) {
-				final Term t = getGlobalTerm(a.getParameters()[i], inVars, outVars);
-				newParams[i] = t;
-				if (t instanceof TermVariable) {
-					varsContained.add(t);
+				final Term globalTerm = getGlobalTerm(a.getParameters()[i], transformula);
+				newParams[i] = globalTerm;
+				if (globalTerm instanceof TermVariable) {
+					varsContained.add(globalTerm);
 				} else {
-					if (!mExpressionContainsVariable.containsKey(t)) {
+					if (!mExpressionContainsVariable.containsKey(globalTerm)) {
 						continue;
 					}
-					varsContained.addAll(mExpressionContainsVariable.get(t));
+					varsContained.addAll(mExpressionContainsVariable.get(globalTerm));
 				}
 
 			}
 			final String function = a.getFunction().getApplicationString();
 			final Term newTerm = mScript.term(function, newParams);
-			if (!function.equals("select") && !function.equals("store")) {
+			if (!("select".equals(function) || "store".equals(function))) {
 				if (!mExpressionContainsVariable.containsKey(newTerm)) {
 					mExpressionContainsVariable.put(newTerm, new HashSet<Term>());
 				}
@@ -704,10 +693,10 @@ public class MapEliminator {
 		return term;
 	}
 
-	private ArrayIndex getGlobalArrayIndex(final ArrayIndex arrayIndex, final Map<Term, RankVar> inVars, final Map<Term, RankVar> outVars) {
+	private ArrayIndex getGlobalIndex(final ArrayIndex arrayIndex, final TransFormulaLR transformula) {
 		final List<Term> list = new ArrayList<>();
 		for (final Term t : arrayIndex) {
-			list.add(getGlobalTerm(t, inVars, outVars));
+			list.add(getGlobalTerm(t, transformula));
 		}
 		return new ArrayIndex(list);
 	}
@@ -716,25 +705,25 @@ public class MapEliminator {
 	 * Check if the given {@code term} only contains in- or out-vars
 	 *
 	 * @param term A SMT-Term to be checked
-	 * @param tf A TransFormulaLR
-	 * @param inVar Switch between in- and out-vars
+	 * @param transformula A TransFormulaLR
+	 * @param onlyInVars Switch between in- and out-vars
 	 * @return {@code true}, iff the given {@code term} only contains one type of vars (in- or out-vars, depending on {@code inVar})
 	 */
-	private boolean containsOnlyOneVarType(final Term term, final TransFormulaLR tf, final boolean inVar) {
+	private boolean containsOnlyOneVarType(final Term term, final TransFormulaLR transformula, final boolean onlyInVars) {
 		if (term instanceof ConstantTerm) {
 			return true;
 		}
 		if (term instanceof TermVariable) {
-			if (inVar) {
-				return tf.getInVarsReverseMapping().containsKey(term);
+			if (onlyInVars) {
+				return transformula.getInVarsReverseMapping().containsKey(term);
 			} else {
-				return tf.getOutVarsReverseMapping().containsKey(term);
+				return transformula.getOutVarsReverseMapping().containsKey(term);
 			}
 		}
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			for (final Term t : applicationTerm.getParameters()) {
-				if (!containsOnlyOneVarType(t, tf, inVar)) {
+				if (!containsOnlyOneVarType(t, transformula, onlyInVars)) {
 					return false;
 				}
 			}
@@ -743,13 +732,13 @@ public class MapEliminator {
 		throw new UnsupportedOperationException("Term-type " + term.getClass().getSimpleName() + " is not supported at this position");
 	}
 
-	private boolean containsArray(final TransFormulaLR tf) {
-		for (final Term var : tf.getInVars().values()) {
+	private boolean containsArray(final TransFormulaLR transformula) {
+		for (final Term var : transformula.getInVars().values()) {
 			if (var.getSort().isArraySort()) {
 				return true;
 			}
 		}
-		for (final Term var : tf.getOutVars().values()) {
+		for (final Term var : transformula.getOutVars().values()) {
 			if (var.getSort().isArraySort()) {
 				return true;
 			}
@@ -757,8 +746,8 @@ public class MapEliminator {
 		return false;
 	}
 
-	private boolean containsIndexAssignment(final TransFormulaLR tf) {
-		for (final RankVar rankVar : tf.getAssignedVars()) {
+	private boolean containsIndexAssignment(final TransFormulaLR transformula) {
+		for (final RankVar rankVar : transformula.getAssignedVars()) {
 			if (mIndicesToTuples.containsKey(rankVar.getDefinition())) {
 				return true;
 			}
