@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -153,41 +153,42 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		System.out.println("Processing data...");
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
-//		tables.add(new Pair<>("instanceFullComparison",
-//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, false)));
+		tables.add(new Pair<>("instanceFullComparison",
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
 //		tables.add(new Pair<>("instanceTimePartitioning",
 //				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 //		tables.add(new Pair<>("instanceAlgoWork",
 //				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-//		tables.add(new Pair<>("averagedSimulationFullComparison",
-//				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("averagedSimulationFullComparison",
+				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
 //		tables.add(new Pair<>("averagedSimulationTimePartitioning",
 //				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 //		tables.add(new Pair<>("averagedSimulationAlgoWork",
 //				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-//		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
-//		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
-//		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
-//		tables.add(new Pair<>("longerThanOneSecondNames",
-//				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
+		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
+		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
+		tables.add(new Pair<>("longerThanOneSecondNames",
+				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
 		
-		tables.add(new Pair<>("directFilteredInstanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
-		tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
-		tables.add(new Pair<>("directFilteredAverageFullComparison",
-		ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
-		tables.add(new Pair<>("delayedFilteredAverageFullComparison",
-				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
+//		tables.add(new Pair<>("directFilteredInstanceFullComparison",
+//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+//		tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
+//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
+//		tables.add(new Pair<>("directFilteredAverageFullComparison",
+//		ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+//		tables.add(new Pair<>("delayedFilteredAverageFullComparison",
+//				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {
 			tableToHtmlFile(pair.getFirst(), pair.getSecond());
 		}
-		System.out.println("Creating plot files...");
-		for (final Pair<String, List<String>> pair : tables) {
-			tableToPlotFile(pair.getFirst(), pair.getSecond());
-		}
+		
+//		System.out.println("Creating plot files...");
+//		for (final Pair<String, List<String>> pair : tables) {
+//			tableToPlotFile(pair.getFirst(), pair.getSecond());
+//		}
 
 		System.out.println("Terminated.");
 	}
@@ -530,7 +531,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		// Remove dead ends, a requirement of simulation
 		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
-				mServices, new RemoveNonLiveStates<LETTER, STATE>(mServices, operand).getResult()).getResult();
+				mServices, new RemoveDeadEnds<LETTER, STATE>(mServices, operand).getResult()).getResult();
 
 		final String automatonName = "";
 //		BufferedReader br = null;

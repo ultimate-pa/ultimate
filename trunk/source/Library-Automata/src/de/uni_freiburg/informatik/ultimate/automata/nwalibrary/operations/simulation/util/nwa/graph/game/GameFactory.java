@@ -18,13 +18,18 @@ public final class GameFactory extends StateFactory<IGameState> {
 	/**
 	 * The state that represents an empty stack.
 	 */
-	private IGameState emptyStackState;
+	private final IGameState mEmptyStackState;
+	/**
+	 * The state that represents an empty stack.
+	 */
+	private final IGameState mSinkState;
 
 	/**
 	 * Creates a new instance of a game automaton factory object.
 	 */
 	public GameFactory() {
-		emptyStackState = new GameEmptyState();
+		mEmptyStackState = new GameEmptyState();
+		mSinkState = new GameSinkState();
 	}
 
 	/*
@@ -36,7 +41,19 @@ public final class GameFactory extends StateFactory<IGameState> {
 	 */
 	@Override
 	public IGameState createEmptyStackState() {
-		return emptyStackState;
+		return mEmptyStackState;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory#
+	 * createSinkStateContent()
+	 */
+	@Override
+	public IGameState createSinkStateContent() {
+		return mSinkState;
 	}
 
 	/*

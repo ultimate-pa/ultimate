@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameDoubleDeckerSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameLetter;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSinkState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSpecialSinkState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -124,7 +124,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Auxiliary game state, is used at summarize edge computation for pointing
 	 * to dead-end return vertices.
 	 */
-	private final GameSinkState mAuxiliaryGameState;
+	private final GameSpecialSinkState mAuxiliaryGameState;
 	/**
 	 * Provides a fast access to all Spoiler vertices that are directly losing
 	 * for Duplicator, if he moves in. The set is only used if the simulation
@@ -262,7 +262,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mSrcDestToSummarizeEdges = new NestedMap2<>();
 		mEntryToSink = new HashMap<>();
 		mRemovedReturnBridges = new GameGraphChanges<>();
-		mAuxiliaryGameState = new GameSinkState();
+		mAuxiliaryGameState = new GameSpecialSinkState();
 		mLogger = logger;
 		mProgressTimer = progressTimer;
 		mGameGraph = gameGraph;
@@ -1405,7 +1405,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// We make all summarySources the only initial game states and
 		// determinize the automaton.
 
-		// TODO Resolve problems in IsDeterministic
 		boolean alreadyWasDeterministic = !new IsDeterministic<>(mServices, gameAutomatonWithSummaries)
 				.hasNondeterministicTransitions();
 		if (alreadyWasDeterministic) {
@@ -2299,8 +2298,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		} else {
 			// Consider every down state of the source as hierPred
-			Set<STATE> downStates = mNwa.getDownStates(spoilerSrc);
-			spoilerHierPreds.addAll(downStates);
+			for (STATE downState : mNwa.getDownStates(spoilerSrc)) {
+				spoilerHierPreds.add(downState);
+			}
 			spoilerHierPreds.remove(mNwa.getEmptyStackState());
 		}
 
@@ -2314,8 +2314,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		} else {
 			// Consider every down state of the source as hierPred
-			Set<STATE> downStates = mNwa.getDownStates(duplicatorSrc);
-			duplicatorHierPreds.addAll(downStates);
+			for (STATE downState : mNwa.getDownStates(duplicatorSrc)) {
+				duplicatorHierPreds.add(downState);
+			}
 			duplicatorHierPreds.remove(mNwa.getEmptyStackState());
 		}
 

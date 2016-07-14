@@ -140,8 +140,11 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
+				Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+						operand, true).getResult();
+				
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
-						logger, operand, stateFactory, possibleEquivalenceClasses);
+						logger, operand, stateFactory, possibleEquivalenceClassesForDirect);
 				graph.generateGameGraphFromAutomaton();
 				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
