@@ -319,7 +319,7 @@ public class LassoAnalysis {
 			mapElimination = new RewriteArrays2(true, mstem_transition, mloop_transition, mModifiableGlobalsAtHonda, 
 					mServices, mArrayIndexSupportingInvariants, mBoogie2SMT, lassoBuilder.getReplacementVarFactory());
 		} else {
-			mapElimination = new RewriteArraysMapElimination(mstem_transition, mloop_transition, mServices, mBoogie2SMT);
+			mapElimination = new RewriteArraysMapElimination(mServices, mBoogie2SMT);
 		}
 		return new LassoPreprocessor[] {
 				new StemAndLoopPreprocessor(mold_script, new MatchInOutVars(mBoogie2SMT.getVariableManager())),

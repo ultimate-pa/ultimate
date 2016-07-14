@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -57,48 +57,99 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	
 	private final AutomataLibraryServices mServices;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final Collection<Set<STATE>> mResult;
-
+	private final Set<Set<STATE>> mResult;
+	
+	/**
+	 * @param services Ultimate services
+	 * @param operand input automaton
+	 */
 	public LookaheadPartitionConstructor(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> operand) {
+		this(services, operand, false);
+	}
+	
+	/**
+	 * @param services Ultimate services
+	 * @param operand input automaton
+	 * @param separateAcceptingStates true iff only accepting or non-accepting
+	 *         states can be in a set
+	 */
+	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean separateAcceptingStates) {
 		mServices = services;
 		mOperand = operand;
 
-		final HashRelation<OutgoingInCaSymbols<STATE, LETTER>, STATE> symbols2states = new HashRelation<>();
+		final HashRelation<OutgoingInCaSymbols<LETTER>, STATE> symbols2states =
+				new HashRelation<>();
 		for (final STATE inputState : mOperand.getStates()) {
 			symbols2states.addPair(computeOutgoingSymbols(inputState), inputState);
 		}
-		mResult = new LinkedHashSet<>();
-		for(final OutgoingInCaSymbols<STATE, LETTER> outgoingSymbols : symbols2states.getDomain()) {
-			mResult.add(Collections.unmodifiableSet(symbols2states.getImage(outgoingSymbols)));
+		Set<Set<STATE>> collection = new LinkedHashSet<>();
+		for(final OutgoingInCaSymbols<LETTER> outgoingSymbols : symbols2states.getDomain()) {
+			collection.add(symbols2states.getImage(outgoingSymbols));
 		}
+		
+		if (separateAcceptingStates) {
+			collection = splitAcceptingStates(collection);
+		}
+		
+		mResult = collection;
 	}
 	
-	private OutgoingInCaSymbols<STATE,LETTER> computeOutgoingSymbols(STATE state) {
+	private OutgoingInCaSymbols<LETTER> computeOutgoingSymbols(final STATE state) {
 		final Set<LETTER> lettersInternal = mOperand.lettersInternal(state);
 		final Set<LETTER> lettersCall = mOperand.lettersCall(state);
 		return new OutgoingInCaSymbols<>(lettersInternal, lettersCall);
-		
 	}
 	
-	private static class OutgoingInCaSymbols<STATE,LETTER> {
+	private Set<Set<STATE>> splitAcceptingStates(final Set<Set<STATE>> oldSets) {
+		final Set<Set<STATE>> newSets = new LinkedHashSet<>(2 * oldSets.size());
+		for (final Set<STATE> set : oldSets) {
+			// find final and non-final states
+			final Set<STATE> finals = new HashSet<STATE>(set.size());
+			final Set<STATE> nonfinals = new HashSet<STATE>(set.size());
+			for (final STATE state : set) {
+				if (mOperand.isFinal(state)) {
+					finals.add(state);
+				} else {
+					nonfinals.add(state);
+				}
+			}
+			
+			if (finals.isEmpty()) {
+				assert (! nonfinals.isEmpty()) :
+					"The input sets should not be empty.";
+				newSets.add(nonfinals);
+			} else {
+				newSets.add(finals);
+				if (!nonfinals.isEmpty()) {
+					newSets.add(nonfinals);
+				}
+			}
+		}
+		return newSets;
+	}
+	
+	private static class OutgoingInCaSymbols<LETTER> {
+		private static final int PRIME = 31;
 		private final Set<LETTER> mInternal;
 		private final Set<LETTER> mCall;
-		public OutgoingInCaSymbols(Set<LETTER> internal, Set<LETTER> call) {
-			super();
+		public OutgoingInCaSymbols(
+				final Set<LETTER> internal,
+				final Set<LETTER> call) {
 			mInternal = internal;
 			mCall = call;
 		}
 		@Override
 		public int hashCode() {
-			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((mCall == null) ? 0 : mCall.hashCode());
-			result = prime * result + ((mInternal == null) ? 0 : mInternal.hashCode());
+			result = PRIME * result + ((mCall == null) ? 0 : mCall.hashCode());
+			result = PRIME * result + ((mInternal == null) ? 0 : mInternal.hashCode());
 			return result;
 		}
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -108,7 +159,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final OutgoingInCaSymbols other = (OutgoingInCaSymbols) obj;
+			final OutgoingInCaSymbols<LETTER> other =
+					(OutgoingInCaSymbols<LETTER>) obj;
 			if (mCall == null) {
 				if (other.mCall != null) {
 					return false;
@@ -127,17 +179,12 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		}
 		@Override
 		public String toString() {
-			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" + mCall + "]";
+			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" +
+					mCall + "]";
 		}
-		
-		
-
 	}
 	
 	public Collection<Set<STATE>> getResult() {
 		return mResult;
 	}
-	
-	
-
 }

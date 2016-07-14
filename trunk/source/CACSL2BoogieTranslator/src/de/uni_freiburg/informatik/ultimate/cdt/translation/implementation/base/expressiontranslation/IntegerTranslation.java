@@ -797,4 +797,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
 		throw new UnsupportedOperationException("createFloatingPointClassificationFunction is unsupported");
 	}
+
+	@Override
+	public RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments) {
+		throw new UnsupportedOperationException("other floating point operations not supported");
+	}
 }

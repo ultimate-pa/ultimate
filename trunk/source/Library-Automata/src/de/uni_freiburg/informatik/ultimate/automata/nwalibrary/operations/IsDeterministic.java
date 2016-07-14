@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -73,7 +74,7 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public IsDeterministic(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mStateFactory = input.getStateFactory();

@@ -108,7 +108,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand, true).getResult());
 	}
 
 	/**

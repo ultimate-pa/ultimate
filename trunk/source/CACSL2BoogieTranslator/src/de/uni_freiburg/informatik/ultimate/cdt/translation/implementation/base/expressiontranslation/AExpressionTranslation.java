@@ -615,6 +615,8 @@ public abstract class AExpressionTranslation {
 	
 	public abstract Expression createFloatingPointClassificationFunction(ILocation loc, String name);
 	
+	public abstract RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments);
+	
 	
 	public RValue constructOverapproximationFloatLiteral(ILocation loc, String val, CPrimitive type) {
 		final String functionName = "floatingLiteral_" + makeBoogieIdentifierSuffix(val);

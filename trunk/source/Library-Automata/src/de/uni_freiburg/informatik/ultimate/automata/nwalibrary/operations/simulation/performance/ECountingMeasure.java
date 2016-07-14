@@ -34,6 +34,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  */
 public enum ECountingMeasure {
 	/**
+	 * One if the game automaton of a nwa game graph already was deterministic
+	 * before using the determinizer, zero or not set else.
+	 */
+	ALREADY_WAS_DETERMINISTIC,
+	/**
 	 * Size of the alphabet the automaton has before simulation.
 	 */
 	BUCHI_ALPHABET_SIZE,
@@ -200,5 +205,5 @@ public enum ECountingMeasure {
 	/**
 	 * Amount of summarize edges a nwa game graph has.
 	 */
-	SUMMARIZE_EDGES,
+	SUMMARIZE_EDGES
 }

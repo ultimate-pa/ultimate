@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapElimina
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement
@@ -53,16 +52,11 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public static final String s_Description =
 			"Removes arrays by introducing new variables for each relevant array cell";
 
-	private final TransFormula mStem;
-	private final TransFormula mLoop;
 	private final Boogie2SMT mBoogie2smt;
 
 
-	public RewriteArraysMapElimination(final TransFormula stem, final TransFormula loop, final IUltimateServiceProvider services,
-			final Boogie2SMT boogie2smt) {
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt) {
 		mServices = services;
-		mStem = stem;
-		mLoop = loop;
 		mBoogie2smt = boogie2smt;
 	}
 
@@ -79,9 +73,9 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		// TODO: Only basic version, do other things like IndexSupportingInvariantAnalysis
-		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(mStem, mLoop));
-		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(mStem);
-		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(mLoop);
+		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(lasso.getStem(), lasso.getLoop()));
+		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(lasso.getStem());
+		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(lasso.getLoop());
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
 	}
