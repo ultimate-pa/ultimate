@@ -18,7 +18,7 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: junit.framework,
  org.apache.commons.io,
  org.junit,
