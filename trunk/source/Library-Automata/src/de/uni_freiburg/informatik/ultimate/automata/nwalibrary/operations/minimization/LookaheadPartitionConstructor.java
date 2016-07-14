@@ -27,12 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -52,10 +58,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class LookaheadPartitionConstructor<LETTER, STATE>  {
-	
+
 	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final Set<Set<STATE>> mResult;
 	
@@ -78,23 +86,55 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean separateAcceptingStates) {
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-
+		mResult = createPartition(separateAcceptingStates);
+	}
+	
+	private Set<Set<STATE>>
+			createPartition(final boolean separateAcceptingStates) {
+		// result partition (changed several times)
+		Set<Set<STATE>> partition;
+		
+		// split states which do not have the same outgoing symbols
+		partition = splitDifferentSymbols();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Splitting by different symbols, result:");
+			mLogger.debug(partition);
+		}
+		
+		// split states which are not both final or both non-final
+		if (separateAcceptingStates) {
+			partition = splitAcceptingStates(partition);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Splitting by accepting states, result:");
+				mLogger.debug(partition);
+			}
+		}
+		
+		// split states with (unique) split successors wrt. a symbol
+		partition = splitSuccessorsDeterministic(partition);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Splitting by different deterministic successors, result:");
+			mLogger.debug(partition);
+		}
+		
+		return partition;
+	}
+	
+	private Set<Set<STATE>> splitDifferentSymbols() {
 		final HashRelation<OutgoingInCaSymbols<LETTER>, STATE> symbols2states =
 				new HashRelation<>();
 		for (final STATE inputState : mOperand.getStates()) {
 			symbols2states.addPair(computeOutgoingSymbols(inputState), inputState);
 		}
-		Set<Set<STATE>> collection = new LinkedHashSet<>();
+		
+		final Set<Set<STATE>> partition = new LinkedHashSet<>();
 		for(final OutgoingInCaSymbols<LETTER> outgoingSymbols : symbols2states.getDomain()) {
-			collection.add(symbols2states.getImage(outgoingSymbols));
+			partition.add(symbols2states.getImage(outgoingSymbols));
 		}
 		
-		if (separateAcceptingStates) {
-			collection = splitAcceptingStates(collection);
-		}
-		
-		mResult = collection;
+		return partition;
 	}
 	
 	private OutgoingInCaSymbols<LETTER> computeOutgoingSymbols(final STATE state) {
@@ -103,13 +143,13 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		return new OutgoingInCaSymbols<>(lettersInternal, lettersCall);
 	}
 	
-	private Set<Set<STATE>> splitAcceptingStates(final Set<Set<STATE>> oldSets) {
-		final Set<Set<STATE>> newSets = new LinkedHashSet<>(2 * oldSets.size());
-		for (final Set<STATE> set : oldSets) {
+	private Set<Set<STATE>> splitAcceptingStates(final Set<Set<STATE>> oldPartition) {
+		final Set<Set<STATE>> newPartition = new LinkedHashSet<>(2 * oldPartition.size());
+		for (final Set<STATE> block : oldPartition) {
 			// find final and non-final states
-			final Set<STATE> finals = new HashSet<STATE>(set.size());
-			final Set<STATE> nonfinals = new HashSet<STATE>(set.size());
-			for (final STATE state : set) {
+			final Set<STATE> finals = new LinkedHashSet<STATE>(block.size());
+			final Set<STATE> nonfinals = new LinkedHashSet<STATE>(block.size());
+			for (final STATE state : block) {
 				if (mOperand.isFinal(state)) {
 					finals.add(state);
 				} else {
@@ -117,18 +157,122 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 				}
 			}
 			
+			// add new blocks if non-empty
 			if (finals.isEmpty()) {
 				assert (! nonfinals.isEmpty()) :
 					"The input sets should not be empty.";
-				newSets.add(nonfinals);
+				newPartition.add(nonfinals);
 			} else {
-				newSets.add(finals);
-				if (!nonfinals.isEmpty()) {
-					newSets.add(nonfinals);
+				newPartition.add(finals);
+				if (! nonfinals.isEmpty()) {
+					newPartition.add(nonfinals);
 				}
 			}
 		}
-		return newSets;
+		
+		return newPartition;
+	}
+	
+	/**
+	 * NOTE: The method assumes that all states in the same block have the same
+	 * outgoing internal and call symbols.
+	 * 
+	 * @param inputPartition old partition
+	 * @return new partition
+	 */
+	private Set<Set<STATE>>
+			splitSuccessorsDeterministic(final Set<Set<STATE>> inputPartition) {
+		Set<Set<STATE>> partition = inputPartition;
+		final Map<STATE, Set<STATE>> state2block = new HashMap<>(mOperand.size());
+		for (final Set<STATE> block : partition) {
+			for (final STATE state : block) {
+				state2block.put(state, block);
+			}
+		}
+		
+		boolean hasChanged = true;
+		while (hasChanged) {
+			hasChanged = false;
+			
+			final Set<Set<STATE>> newPartition =
+					new LinkedHashSet<>(partition.size());
+			for (final Set<STATE> block : partition) {
+				newPartition.add(block);
+			}
+			
+			for (final Set<STATE> block : partition) {
+				assert (! block.isEmpty()) : "Blocks should be non-empty.";
+				final STATE firstState = block.iterator().next();
+				for (final LETTER letter : mOperand.lettersInternal(firstState)) {
+					hasChanged |= splitLetterSuccessors(state2block, block,
+							letter, newPartition, true);
+				}
+				for (final LETTER letter : mOperand.lettersCall(firstState)) {
+					hasChanged |= splitLetterSuccessors(state2block, block,
+							letter, newPartition, false);
+				}
+			}
+			
+			partition = newPartition;
+		}
+		
+		return partition;
+	}
+	
+	private boolean splitLetterSuccessors(
+			final Map<STATE, Set<STATE>> state2block, final Set<STATE> block,
+			final LETTER letter, final Set<Set<STATE>> partition,
+			final boolean isInternal) {
+		final Map<Set<STATE>, Set<STATE>> targetBlock2state = new HashMap<>();
+		for (final STATE state : block) {
+			final STATE targetState = getSuccessor(letter, state, isInternal);
+			if (targetState == null) {
+				// state is nondeterministic wrt. letter
+				return false;
+			}
+			final Set<STATE> targetBlock = state2block.get(targetState);
+			Set<STATE> states = targetBlock2state.get(targetBlock);
+			if (states == null) {
+				states = new LinkedHashSet<STATE>();
+				targetBlock2state.put(targetBlock, states);
+			}
+			states.add(state);
+		}
+		
+		// modify the partition since all states are deterministic wrt. letter
+		boolean result = false;
+		for (final Set<STATE> newBlock : targetBlock2state.values()) {
+			final boolean isNewBlock = partition.add(newBlock);
+			if (isNewBlock) {
+				result = true;
+				// update map
+				for (final STATE state : newBlock) {
+					final Set<STATE> oldBlock = state2block.put(state, newBlock);
+					partition.remove(oldBlock);
+				}
+			}
+		}
+		return result;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private STATE getSuccessor(final LETTER letter, final STATE state,
+			final boolean isInternal) {
+		final Iterator<?> it = isInternal
+				? mOperand.internalSuccessors(state, letter).iterator()
+				: mOperand.callSuccessors(state, letter).iterator();
+		assert it.hasNext() :
+			"There should be at least one outgoing transition.";
+		@SuppressWarnings("squid:S1941")
+		final Object trans = it.next();
+		if (it.hasNext()) {
+			// state is nondeterministic wrt. letter
+			return null;
+		}
+		final STATE targetState = isInternal
+				? ((OutgoingInternalTransition<LETTER, STATE>) trans).getSucc()
+				: ((OutgoingCallTransition<LETTER, STATE>) trans).getSucc();
+		return targetState;
 	}
 	
 	private static class OutgoingInCaSymbols<LETTER> {
