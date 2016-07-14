@@ -81,7 +81,35 @@ public class PeaSystemModel {
 		}
 		return false;
 	}
+	
+	public DCPhase getFinalPhase(CounterTrace ct){
+		return ct.getPhases()[ct.getPhases().length - 3];
+	}
+	
+	public int getFinalPhaseNumber(CounterTrace ct){
+		return ct.getPhases().length - 3;
+	}
 
+	/***
+	 * Returns the number of the highest dcphase in an pea automatons phase
+	 * @param ct
+	 * @param pea
+	 * @param automatonPhase
+	 * @return
+	 */
+	public int getDCPhasesMax(CounterTrace ct, PhaseEventAutomata pea, Phase automatonPhase){
+		ArrayList<DCPhase> statePhases = this.getDcPhases(pea, automatonPhase);
+		int highest = -1;
+		DCPhase[] tracePhases = ct.getPhases();
+		for(DCPhase phase: statePhases){
+			for(int i = 0; i < tracePhases.length; i++){
+				if(tracePhases[i] == phase && highest < i){
+					highest = i;
+				}
+			}
+		}
+		return highest;
+	}
 	
 	public ArrayList<DCPhase> getDcPhases(PhaseEventAutomata pea, Phase phase){
 		ArrayList<DCPhase> result = new ArrayList<DCPhase>();
