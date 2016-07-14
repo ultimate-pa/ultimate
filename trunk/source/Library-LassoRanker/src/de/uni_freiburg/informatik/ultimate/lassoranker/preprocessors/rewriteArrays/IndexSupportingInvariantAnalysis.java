@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class IndexSupportingInvariantAnalysis {
 	private final SetOfDoubletons<Term> mAllDoubletons;
 	private final Script mScript;
-	private final Boogie2SMT mboogie2smt;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<Term>();
 	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<Term>();
 	
@@ -66,13 +66,14 @@ public class IndexSupportingInvariantAnalysis {
 	
 	public IndexSupportingInvariantAnalysis(ArrayCellRepVarConstructor arrayCellRepVarConstructor,
 			boolean searchAdditionalSupportingInvariants, 
-			Boogie2SMT boogie2smt, 
+			Boogie2SmtSymbolTable symbolTable, 
+			Script script,
 			TransFormula originalStem, TransFormula originalLoop, 
 			Set<BoogieVar> modifiableGlobalsAtHonda) {
 		super();
 		mArrayCellRepVarConstructor = arrayCellRepVarConstructor;
-		mboogie2smt = boogie2smt;
-		mScript = boogie2smt.getScript();
+		mSymbolTable = symbolTable;
+		mScript = script;
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtStart = Collections.emptySet();
@@ -150,7 +151,7 @@ public class IndexSupportingInvariantAnalysis {
 		} else {
 			invariantCandidateTerm = notEqualTerm(definingDoubleton);
 		}
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mboogie2smt);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
 		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		final Set<BoogieVar> emptyVarSet = Collections.emptySet();
 		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.term("true"), emptyVarSet, mScript.term("true"));

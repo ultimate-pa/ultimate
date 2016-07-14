@@ -46,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
@@ -59,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class PredicateFactory {
 
-	private final Boogie2SMT mBoogie2Smt;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final Script mScript;
 
 	protected int mSerialNumber;
@@ -68,6 +70,7 @@ public class PredicateFactory {
 	private static final String[] NO_PROCEDURE = new String[0];
 
 	private final IUltimateServiceProvider mServices;
+	private final IFreshTermVariableConstructor mFreshVariableConstructor;
 	private final ILogger mLogger;
 	
 	protected Term mDontCareTerm;
@@ -84,7 +87,8 @@ public class PredicateFactory {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mDontCareTerm = new AuxilliaryTerm("don't care");
 		mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
-		mBoogie2Smt = boogie2smt;
+		mSymbolTable = boogie2smt.getBoogie2SmtSymbolTable();
+		mFreshVariableConstructor = boogie2smt.getVariableManager();
 		mScript = boogie2smt.getScript();
 	}
 	
@@ -94,7 +98,7 @@ public class PredicateFactory {
 	 */
 	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = mBoogie2Smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+			final BoogieVar bv = mSymbolTable.getBoogieVar(tv);
 			if (bv == null) {
 				if (!quantifiedVariables.contains(tv)) {
 					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
@@ -147,7 +151,7 @@ public class PredicateFactory {
 		if (term == mDontCareTerm) {
 			termVarsProc = constructDontCare();
 		} else {
-			termVarsProc = TermVarsProc.computeTermVarsProc(term, mBoogie2Smt);
+			termVarsProc = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
 		}
 		return termVarsProc;
 	}
@@ -193,12 +197,12 @@ public class PredicateFactory {
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp, ModifiableGlobalVariableManager modifiableGlobals) {
-		return new HoareAnnotation(pp, mSerialNumber++, mBoogie2Smt, this, modifiableGlobals, mServices);
+		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mFreshVariableConstructor, mScript, mServices);
 	}
 
 	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
 		final Term conjunction = and(inputPreds);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mBoogie2Smt);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
 		final BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;

@@ -100,7 +100,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 			acc = Util.or(mScript, acc, state.getTerm(mScript, mBoogie2Smt));
 		}
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mBoogie2Smt);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mScript, mBoogie2Smt.getBoogie2SmtSymbolTable());
 		return new BasicPredicate(sIllegalPredicates--, tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
 	}

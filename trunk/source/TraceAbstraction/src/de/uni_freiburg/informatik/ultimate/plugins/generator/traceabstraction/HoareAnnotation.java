@@ -48,8 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
@@ -83,7 +84,8 @@ public class HoareAnnotation extends SPredicate {
 	private final IUltimateServiceProvider mServices;
 
 	private final Script mScript;
-	private final Boogie2SMT mBoogie2Smt;
+	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final IFreshTermVariableConstructor mFreshVariableConstructor;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
@@ -96,16 +98,19 @@ public class HoareAnnotation extends SPredicate {
 	
 
 	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, 
-			Boogie2SMT boogie2smt, PredicateFactory predicateFactory, 
-			ModifiableGlobalVariableManager modifiableGlobals, 
+			Boogie2SmtSymbolTable symbolTable, PredicateFactory predicateFactory, 
+			ModifiableGlobalVariableManager modifiableGlobals,
+			IFreshTermVariableConstructor freshVariableConstructor,
+			Script script,
 			IUltimateServiceProvider services) {
-		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, boogie2smt.getScript().term(
+		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term(
 				"true"), new HashSet<BoogieVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
-		mBoogie2Smt = boogie2smt;
+		mSymbolTable = symbolTable;
+		mFreshVariableConstructor = freshVariableConstructor;
 		mPredicateFactory = predicateFactory;
-		mScript = boogie2smt.getScript();
+		mScript = script;
 		mModifiableGlobals = modifiableGlobals;
 	}
 
@@ -186,7 +191,7 @@ public class HoareAnnotation extends SPredicate {
 			invariant = SmtUtils.simplify(mScript, invariant, mServices); 
 			Term precondTerm = Util.implies(mScript, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(mScript, mServices, mBoogie2Smt.getVariableManager(), QuantifierHandling.KEEP)).transform(precondTerm);
+				precondTerm = (new Nnf(mScript, mServices, mFreshVariableConstructor, QuantifierHandling.KEEP)).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			mFormula = Util.and(mScript, mFormula, precondTerm);
@@ -195,7 +200,7 @@ public class HoareAnnotation extends SPredicate {
 				mFormula);
 		mFormula = SmtUtils.simplify(mScript, mFormula, mServices); 
 		mFormula = getPositiveNormalForm(mFormula);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mBoogie2Smt);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mScript, mSymbolTable);
 		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);
 	}
 	
