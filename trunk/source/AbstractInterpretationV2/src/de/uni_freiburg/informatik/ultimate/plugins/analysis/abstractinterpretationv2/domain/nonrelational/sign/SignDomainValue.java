@@ -28,7 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
@@ -48,11 +52,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values>, Comparable<SignDomainValue> {
+public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignValues>, INonrelationalValue<SignDomainValue>,
+		Comparable<SignDomainValue> {
 
 	private static final int BUILDER_SIZE = 100;
 
-	private final Values mValue;
+	private final SignValues mValue;
 
 	/**
 	 * The possible values of one {@link SignDomainValue}.
@@ -60,7 +65,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public enum Values {
+	public enum SignValues {
 		POSITIVE, NEGATIVE, ZERO, BOTTOM, TOP,
 	}
 
@@ -68,16 +73,16 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Default constructor. The default value of the {@link SignDomainValue} is T.
 	 */
 	protected SignDomainValue() {
-		mValue = Values.TOP;
+		mValue = SignValues.TOP;
 	}
 
 	/**
 	 * Constructor that sets the value of the created {@link SignDomainValue}.
 	 * 
 	 * @param value
-	 *            The value the SignDomainValue should be set to. Must be one of {@link Values}.
+	 *            The value the SignDomainValue should be set to. Must be one of {@link SignValues}.
 	 */
-	protected SignDomainValue(Values value) {
+	protected SignDomainValue(SignValues value) {
 		mValue = value;
 	}
 
@@ -85,7 +90,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Returns the value of the current {@link SignDomainValue}.
 	 */
 	@Override
-	public Values getValue() {
+	public SignValues getValue() {
 		return mValue;
 	}
 
@@ -107,20 +112,21 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 *            The other value to intersect the current value with.
 	 * @return A new value after the intersection of the current value with the other value.
 	 */
-	protected SignDomainValue intersect(SignDomainValue other) {
+	@Override
+	public SignDomainValue intersect(SignDomainValue other) {
 
-		if (mValue == other.getValue() && mValue == Values.POSITIVE) {
-			return new SignDomainValue(Values.POSITIVE);
+		if (mValue == other.getValue() && mValue == SignValues.POSITIVE) {
+			return new SignDomainValue(SignValues.POSITIVE);
 		}
-		if (mValue == other.getValue() && mValue == Values.ZERO) {
-			return new SignDomainValue(Values.ZERO);
+		if (mValue == other.getValue() && mValue == SignValues.ZERO) {
+			return new SignDomainValue(SignValues.ZERO);
 		}
-		if (mValue == other.getValue() && mValue == Values.TOP) {
-			return new SignDomainValue(Values.TOP);
+		if (mValue == other.getValue() && mValue == SignValues.TOP) {
+			return new SignDomainValue(SignValues.TOP);
 		}
 
 		// In all other cases, return \bot
-		return new SignDomainValue(Values.BOTTOM);
+		return new SignDomainValue(SignValues.BOTTOM);
 	}
 
 	@Override
@@ -150,23 +156,12 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Implements the following relations and their inverse according to the lattice of the sign domain:
 	 * 
 	 * <p>
-	 * &bot; == &bot;
-	 * (-) == (-)
-	 * (+) == (+)
-	 * T == T
-	 * &bot; < ..., where ... is not &bot;
-	 * (-) < 0
-	 * (-) < (+)
-	 * (0) < (+)
-	 * ... < T, where ... is not T
+	 * &bot; == &bot; (-) == (-) (+) == (+) T == T &bot; < ..., where ... is not &bot; (-) < 0 (-) < (+) (0) < (+) ... <
+	 * T, where ... is not T
 	 * </p>
 	 * 
 	 * <p>
-	 *        T
-	 *    /   |   \
-	 * (-) - (0) - (+)
-	 *    \   |   /
-	 *      &bot;
+	 * T / | \ (-) - (0) - (+) \ | / &bot;
 	 * </p>
 	 */
 	public int compareTo(SignDomainValue other) {
@@ -178,50 +173,79 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 		// ... == ...
 
 		// \bot < ...
-		if (getValue() == Values.BOTTOM && other.getValue() != Values.BOTTOM) {
+		if (getValue() == SignValues.BOTTOM && other.getValue() != SignValues.BOTTOM) {
 			return -1;
 		}
-		if (getValue() != Values.BOTTOM && other.getValue() == Values.BOTTOM) {
+		if (getValue() != SignValues.BOTTOM && other.getValue() == SignValues.BOTTOM) {
 			return 1;
 		}
 		// \bot < ...
 
 		// (-) < ...
-		if (getValue() == Values.NEGATIVE && other.getValue() != Values.NEGATIVE) {
+		if (getValue() == SignValues.NEGATIVE && other.getValue() != SignValues.NEGATIVE) {
 			return -1;
 		}
-		if (getValue() != Values.NEGATIVE && other.getValue() == Values.NEGATIVE) {
+		if (getValue() != SignValues.NEGATIVE && other.getValue() == SignValues.NEGATIVE) {
 			return 1;
 		}
 		// (-) < ...
 
 		// (0) < ...
-		if (getValue() == Values.ZERO && other.getValue() != Values.ZERO) {
+		if (getValue() == SignValues.ZERO && other.getValue() != SignValues.ZERO) {
 			return -1;
 		}
-		if (getValue() != Values.ZERO && other.getValue() == Values.ZERO) {
+		if (getValue() != SignValues.ZERO && other.getValue() == SignValues.ZERO) {
 			return 1;
 		}
 		// (0) < ...
 
 		// \top > ...
-		if (getValue() != Values.TOP && other.getValue() == Values.TOP) {
+		if (getValue() != SignValues.TOP && other.getValue() == SignValues.TOP) {
 			return -1;
 		}
-		if (getValue() == Values.TOP && other.getValue() != Values.TOP) {
+		if (getValue() == SignValues.TOP && other.getValue() != SignValues.TOP) {
 			return 1;
 		}
 		// \top > ...
 
 		final StringBuilder stringBuilder = new StringBuilder(BUILDER_SIZE);
-		stringBuilder.append("The case for this = ").append(getValue()).append(" and other = ")
-		        .append(other.getValue()).append(" is not implemented.");
+		stringBuilder.append("The case for this = ").append(getValue()).append(" and other = ").append(other.getValue())
+				.append(" is not implemented.");
 		throw new UnsupportedOperationException(stringBuilder.toString());
 	}
 
 	@Override
 	public BooleanValue getBooleanValue() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public SignDomainValue copy() {
+		return new SignDomainValue(mValue);
+	}
+
+	@Override
+	public boolean isBottom() {
+		return mValue == SignValues.BOTTOM;
+	}
+
+	@Override
+	public SignDomainValue merge(SignDomainValue other) {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public boolean isEqualTo(SignDomainValue other) {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public Term getTerm(Script script, Sort sort, Term var) {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public boolean isContainedIn(SignDomainValue otherValue) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 }

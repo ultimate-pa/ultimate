@@ -35,14 +35,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -51,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+public class SignBinaryExpressionEvaluator implements INAryEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
-	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
-	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
+	protected IEvaluator<SignDomainValue, SignDomainState, CodeBlock> mLeftSubEvaluator;
+	protected IEvaluator<SignDomainValue, SignDomainState, CodeBlock> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
-	protected final Set<String> mVariableSet;
+	protected final Set<IBoogieVar> mVariableSet;
 	protected final ILogger mLogger;
 	protected final EvaluatorType mEvaluatorType;
 
@@ -66,9 +64,9 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 * @param services
 	 *            Ultimate service provider.
 	 */
-	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
-		mVariableSet = new HashSet<String>();
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	public SignBinaryExpressionEvaluator(ILogger logger, EvaluatorType type) {
+		mVariableSet = new HashSet<>();
+		mLogger = logger;
 		mEvaluatorType = type;
 	}
 
@@ -86,22 +84,22 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<SignDomainValue>> evaluate(SignDomainState currentState) {
 
-		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<SignDomainValue>> returnList = new ArrayList<>();
 
-		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
-		final List<IEvaluationResult<Values>> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final List<IEvaluationResult<Values>> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<SignDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<SignDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (final IEvaluationResult<Values> res1 : firstResult) {
-			for (final IEvaluationResult<Values> res2 : secondResult) {
+		for (final IEvaluationResult<SignDomainValue> res1 : firstResult) {
+			for (final IEvaluationResult<SignDomainValue> res2 : secondResult) {
 				switch (mOperator) {
 				// case LOGICIFF:
 				// break;
@@ -134,14 +132,16 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 				// case ARITHMOD:
 				// break;
 				case ARITHPLUS:
-					returnList.add(performAddition(res1, res2));
-					break;
+
+//					returnList.add(new SignDomainValue(performAddition(res1.getValue(), res2.getValue()).getValue()));
+//					break;
 				case ARITHMINUS:
-					returnList.add(performSubtraction(res1, res2));
+//					returnList
+//							.add(new SignDomainValue(performSubtraction(res1.getValue(), res2.getValue()).getValue()));
 					break;
 				default:
 					throw new UnsupportedOperationException(
-					        "The operator " + mOperator.toString() + " is not implemented.");
+							"The operator " + mOperator.toString() + " is not implemented.");
 				}
 			}
 		}
@@ -190,49 +190,49 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 *            The second evaluation result to be added.
 	 * @return A new evaluation result corresponding to the result of the addition operation.
 	 */
-	private IEvaluationResult<Values> performAddition(IEvaluationResult<Values> first,
-	        IEvaluationResult<Values> second) {
+	private IEvaluationResult<SignDomainValue> performAddition(IEvaluationResult<SignDomainValue> first,
+			IEvaluationResult<SignDomainValue> second) {
 
 		assert first != null;
 		assert second != null;
 
-		// ===== Same values =====
-		if (first.getValue().equals(second.getValue())) {
-			return new SignDomainValue(first.getValue());
-		}
-		// ===== End Same values =====
-
-		// ===== Special cases =====
-		// If first = \bot or second = \bot, return \bot.
-		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
-			return new SignDomainValue(Values.BOTTOM);
-		}
-
-		// If one of them is \top, return \top.
-		if (first.getValue().equals(Values.TOP) || second.getValue().equals(Values.TOP)) {
-			return new SignDomainValue(Values.TOP);
-		}
-		// ===== End Special cases =====
-
-		// ===== Different values =====
-		// If one of the values is 0, return the other value.
-		if (first.getValue().equals(Values.ZERO)) {
-			return new SignDomainValue(second.getValue());
-		}
-		if (second.getValue().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getValue());
-		}
-
-		// If both values are different, return \top.
-		if (!first.getValue().equals(second.getValue())) {
-			return new SignDomainValue(Values.TOP);
-		}
-		// ===== End Different values =====
+//		// ===== Same values =====
+//		if (first.getValue().equals(second.getValue())) {
+//			return new SignDomainValue(first.getValue());
+//		}
+//		// ===== End Same values =====
+//
+//		// ===== Special cases =====
+//		// If first = \bot or second = \bot, return \bot.
+//		if (first.getValue().equals(SignValues.BOTTOM) || second.getValue().equals(SignValues.BOTTOM)) {
+//			return new SignDomainValue(SignValues.BOTTOM);
+//		}
+//
+//		// If one of them is \top, return \top.
+//		if (first.getValue().equals(SignValues.TOP) || second.getValue().equals(SignValues.TOP)) {
+//			return new SignDomainValue(SignValues.TOP);
+//		}
+//		// ===== End Special cases =====
+//
+//		// ===== Different values =====
+//		// If one of the values is 0, return the other value.
+//		if (first.getValue().equals(SignValues.ZERO)) {
+//			return new SignDomainValue(second.getValue());
+//		}
+//		if (second.getValue().equals(SignValues.ZERO)) {
+//			return new SignDomainValue(first.getValue());
+//		}
+//
+//		// If both values are different, return \top.
+//		if (!first.getValue().equals(second.getValue())) {
+//			return new SignDomainValue(SignValues.TOP);
+//		}
+//		// ===== End Different values =====
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-		        "There is one case which has not been covered in the addition of SignedDomain values. first: "
-		                + first.getValue().toString() + ", second: " + second.getValue().toString());
+				"There is one case which has not been covered in the addition of SignedDomain values. first: "
+						+ first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
@@ -276,50 +276,50 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 *            The second evaluation result to be subtracted.
 	 * @return A new evaluation result corresponding to the result of the subtract operation.
 	 */
-	private IEvaluationResult<Values> performSubtraction(IEvaluationResult<Values> first,
-	        IEvaluationResult<Values> second) {
+	private IEvaluationResult<SignDomainValue> performSubtraction(IEvaluationResult<SignDomainValue> first,
+			IEvaluationResult<SignDomainValue> second) {
 
 		assert first != null;
 		assert second != null;
 
-		// ====== Same Values ======
-		if (first.getValue().equals(Values.ZERO) && second.getValue().equals(Values.ZERO)) {
-			return new SignDomainValue(Values.ZERO);
-		}
-		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
-			return new SignDomainValue(Values.BOTTOM);
-		}
-		if (first.getValue().equals(second.getValue())) {
-			return new SignDomainValue(Values.TOP);
-		}
-		// ====== End Same Values ======
-
-		// ====== Different Values ======
-		if (first.getValue().equals(Values.ZERO)) {
-			return negateValue(first.getValue());
-		}
-		if (second.getValue().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getValue());
-		}
-		if (first.getValue().equals(Values.POSITIVE) && second.getValue().equals(Values.NEGATIVE)) {
-			return new SignDomainValue(Values.POSITIVE);
-		}
-		if (first.getValue().equals(Values.NEGATIVE) && second.getValue().equals(Values.POSITIVE)) {
-			return new SignDomainValue(Values.NEGATIVE);
-		}
-		// ====== End Different Values ======
+//		// ====== Same Values ======
+//		if (first.getValue().equals(SignValues.ZERO) && second.getValue().equals(SignValues.ZERO)) {
+//			return new SignDomainValue(SignValues.ZERO);
+//		}
+//		if (first.getValue().equals(SignValues.BOTTOM) || second.getValue().equals(SignValues.BOTTOM)) {
+//			return new SignDomainValue(SignValues.BOTTOM);
+//		}
+//		if (first.getValue().equals(second.getValue())) {
+//			return new SignDomainValue(SignValues.TOP);
+//		}
+//		// ====== End Same Values ======
+//
+//		// ====== Different Values ======
+//		if (first.getValue().equals(SignValues.ZERO)) {
+//			return negateValue(first.getValue());
+//		}
+//		if (second.getValue().equals(SignValues.ZERO)) {
+//			return new SignDomainValue(first.getValue());
+//		}
+//		if (first.getValue().equals(SignValues.POSITIVE) && second.getValue().equals(SignValues.NEGATIVE)) {
+//			return new SignDomainValue(SignValues.POSITIVE);
+//		}
+//		if (first.getValue().equals(SignValues.NEGATIVE) && second.getValue().equals(SignValues.POSITIVE)) {
+//			return new SignDomainValue(SignValues.NEGATIVE);
+//		}
+//		// ====== End Different Values ======
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
-		                + first.getValue().toString() + ", second: " + second.getValue().toString());
+				"There is one case which has not been covered in the subtraction of SignedDomain values. first: "
+						+ first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
 	 * Adds a subevaluator to {@link this} if possible.
 	 */
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<SignDomainValue, SignDomainState, CodeBlock> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}
@@ -347,28 +347,28 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 *            The value to negate.
 	 * @return The negated value as new object.
 	 */
-	private SignDomainValue negateValue(Values value) {
+	private SignDomainValue negateValue(SignValues value) {
 		assert value != null;
 
 		switch (value) {
 		case POSITIVE:
-			return new SignDomainValue(Values.NEGATIVE);
+			return new SignDomainValue(SignValues.NEGATIVE);
 		case NEGATIVE:
-			return new SignDomainValue(Values.POSITIVE);
+			return new SignDomainValue(SignValues.POSITIVE);
 		case TOP:
-			return new SignDomainValue(Values.TOP);
+			return new SignDomainValue(SignValues.TOP);
 		case BOTTOM:
-			return new SignDomainValue(Values.BOTTOM);
+			return new SignDomainValue(SignValues.BOTTOM);
 		case ZERO:
-			return new SignDomainValue(Values.ZERO);
+			return new SignDomainValue(SignValues.ZERO);
 		default:
 			throw new UnsupportedOperationException(
-			        "The sign domain value " + value.toString() + " is not implemented.");
+					"The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mVariableSet;
 	}
 
@@ -379,14 +379,14 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
-	        final SignDomainState currentState) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<SignDomainState> inverseEvaluate(IEvaluationResult<SignDomainValue> computedValue,
+			SignDomainState currentState) {
+		throw new UnsupportedOperationException("not implemented");
 	}
+
+	
 }

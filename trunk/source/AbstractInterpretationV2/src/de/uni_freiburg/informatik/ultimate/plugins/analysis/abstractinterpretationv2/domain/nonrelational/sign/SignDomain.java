@@ -30,7 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -50,18 +54,23 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 
 	private final IUltimateServiceProvider mServices;
 	private final RootAnnot mRootAnnotation;
-	
+	private final ILogger mLogger;
+
 	private IEqualityProvider<SignDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
 	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private final BoogieSymbolTable mSymbolTable;
 
-	public SignDomain(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
+	public SignDomain(final IUltimateServiceProvider services, final RootAnnot rootAnnotation,
+			final BoogieSymbolTable symbolTable) {
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRootAnnotation = rootAnnotation;
+		mSymbolTable = symbolTable;
 	}
 
 	@Override
 	public SignDomainState createFreshState() {
-		return new SignDomainState();
+		return new SignDomainState(mLogger);
 	}
 
 	@Override
@@ -77,7 +86,12 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	@Override
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new SignPostOperator(mServices);
+			Boogie2SmtSymbolTable bpl2smtTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
+			String evaluatorType = "";
+			int maxParallelStates = 2;
+			final SignDomainStatementProcessor stmtProcessor = new SignDomainStatementProcessor(mLogger, mSymbolTable,
+					bpl2smtTable, evaluatorType, maxParallelStates);
+			mPostOperator = new SignPostOperator(mLogger, stmtProcessor);
 		}
 		return mPostOperator;
 	}

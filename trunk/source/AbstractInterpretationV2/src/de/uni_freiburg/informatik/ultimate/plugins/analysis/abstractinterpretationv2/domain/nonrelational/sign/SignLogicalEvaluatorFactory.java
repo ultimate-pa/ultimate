@@ -32,13 +32,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -46,17 +45,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, SignDomainState, CodeBlock, IBoogieVar> {
+public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<SignDomainValue, SignDomainState, CodeBlock> {
 
-	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
-	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services) {
-		mServices = services;
+	public SignLogicalEvaluatorFactory(ILogger logger) {
+		mLogger = logger;
 	}
 
 	@Override
-	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity,
-	        EvaluatorType type) {
+	public INAryEvaluator<SignDomainValue, SignDomainState, CodeBlock> createNAryExpressionEvaluator(int arity,
+			EvaluatorType type) {
 
 		assert arity >= 1 && arity <= 2;
 
@@ -64,15 +63,15 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 		case 1:
 			return new SignLogicalUnaryExpressionEvaluator();
 		case 2:
-			return new SignLogicalBinaryExpressionEvaluator(mServices, type);
+			return new SignLogicalBinaryExpressionEvaluator(mLogger, type);
 		default:
 			throw new UnsupportedOperationException("Arity of " + arity + " is not implemented.");
 		}
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonValueExpressionEvaluator(String value,
+			Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignLogicalSingletonIntegerExpressionEvaluator(value);
@@ -90,26 +89,32 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
+			createSingletonVariableExpressionEvaluator(IBoogieVar variableName) {
 		return new SignLogicalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
+			createSingletonLogicalValueExpressionEvaluator(BooleanValue value) {
 		return null;
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(String functionName,
-	        int inputParamCount) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createFunctionEvaluator(String functionName,
+			int inputParamCount) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createConditionalEvaluator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonValueTopEvaluator() {
 		// TODO Auto-generated method stub
 		return null;
 	}

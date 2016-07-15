@@ -32,13 +32,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -47,29 +46,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomainState, CodeBlock, IBoogieVar> {
+public class SignEvaluatorFactory implements IEvaluatorFactory<SignDomainValue, SignDomainState, CodeBlock> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
+	private final ILogger mLogger;
 
-	private final IUltimateServiceProvider mServices;
-
-	/**
-	 * Creates a new evaluator factory for the sign domain.
-	 * 
-	 * @param services
-	 *            The Ultimate services.
-	 * @param stateConverter
-	 *            The state converter in the sign domain.
-	 */
-	public SignEvaluatorFactory(IUltimateServiceProvider services) {
-		mServices = services;
+	public SignEvaluatorFactory(ILogger logger, String evaluatorType, int maxParallelStates) {
+		mLogger = logger;
 	}
 
 	@Override
-	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity,
-	        EvaluatorType type) {
+	public INAryEvaluator<SignDomainValue, SignDomainState, CodeBlock> createNAryExpressionEvaluator(int arity,
+			EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -77,7 +67,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 		case ARITY_MIN:
 			return new SignUnaryExpressionEvaluator();
 		case ARITY_MAX:
-			return new SignBinaryExpressionEvaluator(mServices, type);
+			return new SignBinaryExpressionEvaluator(mLogger, type);
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");
@@ -86,8 +76,8 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonValueExpressionEvaluator(String value,
+			Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignSingletonIntegerExpressionEvaluator(value);
@@ -101,27 +91,30 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
+			createSingletonVariableExpressionEvaluator(IBoogieVar variableName) {
 		return new SignSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value) {
-		return null;
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
+			createSingletonLogicalValueExpressionEvaluator(BooleanValue value) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(String functionName,
-	        int inputParamCount) {
-		// TODO Auto-generated method stub
-		return null;
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createFunctionEvaluator(String functionName,
+			int inputParamCount) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
-		// TODO Auto-generated method stub
-		return null;
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createConditionalEvaluator() {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonValueTopEvaluator() {
+		throw new UnsupportedOperationException("not implemented");
 	}
 }

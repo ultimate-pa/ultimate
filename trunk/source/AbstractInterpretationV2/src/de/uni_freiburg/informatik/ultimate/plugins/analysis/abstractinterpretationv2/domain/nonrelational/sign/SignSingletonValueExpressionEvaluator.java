@@ -29,14 +29,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            The type of the value stored in this class.
  */
 public abstract class SignSingletonValueExpressionEvaluator<T>
-        implements IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> {
+		implements IEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
 	protected final T mValue;
 
@@ -58,29 +57,29 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
-		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+	public List<IEvaluationResult<SignDomainValue>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<SignDomainValue>> returnList = new ArrayList<>();
 
 		final int num = getSignum();
 
-		if (num > 0) {
-			returnList.add(new SignDomainValue(Values.POSITIVE));
-			return returnList;
-		}
-
-		if (num < 0) {
-			returnList.add(new SignDomainValue(Values.NEGATIVE));
-			return returnList;
-		}
-
-		returnList.add(new SignDomainValue(Values.ZERO));
+//		if (num > 0) {
+//			returnList.add(new SignDomainValue(SignValues.POSITIVE));
+//			return returnList;
+//		}
+//
+//		if (num < 0) {
+//			returnList.add(new SignDomainValue(SignValues.NEGATIVE));
+//			return returnList;
+//		}
+//
+//		returnList.add(new SignDomainValue(SignValues.ZERO));
 		return returnList;
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<SignDomainValue, SignDomainState, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
-		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
+				"A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
 
 	@Override
@@ -93,7 +92,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	protected abstract int getSignum();
 
 	@Override
-	public final Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+	public final Set<IBoogieVar> getVarIdentifiers() {
+		return Collections.emptySet();
 	}
 }

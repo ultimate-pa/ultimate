@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+public class SignUnaryExpressionEvaluator implements INAryEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
-	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<SignDomainValue, SignDomainState, CodeBlock> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<SignDomainValue, SignDomainState, CodeBlock> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 		mSubEvaluator = evaluator;
@@ -67,46 +67,46 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> evaluate(SignDomainState oldState) {
+	public List<IEvaluationResult<SignDomainValue>> evaluate(SignDomainState oldState) {
 
-		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<SignDomainValue>> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<Values>> subEvalResult = mSubEvaluator.evaluate(oldState);
+		final List<IEvaluationResult<SignDomainValue>> subEvalResult = mSubEvaluator.evaluate(oldState);
 
-		for (final IEvaluationResult<Values> res : subEvalResult) {
+		for (final IEvaluationResult<SignDomainValue> res : subEvalResult) {
 			switch (mOperator) {
 			case LOGICNEG:
-				returnList.add(negateValue(res.getValue()));
+				// returnList.add(negateValue(res.getValue()));
 				break;
 			case ARITHNEGATIVE:
-				returnList.add(negateValue(res.getValue()));
+				// returnList.add(negateValue(res.getValue()));
 				break;
 			default:
 				throw new UnsupportedOperationException(
-				        "The operator " + mOperator.toString() + " is not implemented.");
+						"The operator " + mOperator.toString() + " is not implemented.");
 			}
 		}
 
 		return returnList;
 	}
 
-	private IEvaluationResult<SignDomainValue.Values> negateValue(SignDomainValue.Values value) {
+	private IEvaluationResult<SignDomainValue.SignValues> negateValue(SignDomainValue.SignValues value) {
 		assert value != null;
 
 		switch (value) {
 		case POSITIVE:
-			return new SignDomainValue(Values.NEGATIVE);
+			return new SignDomainValue(SignValues.NEGATIVE);
 		case NEGATIVE:
-			return new SignDomainValue(Values.POSITIVE);
+			return new SignDomainValue(SignValues.POSITIVE);
 		case TOP:
-			return new SignDomainValue(Values.TOP);
+			return new SignDomainValue(SignValues.TOP);
 		case BOTTOM:
-			return new SignDomainValue(Values.BOTTOM);
+			return new SignDomainValue(SignValues.BOTTOM);
 		case ZERO:
-			return new SignDomainValue(Values.ZERO);
+			return new SignDomainValue(SignValues.ZERO);
 		default:
 			throw new UnsupportedOperationException(
-			        "The sign domain value " + value.toString() + " is not implemented.");
+					"The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 
@@ -116,7 +116,7 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
 
@@ -127,14 +127,12 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
-	        final SignDomainState currentState) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<SignDomainValue> computedValue,
+			final SignDomainState currentState) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 }

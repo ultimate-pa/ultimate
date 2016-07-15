@@ -28,18 +28,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 
 /**
  * Implementation of an abstract state of the {@link SignDomain}.
@@ -56,277 +53,42 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignDomainState implements IAbstractState<SignDomainState, CodeBlock> {
+public class SignDomainState extends NonrelationalState<SignDomainState, SignDomainValue> {
 
-	private static int sId;
-	private final int mId;
-
-	private final Map<String, IBoogieVar> mVariablesMap;
-	private final Map<String, SignDomainValue> mValuesMap;
-
-	private final boolean mIsFixpoint;
-
-	protected SignDomainState() {
-		mVariablesMap = new HashMap<String, IBoogieVar>();
-		mValuesMap = new HashMap<String, SignDomainValue>();
-		mIsFixpoint = false;
-		sId++;
-		mId = sId;
+	protected SignDomainState(final ILogger logger) {
+		super(logger);
 	}
 
-	protected SignDomainState(Map<String, IBoogieVar> variablesMap, Map<String, SignDomainValue> valuesMap,
-			boolean isFixpoint) {
-		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
-		mValuesMap = new HashMap<String, SignDomainValue>(valuesMap);
-		mIsFixpoint = isFixpoint;
-		sId++;
-		mId = sId;
+	protected SignDomainState(final ILogger logger, final Set<IBoogieVar> variables,
+			final Map<IBoogieVar, SignDomainValue> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap) {
+		super(logger, variables, valuesMap, booleanValuesMap);
 	}
 
 	@Override
-	public SignDomainState addVariable(String name, IBoogieVar variable) {
-		assert name != null;
-		assert variable != null;
-
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		final IBoogieVar old = newVarMap.put(name, variable);
-		if (old != null) {
-			throw new UnsupportedOperationException("Variable names must be disjoint.");
-		}
-
-		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		newValMap.put(name, new SignDomainValue(Values.TOP));
-
-		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
+	protected SignDomainState createCopy() {
+		return new SignDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+				new HashMap<>(getVar2ValueBoolean()));
 	}
 
 	@Override
-	public SignDomainState removeVariable(String name, IBoogieVar variable) {
-		assert name != null;
-		assert variable != null;
-
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		newVarMap.remove(name);
-		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		newValMap.remove(name);
-
-		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
+	protected SignDomainState createState(ILogger logger, Set<IBoogieVar> newVarMap,
+			Map<IBoogieVar, SignDomainValue> newValMap, Map<IBoogieVar, BooleanValue> newBooleanValMap) {
+		return new SignDomainState(logger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public SignDomainState addVariables(Map<String, IBoogieVar> variables) {
-		assert variables != null;
-		assert !variables.isEmpty();
-
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			final IBoogieVar old = newVarMap.put(entry.getKey(), entry.getValue());
-			if (old != null) {
-				throw new UnsupportedOperationException("Variable names must be disjoint.");
-			}
-			newValMap.put(entry.getKey(), new SignDomainValue(Values.TOP));
-		}
-
-		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
+	protected SignDomainValue createBottomValue() {
+		return new SignDomainValue(SignValues.BOTTOM);
 	}
 
 	@Override
-	public SignDomainState removeVariables(Map<String, IBoogieVar> variables) {
-		assert variables != null;
-		assert !variables.isEmpty();
-
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			newVarMap.remove(entry.getKey());
-			newValMap.remove(entry.getKey());
-		}
-
-		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
+	protected SignDomainValue createTopValue() {
+		return new SignDomainValue(SignValues.TOP);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
-		return mVariablesMap.containsKey(name);
+	protected SignDomainValue[] getArray(int size) {
+		return new SignDomainValue[size];
 	}
 
-	@Override
-	public boolean isEmpty() {
-		return mVariablesMap.isEmpty();
-	}
-
-	@Override
-	public boolean isBottom() {
-		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			if (entry.getValue().getValue() == Values.BOTTOM) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	public SignDomainState setFixpoint(boolean value) {
-		return new SignDomainState(mVariablesMap, mValuesMap, value);
-	}
-
-	/**
-	 * Build a string of the form "var1 : type1 = value1; var2 : type2 = value2; ...".
-	 * 
-	 * @return A string of all variables with their values.
-	 */
-	@Override
-	public String toLogString() {
-		final StringBuilder stringBuffer = new StringBuilder();
-		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
-			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-					.append(mValuesMap.get(entry.getKey()).getValue().toString()).append("; ");
-		}
-		return stringBuffer.toString();
-	}
-
-	@Override
-	public String toString() {
-		return toLogString();
-	}
-
-	@Override
-	public int hashCode() {
-		return mId;
-	}
-
-	@Override
-	public boolean equals(Object other) {
-		if (other == null) {
-			return false;
-		}
-
-		if (other == this) {
-			return true;
-		}
-
-		if (this.getClass() != other.getClass()) {
-			return false;
-		}
-
-		return isEqualTo((SignDomainState) other);
-	}
-
-	@Override
-	public boolean isEqualTo(SignDomainState other) {
-		if (!hasSameVariables(other)) {
-			return false;
-		}
-		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			final SignDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).getValue().equals(otherValue.getValue())) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	protected boolean hasSameVariables(SignDomainState other) {
-		if (other == null) {
-			return false;
-		}
-
-		if (!(other instanceof SignDomainState)) {
-			return false;
-		}
-
-		if (!getClass().isInstance(other)) {
-			return false;
-		}
-
-		if (other.mVariablesMap.size() != mVariablesMap.size()) {
-			return false;
-		}
-
-		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
-			final IBoogieVar otherType = other.mVariablesMap.get(entry.getKey());
-			if (!entry.getValue().equals(otherType)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	public SignDomainState copy() {
-		return new SignDomainState(new HashMap<String, IBoogieVar>(mVariablesMap),
-				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
-	}
-
-	@Override
-	public Map<String, IBoogieVar> getVariables() {
-		return Collections.unmodifiableMap(mVariablesMap);
-	}
-
-	protected Map<String, SignDomainValue> getValues() {
-		return new HashMap<String, SignDomainValue>(mValuesMap);
-	}
-
-	protected void setValue(String name, SignDomainValue value) {
-		assert name != null;
-		assert value != null;
-		assert mVariablesMap.containsKey(name);
-		assert mValuesMap.containsKey(name);
-
-		mValuesMap.put(name, value);
-	}
-
-	/**
-	 * Intersects {@link this} with another {@link SignDomainState} by intersecting each value of each variable.
-	 * 
-	 * @param other
-	 *            The other state to intersect with.
-	 * @return A new state which corresponds to the intersection.
-	 */
-	protected SignDomainState intersect(SignDomainState other) {
-		assert hasSameVariables(other);
-
-		final SignDomainState newState = copy();
-
-		for (final Entry<String, IBoogieVar> variable : mVariablesMap.entrySet()) {
-			final String key = variable.getKey();
-			newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
-		}
-
-		return newState;
-	}
-
-	public void setToBottom() {
-		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			entry.setValue(new SignDomainValue(Values.BOTTOM));
-		}
-	}
-
-	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		return script.term("true");
-	}
-
-	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
-		assert name != null;
-		assert mVariablesMap.containsKey(name);
-
-		return mVariablesMap.get(name);
-	}
-
-	@Override
-	public SignDomainState patch(final SignDomainState dominator) {
-		throw new UnsupportedOperationException("not yet implemented");
-	}
-
-	@Override
-	public SubsetResult isSubsetOf(final SignDomainState other) {
-		assert hasSameVariables(other);
-		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
-	}
 }

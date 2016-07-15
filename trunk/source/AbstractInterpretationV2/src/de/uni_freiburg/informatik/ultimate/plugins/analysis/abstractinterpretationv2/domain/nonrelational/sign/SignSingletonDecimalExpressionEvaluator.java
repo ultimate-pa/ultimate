@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
@@ -71,7 +71,7 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<SignDomainValue> computedValue,
 	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
 		return null;

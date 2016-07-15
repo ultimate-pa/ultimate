@@ -30,30 +30,29 @@ import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalSingletonVariableExpressionEvaluator extends SignSingletonVariableExpressionEvaluator
-        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonVariableExpressionEvaluator(String variableName) {
+	public SignLogicalSingletonVariableExpressionEvaluator(IBoogieVar variableName) {
 		super(variableName);
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 		assert currentState.containsVariable(mVariableName);
 
-		final IBoogieVar var = currentState.getVariables().get(mVariableName);
 
-		final BoogieType varType = (BoogieType) var.getIType();
+		final BoogieType varType = (BoogieType) mVariableName.getIType();
 
 		// TODO: Check type for bool. How to do that?
 
-		final SignDomainValue value = currentState.getValues().get(mVariableName);
+		final SignDomainValue value = currentState.getValue(mVariableName);
 
-		final SignDomainState newState = currentState.copy();
+		final SignDomainState newState = currentState.createCopy();
 
 		return newState;
 	}
@@ -62,17 +61,17 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainValue value = currentState.getValues().get(mVariableName);
+		final SignDomainValue value = currentState.getValue(mVariableName);
 
 		final SignDomainValue newValue;
 
 		switch (value.getValue()) {
 		case NEGATIVE:
-			return new SignDomainValue(Values.NEGATIVE);
+			return new SignDomainValue(SignValues.NEGATIVE);
 		case POSITIVE:
-			return new SignDomainValue(Values.POSITIVE);
+			return new SignDomainValue(SignValues.POSITIVE);
 		case BOTTOM:
-			return new SignDomainValue(Values.BOTTOM);
+			return new SignDomainValue(SignValues.BOTTOM);
 		default:
 			throw new UnsupportedOperationException(
 			        "The value " + value.getValue().toString() + " is no valid boolean sign domain value.");
@@ -83,7 +82,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainValue value = currentState.getValues().get(mVariableName);
+		final SignDomainValue value = currentState.getValue(mVariableName);
 
 		final SignDomainValue newValue;
 

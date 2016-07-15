@@ -31,11 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -47,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonValueExpressionEvaluator<Boolean>
-        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
 	private final BooleanValue mBooleanValue;
 
@@ -57,13 +55,13 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
-		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+	public List<IEvaluationResult<SignDomainValue>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<SignDomainValue>> returnList = new ArrayList<>();
 
 		if (mValue) {
-			returnList.add(new SignDomainValue(Values.POSITIVE));
+//			returnList.add(new SignDomainValue(SignValues.POSITIVE));
 		} else {
-			returnList.add(new SignDomainValue(Values.NEGATIVE));
+//			returnList.add(new SignDomainValue(SignValues.NEGATIVE));
 		}
 
 		return returnList;
@@ -97,7 +95,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<SignDomainValue> computedValue,
 	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
 		return null;

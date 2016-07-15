@@ -32,7 +32,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 
 /**
  * Represents a single integer expression in the {@link SignDomain}.
@@ -64,14 +64,13 @@ public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueE
 
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<SignDomainValue> computedValue,
 	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("not implemented");
 	}
 }

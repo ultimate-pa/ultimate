@@ -28,233 +28,31 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link SignDomainState} for the given Statement.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class SignDomainStatementProcessor extends BoogieVisitor {
+public class SignDomainStatementProcessor extends NonrelationalStatementProcessor<SignDomainState, SignDomainValue> {
 
-	private SignDomainState mOldState;
-	private List<SignDomainState> mNewState;
-	private SignDomainState mCurrentNewState;
-
-	private final IUltimateServiceProvider mServices;
-
-	IEvaluatorFactory<Values, SignDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
-	ExpressionEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
-
-	private String mLhsVariable;
-
-	protected SignDomainStatementProcessor(IUltimateServiceProvider services) {
-		mServices = services;
+	protected SignDomainStatementProcessor (final ILogger logger, final BoogieSymbolTable symbolTable,
+			final Boogie2SmtSymbolTable bpl2smtTable, final String evaluatorType, final int maxParallelStates) {
+		super(logger, symbolTable, bpl2smtTable, evaluatorType, maxParallelStates);
 	}
-
-	protected List<SignDomainState> process(SignDomainState oldState, Statement statement) {
-
-		assert oldState != null;
-		assert statement != null;
-
-		mOldState = oldState;
-		mNewState = new ArrayList<>();
-		mCurrentNewState = oldState.copy();
-
-		mLhsVariable = null;
-
-		// Process the current statement and alter mNewState
-		processStatement(statement);
-
-		return mNewState;
-	}
-
+	
 	@Override
-	protected void visit(HavocStatement statement) {
-
-		mEvaluatorFactory = new SignEvaluatorFactory(mServices);
-
-		final VariableLHS[] vars = statement.getIdentifiers();
-		for (final VariableLHS var : vars) {
-			mCurrentNewState.setValue(var.getIdentifier(), new SignDomainValue(Values.TOP));
-		}
-
-		mNewState.add(mCurrentNewState);
+	protected IEvaluatorFactory<SignDomainValue, SignDomainState, CodeBlock>
+			createEvaluatorFactory(final String evaluatorType, final int maxParallelStates) {
+		return new SignEvaluatorFactory(getLogger(), evaluatorType, maxParallelStates);
 	}
-
-	@Override
-	protected void visit(AssignmentStatement statement) {
-		mEvaluatorFactory = new SignEvaluatorFactory(mServices);
-
-		final LeftHandSide[] lhs = statement.getLhs();
-		final Expression[] rhs = statement.getRhs();
-
-		for (int i = 0; i < lhs.length; i++) {
-			mExpressionEvaluator = new ExpressionEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>();
-
-			assert mLhsVariable == null;
-			processLeftHandSide(lhs[i]);
-			assert mLhsVariable != null;
-			final String varname = mLhsVariable;
-			mLhsVariable = null;
-
-			processExpression(rhs[i]);
-			assert mExpressionEvaluator.isFinished();
-			final List<IEvaluationResult<Values>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
-
-			for (final IEvaluationResult<Values> res : result) {
-				final SignDomainState retState = mCurrentNewState.copy();
-				final SignDomainValue newValue = new SignDomainValue(res.getValue());
-				retState.setValue(varname, newValue);
-				mNewState.add(retState);
-			}
-		}
-	}
-
-	@Override
-	protected void visit(AssumeStatement statement) {
-
-		// We are in a situation where we need to evaluate a logical formula (and update the abstract state
-		// accordingly). Therefore, we use the SignLogicalEvaluatorFactory to allow for all evaluators to also be able
-		// to interpret the result logically and return a new abstract state which will then be intersected with the
-		// current abstract state.
-		mEvaluatorFactory = new SignLogicalEvaluatorFactory(mServices);
-
-		mExpressionEvaluator = new ExpressionEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>();
-
-		final Expression formula = statement.getFormula();
-
-		if (formula instanceof BooleanLiteral) {
-			final BooleanLiteral binform = (BooleanLiteral) formula;
-			if (!binform.getValue()) {
-				final SignDomainState ret = mCurrentNewState.copy();
-				ret.setToBottom();
-				mNewState.add(ret);
-			}
-			return;
-		}
-
-		processExpression(formula);
-
-		// final IAbstractState<CodeBlock, IBoogieVar> newState = ((ILogicalEvaluator<Values, CodeBlock, IBoogieVar>)
-		// mExpressionEvaluator
-		// .getRootEvaluator()).logicallyInterpret(mOldState);
-		throw new UnsupportedOperationException("Logical interpretation not yet implemented.");
-
-		// mNewState = (SignDomainState) newState;
-	}
-
-	@Override
-	protected void visit(AssertStatement statement) {
-		mEvaluatorFactory = new SignLogicalEvaluatorFactory(mServices);
-		// TODO Auto-generated method stub
-		super.visit(statement);
-	}
-
-	@Override
-	protected void visit(BinaryExpression expr) {
-		INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator;
-
-		evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
-
-		evaluator.setOperator(expr.getOperator());
-
-		mExpressionEvaluator.addEvaluator(evaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(BooleanLiteral expr) {
-		if (!(mEvaluatorFactory instanceof SignLogicalEvaluatorFactory)) {
-			throw new UnsupportedOperationException(
-			        "Boolean literas are only allowed in a boolean context, i.e. when visiting logic formulas.");
-		}
-
-		final SignLogicalEvaluatorFactory logicalEvaluatorFactory = (SignLogicalEvaluatorFactory) mEvaluatorFactory;
-
-		final String booleanValue = expr.getValue() ? "True" : "False";
-
-		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
-
-		mExpressionEvaluator.addEvaluator(booleanExpressionEvaluator);
-	}
-
-	@Override
-	protected void visit(RealLiteral expr) {
-		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
-
-		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
-	}
-
-	@Override
-	protected void visit(IntegerLiteral expr) {
-
-		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
-
-		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
-	}
-
-	@Override
-	protected void visit(UnaryExpression expr) {
-
-		final SignUnaryExpressionEvaluator unaryExpressionEvaluator = (SignUnaryExpressionEvaluator) mEvaluatorFactory
-		        .createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
-
-		unaryExpressionEvaluator.setOperator(expr.getOperator());
-
-		mExpressionEvaluator.addEvaluator(unaryExpressionEvaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(IdentifierExpression expr) {
-
-		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> variableExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
-
-		mExpressionEvaluator.addEvaluator(variableExpressionEvaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(VariableLHS lhs) {
-		mLhsVariable = lhs.getIdentifier();
-	}
-
 }

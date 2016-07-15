@@ -28,10 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -41,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingletonDecimalExpressionEvaluator
-        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+		implements IEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
 	private final BooleanValue mBooleanValue;
 
@@ -51,7 +49,7 @@ public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingleto
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {
-		return currentState.copy();
+		return currentState.createCopy();
 	}
 
 	private boolean logicalEvaluation(SignDomainState currentState) {

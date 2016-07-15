@@ -31,39 +31,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
-        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+		implements IEvaluator<SignDomainValue, SignDomainState, CodeBlock> {
 
 	private final BooleanValue mBooleanValue = new BooleanValue(false);
 
-	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
-		super(services, type);
+	public SignLogicalBinaryExpressionEvaluator(ILogger logger, EvaluatorType type) {
+		super(logger, type);
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
-		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+	public List<IEvaluationResult<SignDomainValue>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<SignDomainValue>> returnList = new ArrayList<>();
 
-		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final IBoogieVar var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
-		final List<IEvaluationResult<Values>> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final List<IEvaluationResult<Values>> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<SignDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<SignDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (final IEvaluationResult<Values> res1 : firstResult) {
-			for (final IEvaluationResult<Values> res2 : secondResult) {
+		for (final IEvaluationResult<SignDomainValue> res1 : firstResult) {
+			for (final IEvaluationResult<SignDomainValue> res2 : secondResult) {
 				switch (mOperator) {
 				// case LOGICIFF:
 				// break;
@@ -100,7 +100,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 					// break;
 				default:
 					throw new UnsupportedOperationException(
-					        "The operator " + mOperator.toString() + " is not implemented.");
+							"The operator " + mOperator.toString() + " is not implemented.");
 				}
 			}
 		}
@@ -113,13 +113,11 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
-		if (firstResult.getValue().equals(Values.BOTTOM) || secondResult.getValue().equals(Values.BOTTOM)) {
-			final SignDomainState newState = currentState.copy();
-			newState.setToBottom();
-			return newState;
+		if (firstResult.getValue().equals(SignValues.BOTTOM) || secondResult.getValue().equals(SignValues.BOTTOM)) {
+			return currentState.bottomState();
 		}
 
-		SignDomainState newState = currentState.copy();
+		SignDomainState newState = currentState.createCopy();
 
 		final boolean compResult = evaluateComparisonOperators(firstResult, secondResult);
 
@@ -134,36 +132,38 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case COMPGEQ:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		case COMPNEQ:
-			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(SignValues.TOP) || secondResult.getValue().equals(SignValues.TOP)) {
 				return newState;
 			}
 
 			// TODO How to deal with inequalities in the sign domain?
 			if (!compResult) {
-				newState.setToBottom();
+				return newState.bottomState();
 			}
 
 			return newState;
 		case COMPEQ:
-			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(SignValues.TOP) || secondResult.getValue().equals(SignValues.TOP)) {
 				return newState;
 			}
 
 			if (compResult) {
 				// Compute new state, only of the form x == 3 or 3 == x for now.
 				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator
-				        && !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
-					final SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
-					final SignDomainState intersecterino = currentState.copy();
+						&& !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
+					final SignLogicalSingletonVariableExpressionEvaluator leftie =
+							(SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
+					final SignDomainState intersecterino = currentState.createCopy();
 					// SignDomainState<CodeBlock, IBoogieVar> rightState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// secondLogicalInterpretation;
 					// intersecterino.setValue(leftie.mVariableName, rightState.getValues().get(leftie.mVariableName));
 
 					newState = newState.intersect(intersecterino);
 				} else if (!(mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)
-				        && mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
-					final SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
-					final SignDomainState intersecterino = currentState.copy();
+						&& mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
+					final SignLogicalSingletonVariableExpressionEvaluator rightie =
+							(SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
+					final SignDomainState intersecterino = currentState.createCopy();
 					// SignDomainState<CodeBlock, IBoogieVar> leftState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// firstLogicalInterpretation;
 					// intersecterino.setValue(rightie.mVariableName, leftState.getValues().get(rightie.mVariableName));
@@ -182,7 +182,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		default:
 			mLogger.warn("Loss of precision while interpreting the logical expression " + toString());
-			return currentState.copy();
+			return currentState.createCopy();
 		// throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
 	}
@@ -214,7 +214,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.ZERO) {
+		if (firstResult.getValue() == SignValues.ZERO && secondResult.getValue() == SignValues.ZERO) {
 			return false;
 		}
 
@@ -222,17 +222,17 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getValue() == secondResult.getValue() || firstResult.getValue() == Values.BOTTOM
-		        || secondResult.getValue() == Values.BOTTOM || firstResult.getValue() == Values.TOP
-		        || secondResult.getValue() == Values.TOP) {
+		if (firstResult.getValue() == secondResult.getValue() || firstResult.getValue() == SignValues.BOTTOM
+				|| secondResult.getValue() == SignValues.BOTTOM || firstResult.getValue() == SignValues.TOP
+				|| secondResult.getValue() == SignValues.TOP) {
 			return false;
 		}
 
-		if (firstResult.getValue() == Values.POSITIVE && !(secondResult.getValue() == Values.POSITIVE)) {
+		if (firstResult.getValue() == SignValues.POSITIVE && !(secondResult.getValue() == SignValues.POSITIVE)) {
 			return true;
 		}
 
-		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.NEGATIVE) {
+		if (firstResult.getValue() == SignValues.ZERO && secondResult.getValue() == SignValues.NEGATIVE) {
 			return true;
 		}
 
@@ -244,11 +244,11 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return false;
 		}
 
-		if (firstResult.getValue() == Values.NEGATIVE && !(secondResult.getValue() == Values.NEGATIVE)) {
+		if (firstResult.getValue() == SignValues.NEGATIVE && !(secondResult.getValue() == SignValues.NEGATIVE)) {
 			return true;
 		}
 
-		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.POSITIVE) {
+		if (firstResult.getValue() == SignValues.ZERO && secondResult.getValue() == SignValues.POSITIVE) {
 			return true;
 		}
 		return false;

@@ -275,8 +275,7 @@ public final class AbstractInterpreter {
 							.setStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint>(
 									domain.getMergeOperator(), services, transitionProvider))
 							.setTransitionProvider(transitionProvider)
-							.setVariableProvider(new RcfgVariableProvider<>(symbolTable,
-									boogieVarTable, services))
+							.setVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
 							.setDebugHelper(new RcfgDebugHelper<>(rootAnnot, services)).setTimer(timer);
 
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> fxpe =
@@ -322,7 +321,7 @@ public final class AbstractInterpreter {
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(services, rootAnnotation);
+			return new SignDomain(services, rootAnnotation, symbolTable);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(logger, symbolTable, literalCollector.create().getLiteralCollection(), services,
 					rootAnnotation);
@@ -344,7 +343,7 @@ public final class AbstractInterpreter {
 				domainList.add(new EmptyDomain<>());
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
-				domainList.add(new SignDomain(services, rootAnnotation));
+				domainList.add(new SignDomain(services, rootAnnotation, symbolTable));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
 				domainList.add(new CongruenceDomain(logger, services, symbolTable, rootAnnotation));

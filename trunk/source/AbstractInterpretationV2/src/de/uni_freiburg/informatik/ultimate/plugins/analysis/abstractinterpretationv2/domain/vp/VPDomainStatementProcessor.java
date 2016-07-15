@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -66,8 +65,8 @@ public class VPDomainStatementProcessor extends NonRecursive {
 
 	private final IUltimateServiceProvider mServices;
 
-	IEvaluatorFactory<Values, VPDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
-	ExpressionEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
+	IEvaluatorFactory<Values, VPDomainState, CodeBlock> mEvaluatorFactory;
+	ExpressionEvaluator<Values, VPDomainState, CodeBlock> mExpressionEvaluator;
 
 	private String mLhsVariable;
 
