@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.P
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -910,14 +911,24 @@ public class FunctionHandler {
 			mCallGraph.get(mCurrentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
 
 			return result;
-		} else if (methodName.equals("sqrt")) {
+		} else if (methodName.equals("sqrt") || Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
 			assert arguments.length == 1;
 			final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			if (Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
+				final CPrimitive expectedType = BitvectorTranslation.getParamTypeForFpClassification(methodName);
+				if (expectedType != null) {
+					mExpressionTranslation.convertFloatToFloat(loc, arg, expectedType);
+				}
+			}
 			final RValue rvalue = mExpressionTranslation.constructOtherFloatOperation(loc, methodName, (RValue) arg.lrVal);
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
 			result.lrVal = rvalue;
 			return result;
+		} else if (methodName.equals("__builtin_huge_val")) {
+			return mExpressionTranslation.createNanOrInfinity(loc, "inf");
+		} else if (methodName.equals("__builtin_huge_valf")) {
+			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
 		} else {
 			return null;
 		}

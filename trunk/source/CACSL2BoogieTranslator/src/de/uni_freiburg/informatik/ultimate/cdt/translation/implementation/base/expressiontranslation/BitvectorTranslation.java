@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -765,50 +766,74 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public Expression getRoundingMode() {
 		return mRoundingMode;
 	}
-
-	@Override
-	public Expression createFloatingPointClassificationFunction(ILocation loc, String name) {
 	
-		String smtlibFunctionName;
-		CPrimitive param;
-		
-		if (name.equals("__isnan") || name.equals("__isnand") || name.equals("__isnanf") || name.equals("__isnanl")) {
-			smtlibFunctionName = "fp.isNaN";
-			if (name.equals("__isnanf")) {
-				param = new CPrimitive(PRIMITIVE.FLOAT);
-			} else if (name.equals("__isnanl")) {
-				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
-			} else {
-				param = new CPrimitive(PRIMITIVE.DOUBLE);
+
+
+	/**
+	 * Determine the id of the SMT-LIB function to which we translate 
+	 * a floating point classification function.
+	 * @param id of a C floating point classification function.
+	 * @return id of an SMT-LIB function.
+	 */
+	private String getSmtLibIdForFpClassification(String id) {
+		if (id.startsWith("__")) {
+			final String suffix = id.substring(2);
+			if (suffix.startsWith("isnan")) {
+				return "fp.isNaN";
+			} else if (suffix.startsWith("isinf")) {
+				return "fp.isInfinite";
+			} else if (suffix.startsWith("isnormal")) {
+				return "fp.isNormal";
 			}
-		} else if (name.equals("__isinf") || name.equals("__isinfd") || name.equals("__isinff") || name.equals("__isinfl")) {
-			smtlibFunctionName = "fp.isInfinite";
-			if (name.equals("__isinff")) {
-				param = new CPrimitive(PRIMITIVE.FLOAT);
-			} else if (name.equals("__isinfl")) {
-				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
-			} else {
-				param = new CPrimitive(PRIMITIVE.DOUBLE);
-			}
-		} else if (name.equals("__isnormal") || name.equals("__isnormald") || name.equals("__isnormalf") || name.equals("__isnormall")) {
-			smtlibFunctionName = "fp.isNormal";
-			if (name.equals("__isnormalf")) {
-				param = new CPrimitive(PRIMITIVE.FLOAT);
-			} else if (name.equals("__isnormall")) {
-				param = new CPrimitive(PRIMITIVE.LONGDOUBLE);
-			} else {
-				param = new CPrimitive(PRIMITIVE.DOUBLE);
-			}
-		} else {
-			throw new UnsupportedOperationException("Operation not supported");
 		}
-		//declareFloatingPointFunction(loc, smtlibFunctionName, SFO.AUXILIARY_FUNCTION_PREFIX + name, true, false, new CPrimitive(PRIMITIVE.BOOL), null, param);
-		
-		
-		ASTType ASTparam = new NamedType(loc, param.toString(), new ASTType[0]);
-		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, null); 
-		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, attributes, new PrimitiveType(loc, SFO.BOOL), ASTparam);
-		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + name, null);
+		throw new IllegalArgumentException("not fp classification function " + id);
+	}
+	
+	/**
+	 * Determine the parameter type of a floating point classification function.
+	 * The type can be determined from the last symbol of the function name. 
+	 * @param id of a C floating point classification function.
+	 * @return C type of parameter
+	 */
+	public static CPrimitive getParamTypeForFpClassification(String id) {
+		char lastCharacer = id.charAt(id.length()-1);
+		switch (lastCharacer) {
+		case 'f':
+			return new CPrimitive(PRIMITIVE.FLOAT);
+		case 'd':
+			return new CPrimitive(PRIMITIVE.DOUBLE);
+		case 'l':
+			return new CPrimitive(PRIMITIVE.LONGDOUBLE);
+		default:
+			return null;
+		}
+	}
+	
+	/**
+	 * Declare Boogie function and return function application for C functions
+	 * from the following list.  
+	 *		"__isnan","__isnand","__isnanf","__isnanl",
+	 *		"__isinf","__isinfd","__isinff","__isinfl",
+	 *		"__isnormal","__isnormald","__isnormalf","__isnormall",
+	 */
+	private RValue constructFloatClassificationFunction(ILocation loc, String cFunctionName, RValue... arguments) {
+		final String smtLibFunctionName = getSmtLibIdForFpClassification(cFunctionName);
+		final CPrimitive expectedType = getParamTypeForFpClassification(cFunctionName);
+		if (expectedType != null) {
+			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
+					((CPrimitive) arguments[0].getCType()).getType() != expectedType.getType()) {
+				throw new IllegalArgumentException();
+			}
+		}
+		final CPrimitive paramCType = (CPrimitive) arguments[0].getCType();
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + paramCType;
+		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
+		final ASTType resultBoogieType = new PrimitiveType(loc, SFO.BOOL);
+		final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
+		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, paramCType);
+		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
+		final Expression expr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{arguments[0].getValue()});
+		return new RValue(expr, resultCType, true);
 	}
 
 	@Override
@@ -818,7 +843,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					((CPrimitive) arguments[0].getCType()).getType() != PRIMITIVE.DOUBLE) {
 				throw new IllegalArgumentException();
 			}
-			final String prefixedFunctionName = "~" + cFunctionName;
+			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + cFunctionName;
 			final String smtLibFunctionName = "fp.sqrt";
 			final CPrimitive resultType = new CPrimitive(PRIMITIVE.DOUBLE);
 			if (!getFunctionDeclarations().getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -830,7 +855,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			}
 			final Expression expr = new FunctionApplication(loc, prefixedFunctionName, new Expression[]{getRoundingMode(), arguments[0].getValue()});
 			return new RValue(expr, resultType);
+		} else if (Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(cFunctionName)) {
+			return constructFloatClassificationFunction(loc, cFunctionName, arguments);
 		}
 		throw new UnsupportedOperationException("not yet supported float operation " + cFunctionName);
 	}
+
+
 }

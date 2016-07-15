@@ -154,9 +154,9 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals("pthread_create")) {
 			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
 		}
-		if (mUnsupportedFloatOperations.contains(methodName)) {
-			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
-		}
+//		if (mUnsupportedFloatOperations.contains(methodName)) {
+//			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
+//		}
 		if (methodName.equals(ERROR_STRING)) {
 			final boolean checkSvcompErrorfunction = 
 					main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);

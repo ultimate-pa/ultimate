@@ -613,8 +613,6 @@ public abstract class AExpressionTranslation {
 
 	public abstract Expression getRoundingMode();
 	
-	public abstract Expression createFloatingPointClassificationFunction(ILocation loc, String name);
-	
 	public abstract RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments);
 	
 	
