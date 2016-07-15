@@ -205,7 +205,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
 		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
-		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
