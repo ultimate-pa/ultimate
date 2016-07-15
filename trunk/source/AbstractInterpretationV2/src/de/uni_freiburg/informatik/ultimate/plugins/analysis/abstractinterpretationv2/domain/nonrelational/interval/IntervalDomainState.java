@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,11 +76,12 @@ public class IntervalDomainState extends NonrelationalState<IntervalDomainState,
 
 	@Override
 	protected IntervalDomainState createCopy() {
-		return new IntervalDomainState(getLogger(), getVariables(), getVar2ValueNonrelational(), getVar2ValueBoolean());
+		return new IntervalDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+				new HashMap<>(getVar2ValueBoolean()));
 	}
 
 	@Override
-	protected IntervalDomainState createCopy(ILogger logger, Set<IBoogieVar> newVarMap,
+	protected IntervalDomainState createState(ILogger logger, Set<IBoogieVar> newVarMap,
 			Map<IBoogieVar, IntervalDomainValue> newValMap, Map<IBoogieVar, BooleanValue> newBooleanValMap) {
 		return new IntervalDomainState(logger, newVarMap, newValMap, newBooleanValMap);
 	}

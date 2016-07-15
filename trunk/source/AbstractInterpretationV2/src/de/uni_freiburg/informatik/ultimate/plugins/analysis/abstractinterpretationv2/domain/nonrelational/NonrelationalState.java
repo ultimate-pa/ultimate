@@ -96,16 +96,16 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * 
 	 * @param logger
 	 *            The current logger object in the current context.
-	 * @param variablesMap
+	 * @param variables
 	 *            The map with all variable identifiers and their types.
 	 * @param valuesMap
 	 *            The values of all variables.
 	 * @param booleanValuesMap
 	 *            The values of all boolean variables.
 	 */
-	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variablesMap,
+	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variables,
 			final Map<IBoogieVar, V> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap) {
-		mVariables = new HashSet<>(variablesMap);
+		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
 		sId++;
@@ -493,7 +493,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 		newBooleanValMap.remove(variable);
 
-		return createCopy(mLogger, newVarMap, newValMap, newBooleanValMap);
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
@@ -543,7 +543,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			}
 		}
 
-		return createCopy(mLogger, newVars, newValMap, newBooleanValMap);
+		return createState(mLogger, newVars, newValMap, newBooleanValMap);
 	}
 
 	@Override
@@ -560,7 +560,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			newBooleanValMap.remove(entry);
 		}
 
-		return createCopy(mLogger, newVarMap, newValMap, newBooleanValMap);
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
@@ -663,7 +663,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	protected abstract STATE createCopy();
 
-	protected abstract STATE createCopy(ILogger logger, Set<IBoogieVar> newVarMap, Map<IBoogieVar, V> newValMap,
+	protected abstract STATE createState(ILogger logger, Set<IBoogieVar> newVarMap, Map<IBoogieVar, V> newValMap,
 			Map<IBoogieVar, BooleanValue> newBooleanValMap);
 
 	protected abstract V createBottomValue();

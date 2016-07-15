@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,12 +76,13 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 
 	@Override
 	protected CongruenceDomainState createCopy() {
-		return new CongruenceDomainState(getLogger(), getVariables(), getVar2ValueNonrelational(), getVar2ValueBoolean());
+		return new CongruenceDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+				new HashMap<>(getVar2ValueBoolean()));
 	}
 
 	@Override
-	protected CongruenceDomainState createCopy(ILogger logger, Set<IBoogieVar> newVarMap,
-			Map<IBoogieVar, CongruenceDomainValue> newValMap, Map<IBoogieVar, BooleanValue> newBooleanValMap) {
+	protected CongruenceDomainState createState(final ILogger logger, final Set<IBoogieVar> newVarMap,
+			final Map<IBoogieVar, CongruenceDomainValue> newValMap, final Map<IBoogieVar, BooleanValue> newBooleanValMap) {
 		return new CongruenceDomainState(logger, newVarMap, newValMap, newBooleanValMap);
 	}
 
