@@ -630,7 +630,8 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (main.isMMRequired() && (main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && 
+					(main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
 				if (mCheckMemoryLeakAtEndOfMain) {
 					// add a specification to check for memory leaks
 					final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
