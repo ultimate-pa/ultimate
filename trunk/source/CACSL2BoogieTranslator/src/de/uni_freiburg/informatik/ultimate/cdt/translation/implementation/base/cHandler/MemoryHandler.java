@@ -278,7 +278,7 @@ public class MemoryHandler {
 	 */
 	public ArrayList<Declaration> declareMemoryModelInfrastructure(final Dispatcher main, final ILocation tuLoc) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		if (!main.isMMRequired() && !mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()
+		if (!mRequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired()
 				&& mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().isEmpty()) {
 			return decl;
 		}

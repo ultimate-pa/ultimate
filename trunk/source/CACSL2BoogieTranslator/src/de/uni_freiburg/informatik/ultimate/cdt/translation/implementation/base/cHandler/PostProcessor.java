@@ -299,7 +299,7 @@ public class PostProcessor {
 
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
-		if (main.isMMRequired() || memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+		if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
