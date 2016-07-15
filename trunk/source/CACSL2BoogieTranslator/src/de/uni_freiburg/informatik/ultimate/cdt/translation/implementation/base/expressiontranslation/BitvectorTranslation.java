@@ -720,44 +720,35 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 		return prefixedFunctionName;
 	}
+	
 	@Override
 	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
-		final String functionName;
+		final String smtFunctionName;
 		final String suffixedFunctionName;
 		final CPrimitive type;
 		if (name.equals("NAN") || name.equals("nan")) {
-			functionName = "NaN";
+			smtFunctionName = "NaN";
 			suffixedFunctionName = "NaN_d";
 			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
-			functionName = "+oo";
+			smtFunctionName = "+oo";
 			suffixedFunctionName = "+oo_d";
 			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("nanl")){
-			functionName = "NaN";
+			smtFunctionName = "NaN";
 			suffixedFunctionName = "NaN_l";
 			type = new CPrimitive(PRIMITIVE.LONGDOUBLE);
 		} else if (name.equals("nanf")){
-			functionName = "NaN";
+			smtFunctionName = "NaN";
 			suffixedFunctionName = "NaN_f";
 			type = new CPrimitive(PRIMITIVE.FLOAT);
 		} else {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
-		final Expression[] indices = new Expression[]{
-				new IntegerLiteral(loc, String.valueOf(fps.getExponent())), 
-				new IntegerLiteral(loc, String.valueOf(fps.getSignificant()))};
-		final Attribute[] attributes;
-		if (mOverapproximateFloatingPointOperations) {
-			attributes = new Attribute[0];
-		} else {
-			attributes = new Attribute[]{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-					new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-		}
+		final Attribute[] attributes = generateAttributes(loc, smtFunctionName, new int[]{fps.getExponent(), fps.getSignificant() });
 		final ASTType asttype = mTypeHandler.ctype2asttype(loc, type);
 		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype);
-		
 		final FunctionApplication func = new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, new Expression[]{});
 		return new ExpressionResult(new RValue(func, type));
 	}
@@ -767,8 +758,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return mRoundingMode;
 	}
 	
-
-
 	/**
 	 * Determine the id of the SMT-LIB function to which we translate 
 	 * a floating point classification function.
