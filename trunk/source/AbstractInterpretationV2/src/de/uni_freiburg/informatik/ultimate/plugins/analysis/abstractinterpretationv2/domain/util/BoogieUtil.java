@@ -47,7 +47,7 @@ public class BoogieUtil {
 
 			@Override
 			public String toString() {
-				return BoogieUtil.class.getSimpleName() + "Temporary:" + identifier;
+				return identifier;
 			}
 		};
 	}

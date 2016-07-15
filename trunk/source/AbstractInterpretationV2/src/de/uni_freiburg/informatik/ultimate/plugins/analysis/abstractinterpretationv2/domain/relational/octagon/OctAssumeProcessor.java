@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -62,8 +63,10 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume an expression.
 	 * 
-	 * @param assumption Expression to be assumed
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param assumption
+	 *            Expression to be assumed
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	public List<OctDomainState> assume(final Expression assumption, final List<OctDomainState> oldStates) {
@@ -73,9 +76,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume an boolean expression.
 	 * 
-	 * @param expr Boolean expression to be assumed.
-	 * @param isNegated The expression was inside a logical negation ("x < y" will be "x >= y").
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param expr
+	 *            Boolean expression to be assumed.
+	 * @param isNegated
+	 *            The expression was inside a logical negation ("x < y" will be "x >= y").
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processBooleanOperations(final Expression expr, final boolean isNegated,
@@ -91,11 +97,10 @@ public class OctAssumeProcessor {
 			}
 
 		} else if (expr instanceof IdentifierExpression) {
-			final String var = ((IdentifierExpression) expr).getIdentifier();
+			final IBoogieVar var = mPostOp.getBoogieVar((IdentifierExpression) expr);
 			final BoolValue value = BoolValue.get(!isNegated);
 			oldStates.forEach(s -> s.assumeBooleanVar(var, value));
 			return oldStates;
-
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unExpr = (UnaryExpression) expr;
 
@@ -166,11 +171,16 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the logical conjunction of the expressions {@code left} and {@code right}
 	 * 
-	 * @param left First expression to be assumed.
-	 * @param negLeft Negate the first expression.
-	 * @param right Second expression to be assumed.
-	 * @param negRight Negate the second expression.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param left
+	 *            First expression to be assumed.
+	 * @param negLeft
+	 *            Negate the first expression.
+	 * @param right
+	 *            Second expression to be assumed.
+	 * @param negRight
+	 *            Negate the second expression.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> assumeAnd(final Expression left, final boolean negLeft, final Expression right,
@@ -184,11 +194,16 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the logical disjunction of the expressions {@code left} and {@code right}
 	 * 
-	 * @param left First expression to be assumed.
-	 * @param negLeft Negate the first expression.
-	 * @param right Second expression to be assumed.
-	 * @param negRight Negate the second expression.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param left
+	 *            First expression to be assumed.
+	 * @param negLeft
+	 *            Negate the first expression.
+	 * @param right
+	 *            Second expression to be assumed.
+	 * @param negRight
+	 *            Negate the second expression.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> assumeOr(final Expression left, final boolean negLeft, final Expression right,
@@ -201,10 +216,14 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the logical equivalence ("if and only if") of the expressions {@code left} and {@code right}
 	 * 
-	 * @param left First expression to be assumed.
-	 * @param right Second expression to be assumed.
-	 * @param negIff Negate the equivalence.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param left
+	 *            First expression to be assumed.
+	 * @param right
+	 *            Second expression to be assumed.
+	 * @param negIff
+	 *            Negate the equivalence.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> assumeIff(final Expression left, final Expression right, final boolean negIff,
@@ -217,9 +236,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume a relation between two boolean variables (for instance "boolA == boolB").
 	 * 
-	 * @param binExpr Boolean relation to be assumed.
-	 * @param isNegated Negate the relation.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param binExpr
+	 *            Boolean relation to be assumed.
+	 * @param isNegated
+	 *            Negate the relation.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processBooleanRelation(final BinaryExpression binExpr, final boolean isNegated,
@@ -241,9 +263,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume a relation between two numeric variables (for instance "intA < intB").
 	 * 
-	 * @param binExpr Numeric relation to be assumed.
-	 * @param isNegated Negate the relation.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param binExpr
+	 *            Numeric relation to be assumed.
+	 * @param isNegated
+	 *            Negate the relation.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processNumericRelation(final BinaryExpression binExpr, final boolean isNegated,
@@ -302,9 +327,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the relation "affineExpression != 0".
 	 * 
-	 * @param affExpr Expression to be assumed to be not equal zero.
-	 * @param intRelation The operands/variables are integers.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param affExpr
+	 *            Expression to be assumed to be not equal zero.
+	 * @param intRelation
+	 *            The operands/variables are integers.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processAffineNeZero(AffineExpression affExpr, final boolean intRelation,
@@ -321,8 +349,8 @@ public class OctAssumeProcessor {
 		}
 
 		// from now on handle (affExpr - c != 0) as (affExpr <= c) or (affExpr >= c) ----------------
-		BigDecimal leC; //        (affExpr \in [-\inf, leC]) ...
-		BigDecimal geC; // ... or (affExpr \in [geC,  \inf])
+		BigDecimal leC; // (affExpr \in [-\inf, leC]) ...
+		BigDecimal geC; // ... or (affExpr \in [geC, \inf])
 		leC = geC = affExpr.getConstant().negate();
 		if (intRelation) {
 			// in case of integers: (affExpr - c != 0) as (affExpr <= c-1) or (affExpr >= c+1)
@@ -343,17 +371,16 @@ public class OctAssumeProcessor {
 				geCOct = new OctValue(geC);
 				leCOct = new OctValue(leC);
 			}
-			return mPostOp.splitC(oldStates,
-				s -> s.assumeNumericVarInterval(ovf.var, geCOct, OctValue.INFINITY), // v > c
-				s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leCOct)  // v < c
+			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.var, geCOct, OctValue.INFINITY), // v >
+																													// c
+					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leCOct) // v < c
 			);
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue leCOct = new OctValue(leC);
 			final OctValue leCOct2 = new OctValue(geC.negate()); // (affExpr > c) is equivalent to (-affExpr < -c)
 			return mPostOp.splitC(oldStates,
-				s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leCOct),
-				s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leCOct2)
-			);
+					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leCOct),
+					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leCOct2));
 
 		} else {
 			return oldStates; // safe over-approximation
@@ -364,9 +391,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the relation "affineExpression == 0".
 	 * 
-	 * @param affExpr Expression to be assumed to be equal zero.
-	 * @param intRelation The operands/variables are integers.
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param affExpr
+	 *            Expression to be assumed to be equal zero.
+	 * @param intRelation
+	 *            The operands/variables are integers.
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processAffineEqZero(AffineExpression affExpr, final boolean intRelation,
@@ -397,10 +427,10 @@ public class OctAssumeProcessor {
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
 			final OctValue cOctNeg = new OctValue(c.negate());
-			oldStates.forEach(state ->
-					state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, cOct));
-			oldStates.forEach(state ->
-					state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, cOctNeg));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+					tvf.negVar2, cOct));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
+					!tvf.negVar2, cOctNeg));
 			return oldStates;
 
 		} else {
@@ -412,9 +442,12 @@ public class OctAssumeProcessor {
 	/**
 	 * Assume the relation "affineExpression < 0" or "affineExpression <= 0".
 	 * 
-	 * @param affExpr Expression to be assumed to be less than zero.
-	 * @param intRelation The operands/variables are integers and the relation is "<".
-	 * @param oldStates Pre-states -- may be modified in-place.
+	 * @param affExpr
+	 *            Expression to be assumed to be less than zero.
+	 * @param intRelation
+	 *            The operands/variables are integers and the relation is "<".
+	 * @param oldStates
+	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
 	private List<OctDomainState> processAffineLtZero(AffineExpression affExpr, final boolean strictRelInt,
@@ -456,8 +489,8 @@ public class OctAssumeProcessor {
 
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
-			oldStates.forEach(state ->
-					state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, cOct));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+					tvf.negVar2, cOct));
 			return oldStates;
 
 		} else {

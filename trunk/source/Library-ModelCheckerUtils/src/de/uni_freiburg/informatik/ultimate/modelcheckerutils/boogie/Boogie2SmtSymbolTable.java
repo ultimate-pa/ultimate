@@ -178,7 +178,8 @@ public class Boogie2SmtSymbolTable {
 		return mScript;
 	}
 
-	public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation, final boolean inOldContext) {
+	public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
+			final boolean inOldContext) {
 		final BoogieVar result;
 		final StorageClass storageClass = declarationInformation.getStorageClass();
 		final String procedure = declarationInformation.getProcedure();
@@ -210,6 +211,17 @@ public class Boogie2SmtSymbolTable {
 		return result;
 	}
 
+	/**
+	 * Get BoogieVar for in our outparams.
+	 * 
+	 * @param varId
+	 *            The id of the param.
+	 * @param procedure
+	 *            The procedure.
+	 * @param isInParam
+	 *            true iff its an inparam, false if its an outparam.
+	 * @return The BoogieVar.
+	 */
 	public BoogieVar getBoogieVar(final String varId, final String procedure, final boolean isInParam) {
 		if (isInParam) {
 			return get(varId, procedure, mImplementationInParam);

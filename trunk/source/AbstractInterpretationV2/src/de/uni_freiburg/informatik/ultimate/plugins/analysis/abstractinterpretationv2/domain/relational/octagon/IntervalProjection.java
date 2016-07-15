@@ -29,35 +29,47 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 
 /**
- * Utilities to project octagons to intervals, calculated expression using intervals,
- * and assigning the resulting intervals to octagons.
+ * Utilities to project octagons to intervals, calculated expression using intervals, and assigning the resulting
+ * intervals to octagons.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class IntervalProjection {
 
+	private final Boogie2SmtSymbolTable mBpl2smtSymbolTable;
+
+	public IntervalProjection(final Boogie2SmtSymbolTable bpl2smtSymbolTable) {
+		mBpl2smtSymbolTable = bpl2smtSymbolTable;
+	}
+
 	/**
 	 * Processes an assignment by projection to intervals.
 	 * 
-	 * @param var Variable to be assigned.
-	 * @param rhs Expression without if-expressions, describing te new value of the variable.
-	 * @param oldStates Octagon abstract states to be updated -- will be modified in-place.
+	 * @param var
+	 *            Variable to be assigned.
+	 * @param rhs
+	 *            Expression without if-expressions, describing te new value of the variable.
+	 * @param oldStates
+	 *            Octagon abstract states to be updated -- will be modified in-place.
 	 * @return Updated states in the same list.
 	 */
-	public static List<OctDomainState> assignNumericVarWithoutIfs(final String var, final Expression rhs,
+	public List<OctDomainState> assignNumericVarWithoutIfs(final IBoogieVar var, final Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
@@ -71,12 +83,15 @@ public class IntervalProjection {
 	/**
 	 * Processes an assignment by projection to intervals.
 	 * 
-	 * @param var Variable to be assigned.
-	 * @param rhs Affine expression, describing te new value of the variable.
-	 * @param oldStates Octagon abstract states to be updated -- will be modified in-place.
+	 * @param var
+	 *            Variable to be assigned.
+	 * @param rhs
+	 *            Affine expression, describing te new value of the variable.
+	 * @param oldStates
+	 *            Octagon abstract states to be updated -- will be modified in-place.
 	 * @return Updated states in the same list.
 	 */
-	public static List<OctDomainState> assignNumericVarAffine(final String var, final AffineExpression rhs,
+	public List<OctDomainState> assignNumericVarAffine(final IBoogieVar var, final AffineExpression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
@@ -90,23 +105,27 @@ public class IntervalProjection {
 	/**
 	 * Project an octagon to intervals and calculate the abstract result (interval) of an expression.
 	 * 
-	 * @param expr Expression to be evaluated.
-	 * @param state Octagon abstract state, describing the values variables can have.
+	 * @param expr
+	 *            Expression to be evaluated.
+	 * @param state
+	 *            Octagon abstract state, describing the values variables can have.
 	 * @return Abstract result (interval) of the expression
 	 */
-	public static IntervalDomainValue projectNumericExprWithoutIfs(final Expression expr, final OctDomainState state) {
+	public IntervalDomainValue projectNumericExprWithoutIfs(final Expression expr, final OctDomainState state) {
 		// TODO (?) cache interval projections of each variable
 
 		if (expr instanceof IntegerLiteral) {
 			final IntervalValue pointInterval = new IntervalValue(((IntegerLiteral) expr).getValue());
 			return new IntervalDomainValue(pointInterval, pointInterval);
-		
+
 		} else if (expr instanceof RealLiteral) {
 			final IntervalValue pointInterval = new IntervalValue(((IntegerLiteral) expr).getValue());
 			return new IntervalDomainValue(pointInterval, pointInterval);
-		
+
 		} else if (expr instanceof IdentifierExpression) {
-			final String var = ((IdentifierExpression) expr).getIdentifier();
+			final IdentifierExpression iexpr = ((IdentifierExpression) expr);
+			final BoogieVar var =
+					mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(), iexpr.getDeclarationInformation(), false);
 			final OctInterval octInterval = state.projectToInterval(var);
 			return octInterval.toIvlInterval();
 
@@ -118,7 +137,7 @@ public class IntervalProjection {
 			default:
 				// see end of this method
 			}
-			
+
 		} else if (expr instanceof BinaryExpression) {
 			final BinaryExpression binExpr = (BinaryExpression) expr;
 			final IntervalDomainValue left = projectNumericExprWithoutIfs(binExpr.getLeft(), state);
@@ -145,17 +164,19 @@ public class IntervalProjection {
 		}
 		return new IntervalDomainValue(); // \top = safe over-approximation
 	}
-	
+
 	/**
 	 * Project an octagon to intervals and calculate the abstract result (interval) of an affine expression.
 	 * 
-	 * @param expr Affine expression to be evaluated.
-	 * @param state Octagon abstract state, describing the values variables can have.
+	 * @param expr
+	 *            Affine expression to be evaluated.
+	 * @param state
+	 *            Octagon abstract state, describing the values variables can have.
 	 * @return Abstract result (interval) of the expression
 	 */
-	public static IntervalDomainValue projectAffineExpr(final AffineExpression expr, final OctDomainState state) {
+	public IntervalDomainValue projectAffineExpr(final AffineExpression expr, final OctDomainState state) {
 		IntervalDomainValue resultInterval = new IntervalDomainValue(0, 0);
-		for (final Map.Entry<String, BigDecimal> summand : expr.getCoefficients().entrySet()) {
+		for (final Entry<IBoogieVar, BigDecimal> summand : expr.getCoefficients().entrySet()) {
 			final IntervalDomainValue varValue = state.projectToInterval(summand.getKey()).toIvlInterval();
 			final IntervalValue factor = new IntervalValue(summand.getValue());
 			resultInterval = resultInterval.add(varValue.multiply(new IntervalDomainValue(factor, factor)));

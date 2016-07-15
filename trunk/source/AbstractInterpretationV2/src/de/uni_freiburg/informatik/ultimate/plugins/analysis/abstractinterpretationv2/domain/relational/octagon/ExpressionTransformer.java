@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -40,44 +41,53 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 
 /**
- * Methods to transform Boogie expressions into {@link AffineExpression}s
- * {@link IfThenElseExpression}-free expressions and logic negations.
- * Transformations are cached.
+ * Methods to transform Boogie expressions into {@link AffineExpression}s {@link IfThenElseExpression}-free expressions
+ * and logic negations. Transformations are cached.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class ExpressionTransformer {
 
 	/**
-	 * Cache of already processed expressions and their affine version.
-	 * Expressions that are not present as a map key were never processed.
-	 * Expressions that map to {@code null} were processed, but could not be transformed.
+	 * Cache of already processed expressions and their affine version. Expressions that are not present as a map key
+	 * were never processed. Expressions that map to {@code null} were processed, but could not be transformed.
 	 */
-	private final Map<Expression, AffineExpression> mCacheAffineExpr = new HashMap<>();
+	private final Map<Expression, AffineExpression> mCacheAffineExpr;
 
 	/**
-	 * Cache of already processed expressions and their logical negation.
-	 * Expressions that are not present as a map key were never processed.
+	 * Cache of already processed expressions and their logical negation. Expressions that are not present as a map key
+	 * were never processed.
 	 */
-	private final Map<Expression, Expression> mCacheLogicNeg = new HashMap<>();
-	
+	private final Map<Expression, Expression> mCacheLogicNeg;
+
 	/**
-	 * Cache of already processed expressions and their if-free version.
-	 * Expressions that are not present as a map key were never processed.
+	 * Cache of already processed expressions and their if-free version. Expressions that are not present as a map key
+	 * were never processed.
 	 */
-	private final Map<Expression, IfExpressionTree> mCacheRemoveIfExpr = new HashMap<>();
-	
+	private final Map<Expression, IfExpressionTree> mCacheRemoveIfExpr;
+
+	private final Boogie2SmtSymbolTable mBpl2SmtSymbolTable;
+
+	ExpressionTransformer(final Boogie2SmtSymbolTable symbolTable) {
+		mCacheRemoveIfExpr = new HashMap<>();
+		mCacheLogicNeg = new HashMap<>();
+		mCacheAffineExpr = new HashMap<>();
+		mBpl2SmtSymbolTable = symbolTable;
+	}
+
 	/**
-	 * Transform an expression into an {@link AffineExpression}.
-	 * Expressions that cannot be transformed result in {@code null}.
+	 * Transform an expression into an {@link AffineExpression}. Expressions that cannot be transformed result in
+	 * {@code null}.
 	 * <p>
-	 * The result of the transformation is cached
-	 * -- subsequent calls with the same parameter will return the very same object.
+	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
+	 * object.
 	 * 
-	 * @param expr Expression to be transformed.
+	 * @param expr
+	 *            Expression to be transformed.
 	 * @return {@link AffineExpression} or {@code null}
 	 */
 	public AffineExpression affineExprCached(final Expression expr) {
@@ -94,15 +104,15 @@ public class ExpressionTransformer {
 	// (x = [1, 1] is concrete, y = [1, 2] is not.)
 
 	/**
-	 * Negate a boolean expression.
-	 * The negation is not deep. The resulting negation of {@code x < y} is {@code !(x < y)} and not {@code x >= y}.
-	 * Only boolean literals and already negated expressions (for instance {@code !(expr)} are negated without
-	 * enclosing them in a further negation.
+	 * Negate a boolean expression. The negation is not deep. The resulting negation of {@code x < y} is
+	 * {@code !(x < y)} and not {@code x >= y}. Only boolean literals and already negated expressions (for instance
+	 * {@code !(expr)} are negated without enclosing them in a further negation.
 	 * <p>
-	 * The result of the transformation is cached
-	 * -- subsequent calls with the same parameter will return the very same object.
+	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
+	 * object.
 	 * 
-	 * @param expr Expression to be transformed.
+	 * @param expr
+	 *            Expression to be transformed.
 	 * @return Logical negation
 	 */
 	public Expression logicNegCached(final Expression expr) {
@@ -115,15 +125,15 @@ public class ExpressionTransformer {
 	}
 
 	/**
-	 * Removes {@link IfThenElseExpression}s from an expression.
-	 * Each {@code if} is substituted by two assume statements.
-	 * {@code if}s inside the body of other {@code if}s are removed.
-	 * {@code if}s inside the conditions of other {@code if}s are <b>not</b> removed.
+	 * Removes {@link IfThenElseExpression}s from an expression. Each {@code if} is substituted by two assume
+	 * statements. {@code if}s inside the body of other {@code if}s are removed. {@code if}s inside the conditions of
+	 * other {@code if}s are <b>not</b> removed.
 	 * <p>
-	 * The result of the transformation is cached
-	 * -- subsequent calls with the same parameter will return the very same object.
+	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
+	 * object.
 	 * 
-	 * @param expr Expression to be transformed.
+	 * @param expr
+	 *            Expression to be transformed.
 	 * @return Expression without {@code if}s
 	 * 
 	 * @see IfExpressionTree
@@ -139,10 +149,11 @@ public class ExpressionTransformer {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	/** Internal, non-cached version of {@link #affineExprCached(Expression)}. */
 	private AffineExpression toAffineExpr(final Expression expr) {
-		assert TypeUtil.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: " + expr;
+		assert TypeUtil.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: "
+				+ expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
@@ -150,8 +161,9 @@ public class ExpressionTransformer {
 			final String value = ((RealLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
-			final String varName = ((IdentifierExpression) expr).getIdentifier();
-			final Map<String, BigDecimal> coefficients = Collections.singletonMap(varName, BigDecimal.ONE);
+			final IdentifierExpression ie = ((IdentifierExpression) expr);
+			final IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
+			final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
 		} else if (expr instanceof UnaryExpression) {
 			return unaryExprToAffineExpr((UnaryExpression) expr);
@@ -171,7 +183,7 @@ public class ExpressionTransformer {
 			return null;
 		}
 	}
-	
+
 	/** @see #toAffineExpr(Expression) */
 	private AffineExpression binaryExprToAffineExpr(final BinaryExpression expr) {
 		final AffineExpression left = affineExprCached(expr.getLeft());

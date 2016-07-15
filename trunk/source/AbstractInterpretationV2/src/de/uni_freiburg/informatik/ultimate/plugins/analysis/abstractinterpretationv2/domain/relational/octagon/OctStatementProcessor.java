@@ -52,9 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class OctStatementProcessor {
 
 	private final OctPostOperator mPostOp;
-	
+	private final IntervalProjection mIntervalProjection;
+
 	public OctStatementProcessor(OctPostOperator postOperator) {
 		mPostOp = postOperator;
+		mIntervalProjection = new IntervalProjection(mPostOp.getBoogie2SmtSymbolTable());
 	}
 
 	public List<OctDomainState> processStatement(Statement statement, List<OctDomainState> oldStates) {
@@ -65,7 +67,8 @@ public class OctStatementProcessor {
 			return mPostOp.getAssumeProcessor().assume(assumption, oldStates);
 		} else if (statement instanceof HavocStatement) {
 			return processHavocStatement((HavocStatement) statement, oldStates);
-		} if (statement instanceof Label) {
+		}
+		if (statement instanceof Label) {
 			return oldStates; // nothing to do
 		} else {
 			throw new UnsupportedOperationException("Unsupported type of statement: " + statement);
@@ -78,11 +81,11 @@ public class OctStatementProcessor {
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
 		assert lhs.length == rhs.length : "Unbalanced assignment: " + statement;
-		final int length = lhs.length;		
+		final int length = lhs.length;
 		if (length == 1) {
 			final LeftHandSide l = lhs[0];
 			if (l instanceof VariableLHS) {
-				return processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0], oldStates);
+				return processSingleAssignment(mPostOp.getBoogieVar((VariableLHS) l), rhs[0], oldStates);
 			} else {
 				// variables of unsupported types (e.g. arrays) are assumed to be \top all the time
 				return oldStates;
@@ -90,17 +93,19 @@ public class OctStatementProcessor {
 		}
 
 		final Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		final List<Pair<String, Expression>> mapLhsToRhs = new ArrayList<>(length);
-		final List<Pair<String, String>> mapOrigVarToTmpVar = new ArrayList<>(length);
+		final List<Pair<IBoogieVar, Expression>> mapLhsToRhs = new ArrayList<>(length);
+		final List<Pair<IBoogieVar, IBoogieVar>> mapOrigVarToTmpVar = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i) {
 			final LeftHandSide l = lhs[i];
 
 			if (l instanceof VariableLHS) {
 				final VariableLHS vLhs = (VariableLHS) l;
-				final String origVar = vLhs.getIdentifier();
-				final String tmpVar = "octTmp(" + origVar + ")"; // unique (origVar is unique + braces are not allowed)
+				final IBoogieVar origVar = mPostOp.getBoogieVar(vLhs);
+				// unique (origVar is unique + braces are not allowed)
+				final String tmpVarName = "octTmp(" + origVar + ")";
+				final IBoogieVar tmpVar = BoogieUtil.createTemporaryIBoogieVar(tmpVarName, vLhs.getType());
 
-				tmpVars.put(tmpVar, BoogieUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
+				tmpVars.put(tmpVarName, tmpVar);
 				mapLhsToRhs.add(new Pair<>(tmpVar, rhs[i]));
 				mapOrigVarToTmpVar.add(new Pair<>(origVar, tmpVar));
 			}
@@ -110,12 +115,12 @@ public class OctStatementProcessor {
 		// add temporary variables
 		List<OctDomainState> tmpStates = new ArrayList<>(oldStates.size());
 		for (final OctDomainState oldState : oldStates) {
-			tmpStates.add(oldState.addVariables(tmpVars));
+			tmpStates.add(oldState.addVariables(tmpVars.values()));
 		}
 
 		// (tmpVar := origExpr)*
 		// note: oldStates may be modified, since addVariables() returns only a shallow copy. Not a problem.
-		for (final Pair<String, Expression> assignment : mapLhsToRhs) {
+		for (final Pair<IBoogieVar, Expression> assignment : mapLhsToRhs) {
 			tmpStates = processSingleAssignment(assignment.getFirst(), assignment.getSecond(), tmpStates);
 		}
 
@@ -125,11 +130,11 @@ public class OctStatementProcessor {
 
 		// remove temporary variables
 		final List<OctDomainState> newStates = new ArrayList<>(oldStates.size());
-		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars)));
+		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars.values())));
 		return newStates;
 	}
 
-	public List<OctDomainState> processSingleAssignment(String targetVar, Expression rhs,
+	public List<OctDomainState> processSingleAssignment(IBoogieVar targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 		final IType type = rhs.getType();
 		if (TypeUtil.isBoolean(type)) {
@@ -141,7 +146,7 @@ public class OctStatementProcessor {
 		}
 	}
 
-	private List<OctDomainState> processBooleanAssign(String targetVar, Expression rhs,
+	private List<OctDomainState> processBooleanAssign(IBoogieVar targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		if (rhs instanceof BooleanLiteral) {
@@ -154,7 +159,7 @@ public class OctStatementProcessor {
 			final IdentifierExpression ie = (IdentifierExpression) rhs;
 			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 			if (BoogieUtil.isVariable(ie)) {
-				final String sourceVar = ie.getIdentifier();
+				final IBoogieVar sourceVar = mPostOp.getBoogieVar(ie);
 				oldStates.forEach(s -> s.copyVar(targetVar, sourceVar));
 			} else {
 				oldStates.forEach(s -> s.havocVar(targetVar));
@@ -163,23 +168,21 @@ public class OctStatementProcessor {
 
 		} else {
 			final Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
-			return mPostOp.splitF(oldStates,
-					stateList -> {
-						stateList = mPostOp.getAssumeProcessor().assume(rhs, stateList);
-						stateList = OctPostOperator.removeBottomStates(stateList); // important!
-						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.TRUE));
-						return stateList;
-					},
-					stateList -> {
-						stateList = mPostOp.getAssumeProcessor().assume(notRhs, stateList);
-						stateList = OctPostOperator.removeBottomStates(stateList); // important!
-						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.FALSE));
-						return stateList;
-					});
+			return mPostOp.splitF(oldStates, stateList -> {
+				stateList = mPostOp.getAssumeProcessor().assume(rhs, stateList);
+				stateList = OctPostOperator.removeBottomStates(stateList); // important!
+				stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.TRUE));
+				return stateList;
+			}, stateList -> {
+				stateList = mPostOp.getAssumeProcessor().assume(notRhs, stateList);
+				stateList = OctPostOperator.removeBottomStates(stateList); // important!
+				stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.FALSE));
+				return stateList;
+			});
 		}
 	}
 
-	private List<OctDomainState> processNumericAssign(String targetVar, Expression rhs,
+	private List<OctDomainState> processNumericAssign(IBoogieVar targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		final List<OctDomainState> newStates = new ArrayList<>();
@@ -192,9 +195,9 @@ public class OctStatementProcessor {
 		return mPostOp.joinDownToMax(newStates);
 	}
 
-	private List<OctDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
+	private List<OctDomainState> processNumericAssignWithoutIfs(IBoogieVar targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
-		
+
 		final AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
 			AffineExpression.OneVarForm ovf;
@@ -220,10 +223,11 @@ public class OctStatementProcessor {
 				}
 				return oldStates;
 			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
-				return IntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);
+
+				return mIntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);
 			}
 		} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) { // no affine form found
-			return IntervalProjection.assignNumericVarWithoutIfs(targetVar, rhs, oldStates);
+			return mIntervalProjection.assignNumericVarWithoutIfs(targetVar, rhs, oldStates);
 		}
 
 		// could not interpret rhs -- return safe over-approximation (targetVar := \top)
@@ -231,15 +235,13 @@ public class OctStatementProcessor {
 		return oldStates;
 	}
 
-	private List<OctDomainState> processHavocStatement(HavocStatement statement,
-			List<OctDomainState> oldStates) {
-		final List<String> vars = new ArrayList<>();
+	private List<OctDomainState> processHavocStatement(HavocStatement statement, List<OctDomainState> oldStates) {
+		final List<IBoogieVar> vars = new ArrayList<>();
 		for (final VariableLHS lhs : statement.getIdentifiers()) {
-			vars.add(lhs.getIdentifier());
+			vars.add(mPostOp.getBoogieVar(lhs));
 		}
 		oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 		oldStates.forEach(s -> s.havocVars(vars));
 		return oldStates;
 	}
-
 }
