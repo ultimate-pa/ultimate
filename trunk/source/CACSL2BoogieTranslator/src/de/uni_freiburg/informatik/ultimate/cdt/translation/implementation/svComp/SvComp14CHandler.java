@@ -113,7 +113,7 @@ public class SvComp14CHandler extends CHandler {
 	private static final String ASSUME_STRING = "__VERIFIER_assume";
 	
 	private static final String[] s_UNSUPPORTED_FLOAT_OPERATIONS = {
-		"__isinff","__finitef","__fpclassifyf","__fpclassifyf","__isinfl","__finitel","__isnanl", "sin"
+		"__finitef","__fpclassifyf","__fpclassifyf","__finitel", "sin"
 	};
 	private final HashSet<String> mUnsupportedFloatOperations = 
 			new HashSet<>(Arrays.asList(s_UNSUPPORTED_FLOAT_OPERATIONS));
@@ -154,9 +154,9 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals("pthread_create")) {
 			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
 		}
-//		if (mUnsupportedFloatOperations.contains(methodName)) {
-//			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
-//		}
+		if (mUnsupportedFloatOperations.contains(methodName)) {
+			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
+		}
 		if (methodName.equals(ERROR_STRING)) {
 			final boolean checkSvcompErrorfunction = 
 					main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
