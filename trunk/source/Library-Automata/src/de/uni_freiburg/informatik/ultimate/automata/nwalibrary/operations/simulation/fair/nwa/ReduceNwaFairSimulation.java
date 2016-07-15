@@ -192,8 +192,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 
 			correct = true;
 			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
-				boolean op = checkAcceptance(nestedLassoWord, operand, false);
-				boolean res = checkAcceptance(nestedLassoWord, result, false);
+				final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				final boolean res = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
 				correct &= (op == res);
 			}
 		}
@@ -213,25 +213,5 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	@Override
 	public String operationName() {
 		return "reduceNwaFairSimulation";
-	}
-
-	/**
-	 * @see {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV#checkAcceptance
-	 *      BuchiComplementFKV#checkAcceptance}
-	 */
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw, INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			boolean underApproximationOfComplement) throws AutomataLibraryException {
-		AutomataLibraryServices services = getServices();
-		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
-
-		final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(services, result, nlw)).getResult();
-		boolean correct;
-		if (underApproximationOfComplement) {
-			correct = !res || op;
-		} else {
-			correct = op ^ res;
-		}
-		return correct;
 	}
 }
