@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
@@ -49,15 +49,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 /**
  * Constructs the quotient for a given NWA and an equivalence relation on its
  * states.
- * The equivalence relation has to be given as a {@link UnionFind} data 
- * structure.
+ * The equivalence relation has to be given as a {@link UnionFind} or a
+ * {@link IPartition} data structure.
+ * 
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class QuotientNwaConstructor<LETTER, STATE>  {
 	
 	private final AutomataLibraryServices mServices;
 	private final StateFactory<STATE> mStateFactory;
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final Map<STATE, STATE> mOldState2newState;
 	
@@ -67,10 +69,11 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param services Ultimate services
 	 * @param stateFactory state factory
 	 * @param operand operand automaton
+	 * @param addMapOldState2newState add a map from old to new states?
 	 */
 	private QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState) {
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -91,10 +94,11 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param stateFactory state factory
 	 * @param operand operand automaton
 	 * @param partition partition data structure
+	 * @param addMapOldState2newState add a map from old to new states?
 	 */
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, addMapOldState2newState);
@@ -111,11 +115,11 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param stateFactory state factory
 	 * @param operand operand automaton
 	 * @param unionFind union-find data structure
+	 * @param addMapOldState2newState add a map from old to new states?
 	 */
-	@Deprecated
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, addMapOldState2newState);
@@ -130,7 +134,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * 
 	 * @param resStateConstructor state constructor
 	 */
-	@Deprecated
 	private void constructResultUnionFind(
 			final IResultStateConstructor<STATE> resStateConstructor) {
 		for (final STATE inputState : mOperand.getStates()) {
@@ -251,6 +254,13 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final STATE inputState, final STATE resultState) {
 		for (final OutgoingReturnTransition<LETTER, STATE> trans :
 				mOperand.returnSuccessors(inputState)) {
+			/*
+			 * Return transitions which are not usable in the original automaton
+			 * may change the language if they are blindly copied.
+			 */
+			assert mOperand.isDoubleDecker(inputState, trans.getHierPred()) :
+				"Unusable return transitions should not be present.";
+			
 			final STATE resultSucc =
 					resStateConstructor.getOrConstructResultState(
 							trans.getSucc());
@@ -285,10 +295,9 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		 * @param inputState input state
 		 * @return new state in quotient automaton
 		 */
-		public STATE getOrConstructResultState(final STATE inputState);
+		STATE getOrConstructResultState(final STATE inputState);
 	}
 	
-	@Deprecated
 	private class ResultStateConstructorFromUnionFind
 			implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<STATE, STATE> mConstructionCache;

@@ -24,6 +24,6 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  BoogiePreprocessor
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
 

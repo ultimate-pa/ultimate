@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class TransFormulaLR implements Serializable {
 	private final Map<Term, RankVar> minVarsReverseMapping;
 	private final Map<RankVar, Term> moutVars;
 	private final Map<Term, RankVar> moutVarsReverseMapping;
-	private final Set<TermVariable> mAuxVars;
+	private final Map<TermVariable, Term> mAuxVars;
 	
 	private Term mformula;
 	
@@ -83,7 +83,7 @@ public class TransFormulaLR implements Serializable {
 		minVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
 		moutVars = new LinkedHashMap<RankVar, Term>();
 		moutVarsReverseMapping = new LinkedHashMap<Term, RankVar>();
-		mAuxVars = new HashSet<TermVariable>();
+		mAuxVars = new HashMap<TermVariable, Term>();
 		mformula = formula;
 	}
 	
@@ -96,7 +96,7 @@ public class TransFormulaLR implements Serializable {
 		minVarsReverseMapping.putAll(other.minVarsReverseMapping);
 		moutVars.putAll(other.moutVars);
 		moutVarsReverseMapping.putAll(other.moutVarsReverseMapping);
-		mAuxVars.addAll(other.getAuxVars());
+		mAuxVars.putAll(other.getAuxVars());
 	}
 	
 	
@@ -165,8 +165,8 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * @return the collected auxVars
 	 */
-	public Set<TermVariable> getAuxVars() {
-		return Collections.unmodifiableSet(mAuxVars);
+	public Map<TermVariable, Term> getAuxVars() {
+		return Collections.unmodifiableMap(mAuxVars);
 	}
 	
 	/**
@@ -232,8 +232,8 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	public void removeAuxVar(TermVariable auxVar) {
-		final boolean modified = mAuxVars.remove(auxVar);
-		if (!modified) {
+		final Term oldValue = mAuxVars.remove(auxVar);
+		if (oldValue == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
 		}
@@ -245,8 +245,8 @@ public class TransFormulaLR implements Serializable {
 	 * of auxiliary variables. (Note that auxiliary variables are different from
 	 * replacement variables).
 	 */
-	public void addAuxVars(Collection<TermVariable> auxVars) {
-		mAuxVars.addAll(auxVars);
+	public void addAuxVars(Map<TermVariable, Term> auxVars) {
+		mAuxVars.putAll(auxVars);
 	}
 	
 	/**
@@ -268,7 +268,7 @@ public class TransFormulaLR implements Serializable {
 	 * This property should always hold.
 	 */
 	public boolean auxVarsDisjointFromInOutVars() {
-		for (final Term auxVar : mAuxVars) {
+		for (final Term auxVar : mAuxVars.keySet()) {
 			if (minVarsReverseMapping.containsKey(auxVar)) {
 				return false;
 			}
@@ -296,6 +296,33 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	/**
+	 * compute the assigned/updated variables. A variable is updated by this
+     * transition if it occurs as outVar and
+     * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	private HashSet<RankVar> computeAssignedVars() {
+		final HashSet<RankVar> assignedVars = new HashSet<RankVar>();
+		for (final RankVar var : moutVars.keySet()) {
+			assert (moutVars.get(var) != null);
+			if (moutVars.get(var) != minVars.get(var)) {
+				assignedVars.add(var);
+			}
+		}
+		return assignedVars;
+	}
+	
+	/**
+	 * @return the set of assigned/updated variables. A variable is updated by 
+	 * this transition if it occurs as outVar and
+     * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	public Set<RankVar> getAssignedVars() {
+		return Collections.unmodifiableSet(computeAssignedVars());
+	}
+	
+	/**
 	 * @return whether the TermVariable tv occurs as inVar, outVar, or auxVar.
 	 */
 	private boolean isInOurAux(TermVariable tv) {
@@ -303,7 +330,7 @@ public class TransFormulaLR implements Serializable {
 			return true;
 		} else if (moutVarsReverseMapping.containsKey(tv)) {
 			return true;
-		} else if (mAuxVars.contains(tv)) {
+		} else if (mAuxVars.keySet().contains(tv)) {
 			return true;
 		} else {
 			return false;

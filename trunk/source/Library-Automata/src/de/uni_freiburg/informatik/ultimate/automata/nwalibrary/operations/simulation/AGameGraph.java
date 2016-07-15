@@ -136,6 +136,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPushOverSuccessors;
 	/**
+	 * Service object used by the framework.
+	 */
+	private final AutomataLibraryServices mServices;
+	/**
 	 * Set of all {@link SpoilerVertex} objects the game graph holds.
 	 */
 	private final HashSet<SpoilerVertex<LETTER, STATE>> mSpoilerVertices;
@@ -176,6 +180,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 		// the algorithm to work correctly.
 		mBuechi = buechi;
 
+		mServices = services;
 		mProgressTimer = progressTimer;
 		mLogger = logger;
 		mStateFactory = stateFactory;
@@ -282,6 +287,21 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             framework.
 	 */
 	public abstract void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException;
+
+	/**
+	 * Gets the amount of edges the game graph has. The method computes the
+	 * number at method-call, which takes time linear in the size of the game
+	 * graph.
+	 * 
+	 * @return The amount of edges the game graph has
+	 */
+	public int getAmountOfEdges() {
+		int amountOfEdges = 0;
+		for (HashSet<Vertex<LETTER, STATE>> successors : mSuccessors.values()) {
+			amountOfEdges += successors.size();
+		}
+		return amountOfEdges;
+	}
 
 	/**
 	 * Gets the underlying automaton.
@@ -441,6 +461,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Gets the service object used by the Ultimate framework.
+	 * 
+	 * @return The service object used by the Ultimate framework.
+	 */
+	public AutomataLibraryServices getServices() {
+		return mServices;
 	}
 
 	/**
@@ -784,6 +813,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 			}
 		}
 
+		// Undo push-over edge changes
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges = changes
+				.getChangedPushOverEdges();
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdge : changedPushOverEdges
+				.entrySet()) {
+			final Vertex<LETTER, STATE> src = changedPushOverEdge.getFirst();
+			final Vertex<LETTER, STATE> dest = changedPushOverEdge.getSecond();
+			final EGameGraphChangeType type = changedPushOverEdge.getThird();
+			// If added before, remove and vice versa
+			if (type.equals(EGameGraphChangeType.ADDITION)) {
+				removePushOverEdge(src, dest);
+			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
+				addPushOverEdge(src, dest);
+			}
+		}
+
 		// Undo vertex changes
 		final HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
 		for (final Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
@@ -806,7 +851,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo vertex value changes
-		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes.getRememberedVertexValues();
+		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes
+				.getRememberedVertexValues();
 		for (final Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues : changedVertexValues.entrySet()) {
 			final Vertex<LETTER, STATE> vertex = changedValues.getKey();
 			final VertexValueContainer values = changedValues.getValue();

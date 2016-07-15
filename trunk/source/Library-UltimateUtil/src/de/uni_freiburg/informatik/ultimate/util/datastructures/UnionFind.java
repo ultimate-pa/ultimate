@@ -31,29 +31,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-
 /**
  * Data structure that can be used to partition a set of elements <E>.
- * http://en.wikipedia.org/wiki/Disjoint-set_data_structure
- * Each equivalence class has a unique representative. This implementation uses
- * HashMaps 
- * - to store for each element its equivalence class and
- * - to store for each equivalence class the representative
+ * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence
+ * class has a unique representative. This implementation uses HashMaps - to
+ * store for each element its equivalence class and - to store for each
+ * equivalence class the representative
  * 
  * @author Matthias Heizmann
+ * @author Daniel Tischner
  */
 public class UnionFind<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
-	Map<E,Set<E>> mEquivalenceClass = new HashMap<E,Set<E>>();
+	Map<E, Set<E>> mEquivalenceClass = new HashMap<E, Set<E>>();
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
-	Map<Set<E>,E> mRepresentative = new HashMap<Set<E>,E>();
+	Map<Set<E>, E> mRepresentative = new HashMap<Set<E>, E>();
 
 	/**
 	 * Returns the representative of the equivalence class of element e.
@@ -64,36 +64,36 @@ public class UnionFind<E> {
 	}
 
 	/**
-	 * Construct a new equivalence class that is a singleton and contains only
-	 * element e.
+	 * Returns the representative of the equivalence class of element e. If
+	 * there is no equivalence class for e this equivalence class is
+	 * constructed.
 	 */
-	public void makeEquivalenceClass(E e) {
-		if (mEquivalenceClass.containsKey(e)) {
-			throw new IllegalArgumentException("Already contained " + e);
+	public E findAndConstructEquivalenceClassIfNeeded(E e) {
+		final E findResult = find(e);
+		if (findResult == null) {
+			makeEquivalenceClass(e);
+			return e;
+		} else {
+			return findResult;
 		}
-		final Set<E> result = new HashSet<E>();
-		result.add(e);
-		mEquivalenceClass.put(e, result);
-		mRepresentative.put(result, e);
 	}
 
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do 
-	 * not have to be the representatives of this equivalence classes).
+	 * Returns a collection of all equivalence classes. A equivalence class is
+	 * an unmodifiable set that contains elements. Each contained element is
+	 * only in one equivalence class.
+	 * 
+	 * @return A collection of all equivalence classes. If there are no, the
+	 *         collection is empty.
 	 */
-	public void union(E e1, E e2) {
-		final Set<E> set1 = mEquivalenceClass.get(e1);
-		final Set<E> set2 = mEquivalenceClass.get(e2);
-		final E set1rep = mRepresentative.get(set1);
-		mRepresentative.remove(set1);
-		mRepresentative.remove(set2);
-		set1.addAll(set2);
-		for (final E e : set2) {
-			mEquivalenceClass.put(e, set1);
-		} 
-		mRepresentative.put(set1, set1rep);
+	public Collection<Set<E>> getAllEquivalenceClasses() {
+		final Collection<Set<E>> allEquivalenceClasses = new LinkedList<>();
+		for (final E representative : getAllRepresentatives()) {
+			allEquivalenceClasses.add(getEquivalenceClassMembers(representative));
+		}
+		return allEquivalenceClasses;
 	}
-	
+
 	/**
 	 * Return collection of all elements e such that e is representative of an
 	 * equivalence class.
@@ -110,26 +110,40 @@ public class UnionFind<E> {
 		return Collections.unmodifiableSet(mEquivalenceClass.get(e));
 	}
 
+	/**
+	 * Construct a new equivalence class that is a singleton and contains only
+	 * element e.
+	 */
+	public void makeEquivalenceClass(E e) {
+		if (mEquivalenceClass.containsKey(e)) {
+			throw new IllegalArgumentException("Already contained " + e);
+		}
+		final Set<E> result = new HashSet<E>();
+		result.add(e);
+		mEquivalenceClass.put(e, result);
+		mRepresentative.put(result, e);
+	}
+
 	@Override
 	public String toString() {
 		return mRepresentative.toString();
 	}
-	
+
 	/**
-	 * Returns the representative of the equivalence class of element e.
-	 * If there is no equivalence class for e this equivalence class is
-	 * constructed.
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do
+	 * not have to be the representatives of this equivalence classes).
 	 */
-	public E findAndConstructEquivalenceClassIfNeeded(E e) {
-		final E findResult = find(e);
-		if (findResult == null) {
-			makeEquivalenceClass(e);
-			return e;
-		} else {
-			return findResult;
+	public void union(E e1, E e2) {
+		final Set<E> set1 = mEquivalenceClass.get(e1);
+		final Set<E> set2 = mEquivalenceClass.get(e2);
+		final E set1rep = mRepresentative.get(set1);
+		mRepresentative.remove(set1);
+		mRepresentative.remove(set2);
+		set1.addAll(set2);
+		for (final E e : set2) {
+			mEquivalenceClass.put(e, set1);
 		}
+		mRepresentative.put(set1, set1rep);
 	}
 
-
 }
-

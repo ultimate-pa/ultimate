@@ -31,19 +31,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
+ * @param <STATE>
+ * @param <ACTION>
+ * @param <VARDECL>
  */
-public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
-	 * <code>current</code>. Will be called if a fresh state has to be filled with variables. <br>
+	 * <code>current</code>. Will be called for initial edges of a program and for a fresh state.<br>
 	 * 
 	 * Note that
 	 * <ul>
-	 * <li>The current frontier is not considered.
-	 * <li>May assume that <code>state</code> is fresh (i.e., <code>{@link IAbstractState#isEmpty()} == true</code>).
+	 * <li>Assume that <code>state</code> is fresh (i.e., <code>{@link IAbstractState#isEmpty()} == true</code>).
 	 * </ul>
 	 * 
 	 * @param current
@@ -53,7 +55,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 * @return An {@link IAbstractState} that contains all global and local variables according to the position of
 	 *         <code>current</code> in the program.
 	 */
-	STATE defineVariablesBefore(ACTION current, STATE state);
+	STATE defineInitialVariables(ACTION current, STATE state);
 
 	/**
 	 * Should prepare an {@link IAbstractState} with insertion or removal of variables s.t.

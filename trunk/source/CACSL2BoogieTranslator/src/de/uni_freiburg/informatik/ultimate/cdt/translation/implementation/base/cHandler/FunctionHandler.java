@@ -82,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -910,7 +910,14 @@ public class FunctionHandler {
 			mCallGraph.get(mCurrentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
 
 			return result;
-
+		} else if (methodName.equals("sqrt")) {
+			assert arguments.length == 1;
+			final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			final RValue rvalue = mExpressionTranslation.constructOtherFloatOperation(loc, methodName, (RValue) arg.lrVal);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
+			result.lrVal = rvalue;
+			return result;
 		} else {
 			return null;
 		}

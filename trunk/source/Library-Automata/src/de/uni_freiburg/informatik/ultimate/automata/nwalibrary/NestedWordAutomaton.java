@@ -154,7 +154,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return this.mStateFactory;
 	}
 
-	boolean contains(STATE state) {
+	public boolean contains(STATE state) {
 		return mInternalOut.containsKey(state);
 	}
 

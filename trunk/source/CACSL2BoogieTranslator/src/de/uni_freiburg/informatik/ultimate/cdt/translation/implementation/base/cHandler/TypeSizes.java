@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.SIGNEDNESS;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 
 /**
  * Provides the information if we want to use fixed sizes for types.
@@ -98,8 +98,8 @@ public class TypeSizes {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		sizeOfPointerType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		final SIGNEDNESS signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.class);
-		if (signednessOfChar == SIGNEDNESS.UNSIGNED) {
+		final Signedness signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
+		if (signednessOfChar == Signedness.UNSIGNED) {
 			throw new UnsupportedOperationException("char == uchar is not supported yet");
 		}
 //		this.sizeOfChar16Type = 
@@ -188,5 +188,66 @@ public class TypeSizes {
 		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
 		maxValue = maxValue.subtract(BigInteger.ONE);
 		return maxValue;
+	}
+	
+	/**
+	 * @return FloatingPointSize of a float, double, or long double.
+	 */
+	public FloatingPointSize getFloatingPointSize(CPrimitive cPrimitive) {
+		final FloatingPointSize result;
+		switch (cPrimitive.getType()) {
+		case FLOAT: {
+			final int sizeof = getSize(cPrimitive.getType());  
+			if (sizeof == 4) {
+				result = new FloatingPointSize(24, 8);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		}
+		break;
+		case DOUBLE: {
+			final int sizeof = getSize(cPrimitive.getType());  
+			if (sizeof == 8) {
+				result = new FloatingPointSize(53, 11);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		} 
+		break;
+		case LONGDOUBLE: {
+			final int sizeof = getSize(cPrimitive.getType());  
+			if (sizeof == 12 || sizeof == 16) {
+				result = new FloatingPointSize(113, 15);
+			} else {
+				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+			}
+		}
+		break;
+		default:
+			throw new IllegalArgumentException("not real floating type " + cPrimitive);
+		}
+		return result;
+	}
+	
+	/**
+	 * The size of a real floating point type is defined by a significant
+	 * and an exponent.
+	 */
+	public class FloatingPointSize {
+		final int mSignificant;
+		final int mExponent;
+		public FloatingPointSize(int significant, int exponent) {
+			super();
+			mSignificant = significant;
+			mExponent = exponent;
+		}
+		public int getSignificant() {
+			return mSignificant;
+		}
+		public int getExponent() {
+			return mExponent;
+		}
+		
+		
 	}
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -26,8 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -73,7 +77,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Determinize(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
@@ -81,6 +85,20 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.mOperand = input;
 		mLogger.info(startMessage());
 		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
+		mLogger.info(exitMessage());
+	}
+	
+	public Determinize(AutomataLibraryServices services,
+			StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> input, Set<STATE> predefinedInitials) throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.mStateFactory = stateFactory;
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory, predefinedInitials);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
 		mLogger.info(exitMessage());
 	}
@@ -100,10 +118,8 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			mLogger.info("Start testing correctness of " + operationName());
 			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
-			// should have same number of states as old determinization
 			final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
-			correct &= (resultDD.size() == mResult.size());
 			// should recognize same language as old computation
 			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD, mResult, sf) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, resultDD, sf) == null);

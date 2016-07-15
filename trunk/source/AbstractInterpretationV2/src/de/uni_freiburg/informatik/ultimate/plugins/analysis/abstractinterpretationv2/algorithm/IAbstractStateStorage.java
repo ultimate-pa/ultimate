@@ -52,7 +52,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 
 	STATE mergePostStates(ACTION transition);
 
-	List<STATE> widenPostState(ACTION transition, IAbstractStateBinaryOperator<STATE> wideningOp, STATE operand);
+	List<STATE> widenPostState(ACTION transition, IAbstractStateBinaryOperator<STATE> wideningOp, STATE leftOperand);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 

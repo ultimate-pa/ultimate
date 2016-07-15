@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -58,9 +59,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaCombinator;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
@@ -159,7 +162,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	// private IHoareTripleChecker mHoareTripleChecker;
-	private final boolean mDoFaultLocalization;
+	private final boolean mDoFaultLocalization_NonFlowSensitive;
+	private final boolean mDoFaultLocalization_FlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -212,8 +216,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IPreferenceProvider mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mUnsatCores = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalization = mPrefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
+		mDoFaultLocalization_NonFlowSensitive = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
+		mDoFaultLocalization_FlowSensitive = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
+
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
@@ -399,14 +406,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			mRcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
-			if (mDoFaultLocalization && feasibility == LBool.SAT) {
+			if ((mDoFaultLocalization_NonFlowSensitive || mDoFaultLocalization_FlowSensitive) && feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
 						mPref.interprocedural(), super.mSmtManager, mLogger);
 				final NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample,
 						cfg, mServices, mSmtManager,
-						mModGlobVarManager, predicateUnifier);
+						mModGlobVarManager, predicateUnifier, 
+						mDoFaultLocalization_NonFlowSensitive, mDoFaultLocalization_FlowSensitive);
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");
@@ -789,6 +797,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
 		case NWA_MAX_SAT:
+		case NWA_MAX_SAT2:
+		case RAQ_DIRECT_SIMULATION:
 		case NWA_COMBINATOR:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
@@ -937,6 +947,31 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 				break;
 			}
+			case NWA_MAX_SAT2: {
+				final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement, 
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstraction);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						minimizeOp.getResult())).getResult();
+				if (mComputeHoareAnnotation) {
+					throw new AssertionError("Hoare annotation and NWA_MAX_SAT2 incompatible");
+				}
+				break;
+			}
+			case RAQ_DIRECT_SIMULATION: {
+				final ReduceNwaDirectSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement, 
+						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) newAbstraction);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						minimizeOp.getResult())).getResult();
+				if (mComputeHoareAnnotation) {
+					throw new AssertionError("Hoare annotation and RAQ_DIRECT_SIMULATION incompatible");
+				}
+				break;
+			}
+			
 			case NONE:
 				minimized = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
 				break;

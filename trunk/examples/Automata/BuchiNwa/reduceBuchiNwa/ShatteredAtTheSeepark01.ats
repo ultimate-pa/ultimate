@@ -1,0 +1,45 @@
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2016-07-09
+// Spoiler can force Duplicator to move to s7 which is non-accepting.
+// Our implementation does not detect this.
+// The last days I presumed that this is a bug of our approach.
+// However, I am starting to realize that there is some hope that it is not
+// a bug, but a feature.
+
+
+//print(nwa);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r"},
+	states = {"atv0" "atv1" "polizei1" "polizei2" "polizei3" "s0" "m1" "m2" "m3" "m4" "m5" "s6" "s7"},
+	initialStates = {"atv0" "s0" },
+	finalStates = {"atv1" "s6"},
+	callTransitions = {
+		 ("atv0" "c" "polizei1")
+		 ("s0" "c" "m1")
+	},
+	internalTransitions = {
+		 ("polizei1" "a" "polizei2")
+		 ("polizei2" "a" "polizei3")
+		 ("polizei2" "b" "polizei3")
+		 ("m1" "a" "m2")
+		 ("m1" "a" "m3")
+ 		 ("m2" "a" "m4")
+		 ("m2" "b" "m5")
+  		 ("m3" "b" "m4")
+		 ("m3" "a" "m5")
+		 
+		 ("atv1" "a" "atv0")
+  		 ("s6" "a" "s0")
+		 ("s7" "a" "s0")
+	},
+	returnTransitions = {
+		 ("polizei3" "atv0" "r" "atv1")
+		 ("m4" "s0" "r" "s6")
+		 ("m5" "s0" "r" "s7")
+	}
+);

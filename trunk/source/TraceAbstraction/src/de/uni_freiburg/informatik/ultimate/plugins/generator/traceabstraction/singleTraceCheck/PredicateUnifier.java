@@ -46,8 +46,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
@@ -92,6 +94,8 @@ public class PredicateUnifier {
 	private final CoverageRelation mCoverageRelation = new CoverageRelation();
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final Script mScript;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
@@ -101,12 +105,14 @@ public class PredicateUnifier {
 	public PredicateUnifier(IUltimateServiceProvider services, SmtManager smtManager, IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSmtManager = smtManager;
+		mScript = smtManager.getScript();
+		mSymbolTable = smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTerm2Predicates = new HashMap<Term, IPredicate>();
-		final Term trueTerm = mSmtManager.getScript().term("true");
+		final Term trueTerm = mScript.term("true");
 		IPredicate truePredicate = null;
-		final Term falseTerm = mSmtManager.getScript().term("false");
+		final Term falseTerm = mScript.term("false");
 		IPredicate falsePredicate = null;
 		for (final IPredicate pred : initialPredicates) {
 			if (pred.getFormula().equals(trueTerm)) {
@@ -116,12 +122,12 @@ public class PredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			mTruePredicate = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
+			mTruePredicate = mSmtManager.getPredicateFactory().newPredicate(mScript.term("true"));
 		} else {
 			mTruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			mFalsePredicate = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("false"));
+			mFalsePredicate = mSmtManager.getPredicateFactory().newPredicate(mScript.term("false"));
 		} else {
 			mFalsePredicate = falsePredicate;
 		}
@@ -323,7 +329,7 @@ public class PredicateUnifier {
 	 */
 	private boolean varsIsSupersetOfFreeTermVariables(Term term, Set<BoogieVar> vars) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable().getBoogieVar(tv);
+			final BoogieVar bv = mSymbolTable.getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("Variable " + tv + " has no corresponding BoogieVar, hence seems "
 						+ "to be some auxiliary variable and may not "
@@ -358,7 +364,7 @@ public class PredicateUnifier {
 			final HashMap<IPredicate, Validity> impliedPredicates, 
 			final HashMap<IPredicate, Validity> expliedPredicates) {
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mSmtManager.getBoogie2Smt());
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
@@ -375,7 +381,7 @@ public class PredicateUnifier {
 				return p;
 			}
 		}
-		final Term commuNF = (new CommuhashNormalForm(mServices, mSmtManager.getScript())).transform(withoutAnnotation);
+		final Term commuNF = (new CommuhashNormalForm(mServices, mScript)).transform(withoutAnnotation);
 		{
 			IPredicate p = mTerm2Predicates.get(commuNF);
 			if (p != null) {
@@ -404,8 +410,8 @@ public class PredicateUnifier {
 			simplifiedTerm = commuNF;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mSmtManager.getScript(), commuNF, mServices);
-				simplifiedTerm  = (new CommuhashNormalForm(mServices, mSmtManager.getScript())).transform(tmp);
+				final Term tmp = SmtUtils.simplify(mScript, commuNF, mServices);
+				simplifiedTerm  = (new CommuhashNormalForm(mServices, mScript)).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
 			}
@@ -466,11 +472,11 @@ public class PredicateUnifier {
 
 //	private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
 //			HashMap<IPredicate, Validity> impliedPredicats, HashMap<IPredicate, Validity> expliedPredicates) {
-//		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mSmtManager.getScript());
+//		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
 //		assert impliedPredicats.isEmpty();
 //		assert expliedPredicates.isEmpty();
 //		mSmtManager.lock(this);
-//		mSmtManager.getScript().echo(new QuotedObject("begin unification"));
+//		mScript.echo(new QuotedObject("begin unification"));
 //		for (Term interpolantTerm : mTerm2Predicates.keySet()) {
 //			IPredicate interpolant = mTerm2Predicates.get(interpolantTerm);
 //			Term interpolantClosedTerm = interpolant.getClosedFormula();
@@ -479,12 +485,12 @@ public class PredicateUnifier {
 //			Validity explies = mSmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
 //			expliedPredicates.put(interpolant, explies);
 //			if (implies == Validity.VALID && explies == Validity.VALID) {
-//				mSmtManager.getScript().echo(new QuotedObject("end unification"));
+//				mScript.echo(new QuotedObject("end unification"));
 //				mSmtManager.unlock(this);
 //				return interpolant;
 //			}
 //		}
-//		mSmtManager.getScript().echo(new QuotedObject("end unification"));
+//		mScript.echo(new QuotedObject("end unification"));
 //		mSmtManager.unlock(this);
 //		return null;
 //	}
@@ -502,7 +508,7 @@ public class PredicateUnifier {
 	 * @return
 	 */
 	private class PredicateComparison {
-		private final Term mclosedTerm;
+		private final Term mClosedTerm;
 		private final boolean mTermContainsQuantifiers;
 		private final HashMap<IPredicate, Validity> mImpliedPredicates;
 		private final HashMap<IPredicate, Validity> mExpliedPredicates;
@@ -514,7 +520,7 @@ public class PredicateUnifier {
 			if (mEquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-			return mclosedTerm;
+			return mClosedTerm;
 		}
 
 		public HashMap<IPredicate, Validity> getImpliedPredicates() {
@@ -582,24 +588,24 @@ public class PredicateUnifier {
 				mExpliedPredicates = expliedPredicates;
 			}
 			
-			mclosedTerm = PredicateUtils.computeClosedFormula(term, vars, mSmtManager.getScript());
+			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
 			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
 			if (mSmtManager.isLocked()) {
 				mSmtManager.requestLockRelease();
 			}
 			mSmtManager.lock(this);
-			mSmtManager.getScript().echo(new QuotedObject("begin unification"));
+			mScript.echo(new QuotedObject("begin unification"));
 			
 			mEquivalentLeqQuantifiedPredicate = compare();
 
-			mSmtManager.getScript().echo(new QuotedObject("end unification"));
+			mScript.echo(new QuotedObject("end unification"));
 			mSmtManager.unlock(this);
 		}
 		
 		
 		private IPredicate compare() {
 			// check if false
-			final Validity impliesFalse = mSmtManager.isCovered(this, mclosedTerm, mFalsePredicate.getFormula());
+			final Validity impliesFalse = mSmtManager.isCovered(this, mClosedTerm, mFalsePredicate.getFormula());
 			switch (impliesFalse) {
 			case VALID:
 				return mFalsePredicate;
@@ -607,7 +613,7 @@ public class PredicateUnifier {
 				mImpliedPredicates.put(mFalsePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", mclosedTerm));
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", mClosedTerm));
 				mImpliedPredicates.put(mFalsePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;
@@ -620,7 +626,7 @@ public class PredicateUnifier {
 			mExpliedPredicates.put(mFalsePredicate, Validity.VALID);
 			
 			// check if true
-			final Validity impliedByTrue = mSmtManager.isCovered(this, mTruePredicate.getClosedFormula(), mclosedTerm);
+			final Validity impliedByTrue = mSmtManager.isCovered(this, mTruePredicate.getClosedFormula(), mClosedTerm);
 			switch (impliedByTrue) {
 			case VALID:
 				return mTruePredicate;
@@ -628,7 +634,7 @@ public class PredicateUnifier {
 				mExpliedPredicates.put(mTruePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", mclosedTerm));
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", mClosedTerm));
 				mExpliedPredicates.put(mTruePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;
@@ -664,13 +670,13 @@ public class PredicateUnifier {
 					mExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
-				checkTimeout(mclosedTerm);
+				checkTimeout(mClosedTerm);
 				final Term otherClosedTerm = other.getClosedFormula();
 				Validity implies = mImpliedPredicates.get(other);
 				if (implies == null) {
-					implies = mSmtManager.isCovered(this, mclosedTerm, otherClosedTerm);
+					implies = mSmtManager.isCovered(this, mClosedTerm, otherClosedTerm);
 					if (implies == Validity.VALID) {
-						// if (this ==> other) and (other ==> impliedByOther)
+						// if (this ==> other) and (other ==> impliedByOther) then
 						// we conclude (this ==> impliedByOther)
 						for (final IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
@@ -704,7 +710,7 @@ public class PredicateUnifier {
 				}
 				Validity explies = mExpliedPredicates.get(other);
 				if (explies == null) {
-					explies = mSmtManager.isCovered(this, otherClosedTerm, mclosedTerm);
+					explies = mSmtManager.isCovered(this, otherClosedTerm, mClosedTerm);
 					if (explies == Validity.VALID) {
 						// if (other ==> this) and (expliedByOther ==> other)
 						// we conclude (expliedByOther ==> this)
@@ -745,7 +751,7 @@ public class PredicateUnifier {
 					final boolean otherContainsQuantifiers = 
 							(new ContainsQuantifier()).containsQuantifier(other.getFormula());
 					if (!otherContainsQuantifiers || 
-							(mTermContainsQuantifiers && !thisIsLessQuantifiedThanOther(mclosedTerm, otherClosedTerm))) {
+							(mTermContainsQuantifiers && !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm))) {
 						return other;
 					} else {
 						if (mEquivalentGtQuantifiedPredicate == null) {
@@ -772,9 +778,9 @@ public class PredicateUnifier {
 
 		private String generateQuantifierInformation(Term closedTerm) {
 			final String result;
-			final Term pnf = new PrenexNormalForm(mSmtManager.getScript(), mSmtManager.getVariableManager()).transform(closedTerm);
+			final Term pnf = new PrenexNormalForm(mScript, mSmtManager.getVariableManager()).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
-				final QuantifierSequence qs = new QuantifierSequence(mSmtManager.getScript(), pnf);
+				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks()-1) + "quantifier alternations";
 			} else {
 				result = "quantifier-free";
@@ -826,7 +832,7 @@ public class PredicateUnifier {
 	 */
 	public Set<IPredicate> cannibalize(boolean splitNumericEqualities, Term term) {
 		final Set<IPredicate> result = new HashSet<IPredicate>();
-		final Term cnf = (new Cnf(mSmtManager.getScript(), mServices, mSmtManager.getVariableManager())).transform(term);
+		final Term cnf = (new Cnf(mScript, mServices, mSmtManager.getVariableManager())).transform(term);
 		Term[] conjuncts;
 		if (splitNumericEqualities) {
 			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));
@@ -846,9 +852,9 @@ public class PredicateUnifier {
 			try {
 				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
 				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
-					final Term leq = mSmtManager.getScript().term("<=", bnr.getLhs(), bnr.getRhs());
+					final Term leq = mScript.term("<=", bnr.getLhs(), bnr.getRhs());
 					result.add(leq);
-					final Term geq = mSmtManager.getScript().term(">=", bnr.getLhs(), bnr.getRhs());
+					final Term geq = mScript.term(">=", bnr.getLhs(), bnr.getRhs());
 					result.add(geq);
 				} else {
 					result.add(conjunct);

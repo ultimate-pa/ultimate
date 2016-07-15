@@ -33,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -53,9 +55,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
+ * @param <STATE>
  */
-public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
-		implements IVariableProvider<STATE, CodeBlock, IBoogieVar, LOCATION> {
+public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+		implements IVariableProvider<STATE, CodeBlock, IBoogieVar> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
@@ -74,7 +77,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesBefore(final CodeBlock current, final STATE state) {
+	public STATE defineInitialVariables(final CodeBlock current, final STATE state) {
 		assert current != null;
 		assert state != null;
 		assert state.isEmpty();
@@ -96,95 +99,104 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesAfter(final CodeBlock action, final STATE localPreState, final STATE hierachicalPreState) {
+	public STATE defineVariablesAfter(final CodeBlock action, final STATE localPreState,
+			final STATE hierachicalPreState) {
 		assert action != null;
 		assert localPreState != null;
 
 		// we assume that state has all variables except the ones that would be
 		// introduced or removed by this edge
 		// so, only call or return can do this
-
 		if (action instanceof Call) {
-			// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
-			// and add all the ones from the new scope (thus also automatically masking globals)
-			final String remove = action.getPreceedingProcedure();
-			final String add = action.getSucceedingProcedure();
-			STATE rtr = localPreState;
-			// remove current locals
-			rtr = removeLocals(rtr, remove);
-			// remove globals that will be masked by the new scope
-			final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add);
-			if (!masked.isEmpty()) {
-				rtr = rtr.removeVariables(masked);
-			}
-			// add locals of new scope
-			rtr = applyLocals(rtr, add, rtr::addVariables);
-			return rtr;
+			return defineVariablesAfterCall(action, localPreState);
 		} else if (action instanceof Return) {
-			// if the action is a return, we have to:
-			// - remove all currently local variables
-			// - keep all unmasked globals
-			// - add old locals from the scope we are returning to
-			// - add globals that were masked by this scope from the scope we are returning to
-
-			final String source = action.getPreceedingProcedure();
-			final String target = action.getSucceedingProcedure();
-			final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
-
-			if (source != null) {
-				// we need masked globals from the old scope, so we have to determine which globals are masked
-				varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(source));
-			}
-			if (target != null) {
-				// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
-				// mask them again
-				varsNeededFromOldScope.putAll(getLocalVariables(target));
-			}
-
-			STATE rtr = localPreState;
-			// in any case, we have to remove all local variables from the state
-			rtr = removeLocals(rtr, source);
-
-			if (varsNeededFromOldScope.isEmpty()) {
-				// we do not need information from the old scope, so we are finished
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-							.append(" No vars needed from old scope"));
-				}
-				return rtr;
-			}
-
-			// the program state that has to be used to obtain the values of the old scope
-			// (old locals, unmasked globals) is the pre state of the call
-			STATE preCallState = hierachicalPreState;
-			assert preCallState != null : "There is no abstract state before the call that corresponds to this return";
-			// we determine which variables are not needed ...
-			final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
-			for (final Entry<String, IBoogieVar> entry : preCallState.getVariables().entrySet()) {
-				if (!varsNeededFromOldScope.containsKey(entry.getKey())) {
-					toberemoved.put(entry.getKey(), entry.getValue());
-				}
-			}
-
-			if (!toberemoved.isEmpty()) {
-				// ... and remove them if there are any
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageRemoveLocalsPreCall(preCallState, toberemoved));
-				}
-				preCallState = preCallState.removeVariables(toberemoved);
-			} else if (mLogger.isDebugEnabled()) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageNoRemoveLocalsPreCall(preCallState));
-				}
-			}
-			// now we combine the state after returning from this method with the one from before we entered the method.
-			rtr = rtr.patch(preCallState);
-			return rtr;
-
+			return defineVariablesAfterReturn(action, localPreState, hierachicalPreState);
 		} else {
 			// nothing changes
 			return localPreState;
 		}
+	}
+
+	private STATE defineVariablesAfterReturn(final CodeBlock action, final STATE localPreState,
+			final STATE hierachicalPreState) {
+		// if the action is a return, we have to:
+		// - remove all currently local variables
+		// - keep all unmasked globals
+		// - add old locals from the scope we are returning to
+		// - add globals that were masked by this scope from the scope we are returning to
+
+		final String sourceProc = action.getPreceedingProcedure();
+		final String targetProc = action.getSucceedingProcedure();
+		final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
+
+		if (sourceProc != null) {
+			// we need masked globals from the old scope, so we have to determine which globals are masked
+			varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(sourceProc));
+		}
+		if (targetProc != null) {
+			// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
+			// mask them again
+			varsNeededFromOldScope.putAll(getLocalVariables(targetProc));
+		}
+
+		STATE rtr = localPreState;
+		// in any case, we have to remove all local variables from the state
+		rtr = removeLocals(rtr, sourceProc);
+
+		if (varsNeededFromOldScope.isEmpty()) {
+			// we do not need information from the old scope, so we are finished
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+						.append(" No vars needed from old scope"));
+			}
+			return rtr;
+		}
+
+		// the program state that has to be used to obtain the values of the old scope
+		// (old locals, unmasked globals) is the pre state of the call
+		STATE preCallState = hierachicalPreState;
+		assert preCallState != null : "There is no abstract state before the call that corresponds to this return";
+		// we determine which variables are not needed ...
+		final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
+		for (final Entry<String, IBoogieVar> entry : preCallState.getVariables().entrySet()) {
+			if (!varsNeededFromOldScope.containsKey(entry.getKey())) {
+				toberemoved.put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		if (!toberemoved.isEmpty()) {
+			// ... and remove them if there are any
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessageRemoveLocalsPreCall(preCallState, toberemoved));
+			}
+			preCallState = preCallState.removeVariables(toberemoved);
+		} else if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageNoRemoveLocalsPreCall(preCallState));
+		}
+		// now we combine the state after returning from this method with the one from before we entered the method.
+		rtr = rtr.patch(preCallState);
+		return rtr;
+	}
+
+	private STATE defineVariablesAfterCall(final CodeBlock action, final STATE localPreState) {
+		// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
+		// and add all the ones from the new scope (thus also automatically masking globals)
+		final String remove = action.getPreceedingProcedure();
+		final String add = action.getSucceedingProcedure();
+
+		// remove current locals
+		STATE rtr = removeLocals(localPreState, remove);
+		
+		//TODO: replace old old variables with fresh ones 
+		
+		// remove globals that will be masked by the new scope
+		final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add);
+		if (!masked.isEmpty()) {
+			rtr = rtr.removeVariables(masked);
+		}
+		// add locals of new scope
+		rtr = applyLocals(rtr, add, rtr::addVariables);
+		return rtr;
 	}
 
 	private STATE removeLocals(final STATE state, final String procedure) {
@@ -209,7 +221,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	 * Get all global variables that are masked by the specified procedure.
 	 * 
 	 * @param procedure
-	 * @return
+	 *            the name of the masking procedure.
+	 * @return A map from variable name to {@link IBoogieVar}.
 	 */
 	private Map<String, IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
@@ -228,6 +241,16 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			}
 		}
 
+		return rtr;
+	}
+
+	private Map<String, IBoogieVar> getOldVars() {
+		final DeclarationInformation sc = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final Map<String, IBoogieVar> rtr = new HashMap<>();
+		for (final Entry<String, BoogieNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
+			final BoogieVar oldVar = mBoogieVarTable.getBoogieVar(entry.getKey(), sc, true);
+			rtr.put("old("+oldVar.getIdentifier()+")", oldVar);
+		}
 		return rtr;
 	}
 

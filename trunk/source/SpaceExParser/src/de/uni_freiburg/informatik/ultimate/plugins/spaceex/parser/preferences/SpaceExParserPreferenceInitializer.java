@@ -27,30 +27,49 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
+ * SpaceEx Parser preferences.
+ * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
 public class SpaceExParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public enum Mode {
-		Default
-	}
+	public static final String LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL = "Load config file of corresponding SpaceEx model";
+	public static final String LABEL_SPACEEX_CONFIG_FILE = "Use config file:";
+	public static final String LABEL_CONFIG_FILE_EXPLANATION = "If no config file should be loaded automatically "
+	        + "and no config file is specified, all occurring\nvariables are set to be unbounded initially and no "
+	        + "error location is assumed.";
 
-	private static final String sMode = "Mode";
-	
+	private static final Boolean DEFAULT_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL = true;
+
+	/**
+	 * Initializes the SpaceEx Parser preferences.
+	 */
 	public SpaceExParserPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem[] { new UltimatePreferenceItem<Mode>(sMode, Mode.Default,
-				PreferenceType.Combo, Mode.values()), };
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+		final List<BaseUltimatePreferenceItem> rtr = new ArrayList<>();
+
+		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL,
+		        DEFAULT_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL, PreferenceType.Boolean));
+
+		rtr.add(new UltimatePreferenceItem<String>(LABEL_SPACEEX_CONFIG_FILE, "", PreferenceType.File));
+
+		rtr.add(new UltimatePreferenceItem<String>(LABEL_CONFIG_FILE_EXPLANATION, null, PreferenceType.Label));
+
+		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
 	}
 }

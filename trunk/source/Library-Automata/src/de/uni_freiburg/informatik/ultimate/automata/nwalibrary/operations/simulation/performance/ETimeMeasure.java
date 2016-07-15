@@ -46,8 +46,7 @@ public enum ETimeMeasure {
 	 */
 	BUILD_SCC,
 	/**
-	 * The time computing which vertex down states are safe, took in nwa game
-	 * graph generation.
+	 * The time needed for computing which vertex down states are safe.
 	 */
 	COMPUTE_SAFE_VERTEX_DOWN_STATES,
 	/**
@@ -67,5 +66,10 @@ public enum ETimeMeasure {
 	 * The time the simulation only took, this is the overall time minus the
 	 * time to build the graph and the result.
 	 */
-	SIMULATION_ONLY
+	SIMULATION_ONLY,
+	/**
+	 * The time solving the Max-Sat problem at nwa game graph resulting
+	 * automaton generation took.
+	 */
+	SOLVE_MAX_SAT
 }

@@ -9,6 +9,6 @@ int main()
 {
   float x = 1.2f;
   double y = 1.2;
-  long double = 1.2l;  
+  long double z = 1.2l;  
   return 0;
 }

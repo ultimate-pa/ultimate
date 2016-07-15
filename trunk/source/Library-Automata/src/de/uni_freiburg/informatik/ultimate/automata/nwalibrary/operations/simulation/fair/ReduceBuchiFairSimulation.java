@@ -215,11 +215,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
-//			try {
-//				errorOccurred = !operation.checkResult(operation.mStateFactory);
-//			} catch (AutomataLibraryException e) {
-//				e.printStackTrace();
-//			}
+			// try {
+			// errorOccurred = !operation.checkResult(operation.mStateFactory);
+			// } catch (AutomataLibraryException e) {
+			// e.printStackTrace();
+			// }
 			if (errorOccurred) {
 				break;
 			}
@@ -296,7 +296,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			logMessage("Start comparing results...", logger);
 		}
 		boolean errorOccurred = false;
-		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
+		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC
+				.getGameGraph();
 		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
 		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
 		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
@@ -317,8 +318,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
 			if (simSCCVertex.isSpoilerVertex()) {
 				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
-				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(),
-						false);
+				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(),
+						asSV.getQ1(), false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
 					errorOccurred = true;
@@ -662,5 +663,32 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
+	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected ILogger getLogger() {
+		return mLogger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return mServices;
 	}
 }

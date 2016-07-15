@@ -42,9 +42,12 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -145,8 +148,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Comparator that compares two given vertices by their progress measure
 	 * whereas a higher measure gets favored before a smaller.<br/>
-	 * This is used to implement the @link {@link #mWorkingList working list}
-	 * as a priority queue that first works vertices with high measures.
+	 * This is used to implement the @link {@link #mWorkingList working list} as
+	 * a priority queue that first works vertices with high measures.
 	 */
 	private final VertexPmReverseComparator<LETTER, STATE> mVertexComp;
 	/**
@@ -180,7 +183,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws AutomataOperationCanceledException {
+			final StateFactory<STATE> stateFactory, final ESimulationType simType)
+					throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
 		mUseSCCs = useSCCs;
@@ -209,7 +213,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		if (mUseSCCs) { // calculate reduction with SCC
 			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
+			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(
+					getGameGraph());
 			mSccComp = new SccComputation<>(mLogger, succProvider, sccFactory, getGameGraph().getSize(),
 					getGameGraph().getVertices());
 
@@ -229,19 +234,21 @@ public abstract class ASimulation<LETTER, STATE> {
 			mPerformance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
 			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
+		simulationHook();
 		mPerformance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 		mResult = getGameGraph().generateAutomatonFromGraph();
 
 		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		final long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
-		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+
+		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
@@ -626,7 +633,8 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			final boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v);
+			final boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity
+					&& game.hasPushOverPredecessors(v);
 			if (!game.hasPredecessors(v) && !considerPushOverPredecessors) {
 				continue;
 			}
@@ -843,6 +851,52 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Retrieves general performance data of the input and output automaton.
+	 * Saves the data in the current internal performance object.
+	 */
+	protected void retrieveGeneralAutomataPerformance() {
+		AGameGraph<LETTER, STATE> graph = getGameGraph();
+		AutomataLibraryServices services = graph.getServices();
+		INestedWordAutomatonOldApi<LETTER, STATE> input = graph.getAutomaton();
+
+		// Input automaton
+		Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+		int inputStates = inputAnalyzer.getNumberOfStates();
+		int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+				inputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+
+		// Output automaton
+		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
+		int outputStates = outputAnalyzer.getNumberOfStates();
+		int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+				outputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+
+		// General metrics
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+	}
+
+	/**
 	 * Sets the result of the simulation calculation, a possible reduced buechi
 	 * automaton.
 	 * 
@@ -876,6 +930,19 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected void setUseSCCs(final boolean useSCCs) {
 		mUseSCCs = useSCCs;
+	}
+
+	/**
+	 * Gets called after the simulation was run but before the resulting
+	 * automaton gets generated. Provides a hook for manipulating simulation
+	 * results.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected void simulationHook() throws AutomataOperationCanceledException {
+		// The default implementation is to do nothing
 	}
 
 	/**

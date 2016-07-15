@@ -428,7 +428,7 @@ public class NestedSsaBuilder {
 		}
 
 		public void replaceAuxVars() {
-			for (TermVariable tv : mTF.getAuxVars()) {
+			for (TermVariable tv : mTF.getAuxVars().keySet()) {
 				// we deliberately construct the fresh variable in the 
 				// old script first and translate it afterwards
 				Term freshConst = mSmtManager.getVariableManager().constructFreshConstant(tv);

@@ -102,7 +102,7 @@ public class TransFormula implements Serializable {
 	private final Map<BoogieVar, TermVariable> mInVars;
 	private final Map<BoogieVar, TermVariable> mOutVars;
 	private final Set<BoogieVar> mAssignedVars;
-	private final Set<TermVariable> mauxVars;
+	private final Map<TermVariable, Term> mAuxVars;
 	private final Set<TermVariable> mBranchEncoders;
 	private final Infeasibility mInfeasibility;
 	private final Term mClosedFormula;
@@ -118,12 +118,12 @@ public class TransFormula implements Serializable {
 	}
 
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
-			Set<TermVariable> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility,
+			Map<TermVariable, Term> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility,
 			Term closedFormula, boolean allowSuperflousInVars) {
 		mFormula = formula;
 		mInVars = inVars;
 		mOutVars = outVars;
-		mauxVars = auxVars;
+		mAuxVars = auxVars;
 		mBranchEncoders = branchEncoders;
 		mInfeasibility = infeasibility;
 		mClosedFormula = closedFormula;
@@ -170,7 +170,7 @@ public class TransFormula implements Serializable {
 	}
 
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
-			Set<TermVariable> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility, Term closedFormula) {
+			Map<TermVariable, Term> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility, Term closedFormula) {
 		this(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula, false);
 	}
 	
@@ -204,10 +204,10 @@ public class TransFormula implements Serializable {
 			mInfeasibility = Infeasibility.NOT_DETERMINED;
 		}
 		mBranchEncoders = Collections.emptySet();
-		mauxVars = Collections.emptySet();
+		mAuxVars = Collections.emptyMap();
 		mConstants = (new ConstantFinder()).findConstants(mFormula);
 		mAssignedVars = computeAssignedVars(mInVars, mOutVars);
-		mClosedFormula = computeClosedFormula(mFormula, mInVars, mOutVars, mauxVars, false, boogie2smt);
+		mClosedFormula = computeClosedFormula(mFormula, mInVars, mOutVars, mAuxVars, boogie2smt);
 	}
 
 	/**
@@ -228,7 +228,7 @@ public class TransFormula implements Serializable {
 	 * 
 	 */
 	public static Term computeClosedFormula(Term formula, Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars, Set<TermVariable> auxVars, boolean existingAuxVarConsts,
+			Map<BoogieVar, TermVariable> outVars, Map<TermVariable, Term> auxVars,
 			Boogie2SMT boogie2smt) {
 		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (final BoogieVar bv : inVars.keySet()) {
@@ -242,14 +242,10 @@ public class TransFormula implements Serializable {
 			}
 			substitutionMapping.put(outVars.get(bv), bv.getPrimedConstant());
 		}
-		for (final TermVariable tv : auxVars) {
-			Term auxConst;
-			if (existingAuxVarConsts) {
-				auxConst = boogie2smt.getScript().term(tv.getName());
-			} else {
-				auxConst = boogie2smt.getVariableManager().getOrConstructCorrespondingConstant(tv);
-			}
-			substitutionMapping.put(tv, auxConst);
+		for (final Entry<TermVariable, Term> entry : auxVars.entrySet()) {
+			final TermVariable auxVarTv = entry.getKey();
+			final Term auxVarConst = entry.getValue();
+			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
 		final Term closedTerm = (new Substitution(substitutionMapping, boogie2smt.getScript())).transform(formula);
 		return closedTerm;
@@ -356,11 +352,11 @@ public class TransFormula implements Serializable {
 		boolean result = true;
 		final HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		for (final TermVariable tv : allVars) {
-			result &= (mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mauxVars.contains(tv) || mBranchEncoders
+			result &= (mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mAuxVars.keySet().contains(tv) || mBranchEncoders
 					.contains(tv));
 			assert result : "unexpected variable in formula";
 		}
-		for (final TermVariable tv : mauxVars) {
+		for (final TermVariable tv : mAuxVars.keySet()) {
 			result &= allVars.contains(tv);
 			assert result : "unnecessary many vars in TransFormula";
 		}
@@ -379,7 +375,7 @@ public class TransFormula implements Serializable {
 				assert result : "superfluous inVar";
 			}
 		}
-		for (final TermVariable tv : mauxVars) {
+		for (final TermVariable tv : mAuxVars.keySet()) {
 			result &= allVars.contains(tv);
 			assert result : "superfluous auxVar";
 		}
@@ -407,8 +403,8 @@ public class TransFormula implements Serializable {
 		return Collections.unmodifiableMap(mOutVars);
 	}
 
-	public Set<TermVariable> getAuxVars() {
-		return Collections.unmodifiableSet(mauxVars);
+	public Map<TermVariable,Term> getAuxVars() {
+		return Collections.unmodifiableMap(mAuxVars);
 	}
 
 	public Set<TermVariable> getBranchEncoders() {
@@ -432,7 +428,7 @@ public class TransFormula implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Formula: " + mFormula + "  InVars " + mInVars + "  OutVars" + mOutVars + "  AuxVars" + mauxVars
+		return "Formula: " + mFormula + "  InVars " + mInVars + "  OutVars" + mOutVars + "  AuxVars" + mAuxVars
 				+ "  AssignedVars" + mAssignedVars;
 	}
 
@@ -552,7 +548,7 @@ public class TransFormula implements Serializable {
 					}
 				}
 			}
-			for (final TermVariable auxVar : transFormula[i].getAuxVars()) {
+			for (final TermVariable auxVar : transFormula[i].getAuxVars().keySet()) {
 				final TermVariable newAuxVar = boogie2smt.getVariableManager().constructFreshCopy(auxVar);
 				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
@@ -629,8 +625,9 @@ public class TransFormula implements Serializable {
 			removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		}
 
-		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, false, boogie2smt);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, newBranchEncoders, infeasibility,
+		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, boogie2smt.getVariableManager());
+		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVar2Const, boogie2smt);
+		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVar2Const, newBranchEncoders, infeasibility,
 				closedFormula);
 
 		// assert allVarsContainsFreeVars(allVars, formula);
@@ -977,7 +974,7 @@ public class TransFormula implements Serializable {
 
 		for (int i = 0; i < transFormulas.length; i++) {
 			branchEncoders.addAll(transFormulas[i].getBranchEncoders());
-			auxVars.addAll(transFormulas[i].getAuxVars());
+			auxVars.addAll(transFormulas[i].getAuxVars().keySet());
 			final Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 			for (final BoogieVar bv : transFormulas[i].getInVars().keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -1040,8 +1037,9 @@ public class TransFormula implements Serializable {
 			resultFormula = (new Cnf(script, services, boogie2smt.getVariableManager())).transform(resultFormula);
 		}
 		TransFormula.removeSuperfluousVars(resultFormula, newInVars, newOutVars, auxVars);
-		final Term closedFormula = computeClosedFormula(resultFormula, newInVars, newOutVars, auxVars, true, boogie2smt);
-		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, branchEncoders, inFeasibility,
+		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, boogie2smt.getVariableManager());
+		final Term closedFormula = computeClosedFormula(resultFormula, newInVars, newOutVars, auxVar2Const, boogie2smt);
+		return new TransFormula(resultFormula, newInVars, newOutVars, auxVar2Const, branchEncoders, inFeasibility,
 				closedFormula);
 	}
 
@@ -1210,7 +1208,7 @@ public class TransFormula implements Serializable {
 	// }
 	//
 
-	private void removeOutVar(BoogieVar var) {
+	private void removeOutVar(final BoogieVar var, final VariableManager variableManager) {
 		assert mOutVars.containsKey(var) : "illegal to remove variable not that is contained";
 		final TermVariable inVar = mInVars.get(var);
 		final TermVariable outVar = mOutVars.get(var);
@@ -1218,7 +1216,8 @@ public class TransFormula implements Serializable {
 		if (inVar != outVar) {
 			// outVar does not occurs already as inVar, we have to add outVar
 			// to auxVars
-			mauxVars.add(outVar);
+			final Term newAuxVarConst = variableManager.constructFreshConstant(outVar); 
+			mAuxVars.put(outVar, newAuxVarConst);
 			final boolean removed = mAssignedVars.remove(var);
 			assert (removed);
 		} else {
@@ -1226,7 +1225,7 @@ public class TransFormula implements Serializable {
 		}
 	}
 
-	private void removeInVar(BoogieVar var) {
+	private void removeInVar(final BoogieVar var, final VariableManager variableManager) {
 		assert mInVars.containsKey(var) : "illegal to remove variable not that is contained";
 		final TermVariable inVar = mInVars.get(var);
 		final TermVariable outVar = mOutVars.get(var);
@@ -1234,7 +1233,8 @@ public class TransFormula implements Serializable {
 		if (inVar != outVar) {
 			// inVar does not occurs already as outVar, we have to add inVar
 			// to auxVars
-			mauxVars.add(inVar);
+			final Term newAuxVarConst = variableManager.constructFreshConstant(inVar); 
+			mAuxVars.put(inVar, newAuxVarConst);
 			assert outVar == null || mAssignedVars.contains(var);
 		} else {
 			assert !mAssignedVars.contains(var);
@@ -1350,7 +1350,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final BoogieVar bv : varsToRemove) {
-				callAndBeforeTF.removeOutVar(bv);
+				callAndBeforeTF.removeOutVar(bv, boogie2smt.getVariableManager());
 			}
 		}
 
@@ -1379,7 +1379,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final BoogieVar bv : inVarsToRemove) {
-				oldAssignAndAfterTF.removeInVar(bv);
+				oldAssignAndAfterTF.removeInVar(bv, boogie2smt.getVariableManager());
 			}
 			
 			final List<BoogieVar> outVarsToRemove = new ArrayList<BoogieVar>();
@@ -1394,7 +1394,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final BoogieVar bv : outVarsToRemove) {
-				oldAssignAndAfterTF.removeOutVar(bv);
+				oldAssignAndAfterTF.removeOutVar(bv, boogie2smt.getVariableManager());
 			}
 		}
 
@@ -1440,7 +1440,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final BoogieVar bv : inVarsToRemove) {
-				result.removeInVar(bv);
+				result.removeInVar(bv, boogie2smt.getVariableManager());
 			}
 		}
 		{
@@ -1458,7 +1458,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final BoogieVar bv : outVarsToRemove) {
-				result.removeOutVar(bv);
+				result.removeOutVar(bv, boogie2smt.getVariableManager());
 			}
 		}
 		{
@@ -1523,7 +1523,7 @@ public class TransFormula implements Serializable {
 		final Map<BoogieVar, TermVariable> inVars = tf.getInVars();
 		final Map<BoogieVar, TermVariable> outVars = tf.getInVars(); // yes! outVars are inVars of input
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		auxVars.addAll(tf.getAuxVars());
+		auxVars.addAll(tf.getAuxVars().keySet());
 		for (final BoogieVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
@@ -1536,13 +1536,13 @@ public class TransFormula implements Serializable {
 		final Set<TermVariable> branchEncoders = tf.getBranchEncoders();
 		final Infeasibility infeasibility = tf.isInfeasible();
 		final Term formula = tf.getFormula();
-		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, false, boogie2smt);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, boogie2smt.getVariableManager());
+		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVar2Const, boogie2smt);
+		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVar2Const, branchEncoders, infeasibility, closedFormula);
 		return result;
 	}
 	
 	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, ILogger logger) {
-		final Set<TermVariable> auxVars = Collections.emptySet();
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
@@ -1551,17 +1551,23 @@ public class TransFormula implements Serializable {
 		Term formula = tf.getFormula();
 		formula = PartialQuantifierElimination.quantifier(services, logger, 
 				boogie2smt.getScript(), boogie2smt.getVariableManager(), QuantifiedFormula.EXISTS, 
-				tf.getAuxVars(), formula, new Term[0]);
+				tf.getAuxVars().keySet(), formula, new Term[0]);
+		final Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
+		freeVars.retainAll(tf.getAuxVars().keySet());
+		if (!freeVars.isEmpty()) {
+			throw new UnsupportedOperationException("cannot negate if there are auxVars");
+		}
 		formula = SmtUtils.not(boogie2smt.getScript(), formula);
+		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
 		
 		final Map<BoogieVar, TermVariable> inVars = new HashMap<>(tf.getInVars());
 		final Map<BoogieVar, TermVariable> outVars = new HashMap<>(tf.getOutVars());
-		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
+		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars.keySet());
 		
 
 		//FIXME: Filter inVars and outVars to tv that occur in formula
 //		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);
-		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, true, boogie2smt);
+		final Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, boogie2smt);
 		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
 		return result;
 	}
@@ -1572,6 +1578,19 @@ public class TransFormula implements Serializable {
 		final TransFormula negGuard = negate(guard, boogie2smt, services, logger);
 		final TransFormula markhor = parallelComposition(logger, services, tf.hashCode(), boogie2smt, null, false, tf, negGuard);
 		return markhor;
+	}
+	
+	/**
+	 * Given a set of auxVars, construct a map that assigns to auxVar
+	 * a fresh constant. 
+	 */
+	public static Map<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars, final VariableManager varManager) {
+		final Map<TermVariable,Term> result = new HashMap<>();
+		for (final TermVariable auxVar : auxVars) {
+			final Term auxVarConst = varManager.constructFreshConstant(auxVar);
+			result.put(auxVar, auxVarConst);
+		}
+		return result;
 	}
 
 }

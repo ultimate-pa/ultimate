@@ -1154,7 +1154,7 @@ public class IntervalDomainValue {
 					valuePresent = true;
 				}
 			} else {
-				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
+				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
 				        valuePresent);
 				valuePresent = true;
 			}
@@ -1224,19 +1224,20 @@ public class IntervalDomainValue {
 			if (other.isPointInterval()) {
 				return new IntervalDomainValue(true);
 			}
-
-			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
-			        new IntervalValue(new BigDecimal(-1)));
-			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
-			        other.getUpper());
-
-			final IntervalDomainValue resultNeg = divideInternally(negZero);
-			final IntervalDomainValue resultPos = divideInternally(posZero);
-
-			result = resultNeg.merge(resultPos);
-		} else {
-			result = divideInternally(other);
 		}
+
+//			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
+//			        new IntervalValue(new BigDecimal(-1)));
+//			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
+//			        other.getUpper());
+//
+//			final IntervalDomainValue resultNeg = divideInternally(negZero);
+//			final IntervalDomainValue resultPos = divideInternally(posZero);
+//
+//			result = resultNeg.merge(resultPos);
+//		} else {
+			result = divideInternally(other);
+//		}
 
 		if (result.isBottom() || result.isInfinity()) {
 			return result;
@@ -1280,13 +1281,13 @@ public class IntervalDomainValue {
 
 		if (other.containsZero()) {
 			return new IntervalDomainValue();
-		} else {
+		}// else {
 
 			final IntervalValue lowerBound = computeMinDiv(other);
 			final IntervalValue upperBound = computeMaxDiv(other);
 
 			return new IntervalDomainValue(lowerBound, upperBound);
-		}
+//		}
 	}
 
 	/**
@@ -1313,6 +1314,12 @@ public class IntervalDomainValue {
 		final IntervalValue b = getUpper();
 		final IntervalValue c = other.getLower();
 		final IntervalValue d = other.getUpper();
+		
+		// If the other interval contains infinity, we need 0 as a lower bound.
+		if (c.isInfinity() || d.isInfinity()) {
+			returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
+			valuePresent = true;
+		}
 
 		// Compute a / c
 		if (a.isInfinity()) {
@@ -1329,7 +1336,7 @@ public class IntervalDomainValue {
 				valuePresent = true;
 			} else {
 				if (c.isInfinity()) {
-					// val * -\infty = -\infty, if val > 0
+					// val / -\infty = -\infty, if val > 0
 					if (a.getValue().signum() > 0) {
 						return new IntervalValue();
 					}
@@ -1358,7 +1365,7 @@ public class IntervalDomainValue {
 				valuePresent = true;
 			} else {
 				if (d.isInfinity()) {
-					// val * \infty = -\infty, if val < 0
+					// val / \infty = -\infty, if val < 0
 					if (a.getValue().signum() < 0) {
 						return new IntervalValue();
 					}
@@ -1460,6 +1467,11 @@ public class IntervalDomainValue {
 		final IntervalValue c = other.getLower();
 		final IntervalValue d = other.getUpper();
 
+		// If the other interval contains 0, max is a new upper bound
+		if (other.containsZero()) {
+			return new IntervalValue();
+		}
+		
 		// Compute a / c
 		if (a.isInfinity()) {
 			// -\infty / -\infty = \infty

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -48,6 +49,8 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
 	private final StateFactory<STATE> mStateFactory;
+	private final boolean mNondeterministicTransitions;
+	private final boolean mNondeterministicInitials;
 	
 	
 	@Override
@@ -71,7 +74,7 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public IsDeterministic(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mStateFactory = input.getStateFactory();
@@ -80,9 +83,20 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mTotalized = new TotalizeNwa<LETTER, STATE>(input, mStateFactory);
 		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mTotalized);
 		mResult = !mTotalized.nonDeterminismInInputDetected();
+		mNondeterministicTransitions = mTotalized.nondeterministicTransitionsDetected();
+		mNondeterministicInitials = mTotalized.nondeterministicInitialsDetected();
 		mLogger.info(exitMessage());
 	}
 	
+
+	public boolean hasNondeterministicTransitions() {
+		return mNondeterministicTransitions;
+	}
+
+
+	public boolean hasNondeterministicInitials() {
+		return mNondeterministicInitials;
+	}
 
 
 	@Override

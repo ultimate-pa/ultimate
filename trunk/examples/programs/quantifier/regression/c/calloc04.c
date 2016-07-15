@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 /*
  * Bug: modifies not transitive.
  * 

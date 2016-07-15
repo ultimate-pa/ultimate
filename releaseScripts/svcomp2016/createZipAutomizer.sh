@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Build latest version of Z3 or copy binary from Monteverdi
+# Get CVC4 here: http://cvc4.cs.nyu.edu/downloads/
+
 function test {
     "$@"
     local status=$?
@@ -20,11 +23,13 @@ if [ "$1" == "linux" ]; then
 	ARCH="linux"
 	ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
 	Z3PATH="z3"
+	CVC4PATH="cvc4"
 elif [ "$1" == "win32" ]; then
 	echo "Building .zip for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
 	Z3PATH="z3.exe"
+	CVC4PATH="cvc4.exe"
 else
     echo "Wrong argument: ""$1"" -- use 'linux' or 'win32'"		
 	exit 1
@@ -62,6 +67,7 @@ test cp Ultimate.py "$TARGETDIR"/
 test cp Ultimate.ini "$TARGETDIR"/
 test cp README "$TARGETDIR"/
 test cp ${Z3PATH} "$TARGETDIR"/
+test cp ${CVC4PATH} "$TARGETDIR"/
 
 # change Z3 memory settings for rcfgbuilder 
 #for i in "$TARGETDIR"/*.epf; do awk '/@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1/ { print; print "/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\\ for\\ external\\ solver=z3 SMTLIB2_COMPLIANT\\=true -memory\\:2500 -smt2 -in -t\\:12000"; next }1' $i > $i.tmp && mv $i.tmp $i ; done

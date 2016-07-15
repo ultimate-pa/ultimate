@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
 /**
  * @author Markus Lindenmann
@@ -325,14 +325,14 @@ public abstract class Dispatcher {
 	}
 	
 	public static final class TranslationSettings {
-		private final POINTER_CHECKMODE mDivisionByZero;
+		private final PointerCheckMode mDivisionByZero;
 
 		public TranslationSettings(IPreferenceProvider preferences) {
 			mDivisionByZero = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO,
-					POINTER_CHECKMODE.class);
+					PointerCheckMode.class);
 		}
 
-		public POINTER_CHECKMODE getDivisionByZero() {
+		public PointerCheckMode getDivisionByZero() {
 			return mDivisionByZero;
 		}
 	}

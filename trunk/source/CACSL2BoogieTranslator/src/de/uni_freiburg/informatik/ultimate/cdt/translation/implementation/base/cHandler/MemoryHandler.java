@@ -85,8 +85,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.AMemoryModel.ReadWriteDefinition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -111,8 +111,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MEMORY_MODEL;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**
@@ -134,9 +134,9 @@ public class MemoryHandler {
 	 */
 	private static final boolean ADD_IMPLEMENTATIONS = false;
 
-	private final POINTER_CHECKMODE mPointerBaseValidity;
-	private final POINTER_CHECKMODE mCheckPointerSubtractionAndComparisonValidity;
-	private final POINTER_CHECKMODE mPointerTargetFullyAllocated;
+	private final PointerCheckMode mPointerBaseValidity;
+	private final PointerCheckMode mCheckPointerSubtractionAndComparisonValidity;
+	private final PointerCheckMode mPointerTargetFullyAllocated;
 	private final boolean mCheckFreeValid;
 
 	// needed for adding modifies clauses
@@ -159,7 +159,7 @@ public class MemoryHandler {
 	private final RequiredMemoryModelFeatures mRequiredMemoryModelFeatures;
 	private final AMemoryModel mMemoryModel;
 	private final INameHandler mNameHandler;
-	private final MEMORY_MODEL mMemoryModelPreference;
+	private final MemoryModel mMemoryModelPreference;
 	private final IBooleanArrayHelper mBooleanArrayHelper;
 
 	/**
@@ -193,15 +193,15 @@ public class MemoryHandler {
 
 		// read preferences from settings
 		mPointerBaseValidity = prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY,
-				POINTER_CHECKMODE.class);
+				PointerCheckMode.class);
 		mPointerTargetFullyAllocated = prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC,
-				POINTER_CHECKMODE.class);
+				PointerCheckMode.class);
 		mCheckFreeValid = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
 		mCheckPointerSubtractionAndComparisonValidity = prefs.getEnum(
 				CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-				POINTER_CHECKMODE.class);
-		mMemoryModelPreference = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MEMORY_MODEL.class);
-		final MEMORY_MODEL memoryModelPreference = mMemoryModelPreference;
+				PointerCheckMode.class);
+		mMemoryModelPreference = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
+		final MemoryModel memoryModelPreference = mMemoryModelPreference;
 		final AMemoryModel memoryModel = getMemoryModel(bitvectorTranslation, memoryModelPreference);
 		mMemoryModel = memoryModel;
 		mVariablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
@@ -210,7 +210,7 @@ public class MemoryHandler {
 		mTypeSizeAndOffsetComputer = typeSizeComputer;
 	}
 
-	private AMemoryModel getMemoryModel(boolean bitvectorTranslation, final MEMORY_MODEL memoryModelPreference)
+	private AMemoryModel getMemoryModel(boolean bitvectorTranslation, final MemoryModel memoryModelPreference)
 			throws AssertionError {
 		final AMemoryModel memoryModel;
 		if (bitvectorTranslation) {
@@ -1055,7 +1055,7 @@ public class MemoryHandler {
 	 */
 	private void checkPointerTargetFullyAllocated(final ILocation loc, Expression size, String ptrName,
 			ArrayList<Specification> specList) {
-		if (mPointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+		if (mPointerBaseValidity == PointerCheckMode.IGNORE) {
 			// add nothing
 			return;
 		} else {
@@ -1066,10 +1066,10 @@ public class MemoryHandler {
 			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
 			final Expression leq = constructPointerComponentLessEqual(loc, sum, aae);
 			final boolean isFreeRequires;
-			if (mPointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+			if (mPointerTargetFullyAllocated == PointerCheckMode.ASSERTandASSUME) {
 				isFreeRequires = false;
 			} else {
-				assert mPointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
+				assert mPointerTargetFullyAllocated == PointerCheckMode.ASSUME;
 				isFreeRequires = true;
 			}
 			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, leq);
@@ -1095,7 +1095,7 @@ public class MemoryHandler {
 	 */
 	private void addPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final ArrayList<Specification> specList) {
-		if (mPointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+		if (mPointerBaseValidity == PointerCheckMode.IGNORE) {
 			// add nothing
 			return;
 		} else {
@@ -1105,10 +1105,10 @@ public class MemoryHandler {
 					new Expression[] { ptrBase });
 			final Expression isValid = mBooleanArrayHelper.compareWithTrue(aae);
 			final boolean isFreeRequires;
-			if (mPointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+			if (mPointerBaseValidity == PointerCheckMode.ASSERTandASSUME) {
 				isFreeRequires = false;
 			} else {
-				assert mPointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+				assert mPointerBaseValidity == PointerCheckMode.ASSUME;
 				isFreeRequires = true;
 			}
 			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
@@ -1823,7 +1823,7 @@ public class MemoryHandler {
 		return mVariablesToBeFreed;
 	}
 
-	public POINTER_CHECKMODE getPointerSubtractionAndComparisonValidityCheckMode() {
+	public PointerCheckMode getPointerSubtractionAndComparisonValidityCheckMode() {
 		return mCheckPointerSubtractionAndComparisonValidity;
 	}
 

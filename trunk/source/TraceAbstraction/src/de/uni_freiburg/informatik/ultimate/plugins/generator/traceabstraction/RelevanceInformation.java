@@ -88,7 +88,7 @@ public class RelevanceInformation implements IRelevanceInformation
 		boolean criterion1uc = getCriterion1UC();
 		boolean criterion1gf = getCriterion1GF();
 		boolean criterion2uc = getCriterion2UC();
-		boolean criterion2gf = getCriterion1GF();
+		boolean criterion2gf = getCriterion2GF();
 		final List<IAction> actions = new ArrayList<>();
 		for (final IRelevanceInformation iri : relevanceInformations) {
 			final RelevanceInformation ri = (RelevanceInformation) iri;

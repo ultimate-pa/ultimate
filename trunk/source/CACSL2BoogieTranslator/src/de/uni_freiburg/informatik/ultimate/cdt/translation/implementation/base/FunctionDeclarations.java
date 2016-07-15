@@ -87,10 +87,10 @@ public class FunctionDeclarations {
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
-		if (mDeclaredFunctions.containsKey(prefixedFunctionName)) {
-			return;
-			//throw new IllegalArgumentException("Function " + functionName + " already declared");
-		}
+//		if (mDeclaredFunctions.containsKey(prefixedFunctionName)) {
+//			return;
+//			//throw new IllegalArgumentException("Function " + functionName + " already declared");
+//		}
 		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}

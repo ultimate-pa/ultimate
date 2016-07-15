@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
 
@@ -92,18 +93,20 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @see BinaryDebug
 	 * @param shrinkersLoop list of shrinkers (shrinking rules) applied in loop
 	 * @param shrinkersEnd list of shrinkers (shrinking rules) applied once
+	 * @param policy debug policy
 	 * @return shrunk automaton
 	 */
 	public INestedWordAutomaton<LETTER, STATE> shrink(
 			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
-			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd) {
+			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd,
+			final EDebugPolicy policy) {
 		// loop through shrinkers until nothing has changed
 		boolean isReduced = true;
 		while (isReduced) {
-			isReduced = applyShrinkers(shrinkersLoop);
+			isReduced = applyShrinkers(shrinkersLoop, policy);
 		}
 		// final shrinkers (apply only once)
-		applyShrinkers(shrinkersEnd);
+		applyShrinkers(shrinkersEnd, policy);
 		return mAutomaton;
 	}
 	
@@ -112,14 +115,16 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * 
 	 * @see BinaryDebug
 	 * @param shrinkers list of shrinkers (shrinking rules)
+	 * @param policy debug policy
 	 * @return true iff at least one shrinker was successful
 	 */
 	private boolean
-			applyShrinkers(final List<AShrinker<?, LETTER, STATE>> shrinkers) {
+			applyShrinkers(final List<AShrinker<?, LETTER, STATE>> shrinkers,
+					final EDebugPolicy policy) {
 		boolean isReduced = false;
 		for (final AShrinker<?, LETTER, STATE> shrinker : shrinkers) {
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton =
-					shrinker.runBinarySearch(mAutomaton, mTester, mFactory);
+					shrinker.runSearch(mAutomaton, mTester, mFactory, policy);
 			if (newAutomaton != null) {
 				// store shrunk automaton
 				mAutomaton = newAutomaton;

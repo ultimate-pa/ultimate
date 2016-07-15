@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HCGBuilderHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClauseParserScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HCGBuilderHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -63,6 +63,7 @@ public class SmtParser implements ISource {
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
+	private IElement output;
 
 	public SmtParser() {
 		mFileTypes = new String[] { "smt2" };
@@ -99,8 +100,8 @@ public class SmtParser implements ISource {
 			return parseAST(file.listFiles());
 		} else {
 			processFile(file);
+			return output;
 		}
-		return null;
 	}
 
 	@Override
@@ -178,6 +179,7 @@ public class SmtParser implements ISource {
 					caibss.getScript(), 
 					caibss.getLogicForExternalSolver(), 
 					caibss.getSolverSettings()); 
+			output = ((HornClauseParserScript) script).getHornClauses();
 		} else {
 			if (useExternalSolver) {
 				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);

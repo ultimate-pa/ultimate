@@ -1,0 +1,33 @@
+// error in reduceNwaDelayedSimulation
+//
+// Author: Christian Schilling
+// Date: 2016-06-12
+
+//print(nwa);
+//reduceNwaDelayedSimulation(removeDeadEnds(nwa), false);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c1" "c2"},
+	internalAlphabet = {"a1" "a2" "a3" "a4"},
+	returnAlphabet = {"r1" "r2"},
+	states = {"q0" "q1" "q2" "q3" "q4" "q5" "q6"},
+	initialStates = {"q0"},
+	finalStates = {"q3" "q4" "q5" "q6"},
+	callTransitions = {
+		 ("q0" "c1" "q1")
+		 ("q1" "c2" "q2")
+		 ("q4" "c2" "q5")
+		 ("q6" "c1" "q4")
+	},
+	internalTransitions = {
+		 ("q2" "a2" "q0")
+		 ("q5" "a2" "q6")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "r1" "q3")
+		 ("q3" "q0" "r2" "q4")
+		 ("q3" "q6" "r2" "q4")
+		 ("q5" "q4" "r1" "q3")
+	}
+);

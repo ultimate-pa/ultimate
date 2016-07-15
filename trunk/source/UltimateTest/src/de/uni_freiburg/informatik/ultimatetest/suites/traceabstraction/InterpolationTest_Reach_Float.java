@@ -70,11 +70,13 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 	private static final String[] mSettings = {
 		"automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf",
+		"automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf",
+		"automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf",
 	};
 	
 	private static final String[] mCToolchains = {
-		"AutomizerC.xml",
-//		"AutomizerCInline.xml",
+//		"AutomizerC.xml",
+		"AutomizerCInline.xml",
 	};
 
 	@Override

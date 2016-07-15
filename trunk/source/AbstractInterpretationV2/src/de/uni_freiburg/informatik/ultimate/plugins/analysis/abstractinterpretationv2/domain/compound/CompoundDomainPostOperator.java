@@ -116,14 +116,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
-			final List<IAbstractState> result = applyInternally(states.get(i), domains.get(i).getPostOperator(),
-					transitionList.get(i));
+			final IAbstractDomain currentDomain = domains.get(i);
+			final IAbstractState<?, CodeBlock, IBoogieVar> currentPreState = states.get(i);
+			final CodeBlock currentTrans = transitionList.get(i);
+
+			final List<IAbstractState> result =
+					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans);
 
 			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb = new StringBuilder(AbsIntPrefInitializer.INDENT)
-						.append(AbsIntPrefInitializer.INDENT).append(domains.get(i).getClass().getSimpleName())
-						.append(": ");
-				result.stream().map(a -> a.toLogString()).forEach(a -> mLogger.debug(new StringBuilder(sb).append(a)));
+				final StringBuilder sb = new StringBuilder(AbsIntPrefInitializer.DINDENT)
+						.append(currentDomain.getClass().getSimpleName()).append(": ");
+				result.stream().map(a -> a.toLogString())
+						.forEach(a -> mLogger.debug(new StringBuilder(sb).append("post: ").append(a)));
 			}
 
 			if (result.isEmpty()) {
@@ -132,7 +136,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 			IAbstractState state = result.get(0);
 			for (int j = 1; j < result.size(); j++) {
-				state = applyMergeInternally(state, result.get(j), domains.get(i).getMergeOperator());
+				state = applyMergeInternally(state, result.get(j), currentDomain.getMergeOperator());
 			}
 
 			if (state.isBottom()) {
@@ -206,11 +210,6 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			}
 		}
 
-		if (mCreateStateAssumptions && mLogger.isDebugEnabled()) {
-			mLogger.debug(new StringBuilder().append("Constructed transition list for each state: ").append(returnList)
-					.toString());
-		}
-
 		return returnList;
 	}
 
@@ -233,12 +232,10 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (i == index) {
 				continue;
 			}
-			if (assumeTerm == null) {
-				assumeTerm = states.get(i).getTerm(mScript, mBoogie2Smt);
-			} else {
-//				assumeTerm = Util.and(mScript, assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
-				assumeTerm = mScript.term("and", assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
-			}
+			final IAbstractState<?, CodeBlock, IBoogieVar> state = states.get(i);
+
+			final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
 		}
 
 		if (mSimplifyAssumption) {
@@ -246,14 +243,21 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		}
 
 		final Expression assumeExpression = mBoogie2Smt.getTerm2Expression().translate(assumeTerm);
-		final AssumeStatement assume = new AssumeStatement(assumeExpression.getLocation(), assumeExpression);
-		final List<Statement> secondStatements = new ArrayList<>();
-		secondStatements.add(assume);
-		secondStatements.addAll(mStatementExtractor.process(transition));
-		final CodeBlock returnCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null, secondStatements,
-				Origin.IMPLEMENTATION);
-		mTransformulaBuilder.addTransitionFormulas(returnCodeBlock, transition.getPreceedingProcedure());
-		return returnCodeBlock;
+		final AssumeStatement assumeStmt = new AssumeStatement(assumeExpression.getLocation(), assumeExpression);
+		final List<Statement> stmtLists = new ArrayList<>();
+		stmtLists.add(assumeStmt);
+		stmtLists.addAll(mStatementExtractor.process(transition));
+		final CodeBlock result =
+				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists, Origin.IMPLEMENTATION);
+		mTransformulaBuilder.addTransitionFormulas(result, transition.getPreceedingProcedure());
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(AbsIntPrefInitializer.INDENT + " Created new transition for domain " + index);
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " term:       " + assumeTerm.toStringDirect());
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " transition: " + result);
+		}
+
+		return result;
 	}
 
 	@Override

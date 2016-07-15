@@ -26,15 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance;
 
+import java.util.Collection;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaSimulation;
@@ -118,6 +124,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.
 	 * INestedWordAutomatonOldApi)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
@@ -128,26 +135,32 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		boolean outOfMemory = false;
 		Object method = null;
 
+		Collection<Set<STATE>> possibleEquivalenceClasses = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+				operand).getResult();
+
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer, logger,
-						operand, stateFactory);
+				Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+						operand, true).getResult();
+				
+				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
+						logger, operand, stateFactory, possibleEquivalenceClassesForDirect);
 				graph.generateGameGraphFromAutomaton();
 				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer, logger,
-						operand, stateFactory);
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer,
+						logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
-				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger, useSCCs,
-						stateFactory, graph);
+				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
+						useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger, operand,
-						stateFactory);
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger,
+						operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
@@ -163,7 +176,14 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSAT<>(getServices(), stateFactory, operand);
+				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
+				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
+					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
+				} else {
+					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
+				}
+				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa,
+						possibleEquivalenceClasses);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {
@@ -201,14 +221,6 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
 		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
-				stateFactory, reachableOperand);
-
-		// Other minimization methods
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, getServices(), timeOutMillis,
-				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, getServices(), timeOutMillis,
-				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, true, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 }

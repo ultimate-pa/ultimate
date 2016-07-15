@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdg
  *
  */
 public abstract class SpaceExNode
-		extends ModifiableExplicitEdgesMultigraph<SpaceExNode, SpaceExModelEdge, SpaceExNode, SpaceExModelEdge> {
+        extends ModifiableExplicitEdgesMultigraph<SpaceExNode, SpaceExModelEdge, SpaceExNode, SpaceExModelEdge> {
 
 	/**
 	 * This field holds the name of the current node.
@@ -48,6 +48,9 @@ public abstract class SpaceExNode
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Creates a new instance of a SpaceEx Root Node.
+	 */
 	public SpaceExNode() {
 		mName = "SpaceExRoot";
 	}
@@ -64,7 +67,7 @@ public abstract class SpaceExNode
 	public String toString() {
 		return mName;
 	}
-	
+
 	@Override
 	public SpaceExNode getLabel() {
 		return this;

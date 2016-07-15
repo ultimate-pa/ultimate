@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.UsedVari
  */
 public class ConfigurableHeuristic implements IRatingHeuristic {
 
-	protected RatingStrategy strategy;
+	protected RatingStrategy mStrategy;
 
-	protected IRating boundary;
+	protected IRating mBoundary;
 
 	/**
 	 * Public constructor needs the used strategy to interpret the given values.
@@ -62,33 +62,33 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 	 *            the used RatingStrategy
 	 */
 	public ConfigurableHeuristic(RatingStrategy strategy) {
-		this.strategy = strategy;
+		mStrategy = strategy;
 	}
 
 	@Override
 	public void init(String givenPref) {
 		// Determine the used strategy
-		switch (strategy) {
+		switch (mStrategy) {
 		case LARGE_BLOCK:
 			throw new IllegalArgumentException(
 					"For Large Block Encoding, there is no heuristic needed");
 		case DEFAULT:
-			boundary = new DefaultRating(givenPref);
+			mBoundary = new DefaultRating(givenPref);
 			break;
 		case DISJUNCTIVE_RATING:
-			boundary = new DisjunctiveRating(givenPref);
+			mBoundary = new DisjunctiveRating(givenPref);
 			break;
 		case DISJUNCTIVE_STMTCOUNT:
-			boundary = new DisjunctiveStatementsRating(givenPref);
+			mBoundary = new DisjunctiveStatementsRating(givenPref);
 			break;
 		case USED_VARIABLES_RATING:
-			boundary = new UsedVariablesRating(givenPref);
+			mBoundary = new UsedVariablesRating(givenPref);
 			break;
 		case DISJUNCTIVE_VARIABLES_RATING:
-			boundary = new DisjunctVariablesRating(givenPref);
+			mBoundary = new DisjunctVariablesRating(givenPref);
 			break;
 		case DISJUNCTIVE_MULTI_STATEMENT_RATING:
-			boundary = new DisjunctMultiStatementRating(givenPref);
+			mBoundary = new DisjunctMultiStatementRating(givenPref);
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -97,25 +97,16 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.
-	 * IRatingHeuristic
-	 * #isRatingBoundReached(de.uni_freiburg.informatik.ultimate.
-	 * blockencoding.rating.interfaces.IRating)
-	 */
 	@Override
 	public boolean isRatingBoundReached(IRating rating, List<IMinimizedEdge> edgeLevel) {
-		if (boundary == null) {
+		if (mBoundary == null) {
 			throw new IllegalArgumentException("No boundary rating specified");
 		}
-		return rating.compareTo(boundary) <= 0;
+		return rating.compareTo(mBoundary) <= 0;
 	}
 
 	@Override
 	public boolean isRatingStrategySupported(RatingStrategy strategy) {
-		// here every strategy should be supported!
 		return true;
 	}
 

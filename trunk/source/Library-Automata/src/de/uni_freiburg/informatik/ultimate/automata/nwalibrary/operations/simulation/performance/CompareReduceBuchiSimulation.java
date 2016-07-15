@@ -44,14 +44,15 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
@@ -87,6 +88,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 */
 	private final static int FIX_FIELD_AMOUNT = 5;
 	/**
+	 * Constant for representing no value in the html format.
+	 */
+	private final static String HTML_NO_VALUE = "&ndash;";
+	/**
 	 * Marks the end of the head from an entry.
 	 */
 	private final static String LOG_ENTRY_HEAD_END = "-->";
@@ -112,9 +117,25 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 */
 	private static final String LOG_PATH_HTML_SUFF = ".html";
 	/**
+	 * Prefix for test result files.
+	 */
+	private static final String LOG_PATH_PLOT_PRE = "plot_";
+	/**
+	 * Suffix for test result files.
+	 */
+	private static final String LOG_PATH_PLOT_SUFF = ".csv";
+	/**
 	 * Separator that is used in the log.
 	 */
 	private final static String LOG_SEPARATOR = "\t";
+	/**
+	 * Constant for representing no value in the plot format.
+	 */
+	private final static String PLOT_NO_VALUE = "--";
+	/**
+	 * Separator that is used in plot files.
+	 */
+	private final static String PLOT_SEPARATOR = "\t";
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
@@ -133,25 +154,41 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		System.out.println("Processing data...");
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
 		tables.add(new Pair<>("instanceFullComparison",
-				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("instanceTimePartitioning",
-				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("instanceAlgoWork",
-				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
+//		tables.add(new Pair<>("instanceTimePartitioning",
+//				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("instanceAlgoWork",
+//				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("averagedSimulationFullComparison",
-				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationTimePartitioning",
-				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationAlgoWork",
-				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
+				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
+//		tables.add(new Pair<>("averagedSimulationTimePartitioning",
+//				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+//		tables.add(new Pair<>("averagedSimulationAlgoWork",
+//				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
 		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
 		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
+		tables.add(new Pair<>("longerThanOneSecondNames",
+				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+		
+//		tables.add(new Pair<>("directFilteredInstanceFullComparison",
+//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+//		tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
+//				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
+//		tables.add(new Pair<>("directFilteredAverageFullComparison",
+//		ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
+//		tables.add(new Pair<>("delayedFilteredAverageFullComparison",
+//				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {
 			tableToHtmlFile(pair.getFirst(), pair.getSecond());
 		}
+		
+//		System.out.println("Creating plot files...");
+//		for (final Pair<String, List<String>> pair : tables) {
+//			tableToPlotFile(pair.getFirst(), pair.getSecond());
+//		}
 
 		System.out.println("Terminated.");
 	}
@@ -279,7 +316,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 	/**
 	 * Parses a table, in a format like .csv or .tsv where
-	 * {@link #LOG_SEPARATOR} is the separator. The parsed table then is writen
+	 * {@link #LOG_SEPARATOR} is the separator. The parsed table then is written
 	 * to a html-file on the desktop.
 	 * 
 	 * @param name
@@ -338,7 +375,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			if (cells.length > 0) {
 				htmlText.append("<tr>");
 				for (final String value : cells) {
-					htmlText.append("<" + cellTag + ">" + value + "</" + cellTag + ">");
+					String valueText = value;
+					if (value.equals(ComparisonTables.NO_VALUE)) {
+						valueText = HTML_NO_VALUE;
+					}
+					htmlText.append("<" + cellTag + ">" + valueText + "</" + cellTag + ">");
 				}
 				htmlText.append("</tr>" + System.lineSeparator());
 			}
@@ -353,6 +394,60 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		try {
 			writer = new PrintWriter(new BufferedWriter(new FileWriter(resultFile)));
 			writer.print(htmlText.toString());
+		} catch (final IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (writer != null) {
+				writer.close();
+			}
+		}
+	}
+
+	/**
+	 * Parses a table, in a format like .csv or .tsv where
+	 * {@link #LOG_SEPARATOR} is the separator. The parsed table then is written
+	 * to a plot-able csv-file on the desktop.
+	 * 
+	 * @param name
+	 *            Name for the csv file
+	 * @param table
+	 *            Table to convert
+	 */
+	private static void tableToPlotFile(final String name, final List<String> table) {
+		final StringBuilder tsvText = new StringBuilder();
+		for (final String row : table) {
+			// Empty row
+			if (row.isEmpty()) {
+				tsvText.append(System.lineSeparator());
+				continue;
+			}
+
+			// Row is not empty
+			final String[] cells = row.split(LOG_SEPARATOR);
+			if (cells.length > 0) {
+				boolean isFirstCell = true;
+				for (final String value : cells) {
+					if (isFirstCell) {
+						isFirstCell = false;
+					} else {
+						tsvText.append(PLOT_SEPARATOR);
+					}
+					String valueText = value;
+					if (value.equals(ComparisonTables.NO_VALUE)) {
+						valueText = PLOT_NO_VALUE;
+					}
+					tsvText.append(valueText);
+				}
+				tsvText.append(System.lineSeparator());
+			}
+		}
+
+		// Write tsv to file
+		PrintWriter writer = null;
+		final File resultFile = new File(LOG_PATH, LOG_PATH_PLOT_PRE + name + LOG_PATH_PLOT_SUFF);
+		try {
+			writer = new PrintWriter(new BufferedWriter(new FileWriter(resultFile)));
+			writer.print(tsvText.toString());
 		} catch (final IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -436,7 +531,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		// Remove dead ends, a requirement of simulation
 		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
-				mServices, new RemoveNonLiveStates<LETTER, STATE>(mServices, operand).getResult()).getResult();
+				mServices, new RemoveDeadEnds<LETTER, STATE>(mServices, operand).getResult()).getResult();
 
 		final String automatonName = "";
 //		BufferedReader br = null;
@@ -756,7 +851,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
 			// Removed states
 			if (methodResult != null) {
-				final int removedStates = mOperand.size() - methodResult.size();
+				final int removedStates = operand.size() - methodResult.size();
 				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states
@@ -768,7 +863,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
 			// Removed states
 			if (methodResult != null) {
-				final int removedStates = mOperand.size() - methodResult.size();
+				final int removedStates = operand.size() - methodResult.size();
 				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states
@@ -824,6 +919,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
+	@SuppressWarnings("unchecked")
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
@@ -834,8 +930,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(services, progressTimer, mLogger, operand,
-						stateFactory);
+				final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(services, progressTimer, mLogger,
+						operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
 				final DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(progressTimer, mLogger, useSCCs,
 						stateFactory, graph);
@@ -850,16 +946,16 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairGameGraph<LETTER, STATE> graph = new FairGameGraph<>(services, progressTimer, mLogger, operand,
-						stateFactory);
+				final FairGameGraph<LETTER, STATE> graph = new FairGameGraph<>(services, progressTimer, mLogger,
+						operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
 				final FairSimulation<LETTER, STATE> sim = new FairSimulation<>(progressTimer, mLogger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIRDIRECT)) {
-				final FairDirectGameGraph<LETTER, STATE> graph = new FairDirectGameGraph<>(services, progressTimer, mLogger,
-						operand, stateFactory);
+				final FairDirectGameGraph<LETTER, STATE> graph = new FairDirectGameGraph<>(services, progressTimer,
+						mLogger, operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
 				final FairDirectSimulation<LETTER, STATE> sim = new FairDirectSimulation<>(progressTimer, mLogger,
 						useSCCs, stateFactory, graph);
@@ -875,7 +971,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSAT<>(mServices, stateFactory, operand);
+				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
+				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
+					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
+				} else {
+					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
+				}
+				method = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (final AutomataOperationCanceledException e) {

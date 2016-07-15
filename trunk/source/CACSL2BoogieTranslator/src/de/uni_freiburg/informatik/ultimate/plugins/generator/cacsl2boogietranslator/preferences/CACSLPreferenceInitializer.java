@@ -82,24 +82,24 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
 	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
 
-	public enum POINTER_CHECKMODE {
+	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
 
-	public enum UNSIGNED_TREATMENT {
+	public enum UnsignedTreatment {
 		IGNORE, ASSUME_SOME, ASSUME_ALL, WRAPAROUND
 	}
 
-	public enum SIGNEDNESS {
+	public enum Signedness {
 		SIGNED, UNSIGNED
 	}
 
-	public enum MEMORY_MODEL {
+	public enum MemoryModel {
 		HoenickeLindenmann_Original, // one data array for each boogie type
 		HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution, HoenickeLindenmann_4ByteResolution, HoenickeLindenmann_8ByteResolution,
 	}
 
-	public enum POINTER_INTEGER_CONVERSION {
+	public enum PointerIntegerConversion {
 		Overapproximate, NonBijectiveMapping, NutzBijection, IdentityAxiom,
 	}
 
@@ -115,26 +115,26 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						TranslationMode.values()),
 				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "main", PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SVCOMP_ERRORFUNCTION, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_VALIDITY,
-						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_ALLOC,
-						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_ARRAYACCESSOFFHEAP,
-						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_POINTER_VALIDITY,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_POINTER_ALLOC,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_ARRAYACCESSOFFHEAP,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<MEMORY_MODEL>(LABEL_MEMORY_MODEL, MEMORY_MODEL.HoenickeLindenmann_Original,
-						PreferenceType.Combo, MEMORY_MODEL.values()),
-				new UltimatePreferenceItem<POINTER_INTEGER_CONVERSION>(LABEL_POINTER_INTEGER_CONVERSION,
-						POINTER_INTEGER_CONVERSION.NonBijectiveMapping, PreferenceType.Combo,
-						POINTER_INTEGER_CONVERSION.values()),
+				new UltimatePreferenceItem<MemoryModel>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
+						PreferenceType.Combo, MemoryModel.values()),
+				new UltimatePreferenceItem<PointerIntegerConversion>(LABEL_POINTER_INTEGER_CONVERSION,
+						PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
+						PointerIntegerConversion.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_REPORT_UNSOUNDNESS_WARNING, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
-				new UltimatePreferenceItem<UNSIGNED_TREATMENT>(LABEL_UNSIGNED_TREATMENT, UNSIGNED_TREATMENT.WRAPAROUND,
-						PreferenceType.Combo, UNSIGNED_TREATMENT.values()),
-				new UltimatePreferenceItem<POINTER_CHECKMODE>(LABEL_CHECK_DIVISION_BY_ZERO,
-						POINTER_CHECKMODE.ASSERTandASSUME, PreferenceType.Combo, POINTER_CHECKMODE.values()),
+				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<UnsignedTreatment>(LABEL_UNSIGNED_TREATMENT, UnsignedTreatment.WRAPAROUND,
+						PreferenceType.Combo, UnsignedTreatment.values()),
+				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_DIVISION_BY_ZERO,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
@@ -158,7 +158,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				// LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
 				// new UltimatePreferenceItem<Integer>(
 				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<SIGNEDNESS>(LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.SIGNED, PreferenceType.Combo,
-						SIGNEDNESS.values()), };
+				new UltimatePreferenceItem<Signedness>(LABEL_SIGNEDNESS_CHAR, Signedness.SIGNED, PreferenceType.Combo,
+						Signedness.values()), };
 	}
 }

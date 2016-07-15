@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.ArrayDeque;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
 
 /**
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class BinaryDebug<T, LETTER, STATE> {
+public class BinaryDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 	/**
 	 * Left and right bound for the list of objects
 	 */
@@ -74,9 +73,8 @@ public class BinaryDebug<T, LETTER, STATE> {
 		}
 	}
 	
-	private final ATester<LETTER, STATE> mTester;
-	private final AShrinker<T, LETTER, STATE> mShrinker;
 	private final ArrayDeque<SublistBounds> mStack;
+	private SublistBounds mSublistBounds;
 	
 	/**
 	 * @param tester tester
@@ -84,9 +82,9 @@ public class BinaryDebug<T, LETTER, STATE> {
 	 */
 	public BinaryDebug(final ATester<LETTER, STATE> tester,
 			final AShrinker<T, LETTER, STATE> shrinker) {
-		this.mTester = tester;
-		this.mShrinker = shrinker;
-		this.mStack = new ArrayDeque<SublistBounds>();
+		super(tester, shrinker);
+		mStack = new ArrayDeque<SublistBounds>();
+		mSublistBounds = null;
 	}
 	
 	/**
@@ -116,11 +114,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 		}
 	}
 	
-	/**
-	 * Runs the binary search for the current shrinker.
-	 * 
-	 * @return true iff the sublist could be shrunk
-	 */
+	@Override
 	public boolean run() {
 		boolean result = false;
 		final List<T> list = mShrinker.extractList();
@@ -129,45 +123,35 @@ public class BinaryDebug<T, LETTER, STATE> {
 		}
 		mStack.add(new SublistBounds(0, list.size(), false));
 		while (!mStack.isEmpty()) {
-			final SublistBounds sb = mStack.poll();
-			final List<T> sublist = list.subList(sb.mLeft, sb.mRight);
+			mSublistBounds = mStack.poll();
+			final List<T> sublist =
+					list.subList(mSublistBounds.mLeft, mSublistBounds.mRight);
 			if (sublist.isEmpty()) {
 				continue;
 			}
 			
-			// initialize test for the sublist
-			final INestedWordAutomaton<LETTER, STATE> automaton =
-					mShrinker.createAutomaton(sublist);
-			
 			// run test
-			final boolean isTestSuccessful = mTester.test(automaton);
-			
-			if (isTestSuccessful) {
-				// error reproduced
-				mShrinker.error(automaton);
-				result = true;
-				if (sb.mIsLhs) {
-					/*
-					 * When the success happened on the first half part, we can
-					 * remove the corresponding second half part and directly
-					 * work on its children. This is because by removing the
-					 * second half part we would have removed the whole sublist
-					 * and this was, by construction, already unsuccessful in a
-					 * previous test.
-					 */
-					split(mStack.poll());
-				}
-			} else {
-				// error not reproduced => split list into two parts
-				mShrinker.noError(automaton);
-				split(sb);
-			}
+			result |= super.test(sublist);
 		}
 		return result;
 	}
 	
 	@Override
-	public String toString() {
-		return this.getClass().getSimpleName();
+	protected void errorAction() {
+		/*
+		 * When the success happened on the first half part, we can remove the
+		 * corresponding second half part and directly work on its children.
+		 * This is because by removing the second half part we would have
+		 * removed the whole sublist, and this was, by construction, already
+		 * unsuccessful in a previous test.
+		 */
+		if (mSublistBounds.mIsLhs) {
+			split(mStack.poll());
+		}
+	}
+	
+	@Override
+	protected void noErrorAction() {
+		split(mSublistBounds);
 	}
 }

@@ -72,7 +72,6 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 						getTestResultDecider(urd), starter, urd, null, null));
 			}
 		}
-		// return Util.firstN(rtr, 3);
 		return rtr;
 	}
 

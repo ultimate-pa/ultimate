@@ -77,6 +77,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 
 	public static final String INDENT = "   ";
+	public static final String DINDENT = INDENT + INDENT;
+	public static final String TINDENT = DINDENT + INDENT;
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);

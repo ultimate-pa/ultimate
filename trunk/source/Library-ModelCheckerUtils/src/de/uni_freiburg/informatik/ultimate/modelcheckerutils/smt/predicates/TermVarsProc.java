@@ -36,9 +36,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 
 public class TermVarsProc {
@@ -47,8 +49,8 @@ public class TermVarsProc {
 	private final String[] mProcedures;
 	private final Term mClosedTerm;
 	
-	public TermVarsProc(Term term, Set<BoogieVar> vars,
-			String[] procedures, Term closedTerm) {
+	public TermVarsProc(final Term term, final Set<BoogieVar> vars,
+			final String[] procedures, final Term closedTerm) {
 		mTerm = term;
 		mVars = vars;
 		mProcedures = procedures;
@@ -78,11 +80,12 @@ public class TermVarsProc {
 	 * BoogieVar. Compute the BoogieVars of the free variables and the 
 	 * procedures of these BoogieVariables.
 	 */
-	public static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt) {
+	public static TermVarsProc computeTermVarsProc(final Term term, final Script script, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		final Set<String> procs = new HashSet<String>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+			final BoogieVar bv = symbolTable.getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}
@@ -91,7 +94,7 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
-		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
+		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 	
@@ -107,8 +110,8 @@ public class TermVarsProc {
 	 * Don't use it unless you know what you do.
 	 */
 	@Deprecated
-	private static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt, 
-			boolean replaceNonModifiableOldVars, Set<BoogieVar> modifiableGlobals) {
+	private static TermVarsProc computeTermVarsProc(Term term, final Boogie2SMT boogie2smt, 
+			final boolean replaceNonModifiableOldVars, final Set<BoogieVar> modifiableGlobals) {
 		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		final List<BoogieOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
 		final Set<String> procs = new HashSet<String>();

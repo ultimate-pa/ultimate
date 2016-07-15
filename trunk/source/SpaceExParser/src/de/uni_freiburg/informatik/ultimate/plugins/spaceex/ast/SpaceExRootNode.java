@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 /**
@@ -47,11 +48,14 @@ public class SpaceExRootNode extends SpaceExNode {
 	private final Map<String, ComponentType> mComponents;
 	private final Map<String, ComponentType> mSystems;
 
-	public SpaceExRootNode(String math, String version) {
+	private final ILogger mLogger;
+
+	public SpaceExRootNode(String math, String version, ILogger logger) {
 		getPayload().getAnnotations().put("RootNodeAnnotation", new RootNodeAnnotation(math, version));
 
 		mComponents = new HashMap<String, ComponentType>();
 		mSystems = new HashMap<String, ComponentType>();
+		mLogger = logger;
 	}
 
 	public void addComponent(ComponentType component) {
@@ -59,9 +63,13 @@ public class SpaceExRootNode extends SpaceExNode {
 	}
 
 	public void addSystem(ComponentType system) {
+		if (system.getBind().isEmpty()) {
+			throw new UnsupportedOperationException("A system component must contain at least one bind.");
+		}
+
 		mSystems.put(system.getId(), system);
 
-		final SystemNode systemNode = new SystemNode(system);
+		final SystemNode systemNode = new SystemNode(system, mLogger);
 		final SpaceExRootEdge componentEdge = new SpaceExRootEdge(this, systemNode);
 		addOutgoing(componentEdge);
 

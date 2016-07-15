@@ -142,6 +142,9 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 		"automizer/interpolation/Reach-32bit-Z3-IcWp.epf",
 		"automizer/interpolation/Reach-32bit-Z3-WpLv.epf",
 		"automizer/interpolation/Reach-32bit-Z3-Wp.epf",
+		
+		"automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf",
+		"automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf",
 	};
 // settings that we do not use
 //	"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
