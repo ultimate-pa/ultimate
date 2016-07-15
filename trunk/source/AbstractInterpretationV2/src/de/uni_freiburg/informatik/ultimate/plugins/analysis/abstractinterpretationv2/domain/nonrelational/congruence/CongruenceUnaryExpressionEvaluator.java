@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceUnaryExpressionEvaluator
-        implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
+		implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> {
 
 	private final ILogger mLogger;
 
@@ -84,7 +84,7 @@ public class CongruenceUnaryExpressionEvaluator
 				returnBool = new BooleanValue();
 				returnValue = CongruenceDomainValue.createTop();
 				if (mLogger.isDebugEnabled()) {
-					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator 
+					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 							+ ". Returning current state. Returned value is top.");
 				}
 				break;
@@ -107,7 +107,7 @@ public class CongruenceUnaryExpressionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
+	public Set<IBoogieVar> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
 
@@ -161,7 +161,7 @@ public class CongruenceUnaryExpressionEvaluator
 
 	@Override
 	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
-	        final CongruenceDomainState currentState) {
+			final CongruenceDomainState currentState) {
 		CongruenceDomainValue evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
 
@@ -174,7 +174,7 @@ public class CongruenceUnaryExpressionEvaluator
 			break;
 		default:
 			throw new UnsupportedOperationException(
-			        new StringBuilder().append("Operator ").append(mOperator).append(" not supported.").toString());
+					new StringBuilder().append("Operator ").append(mOperator).append(" not supported.").toString());
 		}
 
 		final CongruenceDomainEvaluationResult evalResult = new CongruenceDomainEvaluationResult(evalValue, evalBool);

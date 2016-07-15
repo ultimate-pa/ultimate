@@ -187,7 +187,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert vars.length == values.length;
 
 		return setMixedValues(vars, values, new IBoogieVar[0], new BooleanValue.Value[0], new IBoogieVar[0],
-				getEmtpyArray());
+				getArray(0));
 	}
 
 	/**
@@ -260,7 +260,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(new IBoogieVar[0], getEmtpyArray(), vars, values, new IBoogieVar[0], getEmtpyArray());
+		return setMixedValues(new IBoogieVar[0], getArray(0), vars, values, new IBoogieVar[0], getArray(0));
 	}
 
 	/**
@@ -288,7 +288,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert arrays.length == values.length;
 
-		return setMixedValues(new IBoogieVar[0], getEmtpyArray(), new IBoogieVar[0], new BooleanValue.Value[0], arrays,
+		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new BooleanValue.Value[0], arrays,
 				values);
 	}
 
@@ -670,7 +670,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	protected abstract V createTopValue();
 
-	protected abstract V[] getEmtpyArray();
+	protected abstract V[] getArray(int size);
 
 	/**
 	 * Returns <code>true</code> if and only if {@link this} has the same variables as other.

@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -93,9 +94,14 @@ public class CongruenceEvaluatorFactory
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock>
 			createSingletonValueExpressionEvaluator(final String value, final Class<?> valueType) {
 		assert value != null;
+		if (valueType == BigInteger.class) {
+			return new CongruenceSingletonValueExpressionEvaluator(
+					CongruenceDomainValue.createConstant(new BigInteger(value)));
+		} else {
+			assert valueType == BigDecimal.class;
+			return createSingletonValueTopEvaluator();
+		}
 
-		return new CongruenceSingletonValueExpressionEvaluator(
-				CongruenceDomainValue.createConstant(new BigInteger(value)));
 	}
 
 	@Override

@@ -95,7 +95,7 @@ public class IntervalDomainState extends NonrelationalState<IntervalDomainState,
 	}
 
 	@Override
-	protected IntervalDomainValue[] getEmtpyArray() {
-		return new IntervalDomainValue[0];
+	protected IntervalDomainValue[] getArray(int size) {
+		return new IntervalDomainValue[size];
 	}
 }

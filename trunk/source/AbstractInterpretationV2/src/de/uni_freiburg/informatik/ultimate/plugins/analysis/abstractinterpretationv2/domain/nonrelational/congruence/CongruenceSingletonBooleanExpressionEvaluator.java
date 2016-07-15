@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -77,8 +77,8 @@ public class CongruenceSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+	public Set<IBoogieVar> getVarIdentifiers() {
+		return Collections.emptySet();
 	}
 
 	@Override

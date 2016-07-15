@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
+import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
  * Helper functions for the interval test suite.
@@ -59,12 +60,12 @@ public class HelperFunctions {
 
 		final LoggerInitializer loggerInitializer = new LoggerInitializer();
 		final ILogger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
-		final IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
-				first);
-		final IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
-				second);
-		final IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(
-				logger, type, maxParallelStates);
+		final IntervalSingletonValueExpressionEvaluator value1Evaluator =
+				new IntervalSingletonValueExpressionEvaluator(first);
+		final IntervalSingletonValueExpressionEvaluator value2Evaluator =
+				new IntervalSingletonValueExpressionEvaluator(second);
+		final IntervalBinaryExpressionEvaluator binaryExpressionEvaluator =
+				new IntervalBinaryExpressionEvaluator(logger, type, maxParallelStates);
 
 		binaryExpressionEvaluator.setOperator(operator);
 		binaryExpressionEvaluator.addSubEvaluator(value1Evaluator);
@@ -109,9 +110,9 @@ public class HelperFunctions {
 
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 			IntervalDomainValue expectedResult) {
-
-		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
-				Operator.ARITHPLUS, EvaluatorType.INTEGER, 2).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result =
+				createBinaryEvaluator(interval1, interval2, Operator.ARITHPLUS, EvaluatorType.INTEGER, 2)
+						.evaluate(new IntervalDomainState(new ConsoleLogger()));
 
 		boolean ret = true;
 
@@ -125,8 +126,9 @@ public class HelperFunctions {
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 			IntervalDomainValue expectedResult) {
 
-		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
-				Operator.ARITHMINUS, EvaluatorType.INTEGER, 2).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result =
+				createBinaryEvaluator(interval1, interval2, Operator.ARITHMINUS, EvaluatorType.INTEGER, 2)
+						.evaluate(new IntervalDomainState(new ConsoleLogger()));
 
 		boolean ret = true;
 
@@ -140,8 +142,9 @@ public class HelperFunctions {
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 			IntervalDomainValue expectedResult) {
 
-		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
-				Operator.ARITHMUL, EvaluatorType.INTEGER, 2).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result =
+				createBinaryEvaluator(interval1, interval2, Operator.ARITHMUL, EvaluatorType.INTEGER, 2)
+						.evaluate(new IntervalDomainState(new ConsoleLogger()));
 
 		boolean ret = true;
 
@@ -175,8 +178,9 @@ public class HelperFunctions {
 	protected static boolean computeDivisionResultReal(IntervalDomainValue interval1, IntervalDomainValue interval2,
 			IntervalDomainValue expectedResult) {
 
-		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
-				Operator.ARITHDIV, EvaluatorType.REAL, 2).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result =
+				createBinaryEvaluator(interval1, interval2, Operator.ARITHDIV, EvaluatorType.REAL, 2)
+						.evaluate(new IntervalDomainState(new ConsoleLogger()));
 
 		boolean ret = true;
 
@@ -190,8 +194,9 @@ public class HelperFunctions {
 	protected static boolean computeDivisionResultInteger(IntervalDomainValue interval1, IntervalDomainValue interval2,
 			IntervalDomainValue expectedResult) {
 
-		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
-				Operator.ARITHDIV, EvaluatorType.INTEGER, 2).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result =
+				createBinaryEvaluator(interval1, interval2, Operator.ARITHDIV, EvaluatorType.INTEGER, 2)
+						.evaluate(new IntervalDomainState(new ConsoleLogger()));
 
 		boolean ret = true;
 

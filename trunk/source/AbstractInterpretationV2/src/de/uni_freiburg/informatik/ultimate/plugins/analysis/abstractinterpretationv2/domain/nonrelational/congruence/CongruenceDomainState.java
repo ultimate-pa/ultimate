@@ -95,7 +95,7 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 	}
 
 	@Override
-	protected CongruenceDomainValue[] getEmtpyArray() {
-		return new CongruenceDomainValue[0];
+	protected CongruenceDomainValue[] getArray(int size) {
+		return new CongruenceDomainValue[size];
 	}
 }
