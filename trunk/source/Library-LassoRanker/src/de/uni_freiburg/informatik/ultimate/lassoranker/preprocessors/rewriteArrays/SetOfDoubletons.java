@@ -52,8 +52,8 @@ public class SetOfDoubletons<E> {
 		mElements = new ArrayList<Doubleton<E>>();
 	}
 	
-	public boolean containsDoubleton(Doubleton<E> twoelton) {
-		return containsDoubleton(twoelton.getOneElement(), twoelton.getOtherElement());
+	public boolean containsDoubleton(Doubleton<E> doubleton) {
+		return containsDoubleton(doubleton.getOneElement(), doubleton.getOtherElement());
 	}
 	
 	public boolean containsDoubleton(E oneElem, E otherElem) {

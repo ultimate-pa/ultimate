@@ -54,9 +54,9 @@ public class IndexSupportingInvariantAnalysis {
 	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<Term>();
 	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<Term>();
 	
-	private final SetOfDoubletons<Term> distinctDoubletons = new SetOfDoubletons<>();
-	private final SetOfDoubletons<Term> equalDoubletons = new SetOfDoubletons<>();
-	private final SetOfDoubletons<Term> unknownDoubletons = new SetOfDoubletons<>();
+	private final SetOfDoubletons<Term> mDistinctDoubletons = new SetOfDoubletons<>();
+	private final SetOfDoubletons<Term> mEqualDoubletons = new SetOfDoubletons<>();
+	private final SetOfDoubletons<Term> mUnknownDoubletons = new SetOfDoubletons<>();
 	
 	private final TransFormula mOriginalStem;
 	private final TransFormula mOriginalLoop;
@@ -100,17 +100,17 @@ public class IndexSupportingInvariantAnalysis {
 	
 	
 	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
-		distinctDoubletons.addDoubleton(doubleton);
+		mDistinctDoubletons.addDoubleton(doubleton);
 		mNotEqualsSupportingInvariants.add(notEqualTerm(doubleton));
 	}
 	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
-		equalDoubletons.addDoubleton(doubleton);
+		mEqualDoubletons.addDoubleton(doubleton);
 		mEqualitySupportingInvariants.add(equalTerm(doubleton));
 	}
 	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
-		unknownDoubletons.addDoubleton(doubleton);
+		mUnknownDoubletons.addDoubleton(doubleton);
 	}
 	
 	private SetOfDoubletons<Term> computeDoubletons() {
@@ -183,15 +183,15 @@ public class IndexSupportingInvariantAnalysis {
 	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
 	
 	public boolean isEqualDoubleton(Term t1, Term t2) {
-		return equalDoubletons.containsDoubleton(t1, t2);
+		return mEqualDoubletons.containsDoubleton(t1, t2);
 	}
 	
 	public boolean isDistinctDoubleton(Term t1, Term t2) {
-		return distinctDoubletons.containsDoubleton(t1, t2);
+		return mDistinctDoubletons.containsDoubleton(t1, t2);
 	}
 	
 	public boolean isUnknownDoubleton(Term t1, Term t2) {
-		return unknownDoubletons.containsDoubleton(t1, t2);
+		return mUnknownDoubletons.containsDoubleton(t1, t2);
 	}
 	
 	public List<Term> getAdditionalConjunctsEqualities() {

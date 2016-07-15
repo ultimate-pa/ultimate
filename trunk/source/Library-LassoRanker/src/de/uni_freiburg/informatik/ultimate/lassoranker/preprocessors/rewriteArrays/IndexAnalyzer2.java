@@ -110,7 +110,7 @@ public class IndexAnalyzer2 {
 		unknownDoubletons.addDoubleton(doubleton);
 	}
 	
-	void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
+	private void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
 		Term termWithAdditionalInvariants;
 		if (mUseArrayIndexSupportingInvariants) { 
 			termWithAdditionalInvariants = Util.and(mScript, mTerm, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
