@@ -236,7 +236,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Game graph that should get modified by this object
 	 * @param simulationType
 	 *            Simulation method to use for graph generation. Supported types
-	 *            are {@link ESimulationType#DIRECT DIRECT} and
+	 *            are {@link ESimulationType#DIRECT DIRECT}, {@link ESimulationType#DELAYED DELAYED} and
 	 *            {@link ESimulationType#FAIR FAIR}.
 	 * @param possibleEquivalenceClasses
 	 *            A collection of sets which contains states of an automaton
@@ -636,10 +636,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		// By default, we assume that there are merge-able states.
 		boolean areThereMergeableStates = true;
-		if (fairGraph != null) {
-			// For fair simulation, we know if there are such states.
-			areThereMergeableStates = fairGraph.areThereMergeableStates();
-		}
 		// By default, we assume that there are no remove-able transitions.
 		// Since only fair simulation is capable of such.
 		boolean areThereRemoveableTransitions = false;
@@ -660,55 +656,50 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// with their representatives
 			UnionFind<STATE> equivalenceClasses;
 
-			if (fairGraph != null) {
-				// For fair simulation, this was already set up.
-				equivalenceClasses = fairGraph.getEquivalenceClasses();
-			} else {
-				// For other simulation types, we set it up now.
-				// Determine which states to merge
-				equivalenceClasses = new UnionFind<>();
-				for (final STATE state : mNwa.getStates()) {
-					equivalenceClasses.makeEquivalenceClass(state);
-				}
-				// A pair q0, q1 is similar (regarding matched return words) if
-				// q1 simulates q0.
-				final HashRelation<STATE, STATE> similarStates = new HashRelation<>();
-				for (final SpoilerVertex<LETTER, STATE> v : mGameGraph.getSpoilerVertices()) {
+			// For other simulation types, we set it up now.
+			// Determine which states to merge
+			equivalenceClasses = new UnionFind<>();
+			for (final STATE state : mNwa.getStates()) {
+				equivalenceClasses.makeEquivalenceClass(state);
+			}
+			// A pair q0, q1 is similar (regarding matched return words) if
+			// q1 simulates q0.
+			final HashRelation<STATE, STATE> similarStates = new HashRelation<>();
+			for (final SpoilerVertex<LETTER, STATE> v : mGameGraph.getSpoilerVertices()) {
 
-					// All the states we need are from Spoiler
-					boolean considerVertex = true;
-					final STATE state1 = v.getQ0();
-					final STATE state2 = v.getQ1();
-					// For delayed simulation we need to choose between the
-					// vertex with bit set to true or false
-					if (mSimulationType == ESimulationType.DELAYED) {
-						if (v.isB()) {
-							considerVertex = mNwa.isFinal(state1) && !mNwa.isFinal(state2);
-						} else {
-							considerVertex = !mNwa.isFinal(state1) || mNwa.isFinal(state2);
-						}
-					}
-					if (considerVertex && state1 != null && state2 != null) {
-						if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
-							similarStates.addPair(state1, state2);
-						}
+				// All the states we need are from Spoiler
+				boolean considerVertex = true;
+				final STATE state1 = v.getQ0();
+				final STATE state2 = v.getQ1();
+				// For delayed simulation we need to choose between the
+				// vertex with bit set to true or false
+				if (mSimulationType == ESimulationType.DELAYED) {
+					if (v.isB()) {
+						considerVertex = mNwa.isFinal(state1) && !mNwa.isFinal(state2);
+					} else {
+						considerVertex = !mNwa.isFinal(state1) || mNwa.isFinal(state2);
 					}
 				}
-				// Mark states for merge if they simulate each other
-				for (final STATE state1 : similarStates.getDomain()) {
-					for (final STATE state2 : similarStates.getImage(state1)) {
-						// Only merge if simulation holds in both directions and
-						// we did not exclude the pair from merge
-						if (similarStates.containsPair(state2, state1)) {
-							equivalenceClasses.union(state1, state2);
-						}
+				if (considerVertex && state1 != null && state2 != null) {
+					if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
+						similarStates.addPair(state1, state2);
 					}
 				}
+			}
+			// Mark states for merge if they simulate each other
+			for (final STATE state1 : similarStates.getDomain()) {
+				for (final STATE state2 : similarStates.getImage(state1)) {
+					// Only merge if simulation holds in both directions and
+					// we did not exclude the pair from merge
+					if (similarStates.containsPair(state2, state1)) {
+						equivalenceClasses.union(state1, state2);
+					}
+				}
+			}
 
-				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
-					mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
 			Collection<Set<STATE>> equivalenceClassesAsCollection = equivalenceClasses.getAllEquivalenceClasses();
@@ -852,9 +843,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
-				// Generate an equivalence class for every state from
-				// the nwa automaton, if fair simulation
-				makeEquivalenceClass(leftState);
 			}
 		}
 
@@ -1664,10 +1652,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
-
-			// Generate an equivalence class for every state from
-			// the nwa automaton, if fair simulation
-			makeEquivalenceClass(leftState);
 		}
 
 		// Increase by one, global infinity is amount of priority one + 1
@@ -2533,20 +2517,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private boolean hasDownState(final STATE upState, final STATE downState) {
 		return mNwa.getDownStates(upState).contains(downState);
-	}
-
-	/**
-	 * Generates an equivalence class for the given state from the nwa
-	 * automaton, if fair simulation.
-	 * 
-	 * @param leftState
-	 *            State to make equivalence class for
-	 */
-	private void makeEquivalenceClass(final STATE leftState) {
-		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
-		if (fairGraph != null) {
-			fairGraph.getEquivalenceClasses().makeEquivalenceClass(leftState);
-		}
 	}
 
 	/**

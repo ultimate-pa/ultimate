@@ -325,95 +325,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		}
 		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, mGlobalInfinity);
 
-		// Merge states
-		mAttemptingChanges = true;
-		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		final Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Size of merge candidates: " + mergeCandidates.size());
-		}
-
-		for (final SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
-			final STATE leftState = mergeCandidate.getQ0();
-			final STATE rightState = mergeCandidate.getQ1();
-
-			// Attempt merge
-			final FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
-			// Undo if language changed, else do not consider
-			// pair for transition removal
-			if (changes != null) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted merge for " + leftState + " and " + rightState
-							+ " was not successful, undoing...");
-				}
-
-				mGame.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
-			} else {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
-				}
-				// Pass merge to game graph
-				mGame.markMergeable(leftState, rightState);
-
-				// Pair and mirrored pair are no candidates
-				// for transition removal
-				noTransitionCandidates.add(mergeCandidate);
-				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState, false);
-				if (mirroredCandidate != null) {
-					noTransitionCandidates.add(mirroredCandidate);
-				}
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				mLogger.debug("Stopped in doSimulation/attempting merges");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
-
-		// Remove redundant transitions
-		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
-		}
-
-		for (final Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
-			final STATE src = transitionCandidate.getFirst();
-			final LETTER a = transitionCandidate.getSecond();
-			final STATE dest = transitionCandidate.getThird();
-			final STATE invoker = transitionCandidate.getFourth();
-
-			// Attempt transition removal
-			final FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
-			// Undo if language changed, else add transition for removal
-			if (changes != null) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
-							+ " was not successful, undoing...");
-				}
-
-				mGame.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
-			} else {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(
-							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
-				}
-				// Pass removal to game graph
-				mGame.markRemoveableTransition(src, a, dest);
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				mLogger.debug("Stopped in doSimulation/attempting transition removal");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
+		doFollowingSimulation(performance);
 
 		// Re-enable the usage
 		if (disabledSCCUsage) {
@@ -430,12 +342,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		
+
 		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
@@ -827,6 +740,111 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		return validateChange(changes);
 	}
 
+	/**
+	 * Proceeds with following simulations to validate which states can be
+	 * merged and which transitions can be removed.
+	 * 
+	 * @param performance
+	 *            Performance object used
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected void doFollowingSimulation(final SimulationPerformance performance)
+			throws AutomataOperationCanceledException {
+		// Merge states
+		mAttemptingChanges = true;
+		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
+		final Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Size of merge candidates: " + mergeCandidates.size());
+		}
+
+		for (final SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
+			final STATE leftState = mergeCandidate.getQ0();
+			final STATE rightState = mergeCandidate.getQ1();
+
+			// Attempt merge
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
+			// Undo if language changed, else do not consider
+			// pair for transition removal
+			if (changes != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted merge for " + leftState + " and " + rightState
+							+ " was not successful, undoing...");
+				}
+
+				mGame.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				}
+				// Pass merge to game graph
+				mGame.markMergeable(leftState, rightState);
+
+				// Pair and mirrored pair are no candidates
+				// for transition removal
+				noTransitionCandidates.add(mergeCandidate);
+				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState,
+						false);
+				if (mirroredCandidate != null) {
+					noTransitionCandidates.add(mirroredCandidate);
+				}
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				mLogger.debug("Stopped in doSimulation/attempting merges");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+
+		// Remove redundant transitions
+		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(
+				noTransitionCandidates);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
+		}
+
+		for (final Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
+			final STATE src = transitionCandidate.getFirst();
+			final LETTER a = transitionCandidate.getSecond();
+			final STATE dest = transitionCandidate.getThird();
+			final STATE invoker = transitionCandidate.getFourth();
+
+			// Attempt transition removal
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
+			// Undo if language changed, else add transition for removal
+			if (changes != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
+							+ " was not successful, undoing...");
+				}
+
+				mGame.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(
+							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
+				}
+				// Pass removal to game graph
+				mGame.markRemoveableTransition(src, a, dest);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				mLogger.debug("Stopped in doSimulation/attempting transition removal");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -918,7 +936,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Skip updating predecessors if there are no
-			final boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity && mGame.hasPushOverPredecessors(workingVertex);
+			final boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity
+					&& mGame.hasPushOverPredecessors(workingVertex);
 			final Set<Vertex<LETTER, STATE>> predVertices = mGame.getPredecessors(workingVertex);
 			if ((predVertices == null || predVertices.isEmpty()) && !considerPushOverPredecessors) {
 				continue;
