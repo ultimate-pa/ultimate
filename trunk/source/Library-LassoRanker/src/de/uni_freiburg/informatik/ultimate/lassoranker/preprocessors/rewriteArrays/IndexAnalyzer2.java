@@ -71,13 +71,13 @@ public class IndexAnalyzer2 {
 	 */
 	private final Set<Doubleton<Term>> ignoredDoubletons = new LinkedHashSet<>();
 	
-	private final IndexSupportingInvariantAnalysis mIndexSupportingInvariantAnalysis;
+	private final EqualitySupportingInvariantAnalysis mIndexSupportingInvariantAnalysis;
 	
 	private final boolean mUseArrayIndexSupportingInvariants = true;
 	
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
-			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, ILogger logger) {
+			EqualitySupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, ILogger logger) {
 		super();
 		mLogger = logger;
 		mIsStem = isStem;
@@ -224,11 +224,11 @@ public class IndexAnalyzer2 {
 			if (definingDoubleton.getOneElement() == definingDoubleton.getOtherElement()) {
 				// trivially equal
 				addEqualDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.isEqualDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.getEqualDoubletons().contains(definingDoubleton)) {
 				addEqualDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.isDistinctDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.getDistinctDoubletons().contains(definingDoubleton)) {
 				addDistinctDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.isUnknownDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.getUnknownDoubletons().contains(definingDoubleton)) {
 				addUnknownDoubleton(doubleton);
 			} else {
 				throw new AssertionError("inVar (or outVar) doulbeton has to be in invariant anlysis");

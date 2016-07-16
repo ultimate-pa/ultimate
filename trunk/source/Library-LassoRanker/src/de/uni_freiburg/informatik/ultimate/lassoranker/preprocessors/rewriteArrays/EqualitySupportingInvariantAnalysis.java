@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,23 +45,67 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
-public class IndexSupportingInvariantAnalysis {
+/**
+ * Computes supporting invariants that have the form of equalities and
+ * not equal relations (negated equalities).
+ * A supporting invariant of a lasso program is a formula φ over program 
+ * variables such that the following two implications hold.
+ * <ul>
+ * <li>    post(true, stem) ==> φ </li>
+ * <li>       post(φ, loop) ==> φ </li>
+ * </ul>
+ * 
+ * The name supporting invariant which is commonly used in the literature 
+ * refers to the fact that these invariants are used to support the synthesis
+ * of ranking functions.
+ * 
+ * The analysis implemented in this class expects a set of {@link Doubleton}s
+ * over terms (unordered pairs of terms) and checks for each pair (t1,t2)
+ * if the equality t1=t2  or the not-equals relation t1!=t2 is an invariant
+ * at the program point between stem and loop.
+ * 
+ * Note that the free variables that occur in the terms must be the default
+ * TermVariables of {@link BoogieVar}s. This means that you cannot directly
+ * (without an additional substitution) use terms of {@link TransFormulas} 
+ * (where we have primed and unprimed versions of these TermVariables).
+ * 
+ * We currently use this analysis to infer equality information about
+ * array indices. Our Doubletons entries from pairs of array indices.
+ * We use the equality (resp. not equals) information to detect which array
+ * cells are similar/different. E.g., a[x,y] and a[v,w] refer to the same
+ * array cell if x==y and y==w holds, and both expressions refer to a different 
+ * array cell if x!=y or y!=w holds.    
+ *  
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
+public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<Term>();
-	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<Term>();
+	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<>();
+	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<>();
 	
-	private final Set<Doubleton<Term>> mDistinctDoubletons = new LinkedHashSet<>();
-	private final Set<Doubleton<Term>> mEqualDoubletons = new LinkedHashSet<>();
-	private final Set<Doubleton<Term>> mUnknownDoubletons = new LinkedHashSet<>();
+	private final Set<Doubleton<Term>> mDistinctDoubletons = new HashSet<>();
+	private final Set<Doubleton<Term>> mEqualDoubletons = new HashSet<>();
+	private final Set<Doubleton<Term>> mUnknownDoubletons = new HashSet<>();
 	
 	private final TransFormula mOriginalStem;
 	private final TransFormula mOriginalLoop;
 	private final Set<BoogieVar> mModifiableGlobalsAtStart;
 	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
 	
-	public IndexSupportingInvariantAnalysis(Set<Doubleton<Term>> allDoubletons,
+	/**
+	 * 
+	 * @param doubletons set of all Doubletons that should be analyzed
+	 * @param symbolTable symbol table of the cfg
+	 * @param originalStem stem of lasso program. This must be the original,
+	 * unprocessed TransFormula.
+	 * @param originalLoop loop of lasso program. This must be the original,
+	 * unprocessed TransFormula.
+	 * @param modifiableGlobalsAtHonda set of all global program variables
+	 * that are modifiable at the program point between stem and loop.
+	 */
+	public EqualitySupportingInvariantAnalysis(Set<Doubleton<Term>> doubletons,
 			Boogie2SmtSymbolTable symbolTable, 
 			Script script, 
 			TransFormula originalStem,
@@ -73,7 +117,7 @@ public class IndexSupportingInvariantAnalysis {
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtStart = Collections.emptySet();
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		mAllDoubletons = allDoubletons;
+		mAllDoubletons = doubletons;
 
 		for (final Doubleton<Term> doubleton : mAllDoubletons) {
 			final boolean equalityIsInvariant = isInVariant(doubleton, true);
@@ -96,25 +140,27 @@ public class IndexSupportingInvariantAnalysis {
 		mNotEqualsSupportingInvariants.add(notEqualTerm(doubleton));
 	}
 	
+	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
 		mEqualDoubletons.add(doubleton);
 		mEqualitySupportingInvariants.add(equalTerm(doubleton));
 	}
 	
+	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
 		mUnknownDoubletons.add(doubleton);
 	}
-	
-
 	
 	
 	private Term equalTerm(Doubleton<Term> doubleton) {
 		return SmtUtils.binaryEquality(mScript, doubleton.getOneElement(), doubleton.getOtherElement());
 	}
 
+	
 	private Term notEqualTerm(Doubleton<Term> doubleton) {
 		return SmtUtils.not(mScript, equalTerm(doubleton));
 	}
+	
 	
 	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {
 		Term invariantCandidateTerm;
@@ -142,25 +188,48 @@ public class IndexSupportingInvariantAnalysis {
 		}
 	}
 	
-	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
 	
-	public boolean isEqualDoubleton(Term t1, Term t2) {
-		return mEqualDoubletons.contains(new Doubleton<Term>(t1, t2));
+	/**
+	 * @return the list of all inferred equalities where each equality
+	 * is given as an SMT term.
+	 */
+	public List<Term> getEqualities() {
+		return Collections.unmodifiableList(mEqualitySupportingInvariants);
 	}
+
 	
-	public boolean isDistinctDoubleton(Term t1, Term t2) {
-		return mDistinctDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-	
-	public boolean isUnknownDoubleton(Term t1, Term t2) {
-		return mUnknownDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-	
-	public List<Term> getAdditionalConjunctsEqualities() {
-		return mEqualitySupportingInvariants;
-	}
-	
+	/**
+	 * @return the list of all inferred not-equals relations where each 
+	 * not-equals relation is given as an SMT term.
+	 */
 	public List<Term> getAdditionalConjunctsNotEquals() {
-		return mNotEqualsSupportingInvariants;
+		return Collections.unmodifiableList(mNotEqualsSupportingInvariants);
+	}
+
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was able
+	 * to prove that t1!=t2 holds.
+	 */
+	public Set<Doubleton<Term>> getDistinctDoubletons() {
+		return Collections.unmodifiableSet(mDistinctDoubletons);
+	}
+
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was able
+	 * to prove that t1==t2 holds.
+	 */
+	public Set<Doubleton<Term>> getEqualDoubletons() {
+		return Collections.unmodifiableSet(mEqualDoubletons);
+	}
+
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was neither able
+	 * to prove that t1==t2 holds nor that t1!=t2 holds.
+	 */
+	public Set<Doubleton<Term>> getUnknownDoubletons() {
+		return Collections.unmodifiableSet(mUnknownDoubletons);
 	}
 }

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellRepVarConstructor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellReplacementVarInformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexSupportingInvariantAnalysis;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.EqualitySupportingInvariantAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayCells;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayInformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
@@ -212,8 +212,8 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
 		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
-		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
-		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
+		final EqualitySupportingInvariantAnalysis isia = new EqualitySupportingInvariantAnalysis(computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		mArrayIndexSupportingInvariants.addAll(isia.getEqualities());
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
 		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);

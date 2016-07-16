@@ -118,7 +118,7 @@ public class TransFormulaLRWithArrayCells {
 			IUltimateServiceProvider services, 
 			ReplacementVarFactory replacementVarFactory, Script script,
 			TransFormulaLRWithArrayInformation tflrwai, 
-			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
+			EqualitySupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
 			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc, boolean moverapproximateByOmmitingDisjointIndices, boolean isStem) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
