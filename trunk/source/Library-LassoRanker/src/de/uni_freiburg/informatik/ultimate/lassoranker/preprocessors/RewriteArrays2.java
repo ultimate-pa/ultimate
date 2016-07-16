@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -36,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellRepVarConstructor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellReplacementVarInformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexSupportingInvariantAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayCells;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayInformation;
@@ -45,9 +48,13 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUti
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement
@@ -205,7 +212,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
 		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
-		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		final IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
 		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
@@ -214,6 +221,29 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		assert !s_AdditionalChecksIfAssertionsEnabled || checkStemImplication(
 				mServices, mLogger, lasso, newLasso, mboogie2smt) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
+	}
+	
+	
+	private Set<Doubleton<Term>> computeDoubletons(final ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
+		final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2index2repVar = 
+				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
+		final Set<Doubleton<Term>> result = new LinkedHashSet<>();
+		for (final TermVariable array : array2index2repVar.keySet()) {
+			final Set<ArrayIndex> allIndices = array2index2repVar.get(array).keySet();
+			final ArrayIndex[] allIndicesArr = allIndices.toArray(new ArrayIndex[allIndices.size()]);
+			for (int i=0; i<allIndicesArr.length; i++) {
+				for (int j=i+1; j<allIndicesArr.length; j++) {
+					final List<Term> fstIndex = allIndicesArr[i];
+					final List<Term> sndIndex = allIndicesArr[j];
+					assert fstIndex.size() == sndIndex.size();
+					for (int k=0; k<fstIndex.size(); k++) {
+						final Doubleton<Term> doubleton = new Doubleton<Term>(fstIndex.get(k), sndIndex.get(k));
+						result.add(doubleton);
+					}
+				}
+			}
+		}
+		return result;
 	}
 	
 	

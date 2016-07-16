@@ -36,17 +36,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class IndexSupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
@@ -63,37 +60,34 @@ public class IndexSupportingInvariantAnalysis {
 	private final TransFormula mOriginalLoop;
 	private final Set<BoogieVar> mModifiableGlobalsAtStart;
 	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
-	private final ArrayCellRepVarConstructor mArrayCellRepVarConstructor;
 	
-	public IndexSupportingInvariantAnalysis(ArrayCellRepVarConstructor arrayCellRepVarConstructor,
+	public IndexSupportingInvariantAnalysis(Set<Doubleton<Term>> allDoubletons,
 			Boogie2SmtSymbolTable symbolTable, 
 			Script script, 
 			TransFormula originalStem,
 			TransFormula originalLoop, Set<BoogieVar> modifiableGlobalsAtHonda) {
 		super();
-		mArrayCellRepVarConstructor = arrayCellRepVarConstructor;
 		mSymbolTable = symbolTable;
 		mScript = script;
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtStart = Collections.emptySet();
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		mAllDoubletons = computeDoubletons();
-		
-		for (final Doubleton<Term> doubleton : mAllDoubletons) {
-				final boolean equalityIsInvariant = isInVariant(doubleton, true);
-				if (equalityIsInvariant) {
-					addEqualDoubleton(doubleton);
-				} else {
-					final boolean notEqualIsInvariant = isInVariant(doubleton, false);
-					if (notEqualIsInvariant) {
-						addDistinctDoubleton(doubleton);
-					} else {
-						addUnknownDoubleton(doubleton);
-					}
-				} 
-		}
+		mAllDoubletons = allDoubletons;
 
+		for (final Doubleton<Term> doubleton : mAllDoubletons) {
+			final boolean equalityIsInvariant = isInVariant(doubleton, true);
+			if (equalityIsInvariant) {
+				addEqualDoubleton(doubleton);
+			} else {
+				final boolean notEqualIsInvariant = isInVariant(doubleton, false);
+				if (notEqualIsInvariant) {
+					addDistinctDoubleton(doubleton);
+				} else {
+					addUnknownDoubleton(doubleton);
+				}
+			} 
+		}
 	}
 	
 	
@@ -111,27 +105,7 @@ public class IndexSupportingInvariantAnalysis {
 		mUnknownDoubletons.add(doubleton);
 	}
 	
-	private Set<Doubleton<Term>> computeDoubletons() {
-		final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2index2repVar = 
-				mArrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
-		final Set<Doubleton<Term>> result = new LinkedHashSet<>();
-		for (final TermVariable array : array2index2repVar.keySet()) {
-			final Set<ArrayIndex> allIndices = array2index2repVar.get(array).keySet();
-			final ArrayIndex[] allIndicesArr = allIndices.toArray(new ArrayIndex[allIndices.size()]);
-			for (int i=0; i<allIndicesArr.length; i++) {
-				for (int j=i+1; j<allIndicesArr.length; j++) {
-					final List<Term> fstIndex = allIndicesArr[i];
-					final List<Term> sndIndex = allIndicesArr[j];
-					assert fstIndex.size() == sndIndex.size();
-					for (int k=0; k<fstIndex.size(); k++) {
-						final Doubleton<Term> doubleton = new Doubleton<Term>(fstIndex.get(k), sndIndex.get(k));
-						result.add(doubleton);
-					}
-				}
-			}
-		}
-		return result;
-	}
+
 	
 	
 	private Term equalTerm(Doubleton<Term> doubleton) {
