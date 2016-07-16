@@ -303,7 +303,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(IPredicate state,
+	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessors(IPredicate state,
 			IPredicate hier, CodeBlock letter) {
 		final Return ret = (Return) letter;
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
@@ -311,7 +311,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 				computeSuccs(state, hier, letter, mReSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.returnSucccessors(state, hier, ret);
+		return mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, ret);
 	}
 
 
@@ -322,7 +322,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (final CodeBlock letter : lettersReturn(state)) {
 				final Return ret = (Return) letter;
-				if (!mAlreadyConstrucedAutomaton.returnSucccessors(state, hier, ret).iterator().hasNext()) {
+				if (!mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, ret).iterator().hasNext()) {
 					computeSuccs(state, hier, letter, mReSucComp);
 				}
 			}

@@ -1347,7 +1347,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public Iterable<OutgoingReturnTransition<LETTER, STATE>>
-				returnSucccessors(STATE state, STATE hier, LETTER letter) {
+				returnSuccessors(STATE state, STATE hier, LETTER letter) {
 			final HashSet<OutgoingReturnTransition<LETTER, STATE>> set =
 					moutRet.get(state);
 			if (set == null) {

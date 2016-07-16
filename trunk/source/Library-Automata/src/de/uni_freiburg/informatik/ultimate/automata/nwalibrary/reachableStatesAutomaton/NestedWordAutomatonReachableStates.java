@@ -572,7 +572,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(STATE state, STATE hier, LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, STATE hier, LETTER letter) {
 		return mStates.get(state).returnSuccessors(hier, letter);
 	}
 

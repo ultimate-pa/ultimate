@@ -375,7 +375,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				break;
 			case 2:
 				mLogger.debug("hierPred for " + hierPred);
-				for(final OutgoingReturnTransition<LETTER,STATE> e2 : mSubtrahend.returnSucccessors(s, hierPred, label))
+				for(final OutgoingReturnTransition<LETTER,STATE> e2 : mSubtrahend.returnSuccessors(s, hierPred, label))
 				{
 					if(e2.getSucc() == h_r2)
 					{

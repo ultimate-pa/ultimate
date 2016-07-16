@@ -216,9 +216,9 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return mNwa.returnSucccessors(state, hier, letter);
+		return mNwa.returnSuccessors(state, hier, letter);
 	}
 
 	@Override

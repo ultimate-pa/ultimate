@@ -32,11 +32,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -44,8 +46,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.INwaGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Provides utility methods for simulation with NWA automata.
@@ -54,6 +62,150 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  *
  */
 public final class NwaSimulationUtil {
+
+	/**
+	 * Computes if the simulation results saved in the given game graph are
+	 * correct.
+	 * 
+	 * @param mGameGraph
+	 *            Game graph where the simulation results are saved in
+	 * @param mNwa
+	 *            The underlying Nwa automata
+	 * @return <tt>True</tt> if the simulation results are correct,
+	 *         <tt>false</tt> otherwise.
+	 */
+	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa, final ESimulationType simulationType,
+			final ILogger logger) {
+		if (logger.isInfoEnabled()) {
+			logger.info("Starting checking correctness of simulation results.");
+		}
+
+		// We check each supposedly simulation and validate
+		// First collect them
+		NestedMap2<STATE, STATE, Boolean> supposedlySimulations = new NestedMap2<>();
+		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
+			// All the states we need are from Spoiler
+			boolean considerVertex = true;
+			final STATE state1 = spoilerVertex.getQ0();
+			final STATE state2 = spoilerVertex.getQ1();
+			// For delayed simulation we need to choose between the
+			// vertex with bit set to true or false
+			if (simulationType == ESimulationType.DELAYED) {
+				if (spoilerVertex.isB()) {
+					considerVertex = nwa.isFinal(state1) && !nwa.isFinal(state2);
+				} else {
+					considerVertex = !nwa.isFinal(state1) || nwa.isFinal(state2);
+				}
+			}
+			if (considerVertex && state1 != null && state2 != null) {
+				if (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity()) {
+					if (spoilerVertex instanceof SpoilerNwaVertex<?, ?>) {
+						supposedlySimulations.put(spoilerVertex.getQ0(), spoilerVertex.getQ1(), true);
+					}
+				}
+			}
+		}
+
+		// Validate the supposedly simulations
+		for (Pair<STATE, STATE> supposedlySimulation : supposedlySimulations.keys2()) {
+			STATE leftState = supposedlySimulation.getFirst();
+			STATE rightState = supposedlySimulation.getSecond();
+
+			// Each from leftState outgoing transitions also needs an matching
+			// outgoing transition from rightState whose destination also
+			// simulates the other
+			// Internal transitions
+			for (OutgoingInternalTransition<LETTER, STATE> leftTrans : nwa.internalSuccessors(leftState)) {
+				STATE leftDest = leftTrans.getSucc();
+				LETTER letter = leftTrans.getLetter();
+
+				boolean foundMatchingTrans = false;
+				for (OutgoingInternalTransition<LETTER, STATE> rightTrans : nwa.internalSuccessors(rightState,
+						letter)) {
+					STATE rightDest = rightTrans.getSucc();
+					// If the right destination also simulates the left
+					// destination, we found a matching transition
+					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
+					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
+						foundMatchingTrans = true;
+						break;
+					}
+				}
+
+				// If no matching transition could be found, the underlying
+				// simulation is incorrect
+				if (!foundMatchingTrans) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Supposedly " + rightState + " simulates " + leftState
+								+ ". But there is no matching partner for " + leftTrans);
+					}
+					return false;
+				}
+			}
+
+			// Call transitions
+			for (OutgoingCallTransition<LETTER, STATE> leftTrans : nwa.callSuccessors(leftState)) {
+				STATE leftDest = leftTrans.getSucc();
+				LETTER letter = leftTrans.getLetter();
+
+				boolean foundMatchingTrans = false;
+				for (OutgoingCallTransition<LETTER, STATE> rightTrans : nwa.callSuccessors(rightState, letter)) {
+					STATE rightDest = rightTrans.getSucc();
+					// If the right destination also simulates the left
+					// destination, we found a matching transition
+					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
+					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
+						foundMatchingTrans = true;
+						break;
+					}
+				}
+
+				// If no matching transition could be found, the underlying
+				// simulation is incorrect
+				if (!foundMatchingTrans) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Supposedly " + rightState + " simulates " + leftState
+								+ ". But there is no matching partner for " + leftTrans);
+					}
+					return false;
+				}
+			}
+
+			// Return transitions
+			for (OutgoingReturnTransition<LETTER, STATE> leftTrans : nwa.returnSuccessors(leftState)) {
+				STATE leftDest = leftTrans.getSucc();
+				LETTER letter = leftTrans.getLetter();
+
+				boolean foundMatchingTrans = false;
+				for (OutgoingReturnTransition<LETTER, STATE> rightTrans : nwa.returnSuccessors(rightState, letter)) {
+					STATE rightDest = rightTrans.getSucc();
+					// If the right destination also simulates the left
+					// destination, we found a matching transition
+					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
+					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
+						foundMatchingTrans = true;
+						break;
+					}
+				}
+
+				// If no matching transition could be found, the underlying
+				// simulation is incorrect
+				if (!foundMatchingTrans) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Supposedly " + rightState + " simulates " + leftState
+								+ ". But there is no matching partner for " + leftTrans);
+					}
+					return false;
+				}
+			}
+		}
+
+		if (logger.isInfoEnabled()) {
+			logger.info("Finished checking correctness of simulation results, they are correct.");
+		}
+		return true;
+	}
 
 	/**
 	 * Computes the <i>inner simulation</i> on a given nwa game graph. The

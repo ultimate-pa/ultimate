@@ -299,7 +299,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessors(
 			IPredicate state, IPredicate hier, CodeBlock letter) {
 		return constructReturnSuccessors(state, hier, letter);
 	}
@@ -319,7 +319,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		final ProductState ps = mResult2Product.get(state);
 		final ProductState psHier = mResult2Product.get(hier);
 		final Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> result = new ArrayList<OutgoingReturnTransition<CodeBlock,IPredicate>>();
-		for (final OutgoingReturnTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton.returnSucccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
+		for (final OutgoingReturnTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton.returnSuccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
 			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
 				result.add(new OutgoingReturnTransition<CodeBlock, IPredicate>(hier, letter, succ));

@@ -254,21 +254,21 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
 			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 		}
 		if (state != mSinkState) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
-					mOperand.returnSucccessors(state, hier, letter).iterator();
+					mOperand.returnSuccessors(state, hier, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
 					return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 				} else {
-					return mOperand.returnSucccessors(state, hier, letter);
+					return mOperand.returnSuccessors(state, hier, letter);
 				}
 			}
 		}
@@ -290,7 +290,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 		for (final LETTER letter : getReturnAlphabet()) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
-					returnSucccessors(state, hier, letter).iterator();
+					returnSuccessors(state, hier, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
 				return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 			}

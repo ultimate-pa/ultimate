@@ -151,7 +151,7 @@ public class PowersetDeterminizer<LETTER,STATE>
 					upStates = detState.getUpStates(mNwa.getEmptyStackState());
 				}
 				for (final STATE upState : upStates) {
-					for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mNwa.returnSucccessors(upState, upLinPred, symbol)) {
+					for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mNwa.returnSuccessors(upState, upLinPred, symbol)) {
 						assert mUseDoubleDeckers || downLinPred == mNwa.getEmptyStackState();
 						succDetState.addPair(downLinPred, upSucc.getSucc(), mNwa);
 					}

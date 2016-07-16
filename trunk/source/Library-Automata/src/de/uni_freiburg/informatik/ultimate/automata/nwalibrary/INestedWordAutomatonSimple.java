@@ -165,7 +165,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state);
 	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter);
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(

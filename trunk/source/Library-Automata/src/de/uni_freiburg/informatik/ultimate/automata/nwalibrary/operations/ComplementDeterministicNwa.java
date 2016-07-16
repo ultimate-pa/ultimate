@@ -146,9 +146,9 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return mOperand.returnSucccessors(state, hier, letter);
+		return mOperand.returnSuccessors(state, hier, letter);
 	}
 
 	@Override

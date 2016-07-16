@@ -300,7 +300,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		final ProductState prodState = mres2prod.get(state);
 		final STATE fstState = prodState.getFst();
@@ -308,7 +308,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		final ProductState prodHier = mres2prod.get(hier);
 		final STATE fstHier = prodHier.getFst();
 		final STATE sndHier = prodHier.getSnd();
-		return returnSuccessors(mFstOperand.returnSucccessors(
+		return returnSuccessors(mFstOperand.returnSuccessors(
 							fstState, fstHier, letter), hier, sndState, sndHier);
 	}
 
@@ -334,7 +334,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
 			final LETTER letter = fstTrans.getLetter();
 			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : 
-						mSndOperand.returnSucccessors(sndState, sndHier,  letter)) {
+						mSndOperand.returnSuccessors(sndState, sndHier,  letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
 				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {

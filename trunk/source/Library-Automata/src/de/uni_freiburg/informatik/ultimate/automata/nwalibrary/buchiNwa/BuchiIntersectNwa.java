@@ -331,13 +331,13 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		final ProductState prodState = mres2prod.get(state);
 		final ProductState prodHier = mres2prod.get(hier);
 		final STATE fstHier = prodHier.getFst();
 		final STATE sndHier = prodHier.getSnd();
-		return returnSuccessors(mFstOperand.returnSucccessors(
+		return returnSuccessors(mFstOperand.returnSuccessors(
 				prodState.getFst(), fstHier, letter), prodState, hier, sndHier);
 	}
 
@@ -361,7 +361,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
 			final LETTER letter = fstTrans.getLetter();
 			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : 
-						mSndOperand.returnSucccessors(prod.getSnd(), sndHier,  letter)) {
+						mSndOperand.returnSuccessors(prod.getSnd(), sndHier,  letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
 				STATE resSucc;

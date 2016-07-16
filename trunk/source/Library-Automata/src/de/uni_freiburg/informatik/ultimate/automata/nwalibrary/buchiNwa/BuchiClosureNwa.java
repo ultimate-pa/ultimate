@@ -235,9 +235,9 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return mOperand.returnSucccessors(state, hier, letter);
+		return mOperand.returnSuccessors(state, hier, letter);
 	}
 
 	@Override

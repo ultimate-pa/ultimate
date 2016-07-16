@@ -1854,7 +1854,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		Iterable<OutgoingReturnTransition<LETTER, STATE>> succReturn(
 				STATE state, STATE hier, LETTER letter) {
-			return mParentOperand.returnSucccessors(state, hier, letter);
+			return mParentOperand.returnSuccessors(state, hier, letter);
 		}
 		Iterable<STATE> hierPred(STATE state, LETTER letter) {
 			return mParentOperand.hierPred(state, letter);

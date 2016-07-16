@@ -382,7 +382,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null) {
@@ -430,14 +430,14 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				}
 			}
 		}
-		return mCache.returnSucccessors(state, hier, letter);
+		return mCache.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
 		for (final LETTER letter : getReturnAlphabet()) {
-			returnSucccessors(state, hier, letter);
+			returnSuccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
 	}

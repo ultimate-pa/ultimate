@@ -225,7 +225,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(STATE state, STATE hier, INestedWordAutomaton<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
-			for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSucccessors(state, hier, letter)) {
+			for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state, hier, letter)) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
@@ -239,7 +239,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			for (final STATE hier : nwa.hierPred(state, letter)) {
 				int numberOfSuccs = 0;
-				for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSucccessors(state, hier, letter)) {
+				for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state, hier, letter)) {
 					numberOfSuccs++;
 				}
 				if (numberOfSuccs > 1) {

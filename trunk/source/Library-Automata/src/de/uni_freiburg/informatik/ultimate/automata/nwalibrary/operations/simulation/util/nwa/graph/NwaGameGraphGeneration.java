@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.LoopDetector;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameDoubleDeckerSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.game.GameFactory;
@@ -236,7 +237,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Game graph that should get modified by this object
 	 * @param simulationType
 	 *            Simulation method to use for graph generation. Supported types
-	 *            are {@link ESimulationType#DIRECT DIRECT}, {@link ESimulationType#DELAYED DELAYED} and
+	 *            are {@link ESimulationType#DIRECT DIRECT},
+	 *            {@link ESimulationType#DELAYED DELAYED} and
 	 *            {@link ESimulationType#FAIR FAIR}.
 	 * @param possibleEquivalenceClasses
 	 *            A collection of sets which contains states of an automaton
@@ -632,6 +634,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException {
+		// At this point we may validate the correctness of the simulation
+		// results
+		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(mGameGraph, mNwa,
+				mSimulationType, mLogger)) : "The computed simulation results are incorrect.";
+
 		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
 
 		// By default, we assume that there are merge-able states.

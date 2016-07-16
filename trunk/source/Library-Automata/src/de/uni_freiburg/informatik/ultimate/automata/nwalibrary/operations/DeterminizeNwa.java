@@ -309,7 +309,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null || succs.isEmpty()) {
@@ -322,14 +322,14 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			final STATE succ = getOrConstructState(detSucc);
 			mCache.addReturnTransition(state, hier, letter, succ);
 		}
-		return mCache.returnSucccessors(state, hier, letter);
+		return mCache.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
 		for (final LETTER letter : lettersReturn(state)) {
-			returnSucccessors(state, hier, letter);
+			returnSuccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
 	}

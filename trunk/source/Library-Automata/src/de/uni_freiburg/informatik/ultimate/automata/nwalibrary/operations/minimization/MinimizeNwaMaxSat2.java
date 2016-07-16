@@ -281,7 +281,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 			// both DoubleDeckers have same outgoing return symbols
 			for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand
 					.returnSuccessorsGivenHier(linPredState1, hierPredState1)) {
-				for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSucccessors(linPredState2,
+				for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSuccessors(linPredState2,
 						hierPredState2, trans1.getLetter())) {
 					if (knownToBeSimilar(trans1.getSucc(), trans2.getSucc())) {
 						// corresponding clauses is trivially true

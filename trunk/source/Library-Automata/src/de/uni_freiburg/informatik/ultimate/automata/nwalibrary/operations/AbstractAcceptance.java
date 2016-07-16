@@ -154,7 +154,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 				else {
 					final STATE callPred = config.pop();
 					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
-							nwa.returnSucccessors(state, callPred, symbol);
+							nwa.returnSuccessors(state, callPred, symbol);
 					for (final OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
 						final STATE succ = outRans.getSucc();
 						final Stack<STATE> succConfig = (Stack<STATE>) config.clone();

@@ -255,7 +255,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
 		final Set<STATE> result = new HashSet<STATE>();
-		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSucccessors(state, hier, letter)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, hier, letter)) {
 			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
 				result.add(outTrans.getSucc());
 			}
@@ -393,9 +393,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(STATE state, STATE hier, LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, STATE hier, LETTER letter) {
 		final IPredicate<OutgoingReturnTransition<LETTER, STATE>> predicate = mTransitionFilter.getReturnSuccessorPredicate();
-		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSucccessors(state,hier,letter), predicate);
+		return new FilteredIterable<OutgoingReturnTransition<LETTER, STATE>>(mNwa.returnSuccessors(state,hier,letter), predicate);
 	}
 
 	@Override

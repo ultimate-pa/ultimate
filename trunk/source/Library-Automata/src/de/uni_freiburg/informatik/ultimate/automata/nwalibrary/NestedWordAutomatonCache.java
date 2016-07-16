@@ -505,7 +505,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			@Override
@@ -651,7 +651,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSucccessors(
+								mCurrentIterator = returnSuccessors(
 										state, hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext()
 									&& mLetterIterator.hasNext());

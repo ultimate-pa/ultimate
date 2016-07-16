@@ -278,7 +278,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				for (final StateWithRankInfo<STATE> up : lvlrkState.getUpStates(upHier)) {
 					boolean hasSuccessor = false;
 					for (final OutgoingReturnTransition<LETTER, STATE> trans : 
-						mOperand.returnSucccessors(up.getState(), upHier.getState(), letter)) {
+						mOperand.returnSuccessors(up.getState(), upHier.getState(), letter)) {
 						hasSuccessor = true;
 						constraint.addConstaint(downHier, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
 					}
@@ -355,7 +355,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, STATE hier, LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null) {
@@ -364,14 +364,14 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			final Collection<STATE> computedSuccs = computeStates(constraint);
 			mCache.addReturnTransitions(state, hier, letter, computedSuccs);
 		}
-		return mCache.returnSucccessors(state, hier, letter);
+		return mCache.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
 		for (final LETTER letter : getReturnAlphabet()) {
-			returnSucccessors(state, hier, letter);
+			returnSuccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
 	}

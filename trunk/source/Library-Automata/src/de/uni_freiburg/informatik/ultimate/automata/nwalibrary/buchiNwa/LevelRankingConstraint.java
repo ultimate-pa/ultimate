@@ -189,7 +189,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				upRank = mUserDefinedMaxRank;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : 
-							mOperand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
+							mOperand.returnSuccessors(stateUp.getState(),hierUp.getState(),symbol)) {
 				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
 				addConstaint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
 			}
