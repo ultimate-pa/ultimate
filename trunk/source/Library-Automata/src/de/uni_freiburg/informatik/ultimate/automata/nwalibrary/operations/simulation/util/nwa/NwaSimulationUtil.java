@@ -172,33 +172,7 @@ public final class NwaSimulationUtil {
 				}
 			}
 
-			// Return transitions
-			for (OutgoingReturnTransition<LETTER, STATE> leftTrans : nwa.returnSuccessors(leftState)) {
-				STATE leftDest = leftTrans.getSucc();
-				LETTER letter = leftTrans.getLetter();
-
-				boolean foundMatchingTrans = false;
-				for (OutgoingReturnTransition<LETTER, STATE> rightTrans : nwa.returnSuccessors(rightState, letter)) {
-					STATE rightDest = rightTrans.getSucc();
-					// If the right destination also simulates the left
-					// destination, we found a matching transition
-					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
-					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
-						foundMatchingTrans = true;
-						break;
-					}
-				}
-
-				// If no matching transition could be found, the underlying
-				// simulation is incorrect
-				if (!foundMatchingTrans) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Supposedly " + rightState + " simulates " + leftState
-								+ ". But there is no matching partner for " + leftTrans);
-					}
-					return false;
-				}
-			}
+			// Return transitions do not need to get matched
 		}
 
 		if (logger.isInfoEnabled()) {
