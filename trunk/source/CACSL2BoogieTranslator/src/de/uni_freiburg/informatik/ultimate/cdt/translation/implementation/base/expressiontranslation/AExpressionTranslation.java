@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -199,13 +202,16 @@ public abstract class AExpressionTranslation {
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
-	public abstract RValue translateFloatingLiteral(ILocation loc, String val);
+	public final RValue translateFloatingLiteral(ILocation loc, String val) {
+		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+		final Expression expr = constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
+		return new RValue(expr, fpl.getCPrimitive());
+	}
+	
 	
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 	
-	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive inputPrimitive, BigInteger zero) {
-		throw new UnsupportedOperationException("not yet implemented");
-	}
+	public abstract Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value);
 
 	public FunctionDeclarations getFunctionDeclarations() {
 		return mFunctionDeclarations;
@@ -579,7 +585,7 @@ public abstract class AExpressionTranslation {
 			switch (((CPrimitive) cType).getGeneralType()) {
 			case FLOATTYPE:
 				result = constructLiteralForFloatingType(loc,
-						(CPrimitive) cType, BigInteger.ZERO);
+						(CPrimitive) cType, BigDecimal.ZERO);
 				break;
 			case INTTYPE:
 				result = constructLiteralForIntegerType(loc, 
@@ -616,7 +622,7 @@ public abstract class AExpressionTranslation {
 	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue argument);
 	
 	
-	public RValue constructOverapproximationFloatLiteral(ILocation loc, String val, CPrimitive type) {
+	public Expression constructOverapproximationFloatLiteral(ILocation loc, String val, CPrimitive type) {
 		final String functionName = "floatingLiteral_" + makeBoogieIdentifierSuffix(val);
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -626,8 +632,8 @@ public abstract class AExpressionTranslation {
 			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
-		final Expression expr = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {});
-		return new RValue(expr, type);
+		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] {});
+
 	}
 
 	/**

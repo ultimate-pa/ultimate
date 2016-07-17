@@ -1373,19 +1373,9 @@ public class CHandler implements ICHandler {
 					rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
 				} else if (inputType instanceof CEnum) {
 					final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
-					rhsOfComparison =
-							mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
+					rhsOfComparison = mExpressionTranslation.constructZero(loc, (CPrimitive) intType);
 				} else if (inputType instanceof CPrimitive) {
-					final CPrimitive inputPrimitive = (CPrimitive) inputType;
-					if (inputPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-						rhsOfComparison = mExpressionTranslation.constructLiteralForIntegerType(loc, inputPrimitive,
-								BigInteger.ZERO);
-					} else if (inputPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-						rhsOfComparison = mExpressionTranslation.constructLiteralForFloatingType(loc, inputPrimitive,
-								BigInteger.ZERO);
-					} else {
-						throw new AssertionError("illegal case");
-					}
+					rhsOfComparison = mExpressionTranslation.constructZero(loc, (CPrimitive) inputType);
 				} else {
 					throw new AssertionError("illegal case");
 				}

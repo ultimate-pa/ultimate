@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -63,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -125,9 +125,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
-		return new RValue(new RealLiteral(loc, fpl.getDecimalRepresenation().toString()), fpl.getCPrimitive());
+	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value) {
+		return new RealLiteral(loc, value.toString());
 	}
 
 	@Override

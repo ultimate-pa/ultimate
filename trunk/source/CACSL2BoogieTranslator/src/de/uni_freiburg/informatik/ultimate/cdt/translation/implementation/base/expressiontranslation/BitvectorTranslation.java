@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -117,54 +116,54 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return rVal;
 	}
 	
+	
+	
 	@Override
-	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value) {
 		if (mOverapproximateFloatingPointOperations) {
-			return super.constructOverapproximationFloatLiteral(loc, val, fpl.getCPrimitive());
+			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
 		} else {
 			declareFloatingPointConstructors(loc);
 			
-			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(fpl.getCPrimitive());
+			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 			final Expression[] arguments;
 			final String functionName;
 			
-			if (fpl.getDecimalRepresenation().compareTo(BigDecimal.ZERO) == 0) {
+			if (value.compareTo(BigDecimal.ZERO) == 0) {
 				final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
 				final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
 				final Expression[] indices = new Expression[]{eb, sb};
 				final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
 						new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-				if (fpl.getCPrimitive().getType() == PRIMITIVE.FLOAT) {
+				if (type.getType() == PRIMITIVE.FLOAT) {
 					functionName = "zeroFloat";
-				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.DOUBLE) {
+				} else if (type.getType() == PRIMITIVE.DOUBLE) {
 					functionName = "zeroDouble";
-				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.LONGDOUBLE) {
+				} else if (type.getType() == PRIMITIVE.LONGDOUBLE) {
 					functionName = "zeroLongDouble";
 				} else {
 					throw new IllegalArgumentException();
 				}
-				mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, fpl.getCPrimitive());
+				mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, type);
 				arguments = new Expression[] {};
 			} else {
-				if (fpl.getCPrimitive().getType() == PRIMITIVE.FLOAT){
+				if (type.getType() == PRIMITIVE.FLOAT){
 					functionName = "declareFloat";
-				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.DOUBLE) {
+				} else if (type.getType() == PRIMITIVE.DOUBLE) {
 					functionName = "declareDouble";
-				} else if (fpl.getCPrimitive().getType() == PRIMITIVE.LONGDOUBLE) {
+				} else if (type.getType() == PRIMITIVE.LONGDOUBLE) {
 					functionName = "declareLongDouble";
 				} else {
 					throw new IllegalArgumentException();
 				}
-				final Expression realValue = new RealLiteral(loc, fpl.getDecimalRepresenation().toString());
+				final Expression realValue = new RealLiteral(loc, value.toString());
 				arguments = new Expression[] {getRoundingMode(), realValue};
 			}
 			
-			final FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
-			return new RValue(func, fpl.getCPrimitive());
+			return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
 		}
 	}
-	
+
 	@Override
 	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, mTypeSizes, type, value);
