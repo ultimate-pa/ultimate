@@ -880,27 +880,4 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return new RValue(expr, resultCType, true);
 	}
 	
-	
-//	private RValue constructFpClassifyFunction(ILocation loc, String cFunctionName, RValue argument) {
-//		final String smtLibFunctionName = getSmtLibIdForFpClassification(cFunctionName);
-//		final CPrimitive expectedType = getParamTypeForFpClassification(cFunctionName);
-//		if (expectedType != null) {
-//			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
-//					((CPrimitive) arguments[0].getCType()).getType() != expectedType.getType()) {
-//				throw new IllegalArgumentException();
-//			}
-//		}
-//		final CPrimitive paramCType = (CPrimitive) argument.getCType();
-//		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + "fpclassify" + paramCType;
-//		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
-//		final ASTType resultBoogieType = mTypeHandler.ctype2asttype(loc, resultCType);
-//		final Attribute[] attributes = new Attribute[0];
-//		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, paramCType);
-//		ExpressionFactory.newIfThenElseExpression(loc, condition, thenPart, elsePart)
-//		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
-//		final Expression resultExpr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{argument.getValue()});
-//		return new RValue(resultExpr, resultCType, true);
-//	}
-
-
 }
