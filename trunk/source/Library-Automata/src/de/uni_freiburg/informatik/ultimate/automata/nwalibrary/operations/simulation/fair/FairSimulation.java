@@ -917,7 +917,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If vertex now defines a non trivial non possible simulation
 			if (currentProgressMeasure >= mGlobalInfinity) {
-				if (workingVertex.isSpoilerVertex() && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
+				boolean isAuxiliaryVertex = workingVertex.getQ0() == null || workingVertex.getQ1() == null;
+				if (workingVertex.isSpoilerVertex() && !isAuxiliaryVertex && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
 					final boolean wasAdded = mNotSimulatingNonTrivialVertices
 							.add((SpoilerVertex<LETTER, STATE>) workingVertex);
 					if (mAttemptingChanges && wasAdded) {
