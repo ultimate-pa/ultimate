@@ -113,7 +113,7 @@ public class SvComp14CHandler extends CHandler {
 	private static final String ASSUME_STRING = "__VERIFIER_assume";
 	
 	private static final String[] s_UNSUPPORTED_FLOAT_OPERATIONS = {
-		"__finitef","__fpclassifyf","__fpclassifyf","__finitel", "sin"
+		"sin"
 	};
 	private final HashSet<String> mUnsupportedFloatOperations = 
 			new HashSet<>(Arrays.asList(s_UNSUPPORTED_FLOAT_OPERATIONS));

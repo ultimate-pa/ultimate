@@ -1042,7 +1042,8 @@ public class CHandler implements ICHandler {
 			final ExpressionResult result = mExpressionTranslation.createNanOrInfinity(loc, cId);
 			return result;
 		} else if (mExpressionTranslation.isNumberClassificationMacro(cId)) {
-			return mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
+			final RValue rvalue = mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
+			return new ExpressionResult(rvalue);
 		} else if (node.getName().toString().equals("__func__")) {
 			final CType cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
 			final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);

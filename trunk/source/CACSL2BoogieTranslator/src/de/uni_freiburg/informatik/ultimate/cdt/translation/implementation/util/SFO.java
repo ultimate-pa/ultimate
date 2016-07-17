@@ -188,12 +188,6 @@ public final class SFO {
 	public static final String TO_INT = "#to_int";
 	public static final String MEMSET = "ULTIMATE.memset";
 	
-	public static String[] FLOAT_CLASSIFICATION_FUNCTION = {
-			"__isnan","__isnand","__isnanf","__isnanl",
-			"__isinf","__isinfd","__isinff","__isinfl",
-			"__isnormal","__isnormald","__isnormalf","__isnormall",
-		};
-
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */

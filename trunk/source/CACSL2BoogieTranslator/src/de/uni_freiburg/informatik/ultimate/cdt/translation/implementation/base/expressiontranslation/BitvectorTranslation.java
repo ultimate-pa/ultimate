@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -758,97 +758,149 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return mRoundingMode;
 	}
 	
-	/**
-	 * Determine the id of the SMT-LIB function to which we translate 
-	 * a floating point classification function.
-	 * @param id of a C floating point classification function.
-	 * @return id of an SMT-LIB function.
-	 */
-	private String getSmtLibIdForFpClassification(String id) {
-		if (id.startsWith("__")) {
-			final String suffix = id.substring(2);
-			if (suffix.startsWith("isnan")) {
-				return "fp.isNaN";
-			} else if (suffix.startsWith("isinf")) {
-				return "fp.isInfinite";
-			} else if (suffix.startsWith("isnormal")) {
-				return "fp.isNormal";
-			}
-		}
-		throw new IllegalArgumentException("not fp classification function " + id);
-	}
-	
-	/**
-	 * Determine the parameter type of a floating point classification function.
-	 * The type can be determined from the last symbol of the function name. 
-	 * @param id of a C floating point classification function.
-	 * @return C type of parameter
-	 */
-	public static CPrimitive getParamTypeForFpClassification(String id) {
-		char lastCharacer = id.charAt(id.length()-1);
-		switch (lastCharacer) {
-		case 'f':
-			return new CPrimitive(PRIMITIVE.FLOAT);
-		case 'd':
-			return new CPrimitive(PRIMITIVE.DOUBLE);
-		case 'l':
-			return new CPrimitive(PRIMITIVE.LONGDOUBLE);
-		default:
-			return null;
-		}
-	}
-	
-	/**
-	 * Declare Boogie function and return function application for C functions
-	 * from the following list.  
-	 *		"__isnan","__isnand","__isnanf","__isnanl",
-	 *		"__isinf","__isinfd","__isinff","__isinfl",
-	 *		"__isnormal","__isnormald","__isnormalf","__isnormall",
-	 */
-	private RValue constructFloatClassificationFunction(ILocation loc, String cFunctionName, RValue... arguments) {
-		final String smtLibFunctionName = getSmtLibIdForFpClassification(cFunctionName);
-		final CPrimitive expectedType = getParamTypeForFpClassification(cFunctionName);
-		if (expectedType != null) {
-			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
-					((CPrimitive) arguments[0].getCType()).getType() != expectedType.getType()) {
-				throw new IllegalArgumentException();
-			}
-		}
-		final CPrimitive paramCType = (CPrimitive) arguments[0].getCType();
-		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + paramCType;
-		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
-		final ASTType resultBoogieType = new PrimitiveType(loc, SFO.BOOL);
-		final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
-		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, paramCType);
-		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
-		final Expression expr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{arguments[0].getValue()});
-		return new RValue(expr, resultCType, true);
-	}
-
 	@Override
-	public RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments) {
-		if (cFunctionName.equals("sqrt")) {
-			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
-					((CPrimitive) arguments[0].getCType()).getType() != PRIMITIVE.DOUBLE) {
+	public RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue argument) {
+		if (floatFunction.getFunctionName().equals("sqrt")) {
+			if (!(argument.getCType() instanceof CPrimitive) || 
+					((CPrimitive) argument.getCType()).getType() != PRIMITIVE.DOUBLE) {
 				throw new IllegalArgumentException();
 			}
-			final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + cFunctionName;
+			final CPrimitive argumentType = (CPrimitive) argument.getCType();
+			final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + floatFunction.getFunctionName() + argumentType;
 			final String smtLibFunctionName = "fp.sqrt";
 			final CPrimitive resultType = new CPrimitive(PRIMITIVE.DOUBLE);
-			if (!getFunctionDeclarations().getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			if (!getFunctionDeclarations().getDeclaredFunctions().containsKey(boogieFunctionName)) {
 				final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
 				final ASTType astResultType = mTypeHandler.ctype2asttype(loc, resultType);
 				final ASTType roundingMode = new NamedType(loc,BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
-				final ASTType astParamType = mTypeHandler.ctype2asttype(loc, (CPrimitive) arguments[0].getCType());
-				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astResultType, roundingMode, astParamType);
+				final ASTType astParamType = mTypeHandler.ctype2asttype(loc, argumentType);
+				mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, astResultType, roundingMode, astParamType);
 			}
-			final Expression expr = new FunctionApplication(loc, prefixedFunctionName, new Expression[]{getRoundingMode(), arguments[0].getValue()});
+			final Expression expr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{getRoundingMode(), argument.getValue()});
 			return new RValue(expr, resultType);
-		} else if (Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(cFunctionName)) {
-			return constructFloatClassificationFunction(loc, cFunctionName, arguments);
+		} else if (floatFunction.getFunctionName().equals("isnan")) {
+			final String smtLibFunctionName = "fp.isNaN";
+			return constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+		} else if (floatFunction.getFunctionName().equals("isinf")) {
+			final String smtLibFunctionName = "fp.isInfinite";
+			return constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+		} else if (floatFunction.getFunctionName().equals("isnormal")) {
+			final String smtLibFunctionName = "fp.isNormal";
+			return constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+		} else if (floatFunction.getFunctionName().equals("isfinite") || floatFunction.getFunctionName().equals("finite")) {
+			final Expression isNormal;
+			{
+				final String smtLibFunctionName = "fp.isNormal";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isNormal = rvalue.getValue();
+			}
+			final Expression isSubnormal;
+			{
+				final String smtLibFunctionName = "fp.isSubnormal";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isSubnormal = rvalue.getValue();
+			}
+			final Expression isZero;
+			{
+				final String smtLibFunctionName = "fp.isZero";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isZero = rvalue.getValue();
+			}
+			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,  
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNormal, isSubnormal),
+					isZero);
+			return new RValue(resultExpr, new CPrimitive(PRIMITIVE.INT), true);
+		} else if (floatFunction.getFunctionName().equals("fpclassify")) {
+			final Expression isInfinite;
+			{
+				final String smtLibFunctionName = "fp.isInfinite";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isInfinite = rvalue.getValue();
+			}
+			final Expression isNan;
+			{
+				final String smtLibFunctionName = "fp.isNaN";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isNan = rvalue.getValue();
+			}
+			final Expression isNormal;
+			{
+				final String smtLibFunctionName = "fp.isNormal";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isNormal = rvalue.getValue();
+			}
+			final Expression isSubnormal;
+			{
+				final String smtLibFunctionName = "fp.isSubnormal";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isSubnormal = rvalue.getValue();
+			}
+//			final Expression isZero;
+//			{
+//				final String smtLibFunctionName = "fp.isZero";
+//				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+//				isZero = rvalue.getValue();
+//			}
+			final Expression resultExpr = ExpressionFactory.newIfThenElseExpression(loc,
+					isInfinite, handleNumberClassificationMacro(loc, "FP_INFINITE").getValue(),
+					ExpressionFactory.newIfThenElseExpression(loc,
+					isNan, handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
+					ExpressionFactory.newIfThenElseExpression(loc,
+					isNormal, handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
+					ExpressionFactory.newIfThenElseExpression(loc,
+					isSubnormal, handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
+					handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
+			return new RValue(resultExpr, new CPrimitive(PRIMITIVE.INT));
+		} else if (floatFunction.getFunctionName().equals("signbit")) {
+			final Expression isNegative;
+			{
+				final String smtLibFunctionName = "fp.isNegative";
+				final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtLibFunctionName, argument);
+				isNegative = rvalue.getValue();
+			}
+			final CPrimitive cPrimitive = new CPrimitive(PRIMITIVE.INT);
+			final Expression resultExpr = ExpressionFactory.newIfThenElseExpression(loc, isNegative, 
+					constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE), 
+					constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
+			return new RValue(resultExpr, cPrimitive);
 		}
-		throw new UnsupportedOperationException("not yet supported float operation " + cFunctionName);
+		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
 	}
+	
+	
+	private RValue constructSmtFloatClassificationFunction(ILocation loc, String smtLibFunctionName , RValue argument) {
+		final CPrimitive argumentCType = (CPrimitive) argument.getCType();
+		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + argumentCType;
+		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
+		final ASTType resultBoogieType = new PrimitiveType(loc, SFO.BOOL);
+		final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
+		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, argumentCType);
+		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
+		final Expression expr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{argument.getValue()});
+		return new RValue(expr, resultCType, true);
+	}
+	
+	
+//	private RValue constructFpClassifyFunction(ILocation loc, String cFunctionName, RValue argument) {
+//		final String smtLibFunctionName = getSmtLibIdForFpClassification(cFunctionName);
+//		final CPrimitive expectedType = getParamTypeForFpClassification(cFunctionName);
+//		if (expectedType != null) {
+//			if (arguments.length > 1 || !(arguments[0].getCType() instanceof CPrimitive) || 
+//					((CPrimitive) arguments[0].getCType()).getType() != expectedType.getType()) {
+//				throw new IllegalArgumentException();
+//			}
+//		}
+//		final CPrimitive paramCType = (CPrimitive) argument.getCType();
+//		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + "fpclassify" + paramCType;
+//		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
+//		final ASTType resultBoogieType = mTypeHandler.ctype2asttype(loc, resultCType);
+//		final Attribute[] attributes = new Attribute[0];
+//		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, paramCType);
+//		ExpressionFactory.newIfThenElseExpression(loc, condition, thenPart, elsePart)
+//		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
+//		final Expression resultExpr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{argument.getValue()});
+//		return new RValue(resultExpr, resultCType, true);
+//	}
 
 
 }

@@ -613,7 +613,7 @@ public abstract class AExpressionTranslation {
 
 	public abstract Expression getRoundingMode();
 	
-	public abstract RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments);
+	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue argument);
 	
 	
 	public RValue constructOverapproximationFloatLiteral(ILocation loc, String val, CPrimitive type) {
@@ -656,7 +656,7 @@ public abstract class AExpressionTranslation {
 	 * we take 0,1,2,3,4 because gcc on Matthias' Linux system uses
 	 * these numbers.
 	 */
-	public ExpressionResult handleNumberClassificationMacro(ILocation loc, String cId) {
+	public RValue handleNumberClassificationMacro(ILocation loc, String cId) {
 		final int number;
 		switch (cId) {
 		case "FP_NAN": 
@@ -679,6 +679,6 @@ public abstract class AExpressionTranslation {
 		}
 		final CPrimitive type = new CPrimitive(PRIMITIVE.INT);
 		final Expression expr = constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
-		return new ExpressionResult(new RValue(expr, type));
+		return new RValue(expr, type);
 	}
 }

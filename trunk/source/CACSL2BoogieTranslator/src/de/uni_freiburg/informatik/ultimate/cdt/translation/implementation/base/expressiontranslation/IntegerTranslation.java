@@ -794,7 +794,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public RValue constructOtherFloatOperation(ILocation loc, String cFunctionName, RValue... arguments) {
+	public RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue argument) {
 		throw new UnsupportedOperationException("other floating point operations not supported");
 	}
 }
