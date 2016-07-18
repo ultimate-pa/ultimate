@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -114,7 +114,9 @@ public class IndexAnalyzer2 {
 	private void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
 		Term termWithAdditionalInvariants;
 		if (mUseArrayIndexSupportingInvariants) { 
-			termWithAdditionalInvariants = Util.and(mScript, mTerm, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
+			termWithAdditionalInvariants = Util.and(mScript, mTerm, 
+					SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfEqualities(mScript)),
+					SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfNotEquals(mScript)));
 		} else {
 			termWithAdditionalInvariants = mTerm;
 		}
@@ -286,54 +288,12 @@ public class IndexAnalyzer2 {
 //		}
 	}
 	
-	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
 	
-	public Equality isEqual(List<Term> index1, List<Term> index2) {
-		assert index1.size() == index2.size();
-		boolean oneEntryWasUnknown = false;
-		for (int i=0; i<index1.size(); i++) {
-			if (index1.get(i) == index2.get(i)) {
-				continue;
-			}
-			if (isDistinctDoubleton(index1.get(i), index2.get(i))) {
-				return Equality.NOT_EQUAL;
-			}
-			if (isUnknownDoubleton(index1.get(i), index2.get(i))) {
-				oneEntryWasUnknown = true;
-			} else if (isIgnoredDoubleton(index1.get(i), index2.get(i))) {
-				oneEntryWasUnknown = true;
-			} else {
-				assert (isEqualDoubleton(index1.get(i), index2.get(i)));
-			}
-		}
-		if (oneEntryWasUnknown) {
-			return Equality.UNKNOWN;
-		} else {
-			return Equality.EQUAL;
-		}
-	}
-	
-	public boolean isEqualDoubleton(Term t1, Term t2) {
-		return equalDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-	
-	public boolean isDistinctDoubleton(Term t1, Term t2) {
-		return distinctDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-	
-	public boolean isUnknownDoubleton(Term t1, Term t2) {
-		return unknownDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-	
-	public boolean isIgnoredDoubleton(Term t1, Term t2) {
-		return ignoredDoubletons.contains(new Doubleton<Term>(t1, t2));
-	}
-
-	public Term getAdditionalConjunctsEqualities() {
-		return Util.and(mScript, mAdditionalEqualities.toArray(new Term[mAdditionalEqualities.size()]));
-	}
-	
-	public Term getAdditionalConjunctsNotEquals() {
-		return Util.and(mScript, mAdditionalNotequals.toArray(new Term[mAdditionalNotequals.size()]));
+	public IndexAnalysisResult getResult() {
+		return new IndexAnalysisResult(
+				Collections.unmodifiableSet(equalDoubletons),
+				Collections.unmodifiableSet(distinctDoubletons),
+				Collections.unmodifiableSet(unknownDoubletons),
+				Collections.unmodifiableSet(ignoredDoubletons));
 	}
 }

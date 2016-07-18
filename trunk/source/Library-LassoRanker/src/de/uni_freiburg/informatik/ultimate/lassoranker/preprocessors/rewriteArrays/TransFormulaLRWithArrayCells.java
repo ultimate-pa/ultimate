@@ -97,7 +97,7 @@ public class TransFormulaLRWithArrayCells {
 	private EquivalentCells[] mEquivalentCells;
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 	private HashRelation<TermVariable, ArrayIndex> mFirstGeneration2Indices;
-	private IndexAnalyzer2 indexAnalyzer;
+	private IndexAnalysisResult indexAnalyzer;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;
 	
@@ -108,9 +108,9 @@ public class TransFormulaLRWithArrayCells {
 	private Set<TermVariable> computeVarsThatOccurInFormula() {
 		final Set<TermVariable> varsInFormula = new HashSet<>();
 		varsInFormula.addAll(Arrays.asList(tflrwai.getTransFormulaLR().getFormula().getFreeVars()));
-		varsInFormula.addAll(Arrays.asList(indexAnalyzer.getAdditionalConjunctsEqualities().getFreeVars()));
+		varsInFormula.addAll(Arrays.asList(SmtUtils.and(mScript, indexAnalyzer.constructListOfEqualities(mScript)).getFreeVars()));
 		if (!mOverapproximateByOmmitingDisjointIndices) {
-			varsInFormula.addAll(Arrays.asList(indexAnalyzer.getAdditionalConjunctsNotEquals().getFreeVars()));
+			varsInFormula.addAll(Arrays.asList(SmtUtils.and(mScript, indexAnalyzer.constructListOfNotEquals(mScript)).getFreeVars()));
 		}
 		return varsInFormula;
 	}
@@ -149,8 +149,8 @@ public class TransFormulaLRWithArrayCells {
 			doSomething();
 			
 			
-			
-			indexAnalyzer = new IndexAnalyzer2(mResult.getFormula(), mFirstGeneration2Indices, boogie2smt, mResult, equalityAnalysisAtHonda, isStem, mLogger);
+			final IndexAnalyzer2 ia = new IndexAnalyzer2(mResult.getFormula(), mFirstGeneration2Indices, boogie2smt, mResult, equalityAnalysisAtHonda, isStem, mLogger);
+			indexAnalyzer = ia.getResult();
 			final CellVariableBuilder cvb = new CellVariableBuilder(mResult, this, replacementVarFactory, mLogger, mFirstGeneration2Indices, mArrayCellInVars, mArrayCellOutVars);
 			mVariablesThatOccurInFormula = computeVarsThatOccurInFormula();			
 			mArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
@@ -188,13 +188,13 @@ public class TransFormulaLRWithArrayCells {
 					conjuncts = new Term[5];
 				} else {
 					conjuncts = new Term[6];
-					conjuncts[5] = indexAnalyzer.getAdditionalConjunctsNotEquals();
+					conjuncts[5] = SmtUtils.and(mScript, indexAnalyzer.constructListOfNotEquals(mScript));
 				}
 				conjuncts[0] = removedSelect;
 				conjuncts[1] = indexValueConstraints[i];
 				conjuncts[2] = arrayUpdateConstraints[i];
 				conjuncts[3] = arrayEqualityConstraints[i];
-				conjuncts[4] = mSelect2CellVariable[i].transform(indexAnalyzer.getAdditionalConjunctsEqualities());
+				conjuncts[4] = mSelect2CellVariable[i].transform(SmtUtils.and(mScript, indexAnalyzer.constructListOfEqualities(mScript)));
 				disjunctsWithUpdateConstraints[i] = mSelect2CellVariable[i].transform(Util.and(mScript, conjuncts));
 			}
 			final Term resultDisjuntion = Util.or(mScript, disjunctsWithUpdateConstraints);

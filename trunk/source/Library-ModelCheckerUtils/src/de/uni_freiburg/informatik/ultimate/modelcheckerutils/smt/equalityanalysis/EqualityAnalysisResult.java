@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  *
  */
 public class EqualityAnalysisResult {
+	
+	public enum Equality { EQUAL, NOT_EQUAL, UNKNOWN };
+	
 	private final Set<Doubleton<Term>> mEqualDoubletons;
 	private final Set<Doubleton<Term>> mDistinctDoubletons;
 	private final Set<Doubleton<Term>> mUnknownDoubletons;
