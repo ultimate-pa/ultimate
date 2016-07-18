@@ -72,13 +72,13 @@ public class IndexAnalyzer2 {
 	 */
 	private final Set<Doubleton<Term>> ignoredDoubletons = new LinkedHashSet<>();
 	
-	private final EqualitySupportingInvariantAnalysis mIndexSupportingInvariantAnalysis;
+	private final EqualityAnalysisResult mIndexSupportingInvariantAnalysis;
 	
 	private final boolean mUseArrayIndexSupportingInvariants = true;
 	
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
-			EqualitySupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, ILogger logger) {
+			EqualityAnalysisResult equalityAnalysisAtHonda, boolean isStem, ILogger logger) {
 		super();
 		mLogger = logger;
 		mIsStem = isStem;
@@ -86,7 +86,7 @@ public class IndexAnalyzer2 {
 		mboogie2smt = boogie2smt;
 		mScript = boogie2smt.getScript();
 		mTransFormula = tf;
-		mIndexSupportingInvariantAnalysis = indexSupportingInvariantAnalysis;
+		mIndexSupportingInvariantAnalysis = equalityAnalysisAtHonda;
 		mAdditionalEqualities = new ArrayList<>();
 		mAdditionalNotequals = new ArrayList<>();
 		analyze(array2Indices);
@@ -220,18 +220,16 @@ public class IndexAnalyzer2 {
 
 
 	private void processDoubletonsWithArrayIndexInvariants(Set<Doubleton<Term>> doubletons) {
-		final EqualityAnalysisResult equalityAnalysisResult =
-				mIndexSupportingInvariantAnalysis.getEqualityAnalysisResult();
 		for (final Doubleton<Term> doubleton : doubletons) {
 			final Doubleton<Term> definingDoubleton = constructDefiningDoubleton(doubleton);
 			if (definingDoubleton.getOneElement() == definingDoubleton.getOtherElement()) {
 				// trivially equal
 				addEqualDoubleton(doubleton);
-			} else if (equalityAnalysisResult.getEqualDoubletons().contains(definingDoubleton)) {
+			} else if (mIndexSupportingInvariantAnalysis.getEqualDoubletons().contains(definingDoubleton)) {
 				addEqualDoubleton(doubleton);
-			} else if (equalityAnalysisResult.getDistinctDoubletons().contains(definingDoubleton)) {
+			} else if (mIndexSupportingInvariantAnalysis.getDistinctDoubletons().contains(definingDoubleton)) {
 				addDistinctDoubleton(doubleton);
-			} else if (equalityAnalysisResult.getUnknownDoubletons().contains(definingDoubleton)) {
+			} else if (mIndexSupportingInvariantAnalysis.getUnknownDoubletons().contains(definingDoubleton)) {
 				addUnknownDoubleton(doubleton);
 			} else {
 				throw new AssertionError("inVar (or outVar) doulbeton has to be in invariant anlysis");

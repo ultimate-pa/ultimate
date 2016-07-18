@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -118,7 +119,7 @@ public class TransFormulaLRWithArrayCells {
 			IUltimateServiceProvider services, 
 			ReplacementVarFactory replacementVarFactory, Script script,
 			TransFormulaLRWithArrayInformation tflrwai, 
-			EqualitySupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
+			EqualityAnalysisResult equalityAnalysisAtHonda, 
 			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc, boolean moverapproximateByOmmitingDisjointIndices, boolean isStem) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -149,7 +150,7 @@ public class TransFormulaLRWithArrayCells {
 			
 			
 			
-			indexAnalyzer = new IndexAnalyzer2(mResult.getFormula(), mFirstGeneration2Indices, boogie2smt, mResult, indexSupportingInvariantAnalysis, isStem, mLogger);
+			indexAnalyzer = new IndexAnalyzer2(mResult.getFormula(), mFirstGeneration2Indices, boogie2smt, mResult, equalityAnalysisAtHonda, isStem, mLogger);
 			final CellVariableBuilder cvb = new CellVariableBuilder(mResult, this, replacementVarFactory, mLogger, mFirstGeneration2Indices, mArrayCellInVars, mArrayCellOutVars);
 			mVariablesThatOccurInFormula = computeVarsThatOccurInFormula();			
 			mArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();

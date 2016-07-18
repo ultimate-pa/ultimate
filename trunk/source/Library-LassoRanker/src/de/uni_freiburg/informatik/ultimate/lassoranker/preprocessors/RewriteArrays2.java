@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -212,11 +213,16 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		final TransFormulaLRWithArrayInformation loopTfwai = new TransFormulaLRWithArrayInformation(
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
 		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
-		final EqualitySupportingInvariantAnalysis isia = new EqualitySupportingInvariantAnalysis(computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
-		mArrayIndexSupportingInvariants.addAll(isia.getEqualityAnalysisResult().constructListOfEqualities(mScript));
-		mArrayIndexSupportingInvariants.addAll(isia.getEqualityAnalysisResult().constructListOfNotEquals(mScript));
-		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
-		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);
+		final EqualityAnalysisResult equalityAnalysisAtHonda;
+		{
+			final EqualitySupportingInvariantAnalysis isia = new EqualitySupportingInvariantAnalysis(
+					computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+			equalityAnalysisAtHonda = isia.getEqualityAnalysisResult();
+		}
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfEqualities(mScript));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfNotEquals(mScript));
+		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, equalityAnalysisAtHonda, mboogie2smt, null, overapproximate, true);
+		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, equalityAnalysisAtHonda, mboogie2smt, acrvc, overapproximate, false);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !s_AdditionalChecksIfAssertionsEnabled || checkStemImplication(
 				mServices, mLogger, lasso, newLasso, mboogie2smt) : "result of RewriteArrays too strong";
