@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -69,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -81,9 +82,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class TotalInterpolationAutomatonBuilder {
+public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
-	private final ArrayList<IPredicate> mStateSequence;
+	private final List<IPredicate> mStateSequence;
 	// private final IPredicate[] mInterpolants;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
 	private final PredicateUnifier mPredicateUnifier;
@@ -100,7 +101,7 @@ public class TotalInterpolationAutomatonBuilder {
 	private final AutomatonEpimorphism<IPredicate> mEpimorphism;
 	private final IHoareTripleChecker mHtc;
 	private final ModifiableGlobalVariableManager mModifiedGlobals;
-	private final INTERPOLATION mInterpolation;
+	private final InterpolationTechnique mInterpolation;
 
 	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
 	private final IUltimateServiceProvider mServices;
@@ -110,7 +111,7 @@ public class TotalInterpolationAutomatonBuilder {
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final SmtManager smtManager,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final ModifiableGlobalVariableManager modifiableGlobals,
-			final INTERPOLATION interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks, 
+			final InterpolationTechnique interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
@@ -123,7 +124,8 @@ public class TotalInterpolationAutomatonBuilder {
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mAbstraction = abstraction;
 		final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
-		mIA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory)).getResult();
+		mIA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory))
+				.getResult();
 		mModifiedGlobals = modifiableGlobals;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<IPredicate>(new AutomataLibraryServices(mServices));
@@ -140,8 +142,8 @@ public class TotalInterpolationAutomatonBuilder {
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, 
-				mSmtManager, mModifiedGlobals, mPredicateUnifier);
+		mHtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mSmtManager,
+				mModifiedGlobals, mPredicateUnifier);
 		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
@@ -195,17 +197,21 @@ public class TotalInterpolationAutomatonBuilder {
 	private boolean interpolantAutomatonContainsTransition(final IPredicate predItp,
 			final Transitionlet<CodeBlock, IPredicate> transition, final IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
-			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
+					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
 			return mIA.succInternal(predItp, internalTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof OutgoingCallTransition) {
-			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans =
+					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 			return mIA.succCall(predItp, callTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof OutgoingReturnTransition) {
-			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans =
+					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
 			return mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter()).contains(succItp);
 		} else if (transition instanceof SummaryReturnTransition) {
-			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans =
+					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			final IPredicate linPredItp = mEpimorphism.getMapping(summaryTrans.getLinPred());
 			return mIA.succReturn(linPredItp, predItp, summaryTrans.getLetter()).contains(succItp);
 		} else {
@@ -216,16 +222,20 @@ public class TotalInterpolationAutomatonBuilder {
 	private NestedRun<CodeBlock, IPredicate> constructRunOfLengthOne(final IPredicate p,
 			final Transitionlet<CodeBlock, IPredicate> transition) {
 		if (transition instanceof OutgoingInternalTransition) {
-			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
+					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(p, internalTrans.getLetter(), NestedWord.INTERNAL_POSITION, internalTrans.getSucc());
 		} else if (transition instanceof OutgoingCallTransition) {
-			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans =
+					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(p, callTrans.getLetter(), NestedWord.PLUS_INFINITY, callTrans.getSucc());
 		} else if (transition instanceof OutgoingReturnTransition) {
-			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans =
+					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(p, returnTrans.getLetter(), NestedWord.MINUS_INFINITY, returnTrans.getSucc());
 		} else if (transition instanceof SummaryReturnTransition) {
-			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans =
+					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			return new NestedRun<>(summaryTrans.getLinPred(), summaryTrans.getLetter(), NestedWord.MINUS_INFINITY,
 					summaryTrans.getSucc());
 		} else {
@@ -237,28 +247,34 @@ public class TotalInterpolationAutomatonBuilder {
 	private void checkRunOfLenthOne(final IPredicate predItp, final Transitionlet<CodeBlock, IPredicate> transition,
 			final IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
-			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
+					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
 			final Validity validity = mHtc.checkInternal(predItp, (IInternalAction) transition.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				mIA.addInternalTransition(predItp, internalTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingCallTransition) {
-			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans =
+					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 			final Validity validity = mHtc.checkCall(predItp, (ICallAction) callTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				mIA.addCallTransition(predItp, callTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingReturnTransition) {
-			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans =
+					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
-			final Validity validity = mHtc.checkReturn(predItp, hierPredItp, (IReturnAction) returnTrans.getLetter(), succItp);
+			final Validity validity =
+					mHtc.checkReturn(predItp, hierPredItp, (IReturnAction) returnTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				mIA.addReturnTransition(predItp, hierPredItp, returnTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof SummaryReturnTransition) {
-			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans =
+					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			final IPredicate linPredItp = mEpimorphism.getMapping(summaryTrans.getLinPred());
-			final Validity validity = mHtc.checkReturn(linPredItp, predItp, (IReturnAction) summaryTrans.getLetter(), succItp);
+			final Validity validity =
+					mHtc.checkReturn(linPredItp, predItp, (IReturnAction) summaryTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				mIA.addReturnTransition(linPredItp, predItp, summaryTrans.getLetter(), succItp);
 			}
@@ -269,13 +285,17 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private void caseDistinction(final IPredicate p, final Transitionlet<CodeBlock, IPredicate> transition, final IPredicate succ) {
 		if (transition instanceof OutgoingInternalTransition) {
-			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
+					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
 		} else if (transition instanceof OutgoingCallTransition) {
-			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingCallTransition<CodeBlock, IPredicate> callTrans =
+					(OutgoingCallTransition<CodeBlock, IPredicate>) transition;
 		} else if (transition instanceof OutgoingReturnTransition) {
-			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
+			final OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans =
+					(OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 		} else if (transition instanceof SummaryReturnTransition) {
-			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
+			final SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans =
+					(SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}
@@ -289,7 +309,7 @@ public class TotalInterpolationAutomatonBuilder {
 		final IPredicate postcondition = mEpimorphism.getMapping(last);
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		
+
 		InterpolatingTraceChecker tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
@@ -302,11 +322,10 @@ public class TotalInterpolationAutomatonBuilder {
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
-					run.getWord(), mSmtManager, mModifiedGlobals, 
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mSmtManager,
+					mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
 					mServices, true, mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
-			
+
 			break;
 		case PathInvariants:
 		default:
@@ -355,7 +374,8 @@ public class TotalInterpolationAutomatonBuilder {
 		final NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {
 			if (nw.isInternalPosition(i)) {
-				mIA.addInternalTransition(ipp.getInterpolant(i), (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				mIA.addInternalTransition(ipp.getInterpolant(i), (CodeBlock) nw.getSymbol(i),
+						ipp.getInterpolant(i + 1));
 			} else if (nw.isCallPosition(i)) {
 				mIA.addCallTransition(ipp.getInterpolant(i), (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
 			} else if (nw.isReturnPosition(i)) {
@@ -366,7 +386,8 @@ public class TotalInterpolationAutomatonBuilder {
 					final int callPredPos = nw.getCallPosition(i);
 					hierPred = ipp.getInterpolant(callPredPos);
 				}
-				mIA.addReturnTransition(ipp.getInterpolant(i), hierPred, (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				mIA.addReturnTransition(ipp.getInterpolant(i), hierPred, (CodeBlock) nw.getSymbol(i),
+						ipp.getInterpolant(i + 1));
 			} else {
 				throw new AssertionError();
 			}
@@ -374,13 +395,12 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 	/**
-	 * Add a sequence of interpolants itp_1,...,itp_{n-1} for a sequence of
-	 * states s_0,...,s_n. For each i add itp_i to the interpolant automaton if
-	 * not already contained add s_i to the worklist add s_i to the annotated
-	 * states add (s_i, itp_i) to the epimorphism Return the number of
-	 * (different) interpolants that have been in the automaton before.
+	 * Add a sequence of interpolants itp_1,...,itp_{n-1} for a sequence of states s_0,...,s_n. For each i add itp_i to
+	 * the interpolant automaton if not already contained add s_i to the worklist add s_i to the annotated states add
+	 * (s_i, itp_i) to the epimorphism Return the number of (different) interpolants that have been in the automaton
+	 * before.
 	 */
-	private int addInterpolants(final ArrayList<IPredicate> stateSequence, final IPredicate[] interpolants) {
+	private int addInterpolants(final List<IPredicate> stateSequence, final IPredicate[] interpolants) {
 		int numberOfNewPredicates = 0;
 		for (int i = 0; i < interpolants.length; i++) {
 			final IPredicate state = stateSequence.get(i + 1);
@@ -398,10 +418,11 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private NestedRun<CodeBlock, IPredicate> findRun(final IPredicate p, final Set<IPredicate> annotated)
 			throws AutomataOperationCanceledException {
-		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction, 
+		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
 				Collections.singleton(p), Collections.emptySet(), mAnnotated)).getNestedRun();
 	}
 
+	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mIA;
 	}
@@ -610,8 +631,8 @@ public class TotalInterpolationAutomatonBuilder {
 		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 			final StringBuilder sb = new StringBuilder();
 
-			for (final String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,
-					s_UselessRunGeq2 }) {
+			for (final String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches,
+					s_UsefullRunGeq2, s_UselessRunGeq2 }) {
 				final int value = (int) benchmarkData.getValue(id);
 				sb.append(id);
 				sb.append(": ");

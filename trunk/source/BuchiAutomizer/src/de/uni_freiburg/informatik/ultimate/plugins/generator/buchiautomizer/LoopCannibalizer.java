@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
@@ -76,7 +76,7 @@ public class LoopCannibalizer {
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
-			final BuchiModGlobalVarManager buchiModGlobalVarManager, final INTERPOLATION interpolation,
+			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
@@ -105,7 +105,7 @@ public class LoopCannibalizer {
 		return sb;
 	}
 
-	private void cannibalize(final INTERPOLATION interpolation) {
+	private void cannibalize(final InterpolationTechnique interpolation) {
 		final int startPosition;
 		if (mLoop.isCallPosition(0) && !mLoop.isPendingCall(0)) {
 			final int correspondingReturn = mLoop.getReturnPosition(0);
@@ -139,7 +139,7 @@ public class LoopCannibalizer {
 		}
 	}
 
-	private InterpolatingTraceChecker getTraceChecker(final NestedWord<CodeBlock> shifted, final INTERPOLATION interpolation) {
+	private InterpolatingTraceChecker getTraceChecker(final NestedWord<CodeBlock> shifted, final InterpolationTechnique interpolation) {
 		InterpolatingTraceChecker traceChecker;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:

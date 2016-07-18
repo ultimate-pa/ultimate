@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 
 /**
- * Constructs the canonical interpolant automaton. Boolean flags determine if we
- * also add selfloops in the initial and final state. I think this construction
- * is unsound if the precondition if not the "true" predicate.
+ * Constructs the canonical interpolant automaton. Boolean flags determine if we also add selfloops in the initial and
+ * final state. I think this construction is unsound if the precondition if not the "true" predicate.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
+public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
+		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
 
@@ -65,13 +65,14 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
-	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, 
+	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
 			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
-		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
-				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
+		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+				alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(),
+				predicateFactory);
 		mSmtManager = smtManager;
 	}
 
@@ -147,7 +148,8 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		mIA.addState(false, true, mInterpolantGenerator.getPostcondition());
 	}
 
-	public NestedWordAutomaton<CodeBlock, IPredicate> getResultAutomaton() {
+	@Override
+	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mIA;
 	}
 
@@ -185,14 +187,14 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		}
 		// 2016-05-18 Matthias: Do not add alternative returns, this seems to be expensive
 		// and I am too lazy to construct another IHoaretripleChecker for these few checks.
-//		for (IPredicate hier : mAlternativeCallPredecessors.get(callPos)) {
-//			LBool isInductive = mSmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
-//			mLogger.debug("Trying to add alternative call Predecessor");
-//			if (isInductive == Script.LBool.UNSAT) {
-//				mIA.addReturnTransition(pred, hier, symbol, succ);
-//				mLogger.debug("Added return from alternative call Pred");
-//			}
-//		}
+		// for (IPredicate hier : mAlternativeCallPredecessors.get(callPos)) {
+		// LBool isInductive = mSmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
+		// mLogger.debug("Trying to add alternative call Predecessor");
+		// if (isInductive == Script.LBool.UNSAT) {
+		// mIA.addReturnTransition(pred, hier, symbol, succ);
+		// mLogger.debug("Added return from alternative call Pred");
+		// }
+		// }
 	}
 
 }

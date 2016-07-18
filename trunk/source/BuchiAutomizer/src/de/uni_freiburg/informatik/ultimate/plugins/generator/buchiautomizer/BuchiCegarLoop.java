@@ -114,7 +114,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -218,7 +218,7 @@ public class BuchiCegarLoop {
 	private final boolean mConstructTermcompProof;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
-	private final INTERPOLATION mInterpolation;
+	private final InterpolationTechnique mInterpolation;
 
 	private final RefineBuchi mRefineBuchi;
 	private final List<RefineBuchi.RefinementSetting> mBuchiRefinementSettingSequence;
@@ -292,7 +292,7 @@ public class BuchiCegarLoop {
 				AutomataMinimization.class);
 		mCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
-				INTERPOLATION.class);
+				InterpolationTechnique.class);
 
 		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation, mServices);
 		mConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
@@ -853,7 +853,7 @@ public class BuchiCegarLoop {
 				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction),
 				mSmtManager, mAbstraction.getStateFactory(), mLogger);
 		iab.analyze();
-		mInterpolAutomaton = iab.getResultAutomaton();
+		mInterpolAutomaton = iab.getResult();
 
 		try {
 			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton,

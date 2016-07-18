@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -70,11 +70,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(
 								0, 1000000)),
-				new UltimatePreferenceItem<INTERPOLATION>(
+				new UltimatePreferenceItem<InterpolationTechnique>(
 						TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, 
-						INTERPOLATION.ForwardPredicates,
+						InterpolationTechnique.ForwardPredicates,
 						PreferenceType.Combo, 
-						TraceAbstractionPreferenceInitializer.INTERPOLATION.values()),
+						TraceAbstractionPreferenceInitializer.InterpolationTechnique.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverRank,
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank,

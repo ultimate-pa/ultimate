@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
  * InterpolatingTraceChecker that returns path invariants as interpolants.
@@ -82,13 +82,13 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
 			super.unlockSmtManager();
-			computeInterpolants(new AllIntegers(), INTERPOLATION.PathInvariants);
+			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 		}
 	}
 
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final INTERPOLATION interpolation) {
+			final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
 				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
 				super.getPostcondition(), mPredicateUnifier, super.mSmtManager,

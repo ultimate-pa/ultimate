@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
  * Check if a trace fulfills a specification and additionally compute a 
@@ -129,7 +129,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            Method that is used to compute the interpolants.
 	 */
 	protected abstract void computeInterpolants(Set<Integer> interpolatedPositions,
-			INTERPOLATION interpolation);
+			InterpolationTechnique interpolation);
 
 	private boolean testRelevantVars() {
 		boolean result = true;

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 public class GlobalSettings {
@@ -49,8 +49,8 @@ public class GlobalSettings {
 //	String _dotGraphPath = "C:/temp/codeCheckGraphs";
 //	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
 //	public SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
-//	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
-	public INTERPOLATION _interpolationMode = INTERPOLATION.ForwardPredicates;
+//	InterpolationTechnique _interpolationMode = InterpolationTechnique.Craig_TreeInterpolation;
+	public InterpolationTechnique _interpolationMode = InterpolationTechnique.ForwardPredicates;
 	public PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
 	public EdgeCheckOptimization _edgeCheckOptimization = EdgeCheckOptimization.NONE;
 	public Checker checker = Checker.ULTIMATE;

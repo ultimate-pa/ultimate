@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
@@ -47,7 +47,7 @@ public class TAPreferences {
 	private final int mMaxIterations;
 	private final int mwatchIteration;
 	private final Artifact mArtifact;
-	private final INTERPOLATION mInterpolation;
+	private final InterpolationTechnique mInterpolation;
 	private final InterpolantAutomaton mInterpolantAutomaton;
 	private final boolean mDumpAutomata;
 	private final Format mAutomataFormat;
@@ -101,7 +101,7 @@ public class TAPreferences {
 
 		mInterpolation = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
-				INTERPOLATION.class);
+				InterpolationTechnique.class);
 
 		mInterpolantAutomaton = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON,
@@ -216,7 +216,7 @@ public class TAPreferences {
 	/**
 	 * @return the interpolatedLocs
 	 */
-	public INTERPOLATION interpolation() {
+	public InterpolationTechnique interpolation() {
 		return mInterpolation;
 	}
 

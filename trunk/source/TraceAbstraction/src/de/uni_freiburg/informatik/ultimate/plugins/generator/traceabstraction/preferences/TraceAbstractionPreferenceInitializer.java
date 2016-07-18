@@ -69,8 +69,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_DumpToFile, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_Path, RcfgPreferenceInitializer.DEF_Path, PreferenceType.Directory),
 				
-				new UltimatePreferenceItem<INTERPOLATION>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
-						PreferenceType.Combo, INTERPOLATION.values()),
+				new UltimatePreferenceItem<InterpolationTechnique>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
+						PreferenceType.Combo, InterpolationTechnique.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_INTERPOLANTS_CONSOLIDATION, false,
 							PreferenceType.Boolean),
 				new UltimatePreferenceItem<UnsatCores>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL,
@@ -173,7 +173,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_SEPARATE_SOLVER = true;
 	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
 	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
-	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
+	public static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPAUTOMATA = false;
 	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
@@ -201,7 +201,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK, TOTALINTERPOLATION2
 	}
 
-	public enum INTERPOLATION {
+	public enum InterpolationTechnique {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP, PathInvariants
 	}
 

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann
  *
  */
-public class TwoTrackInterpolantAutomatonBuilder {
+public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 	private final IUltimateServiceProvider mServices;
 
 	private final NestedWord<CodeBlock> mNestedWord;
@@ -274,6 +274,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		}
 	}
 
+	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mTTIA;
 	}
