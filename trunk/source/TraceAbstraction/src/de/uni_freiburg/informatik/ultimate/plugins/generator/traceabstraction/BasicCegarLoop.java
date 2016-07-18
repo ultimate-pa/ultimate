@@ -460,7 +460,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						mInterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(mAbstraction),
 						mSmtManager, mPredicateFactoryInterpolantAutomata, mLogger);
 				iab.analyze();
-				mInterpolAutomaton = iab.getInterpolantAutomaton();
+				mInterpolAutomaton = iab.getResultAutomaton();
 				mLogger.info("Interpolants " + mInterpolAutomaton.getStates());
 
 				// mCegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
@@ -515,7 +515,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							mInterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(mAbstraction),
 							mSmtManager, mPredicateFactoryInterpolantAutomata, mLogger);
 					iab.analyze();
-					mInterpolAutomaton = iab.getInterpolantAutomaton();
+					mInterpolAutomaton = iab.getResultAutomaton();
 					mLogger.info("Interpolants " + mInterpolAutomaton.getStates());
 
 					// mCegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());

@@ -147,7 +147,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		mIA.addState(false, true, mInterpolantGenerator.getPostcondition());
 	}
 
-	public NestedWordAutomaton<CodeBlock, IPredicate> getInterpolantAutomaton() {
+	public NestedWordAutomaton<CodeBlock, IPredicate> getResultAutomaton() {
 		return mIA;
 	}
 

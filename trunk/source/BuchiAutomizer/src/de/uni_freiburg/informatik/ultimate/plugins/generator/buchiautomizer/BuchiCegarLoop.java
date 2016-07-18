@@ -853,7 +853,7 @@ public class BuchiCegarLoop {
 				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction),
 				mSmtManager, mAbstraction.getStateFactory(), mLogger);
 		iab.analyze();
-		mInterpolAutomaton = iab.getInterpolantAutomaton();
+		mInterpolAutomaton = iab.getResultAutomaton();
 
 		try {
 			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
