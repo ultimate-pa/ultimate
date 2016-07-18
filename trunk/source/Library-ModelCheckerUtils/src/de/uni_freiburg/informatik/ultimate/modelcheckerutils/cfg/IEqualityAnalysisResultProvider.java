@@ -57,14 +57,26 @@ public interface IEqualityAnalysisResultProvider<LOC> {
 			this.mUnknownDoubletons = unknownDoubletons;
 		}
 
+		/**
+		 * @return all Doubletons (t1,t2) such that our analysis was able
+		 * to prove that t1==t2 holds.
+		 */
 		public Set<Doubleton<Term>> getEqualDoubletons() {
 			return mEqualDoubletons;
 		}
 
+		/**
+		 * @return all Doubletons (t1,t2) such that our analysis was able
+		 * to prove that t1!=t2 holds.
+		 */
 		public Set<Doubleton<Term>> getDistinctDoubletons() {
 			return mDistinctDoubletons;
 		}
 
+		/**
+		 * @return all Doubletons (t1,t2) such that our analysis was neither able
+		 * to prove that t1==t2 holds nor that t1!=t2 holds.
+		 */
 		public Set<Doubleton<Term>> getUnknownDoubletons() {
 			return mUnknownDoubletons;
 		}

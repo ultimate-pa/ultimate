@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IEqualityAnalysisResultProvider.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -219,16 +220,18 @@ public class IndexAnalyzer2 {
 
 
 	private void processDoubletonsWithArrayIndexInvariants(Set<Doubleton<Term>> doubletons) {
+		final EqualityAnalysisResult equalityAnalysisResult =
+				mIndexSupportingInvariantAnalysis.getEqualityAnalysisResult();
 		for (final Doubleton<Term> doubleton : doubletons) {
 			final Doubleton<Term> definingDoubleton = constructDefiningDoubleton(doubleton);
 			if (definingDoubleton.getOneElement() == definingDoubleton.getOtherElement()) {
 				// trivially equal
 				addEqualDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.getEqualDoubletons().contains(definingDoubleton)) {
+			} else if (equalityAnalysisResult.getEqualDoubletons().contains(definingDoubleton)) {
 				addEqualDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.getDistinctDoubletons().contains(definingDoubleton)) {
+			} else if (equalityAnalysisResult.getDistinctDoubletons().contains(definingDoubleton)) {
 				addDistinctDoubleton(doubleton);
-			} else if (mIndexSupportingInvariantAnalysis.getUnknownDoubletons().contains(definingDoubleton)) {
+			} else if (equalityAnalysisResult.getUnknownDoubletons().contains(definingDoubleton)) {
 				addUnknownDoubleton(doubleton);
 			} else {
 				throw new AssertionError("inVar (or outVar) doulbeton has to be in invariant anlysis");

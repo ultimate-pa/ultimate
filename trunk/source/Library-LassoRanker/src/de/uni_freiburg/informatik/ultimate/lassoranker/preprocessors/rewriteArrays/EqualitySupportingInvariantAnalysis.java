@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IEqualityAnalysisResultProvider.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -205,31 +206,12 @@ public class EqualitySupportingInvariantAnalysis {
 	public List<Term> getAdditionalConjunctsNotEquals() {
 		return Collections.unmodifiableList(mNotEqualsSupportingInvariants);
 	}
-
-
-	/**
-	 * @return all Doubletons (t1,t2) such that our analysis was able
-	 * to prove that t1!=t2 holds.
-	 */
-	public Set<Doubleton<Term>> getDistinctDoubletons() {
-		return Collections.unmodifiableSet(mDistinctDoubletons);
+	
+	public EqualityAnalysisResult getEqualityAnalysisResult() {
+		return new EqualityAnalysisResult(
+				Collections.unmodifiableSet(mEqualDoubletons),
+				Collections.unmodifiableSet(mDistinctDoubletons),
+				Collections.unmodifiableSet(mUnknownDoubletons));
 	}
 
-
-	/**
-	 * @return all Doubletons (t1,t2) such that our analysis was able
-	 * to prove that t1==t2 holds.
-	 */
-	public Set<Doubleton<Term>> getEqualDoubletons() {
-		return Collections.unmodifiableSet(mEqualDoubletons);
-	}
-
-
-	/**
-	 * @return all Doubletons (t1,t2) such that our analysis was neither able
-	 * to prove that t1==t2 holds nor that t1!=t2 holds.
-	 */
-	public Set<Doubleton<Term>> getUnknownDoubletons() {
-		return Collections.unmodifiableSet(mUnknownDoubletons);
-	}
 }
