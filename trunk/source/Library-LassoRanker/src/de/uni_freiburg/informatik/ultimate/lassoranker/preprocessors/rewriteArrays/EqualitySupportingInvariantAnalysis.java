@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -38,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -138,37 +136,27 @@ public class EqualitySupportingInvariantAnalysis {
 	
 	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
 		mDistinctDoubletons.add(doubleton);
-		mNotEqualsSupportingInvariants.add(notEqualTerm(doubleton));
 	}
 	
 	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
 		mEqualDoubletons.add(doubleton);
-		mEqualitySupportingInvariants.add(equalTerm(doubleton));
 	}
-	
 	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
 		mUnknownDoubletons.add(doubleton);
 	}
 	
 	
-	private Term equalTerm(Doubleton<Term> doubleton) {
-		return SmtUtils.binaryEquality(mScript, doubleton.getOneElement(), doubleton.getOtherElement());
-	}
 
-	
-	private Term notEqualTerm(Doubleton<Term> doubleton) {
-		return SmtUtils.not(mScript, equalTerm(doubleton));
-	}
 	
 	
 	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {
-		Term invariantCandidateTerm;
+		final Term invariantCandidateTerm;
 		if (checkEquals) {
-			invariantCandidateTerm = equalTerm(definingDoubleton);
+			invariantCandidateTerm = EqualityAnalysisResult.equalTerm(mScript, definingDoubleton);
 		} else {
-			invariantCandidateTerm = notEqualTerm(definingDoubleton);
+			invariantCandidateTerm = EqualityAnalysisResult.notEqualTerm(mScript, definingDoubleton);
 		}
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
 		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
@@ -189,23 +177,7 @@ public class EqualitySupportingInvariantAnalysis {
 		}
 	}
 	
-	
-	/**
-	 * @return the list of all inferred equalities where each equality
-	 * is given as an SMT term.
-	 */
-	public List<Term> getEqualities() {
-		return Collections.unmodifiableList(mEqualitySupportingInvariants);
-	}
 
-	
-	/**
-	 * @return the list of all inferred not-equals relations where each 
-	 * not-equals relation is given as an SMT term.
-	 */
-	public List<Term> getAdditionalConjunctsNotEquals() {
-		return Collections.unmodifiableList(mNotEqualsSupportingInvariants);
-	}
 	
 	public EqualityAnalysisResult getEqualityAnalysisResult() {
 		return new EqualityAnalysisResult(

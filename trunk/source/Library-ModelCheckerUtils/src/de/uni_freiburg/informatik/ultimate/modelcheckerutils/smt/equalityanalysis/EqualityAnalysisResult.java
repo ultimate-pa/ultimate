@@ -26,9 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -73,6 +77,48 @@ public class EqualityAnalysisResult {
 	 */
 	public Set<Doubleton<Term>> getUnknownDoubletons() {
 		return mUnknownDoubletons;
+	}
+	
+	/**
+	 * @return a possibly simplified version of the term (= t1 t2) 
+	 * for a given Doubleton (t1,t2).
+	 */
+	public static Term equalTerm(Script script, Doubleton<Term> doubleton) {
+		return SmtUtils.binaryEquality(script, doubleton.getOneElement(), doubleton.getOtherElement());
+	}
+
+	/**
+	 * @return a possibly simplified version of the term (not (= t1 t2)) 
+	 * for a given Doubleton (t1,t2).
+	 */
+	public static Term notEqualTerm(Script script, Doubleton<Term> doubleton) {
+		return SmtUtils.not(script, equalTerm(script, doubleton));
+	}
+	
+	
+	/**
+	 * @return a list of all inferred equalities where each equality
+	 * is given as an SMT term.
+	 */
+	public List<Term> constructListOfEqualities(final Script script) {
+		final List<Term> result = new ArrayList<Term>();
+		for (final Doubleton<Term> doubleton : getEqualDoubletons()) {
+			result.add(equalTerm(script, doubleton));
+		}
+		return result;
+	}
+
+	
+	/**
+	 * @return a list of all inferred not-equals relations where each 
+	 * not-equals relation is given as an SMT term.
+	 */
+	public List<Term> constructListOfNotEquals(final Script script) {
+		final List<Term> result = new ArrayList<Term>();
+		for (final Doubleton<Term> doubleton : getDistinctDoubletons()) {
+			result.add(notEqualTerm(script, doubleton));
+		}
+		return result;
 	}
 
 

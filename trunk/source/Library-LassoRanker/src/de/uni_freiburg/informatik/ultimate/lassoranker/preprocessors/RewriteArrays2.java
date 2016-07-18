@@ -213,8 +213,8 @@ public class RewriteArrays2 extends LassoPreprocessor {
 					mServices, lasso.getLoop(), mReplacementVarFactory, mScript, mboogie2smt, stemTfwai);
 		final ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
 		final EqualitySupportingInvariantAnalysis isia = new EqualitySupportingInvariantAnalysis(computeDoubletons(acrvc), mboogie2smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
-		mArrayIndexSupportingInvariants.addAll(isia.getEqualities());
-		mArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
+		mArrayIndexSupportingInvariants.addAll(isia.getEqualityAnalysisResult().constructListOfEqualities(mScript));
+		mArrayIndexSupportingInvariants.addAll(isia.getEqualityAnalysisResult().constructListOfNotEquals(mScript));
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, stemTfwai, isia, mboogie2smt, null, overapproximate, true);
 		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory, mScript, loopTfwai, isia, mboogie2smt, acrvc, overapproximate, false);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
