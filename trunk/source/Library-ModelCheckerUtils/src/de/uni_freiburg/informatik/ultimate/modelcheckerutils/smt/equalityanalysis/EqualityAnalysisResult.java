@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
 import java.util.Set;
 
@@ -32,56 +32,49 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- * Provide information for the questions which Terms are equivalent at a
- * given location.
+ * Result of a pairwise equality analysis for a set of Terms.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IEqualityAnalysisResultProvider<LOC> {
+public class EqualityAnalysisResult {
+	private final Set<Doubleton<Term>> mEqualDoubletons;
+	private final Set<Doubleton<Term>> mDistinctDoubletons;
+	private final Set<Doubleton<Term>> mUnknownDoubletons;
 
-	public EqualityAnalysisResult getAnalysisResult(LOC location, Set<Doubleton<Term>> doubletons);
-	
-	
-	public static class EqualityAnalysisResult {
-		private final Set<Doubleton<Term>> mEqualDoubletons;
-		private final Set<Doubleton<Term>> mDistinctDoubletons;
-		private final Set<Doubleton<Term>> mUnknownDoubletons;
-		
-		public EqualityAnalysisResult(Set<Doubleton<Term>> equalDoubletons, 
-				Set<Doubleton<Term>> distinctDoubletons,
-				Set<Doubleton<Term>> unknownDoubletons) {
-			super();
-			this.mEqualDoubletons = equalDoubletons;
-			this.mDistinctDoubletons = distinctDoubletons;
-			this.mUnknownDoubletons = unknownDoubletons;
-		}
-
-		/**
-		 * @return all Doubletons (t1,t2) such that our analysis was able
-		 * to prove that t1==t2 holds.
-		 */
-		public Set<Doubleton<Term>> getEqualDoubletons() {
-			return mEqualDoubletons;
-		}
-
-		/**
-		 * @return all Doubletons (t1,t2) such that our analysis was able
-		 * to prove that t1!=t2 holds.
-		 */
-		public Set<Doubleton<Term>> getDistinctDoubletons() {
-			return mDistinctDoubletons;
-		}
-
-		/**
-		 * @return all Doubletons (t1,t2) such that our analysis was neither able
-		 * to prove that t1==t2 holds nor that t1!=t2 holds.
-		 */
-		public Set<Doubleton<Term>> getUnknownDoubletons() {
-			return mUnknownDoubletons;
-		}
-		
-		
+	public EqualityAnalysisResult(Set<Doubleton<Term>> equalDoubletons, 
+			Set<Doubleton<Term>> distinctDoubletons,
+			Set<Doubleton<Term>> unknownDoubletons) {
+		super();
+		mEqualDoubletons = equalDoubletons;
+		mDistinctDoubletons = distinctDoubletons;
+		mUnknownDoubletons = unknownDoubletons;
 	}
-	
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was able
+	 * to prove that t1==t2 holds.
+	 */
+	public Set<Doubleton<Term>> getEqualDoubletons() {
+		return mEqualDoubletons;
+	}
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was able
+	 * to prove that t1!=t2 holds.
+	 */
+	public Set<Doubleton<Term>> getDistinctDoubletons() {
+		return mDistinctDoubletons;
+	}
+
+	/**
+	 * @return all Doubletons (t1,t2) such that our analysis was neither able
+	 * to prove that t1==t2 holds nor that t1!=t2 holds.
+	 */
+	public Set<Doubleton<Term>> getUnknownDoubletons() {
+		return mUnknownDoubletons;
+	}
+
+
 }
+	
