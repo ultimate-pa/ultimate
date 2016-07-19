@@ -35,12 +35,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import net.sf.javabdd.BDDFactory;
 
 /**
  * Some BDD based simplification.
@@ -56,8 +55,8 @@ public class SimplifyBdd {
 	//TODO: 2016-05-09 Matthias: The following field might be be useless
 	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 	
-	public SimplifyBdd(IUltimateServiceProvider services, Script script,
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+	public SimplifyBdd(final IUltimateServiceProvider services, final Script script,
+			final IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super();
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -70,34 +69,34 @@ public class SimplifyBdd {
 	 * @return Term which is logically equivalent to input.
 	 */
 	public Term transform(final Term input) {
-		CollectAtoms ca = new CollectAtoms();
-		List<Term> atoms = ca.getTerms(input);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(input);
 		
-		BddBuilder bb = new BddBuilder();
-		BDD d = bb.buildBDD(input, atoms);
+		final BddBuilder bb = new BddBuilder();
+		final BDD d = bb.buildBDD(input, atoms);
 		
 		return bddToTerm(d, atoms);
 	}
 	
 	public Term transformWithImplications(final Term input) {
-		CollectAtoms ca = new CollectAtoms();
-		List<Term> atoms = ca.getTerms(input);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(input);
 		
-		BddBuilder bb = new BddBuilder();
-		BDD d = bb.buildBDD(input, atoms);
+		final BddBuilder bb = new BddBuilder();
+		final BDD d = bb.buildBDD(input, atoms);
 		
 		return bddToTerm(d, atoms);
 	}
 	
-	private Term bddToTerm(BDD d, List<Term> atoms){
+	private Term bddToTerm(final BDD d, final List<Term> atoms){
 		if(d.isOne()){
 			return mScript.term("true");
 		}else if(d.isZero()){
 			return mScript.term("false");
 		}
 		
-		Term low = bddToTerm(d.low(), atoms);
-		Term high = bddToTerm(d.high(), atoms);
+		final Term low = bddToTerm(d.low(), atoms);
+		final Term high = bddToTerm(d.high(), atoms);
 		if(low instanceof ApplicationTerm && high instanceof ApplicationTerm && ((ApplicationTerm)low).getFunction().getName().equals("false") && ((ApplicationTerm)high).getFunction().getName().equals("false")){
 			return low;
 		}else if(high instanceof ApplicationTerm && ((ApplicationTerm)high).getFunction().getName().equals("false")){
@@ -113,22 +112,22 @@ public class SimplifyBdd {
 				return mScript.term("and", atoms.get(d.var()), high);
 			}
 		}
-		return (ApplicationTerm)mScript.term("or", 
+		return mScript.term("or", 
 			mScript.term("and", atoms.get(d.var()), high), 
 			mScript.term("and", atoms.get(d.var()), mScript.term("not", low)));
 	}
 	
 	
 	public Term transformToDNF(final Term input) {
-		CollectAtoms ca = new CollectAtoms();
-		List<Term> atoms = ca.getTerms(input);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(input);
 		
-		BddBuilder bb = new BddBuilder();
-		BDD d = bb.buildBDD(input, atoms);
+		final BddBuilder bb = new BddBuilder();
+		final BDD d = bb.buildBDD(input, atoms);
 		
-		List<Term> con = new ArrayList<Term>();
-		for(byte[]t:(List<byte[]>)d.allsat()){
-			List<Term> lit = new ArrayList<Term>();
+		final List<Term> con = new ArrayList<Term>();
+		for(final byte[]t:(List<byte[]>)d.allsat()){
+			final List<Term> lit = new ArrayList<Term>();
 			for(int i = 0; i < t.length; i++){
 				if(t[i]==0){
 					lit.add(SmtUtils.not(mScript, atoms.get(i)));
@@ -138,19 +137,22 @@ public class SimplifyBdd {
 			}
 			con.add(SmtUtils.and(mScript, lit));
 		}
-		return SmtUtils.or(mScript, con);
+		final Term result = SmtUtils.or(mScript, con);
+		assert (Util.checkSat(mScript, mScript.term("distinct", input, result)) != LBool.SAT) : 
+			"DNF transformation unsound. Input: " + input;
+		return result;
 	}
 	
 	public Term transformToCNF(final Term input) {
-		CollectAtoms ca = new CollectAtoms();
-		List<Term> atoms = ca.getTerms(input);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(input);
 		
-		BddBuilder bb = new BddBuilder();
-		BDD d = bb.buildBDD(input, atoms).not();
+		final BddBuilder bb = new BddBuilder();
+		final BDD d = bb.buildBDD(input, atoms).not();
 		
-		List<Term> dis = new ArrayList<Term>();
-		for(byte[]t:(List<byte[]>)d.allsat()){
-			List<Term> lit = new ArrayList<Term>();
+		final List<Term> dis = new ArrayList<Term>();
+		for(final byte[]t:(List<byte[]>)d.allsat()){
+			final List<Term> lit = new ArrayList<Term>();
 			for(int i = 0; i < t.length; i++){
 				if(t[i]==1){
 					lit.add(SmtUtils.not(mScript, atoms.get(i)));
@@ -166,7 +168,7 @@ public class SimplifyBdd {
 	/**
 	 * @return true iff the SMT solver was able to prove that t1 implies t2.
 	 */
-	private boolean implies(Term t1, Term t2) {
+	private boolean implies(final Term t1, final Term t2) {
 		mScript.push(1);
 		mScript.assertTerm(t1);
 		mScript.assertTerm(SmtUtils.not(mScript, t2));
@@ -175,13 +177,13 @@ public class SimplifyBdd {
 		return (result == LBool.UNSAT);
 	}
 	
-	public List<Pair<Term, Term>> impliesPairwise(List<Term> in) {
-		List<Pair<Term, Term>> res = new ArrayList<Pair<Term, Term>>();
+	public List<Pair<Term, Term>> impliesPairwise(final List<Term> in) {
+		final List<Pair<Term, Term>> res = new ArrayList<Pair<Term, Term>>();
 		
 		for (int i = 0; i < in.size(); i++) {
 			mScript.push(1);
 			mScript.assertTerm(in.get(i));
-			for (int j = 0; i < in.size(); i++) {
+			for (final int j = 0; i < in.size(); i++) {
 				mScript.push(1);
 				mScript.assertTerm(SmtUtils.not(mScript, in.get(j)));
 				final LBool result = mScript.checkSat();
