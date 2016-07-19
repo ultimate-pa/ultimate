@@ -272,6 +272,21 @@ public class TransFormulaUtils {
 	}
 	
 	
+	public static Term translateTermVariablesToInVars(final Script script, 
+			final TransFormulaLR tf, final Term term, 
+			final Boogie2SmtSymbolTable symbolTable, 
+			final ReplacementVarFactory repVarFac) {
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final BoogieVar bv = symbolTable.getBoogieVar(tv);
+			final RankVar rv = repVarFac.getOrConstuctBoogieVarWrapper(bv);
+			final Term inVar = tf.getInVars().get(rv); 
+			substitutionMapping.put(tv, inVar);
+		}
+		return (new SafeSubstitution(script, substitutionMapping)).transform(term);
+	}
+	
+	
 	public static boolean inVarAndOutVarCoincide(RankVar rv, TransFormulaLR rf) {
 		return rf.getInVars().get(rv) == rf.getOutVars().get(rv);
 	}

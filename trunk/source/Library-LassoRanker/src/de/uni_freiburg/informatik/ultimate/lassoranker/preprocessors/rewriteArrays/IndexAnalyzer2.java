@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -60,9 +60,8 @@ public class IndexAnalyzer2 {
 	private final Term mTerm;
 	private final Script mScript;
 	private final Boogie2SMT mboogie2smt;
+	private final ReplacementVarFactory mRepvarFactory;
 	private final TransFormulaLR mTransFormula;
-	private final ArrayList<Term> mAdditionalEqualities;
-	private final ArrayList<Term> mAdditionalNotequals;
 	
 	private final Set<Doubleton<Term>> distinctDoubletons = new LinkedHashSet<>();
 	private final Set<Doubleton<Term>> equalDoubletons = new LinkedHashSet<>();
@@ -78,17 +77,16 @@ public class IndexAnalyzer2 {
 	
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
-			EqualityAnalysisResult equalityAnalysisAtHonda, boolean isStem, ILogger logger) {
+			EqualityAnalysisResult equalityAnalysisAtHonda, boolean isStem, ILogger logger, ReplacementVarFactory replacementVarFactory) {
 		super();
 		mLogger = logger;
 		mIsStem = isStem;
 		mTerm = term;
 		mboogie2smt = boogie2smt;
+		mRepvarFactory = replacementVarFactory;
 		mScript = boogie2smt.getScript();
 		mTransFormula = tf;
 		mIndexSupportingInvariantAnalysis = equalityAnalysisAtHonda;
-		mAdditionalEqualities = new ArrayList<>();
-		mAdditionalNotequals = new ArrayList<>();
 		analyze(array2Indices);
 		mLogger.info(equalDoubletons.size() + " equalDoubletons");
 		mLogger.info(distinctDoubletons.size() + " distinctDoubletons");
@@ -99,12 +97,10 @@ public class IndexAnalyzer2 {
 	
 	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
 		distinctDoubletons.add(doubleton);
-		mAdditionalNotequals.add(notEqualTerm(doubleton));
 	}
 	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
 		equalDoubletons.add(doubleton);
-		mAdditionalEqualities.add(equalTerm(doubleton));
 	}
 	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
@@ -113,14 +109,18 @@ public class IndexAnalyzer2 {
 	
 	private void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
 		Term termWithAdditionalInvariants;
-		if (mUseArrayIndexSupportingInvariants) { 
-			termWithAdditionalInvariants = Util.and(mScript, mTerm, 
-					SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfEqualities(mScript)),
-					SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfNotEquals(mScript)));
+		if (mUseArrayIndexSupportingInvariants && !mIsStem) {
+			final Term equalitiesOriginal = SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfEqualities(mScript));
+			final Term notequalsOriginal = SmtUtils.and(mScript, mIndexSupportingInvariantAnalysis.constructListOfNotEquals(mScript));
+			final Term equalitiesRenamed = TransFormulaUtils.translateTermVariablesToInVars(mScript, 
+					mTransFormula, equalitiesOriginal, mboogie2smt.getBoogie2SmtSymbolTable(), mRepvarFactory);
+			final Term notequalsRenamed = TransFormulaUtils.translateTermVariablesToInVars(mScript, 
+					mTransFormula, notequalsOriginal, mboogie2smt.getBoogie2SmtSymbolTable(), mRepvarFactory);
+			termWithAdditionalInvariants = Util.and(mScript, mTerm, equalitiesRenamed, notequalsRenamed);
 		} else {
 			termWithAdditionalInvariants = mTerm;
 		}
-		final Set<TermVariable> varsInTerm = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
+ 		final Set<TermVariable> varsInTerm = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		
 		for (final TermVariable tv : array2Indices.getDomain()) {
 			final Set<ArrayIndex> test = array2Indices.getImage(tv);
@@ -140,7 +140,6 @@ public class IndexAnalyzer2 {
 						for (int k=0; k<fstIndex.size(); k++) {
 							ignoredDoubletons.add(new Doubleton<Term>(fstIndex.get(k), sndIndex.get(k)));
 						}
-						
 					}
 				}
 			}
@@ -192,17 +191,17 @@ public class IndexAnalyzer2 {
 		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, mboogie2smt.getVariableManager(), allTvs);
 		final SafeSubstitution subst = new SafeSubstitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
-		for (final Doubleton<Term> Doubleton : doubletons) {
+		for (final Doubleton<Term> doubleton : doubletons) {
 			//todo ignore doubletons that are already there
 			final Term equal = subst.transform(
 					SmtUtils.binaryEquality(mScript, 
-							Doubleton.getOneElement(), Doubleton.getOtherElement()));
+							doubleton.getOneElement(), doubleton.getOtherElement()));
 			mScript.push(1);
 			mScript.assertTerm(equal);
 			LBool lbool = mScript.checkSat();
 			mScript.pop(1);
 			if (lbool == LBool.UNSAT) {
-				addDistinctDoubleton(Doubleton);
+				addDistinctDoubleton(doubleton);
 			} else {
 				final Term notEqual = SmtUtils.not(mScript, equal);
 				mScript.push(1);
@@ -210,9 +209,9 @@ public class IndexAnalyzer2 {
 				lbool = mScript.checkSat();
 				mScript.pop(1);
 				if (lbool == LBool.UNSAT) {
-					addEqualDoubleton(Doubleton);
+					addEqualDoubleton(doubleton);
 				} else {
-					addUnknownDoubleton(Doubleton);
+					addUnknownDoubleton(doubleton);
 				}
 			}
 		}
@@ -240,16 +239,6 @@ public class IndexAnalyzer2 {
 		
 	}
 
-
-	private Term equalTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.binaryEquality(mScript, Doubleton.getOneElement(), Doubleton.getOtherElement());
-	}
-
-	private Term notEqualTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.not(mScript, equalTerm(Doubleton));
-	}
-	
-	
 	private Doubleton<Term> constructDefiningDoubleton(Doubleton<Term> inVarDoubleton) {
 		final Term oneElement = inVarDoubleton.getOneElement();
 		final Term otherElement = inVarDoubleton.getOtherElement();
