@@ -502,7 +502,7 @@ public class SmtUtils {
 			final Collection<TermVariable> termVariables) {
 		final Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : termVariables) {
-			Term constant = variableManager.getCorrespondingConstant(tv);
+			Term constant = variableManager.constructFreshConstant(tv);
 			if (constant == null) {
 				constant = termVariable2constant(script, tv);
 			}

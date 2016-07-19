@@ -49,9 +49,9 @@ public class EqualityAnalysisResult {
 	private final Set<Doubleton<Term>> mDistinctDoubletons;
 	private final Set<Doubleton<Term>> mUnknownDoubletons;
 
-	public EqualityAnalysisResult(Set<Doubleton<Term>> equalDoubletons, 
-			Set<Doubleton<Term>> distinctDoubletons,
-			Set<Doubleton<Term>> unknownDoubletons) {
+	public EqualityAnalysisResult(final Set<Doubleton<Term>> equalDoubletons, 
+			final Set<Doubleton<Term>> distinctDoubletons,
+			final Set<Doubleton<Term>> unknownDoubletons) {
 		super();
 		mEqualDoubletons = equalDoubletons;
 		mDistinctDoubletons = distinctDoubletons;
@@ -86,7 +86,7 @@ public class EqualityAnalysisResult {
 	 * @return a possibly simplified version of the term (= t1 t2) 
 	 * for a given Doubleton (t1,t2).
 	 */
-	public static Term equalTerm(Script script, Doubleton<Term> doubleton) {
+	public static Term equalTerm(final Script script, final Doubleton<Term> doubleton) {
 		return SmtUtils.binaryEquality(script, doubleton.getOneElement(), doubleton.getOtherElement());
 	}
 
@@ -94,7 +94,7 @@ public class EqualityAnalysisResult {
 	 * @return a possibly simplified version of the term (not (= t1 t2)) 
 	 * for a given Doubleton (t1,t2).
 	 */
-	public static Term notEqualTerm(Script script, Doubleton<Term> doubleton) {
+	public static Term notEqualTerm(final Script script, final Doubleton<Term> doubleton) {
 		return SmtUtils.not(script, equalTerm(script, doubleton));
 	}
 	
@@ -124,6 +124,22 @@ public class EqualityAnalysisResult {
 		return result;
 	}
 
+	
+	/**
+	 * @return Equality status of a Doubleton that was analyzed.
+	 * @throws IllegalArgumentException for Doubletons that were not analyzed 
+	 */
+	public Equality getEqualityStatus(final Doubleton<Term> doubleton) {
+		if (mEqualDoubletons.contains(doubleton)) {
+			return Equality.EQUAL;
+		} else if (mDistinctDoubletons.contains(doubleton)) {
+			return Equality.NOT_EQUAL;
+		} else if (mUnknownDoubletons.contains(doubleton)) {
+			return Equality.UNKNOWN;
+		} else {
+			throw new IllegalArgumentException("unacquainted doublton " + doubleton);
+		}
+	}
 
 }
 	

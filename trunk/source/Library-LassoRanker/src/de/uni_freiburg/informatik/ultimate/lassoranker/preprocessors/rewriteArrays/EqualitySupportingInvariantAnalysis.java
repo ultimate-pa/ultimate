@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -81,8 +80,6 @@ public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<>();
-	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<>();
 	
 	private final Set<Doubleton<Term>> mDistinctDoubletons = new HashSet<>();
 	private final Set<Doubleton<Term>> mEqualDoubletons = new HashSet<>();
@@ -104,11 +101,11 @@ public class EqualitySupportingInvariantAnalysis {
 	 * @param modifiableGlobalsAtHonda set of all global program variables
 	 * that are modifiable at the program point between stem and loop.
 	 */
-	public EqualitySupportingInvariantAnalysis(Set<Doubleton<Term>> doubletons,
-			Boogie2SmtSymbolTable symbolTable, 
-			Script script, 
-			TransFormula originalStem,
-			TransFormula originalLoop, Set<BoogieVar> modifiableGlobalsAtHonda) {
+	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
+			final Boogie2SmtSymbolTable symbolTable, 
+			final Script script, 
+			final TransFormula originalStem,
+			final TransFormula originalLoop, final Set<BoogieVar> modifiableGlobalsAtHonda) {
 		super();
 		mSymbolTable = symbolTable;
 		mScript = script;
@@ -134,16 +131,16 @@ public class EqualitySupportingInvariantAnalysis {
 	}
 	
 	
-	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
+	private void addDistinctDoubleton(final Doubleton<Term> doubleton) {
 		mDistinctDoubletons.add(doubleton);
 	}
 	
 	
-	private void addEqualDoubleton(Doubleton<Term> doubleton) {
+	private void addEqualDoubleton(final Doubleton<Term> doubleton) {
 		mEqualDoubletons.add(doubleton);
 	}
 	
-	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
+	private void addUnknownDoubleton(final Doubleton<Term> doubleton) {
 		mUnknownDoubletons.add(doubleton);
 	}
 	
@@ -151,7 +148,7 @@ public class EqualitySupportingInvariantAnalysis {
 
 	
 	
-	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {
+	private boolean isInVariant(final Doubleton<Term> definingDoubleton, final boolean checkEquals) {
 		final Term invariantCandidateTerm;
 		if (checkEquals) {
 			invariantCandidateTerm = EqualityAnalysisResult.equalTerm(mScript, definingDoubleton);
