@@ -59,13 +59,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
+	
+	public enum XnfConversionTechnique {BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION };
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -1101,5 +1106,47 @@ public class SmtUtils {
 		}
 		return false;
 	}
+	
+
+	/**
+	 * @return logically equivalent term in disjunctive normal form (DNF)
+	 */
+	public static Term toDnf(final IUltimateServiceProvider services, final Script script,
+			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
+		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final Term result;
+		switch (xnfConversionTechnique) {
+		case BDD_BASED:
+			result = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformToDNF(term);
+			break;
+		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
+			result = (new Dnf(script, services, freshTermVariableConstructor)).transform(term);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
+		return result;
+	}
+	
+	/**
+	 * @return logically equivalent term in conjunctive normal form (CNF)
+	 */
+	public static Term toCnf(final IUltimateServiceProvider services, final Script script,
+			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
+		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final Term result;
+		switch (xnfConversionTechnique) {
+		case BDD_BASED:
+			result = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformToCNF(term);
+			break;
+		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
+			result = (new Cnf(script, services, freshTermVariableConstructor)).transform(term);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
+		return result;
+	}
+	
 
 }
