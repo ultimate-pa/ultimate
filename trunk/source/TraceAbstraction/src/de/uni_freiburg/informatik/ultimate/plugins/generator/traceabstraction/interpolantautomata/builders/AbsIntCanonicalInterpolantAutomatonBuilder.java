@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationPredicateAutomatonGenerator
+public class AbsIntCanonicalInterpolantAutomatonBuilder
 		implements IAbstractInterpretationAutomatonGenerator<CodeBlock, IPredicate>,
 		IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
@@ -35,7 +35,7 @@ public class AbstractInterpretationPredicateAutomatonGenerator
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final SmtManager mSmtManager;
 
-	public AbstractInterpretationPredicateAutomatonGenerator(final IUltimateServiceProvider services,
+	public AbsIntCanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager) {

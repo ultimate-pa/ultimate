@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbstractInterpretationPredicateAutomatonGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntCanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -161,7 +161,7 @@ public class AbstractInterpretationRunner {
 				        predUnifier, smtManager, currentCex, mSimplificationTechnique, mXnfConversionTechnique).getResult();
 			} else {
 				mLogger.info("Using NWA construction from abstract interpretation predicates.");
-				aiInterpolAutomaton = new AbstractInterpretationPredicateAutomatonGenerator(mServices, abstraction,
+				aiInterpolAutomaton = new AbsIntCanonicalInterpolantAutomatonBuilder(mServices, abstraction,
 				        mAbsIntResult, predUnifier, smtManager).getResult();
 			}
 			return aiInterpolAutomaton;
