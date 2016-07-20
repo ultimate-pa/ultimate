@@ -1,0 +1,54 @@
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2016-07-18
+
+
+// print(nwa);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r"},
+	states = {
+		"s0" "s1"
+		"d0" "d1" "d2"
+		"pe" "pr" "pk" "p2" "px"
+		"me" "mxA" "mxB"
+		"rosskopf1" "rosskopf2A" "rosskopf2B"
+		"kandel1" "kandel2A" "kandel2B"
+	},
+	initialStates = {"s0" "d0" },
+	finalStates = {"pk" "kandel2A"},
+	callTransitions = {
+		 ("s0" "c" "pe")
+		 ("d0" "c" "me")
+	},
+	internalTransitions = {
+		 ("pe" "a" "pr")
+		 ("pe" "b" "pk")
+		 ("pr" "a" "p2")
+		 ("pk" "a" "p2")
+		 ("p2" "a" "px")
+		 
+		 ("me" "a" "rosskopf1")
+		 ("rosskopf1" "a" "rosskopf2A")
+		 ("rosskopf1" "a" "rosskopf2B")
+		 ("rosskopf2A" "a" "mxA")
+		 ("rosskopf2B" "a" "mxB")
+		 ("me" "b" "kandel1")
+		 ("kandel1" "a" "kandel2A")
+		 ("kandel1" "a" "kandel2B")
+		 ("kandel2A" "a" "mxA")
+		 ("kandel2B" "a" "mxB")
+		 
+		 ("s1" "a" "s0")
+  		 ("d1" "a" "d0")
+		 ("d2" "a" "d0")
+	},
+	returnTransitions = {
+		 ("mxA" "d0" "r" "d1")
+		 ("mxB" "d0" "r" "d2")
+		 ("px" "s0" "r" "s1")
+	}
+);
