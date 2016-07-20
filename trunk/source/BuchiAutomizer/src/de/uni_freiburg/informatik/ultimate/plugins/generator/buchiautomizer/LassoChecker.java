@@ -76,6 +76,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -94,6 +96,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class LassoChecker {
 
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
@@ -256,13 +260,15 @@ public class LassoChecker {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager, Collection<Term> axioms,
-			BinaryStatePredicateManager bspm, NestedLassoRun<CodeBlock, IPredicate> counterexample,
-			String lassoCheckerIdentifier, IUltimateServiceProvider services, 
-			IToolchainStorage storage) throws IOException {
+	public LassoChecker(final INTERPOLATION interpolation, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
+			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
+			final String lassoCheckerIdentifier, final IUltimateServiceProvider services, 
+			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws IOException {
 		mServices = services;
 		mStorage = storage;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
@@ -282,7 +288,7 @@ public class LassoChecker {
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
-		mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager);
+		mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager, simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
@@ -452,7 +458,7 @@ public class LassoChecker {
 			return translateSatisfiabilityToFeasibility(mConcatCheck.isCorrect());
 		}
 
-		private TraceCheckResult translateSatisfiabilityToFeasibility(LBool lBool) {
+		private TraceCheckResult translateSatisfiabilityToFeasibility(final LBool lBool) {
 			switch (lBool) {
 			case SAT:
 				return TraceCheckResult.FEASIBLE;
@@ -465,7 +471,7 @@ public class LassoChecker {
 			}
 		}
 
-		private InterpolatingTraceChecker checkFeasibilityAndComputeInterpolants(NestedRun<CodeBlock, IPredicate> run) {
+		private InterpolatingTraceChecker checkFeasibilityAndComputeInterpolants(final NestedRun<CodeBlock, IPredicate> run) {
 			InterpolatingTraceChecker result;
 			switch (mInterpolation) {
 			case Craig_NestedInterpolation:
@@ -478,7 +484,7 @@ public class LassoChecker {
 						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 						 * Check if you want to set this
 						 * to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation, true);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -492,7 +498,7 @@ public class LassoChecker {
 						 * Check if you want to set this
 						 * to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
-						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier, mInterpolation, mSmtManager);
+						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -503,7 +509,7 @@ public class LassoChecker {
 			return result;
 		}
 
-		private SynthesisResult checkLoopTermination(TransFormula loopTF) throws IOException {
+		private SynthesisResult checkLoopTermination(final TransFormula loopTF) throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 			if (containsArrays) {
@@ -515,7 +521,7 @@ public class LassoChecker {
 			}
 		}
 
-		private SynthesisResult checkLassoTermination(TransFormula stemTF, TransFormula loopTF) throws IOException {
+		private SynthesisResult checkLassoTermination(final TransFormula stemTF, final TransFormula loopTF) throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			assert loopTF != null;
 			final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
@@ -580,12 +586,12 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the NestedWord word.
 	 */
-	private TransFormula computeTF(NestedWord<CodeBlock> word, boolean simplify,
-			boolean extendedPartialQuantifierElimination, boolean withBranchEncoders) {
+	private TransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
+			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
 		final TransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt(),
 				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
-				withBranchEncoders, mLogger, mServices, word.asList());
+				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique, mSimplificationTechnique);
 		return tf;
 	}
 
@@ -619,13 +625,13 @@ public class LassoChecker {
 		return rfCorrect;
 	}
 
-	private String generateFileBasenamePrefix(boolean withStem) {
+	private String generateFileBasenamePrefix(final boolean withStem) {
 		return mLassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 
-	private LassoRankerPreferences constructLassoRankerPreferences(boolean withStem,
-			boolean overapproximateArrayIndexConnection, NlaHandling nlaHandling, 
-			AnalysisTechnique analysis) {
+	private LassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,
+			final boolean overapproximateArrayIndexConnection, final NlaHandling nlaHandling, 
+			final AnalysisTechnique analysis) {
 		final LassoRankerPreferences pref = new LassoRankerPreferences();
 		switch (analysis) {
 		case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
@@ -669,7 +675,7 @@ public class LassoChecker {
 	}
 
 	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF,
-			boolean containsArrays) throws IOException {
+			final boolean containsArrays) throws IOException {
 		if (mSmtManager.isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
@@ -700,7 +706,7 @@ public class LassoChecker {
 				laNT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
 						modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]), 
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, 
-						NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS), mServices, mStorage);
+						NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				mpreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -732,7 +738,7 @@ public class LassoChecker {
 			laT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
 					modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]), 
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, 
-					NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS), mServices, mStorage);
+					NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 			mpreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();
@@ -798,8 +804,8 @@ public class LassoChecker {
 	 * @throws AssertionError
 	 * @throws IOException 
 	 */
-	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
-			List<RankingTemplate> rankingFunctionTemplates, TransFormula stemTF, TransFormula loopTF) throws AssertionError, IOException {
+	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
+			final List<RankingTemplate> rankingFunctionTemplates, final TransFormula stemTF, final TransFormula loopTF) throws AssertionError, IOException {
 		final String hondaProcedure = ((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
 		final Set<BoogieVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
 		

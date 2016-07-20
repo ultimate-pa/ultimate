@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -51,6 +53,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class InterpolatingTraceChecker extends TraceChecker implements IInterpolantGenerator {
+	
+	protected final SimplicationTechnique mSimplificationTechnique;
+	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
@@ -73,17 +78,22 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * @param logger
 	 * @param services
 	 * @param predicateUnifier 
+	 * @param simplificationTechnique 
+	 * @param xnfConversionTechnique 
 	 * @param interpolation 
 	 */
-	public InterpolatingTraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, SmtManager tcSmtManager) {
+	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
+			final PredicateUnifier predicateUnifier, final SmtManager tcSmtManager, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 
@@ -179,7 +189,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 
 		@Override
-		public boolean contains(Object o) {
+		public boolean contains(final Object o) {
 			return true;
 		}
 
@@ -194,37 +204,37 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 
 		@Override
-		public <T> T[] toArray(T[] a) {
+		public <T> T[] toArray(final T[] a) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean add(Integer e) {
+		public boolean add(final Integer e) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean remove(Object o) {
+		public boolean remove(final Object o) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean containsAll(Collection<?> c) {
+		public boolean containsAll(final Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean addAll(Collection<? extends Integer> c) {
+		public boolean addAll(final Collection<? extends Integer> c) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean retainAll(Collection<?> c) {
+		public boolean retainAll(final Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean removeAll(Collection<?> c) {
+		public boolean removeAll(final Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
 

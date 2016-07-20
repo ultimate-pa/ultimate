@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -113,7 +114,7 @@ public class Statements2TransFormula {
 	private final IUltimateServiceProvider mServices;
 	private Map<String, ILocation> mOverapproximations = null;
 
-	public Statements2TransFormula(Boogie2SMT boogie2smt, IUltimateServiceProvider services, Expression2Term expression2Term) {
+	public Statements2TransFormula(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services, final Expression2Term expression2Term) {
 		super();
 		mServices = services;
 		mBoogie2SMT = boogie2smt;
@@ -129,7 +130,7 @@ public class Statements2TransFormula {
 	 * 
 	 * @param procId
 	 */
-	private void initialize(String procId) {
+	private void initialize(final String procId) {
 		assert mCurrentProcedure == null;
 		assert mOutVars == null;
 		assert mInVars == null;
@@ -147,10 +148,10 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private TranslationResult getTransFormula(boolean simplify, boolean feasibilityKnown) {
+	private TranslationResult getTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
 		TransFormula tf = null;
 		try {
-			tf = constructTransFormula(simplify, feasibilityKnown);
+			tf = constructTransFormula(simplify, feasibilityKnown, simplicationTechnique);
 			mCurrentProcedure = null;
 			mOutVars = null;
 			mInVars = null;
@@ -162,14 +163,14 @@ public class Statements2TransFormula {
 		return new TranslationResult(tf, mOverapproximations);
 	}
 
-	private TransFormula constructTransFormula(boolean simplify, boolean feasibilityKnown) {
+	private TransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
 		final Set<TermVariable> auxVars = mAuxVars;
 		Term formula = mAssumes;
 		formula = eliminateAuxVars(mAssumes, auxVars);
 
 		Infeasibility infeasibility = null;
 		if (simplify) {
-			formula = SmtUtils.simplify(mScript, formula, mServices);
+			formula = SmtUtils.simplify(mScript, formula, mServices, simplicationTechnique, mVariableManager);
 			if (formula == mScript.term("false")) {
 				infeasibility = Infeasibility.INFEASIBLE;
 			}
@@ -203,7 +204,7 @@ public class Statements2TransFormula {
 		return tf;
 	}
 
-	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {
+	private BoogieVar getModifiableBoogieVar(final String id, final DeclarationInformation declInfo) {
 		final StorageClass storageClass = declInfo.getStorageClass();
 		// assert (declInfo.getProcedure() == null ||
 		// declInfo.getProcedure().equals(mCurrentProcedure));
@@ -238,7 +239,7 @@ public class Statements2TransFormula {
 	 * inVars (if contained). If neccessary v_i is put to outVars (possibly by
 	 * getSmtIdentifier).
 	 */
-	private void addAssignment(AssignmentStatement assign) {
+	private void addAssignment(final AssignmentStatement assign) {
 		final LeftHandSide[] lhs = assign.getLhs();
 		final Expression[] rhs = assign.getRhs();
 		final Map<TermVariable, Expression> addedEqualities = new HashMap<TermVariable, Expression>();
@@ -274,7 +275,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private void addHavoc(HavocStatement havoc) {
+	private void addHavoc(final HavocStatement havoc) {
 		for (final VariableLHS lhs : havoc.getIdentifiers()) {
 			assert lhs.getDeclarationInformation() != null : " no declaration information";
 			final String name = lhs.getIdentifier();
@@ -288,7 +289,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private void addAssume(AssumeStatement assume) {
+	private void addAssume(final AssumeStatement assume) {
 		final IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assume.getFormula());
@@ -302,7 +303,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private void addAssert(AssertStatement assertstmt) {
+	private void addAssert(final AssertStatement assertstmt) {
 		if (s_ComputeAsserts) {
 			final IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
@@ -318,7 +319,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private void addSummary(CallStatement call) {
+	private void addSummary(final CallStatement call) {
 		final Procedure procedure = mBoogieDeclarations.getProcSpecification().get(call.getMethodName());
 
 		final HashMap<String, Term> substitution = new HashMap<String, Term>();
@@ -441,7 +442,7 @@ public class Statements2TransFormula {
 	 * Remove boogieVars from inVars mapping, if the inVar is not an outVar, add
 	 * it to he auxilliary variables auxVar.
 	 */
-	private void removeInVar(BoogieVar boogieVar) {
+	private void removeInVar(final BoogieVar boogieVar) {
 		final TermVariable tv = mInVars.remove(boogieVar);
 		if (mOutVars.get(boogieVar) != tv) {
 			mAuxVars.add(tv);
@@ -454,7 +455,7 @@ public class Statements2TransFormula {
 	 * it. In this case we have to add (bv,tv) to the outVars if bv is not
 	 * already an outvar.
 	 */
-	private TermVariable getOrConstuctCurrentRepresentative(BoogieVar bv) {
+	private TermVariable getOrConstuctCurrentRepresentative(final BoogieVar bv) {
 		TermVariable tv = mInVars.get(bv);
 		if (tv == null) {
 			tv = createInVar(bv);
@@ -470,7 +471,7 @@ public class Statements2TransFormula {
 	 * Special case: If BoogieVar bv is an oldVar we do not take a fresh
 	 * TermVariable but the default TermVariable for this BoogieVar.
 	 */
-	private TermVariable createInVar(BoogieVar bv) {
+	private TermVariable createInVar(final BoogieVar bv) {
 		TermVariable tv;
 		if (bv.isOldvar()) {
 			tv = bv.getTermVariable();
@@ -484,8 +485,8 @@ public class Statements2TransFormula {
 	public abstract class IdentifierTranslatorWithInOutVarManagement implements IdentifierTranslator {
 
 		@Override
-		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext,
-				BoogieASTNode boogieASTNode) {
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
 			final BoogieVar bv = getBoogieVar(id, declInfo, isOldContext, boogieASTNode);
 			if (bv == null) {
 				return null;
@@ -503,8 +504,8 @@ public class Statements2TransFormula {
 	public class LocalVarTranslatorWithInOutVarManagement extends IdentifierTranslatorWithInOutVarManagement {
 
 		@Override
-		protected BoogieVar getBoogieVar(String id, DeclarationInformation declInfo, boolean isOldContext,
-				BoogieASTNode boogieASTNode) {
+		protected BoogieVar getBoogieVar(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
 			switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
@@ -534,7 +535,7 @@ public class Statements2TransFormula {
 		private final boolean mAllNonOld;
 		private final Set<String> mModifiableByCurrentProcedure;
 
-		public GlobalVarTranslatorWithInOutVarManagement(String currentProcedure, boolean allNonOld) {
+		public GlobalVarTranslatorWithInOutVarManagement(final String currentProcedure, final boolean allNonOld) {
 			mCurrentProcedure = currentProcedure;
 			mAllNonOld = allNonOld;
 			mModifiableByCurrentProcedure = mBoogieDeclarations.getModifiedVars().get(mCurrentProcedure);
@@ -542,8 +543,8 @@ public class Statements2TransFormula {
 		}
 
 		@Override
-		protected BoogieVar getBoogieVar(String id, DeclarationInformation declInfo, boolean isOldContext,
-				BoogieASTNode boogieASTNode) {
+		protected BoogieVar getBoogieVar(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
 			switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
@@ -572,7 +573,7 @@ public class Statements2TransFormula {
 			}
 		}
 
-		private boolean modifiableByCurrentProcedure(String id) {
+		private boolean modifiableByCurrentProcedure(final String id) {
 			return mModifiableByCurrentProcedure.contains(id);
 		}
 
@@ -581,14 +582,14 @@ public class Statements2TransFormula {
 	private class SubstitutionTranslatorId implements IdentifierTranslator {
 		private final Map<String, Term> mSubstitution;
 
-		public SubstitutionTranslatorId(Map<String, Term> substitution) {
+		public SubstitutionTranslatorId(final Map<String, Term> substitution) {
 			super();
 			mSubstitution = substitution;
 		}
 
 		@Override
-		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext,
-				BoogieASTNode boogieASTNode) {
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
 			return mSubstitution.get(id);
 		}
 	}
@@ -596,14 +597,14 @@ public class Statements2TransFormula {
 	public class SubstitutionTranslatorBoogieVar implements IdentifierTranslator {
 		private final Map<BoogieVar, Term> mSubstitution;
 
-		public SubstitutionTranslatorBoogieVar(Map<BoogieVar, Term> substitution) {
+		public SubstitutionTranslatorBoogieVar(final Map<BoogieVar, Term> substitution) {
 			super();
 			mSubstitution = substitution;
 		}
 
 		@Override
-		public Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext,
-				BoogieASTNode boogieASTNode) {
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
 			final BoogieVar bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
 			if (bv == null) {
 				return null;
@@ -626,13 +627,14 @@ public class Statements2TransFormula {
 	 *            set of free variables occurring in input
 	 * @return
 	 */
-	private Term eliminateAuxVars(Term input, Set<TermVariable> auxVars) {
+	private Term eliminateAuxVars(final Term input, final Set<TermVariable> auxVars) {
 		final XnfDer xnfDer = new XnfDer(mScript, mServices, mVariableManager);
 		final Term result = Util.and(mScript, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
 		return result;
 	}
 
-	public TranslationResult statementSequence(boolean simplify, String procId, Statement... statements) {
+	public TranslationResult statementSequence(final boolean simplify, final SimplicationTechnique simplicationTechnique, 
+			final String procId, final Statement... statements) {
 		initialize(procId);
 		for (int i = statements.length - 1; i >= 0; i--) {
 			final Statement st = statements[i];
@@ -650,7 +652,7 @@ public class Statements2TransFormula {
 			}
 
 		}
-		return getTransFormula(simplify, false);
+		return getTransFormula(simplify, false, simplicationTechnique);
 	}
 
 	/**
@@ -660,7 +662,7 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars which were constructed
 	 * while processing the callee.
 	 */
-	public TranslationResult inParamAssignment(CallStatement st) {
+	public TranslationResult inParamAssignment(final CallStatement st, final SimplicationTechnique simplicationTechnique) {
 		final String callee = st.getMethodName();
 		initialize(callee);
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
@@ -689,7 +691,7 @@ public class Statements2TransFormula {
 		}
 		assert (st.getArguments().length == offset);
 		mAssumes = Util.and(mScript, assignments);
-		return getTransFormula(false, true);
+		return getTransFormula(false, true, simplicationTechnique);
 	}
 
 	/**
@@ -700,7 +702,7 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars of the corresponding
 	 * procedures.
 	 */
-	public TranslationResult resultAssignment(CallStatement st, String caller) {
+	public TranslationResult resultAssignment(final CallStatement st, final String caller, final SimplicationTechnique simplicationTechnique) {
 		initialize(caller);
 		final String callee = st.getMethodName();
 		final Procedure impl = mBoogieDeclarations.getProcImplementation().get(callee);
@@ -725,15 +727,15 @@ public class Statements2TransFormula {
 		}
 		assert (st.getLhs().length == offset);
 		mAssumes = Util.and(mScript, assignments);
-		return getTransFormula(false, true);
+		return getTransFormula(false, true, simplicationTechnique);
 	}
 	
 	
 	public class TranslationResult {
 		private final TransFormula mTransFormula;
 		private final Map<String, ILocation> mOverapproximations;
-		public TranslationResult(TransFormula transFormula,
-				Map<String, ILocation> overapproximations) {
+		public TranslationResult(final TransFormula transFormula,
+				final Map<String, ILocation> overapproximations) {
 			super();
 			mTransFormula = transFormula;
 			mOverapproximations = overapproximations;

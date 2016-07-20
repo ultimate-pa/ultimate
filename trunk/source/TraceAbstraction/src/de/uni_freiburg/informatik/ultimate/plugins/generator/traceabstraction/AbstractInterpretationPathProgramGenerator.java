@@ -10,7 +10,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -24,6 +25,8 @@ public class AbstractInterpretationPathProgramGenerator
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final PredicateFactory mPredicateFactory;
@@ -31,12 +34,15 @@ public class AbstractInterpretationPathProgramGenerator
 
 	public AbstractInterpretationPathProgramGenerator(final IUltimateServiceProvider services,
 	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-	        final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample) {
+	        final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample, 
+	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mCurrentCounterExample = currentCounterexample;
 		mBoogie2Smt = smtManager.getBoogie2Smt();
-		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt);
+		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, simplificationTechnique, xnfConversionTechnique);
 
 		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier);
 	}
@@ -64,7 +70,7 @@ public class AbstractInterpretationPathProgramGenerator
 		// TODO: is it correct to go to length - 1 here? I assume that the last state is the error location and we don't
 		// want anything to to with that as we are introducing this location in the end.
 		for (int cexI = 0; cexI < mCurrentCounterExample.getLength() - 1; cexI++) {
-			IPredicate prevState = currentState;
+			final IPredicate prevState = currentState;
 
 			// Add state
 			currentState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));

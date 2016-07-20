@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
@@ -131,6 +133,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param useNonlinearConstraints
 	 * 			  Kind of constraints that are used to specify invariant.
 	 * @param storage 
+	 * @param simplicationTechnique 
+	 * @param xnfConversionTechnique 
 	 */
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
@@ -140,7 +144,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
-			final boolean useNonlinearConstraints) {
+			final boolean useNonlinearConstraints, 
+			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, smtManager);
 		this.services = services;
 		logger = services.getLoggingService().getLogger(
@@ -152,7 +157,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		patternVariables = new ArrayList<>();
 		patternCoefficients = new HashSet<>();
 
-		linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage);
+		linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage, simplicationTechnique, xnfConversionTechnique);
 		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
 		this.precondition = linearizer.linearize(new TransFormula(precondition,
 				boogie2smt));
@@ -168,7 +173,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(int round) {
+	public void startRound(final int round) {
 		reinitializeSolver();
 		patternVariables.clear();
 		entryInvariantPattern = null;
@@ -386,7 +391,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return a new dnf equivalent to a /\ b
 	 */
 	private static <E> Collection<Collection<E>> expandConjunctionSingle(
-			Collection<Collection<E>> a, Collection<Collection<E>> b) {
+			final Collection<Collection<E>> a, final Collection<Collection<E>> b) {
 		final Collection<Collection<E>> result = new ArrayList<>();
 		for (final Collection<E> aItem : a) {
 			for (final Collection<E> bItem : b) {
@@ -483,7 +488,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param mapping
 	 *            mapping to add auxiliary terms to
 	 */
-	protected void completeMapping(Map<RankVar, Term> mapping) {
+	protected void completeMapping(final Map<RankVar, Term> mapping) {
 		final String prefix = newPrefix() + "replace_";
 		int index = 0;
 		for (final RankVar coefficient : patternCoefficients) {
@@ -510,8 +515,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            mapping to get auxiliary terms from, must contain one entry
 	 *            for each coefficient
 	 */
-	protected void completeMapping(Map<RankVar, Term> mapping,
-			Map<RankVar, Term> source) {
+	protected void completeMapping(final Map<RankVar, Term> mapping,
+			final Map<RankVar, Term> source) {
 		for (final RankVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
@@ -795,7 +800,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	@Override
 	public IPredicate applyConfiguration(
-			Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Term term = getValuatedTermForPattern(pattern);
 		return predicateUnifier.getOrConstructPredicate(term);
 	}

@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -76,7 +78,7 @@ public class TAPreferences {
 		FINITE_AUTOMATA, PETRI_NET
 	}
 
-	public TAPreferences(IUltimateServiceProvider services) {
+	public TAPreferences(final IUltimateServiceProvider services) {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -296,6 +298,14 @@ public class TAPreferences {
 
 	public String order() {
 		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
+	}
+
+	public SimplicationTechnique getSimplificationTechnique() {
+		return SimplicationTechnique.SIMPLIFY_DDA;
+	}
+
+	public XnfConversionTechnique getXnfConversionTechnique() {
+		return XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	}
 
 

@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement
@@ -48,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public static final String s_Description =
 			"Removes arrays by introducing new variables for each relevant array cell";
@@ -55,9 +60,12 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private final Boogie2SMT mBoogie2smt;
 
 
-	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt) {
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	@Override
@@ -73,7 +81,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		// TODO: Only basic version, do other things like IndexSupportingInvariantAnalysis
-		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(lasso.getStem(), lasso.getLoop()));
+		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(lasso.getStem(), lasso.getLoop()), mSimplificationTechnique, mXnfConversionTechnique);
 		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(lasso.getStem());
 		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(lasso.getLoop());
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);

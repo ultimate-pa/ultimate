@@ -175,10 +175,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param computeHoareAnnotation
 	 * @param services
 	 */
-	public CegarLoopSWBnonRecursive(String name, RootNode rootNode, SmtManager smtManager,
-			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+	public CegarLoopSWBnonRecursive(final String name, final RootNode rootNode, final SmtManager smtManager,
+			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
+			final Collection<ProgramPoint> errorLocs, final INTERPOLATION interpolation, final boolean computeHoareAnnotation,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
 		mErrorPathHistory = new ArrayList<String>();
 		mnofStates = new ArrayList<Integer>();
@@ -354,8 +354,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param initialWord
 	 *            Word consisting of the label of the edge
 	 */
-	private void exploreInitialEdge(Transitionlet<CodeBlock, IPredicate> e, IPredicate target,
-			NestedWord<CodeBlock> initialWord) {
+	private void exploreInitialEdge(final Transitionlet<CodeBlock, IPredicate> e, final IPredicate target,
+			final NestedWord<CodeBlock> initialWord) {
 		mActualPath = new ArrayList<IPredicate>(16);
 		// remember the path, we follow
 		mActualPath.add(mActualStartingState);
@@ -400,7 +400,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 *            List of the states of the actual path
 	 */
 	@SuppressWarnings("unchecked")
-	private void exploreState(IPredicate state, NestedWord<CodeBlock> word) {
+	private void exploreState(final IPredicate state, final NestedWord<CodeBlock> word) {
 		mLogger.debug("Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: "
 				+ mActualPath.size());
 		mStackState = new ArrayList<IPredicate>();
@@ -566,7 +566,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 *            the postcondition of the path
 	 * @return true if interpolants were found
 	 */
-	private boolean checkAndAddPath(NestedWord<CodeBlock> word, IPredicate pre, IPredicate post) {
+	private boolean checkAndAddPath(final NestedWord<CodeBlock> word, final IPredicate pre, final IPredicate post) {
 		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
@@ -595,7 +595,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,mServices, false, mPredicateUnifier,
-											mPref.interpolation(), true);
+											mPref.interpolation(), true, mXnfConversionTechnique, mSimplificationTechnique);
 
 		mInterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {
@@ -634,8 +634,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param pre the formula for the state 0
 	 * @param post the formula for the state n-1
 	 */
-	private void addPath(NestedWord<CodeBlock> edges, ArrayList<IPredicate> states, IPredicate[] interpolants,
-			IPredicate pre, IPredicate post, SortedMap<Integer, IPredicate> pendingContexts) {
+	private void addPath(final NestedWord<CodeBlock> edges, final ArrayList<IPredicate> states, final IPredicate[] interpolants,
+			final IPredicate pre, final IPredicate post, final SortedMap<Integer, IPredicate> pendingContexts) {
 		mLogger.debug("Add path: numEdges:" + edges.length() + " numStates:" + states.size() + " numInterpol:"
 				+ interpolants.length);
 

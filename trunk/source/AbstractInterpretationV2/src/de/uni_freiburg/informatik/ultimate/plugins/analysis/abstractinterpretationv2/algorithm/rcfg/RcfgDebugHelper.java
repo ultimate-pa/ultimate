@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -44,6 +46,8 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock>, LOC
 	private final IHoareTripleChecker mHTC;
 	private final Script mScript;
 	private final Boogie2SMT mBoogie2Smt;
+	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
@@ -78,22 +82,22 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock>, LOC
 
 		if (result != Validity.VALID) {
 			mLogger.fatal("Soundness check failed for the following triple:");
-			final String simplePre = SmtUtils.simplify(mScript, precond.getFormula(), mServices).toStringDirect();
+			final String simplePre = SmtUtils.simplify(mScript, precond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect();
 			if (precondHier == null) {
 				mLogger.fatal("Pre: {" + simplePre + "}");
 			} else {
 				mLogger.fatal("PreBefore: {" + simplePre + "}");
 				mLogger.fatal("PreAfter: {"
-						+ SmtUtils.simplify(mScript, precondHier.getFormula(), mServices).toStringDirect() + "}");
+						+ SmtUtils.simplify(mScript, precondHier.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect() + "}");
 			}
 			mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect());
 			mLogger.fatal(
-					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices).toStringDirect() + "}");
+					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect() + "}");
 		}
 		return result != Validity.INVALID;
 	}
 
-	private IPredicate createPredicateFromState(Collection<STATE> states) {
+	private IPredicate createPredicateFromState(final Collection<STATE> states) {
 		Term acc = mScript.term("false");
 
 		for (final STATE state : states) {

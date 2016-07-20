@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
@@ -56,8 +58,8 @@ public class CodeBlockFactory implements IStorable {
 
 	private int mSerialNumberCounter = 0;
 
-	public CodeBlockFactory(IUltimateServiceProvider services, Boogie2SMT boogie2smt,
-			ModifiableGlobalVariableManager mgvManager) {
+	public CodeBlockFactory(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt,
+			final ModifiableGlobalVariableManager mgvManager) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -65,55 +67,55 @@ public class CodeBlockFactory implements IStorable {
 		mMgvManager = mgvManager;
 	}
 
-	public Call constructCall(ProgramPoint source, ProgramPoint target, CallStatement call) {
+	public Call constructCall(final ProgramPoint source, final ProgramPoint target, final CallStatement call) {
 		return new Call(mSerialNumberCounter++, source, target, call, mLogger);
 	}
 
-	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(ProgramPoint source,
-			ProgramPoint target, boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
+	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(final ProgramPoint source,
+			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt,
-				mMgvManager, simplify, extPqe, codeBlocks, mLogger, mServices);
+				mMgvManager, simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique);
 	}
 
-	public GotoEdge constructGotoEdge(ProgramPoint source, ProgramPoint target) {
+	public GotoEdge constructGotoEdge(final ProgramPoint source, final ProgramPoint target) {
 		return new GotoEdge(mSerialNumberCounter++, source, target, mLogger);
 	}
 
-	public ParallelComposition constructParallelComposition(ProgramPoint source, ProgramPoint target,
-			List<CodeBlock> codeBlocks) {
-		return new ParallelComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mServices, codeBlocks);
+	public ParallelComposition constructParallelComposition(final ProgramPoint source, final ProgramPoint target,
+			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+		return new ParallelComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mServices, codeBlocks, xnfConversionTechnique);
 	}
 
-	public Return constructReturn(ProgramPoint source, ProgramPoint target, Call correspondingCall) {
+	public Return constructReturn(final ProgramPoint source, final ProgramPoint target, final Call correspondingCall) {
 		return new Return(mSerialNumberCounter++, source, target, correspondingCall, mLogger);
 	}
 
-	public SequentialComposition constructSequentialComposition(ProgramPoint source, ProgramPoint target,
-			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
+	public SequentialComposition constructSequentialComposition(final ProgramPoint source, final ProgramPoint target,
+			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		return new SequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mMgvManager, simplify,
-				extPqe, mServices, codeBlocks);
+				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final Statement st) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, st, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st,
-			Origin origin) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final Statement st,
+			final Origin origin) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, st, origin, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, List<Statement> stmts,
-			Origin origin) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final List<Statement> stmts,
+			final Origin origin) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, stmts, origin, mLogger);
 	}
 
-	public Summary constructSummary(ProgramPoint source, ProgramPoint target, CallStatement st,
-			boolean calledProcedureHasImplementation) {
+	public Summary constructSummary(final ProgramPoint source, final ProgramPoint target, final CallStatement st,
+			final boolean calledProcedureHasImplementation) {
 		return new Summary(mSerialNumberCounter++, source, target, st, calledProcedureHasImplementation, mLogger);
 	}
 
-	public CodeBlock copyCodeBlock(CodeBlock codeBlock, ProgramPoint source, ProgramPoint target) {
+	public CodeBlock copyCodeBlock(final CodeBlock codeBlock, final ProgramPoint source, final ProgramPoint target) {
 		if (codeBlock instanceof Call) {
 			final Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());

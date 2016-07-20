@@ -81,14 +81,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 
-	public TraceAbstractionConcurrentObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public TraceAbstractionConcurrentObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		final RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 
 		final RootNode rootNode = (RootNode) root;
@@ -98,7 +98,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		final SmtManager smtManager = new SmtManager(rootNode.getRootAnnot().getBoogie2SMT().getScript(),
 				rootNode.getRootAnnot().getBoogie2SMT(), rootNode.getRootAnnot().getModGlobVarManager(), mServices,
-				false, rootNode.getRootAnnot().getManagedScript());
+				false, rootNode.getRootAnnot().getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -213,7 +213,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
+	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
 		final String longDescription;
 		if (errorLocs.isEmpty()) {
 			longDescription = "We were not able to verify any"
@@ -231,7 +231,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(RcfgProgramExecution pe) {
+	private void reportCounterexampleResult(final RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
@@ -240,7 +240,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs) {
 		for (final ProgramPoint errorIpp : errorLocs) {
 			final ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
@@ -254,14 +254,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
+	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
 		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
-	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
+	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
 		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
@@ -269,7 +269,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		reportResult(res);
 	}
 
-	private void reportResult(IResult res) {
+	private void reportResult(final IResult res) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
@@ -287,7 +287,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// TODO Auto-generated method stub
 
 	}
@@ -298,7 +298,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
+	public ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();

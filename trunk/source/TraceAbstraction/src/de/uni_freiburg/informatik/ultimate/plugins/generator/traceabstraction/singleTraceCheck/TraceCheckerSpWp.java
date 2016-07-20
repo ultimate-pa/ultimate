@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -97,15 +99,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private int mNonLiveVariablesBp = 0;
 	
 
-	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			UnsatCores unsatCores, boolean useLiveVariables, 
-			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager smtManagerTc) {
+	public TraceCheckerSpWp(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final UnsatCores unsatCores, final boolean useLiveVariables, 
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
+			final PredicateUnifier predicateUnifier, final INTERPOLATION interpolation, final SmtManager smtManagerTc, 
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManagerTc);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, 
+				smtManagerTc, simplificationTechnique, xnfConversionTechnique);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -135,8 +139,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 	@Override
-	public void computeInterpolants(Set<Integer> interpolatedPositions,
-			INTERPOLATION interpolation) {
+	public void computeInterpolants(final Set<Integer> interpolatedPositions,
+			final INTERPOLATION interpolation) {
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
@@ -187,7 +191,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @see LiveVariables
 	 * @see PredicateTransformer
 	 */
-	private void computeInterpolantsUsingUnsatCore(Set<Integer> interpolatedPositions) {
+	private void computeInterpolantsUsingUnsatCore(final Set<Integer> interpolatedPositions) {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
 		}
@@ -241,12 +245,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
+						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
 						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null);
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
@@ -268,12 +272,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory()));
+						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
 						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null);
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
@@ -330,7 +334,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * Construct representation of the trace formula that contains only the
 	 * conjuncts that occur in the unsat core.
 	 */
-	private NestedFormulas<TransFormula, IPredicate> constructRelevantTransFormulas(Set<Term> unsatCore) {
+	private NestedFormulas<TransFormula, IPredicate> constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<TransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
 			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
@@ -400,7 +404,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * infeasible. This check is desired, when we use unsatisfiable cores of
 	 * finer granularity.
 	 */
-	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
+	private boolean stillInfeasible(final NestedFormulas<TransFormula, IPredicate> rv) {
 		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mSmtManager, mModifiedGlobals, rv,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
@@ -417,8 +421,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * of the trace, and therefore only these are important for the computations
 	 * done afterwards.
 	 */
-	private Set<IAction> filterOutIrrelevantStatements(NestedWord<? extends IAction> trace, Set<Term> unsat_coresAsSet,
-			boolean[] localVarAssignmentAtCallInUnsatCore, boolean[] oldVarAssignmentAtCallInUnsatCore) {
+	private Set<IAction> filterOutIrrelevantStatements(final NestedWord<? extends IAction> trace, final Set<Term> unsat_coresAsSet,
+			final boolean[] localVarAssignmentAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore) {
 		final Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
@@ -458,12 +462,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		private final Set<BoogieVar>[] mRelevantVars;
 		
-		public LiveVariablesPostprocessor_Forward(Set<BoogieVar>[] relevantVars) {
+		public LiveVariablesPostprocessor_Forward(final Set<BoogieVar>[] relevantVars) {
 			mRelevantVars = relevantVars;
 		}
 
 		@Override
-		public IPredicate postprocess(IPredicate pred, int i) {
+		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
@@ -487,13 +491,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		private final Set<BoogieVar>[] mRelevantVars;
 		
-		public LiveVariablesPostprocessor_Backward(Set<BoogieVar>[] relevantVars) {
+		public LiveVariablesPostprocessor_Backward(final Set<BoogieVar>[] relevantVars) {
 			super();
 			mRelevantVars = relevantVars;
 		}
 
 		@Override
-		public IPredicate postprocess(IPredicate pred, int i) {
+		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
@@ -509,7 +513,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	public class UnifyPostprocessor implements PredicatePostprocessor {
 
 		@Override
-		public IPredicate postprocess(IPredicate pred, int i) {
+		public IPredicate postprocess(final IPredicate pred, final int i) {
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(
 					pred.getFormula());
 			return unified;
@@ -527,7 +531,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * 
 	 * @see LiveVariables
 	 */
-	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
+	private Set<TermVariable> computeIrrelevantVariables(final Set<BoogieVar> relevantVars, final IPredicate p) {
 		final Set<TermVariable> result = new HashSet<TermVariable>();
 		for (final BoogieVar bv : p.getVars()) {
 			if (!relevantVars.contains(bv)) {
@@ -548,7 +552,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * post, and once via weakest pre-condition). It ensures the correctness of
 	 * the predicates.
 	 */
-	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
+	private void checkSPImpliesWP(final IPredicate[] interpolantsSP, final IPredicate[] interpolantsWP) {
 		mLogger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
 			final LBool result = mSmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
@@ -559,7 +563,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 	@Override
-	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
+	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
 			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, ssa,
 					mNestedFormulas, mLogger, mSmtManager);
@@ -599,7 +603,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		@Override
-		public Object aggregate(String key, Object value1, Object value2) {
+		public Object aggregate(final String key, final Object value1, final Object value2) {
 			switch (key) {
 			case s_SizeOfPredicatesFP:
 			case s_SizeOfPredicatesBP:
@@ -619,7 +623,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");
@@ -666,8 +670,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			return super.getStopwatches();
 		}
 
-		public void setPredicateData(int[] sizeOfPredicatesFP, int[] sizeOfPredicatesBP,
-				int numberOfNonLiveVariablesFP, int numberOfNonLiveVariablesBP) {
+		public void setPredicateData(final int[] sizeOfPredicatesFP, final int[] sizeOfPredicatesBP,
+				final int numberOfNonLiveVariablesFP, final int numberOfNonLiveVariablesBP) {
 			mSizeOfPredicates = new long[2];
 			if (sizeOfPredicatesFP != null) {
 				mSizeOfPredicates[0] = getSumOfIntArray(sizeOfPredicatesFP);
@@ -683,14 +687,14 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			mNumberOfNonLiveVariablesBP = numberOfNonLiveVariablesBP;
 		}
 
-		public void setConjunctsInSSA(int conjunctsInSSA, int conjunctsInUC) {
+		public void setConjunctsInSSA(final int conjunctsInSSA, final int conjunctsInUC) {
 			assert mConjunctsInSSA == 0 : "have already been set";
 			assert mConjunctsInUC == 0 : "have already been set";
 			mConjunctsInSSA = conjunctsInSSA;
 			mConjunctsInUC = conjunctsInUC;
 		}
 
-		private long getSumOfIntArray(int[] arr) {
+		private long getSumOfIntArray(final int[] arr) {
 			long sum = 0;
 			for (int i = 0; i < arr.length; i++) {
 				sum += arr[i];
@@ -704,7 +708,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		@Override
-		public Object getValue(String key) {
+		public Object getValue(final String key) {
 			switch (key) {
 			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInSSA:
 				return mConjunctsInSSA;

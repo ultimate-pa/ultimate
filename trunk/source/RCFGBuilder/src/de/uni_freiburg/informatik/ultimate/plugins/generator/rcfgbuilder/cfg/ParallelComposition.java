@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
@@ -68,7 +69,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "CodeBlocks (Parallely Composed)") {
 			return mCodeBlocks;
 		} else if (field == "PrettyPrintedStatements") {
@@ -82,8 +83,8 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		}
 	}
 
-	ParallelComposition(int serialNumber, ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
-			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
+	ParallelComposition(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final Boogie2SMT boogie2smt,
+			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
 		final Script script = boogie2smt.getScript();
@@ -121,9 +122,9 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,
-				null, s_TransformToCNF, transFormulas);
+				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
 		mTransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
-				getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, transFormulasWithBranchEncoders);
+				getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
 	}
 
 	@Override
@@ -136,7 +137,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public void setTransitionFormula(TransFormula transFormula) {
+	public void setTransitionFormula(final TransFormula transFormula) {
 		throw new UnsupportedOperationException("transition formula is computed in constructor");
 	}
 

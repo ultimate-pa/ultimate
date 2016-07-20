@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
@@ -77,6 +79,8 @@ public class TransFormulaLRWithArrayCells {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	static final String s_AuxArray = "auxArray";
 
@@ -122,9 +126,11 @@ public class TransFormulaLRWithArrayCells {
 			final ReplacementVarFactory replacementVarFactory, final Script script,
 			final TransFormulaLRWithArrayInformation tflrwai, 
 			final EqualityAnalysisResult equalityAnalysisAtHonda, 
-			final Boogie2SMT boogie2smt, final ArrayCellRepVarConstructor acrvc, final boolean moverapproximateByOmmitingDisjointIndices, final boolean isStem) {
+			final Boogie2SMT boogie2smt, final ArrayCellRepVarConstructor acrvc, final boolean moverapproximateByOmmitingDisjointIndices, final boolean isStem, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+			mSimplificationTechnique = simplificationTechnique;
+			mXnfConversionTechnique = xnfConversionTechnique;
 			mOverapproximateByOmmitingDisjointIndices = moverapproximateByOmmitingDisjointIndices;
 			this.tflrwai = tflrwai;
 			mScript = script;
@@ -213,10 +219,10 @@ public class TransFormulaLRWithArrayCells {
 			final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(cvb.getAuxVars());
 
 			Term result = //resultDisjuntion;
-					PartialQuantifierElimination.elim(mScript, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger, boogie2smt.getVariableManager());
+					PartialQuantifierElimination.elim(mScript, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger, boogie2smt.getVariableManager(), mSimplificationTechnique, mXnfConversionTechnique);
 			
 			assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
-			result = SmtUtils.simplify(mScript, result, mServices);
+			result = SmtUtils.simplify(mScript, result, mServices, mSimplificationTechnique, boogie2smt.getVariableManager());
 			
 			removeArrayInOutVars();
 			

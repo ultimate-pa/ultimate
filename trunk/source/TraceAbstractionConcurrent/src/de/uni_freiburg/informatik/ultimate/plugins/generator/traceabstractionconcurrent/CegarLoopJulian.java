@@ -69,9 +69,9 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 
-	public CegarLoopJulian(String name, RootNode rootNode, SmtManager smtManager,
-			TraceAbstractionBenchmarks timingStatistics, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+	public CegarLoopJulian(final String name, final RootNode rootNode, final SmtManager smtManager,
+			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, taPrefs, errorLocs, INTERPOLATION.Craig_TreeInterpolation, false, services, storage);
 	}
 
@@ -80,7 +80,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		final TaConcurContentFactory contentFactory = new TaConcurContentFactory(
 				mRootNode.getRootAnnot().getProgramPoints(), this, super.mSmtManager, super.mPref,
 				mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mRootNode, contentFactory, mSmtManager, mServices);
+		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mRootNode, contentFactory, mSmtManager, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -193,7 +193,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		throw new UnsupportedOperationException();
 	}
 
-	private static boolean acceptsPetriViaFA(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, Word<CodeBlock> word)
+	private static boolean acceptsPetriViaFA(final IUltimateServiceProvider services, final IAutomaton<CodeBlock, IPredicate> automaton, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
 		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(

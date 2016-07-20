@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitione
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 
 /**
  * Split lasso into independent components.
@@ -50,18 +51,22 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	
 	private final Script mScript;
 
-	public LassoPartitioneerPreprocessor(Script script, 
-			IUltimateServiceProvider services, 
-			Boogie2SMT boogie2smt) {
+	private final XnfConversionTechnique mXnfConversionTechnique;
+
+	public LassoPartitioneerPreprocessor(final Script script, 
+			final IUltimateServiceProvider services, 
+			final Boogie2SMT boogie2smt,
+			final XnfConversionTechnique xnfConversionTechniqe) {
 		mServices = services;
 		mScript = script;
 		mBoogie2Smt = boogie2smt;
+		mXnfConversionTechnique = xnfConversionTechniqe;
 	}
 
 	@Override
 	public Collection<LassoUnderConstruction> process(
-			LassoUnderConstruction lasso) throws TermException {
-		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mBoogie2Smt, mScript, lasso);
+			final LassoUnderConstruction lasso) throws TermException {
+		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mBoogie2Smt, mScript, lasso, mXnfConversionTechnique);
 		return lp.getNewLassos();
 	}
 

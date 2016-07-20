@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -64,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 public class MapEliminator {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IFreshTermVariableConstructor mVariableManager;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
@@ -100,10 +104,14 @@ public class MapEliminator {
 	/**
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
 	 */
-	public MapEliminator(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, final Collection<TransFormulaLR> transformulas) {
+	public MapEliminator(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, 
+			final Collection<TransFormulaLR> transformulas, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mScript = boogie2smt.getScript();
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mIndicesToTuples = new HashMap<>();
 		mArrayIndices = new HashMap<>();
@@ -263,12 +271,12 @@ public class MapEliminator {
 			// If aux-vars have been created, eliminate them
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars, Util.and(mScript, newTerm, mAuxVarTerm));
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-					mVariableManager, quantified);
+					mVariableManager, quantified, mSimplificationTechnique, mXnfConversionTechnique);
 			mAuxVars.clear();
 			mSelectToAuxVars.clear();
 			mAuxVarTerm = mScript.term("true");
 		}
-		newTF.setFormula(SmtUtils.simplify(mScript, newTerm, mServices));
+		newTF.setFormula(SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique, mVariableManager));
 		return newTF;
 	}
 

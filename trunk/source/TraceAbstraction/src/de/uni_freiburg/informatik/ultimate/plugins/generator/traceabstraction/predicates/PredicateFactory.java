@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -63,6 +65,8 @@ public class PredicateFactory {
 
 	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final Script mScript;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	protected int mSerialNumber;
 
@@ -82,7 +86,7 @@ public class PredicateFactory {
 		return mDontCareTerm;
 	}
 
-	public PredicateFactory(IUltimateServiceProvider services, Boogie2SMT boogie2smt) {
+	public PredicateFactory(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mDontCareTerm = new AuxilliaryTerm("don't care");
@@ -90,13 +94,15 @@ public class PredicateFactory {
 		mSymbolTable = boogie2smt.getBoogie2SmtSymbolTable();
 		mFreshVariableConstructor = boogie2smt.getVariableManager();
 		mScript = boogie2smt.getScript();
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 	
 	/**
 	 * Returns true iff each free variables corresponds to a BoogieVar or will
 	 * be quantified. Throws an Exception otherwise.
 	 */
-	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
+	private boolean checkIfValidPredicate(final Term term, final Set<TermVariable> quantifiedVariables) {
 		for (final TermVariable tv : term.getFreeVars()) {
 			final BoogieVar bv = mSymbolTable.getBoogieVar(tv);
 			if (bv == null) {
@@ -109,31 +115,31 @@ public class PredicateFactory {
 		return true;
 	}
 
-	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
+	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, Term term, Map<Integer, Term> history) {
+	public PredicateWithHistory newPredicateWithHistory(final ProgramPoint pp, final Term term, final Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);
 		final PredicateWithHistory pred = new PredicateWithHistory(pp, mSerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
 	}
 
-	public boolean isDontCare(IPredicate pred) {
+	public boolean isDontCare(final IPredicate pred) {
 		return pred.getFormula() == mDontCareTerm;
 	}
 	
-	public boolean isDontCare(Term term) {
+	public boolean isDontCare(final Term term) {
 		return term == mDontCareTerm;
 	}
 
-	public SPredicate newSPredicate(ProgramPoint pp, final Term term) {
+	public SPredicate newSPredicate(final ProgramPoint pp, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		return newSPredicate(pp, termVarsProc);
 	}
 	
-	private SPredicate newSPredicate(ProgramPoint pp, final TermVarsProc termVarsProc) {
+	private SPredicate newSPredicate(final ProgramPoint pp, final TermVarsProc termVarsProc) {
 		final SPredicate pred = new SPredicate(pp, mSerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
@@ -156,14 +162,14 @@ public class PredicateFactory {
 		return termVarsProc;
 	}
 
-	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, Term term) {
+	public MLPredicate newMLPredicate(final ProgramPoint[] programPoints, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		final MLPredicate predicate = new MLPredicate(programPoints, mSerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 	
-	public ProdState getNewProdState(List<IPredicate> programPoints) {
+	public ProdState getNewProdState(final List<IPredicate> programPoints) {
 		return new ProdState(mSerialNumber++, programPoints, mScript.term("true"),new HashSet<BoogieVar>(0));
 	}
 	
@@ -174,12 +180,12 @@ public class PredicateFactory {
 	
 	
 
-	public UnknownState newDontCarePredicate(ProgramPoint pp) {
+	public UnknownState newDontCarePredicate(final ProgramPoint pp) {
 		final UnknownState pred = new UnknownState(pp, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
 
-	public DebugPredicate newDebugPredicate(String debugMessage) {
+	public DebugPredicate newDebugPredicate(final String debugMessage) {
 		final DebugPredicate pred = new DebugPredicate(debugMessage, mSerialNumber++, mDontCareTerm);
 		return pred;
 	}
@@ -190,17 +196,17 @@ public class PredicateFactory {
 
 	}
 
-	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode, Integer stutteringSteps) {
+	public SPredicate newTrueSLPredicateWithWitnessNode(final ProgramPoint pp, final WitnessNode witnessNode, final Integer stutteringSteps) {
 		final SPredicate pred = new SPredicateWithWitnessNode(pp, mSerialNumber++, NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
 				mScript.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
 
-	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp, ModifiableGlobalVariableManager modifiableGlobals) {
-		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mFreshVariableConstructor, mScript, mServices);
+	public HoareAnnotation getNewHoareAnnotation(final ProgramPoint pp, final ModifiableGlobalVariableManager modifiableGlobals) {
+		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mFreshVariableConstructor, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
-	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
+	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = and(inputPreds);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
 		final BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
@@ -210,11 +216,11 @@ public class PredicateFactory {
 	
 	
 	
-	public Term and(IPredicate... preds) {
+	public Term and(final IPredicate... preds) {
 		return and(Arrays.asList(preds));
 	}
 	
-	public Term and(Collection<IPredicate> preds) {
+	public Term and(final Collection<IPredicate> preds) {
 		Term term = mScript.term("true");
 		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
@@ -225,11 +231,11 @@ public class PredicateFactory {
 		return term;
 	}
 	
-	public Term or(boolean withSimplifyDDA, IPredicate... preds) {
+	public Term or(final boolean withSimplifyDDA, final IPredicate... preds) {
 		return or(withSimplifyDDA, Arrays.asList(preds));
 	}
 
-	public Term or(boolean withSimplifyDDA, Collection<IPredicate> preds) {
+	public Term or(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
 		Term term = mScript.term("false");
 		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
@@ -238,12 +244,12 @@ public class PredicateFactory {
 			term = Util.or(mScript, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(mScript, term, mServices);
+			term = SmtUtils.simplify(mScript, term, mServices, mSimplificationTechnique, mFreshVariableConstructor);
 		}
 		return term;
 	}
 
-	public Term not(IPredicate p) {
+	public Term not(final IPredicate p) {
 		if (isDontCare(p)) {
 			return mDontCareTerm;
 		}
@@ -259,7 +265,7 @@ public class PredicateFactory {
 
 		String mName;
 
-		private AuxilliaryTerm(String name) {
+		private AuxilliaryTerm(final String name) {
 			super(0);
 			mName = name;
 		}
@@ -270,7 +276,7 @@ public class PredicateFactory {
 		}
 
 		@Override
-		public void toStringHelper(ArrayDeque<Object> mTodo) {
+		public void toStringHelper(final ArrayDeque<Object> mTodo) {
 			throw new UnsupportedOperationException("Auxiliary term must not be subterm of other terms");
 		}
 

@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -39,9 +41,9 @@ public class Cfg2Nwa extends CFG2Automaton {
 	
 	private INestedWordAutomatonOldApi<CodeBlock,IPredicate> mResult;
 
-	public Cfg2Nwa(RootNode rootNode,
-			StateFactory<IPredicate> contentFactory, SmtManager smtManager, IUltimateServiceProvider services) {
-		super(rootNode, contentFactory, smtManager, services);
+	public Cfg2Nwa(final RootNode rootNode,
+			final StateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
 		mResult = mAutomata.get(0);

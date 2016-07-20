@@ -71,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 public class SmtUtils {
 	
 	public enum XnfConversionTechnique {BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION };
+	
+	public enum SimplicationTechnique {SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA };
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -82,12 +84,29 @@ public class SmtUtils {
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
-	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services) {
+	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services,
+			final SimplicationTechnique simplificationTechnique, final IFreshTermVariableConstructor freshTermVariableConstructor) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
-		final Term simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
+		final Term simplified;
+		switch (simplificationTechnique) {
+		case SIMPLIFY_BDD_PROP:
+			simplified = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transform(formula);
+			break;
+		case SIMPLIFY_BDD_FIRST_ORDER:
+			simplified = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformWithImplications(formula);
+			break;
+		case SIMPLIFY_DDA:
+			simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
+			break;
+		case SIMPLIFY_QUICK:
+			simplified = (new SimplifyQuick(script, services)).getSimplifiedTerm(formula);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
@@ -1112,8 +1131,8 @@ public class SmtUtils {
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
 	public static Term toDnf(final IUltimateServiceProvider services, final Script script,
-			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
-		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:
@@ -1132,8 +1151,8 @@ public class SmtUtils {
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
 	public static Term toCnf(final IUltimateServiceProvider services, final Script script,
-			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
-		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:

@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -86,17 +88,20 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @param smtManager
 	 *            the smt manager for constructing the default
 	 *            {@link IInvariantPatternProcessorFactory}
+	 * @param simplicationTechnique 
+	 * @param xnfConversionTechnique 
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager, 
-			final boolean useNonlinerConstraints, final Settings solverSettings) {
+			final boolean useNonlinerConstraints, final Settings solverSettings, 
+			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services,
-				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, solverSettings);
+				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique);
 	}
 
 	/**
@@ -122,16 +127,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            {@link IInvariantPatternProcessorFactory}
 	 * @param modGlobVarManager
 	 *            reserved for future use.
+	 * @param simplicationTechnique 
+	 * @param xnfConversionTechnique 
 	 */
-	public PathInvariantsGenerator(IUltimateServiceProvider services,
-			IToolchainStorage storage, NestedRun<? extends IAction, IPredicate> run,
-			IPredicate precondition, IPredicate postcondition,
-			PredicateUnifier predicateUnifier, SmtManager smtManager,
-			ModifiableGlobalVariableManager modGlobVarManager, 
-			boolean useNonlinerConstraints, Settings solverSettings) {
+	public PathInvariantsGenerator(final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final NestedRun<? extends IAction, IPredicate> run,
+			final IPredicate precondition, final IPredicate postcondition,
+			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modGlobVarManager, 
+			final boolean useNonlinerConstraints, final Settings solverSettings, 
+			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		this(services, run, precondition, postcondition, predicateUnifier,
 				modGlobVarManager, createDefaultFactory(services, storage, 
-						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings));
+						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique));
 	}
 
 	/**

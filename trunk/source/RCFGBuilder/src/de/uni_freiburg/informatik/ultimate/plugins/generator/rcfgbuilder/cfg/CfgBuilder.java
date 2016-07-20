@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -128,8 +130,11 @@ public class CfgBuilder {
 
 	private final CodeBlockFactory mCbf;
 
-	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator, IUltimateServiceProvider services,
-			IToolchainStorage storage) throws IOException {
+	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	public CfgBuilder(final Unit unit, final RCFGBacktranslator backtranslator, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBacktranslator = backtranslator;
@@ -159,8 +164,8 @@ public class CfgBuilder {
 	 * @param storage
 	 * @param filename
 	 */
-	private Script constructAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
-			String filename) {
+	private Script constructAndInitializeSolver(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final String filename) {
 		final SolverMode solverMode = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
@@ -195,7 +200,7 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public RootNode getRootNode(Unit unit) {
+	public RootNode getRootNode(final Unit unit) {
 
 		tfb = new TransFormulaBuilder(mBoogie2smt, mServices);
 
@@ -232,7 +237,7 @@ public class CfgBuilder {
 
 		// Transform CFGs to a recursive CFG
 		for (final Summary se : mImplementationSummarys) {
-			addCallTransitionAndReturnTransition(se);
+			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
 		}
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
@@ -245,7 +250,7 @@ public class CfgBuilder {
 		return mGraphroot;
 	}
 
-	private Expression getNegation(Expression expr) {
+	private Expression getNegation(final Expression expr) {
 		if (expr == null) {
 			return null;
 		} else {
@@ -257,11 +262,12 @@ public class CfgBuilder {
 	/**
 	 * Add CallEdge from SummaryEdge source to the entry location of the called procedure. Add ReturnEdge from the
 	 * called procedures exit node to the summary edges target.
+	 * @param simplificationTechnique 
 	 * 
 	 * @param SummaryEdge
 	 *            that summarizes execution of an implemented procedure.
 	 */
-	private void addCallTransitionAndReturnTransition(Summary edge) {
+	private void addCallTransitionAndReturnTransition(final Summary edge, final SimplicationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
 		assert (mRootAnnot.mentryNode.containsKey(callee)) : "Source code contains" + " call of " + callee
@@ -274,9 +280,9 @@ public class CfgBuilder {
 		final String caller = callerNode.getProcedure();
 
 		final TranslationResult arguments2InParams = mRootAnnot.getBoogie2SMT().getStatements2TransFormula()
-				.inParamAssignment(st);
+				.inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mRootAnnot.getBoogie2SMT().getStatements2TransFormula()
-				.resultAssignment(st, caller);
+				.resultAssignment(st, caller, simplificationTechnique);
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		overapproximations.putAll(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
@@ -364,7 +370,7 @@ public class CfgBuilder {
 		 * @param Identifier
 		 *            of the procedure for which the CFG will be build.
 		 */
-		private void buildProcedureCfgFromImplementation(String procName) {
+		private void buildProcedureCfgFromImplementation(final String procName) {
 			mcurrentProcedureName = procName;
 			mEdges = new HashSet<CodeBlock>();
 			mGotoEdges = new LinkedList<GotoEdge>();
@@ -522,7 +528,7 @@ public class CfgBuilder {
 			}
 
 			for (final CodeBlock transEdge : mEdges) {
-				tfb.addTransitionFormulas(transEdge, procName);
+				tfb.addTransitionFormulas(transEdge, procName, mXnfConversionTechnique, mSimplificationTechnique);
 			}
 			// mBoogie2smt.removeLocals(proc);
 		}
@@ -533,7 +539,7 @@ public class CfgBuilder {
 		 * 
 		 * @return
 		 */
-		private ProgramPoint addErrorNode(String procName, BoogieASTNode BoogieASTNode) {
+		private ProgramPoint addErrorNode(final String procName, final BoogieASTNode BoogieASTNode) {
 			Collection<ProgramPoint> errorNodes = mRootAnnot.mErrorNodes.get(procName);
 			if (errorNodes == null) {
 				errorNodes = new ArrayList<ProgramPoint>();
@@ -565,7 +571,7 @@ public class CfgBuilder {
 		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
 		 *         true.
 		 */
-		private List<EnsuresSpecification> getDummyEnsuresSpecifications(ILocation loc) {
+		private List<EnsuresSpecification> getDummyEnsuresSpecifications(final ILocation loc) {
 			final Expression dummyExpr = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true);
 			final EnsuresSpecification dummySpec = new EnsuresSpecification(loc, false, dummyExpr);
 			final ArrayList<EnsuresSpecification> dummySpecs = new ArrayList<EnsuresSpecification>(1);
@@ -593,7 +599,7 @@ public class CfgBuilder {
 		 * 
 		 * @return true iff we removed the gotoEdge.
 		 */
-		private boolean removeAuxiliaryGoto(GotoEdge gotoEdge, boolean allowMultiplicationOfEdges) {
+		private boolean removeAuxiliaryGoto(final GotoEdge gotoEdge, final boolean allowMultiplicationOfEdges) {
 			final ProgramPoint mother = (ProgramPoint) gotoEdge.getSource();
 			final ProgramPoint child = (ProgramPoint) gotoEdge.getTarget();
 
@@ -725,7 +731,7 @@ public class CfgBuilder {
 		 * Assume the requires clause. If the requires clause is empty and dummyRequiresIfEmpty is true add an dummy
 		 * requires specification.
 		 */
-		private void assumeRequires(boolean dummyRequiresIfEmpty) {
+		private void assumeRequires(final boolean dummyRequiresIfEmpty) {
 			// Assume everything mentioned in the requires specification
 			List<RequiresSpecification> requires = mBoogieDeclarations.getRequires().get(mcurrentProcedureName);
 			if ((requires == null || requires.isEmpty()) && dummyRequiresIfEmpty) {
@@ -786,7 +792,7 @@ public class CfgBuilder {
 		// return new AssignmentStatement(null,lhs,rhs);
 		// }
 
-		private String getLocName(ILocation location) {
+		private String getLocName(final ILocation location) {
 			final int startLine = location.getStartLine();
 			String unprimedName = "L" + startLine;
 			if (location.isLoop()) {
@@ -796,7 +802,7 @@ public class CfgBuilder {
 			return result;
 		}
 
-		private String getUniqueName(String name) {
+		private String getUniqueName(final String name) {
 			if (mprocLocNodes.containsKey(name)) {
 				return getUniqueName(name + "'");
 			} else {
@@ -816,7 +822,7 @@ public class CfgBuilder {
 		 *            overwritten, when this method is called with the correct Label as second parameter.
 		 * @return LocNode that is the representative for labelName.
 		 */
-		private ProgramPoint getLocNodeforLabel(String labelName, Statement st) {
+		private ProgramPoint getLocNodeforLabel(final String labelName, final Statement st) {
 			if (mlabel2LocNodes.containsKey(labelName)) {
 				final ProgramPoint locNode = mlabel2LocNodes.get(labelName);
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
@@ -841,7 +847,7 @@ public class CfgBuilder {
 			}
 		}
 
-		private void processLabel(Label st) {
+		private void processLabel(final Label st) {
 			final String labelName = st.getName();
 			final boolean existsAlready = !mLabels.add(labelName);
 			if (existsAlready) {
@@ -874,7 +880,7 @@ public class CfgBuilder {
 			mdeadcode = false;
 		}
 
-		private void processAssuAssiHavoStatement(Statement st, Origin origin) {
+		private void processAssuAssiHavoStatement(final Statement st, final Origin origin) {
 			if (mdeadcode) {
 				return;
 			}
@@ -907,7 +913,7 @@ public class CfgBuilder {
 
 		}
 
-		private void processAssertStatement(AssertStatement st) {
+		private void processAssertStatement(final AssertStatement st) {
 			if (mdeadcode) {
 				return;
 			}
@@ -952,7 +958,7 @@ public class CfgBuilder {
 			mcurrent = assumeSafeCB;
 		}
 
-		private void processGotoStatement(GotoStatement st) {
+		private void processGotoStatement(final GotoStatement st) {
 			if (mdeadcode) {
 				return;
 			}
@@ -986,7 +992,7 @@ public class CfgBuilder {
 			mdeadcode = true;
 		}
 
-		private void processCallStatement(CallStatement st) {
+		private void processCallStatement(final CallStatement st) {
 			if (mdeadcode) {
 				return;
 			}
@@ -1093,7 +1099,7 @@ public class CfgBuilder {
 		 * @param newLocNode
 		 *            LocNode that absorbes the oldLocNode.
 		 */
-		private void mergeLocNodes(ProgramPoint oldLocNode, ProgramPoint newLocNode) {
+		private void mergeLocNodes(final ProgramPoint oldLocNode, final ProgramPoint newLocNode) {
 			// oldLocNode must not represent an error location
 			assert (!oldLocNode.isErrorLocation());
 			if (oldLocNode == newLocNode) {
@@ -1170,7 +1176,7 @@ public class CfgBuilder {
 			}
 		}
 
-		private void composeSequential(ProgramPoint pp) {
+		private void composeSequential(final ProgramPoint pp) {
 			assert (pp.getIncomingEdges().size() == 1);
 			assert (pp.getOutgoingEdges().size() == 1);
 			final CodeBlock incoming = (CodeBlock) pp.getIncomingEdges().get(0);
@@ -1180,7 +1186,7 @@ public class CfgBuilder {
 			final List<CodeBlock> sequence = new ArrayList<>(2);
 			sequence.add(incoming);
 			sequence.add(outgoing);
-			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence);
+			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence, mXnfConversionTechnique, mSimplificationTechnique);
 			if (!sequentialQueue.contains(predecessor)) {
 				final List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
@@ -1189,9 +1195,9 @@ public class CfgBuilder {
 			}
 		}
 
-		private void composeParallel(ProgramPoint pp, List<CodeBlock> outgoing) {
+		private void composeParallel(final ProgramPoint pp, final List<CodeBlock> outgoing) {
 			final ProgramPoint successor = (ProgramPoint) outgoing.get(0).getTarget();
-			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing));
+			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing), mXnfConversionTechnique, mSimplificationTechnique);
 			if (superfluousSequential(pp)) {
 				sequentialQueue.add(pp);
 			} else {
@@ -1205,7 +1211,7 @@ public class CfgBuilder {
 			}
 		}
 
-		private boolean superfluousSequential(ProgramPoint pp) {
+		private boolean superfluousSequential(final ProgramPoint pp) {
 			if (pp.getIncomingEdges().size() != 1) {
 				return false;
 			}
@@ -1239,7 +1245,7 @@ public class CfgBuilder {
 		 *         ProgramPoint, if there can be such a list with more than one element. Otherwise (each outgoing edge
 		 *         leads to a different ProgramPoint) return null.
 		 */
-		private List<CodeBlock> superfluousParallel(ProgramPoint pp) {
+		private List<CodeBlock> superfluousParallel(final ProgramPoint pp) {
 			List<CodeBlock> result = null;
 			final Map<ProgramPoint, List<CodeBlock>> succ2edge = new HashMap<ProgramPoint, List<CodeBlock>>();
 			for (final RCFGEdge edge : pp.getOutgoingEdges()) {
@@ -1261,11 +1267,11 @@ public class CfgBuilder {
 		}
 	}
 
-	private static void passAllAnnotations(BoogieASTNode node, RcfgElement cb) {
+	private static void passAllAnnotations(final BoogieASTNode node, final RcfgElement cb) {
 		ModelUtils.copyAnnotations(node, cb);
 	}
 
-	private static void passAllAnnotations(BoogieASTNode node, Statement st) {
+	private static void passAllAnnotations(final BoogieASTNode node, final Statement st) {
 		ModelUtils.copyAnnotations(node, st);
 	}
 }

@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
@@ -59,19 +61,20 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	private final Settings mSolverSettings;
 	
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
-			IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			NestedRun<? extends IAction, IPredicate> run, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals,
-			AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			IUltimateServiceProvider services,
-			IToolchainStorage storage,
-			boolean computeRcfgProgramExecution,
-			PredicateUnifier predicateUnifier, 
-			boolean useNonlinerConstraints, Settings solverSettings) {
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final NestedRun<? extends IAction, IPredicate> run, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services,
+			final IToolchainStorage storage,
+			final boolean computeRcfgProgramExecution,
+			final PredicateUnifier predicateUnifier, 
+			final boolean useNonlinerConstraints, final Settings solverSettings,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier, smtManager);
+				computeRcfgProgramExecution, predicateUnifier, smtManager, simplificationTechnique, xnfConversionTechnique);
 		mStorage = storage;
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;
@@ -84,12 +87,12 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	}
 
 	@Override
-	protected void computeInterpolants(Set<Integer> interpolatedPositions,
-			INTERPOLATION interpolation) {
+	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
+			final INTERPOLATION interpolation) {
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
 				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
 				super.getPostcondition(), mPredicateUnifier, super.mSmtManager,
-				mModifiedGlobals, mUseNonlinerConstraints, mSolverSettings);
+				mModifiedGlobals, mUseNonlinerConstraints, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();

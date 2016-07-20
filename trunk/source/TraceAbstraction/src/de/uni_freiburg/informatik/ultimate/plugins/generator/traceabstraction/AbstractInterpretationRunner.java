@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -26,8 +28,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -40,6 +42,8 @@ public class AbstractInterpretationRunner {
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final RootNode mRoot;
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
@@ -48,10 +52,13 @@ public class AbstractInterpretationRunner {
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
-	        final CegarLoopStatisticsGenerator benchmark, final RootNode root) {
+	        final CegarLoopStatisticsGenerator benchmark, final RootNode root, 
+	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mRoot = root;
 		mAbsIntResult = null;
 		mSkipIteration = false;
@@ -150,7 +157,7 @@ public class AbstractInterpretationRunner {
 			                InterpolantAutomatonEnhancement.class) == InterpolantAutomatonEnhancement.NONE) {
 				mLogger.info("Using path program construction from abstract interpretation predicates.");
 				aiInterpolAutomaton = new AbstractInterpretationPathProgramGenerator(mServices, abstraction,
-				        predUnifier, smtManager, currentCex).getResult();
+				        predUnifier, smtManager, currentCex, mSimplificationTechnique, mXnfConversionTechnique).getResult();
 			} else {
 				mLogger.info("Using NWA construction from abstract interpretation predicates.");
 				aiInterpolAutomaton = new AbstractInterpretationPredicateAutomatonGenerator(mServices, abstraction,
@@ -230,8 +237,8 @@ public class AbstractInterpretationRunner {
 		return false;
 	}
 
-	private String simplify(Term term) {
-		return SmtUtils.simplify(mRoot.getRootAnnot().getScript(), term, mServices).toStringDirect();
+	private String simplify(final Term term) {
+		return SmtUtils.simplify(mRoot.getRootAnnot().getScript(), term, mServices, mSimplificationTechnique, mRoot.getRootAnnot().getBoogie2SMT().getVariableManager()).toStringDirect();
 	}
 
 	@FunctionalInterface

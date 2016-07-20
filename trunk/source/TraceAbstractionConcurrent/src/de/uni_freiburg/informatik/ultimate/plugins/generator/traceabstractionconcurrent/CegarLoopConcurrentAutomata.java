@@ -72,9 +72,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
-	public CegarLoopConcurrentAutomata(String name, RootNode rootNode, SmtManager smtManager,
-			TraceAbstractionBenchmarks timingStatistics, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+	public CegarLoopConcurrentAutomata(final String name, final RootNode rootNode, final SmtManager smtManager,
+			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, taPrefs, errorLocs, INTERPOLATION.Craig_TreeInterpolation, false, services, storage);
 		// mContentFactory = new TaConcurContentFactory(
 		// rootNode.getRootAnnot().getLocNodes(),
@@ -101,7 +101,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected void getInitialAbstraction() {
 		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref);
-		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mServices);
+		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -111,7 +111,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	}
 
 	@Override
-	protected Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+	protected Collection<Set<IPredicate>> computePartition(final INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
 		final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<Set<ProgramPoint>, Set<IPredicate>>();
@@ -132,7 +132,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	 * Pigeon-hole (german: einsortieren) predicates according to their
 	 * ProgramPoint
 	 */
-	protected void pigeonHole(Map<Set<ProgramPoint>, Set<IPredicate>> pp2p, IMLPredicate mp) {
+	protected void pigeonHole(final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p, final IMLPredicate mp) {
 		Set<IPredicate> statesWithSamePPs = pp2p.get(asHashSet(mp.getProgramPoints()));
 		if (statesWithSamePPs == null) {
 			statesWithSamePPs = new HashSet<IPredicate>();
@@ -141,7 +141,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		statesWithSamePPs.add(mp);
 	}
 
-	private static <E> Set<E> asHashSet(E[] array) {
+	private static <E> Set<E> asHashSet(final E[] array) {
 		return new HashSet<E>(Arrays.asList(array));
 	}
 

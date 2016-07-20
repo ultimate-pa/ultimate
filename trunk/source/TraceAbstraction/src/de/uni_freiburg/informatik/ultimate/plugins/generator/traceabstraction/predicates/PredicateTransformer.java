@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -69,12 +71,17 @@ public class PredicateTransformer {
 	private final VariableManager mVariableManager;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public PredicateTransformer(VariableManager variableManager, Script script, 
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			IUltimateServiceProvider services) {
+	public PredicateTransformer(final VariableManager variableManager, final Script script, 
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+			final IUltimateServiceProvider services, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = script;
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mVariableManager = variableManager;
@@ -91,7 +98,7 @@ public class PredicateTransformer {
 	 * its occurrence in the given predicate is substituted by a fresh variable.
 	 * All fresh variables are existentially quantified.
 	 */
-	public Term strongestPostcondition(IPredicate p, TransFormula tf) {
+	public Term strongestPostcondition(final IPredicate p, final TransFormula tf) {
 		if (SmtUtils.isFalse(p.getFormula())) {
 			return p.getFormula();
 		}
@@ -99,7 +106,7 @@ public class PredicateTransformer {
 		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
+			public TermVariable constructValue(final BoogieVar bv) {
 				final TermVariable result = mVariableManager.constructFreshTermVariable(bv);
 				varsToQuantify.add(result);
 				return result;
@@ -149,7 +156,7 @@ public class PredicateTransformer {
 	 * Call statements must be treated in a special way.
 	 */
 	@Deprecated
-	public Term strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
+	public Term strongestPostcondition(final IPredicate p, final Call call, final boolean isPendingCall) {
 		return strongestPostcondition(p, call.getTransitionFormula(),
 				mModifiableGlobalVariableManager.getGlobalVarsAssignment(call.getCallStatement().getMethodName()),
 				mModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
@@ -157,7 +164,7 @@ public class PredicateTransformer {
 	}
 	
 	
-	public Term weakLocalPostconditionCall(IPredicate p, TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+	public Term weakLocalPostconditionCall(final IPredicate p, final TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
 		final Term renamedOldVarsAssignment;
@@ -209,13 +216,13 @@ public class PredicateTransformer {
 	}
 	
 	
-	public Term strongestPostconditionCall(IPredicate p, TransFormula localVarAssignments,
-			TransFormula globalVarAssignments, TransFormula oldVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+	public Term strongestPostconditionCall(final IPredicate p, final TransFormula localVarAssignments,
+			final TransFormula globalVarAssignments, final TransFormula oldVarAssignments, final Set<BoogieVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
+			public TermVariable constructValue(final BoogieVar bv) {
 				final TermVariable result;
 				if (bv instanceof BoogieNonOldVar) {
 					if (modifiableGlobals.contains(bv)) {
@@ -302,8 +309,8 @@ public class PredicateTransformer {
 	 * the SP of a Call Statement?
 	 */
 	@Deprecated
-	private Term strongestPostcondition(IPredicate p, TransFormula localVarAssignments,
-			TransFormula globalVarAssignments, TransFormula oldVarAssignments, boolean isPendingCall) {
+	private Term strongestPostcondition(final IPredicate p, final TransFormula localVarAssignments,
+			final TransFormula globalVarAssignments, final TransFormula oldVarAssignments, final boolean isPendingCall) {
 
 		// VarsToQuantify contains the local Vars and the global vars of the
 		// calling proc, for a non-pending call.
@@ -459,8 +466,8 @@ public class PredicateTransformer {
 	 * statement and callerPred is the predicate that held in the calling
 	 * procedure before the corresponding call. TODO: How is it computed?
 	 */
-	public Term strongestPostcondition(IPredicate calleePred, IPredicate callerPred, TransFormula ret_TF,
-			TransFormula callTF, TransFormula globalVarsAssignment, TransFormula oldVarsAssignment) {
+	public Term strongestPostcondition(final IPredicate calleePred, final IPredicate callerPred, final TransFormula ret_TF,
+			final TransFormula callTF, final TransFormula globalVarsAssignment, final TransFormula oldVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may
 		// contain
 		// some invars, if it was a recursive call, i.e. callingProc =
@@ -616,11 +623,11 @@ public class PredicateTransformer {
 
 		// 1. CalleePredRenamed and loc vars quantified
 		final Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, mScript, mVariableManager,
-				Script.EXISTS, varsToQuantifyInCalleePred,
+				mSimplificationTechnique, mXnfConversionTechnique, Script.EXISTS, varsToQuantifyInCalleePred,
 				calleePredVarsRenamedOldVarsToFreshVars, (Term[][]) null);
 		// 2. CallTF and callerPred
 		final Term calleRPredANDCallTFRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger,
-				mScript, mVariableManager, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, 
+				mScript, mVariableManager, mSimplificationTechnique, mXnfConversionTechnique, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, 
 				Util.and(mScript,
 						callerPredVarsRenamedToFreshVars, callTermRenamed), (Term[][]) null);
 		// 3. Result
@@ -634,7 +641,7 @@ public class PredicateTransformer {
 	}
 	
 
-	public Term weakestPrecondition(IPredicate p, TransFormula tf) {
+	public Term weakestPrecondition(final IPredicate p, final TransFormula tf) {
 		if (SmtUtils.isTrue(p.getFormula())) {
 			return p.getFormula();
 		}
@@ -642,7 +649,7 @@ public class PredicateTransformer {
 		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
+			public TermVariable constructValue(final BoogieVar bv) {
 				final TermVariable result = mVariableManager.constructFreshTermVariable(bv);
 				varsToQuantify.add(result);
 				return result;
@@ -691,9 +698,9 @@ public class PredicateTransformer {
 	 * Responsible for computing WP of a Call statement.
 	 * 
 	 */
-	public Term weakestPrecondition(IPredicate calleePred, TransFormula call_TF,
-			TransFormula globalVarsAssignments, TransFormula oldVarsAssignments, 
-			Set<BoogieVar> modifiableGlobals) {
+	public Term weakestPrecondition(final IPredicate calleePred, final TransFormula call_TF,
+			final TransFormula globalVarsAssignments, final TransFormula oldVarsAssignments, 
+			final Set<BoogieVar> modifiableGlobals) {
 		
 		final InstanceProviderWpCall ip = new InstanceProviderWpCall(modifiableGlobals);
 		
@@ -781,9 +788,9 @@ public class PredicateTransformer {
 	 * @param varsOccurringBetweenCallAndReturn 
 	 * 
 	 */
-	public Term weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
-			TransFormula callTF, TransFormula globalVarsAssignments, TransFormula oldVarAssignments,
-			Set<BoogieVar> modifiableGlobals, Set<BoogieVar> varsOccurringBetweenCallAndReturn) {
+	public Term weakestPrecondition(final IPredicate returnerPred, final IPredicate callerPred, final TransFormula returnTF,
+			final TransFormula callTF, final TransFormula globalVarsAssignments, final TransFormula oldVarAssignments,
+			final Set<BoogieVar> modifiableGlobals, final Set<BoogieVar> varsOccurringBetweenCallAndReturn) {
 		final InstanceProviderWpReturn ir = new InstanceProviderWpReturn(modifiableGlobals, varsOccurringBetweenCallAndReturn, returnTF.getAssignedVars());
 		
 		
@@ -912,7 +919,7 @@ public class PredicateTransformer {
 	 * @return
 	 */
 	private boolean varOccursBetweenCallAndReturn(
-			Set<BoogieVar> varsOccurringBetweenCallAndReturn, BoogieVar bv) {
+			final Set<BoogieVar> varsOccurringBetweenCallAndReturn, final BoogieVar bv) {
 		if (varsOccurringBetweenCallAndReturn == null) {
 			return true;
 		} else {
@@ -939,22 +946,22 @@ public class PredicateTransformer {
 		private final Set<BoogieVar> mModifiableGlobals;
 		private final IValueConstruction<BoogieVar, TermVariable> mValueConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
+			public TermVariable constructValue(final BoogieVar bv) {
 				return mVariableManager.constructFreshTermVariable(bv);
 			}
 		};
 		private final ConstructionCache<BoogieVar, TermVariable> mFreshVariables = new ConstructionCache<>(mValueConstruction);
 		
-		public InstanceProviderWpCall(Set<BoogieVar> modifiableGlobals) {
+		public InstanceProviderWpCall(final Set<BoogieVar> modifiableGlobals) {
 			super();
 			mModifiableGlobals = modifiableGlobals;
 		}
 
-		public TermVariable getOrConstuctBeforeCallInstance(BoogieVar bv) {
+		public TermVariable getOrConstuctBeforeCallInstance(final BoogieVar bv) {
 			return bv.getTermVariable();
 		}
 
-		public TermVariable getOrConstuctAfterCallInstance(BoogieVar bv) {
+		public TermVariable getOrConstuctAfterCallInstance(final BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return mFreshVariables.getOrConstuct(bv);
@@ -1000,16 +1007,16 @@ public class PredicateTransformer {
 		private final Set<BoogieVar> mAssignedOnReturn;
 		private final Set<TermVariable> mFreshTermVariables = new HashSet<TermVariable>();
 		
-		public InstanceProviderWpReturn(Set<BoogieVar> modifiableGlobals,
-				Set<BoogieVar> varsOccurringBetweenCallAndReturn,
-				Set<BoogieVar> assignedOnReturn) {
+		public InstanceProviderWpReturn(final Set<BoogieVar> modifiableGlobals,
+				final Set<BoogieVar> varsOccurringBetweenCallAndReturn,
+				final Set<BoogieVar> assignedOnReturn) {
 			super();
 			mModifiableGlobals = modifiableGlobals;
 			mVarsOccurringBetweenCallAndReturn = varsOccurringBetweenCallAndReturn;
 			mAssignedOnReturn = assignedOnReturn;
 		}
 
-		public TermVariable getOrConstuctBeforeCallInstance(BoogieVar bv) {
+		public TermVariable getOrConstuctBeforeCallInstance(final BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return getOrConstructTermVariable(mBeforeAfterCallCoincide, bv);
@@ -1029,7 +1036,7 @@ public class PredicateTransformer {
 			}
 		}
 
-		public TermVariable getOrConstuctBeforeReturnInstance(BoogieVar bv) {
+		public TermVariable getOrConstuctBeforeReturnInstance(final BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return bv.getTermVariable();
@@ -1041,7 +1048,7 @@ public class PredicateTransformer {
 			}
 		}
 		
-		public TermVariable getOrConstuctAfterReturnInstance(BoogieVar bv) {
+		public TermVariable getOrConstuctAfterReturnInstance(final BoogieVar bv) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return getOrConstructTermVariable(mBeforeAfterCallCoincide, bv);
@@ -1074,7 +1081,7 @@ public class PredicateTransformer {
 		}
 
 		private boolean doesVarOccurBetweenCallAndReturn(
-				BoogieNonOldVar nonOld) {
+				final BoogieNonOldVar nonOld) {
 			return mVarsOccurringBetweenCallAndReturn.contains(nonOld);
 		}
 
@@ -1084,7 +1091,7 @@ public class PredicateTransformer {
 		 * and getOrConstructTermVariable for the mBeforeAfterCallCoincide map
 		 * if the variable is not assigned on return.
 		 */
-		private TermVariable getOrConstructTermVariable_BeforeAndAfterIfNecessary(BoogieVar bv, Map<BoogieVar, TermVariable> map) {
+		private TermVariable getOrConstructTermVariable_BeforeAndAfterIfNecessary(final BoogieVar bv, final Map<BoogieVar, TermVariable> map) {
 			assert map == mBeforeCall || map == mAfterReturn;
 			if (mAssignedOnReturn.contains(bv)) {
 				return getOrConstructTermVariable(map, bv); 
@@ -1094,7 +1101,7 @@ public class PredicateTransformer {
 		}
 		
 		private TermVariable getOrConstructTermVariable(
-				Map<BoogieVar, TermVariable> map, BoogieVar bv) {
+				final Map<BoogieVar, TermVariable> map, final BoogieVar bv) {
 			TermVariable tv = map.get(bv);
 			if (tv == null) {
 				tv = mVariableManager.constructFreshTermVariable(bv);
@@ -1115,7 +1122,7 @@ public class PredicateTransformer {
 	 * Returns copy of map restricted to keys that are of the given GlobalType
 	 * (oldVar or nonOldVar).
 	 */
-	private Map<BoogieVar, TermVariable> restrictMap(Map<BoogieVar, TermVariable> map, GlobalType globalType) {
+	private Map<BoogieVar, TermVariable> restrictMap(final Map<BoogieVar, TermVariable> map, final GlobalType globalType) {
 		final Map<BoogieVar, TermVariable> result = new HashMap<BoogieVar, TermVariable>();
 		for (final Entry<BoogieVar, TermVariable> entry : map.entrySet()) {
 			if ((globalType == GlobalType.OLDVAR) == (entry.getKey().isOldvar())) {
@@ -1144,9 +1151,9 @@ public class PredicateTransformer {
 	 * @return formulaToBeSubstituted, where the variables are substituted by
 	 *         fresh variables
 	 */
-	private Term substituteToFreshVarsAndAddToQuantify(Map<BoogieVar, TermVariable> varsToBeSubstituted,
-			Term formulaToBeSubstituted, Map<TermVariable, Term> varsToBeSubstitutedByFreshVars,
-			Set<TermVariable> varsToQuantify) {
+	private Term substituteToFreshVarsAndAddToQuantify(final Map<BoogieVar, TermVariable> varsToBeSubstituted,
+			final Term formulaToBeSubstituted, final Map<TermVariable, Term> varsToBeSubstitutedByFreshVars,
+			final Set<TermVariable> varsToQuantify) {
 		final Map<Term, Term> substitution = new HashMap<Term, Term>();
 		for (final BoogieVar bv : varsToBeSubstituted.keySet()) {
 			final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
@@ -1180,9 +1187,9 @@ public class PredicateTransformer {
 	 * @return formulaToBeSubstituted, where the variables are substituted by
 	 *         the corresponding term variables
 	 */
-	private Term substituteToRepresantativesAndAddToQuantify(Map<BoogieVar, TermVariable> varsToBeSubstituted,
-			Term formulaToBeSubstituted, Map<Term, Term> varsToBeSubstitutedByFreshVars,
-			Set<TermVariable> varsToQuantify) {
+	private Term substituteToRepresantativesAndAddToQuantify(final Map<BoogieVar, TermVariable> varsToBeSubstituted,
+			final Term formulaToBeSubstituted, final Map<Term, Term> varsToBeSubstitutedByFreshVars,
+			final Set<TermVariable> varsToQuantify) {
 		final Map<Term, Term> substitution = new HashMap<Term, Term>();
 		for (final BoogieVar bv : varsToBeSubstituted.keySet()) {
 			final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);

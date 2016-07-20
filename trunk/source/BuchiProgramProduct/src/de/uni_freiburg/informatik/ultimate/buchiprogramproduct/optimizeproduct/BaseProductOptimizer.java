@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -49,13 +51,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
 public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
+	protected final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	protected final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	protected final RootNode mResult;
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
 	protected final CodeBlockFactory mCbf;
 
-	public BaseProductOptimizer(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public BaseProductOptimizer(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert services != null;
 		assert product != null;
 		mServices = services;
@@ -67,7 +71,7 @@ public abstract class BaseProductOptimizer {
 		mResult = process(product);
 	}
 
-	protected void init(RootNode root, IUltimateServiceProvider services) {
+	protected void init(final RootNode root, final IUltimateServiceProvider services) {
 
 	}
 
@@ -75,7 +79,7 @@ public abstract class BaseProductOptimizer {
 
 	public abstract boolean isGraphChanged();
 
-	protected List<ProgramPoint> getSuccessors(ProgramPoint point) {
+	protected List<ProgramPoint> getSuccessors(final ProgramPoint point) {
 		final List<ProgramPoint> rtr = new ArrayList<>();
 		for (final RCFGEdge edge : point.getOutgoingEdges()) {
 			rtr.add((ProgramPoint) edge.getTarget());
@@ -83,7 +87,7 @@ public abstract class BaseProductOptimizer {
 		return rtr;
 	}
 
-	protected void removeDisconnectedLocations(RootNode root) {
+	protected void removeDisconnectedLocations(final RootNode root) {
 		final Deque<ProgramPoint> toRemove = new ArrayDeque<>();
 
 		for (final Entry<String, Map<String, ProgramPoint>> procPair : root.getRootAnnot().getProgramPoints()
@@ -111,7 +115,7 @@ public abstract class BaseProductOptimizer {
 		}
 	}
 
-	protected void removeDisconnectedLocation(RootNode root, ProgramPoint toRemove) {
+	protected void removeDisconnectedLocation(final RootNode root, final ProgramPoint toRemove) {
 		// TODO: remove stuff from the root annotation
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final String procName = toRemove.getProcedure();
@@ -125,10 +129,10 @@ public abstract class BaseProductOptimizer {
 		return mResult;
 	}
 
-	protected void generateTransFormula(RootNode root, StatementSequence ss) {
+	protected void generateTransFormula(final RootNode root, final StatementSequence ss) {
 		final Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
-		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure());
+		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure(), mXnfConversionTechnique, mSimplificationTechnique);
 		assert ss.getTransitionFormula() != null;
 	}
 }

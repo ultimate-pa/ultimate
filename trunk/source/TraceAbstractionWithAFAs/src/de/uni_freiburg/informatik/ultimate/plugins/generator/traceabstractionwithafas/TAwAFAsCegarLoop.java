@@ -96,12 +96,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	
 	private final Map<String, Term> mIndexedConstants = new HashMap<String, Term>();
 
-	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
-			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+	public TAwAFAsCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
+			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
+			final Collection<ProgramPoint> errorLocs, final INTERPOLATION interpolation, final boolean computeHoareAnnotation,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		mPredicateUnifier = new PredicateUnifier(services, smtManager, 
+		mPredicateUnifier = new PredicateUnifier(services, smtManager,mSimplificationTechnique, mXnfConversionTechnique,
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
 	}
@@ -228,9 +228,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * Also maintains a special SSA-renaming suited for DataflowDAGs (i.e. duplicated statements in the tree need
 	 * to have unique variables)
 	 */
-	private void getTermsFromDAG(DataflowDAG<TraceCodeBlock> dag, ArrayList<Term> terms,
-			ArrayList<Integer> startsOfSubtrees, int currentSubtree, HashMap<BoogieVar,Term> varToSsaVar,
-			HashMap<Term,BoogieVar> constantsToBoogieVar) {
+	private void getTermsFromDAG(final DataflowDAG<TraceCodeBlock> dag, final ArrayList<Term> terms,
+			final ArrayList<Integer> startsOfSubtrees, final int currentSubtree, final HashMap<BoogieVar,Term> varToSsaVar,
+			final HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		
 		final HashMap<BoogieVar,Term> varToSsaVarNew = new HashMap<>(varToSsaVar);//copy (nice would be immutable maps)
 		BoogieVar writtenVar = null;
@@ -277,10 +277,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * writtenVar is the variable that is written according to the dataflow tree
 	 * the ssa versions for all others are stored in varToSsaVarNew
 	 */
-	private Term computeSsaTerm(TraceCodeBlock nodeLabel,
-			BoogieVar writtenVar, Term writtenVarSsa,
-			HashMap<BoogieVar,Term> varToSsaVarNew, 
-			HashMap<Term,BoogieVar> constantsToBoogieVar) {
+	private Term computeSsaTerm(final TraceCodeBlock nodeLabel,
+			final BoogieVar writtenVar, final Term writtenVarSsa,
+			final HashMap<BoogieVar,Term> varToSsaVarNew, 
+			final HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		final TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
@@ -325,7 +325,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * Build constant bv_index that represents BoogieVar bv that obtains a new
 	 * value at position index.
 	 */
-	private Term buildVersion(BoogieVar bv) {
+	private Term buildVersion(final BoogieVar bv) {
 		final int index = ssaIndex++;
 		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mSmtManager.getScript());
 		return constant;
@@ -336,7 +336,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * @param dag The DAG to be annotated with interpolants.
 	 * @param interpolants The interpolants as a list. The order is the postorder of the dag (which is a tree, in fact..)
 	 */
-	private void decorateDagWithInterpolants(DataflowDAG<TraceCodeBlock> dag, IPredicate[] interpolants) {
+	private void decorateDagWithInterpolants(final DataflowDAG<TraceCodeBlock> dag, final IPredicate[] interpolants) {
 		final Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
 		stack.push(dag);
 
@@ -365,7 +365,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * @param constants2BoogieVar
 	 * @return
 	 */
-	private IPredicate[] interpolantsToPredicates(Term[] interpolants, Map<Term, BoogieVar> constants2BoogieVar) {
+	private IPredicate[] interpolantsToPredicates(final Term[] interpolants, final Map<Term, BoogieVar> constants2BoogieVar) {
 		final IPredicate[] result = new IPredicate[interpolants.length];
 		final PredicateConstructionVisitor msfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 
@@ -395,7 +395,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return result;
 	}
 
-	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag){
+	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(final DataflowDAG<TraceCodeBlock> dag){
 		final AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new AlternatingAutomaton<CodeBlock, IPredicate>(mAbstraction.getAlphabet(), mAbstraction.getStateFactory());
 		final IPredicate initialState = mPredicateUnifier.getFalsePredicate();
 		final IPredicate finalState = mPredicateUnifier.getTruePredicate();
@@ -565,7 +565,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * those properties are:
 	 *  - the corresponding hoare triple of each transition is valid
 	 */
-	private boolean checkRAFA(AlternatingAutomaton<CodeBlock, IPredicate> afa) {
+	private boolean checkRAFA(final AlternatingAutomaton<CodeBlock, IPredicate> afa) {
 		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mModGlobVarManager);
 		boolean result = true;
 		for (final Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
@@ -593,7 +593,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * Computes the DNF belonging to the given BooleanExpression and Statelist as an IPredicate
 	 * Helper method for assertions.
 	 */
-	IPredicate bexToPredicate(BooleanExpression bex, List<IPredicate> states) {
+	IPredicate bexToPredicate(final BooleanExpression bex, final List<IPredicate> states) {
 		IPredicate pred = mPredicateUnifier.getTruePredicate();
 		for(int i = 0; i < states.size(); i++){
 			if(bex.getAlpha().get(i)){
@@ -611,7 +611,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return pred;
 	}
 
-	private Word<CodeBlock> reverse(Word<CodeBlock> trace) {
+	private Word<CodeBlock> reverse(final Word<CodeBlock> trace) {
 		final CodeBlock[] newWord = new CodeBlock[trace.length()];
 		final int[] newNestingRelation = new int[trace.length()];
 		for (int i = 0; i < trace.length(); i++) {

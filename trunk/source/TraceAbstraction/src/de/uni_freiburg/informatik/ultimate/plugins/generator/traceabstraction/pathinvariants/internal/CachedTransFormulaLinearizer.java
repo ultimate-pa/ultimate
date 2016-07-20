@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarF
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -68,6 +70,8 @@ public class CachedTransFormulaLinearizer {
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Term[] mAxioms;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final SmtManager mSmtManager;
@@ -85,11 +89,14 @@ public class CachedTransFormulaLinearizer {
 	 *            SMT manager
 	 * @author Matthias Heizmann
 	 */
-	public CachedTransFormulaLinearizer(IUltimateServiceProvider services,
-			SmtManager smtManager, IToolchainStorage storage) {
+	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services,
+			final SmtManager smtManager, final IToolchainStorage storage, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mSmtManager = smtManager;
 		mReplacementVarFactory = new ReplacementVarFactory(mSmtManager
 				.getBoogie2Smt().getVariableManager());
@@ -147,7 +154,7 @@ public class CachedTransFormulaLinearizer {
 	 *            transformula to transform
 	 * @return transformed transformula
 	 */
-	private LinearTransition makeLinear(TransFormula tf) {
+	private LinearTransition makeLinear(final TransFormula tf) {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
 				mReplacementVarFactory);
 
@@ -181,9 +188,9 @@ public class CachedTransFormulaLinearizer {
 				new RewriteIte(),
 				new RewriteUserDefinedTypes(mReplacementVarFactory, mSmtManager.getScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(mServices, mStorage),
-				new DNF(mServices, mSmtManager.getVariableManager()), 
-				new SimplifyPreprocessor(mServices, mStorage),
+				new SimplifyPreprocessor(mServices, mStorage, mSmtManager.getVariableManager(), mSimplificationTechnique),
+				new DNF(mServices, mSmtManager.getVariableManager(), mXnfConversionTechnique), 
+				new SimplifyPreprocessor(mServices, mStorage, mSmtManager.getVariableManager(), mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
 				new RewriteStrictInequalities(), };

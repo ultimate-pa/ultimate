@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -60,7 +62,7 @@ public class TransFormulaBuilder {
 
 	private final IUltimateServiceProvider mServices;
 
-	public TransFormulaBuilder(Boogie2SMT boogie2smt, IUltimateServiceProvider services) {
+	public TransFormulaBuilder(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
 		mSimplifyCodeBlocks = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
@@ -80,7 +82,8 @@ public class TransFormulaBuilder {
 	 *            An IEdge that has to be a CallEdge, InternalEdge, ReturnEdge,
 	 *            GotoEdge or SummaryEdge.
 	 */
-	public void addTransitionFormulas(CodeBlock cb, String procId) {
+	public void addTransitionFormulas(final CodeBlock cb, final String procId, 
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		Statement[] statements;
 		if (cb instanceof StatementSequence) {
 			statements = ((StatementSequence) cb).getStatements().toArray(new Statement[0]);
@@ -94,7 +97,7 @@ public class TransFormulaBuilder {
 
 		TranslationResult tlres = null;
 		try {
-			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks, procId, statements);
+			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks, simplificationTechnique, procId, statements);
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());
@@ -108,7 +111,7 @@ public class TransFormulaBuilder {
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}
 
-	void reportUnsupportedSyntax(CodeBlock cb, String longDescription) {
+	void reportUnsupportedSyntax(final CodeBlock cb, final String longDescription) {
 		final ILocation loc = cb.getPayload().getLocation();
 		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, longDescription);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
