@@ -301,11 +301,11 @@ public class TAPreferences {
 	}
 
 	public SimplicationTechnique getSimplificationTechnique() {
-		return SimplicationTechnique.SIMPLIFY_DDA;
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE, SimplicationTechnique.class);
 	}
 
 	public XnfConversionTechnique getXnfConversionTechnique() {
-		return XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_XNF_CONVERSION_TECHNIQUE, XnfConversionTechnique.class);
 	}
 
 
