@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbstractInterpretationPredicateAutomatonGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -153,7 +154,7 @@ public class AbstractInterpretationRunner {
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton;
 			final IPreferenceProvider pref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			if (pref.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION)
-			        && pref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomatonEnhancement,
+			        && pref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 			                InterpolantAutomatonEnhancement.class) == InterpolantAutomatonEnhancement.NONE) {
 				mLogger.info("Using path program construction from abstract interpretation predicates.");
 				aiInterpolAutomaton = new AbstractInterpretationPathProgramGenerator(mServices, abstraction,

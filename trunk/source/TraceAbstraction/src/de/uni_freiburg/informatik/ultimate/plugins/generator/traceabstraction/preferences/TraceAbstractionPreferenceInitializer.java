@@ -46,7 +46,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public TraceAbstractionPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Automizer (Trace Abstraction)");
 	}
-	
+
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
@@ -60,19 +60,24 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Integer>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 10000000)),
 				new UltimatePreferenceItem<Boolean>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<HoareAnnotationPositions>(LABEL_HOARE_Positions, DEF_HOARE_POSITIONS, PreferenceType.Combo, HoareAnnotationPositions.values()),
-				
+				new UltimatePreferenceItem<HoareAnnotationPositions>(LABEL_HOARE_Positions, DEF_HOARE_POSITIONS,
+						PreferenceType.Combo, HoareAnnotationPositions.values()),
+
 				new UltimatePreferenceItem<Boolean>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
-				new UltimatePreferenceItem<SolverMode>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverLogic, RcfgPreferenceInitializer.DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_DumpToFile, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_Path, RcfgPreferenceInitializer.DEF_Path, PreferenceType.Directory),
-				
+				new UltimatePreferenceItem<SolverMode>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver,
+						PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand,
+						DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverLogic,
+						RcfgPreferenceInitializer.DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_DumpToFile, false,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_Path,
+						RcfgPreferenceInitializer.DEF_Path, PreferenceType.Directory),
+
 				new UltimatePreferenceItem<InterpolationTechnique>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, InterpolationTechnique.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_INTERPOLANTS_CONSOLIDATION, false,
-							PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_INTERPOLANTS_CONSOLIDATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<UnsatCores>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL,
 						PreferenceType.Combo, UnsatCores.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_LIVE_VARIABLES, true, PreferenceType.Boolean),
@@ -81,12 +86,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<InterpolantAutomaton>(LABEL_INTERPOLANT_AUTOMATON,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo, InterpolantAutomaton.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Format>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo, Format.values()),
+				new UltimatePreferenceItem<Format>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
+						Format.values()),
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
-				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_InterpolantAutomatonEnhancement,
-						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo, InterpolantAutomatonEnhancement.values()),
-				new UltimatePreferenceItem<HoareTripleChecks>(LABEL_HoareTripleChecks,
-						HoareTripleChecks.INCREMENTAL, PreferenceType.Combo, HoareTripleChecks.values()),
+				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
+						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
+						InterpolantAutomatonEnhancement.values()),
+				new UltimatePreferenceItem<HoareTripleChecks>(LABEL_HoareTripleChecks, HoareTripleChecks.INCREMENTAL,
+						PreferenceType.Combo, HoareTripleChecks.values()),
 				new UltimatePreferenceItem<LanguageOperation>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
 						PreferenceType.Combo, LanguageOperation.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA,
@@ -95,17 +102,22 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, Minimization.values()),
 				new UltimatePreferenceItem<Concurrency>(LABEL_CONCURRENCY, Concurrency.FINITE_AUTOMATA,
 						PreferenceType.Combo, Concurrency.values()),
-				new UltimatePreferenceItem<String>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo, new String[] {
-						VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
+				new UltimatePreferenceItem<String>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
+						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
 				new UltimatePreferenceItem<Boolean>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION, DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, PreferenceType.Boolean),
-				new UltimatePreferenceItem<SimplicationTechnique>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE, PreferenceType.Combo, SimplicationTechnique.values()),
-				new UltimatePreferenceItem<XnfConversionTechnique>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE, PreferenceType.Combo, XnfConversionTechnique.values()),
-		};
+				new UltimatePreferenceItem<Boolean>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION,
+						DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive,
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive,
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, PreferenceType.Boolean),
+				new UltimatePreferenceItem<SimplicationTechnique>(LABEL_SIMPLIFICATION_TECHNIQUE,
+						DEF_SIMPLIFICATION_TECHNIQUE, PreferenceType.Combo, SimplicationTechnique.values()),
+				new UltimatePreferenceItem<XnfConversionTechnique>(LABEL_XNF_CONVERSION_TECHNIQUE,
+						DEF_XNF_CONVERSION_TECHNIQUE, PreferenceType.Combo, XnfConversionTechnique.values()), };
 	}
 
 	/*
@@ -116,7 +128,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
-	public static final String LABEL_HOARE = "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
+	public static final String LABEL_HOARE =
+			"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
 	public static final String LABEL_HOARE_Positions = "Positions where we compute the Hoare Annotation";
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
@@ -125,7 +138,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
 	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
-	public static final String LABEL_InterpolantAutomatonEnhancement = "Interpolant automaton enhancement";
+	public static final String LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT = "Interpolant automaton enhancement";
 	public static final String LABEL_HoareTripleChecks = "Hoare triple checks";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
@@ -138,9 +151,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
-	public static final String LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION = "Use path program construction from abstract interpretation predicates";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = "Non-flow-sensitive error trace relevance analysis";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = "Flow-sensitive error trace relevance analysis";
+	public static final String LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION =
+			"Use path program construction from abstract interpretation predicates";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive =
+			"Non-flow-sensitive error trace relevance analysis";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive =
+			"Flow-sensitive error trace relevance analysis";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 
@@ -182,7 +198,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
-//	public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
+	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 
 	public static final boolean DEF_CUTOFF = true;
 	public static final boolean DEF_UNFOLDING2NET = false;
@@ -193,9 +209,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = false;
-	
+
 	public static final SimplicationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplicationTechnique.SIMPLIFY_DDA;
-	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	public enum InterpolantAutomaton {
 		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK, TOTALINTERPOLATION2
@@ -218,16 +235,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum LanguageOperation {
-		DIFFERENCE, INCREMENTAL_INCLUSION_VIA_DIFFERENCE, INCREMENTAL_INCLUSION_2, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS,INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE ,
-		INCREMENTAL_INCLUSION_3, INCREMENTAL_INCLUSION_3_2, 
-		INCREMENTAL_INCLUSION_4, INCREMENTAL_INCLUSION_4_2, 
-		INCREMENTAL_INCLUSION_5, INCREMENTAL_INCLUSION_5_2,
+		DIFFERENCE, INCREMENTAL_INCLUSION_VIA_DIFFERENCE, INCREMENTAL_INCLUSION_2, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS, INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE, INCREMENTAL_INCLUSION_3, INCREMENTAL_INCLUSION_3_2, INCREMENTAL_INCLUSION_4, INCREMENTAL_INCLUSION_4_2, INCREMENTAL_INCLUSION_5, INCREMENTAL_INCLUSION_5_2,
 	}
-	
+
 	public enum HoareTripleChecks {
 		MONOLITHIC, INCREMENTAL
 	}
-	
+
 	public enum HoareAnnotationPositions {
 		All, LoopsAndPotentialCycles,
 	}

@@ -136,9 +136,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class BasicCegarLoop extends AbstractCegarLoop {
 
-	private final static boolean DIFFERENCE_INSTEAD_OF_INTERSECTION = true;
-	protected final static boolean REMOVE_DEAD_ENDS = true;
-	protected final static boolean TRACE_HISTOGRAMmBAILOUT = false;
+	private static final boolean DIFFERENCE_INSTEAD_OF_INTERSECTION = true;
+	protected static final boolean REMOVE_DEAD_ENDS = true;
+	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 
 	protected HoareAnnotationFragments mHaf;
 
@@ -298,7 +298,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
-		if (TRACE_HISTOGRAMmBAILOUT) {
+		if (TRACE_HISTOGRAMM_BAILOUT) {
 			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
 				throw new ToolchainCanceledException(getClass(),
 						"bailout by trace histogram " + traceHistogram.toString());

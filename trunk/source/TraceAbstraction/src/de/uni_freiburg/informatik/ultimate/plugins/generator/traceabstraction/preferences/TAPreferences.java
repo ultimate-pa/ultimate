@@ -117,7 +117,7 @@ public class TAPreferences {
 		mDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
 		mDeterminiation = mPrefs.getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomatonEnhancement,
+				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 				InterpolantAutomatonEnhancement.class);
 		
 		mHoareTripleChecks = mPrefs.getEnum(
