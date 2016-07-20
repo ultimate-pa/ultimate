@@ -34,12 +34,12 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
- * Test small examples on our two most common settings.
+ * Test small examples on with BDD settings.
  * @author heizmanninformatik.uni-freiburg.de
  *
  */
 
-public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
+public class AutomizerRegressionTestBdd extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
@@ -48,23 +48,10 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 //		"examples/programs/toy",
 	};
 	
-	private static final String[] mUltimateRepository_TreeInterpolation = {
-		"examples/programs/regression",
-//		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
-//		"examples/programs/toy",
-	};
-
-	
 	
 	private static final String[] mSettings_ForwardPredicates = {
-		"automizer/ForwardPredicates.epf",
+		"automizer/ForwardPredicates-BddProp.epf",
 	};
-	
-	private static final String[] mSettings_TreeInterpolation = {
-		"automizer/TreeInterpolants.epf",
-	};
-
 	
 	/**
 	 * {@inheritDoc}
@@ -87,22 +74,6 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 
-		{
-			// Tests with TreeInterpolation
-			for (final String setting : mSettings_TreeInterpolation) {
-				for (final String toolchain : mBoogieToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
-							new String[] {".bpl"});
-				}
-			}
-			for (final String setting : mSettings_TreeInterpolation) {
-				for (final String toolchain : mCToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, 
-							new String[] {".c", ".i"});
-				}
-			}
-		}
-		
 		{	// Tests with ForwardPredicates
 			for (final String setting : mSettings_ForwardPredicates) {
 				for (final String toolchain : mBoogieToolchains) {
