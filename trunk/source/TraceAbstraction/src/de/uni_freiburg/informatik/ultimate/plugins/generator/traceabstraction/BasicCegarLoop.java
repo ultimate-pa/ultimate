@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -90,12 +88,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.TotalInterpolationAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.TwoTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -122,7 +117,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -146,6 +140,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
+	private final AbstractInterpretationRunner mAbsIntRunner;
+	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
+
 	protected boolean mFallbackToFpIfInterprocedural = true;
 	protected final InterpolationTechnique mInterpolation;
 	protected final InterpolantAutomaton mInterpolantAutomatonConstructionProcedure;
@@ -158,12 +155,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
-	private final AbstractInterpretationRunner mAbsIntRunner;
-
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private final IFreshTermVariableConstructor mFreshVarConstructor;
 
-	// private IHoareTripleChecker mHoareTripleChecker;
 	private final boolean mDoFaultLocalization_NonFlowSensitive;
 	private final boolean mDoFaultLocalization_FlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
@@ -226,6 +220,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
 				mSimplificationTechnique, mXnfConversionTechnique, mSmtManager);
+		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mSmtManager,
+				mPredicateFactoryInterpolantAutomata, mRootNode, taPrefs, mAbsIntRunner, mCegarLoopBenchmark);
 	}
 
 	@Override
@@ -446,110 +442,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		if (mAbsIntRunner.hasShownInfeasibility()) {
-			// if AI has shown infeasibility, construct an AI interpolant automaton instead of an SMT-based one
-			mInterpolAutomaton =
-					mAbsIntRunner
-							.createInterpolantAutomatonBuilder(mInterpolantGenerator,
-									(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample)
-							.getResult();
-		} else {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-			switch (mInterpolantAutomatonConstructionProcedure) {
-			case CANONICAL: {
-				final List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(mCounterexample);
-				final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
-						mInterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(mAbstraction), mSmtManager,
-						mPredicateFactoryInterpolantAutomata, mLogger);
-				iab.analyze();
-				mInterpolAutomaton = iab.getResult();
-				mLogger.info("Interpolants " + mInterpolAutomaton.getStates());
 
-				// mCegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
-						mInterpolantGenerator, programPoints, mLogger);
-				mCegarLoopBenchmark.addBackwardCoveringInformation(bci);
-			}
-				break;
-			case SINGLETRACE: {
-				final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
-						mServices, new InCaReAlphabet<CodeBlock>(mAbstraction), mInterpolantGenerator,
-						mPredicateFactoryInterpolantAutomata);
-				mInterpolAutomaton = iab.getResult();
-			}
-				break;
-			case TOTALINTERPOLATION:
-				throw new AssertionError("not supported by this CegarLoop");
-			case TWOTRACK: {
-				if (!(mInterpolantGenerator instanceof TraceCheckerSpWp)
-						&& !(mInterpolantGenerator instanceof InterpolantConsolidation)) {
-					throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
-				}
-				final List<IPredicate> predicatesA;
-				final List<IPredicate> predicatesB;
-				boolean build2TrackAutomaton = false;
-				if (mInterpolantGenerator instanceof TraceCheckerSpWp) {
-					final TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) mInterpolantGenerator;
-					predicatesA = traceChecker.getForwardPredicates();
-					predicatesB = traceChecker.getBackwardPredicates();
-					build2TrackAutomaton = true;
-				} else if (!((InterpolantConsolidation) mInterpolantGenerator).consolidationSuccessful()) {
-					// if consolidation wasn't successful, then build a 2-Track-Automaton
-					final InterpolantConsolidation ic = (InterpolantConsolidation) mInterpolantGenerator;
-					predicatesA = ic.getInterpolantsOfType_I();
-					predicatesB = ic.getInterpolantsOfType_II();
-					build2TrackAutomaton = true;
-				} else {
-					predicatesA = null;
-					predicatesB = null;
-				}
-				if (build2TrackAutomaton) {
-					final TwoTrackInterpolantAutomatonBuilder ttiab =
-							new TwoTrackInterpolantAutomatonBuilder(mServices, mCounterexample, mSmtManager,
-									predicatesA, predicatesB, mInterpolantGenerator.getPrecondition(),
-									mInterpolantGenerator.getPostcondition(), mAbstraction);
-					mInterpolAutomaton = ttiab.getResult();
-				} else {
-					// Case of Canonical_Automaton, i.e. if the consolidation was successful
-					// FIXME: The case TWOTRACK from the switch is not nice. Should be refactored!
-					final List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(mCounterexample);
-					final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
-							mInterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(mAbstraction),
-							mSmtManager, mPredicateFactoryInterpolantAutomata, mLogger);
-					iab.analyze();
-					mInterpolAutomaton = iab.getResult();
-					mLogger.info("Interpolants " + mInterpolAutomaton.getStates());
+		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
+				mInterpolantAutomatonBuilderFactory.createBuilder(mAbstraction, mInterpolantGenerator, mCounterexample);
+		mInterpolAutomaton = builder.getResult();
 
-					// mCegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
-					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
-							mInterpolantGenerator, programPoints, mLogger);
-					mCegarLoopBenchmark.addBackwardCoveringInformation(bci);
-				}
-				break;
-			}
-			case TOTALINTERPOLATION2: {
-				final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
-						(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-				final NestedRun<CodeBlock, IPredicate> counterexample =
-						(NestedRun<CodeBlock, IPredicate>) mCounterexample;
-				final TotalInterpolationAutomatonBuilder iab =
-						new TotalInterpolationAutomatonBuilder(abstraction, counterexample.getStateSequence(),
-								mInterpolantGenerator, mSmtManager, mPredicateFactoryInterpolantAutomata,
-								mRootNode.getRootAnnot().getModGlobVarManager(), mInterpolation, mServices,
-								mPref.getHoareTripleChecks(), mSimplificationTechnique, mXnfConversionTechnique);
-				mInterpolAutomaton = iab.getResult();
-				mCegarLoopBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
-			}
-				break;
-			}
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-
-			assert (accepts(mServices, mInterpolAutomaton,
-					mCounterexample.getWord())) : "Interpolant automaton broken!";
-			assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-					mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
-							.getResult();
-		}
+		assert (accepts(mServices, mInterpolAutomaton, mCounterexample.getWord())) : "Interpolant automaton broken!";
+		assert (new InductivityCheck(mServices,
+				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
+						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
+								.getResult();
 	}
 
 	@Override
