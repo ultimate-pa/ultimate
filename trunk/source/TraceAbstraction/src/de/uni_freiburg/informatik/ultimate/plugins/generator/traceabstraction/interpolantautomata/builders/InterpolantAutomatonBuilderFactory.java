@@ -58,8 +58,10 @@ public class InterpolantAutomatonBuilderFactory {
 	private final IBuilderFunction mBuilderFunction;
 
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final SmtManager smtManager,
-			final PredicateFactoryForInterpolantAutomata predFac, final RootNode rootNode, final TAPreferences taPrefs,
-			final AbstractInterpretationRunner abstractInterpretationRunner,
+			final PredicateFactoryForInterpolantAutomata predFac, final RootNode rootNode,
+			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
+			final InterpolationTechnique interpolation,
+			final InterpolantAutomaton interpolantAutomatonConstructionProcedure,
 			final CegarLoopStatisticsGenerator benchmark) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -70,8 +72,9 @@ public class InterpolantAutomatonBuilderFactory {
 		mBenchmark = benchmark;
 
 		// settings
-		mInterpolationTechnique = taPrefs.interpolation();
-		mInterpolantAutomatonStyle = taPrefs.interpolantAutomaton();
+		// interpolation settings is different because of settings fallback
+		mInterpolationTechnique = interpolation;
+		mInterpolantAutomatonStyle = interpolantAutomatonConstructionProcedure;
 		mHoareTripleChecks = taPrefs.getHoareTripleChecks();
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();

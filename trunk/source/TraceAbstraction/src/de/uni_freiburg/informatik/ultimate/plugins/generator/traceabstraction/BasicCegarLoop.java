@@ -221,7 +221,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
 				mSimplificationTechnique, mXnfConversionTechnique, mSmtManager);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mSmtManager,
-				mPredicateFactoryInterpolantAutomata, mRootNode, taPrefs, mAbsIntRunner, mCegarLoopBenchmark);
+				mPredicateFactoryInterpolantAutomata, mRootNode, mAbsIntRunner, taPrefs, mInterpolation,
+				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 	}
 
 	@Override
