@@ -184,7 +184,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public Object aggregate(String key, Object value1, Object value2) {
+		public Object aggregate(final String key, final Object value1, final Object value2) {
 			switch (key) {
 			case s_SsaConstruction:
 			case s_SatisfiabilityAnalysis:
@@ -206,7 +206,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 			final StringBuilder sb = new StringBuilder();
 			addTimedStatistic(benchmarkData, sb,s_SsaConstruction);
 			addTimedStatistic(benchmarkData, sb,s_SatisfiabilityAnalysis);
@@ -280,7 +280,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public Object getValue(String key) {
+		public Object getValue(final String key) {
 			switch (key) {
 			case TraceCheckerBenchmarkType.s_SsaConstruction:
 			case TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis:
@@ -313,14 +313,14 @@ public class TraceChecker {
 		/**
 		 * Tell the Benchmark that the checked trace has n CodeBlocks
 		 */
-		public void reportnewCodeBlocks(int n) {
+		public void reportnewCodeBlocks(final int n) {
 			mNumberOfCodeBlocks = mNumberOfCodeBlocks + n;
 		}
 
 		/**
 		 * Tell the Benchmark that n CodeBlocks have been asserted additionally
 		 */
-		public void reportnewAssertedCodeBlocks(int n) {
+		public void reportnewAssertedCodeBlocks(final int n) {
 			mNumberOfCodeBlocksAsserted = mNumberOfCodeBlocksAsserted + n;
 		}
 
@@ -331,14 +331,14 @@ public class TraceChecker {
 			mNumberOfCheckSat++;
 		}
 
-		public void reportNewInterpolant(boolean isQuantified) {
+		public void reportNewInterpolant(final boolean isQuantified) {
 			mConstructedInterpolants++;
 			if (isQuantified) {
 				mQuantifiedInterpolants++;
 			}
 		}
 
-		public void reportSequenceOfInterpolants(List<IPredicate> interpolants) {
+		public void reportSequenceOfInterpolants(final List<IPredicate> interpolants) {
 			for (final IPredicate pred : interpolants) {
 				final boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
 				mTraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
@@ -375,20 +375,20 @@ public class TraceChecker {
 	 * @param logger
 	 * @param services
 	 */
-	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			IUltimateServiceProvider services, boolean computeRcfgProgramExecution) {
+	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
 
-	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
-			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
-			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
+	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, rv,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat,
 				smtManager);
@@ -400,11 +400,11 @@ public class TraceChecker {
 	 * @param services
 	 * 
 	 */
-	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
-			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
-			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
+	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final SmtManager tcSmtManager) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -503,7 +503,7 @@ public class TraceChecker {
 	 * 
 	 * @param isSafe
 	 */
-	private void computeRcfgProgramExecution(LBool isSafe) {
+	private void computeRcfgProgramExecution(final LBool isSafe) {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
@@ -553,7 +553,7 @@ public class TraceChecker {
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
-	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
+	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
 		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
 		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mModifiedGlobals,
 				(NestedWord<CodeBlock>) mTrace, relVars, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
@@ -575,7 +575,8 @@ public class TraceChecker {
 		for (final BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 			if (bv.getTermVariable().getSort().isNumericSort()
 					|| bv.getTermVariable().getSort().getRealSort().getName().equals("Bool")
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")) {
+					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")
+					|| bv.getTermVariable().getSort().getRealSort().getName().equals("FloatingPoint")) {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
@@ -591,14 +592,14 @@ public class TraceChecker {
 		return rpeb.getRcfgProgramExecution();
 	}
 
-	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
+	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, ssa, mLogger);
 
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(mSmtManager, ssa, aaacb);
 	}
 
-	private Term getValue(Term term) {
+	private Term getValue(final Term term) {
 		final Term[] arr = { term };
 		final Map<Term, Term> map = mTcSmtManager.getScript().getValue(arr);
 		final Term value = map.get(term);
@@ -616,7 +617,7 @@ public class TraceChecker {
 
 	}
 
-	private Boolean getBooleanValue(Term term) {
+	private Boolean getBooleanValue(final Term term) {
 		Boolean result;
 		if (SmtUtils.isTrue(term)) {
 			result = true;
