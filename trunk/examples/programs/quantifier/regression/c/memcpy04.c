@@ -1,7 +1,7 @@
 //#Unsafe
 /* Check that invalid src is detected.
  * Date: 2016-02-22
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

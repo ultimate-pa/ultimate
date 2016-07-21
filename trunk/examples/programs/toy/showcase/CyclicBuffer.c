@@ -8,7 +8,7 @@
  * evaluated to 256.
  * 
  * Date: 2016-02-11
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 #include <stdlib.h>

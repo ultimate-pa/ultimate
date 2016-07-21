@@ -7,7 +7,7 @@
  *
  * 
  * Date: June 2014
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

@@ -2,7 +2,7 @@
 /*
  * Bug: p != q missing after second malloc
  * Date: September 2013
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 implementation main() returns ()
