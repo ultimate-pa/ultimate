@@ -106,10 +106,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
 				new UltimatePreferenceItem<Boolean>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION,
+				new UltimatePreferenceItem<AbstractInterpretationMode>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE,
+						PreferenceType.Combo, AbstractInterpretationMode.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION,
-						DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive,
@@ -150,9 +150,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
-	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
-	public static final String LABEL_USE_AI_PATH_PROGRAM_CONSTRUCTION =
-			"Use path program construction from abstract interpretation predicates";
+	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
+	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive =
 			"Non-flow-sensitive error trace relevance analysis";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive =
@@ -205,7 +204,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_ORDER = VALUE_EVR;
 	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
-	public static final boolean DEF_USE_ABSTRACT_INTERPRETATION = false;
+	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
+	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = false;
 	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = false;
@@ -213,6 +213,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final SimplicationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplicationTechnique.SIMPLIFY_DDA;
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	public enum AbstractInterpretationMode {
+		NONE, USE_PREDICATES, USE_PATH_PROGRAM
+	}
 
 	public enum InterpolantAutomaton {
 		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK, TOTALINTERPOLATION2

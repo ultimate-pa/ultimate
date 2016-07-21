@@ -224,13 +224,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mDoFaultLocalization_FlowSensitive = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
 
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
-			mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
-					mSimplificationTechnique, mXnfConversionTechnique);
-		} else {
-			mAbsIntRunner = null;
-		}
+		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
+				mSimplificationTechnique, mXnfConversionTechnique, mSmtManager);
 	}
 
 	@Override
@@ -280,9 +275,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			return true;
 		}
 
-		if (mAbsIntRunner != null) {
-			mAbsIntRunner.generateFixpoints(mCounterexample, abstraction);
-		}
+		mAbsIntRunner.generateFixpoints(mCounterexample, abstraction);
 
 		if (mPref.dumpAutomata()) {
 			dumpNestedRun(mCounterexample, mIterationPW, mLogger);
@@ -453,11 +446,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		if (mAbsIntRunner != null && mAbsIntRunner.hasShownInfeasibility()) {
+		if (mAbsIntRunner.hasShownInfeasibility()) {
 			// if AI has shown infeasibility, construct an AI interpolant automaton instead of an SMT-based one
 			mInterpolAutomaton =
-					mAbsIntRunner.constructInterpolantAutomaton(mInterpolantGenerator.getPredicateUnifier(),
-							mSmtManager, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
+					mAbsIntRunner
+							.createInterpolantAutomatonBuilder(mInterpolantGenerator,
+									(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample)
+							.getResult();
 		} else {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 			switch (mInterpolantAutomatonConstructionProcedure) {
@@ -560,15 +555,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final PredicateUnifier predUnifier = mInterpolantGenerator.getPredicateUnifier();
-		if (mAbsIntRunner != null) {
-			if (mAbsIntRunner.hasShownInfeasibility()) {
-				return mAbsIntRunner.refine(predUnifier, mInterpolAutomaton, mCounterexample,
-						this::refineWithGivenAutomaton);
-			}
-			mAbsIntRunner.refineAnyways(predUnifier, mSmtManager,
-					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample,
+		if (mAbsIntRunner.hasShownInfeasibility()) {
+			return mAbsIntRunner.refine(predUnifier, mInterpolAutomaton, mCounterexample,
 					this::refineWithGivenAutomaton);
 		}
+		mAbsIntRunner.refineAnyways(mInterpolantGenerator, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
+				mCounterexample, this::refineWithGivenAutomaton);
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
 	}
 
@@ -685,7 +677,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
 							super.writeAutomatonToFile(test, filename);
 						}
-						if (mAbsIntRunner == null) {
+						if (mAbsIntRunner.isDisabled()) {
 							// check only if AI did not run
 							final boolean ctxAccepted =
 									(new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), test,
