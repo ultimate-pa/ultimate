@@ -106,8 +106,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/congruence.bpl",
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
+			"examples/programs/abstractInterpretation/regression/all/procedure-Call-bools.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
 //			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
