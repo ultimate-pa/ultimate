@@ -25,8 +25,6 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final PredicateFactory mPredicateFactory;
@@ -38,8 +36,6 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mCurrentCounterExample = currentCounterexample;
 		mBoogie2Smt = smtManager.getBoogie2Smt();
 		mPredicateFactory =

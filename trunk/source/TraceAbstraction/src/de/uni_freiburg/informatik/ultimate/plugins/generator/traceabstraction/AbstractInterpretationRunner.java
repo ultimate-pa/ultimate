@@ -219,7 +219,7 @@ public class AbstractInterpretationRunner {
 
 	public void refineAnyways(final IInterpolantGenerator interpolGenerator,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
-			final RefineFunction refineFun) throws AutomataLibraryException {
+			final IRefineFunction refineFun) throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE || !mAlwaysRefine || mSkipIteration) {
 			return;
 		}
@@ -235,7 +235,7 @@ public class AbstractInterpretationRunner {
 	 */
 	public boolean refine(final PredicateUnifier predUnifier,
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> currentCex, final RefineFunction refineFun)
+			final IRun<CodeBlock, IPredicate> currentCex, final IRefineFunction refineFun)
 			throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			throw new UnsupportedOperationException("You cannot refine in mode " + AbstractInterpretationMode.NONE);
@@ -298,7 +298,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	@FunctionalInterface
-	public interface RefineFunction {
+	public interface IRefineFunction {
 		boolean refine(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, PredicateUnifier unifier)
 				throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
 	}

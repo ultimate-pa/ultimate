@@ -57,8 +57,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
@@ -106,10 +106,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/congruence.bpl",
-//			"examples/programs/abstractInterpretation/regression",
-			"examples/programs/abstractInterpretation/regression/all",
+			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression/all",
 //			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
 //			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
 
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/bla.bpl",
