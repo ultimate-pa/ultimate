@@ -19,7 +19,7 @@ NestedWordAutomaton nwa = (
 		"kandel1" "kandel2A" "kandel2B"
 	},
 	initialStates = {"s0" "d0" },
-	finalStates = {"pk" "kandel2A"},
+	finalStates = {"pe" "kandel2A"},
 	callTransitions = {
 		 ("s0" "c" "pe")
 		 ("d0" "c" "me")
