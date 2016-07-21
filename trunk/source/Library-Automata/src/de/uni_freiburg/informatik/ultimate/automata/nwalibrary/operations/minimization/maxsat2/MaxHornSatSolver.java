@@ -404,8 +404,8 @@ public class MaxHornSatSolver<V> {
 		 * TODO: do update only for newly changed variable
 		 */
 		public ClauseCondition computeClauseCondition() {
-			ClauseStatus mClauseStatus = ClauseStatus.NEITHER;
-			int mUnsetAtoms = 0;
+			ClauseStatus clauseStatus = ClauseStatus.NEITHER;
+			int unsetAtoms = 0;
 			for (final V var : mPositiveAtoms) {
 				final VariableStatus status = getCurrentVariableStatus(var);
 				switch (status) {
@@ -413,10 +413,10 @@ public class MaxHornSatSolver<V> {
 					// do nothing
 					break;
 				case TRUE:
-					mClauseStatus = ClauseStatus.TRUE;
+					clauseStatus = ClauseStatus.TRUE;
 					break;
 				case UNSET:
-					mUnsetAtoms++;
+					unsetAtoms++;
 					break;
 				default:
 					throw new AssertionError();
@@ -426,23 +426,23 @@ public class MaxHornSatSolver<V> {
 				final VariableStatus status = getCurrentVariableStatus(var);
 				switch (status) {
 				case FALSE:
-					mClauseStatus = ClauseStatus.TRUE;
+					clauseStatus = ClauseStatus.TRUE;
 					break;
 				case TRUE:
 					// do nothing
 					break;
 				case UNSET:
-					mUnsetAtoms++;
+					unsetAtoms++;
 					break;
 				default:
 					throw new AssertionError();
 				}
 			}
-			assert mUnsetAtoms >= 0 && mUnsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length;
-			if (mUnsetAtoms == 0 && mClauseStatus != ClauseStatus.TRUE) {
-				mClauseStatus = ClauseStatus.FALSE;
+			assert unsetAtoms >= 0 && unsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length;
+			if (unsetAtoms == 0 && clauseStatus != ClauseStatus.TRUE) {
+				clauseStatus = ClauseStatus.FALSE;
 			}
-			return new ClauseCondition(mClauseStatus, mUnsetAtoms);
+			return new ClauseCondition(clauseStatus, unsetAtoms);
 		}
 		
 		private VariableStatus getCurrentVariableStatus(final V var) {
