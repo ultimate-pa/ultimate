@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -56,6 +57,14 @@ public class EqualityAnalysisResult {
 		mEqualDoubletons = equalDoubletons;
 		mDistinctDoubletons = distinctDoubletons;
 		mUnknownDoubletons = unknownDoubletons;
+	}
+	
+	public EqualityAnalysisResult(final Set<Doubleton<Term>> doubletons) {
+		super();
+		final Set<Doubleton<Term>> emptySet = Collections.emptySet();
+		mEqualDoubletons = emptySet;
+		mDistinctDoubletons = emptySet;
+		mUnknownDoubletons = doubletons;
 	}
 
 	/**

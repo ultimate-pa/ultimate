@@ -29,15 +29,21 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.EqualitySupportingInvariantAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement
@@ -51,21 +57,38 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public static final String s_Description =
 			"Removes arrays by introducing new variables for each relevant array cell";
 
-	private final Boogie2SMT mBoogie2smt;
+	private final Boogie2SMT mBoogie2SMT;
+
+	private final TransFormula mOriginalStem;
+
+	private final TransFormula mOriginalLoop;
+
+	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+
+	private final ReplacementVarFactory mReplacementVarFactory;
+
+	private final SimplicationTechnique mSimplificationTechnique;
+
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 
-	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt,
+			final ReplacementVarFactory replacementVarFactory, final TransFormula originalStem, final TransFormula originalLoop,
+			final Set<BoogieVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mBoogie2smt = boogie2smt;
+		mBoogie2SMT = boogie2smt;
+		mReplacementVarFactory = replacementVarFactory;
+		mOriginalStem = originalStem;
+		mOriginalLoop = originalLoop;
+		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+
 	}
 
 	@Override
@@ -80,10 +103,14 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
-		// TODO: Only basic version, do other things like IndexSupportingInvariantAnalysis
-		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(lasso.getStem(), lasso.getLoop()), mSimplificationTechnique, mXnfConversionTechnique);
-		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(lasso.getStem());
-		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(lasso.getLoop());
+		final MapEliminator elim = new MapEliminator(mServices, mBoogie2SMT, mReplacementVarFactory, mSimplificationTechnique,
+				mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()));
+		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
+		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
+				mBoogie2SMT.getBoogie2SmtSymbolTable(), mBoogie2SMT.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
+		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(lasso.getStem(), equalityAnalysisStem, equalityAnalysisLoop);
+		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(lasso.getLoop(), equalityAnalysisLoop, equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
 	}
