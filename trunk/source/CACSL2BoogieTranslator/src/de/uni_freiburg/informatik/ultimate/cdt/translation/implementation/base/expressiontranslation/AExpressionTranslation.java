@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -81,11 +82,14 @@ public abstract class AExpressionTranslation {
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
 	protected final IPointerIntegerConversion mPointerIntegerConversion;
+	protected final boolean mOverapproximateFloatingPointOperations;
 
 
 	public AExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler, 
-			final PointerIntegerConversion pointerIntegerConversion) {
+			final PointerIntegerConversion pointerIntegerConversion, 
+			final boolean overapproximateFloatingPointOperations) {
 		super();
+		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mTypeSizes = typeSizes;
 		mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
 		mTypeHandler = typeHandler;
@@ -523,7 +527,6 @@ public abstract class AExpressionTranslation {
 		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
-
 	}
 	
 	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
@@ -686,5 +689,34 @@ public abstract class AExpressionTranslation {
 		final CPrimitive type = new CPrimitive(PRIMITIVE.INT);
 		final Expression expr = constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
 		return new RValue(expr, type);
+	}
+	
+	
+	/**
+	 * Generate the attributes for the Boogie code that make sure that we
+	 * either 
+	 * - translate to the desired SMT functions, or 
+	 * - let Ultimate overapproximate 
+	 */
+	protected Attribute[] generateAttributes(final ILocation loc, final String smtlibFunctionName, final int[] indices) {
+		Attribute[] attributes;
+		if (mOverapproximateFloatingPointOperations) {
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName ) });
+			attributes = new Attribute[] { attribute };
+		} else {
+			if (indices == null) {
+				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+				attributes = new Attribute[] { attribute };
+			} else {
+				final Expression[] literalIndices = new IntegerLiteral[indices.length];
+				for (int i = 0; i < indices.length; ++i) {
+					literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
+				}
+				final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
+				final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
+				attributes = new Attribute[] { attribute1, attribute2 };
+			}
+		}
+		return attributes;
 	}
 }

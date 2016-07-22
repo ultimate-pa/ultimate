@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class BitvectorTranslation extends AExpressionTranslation {
 	
-	private final boolean mOverapproximateFloatingPointOperations;
 	private final Expression mRoundingMode;
 	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";
 	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
@@ -86,8 +85,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	public BitvectorTranslation(final TypeSizes mTypeSizeConstants, final ITypeHandler typeHandler, 
 			final PointerIntegerConversion pointerIntegerConversion, final boolean overapproximateFloatingPointOperations) {
-		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion);
-		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
+		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		final IdentifierExpression roundingMode = new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
 		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		mRoundingMode = roundingMode;
@@ -414,33 +412,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	
-	/**
-	 * Generate the attributes for the Boogie code that make sure that we
-	 * either 
-	 * - translate to the desired SMT functions, or 
-	 * - let Ultimate overapproximate 
-	 */
-	private Attribute[] generateAttributes(final ILocation loc, final String smtlibFunctionName, final int[] indices) {
-		Attribute[] attributes;
-		if (mOverapproximateFloatingPointOperations) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName ) });
-			attributes = new Attribute[] { attribute };
-		} else {
-			if (indices == null) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
-				attributes = new Attribute[] { attribute };
-			} else {
-				final Expression[] literalIndices = new IntegerLiteral[indices.length];
-				for (int i = 0; i < indices.length; ++i) {
-					literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
-				}
-				final Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
-				final Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
-				attributes = new Attribute[] { attribute1, attribute2 };
-			}
-		}
-		return attributes;
-	}
 
 	@Override
 	public void convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand, final CPrimitive resultType) {
