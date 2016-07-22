@@ -123,9 +123,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (mOverapproximateFloatingPointOperations) {
 			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
 		} else {
-			//TODO: do not call this method when constructing a float literal
-			//      call it whenever we use corresponding type
-			declareFloatingPointConstructors(loc);
 			
 			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 			final Expression[] arguments;
@@ -149,15 +146,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, type);
 				arguments = new Expression[] {};
 			} else {
-				if (type.getType() == PRIMITIVE.FLOAT){
-					functionName = "declareFloat";
-				} else if (type.getType() == PRIMITIVE.DOUBLE) {
-					functionName = "declareDouble";
-				} else if (type.getType() == PRIMITIVE.LONGDOUBLE) {
-					functionName = "declareLongDouble";
-				} else {
-					throw new IllegalArgumentException();
-				}
+				functionName = SFO.AUXILIARY_FUNCTION_PREFIX + "to_fp" + type;
 				final Expression realValue = new RealLiteral(loc, value.toString());
 				arguments = new Expression[] {getRoundingMode(), realValue};
 			}
@@ -394,33 +383,32 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 	}
 	
-	private void declareFloatingPointConstructors(final ILocation loc) {
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.FLOAT), "declareFloat");
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.DOUBLE), "declareDouble");
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.LONGDOUBLE), "declareLongDouble");
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.FLOAT));
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.DOUBLE));
-		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+	public void declareFloatingPointConstructors(final ILocation loc, final CPrimitive type) {
+		declareFloatingPointConstructor_FromBitvec(loc, type);
+		declareFloatingPointConstructor_FromReal(loc, type);
 	}
 	
-	private void declareFloatingPointConstructor(final ILocation loc, final CPrimitive type, final String functionName) {
+	private void declareFloatingPointConstructor_FromReal(final ILocation loc, final CPrimitive type) {
+		final String smtLibIdentifier = "to_fp";
+		final String functionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibIdentifier + type;
 		final ASTType[] paramASTTypes = new ASTType[2];
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
-		final Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{fps.getExponent(), fps.getSignificant()});
+		final Attribute[] attributes = generateAttributes(loc, smtLibIdentifier, new int[]{fps.getExponent(), fps.getSignificant()});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
 	}
 	
-	private void declareFloatingPointConstructor(final ILocation loc, final CPrimitive type) {
-		final String functionName = SFO.AUXILIARY_FUNCTION_PREFIX + "fp" + type;
+	private void declareFloatingPointConstructor_FromBitvec(final ILocation loc, final CPrimitive type) {
+		final String smtLibIdentifier = "fp";
+		final String functionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibIdentifier + type;
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 		final ASTType[] paramASTTypes = new ASTType[3];
 		paramASTTypes[0] = new PrimitiveType(loc, "bv1");
 		paramASTTypes[1] = new PrimitiveType(loc, "bv" + fps.getExponent());
 		paramASTTypes[2] = new PrimitiveType(loc, "bv" + (fps.getSignificant()-1));
-		final Attribute[] attributes = generateAttributes(loc, "fp", new int[]{1, fps.getExponent(), fps.getSignificant()-1});
+		final Attribute[] attributes = generateAttributes(loc, smtLibIdentifier, new int[]{1, fps.getExponent(), fps.getSignificant()-1});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
 	}

@@ -115,9 +115,9 @@ public class PostProcessor {
 	 * Constructor.
 	 * @param overapproximateFloatingPointOperations 
 	 */
-	public PostProcessor(Dispatcher dispatcher, ILogger logger, 
-			AExpressionTranslation expressionTranslation, 
-			boolean overapproximateFloatingPointOperations) {
+	public PostProcessor(final Dispatcher dispatcher, final ILogger logger, 
+			final AExpressionTranslation expressionTranslation, 
+			final boolean overapproximateFloatingPointOperations) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
@@ -154,10 +154,10 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
-			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			TypeHandler typeHandler, Set<String> undefinedTypes, 
-			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
+	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler, 
+			final ArrayHandler arrayHandler, final FunctionHandler functionHandler, final StructHandler structHandler,
+			final TypeHandler typeHandler, final Set<String> undefinedTypes, 
+			final LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
@@ -171,7 +171,7 @@ public class PostProcessor {
 					typeHandler));
 
 			if ((typeHandler).areFloatingTypesNeeded()) {
-				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations));
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations, expressionTranslation));
 			}
 
 		}
@@ -179,8 +179,8 @@ public class PostProcessor {
 	}
 	
 	private ArrayList<Declaration> declareConversionFunctions(
-			Dispatcher main, FunctionHandler functionHandler, 
-			MemoryHandler memoryHandler, StructHandler structHandler) {
+			final Dispatcher main, final FunctionHandler functionHandler, 
+			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -225,8 +225,8 @@ public class PostProcessor {
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
-			Dispatcher main, FunctionHandler functionHandler, 
-			MemoryHandler memoryHandler, StructHandler structHandler) {
+			final Dispatcher main, final FunctionHandler functionHandler, 
+			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
 //		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
@@ -290,10 +290,10 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a list the initialized variables.
 	 */
-	private ArrayList<Declaration> createUltimateInitProcedure(ILocation translationUnitLoc,
-			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
-			AExpressionTranslation expressionTranslation) {
+	private ArrayList<Declaration> createUltimateInitProcedure(final ILocation translationUnitLoc,
+			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,   
+			final StructHandler structHandler, final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
+			final AExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
@@ -424,7 +424,7 @@ public class PostProcessor {
 	 * @return declarations and implementation of the start procedure.
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
-			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
+			final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
 		final LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
 		final String checkedMethod = main.getCheckedMethod();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -551,8 +551,8 @@ public class PostProcessor {
 	 * workaround.
 	 * @param typeHandler 
 	 */
-	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			TypeSizes typeSizes, TypeHandler typeHandler) {
+	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc, 
+			final TypeSizes typeSizes, final TypeHandler typeHandler) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -579,10 +579,12 @@ public class PostProcessor {
 	 * @param loc
 	 * @param typesizes
 	 * @param typeHandler
+	 * @param expressionTranslation 
 	 * @return
 	 */
-	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
-			TypeSizes typesizes, TypeHandler typeHandler, boolean overapproximateFloat) {
+	public static ArrayList<Declaration> declareFloatDataTypes(final ILocation loc,
+			final TypeSizes typesizes, final TypeHandler typeHandler, 
+			final boolean overapproximateFloat, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
 		//Roundingmodes, for now RNE hardcoded
@@ -619,6 +621,13 @@ public class PostProcessor {
 			
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
+				
+				if (!overapproximateFloat) {
+					// declare floating point constructors here because we might 
+					// always need them for our backtranslation
+					((BitvectorTranslation) expressionTranslation).declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+				}
+
 				final Attribute[] attributes;
 				if (overapproximateFloat) {
 					attributes = new Attribute[0];
