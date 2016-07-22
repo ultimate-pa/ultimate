@@ -100,7 +100,7 @@ public class TransFormulaLRWithArrayInformation {
 	 * Mapping from the first generation of an array to all indices that
 	 * occur in instances of the same array.
 	 */
-	private HashRelation<TermVariable, ArrayIndex> mArrayFirstGeneration2Indices;
+	private HashRelation<Term, ArrayIndex> mArrayFirstGeneration2Indices;
 	private final HashRelation<TermVariable, TermVariable> mArrayFirstGeneration2Instances;
 	private final Map<ArrayIndex, ArrayIndex> mIndexInstance2IndexRepresentative = new HashMap<>();
 	private final List<List<ArrayUpdate>> mArrayUpdates;
@@ -279,7 +279,7 @@ public class TransFormulaLRWithArrayInformation {
 		return result;
 	}
 
-	public HashRelation<TermVariable, ArrayIndex> getArrayFirstGeneration2Indices() {
+	public HashRelation<Term, ArrayIndex> getArrayFirstGeneration2Indices() {
 		return mArrayFirstGeneration2Indices;
 	}
 	
@@ -546,7 +546,7 @@ public class TransFormulaLRWithArrayInformation {
 
 		public IndexCollector(final TransFormulaLR tf, final HashRelation<TermVariable, ArrayIndex> foreignIndices) {
 			mTransFormula = tf;
-			mArrayFirstGeneration2Indices = new HashRelation<TermVariable, ArrayIndex>();
+			mArrayFirstGeneration2Indices = new HashRelation<Term, ArrayIndex>();
 			for (int i = 0; i < sunnf.length; i++) {
 				for (final ArrayUpdate au : mArrayUpdates.get(i)) {
 					final TermVariable firstGeneration = mArrayGenealogy[i].getProgenitor((TermVariable) au.getOldArray());

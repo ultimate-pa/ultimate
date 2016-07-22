@@ -102,7 +102,7 @@ public class TransFormulaLRWithArrayCells {
 	private Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
 	private EquivalentCells[] mEquivalentCells;
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
-	private HashRelation<TermVariable, ArrayIndex> mFirstGeneration2Indices;
+	private HashRelation<Term, ArrayIndex> mFirstGeneration2Indices;
 	private IndexAnalysisResult mIndexAnalysisResult;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;

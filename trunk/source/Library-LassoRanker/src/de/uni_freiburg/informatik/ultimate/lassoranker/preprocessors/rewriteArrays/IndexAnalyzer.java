@@ -85,7 +85,7 @@ public class IndexAnalyzer {
 	
 	private final boolean mUseArrayIndexSupportingInvariants = true;
 	
-	public IndexAnalyzer(final Term term, final HashRelation<TermVariable, ArrayIndex> array2Indices, 
+	public IndexAnalyzer(final Term term, final HashRelation<Term, ArrayIndex> array2Indices, 
 			final Boogie2SmtSymbolTable symbolTable, final TransFormulaLR tf, 
 			final EqualityAnalysisResult invariantEqualitiesBefore, 
 			final EqualityAnalysisResult invariantEqualitiesAfter,
@@ -192,9 +192,9 @@ public class IndexAnalyzer {
 	}
 
 
-	private Set<Doubleton<Term>> extractDoubletons(final HashRelation<TermVariable, ArrayIndex> array2Indices) {
+	private Set<Doubleton<Term>> extractDoubletons(final HashRelation<Term, ArrayIndex> array2Indices) {
 		final Set<Doubleton<Term>> result = new HashSet<>();
-		for (final TermVariable tv : array2Indices.getDomain()) {
+		for (final Term tv : array2Indices.getDomain()) {
 			final Set<ArrayIndex> test = array2Indices.getImage(tv);
 			final ArrayIndex[] testArr = test.toArray(new ArrayIndex[test.size()]);
 			for (int i=0; i<testArr.length; i++) {
