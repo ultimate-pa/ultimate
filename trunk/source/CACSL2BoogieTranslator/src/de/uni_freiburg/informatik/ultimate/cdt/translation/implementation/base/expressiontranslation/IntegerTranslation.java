@@ -295,24 +295,20 @@ public class IntegerTranslation extends AExpressionTranslation {
 		if (rightExpr instanceof IntegerLiteral) {
 			rightValue = new BigInteger(((IntegerLiteral) rightExpr).getValue());
 		}
-		// TODO: make this more general, (a + 4) + 4 may still occur this way..
-
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
-			return constructArIntExprMinus(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
-			return constructArIntExprMul(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
+		case IASTBinaryExpression.op_plusAssign:
+		case IASTBinaryExpression.op_plus:
+			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp);
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			return constructArIntExprDiv(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			return constructArIntExprMod(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
-		case IASTBinaryExpression.op_plusAssign:
-		case IASTBinaryExpression.op_plus:
-			return constructArIntExprPlus(loc, leftExpr, rightExpr, bothAreIntegerLiterals, leftValue, rightValue);
 		default:
 			final String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -373,44 +369,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
-	private Expression constructArIntExprMinus(final ILocation loc, final Expression exp1, final Expression exp2,
-			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
-		final BinaryExpression.Operator operator;
-		String constantResult;
-		operator = Operator.ARITHMINUS;
-		if (bothAreIntegerLiterals) {
-			constantResult = leftValue.subtract(rightValue).toString();
-			return new IntegerLiteral(loc, constantResult);
-		} else {
-			return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
-		}
-	}
-
-	private Expression constructArIntExprMul(final ILocation loc, final Expression exp1, final Expression exp2,
-			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
-		final BinaryExpression.Operator operator;
-		String constantResult;
-		operator = Operator.ARITHMUL;
-		if (bothAreIntegerLiterals) {
-			constantResult = leftValue.multiply(rightValue).toString();
-			return new IntegerLiteral(loc, constantResult);
-		} else {
-			return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
-		}
-	}
-
-	private Expression constructArIntExprPlus(final ILocation loc, final Expression exp1, final Expression exp2,
-			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
-		final BinaryExpression.Operator operator;
-		String constantResult;
-		operator = Operator.ARITHPLUS;
-		if (bothAreIntegerLiterals) {
-			constantResult = leftValue.add(rightValue).toString();
-			return new IntegerLiteral(loc, constantResult);
-		} else {
-			return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
-		}
-	}
 
 	private Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
 			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
@@ -779,8 +737,39 @@ public class IntegerTranslation extends AExpressionTranslation {
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
 		} else {
-			
+			return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 		}
+	}
+
+	private Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final Expression exp2) {
+		final BinaryExpression.Operator operator;
+		switch (nodeOperator) {
+		case IASTBinaryExpression.op_minusAssign:
+		case IASTBinaryExpression.op_minus:
+			operator = Operator.ARITHMINUS;
+			break;
+		case IASTBinaryExpression.op_multiplyAssign:
+		case IASTBinaryExpression.op_multiply:
+			operator = Operator.ARITHMUL;
+			break;
+		case IASTBinaryExpression.op_divideAssign:
+		case IASTBinaryExpression.op_divide:
+			operator = Operator.ARITHDIV;
+			break;
+		case IASTBinaryExpression.op_moduloAssign:
+		case IASTBinaryExpression.op_modulo:
+			operator = Operator.ARITHMOD;
+			break;
+		case IASTBinaryExpression.op_plusAssign:
+		case IASTBinaryExpression.op_plus:
+			operator = Operator.ARITHPLUS;
+			break;
+		default:
+			final String msg = "Unknown or unsupported arithmetic expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 	}
 
 	@Override
