@@ -52,7 +52,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomaton(
 	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
 
-		mLogger.info("Creating automaton from AI predicates.");
+		mLogger.info("Creating interpolant automaton from AI using only explored space.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
 		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
