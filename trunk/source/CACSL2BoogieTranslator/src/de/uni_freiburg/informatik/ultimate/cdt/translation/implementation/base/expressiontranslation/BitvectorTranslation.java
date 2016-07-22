@@ -84,8 +84,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
 	public static final String BOOGIE_ROUNDING_MODE_RTZ = "RoundingMode_RTZ";
 
-	public BitvectorTranslation(TypeSizes mTypeSizeConstants, ITypeHandler typeHandler, 
-			PointerIntegerConversion pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
+	public BitvectorTranslation(final TypeSizes mTypeSizeConstants, final ITypeHandler typeHandler, 
+			final PointerIntegerConversion pointerIntegerConversion, final boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion);
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		final IdentifierExpression roundingMode = new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
@@ -94,7 +94,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(final Dispatcher main, final IASTLiteralExpression node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
@@ -111,7 +111,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public RValue translateIntegerLiteral(ILocation loc, String val) {
+	public RValue translateIntegerLiteral(final ILocation loc, final String val) {
 		final RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, mTypeSizes);
 		return rVal;
 	}
@@ -119,10 +119,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	
 	@Override
-	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive type, BigDecimal value) {
+	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type, final BigDecimal value) {
 		if (mOverapproximateFloatingPointOperations) {
 			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
 		} else {
+			//TODO: do not call this method when constructing a float literal
+			//      call it whenever we use corresponding type
 			declareFloatingPointConstructors(loc);
 			
 			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
@@ -165,13 +167,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
+	public Expression constructLiteralForIntegerType(final ILocation loc, final CPrimitive type, final BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, mTypeSizes, type, value);
 	}
 
 
 	@Override
-	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
@@ -195,7 +197,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	
-	public Expression constructBinaryInequalityExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryInequalityExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
@@ -247,9 +249,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
-			int op, Expression left, CPrimitive typeLeft,
-			Expression right, CPrimitive typeRight) {
+	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc,
+			final int op, final Expression left, final CPrimitive typeLeft,
+			final Expression right, final CPrimitive typeRight) {
 		if(!mFunctionDeclarations.checkParameters(typeLeft, typeRight)) {
 			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
 		}
@@ -289,8 +291,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryIntegerExpression(ILocation loc,
-			int op, Expression expr, CPrimitive type) {
+	public Expression constructUnaryIntegerExpression(final ILocation loc,
+			final int op, final Expression expr, final CPrimitive type) {
 		final String funcname;
 		switch (op) {
 		case IASTUnaryExpression.op_tilde:
@@ -309,8 +311,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructArithmeticIntegerExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		FunctionApplication func;
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
@@ -360,8 +362,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return func;
 	}
 
-	private void declareBitvectorFunction(ILocation loc, String smtlibFunctionName, String boogieFunctionName,
-			boolean boogieResultTypeBool, CPrimitive resultCType, int[] indices, CPrimitive... paramCType) {
+	private void declareBitvectorFunction(final ILocation loc, final String smtlibFunctionName, final String boogieFunctionName,
+			final boolean boogieResultTypeBool, final CPrimitive resultCType, final int[] indices, final CPrimitive... paramCType) {
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
 			// function already declared
 			return;
@@ -370,8 +372,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
-	private void declareFloatingPointFunction(ILocation loc, String smtlibFunctionName, String boogieFunctionName,
-			boolean boogieResultTypeBool, boolean isRounded, CPrimitive resultCType, int[] indices, CPrimitive... paramCType) {
+	private void declareFloatingPointFunction(final ILocation loc, final String smtlibFunctionName, final String boogieFunctionName,
+			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType, final int[] indices, final CPrimitive... paramCType) {
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
 			// function already declared
 			return;
@@ -392,18 +394,33 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 	}
 	
-	private void declareFloatingPointConstructors(ILocation loc) {
+	private void declareFloatingPointConstructors(final ILocation loc) {
 		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.FLOAT), "declareFloat");
 		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.DOUBLE), "declareDouble");
 		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.LONGDOUBLE), "declareLongDouble");
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.FLOAT));
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.DOUBLE));
+		declareFloatingPointConstructor(loc, new CPrimitive(PRIMITIVE.LONGDOUBLE));
 	}
 	
-	private void declareFloatingPointConstructor(ILocation loc, final CPrimitive type, final String functionName) {
+	private void declareFloatingPointConstructor(final ILocation loc, final CPrimitive type, final String functionName) {
 		final ASTType[] paramASTTypes = new ASTType[2];
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 		final Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{fps.getExponent(), fps.getSignificant()});
+		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
+		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
+	}
+	
+	private void declareFloatingPointConstructor(final ILocation loc, final CPrimitive type) {
+		final String functionName = SFO.AUXILIARY_FUNCTION_PREFIX + "fp" + type;
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
+		final ASTType[] paramASTTypes = new ASTType[3];
+		paramASTTypes[0] = new PrimitiveType(loc, "bv1");
+		paramASTTypes[1] = new PrimitiveType(loc, "bv" + fps.getExponent());
+		paramASTTypes[2] = new PrimitiveType(loc, "bv" + (fps.getSignificant()-1));
+		final Attribute[] attributes = generateAttributes(loc, "fp", new int[]{1, fps.getExponent(), fps.getSignificant()-1});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
 	}
@@ -415,7 +432,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	 * - translate to the desired SMT functions, or 
 	 * - let Ultimate overapproximate 
 	 */
-	private Attribute[] generateAttributes(ILocation loc, String smtlibFunctionName, int[] indices) {
+	private Attribute[] generateAttributes(final ILocation loc, final String smtlibFunctionName, final int[] indices) {
 		Attribute[] attributes;
 		if (mOverapproximateFloatingPointOperations) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName ) });
@@ -438,7 +455,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
+	public void convertIntToInt_NonBool(final ILocation loc, final ExpressionResult operand, final CPrimitive resultType) {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
@@ -467,12 +484,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 
 	@Override
-	public Expression extractBits(ILocation loc, Expression operand, int high, int low) {
+	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
 		final Expression bv = new BitVectorAccessExpression(loc, operand, high, low);
 		return bv;
 	}
 
-	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
+	private void extend(final ILocation loc, final ExpressionResult operand, final CType resultType, final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
 		final int[] indices = new int[]{resultLength - operandLength};
 		String smtlibFunctionName;
 		if (((CPrimitive) operand.lrVal.getCType()).isUnsigned()) {
@@ -489,7 +506,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public BigInteger extractIntegerValue(Expression expr, CType cType) {
+	public BigInteger extractIntegerValue(final Expression expr, CType cType) {
 		if (cType.isIntegerType()) {
 			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
@@ -520,13 +537,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype, final List<Statement> stmt) {
 		// do nothing. not needed for bitvectors
 		
 	}
 
 	@Override
-	public Expression concatBits(ILocation loc, List<Expression> dataChunks, int size) {
+	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
 		Expression result;
 		final Iterator<Expression> it = dataChunks.iterator();
 		result = it.next();
@@ -541,7 +558,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter) {
+	public Expression signExtend(final ILocation loc, final Expression operand, final int bitsBefore, final int bitsAfter) {
 		final ASTType resultType = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bitsAfter/8);
 		final ASTType inputType = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bitsBefore/8);
 		final String smtlibFunctionName = "sign_extend";
@@ -555,8 +572,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonFloatingPointExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
@@ -599,8 +616,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
-			CPrimitive type) {
+	public Expression constructUnaryFloatingPointExpression(final ILocation loc, final int nodeOperator, final Expression exp,
+			final CPrimitive type) {
 		final Expression result;
 		final String funcname;
 		switch (nodeOperator) {
@@ -617,8 +634,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		FunctionApplication result;
 		if(!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
@@ -662,14 +679,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Floating(ILocation loc, int nodeOperator, Expression exp1,
-			CType type1, Expression exp2, CType type2) {
+	public Expression constructBinaryEqualityExpression_Floating(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final CType type1, final Expression exp2, final CType type2) {
 		return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Integer(ILocation loc, int nodeOperator, Expression exp1,
-			CType type1, Expression exp2, CType type2) {
+	public Expression constructBinaryEqualityExpression_Integer(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final CType type1, final Expression exp2, final CType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 			} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
@@ -680,7 +697,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+	protected String declareConversionFunction(final ILocation loc, final CPrimitive oldType, final CPrimitive newType) {
 		
 		final String functionName = "convert" + oldType.toString() +"To" + newType.toString();
 		final String prefixedFunctionName = "~" + functionName;
@@ -721,7 +738,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
+	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
 		final String smtFunctionName;
 		final String suffixedFunctionName;
 		final CPrimitive type;
@@ -758,7 +775,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue argument) {
+	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction, final RValue argument) {
 		if (floatFunction.getFunctionName().equals("sqrt")) {
 			if (!(argument.getCType() instanceof CPrimitive) || 
 					((CPrimitive) argument.getCType()).getType() != PRIMITIVE.DOUBLE) {
@@ -867,7 +884,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	
-	private RValue constructSmtFloatClassificationFunction(ILocation loc, String smtLibFunctionName , RValue argument) {
+	private RValue constructSmtFloatClassificationFunction(final ILocation loc, final String smtLibFunctionName , final RValue argument) {
 		final CPrimitive argumentCType = (CPrimitive) argument.getCType();
 		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + argumentCType;
 		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
