@@ -1,11 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -31,15 +34,15 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private final Boogie2SMT mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-	        final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample,
-	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
+			final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample,
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
 		mBoogie2Smt = smtManager.getBoogie2Smt();
-		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, simplificationTechnique,
-		        xnfConversionTechnique);
+		mPredicateFactory =
+				new PredicateFactory(services, mBoogie2Smt, simplificationTechnique, xnfConversionTechnique);
 
 		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier);
 	}
@@ -50,13 +53,19 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
+		// return getPathProgramAutomatonOld(oldAbstraction, predicateUnifier);
+	}
+
+	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonOld(
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating interpolant automaton from AI using only explored space.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 		IPredicate currentState = predicateUnifier.getTruePredicate();
 		result.addState(true, false, currentState);
 
@@ -86,11 +95,11 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 
 		// Add final state
 		if (result.getFinalStates().isEmpty()) {
+			final Word<CodeBlock> word = mCurrentCounterExample.getWord();
 			final IPredicate finalState = predicateUnifier.getFalsePredicate();
 			result.addState(false, true, finalState);
 			// HERE GOES SOMETHING WRONG! length is strangely enough not equal to the counter example length?!
-			result.addInternalTransition(currentState,
-			        mCurrentCounterExample.getSymbol(mCurrentCounterExample.getLength() - 1), finalState);
+			result.addInternalTransition(currentState, word.getSymbol(word.length() - 1), finalState);
 			// Add self-loop to the final state, annotated with the alphabet of the counterexample.
 			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
 		}
@@ -100,8 +109,81 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 		}
 
 		// TODO remove next line; debugging only!
-		mLogger.info("Counter example automaton: " + oldAbstraction);
-		mLogger.info("Resulting abstract interpretation automaton: " + result);
+		mLogger.info("Current abstraction: " + oldAbstraction);
+		mLogger.info("AI interpolation automaton: " + result);
+
+		return result;
+	}
+
+	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonNew(
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+		mLogger.info("Creating interpolant automaton from AI using only explored space.");
+
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+
+		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
+		final ArrayList<IPredicate> stateSequence = cex.getStateSequence();
+
+		if (stateSequence.size() <= 1) {
+			throw new AssertionError("Unexpected");
+		}
+
+		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
+		final Map<Call, IPredicate> callHierPreds = new HashMap<>();
+		final Word<CodeBlock> word = cex.getWord();
+		int i = 0;
+		for (final CodeBlock symbol : word) {
+			final IPredicate prevState = stateSequence.get(i);
+			final IPredicate succState = stateSequence.get(i + 1);
+			++i;
+
+			IPredicate newPrevState = newStates.get(prevState);
+			if (newPrevState == null) {
+				newPrevState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
+				newStates.put(prevState, newPrevState);
+				if (i == 1) {
+					// the initial state is initial
+					result.addState(true, false, newPrevState);
+				} else {
+					result.addState(false, false, newPrevState);
+				}
+			}
+
+			IPredicate newSuccState = newStates.get(succState);
+			if (newSuccState == null) {
+				if (i == stateSequence.size() - 1) {
+					// the last state is always an error state
+					newSuccState = predicateUnifier.getFalsePredicate();
+					result.addState(false, true, newSuccState);
+				} else {
+					newSuccState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
+					result.addState(false, false, newSuccState);
+				}
+				newStates.put(succState, newSuccState);
+			}
+
+			// Add transition
+			if (symbol instanceof Call) {
+				callHierPreds.put((Call) symbol, newPrevState);
+				result.addCallTransition(newPrevState, symbol, newSuccState);
+			} else if (symbol instanceof Return) {
+				final Return returnSymbol = (Return) symbol;
+				final IPredicate hierState = callHierPreds.get(returnSymbol.getCorrespondingCall());
+				assert hierState != null : "Call has to be seen before return";
+				result.addReturnTransition(newPrevState, hierState, symbol, newSuccState);
+			} else {
+				result.addInternalTransition(newPrevState, symbol, newSuccState);
+			}
+		}
+
+		// Add self-loops to final state
+		if (!result.getFinalStates().isEmpty()) {
+			for (final IPredicate finalState : result.getFinalStates()) {
+				oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
+			}
+		}
 
 		return result;
 	}
