@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -144,7 +144,7 @@ public class IterativePredicateTransformer {
 			if (mTrace.getSymbol(i) instanceof Call) {
 				final Call call = (Call) mTrace.getSymbol(i); 
 				final String calledMethod = call.getCallStatement().getMethodName();
-				final Set<BoogieVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+				final Set<IProgramVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 				if (mTrace.isPendingCall(i)) {
 					spTerm = mPredicateTransformer.strongestPostconditionCall(
 							predecessor, nf.getLocalVarAssignment(i),
@@ -287,7 +287,7 @@ public class IterativePredicateTransformer {
 				if (mTrace.isPendingCall(i)) {
 					final Call call = (Call) mTrace.getSymbol(i); 
 					final String calledMethod = call.getCallStatement().getMethodName();
-					final Set<BoogieVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+					final Set<IProgramVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 					wpTerm = mPredicateTransformer.weakestPrecondition(
 							successor,
 							nf.getLocalVarAssignment(i), nf.getGlobalVarAssignment(i),
@@ -306,9 +306,9 @@ public class IterativePredicateTransformer {
 				final TransFormula returnTf = nf.getFormulaFromNonCallPos(i);
 				final Return returnCB = (Return) mTrace.getSymbol(i);
 				final String calledMethod = returnCB.getCallStatement().getMethodName();
-				final Set<BoogieVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+				final Set<IProgramVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 
-				final Set<BoogieVar> varsOccurringBetweenCallAndReturn;
+				final Set<IProgramVar> varsOccurringBetweenCallAndReturn;
 				if (mTrace.isPendingReturn(i)) {
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = mFalsePredicate;
@@ -413,16 +413,16 @@ public class IterativePredicateTransformer {
 		 * Returns a set that contains all variables that occur in the summary
 		 * without call and return.
 		 */
-		public Set<BoogieVar> computeVariableInInnerSummary() {
-			return new Set<BoogieVar>() {
+		public Set<IProgramVar> computeVariableInInnerSummary() {
+			return new Set<IProgramVar>() {
 
 				@Override
-				public boolean add(final BoogieVar e) {
+				public boolean add(final IProgramVar e) {
 					throw new UnsupportedOperationException();
 				}
 
 				@Override
-				public boolean addAll(final Collection<? extends BoogieVar> c) {
+				public boolean addAll(final Collection<? extends IProgramVar> c) {
 					throw new UnsupportedOperationException();
 				}
 
@@ -448,7 +448,7 @@ public class IterativePredicateTransformer {
 				}
 
 				@Override
-				public Iterator<BoogieVar> iterator() {
+				public Iterator<IProgramVar> iterator() {
 					throw new UnsupportedOperationException();
 				}
 
@@ -553,7 +553,7 @@ public class IterativePredicateTransformer {
 						// then we handle this case as a pending-call
 						final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-						final Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, summaryAfterPendingCall,
@@ -562,7 +562,7 @@ public class IterativePredicateTransformer {
 				} else {
 					final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-					final Set<BoogieVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,

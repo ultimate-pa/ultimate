@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -60,7 +60,7 @@ public class DebugPredicate implements IPredicate {
 	}
 
 	@Override
-	public Set<BoogieVar> getVars() {
+	public Set<IProgramVar> getVars() {
 		throw new UnsupportedOperationException();
 	}
 	

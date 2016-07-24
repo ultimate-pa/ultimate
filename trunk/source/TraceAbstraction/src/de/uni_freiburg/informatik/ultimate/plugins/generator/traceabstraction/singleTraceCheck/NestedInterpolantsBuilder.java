@@ -39,7 +39,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -118,7 +118,7 @@ public class NestedInterpolantsBuilder {
 
 
 	public NestedInterpolantsBuilder(final SmtManager smtManagerTc, final NestedFormulas<Term, Term> annotatdSsa,
-			final Map<Term, BoogieVar> mconstants2BoogieVar, final PredicateUnifier predicateBuilder,
+			final Map<Term, IProgramVar> mconstants2BoogieVar, final PredicateUnifier predicateBuilder,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
 			final IUltimateServiceProvider services,
 			final TraceChecker traceChecker, final SmtManager smtManagerPredicates, final boolean instantiateArrayExt, 
@@ -138,7 +138,7 @@ public class NestedInterpolantsBuilder {
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
-		for (final Entry<Term, BoogieVar> entry : mconstants2BoogieVar.entrySet()) {
+		for (final Entry<Term, IProgramVar> entry : mconstants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mSmtManagerTc != smtManagerPredicates) {

@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -75,15 +75,15 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	
-	private static boolean varSetDisjoint(Set<BoogieVar> set1, Set<BoogieVar> set2) {
+	private static boolean varSetDisjoint(Set<IProgramVar> set1, Set<IProgramVar> set2) {
 		if (set1.size() < set2.size()) {
-			for (final BoogieVar bv : set1) {
+			for (final IProgramVar bv : set1) {
 				if (set2.contains(bv)) {
 					return false;
 				}
 			}
 		} else {
-			for (final BoogieVar bv : set2) {
+			for (final IProgramVar bv : set2) {
 				if (set1.contains(bv)) {
 					return false;
 				}
@@ -136,7 +136,7 @@ public class SdHoareTripleCheckerHelper {
 	 * @return
 	 */
 	private boolean varsDisjoinedFormInVars(IPredicate state, TransFormula tf) {
-		for (final BoogieVar bv : state.getVars()) {
+		for (final IProgramVar bv : state.getVars()) {
 			if (tf.getInVars().containsKey(bv)) {
 				return false;
 			}
@@ -173,12 +173,12 @@ public class SdHoareTripleCheckerHelper {
 				}
 			}
 		}
-		for (final BoogieVar bv : pre.getVars()) {
+		for (final IProgramVar bv : pre.getVars()) {
 			if (act.getTransformula().getInVars().containsKey(bv)) {
 				return null;
 			}
 		}
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 //			if (pre.getVars().contains(bv)) {
 //				return null;
 //			} else 
@@ -232,7 +232,7 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecInteral(pre, act, post);
 		}
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 			if (pre.getVars().contains(bv)) {
 				continue;
 			} else if (act.getTransformula().getInVars().containsKey(bv)) {
@@ -260,7 +260,7 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	public Validity sdecCall(IPredicate pre, ICallAction act, IPredicate post) {
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				//if oldVar occurs this edge might be inductive since 
 				// old(g)=g is true
@@ -291,7 +291,7 @@ public class SdHoareTripleCheckerHelper {
 		final TransFormula locVarAssignTf = cb.getLocalVarsAssignment();
 		final boolean argumentsRestrictedByPre = 
 				!varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isGlobal()) {
 				continue;
 			} else {
@@ -324,7 +324,7 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecReturn(pre, hier, ret, post);
 		}
-		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
 		/*
 		 * Old Version. Does not work if param set to constant.
@@ -343,17 +343,17 @@ public class SdHoareTripleCheckerHelper {
 		}
 		 * 
 		 */
-		final Set<BoogieVar> parameters = ret.getLocalVarsAssignmentOfCall().getAssignedVars();
+		final Set<IProgramVar> parameters = ret.getLocalVarsAssignmentOfCall().getAssignedVars();
 		if (!varSetDisjoint(parameters, pre.getVars())) {
 			return null;
 		}
 
 		final String proc = ret.getPreceedingProcedure();
-		final Set<BoogieVar> modifiableGlobals = 
+		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre = 
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					if (hier.getVars().contains(bv)) {
@@ -418,14 +418,14 @@ public class SdHoareTripleCheckerHelper {
 		
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
-		final Set<BoogieVar> modifiableGlobals = 
+		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 
 		
-		for (final BoogieVar bv : pre.getVars()) {
+		for (final IProgramVar bv : pre.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
-					if (hier.getVars().contains(((BoogieOldVar) bv).getNonOldVar())) {
+					if (hier.getVars().contains(((IProgramOldVar) bv).getNonOldVar())) {
 						return false;
 					}
 				} else {
@@ -451,7 +451,7 @@ public class SdHoareTripleCheckerHelper {
 				&& !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return false;
 		}
-		for (final BoogieVar bv : pre.getVars()) {
+		for (final IProgramVar bv : pre.getVars()) {
 			if (bv.isGlobal() && !bv.isOldvar()) {
 				if (pre.getVars().contains(bv)) {
 					return false;
@@ -463,13 +463,13 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	private boolean hierPostIndependent(IPredicate hier, IReturnAction ret, IPredicate post) {
-		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
 		final String proc = ret.getPreceedingProcedure();
-		final Set<BoogieVar> modifiableGlobals = 
+		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
-		for (final BoogieVar bv : post.getVars()) {
+		for (final IProgramVar bv : post.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
 				//do nothing
 				continue;
@@ -495,9 +495,9 @@ public class SdHoareTripleCheckerHelper {
 	 * not able to determinie inductivity selfloop. 
 	 */
 	public Validity sdecInternalSelfloop(IPredicate p, IInternalAction act) {
-		final Set<BoogieVar> assignedVars = act.getTransformula().getAssignedVars();
-		final Set<BoogieVar> occVars = p.getVars();
-		for (final BoogieVar occVar : occVars) {
+		final Set<IProgramVar> assignedVars = act.getTransformula().getAssignedVars();
+		final Set<IProgramVar> occVars = p.getVars();
+		for (final IProgramVar occVar : occVars) {
 			if (assignedVars.contains(occVar)) {
 				return null;
 			}
@@ -511,7 +511,7 @@ public class SdHoareTripleCheckerHelper {
 	 * Returns UNSAT if p contains only non-old globals.
 	 */
 	public Validity sdecCallSelfloop(IPredicate p, ICallAction call) {
-		for (final BoogieVar bv : p.getVars()) {
+		for (final IProgramVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return null;
@@ -527,8 +527,8 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public Validity sdecReturnSelfloopPre(IPredicate p, IReturnAction ret) {
-		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
-		for (final BoogieVar bv : p.getVars()) {
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		for (final IProgramVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
 					return null;
@@ -547,12 +547,12 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public Validity sdecReturnSelfloopHier(IPredicate p, IReturnAction ret) {
-		final Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		final String proc = ret.getPreceedingProcedure();
-		final Set<BoogieVar> modifiableGlobals = 
+		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
-		for (final BoogieVar bv : p.getVars()) {
+		for (final IProgramVar bv : p.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
 				return null;
 			}

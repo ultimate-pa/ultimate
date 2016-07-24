@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -14,12 +14,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class PointerExpression {
 	
 	private Term term;
-	private Map<TermVariable, BoogieVar> termMap;
+	private Map<TermVariable, IProgramVar> termMap;
 	private boolean isConstant;
 	
-	public PointerExpression (Term term, Map<TermVariable, BoogieVar> termMap) {
+	public PointerExpression (Term term, Map<TermVariable, IProgramVar> termMap) {
 		this.term = term;
-		this.termMap = new HashMap<TermVariable, BoogieVar>(termMap);
+		this.termMap = new HashMap<TermVariable, IProgramVar>(termMap);
 		isConstant = false;
 	}
 	
@@ -36,10 +36,10 @@ public class PointerExpression {
 		this.term = term;
 	}
 	
-	public Map<TermVariable, BoogieVar> getTermMap() {
+	public Map<TermVariable, IProgramVar> getTermMap() {
 		return termMap;
 	}
-	public void setTermMap(Map<TermVariable, BoogieVar> termMap) {
+	public void setTermMap(Map<TermVariable, IProgramVar> termMap) {
 		this.termMap = termMap;
 	}
 

@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -109,7 +109,7 @@ public class HoareAnnotation extends SPredicate {
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term(
-				"true"), new HashSet<BoogieVar>(), null);
+				"true"), new HashSet<IProgramVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
@@ -217,19 +217,19 @@ public class HoareAnnotation extends SPredicate {
 	 * substitute the oldVar by the corresponding globalVar in term and remove
 	 * the oldvar from vars.
 	 */
-	public Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<BoogieVar> vars, final Term term) {
-		final Set<BoogieVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
+	public Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars, final Term term) {
+		final Set<IProgramVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
 				.getAssignedVars();
-		final List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
+		final List<IProgramVar> replacedOldVars = new ArrayList<IProgramVar>();
 
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar bv : vars) {
-			if (bv instanceof BoogieOldVar) {
+		for (final IProgramVar bv : vars) {
+			if (bv instanceof IProgramOldVar) {
 				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
-					replacers.add((((BoogieOldVar) bv).getNonOldVar()).getTermVariable());
+					replacers.add((((IProgramOldVar) bv).getNonOldVar()).getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
@@ -240,9 +240,9 @@ public class HoareAnnotation extends SPredicate {
 		Term result = mScript.let(substVars, substValues, term);
 		result = (new FormulaUnLet()).unlet(result);
 
-		for (final BoogieVar bv : replacedOldVars) {
+		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
-			vars.add(((BoogieOldVar) bv).getNonOldVar());
+			vars.add(((IProgramOldVar) bv).getNonOldVar());
 		}
 		return result;
 	}

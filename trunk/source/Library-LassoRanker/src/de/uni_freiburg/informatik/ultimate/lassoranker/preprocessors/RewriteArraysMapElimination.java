@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminator;
@@ -67,7 +67,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	private final TransFormula mOriginalLoop;
 
-	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 
 	private final ReplacementVarFactory mReplacementVarFactory;
 
@@ -78,7 +78,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt,
 			final ReplacementVarFactory replacementVarFactory, final TransFormula originalStem, final TransFormula originalLoop,
-			final Set<BoogieVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
+			final Set<IProgramVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mBoogie2SMT = boogie2smt;

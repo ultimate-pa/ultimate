@@ -38,7 +38,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -221,7 +221,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				+ mTrace.length() + " unsat-core size " + unsatCore.size();
 
 		
-		final Set<BoogieVar>[] liveVariables;
+		final Set<IProgramVar>[] liveVariables;
 		if (museLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
 			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
@@ -460,9 +460,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	public class LiveVariablesPostprocessor_Forward implements PredicatePostprocessor {
 
-		private final Set<BoogieVar>[] mRelevantVars;
+		private final Set<IProgramVar>[] mRelevantVars;
 		
-		public LiveVariablesPostprocessor_Forward(final Set<BoogieVar>[] relevantVars) {
+		public LiveVariablesPostprocessor_Forward(final Set<IProgramVar>[] relevantVars) {
 			mRelevantVars = relevantVars;
 		}
 
@@ -489,9 +489,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	public class LiveVariablesPostprocessor_Backward implements PredicatePostprocessor {
 
-		private final Set<BoogieVar>[] mRelevantVars;
+		private final Set<IProgramVar>[] mRelevantVars;
 		
-		public LiveVariablesPostprocessor_Backward(final Set<BoogieVar>[] relevantVars) {
+		public LiveVariablesPostprocessor_Backward(final Set<IProgramVar>[] relevantVars) {
 			super();
 			mRelevantVars = relevantVars;
 		}
@@ -531,9 +531,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * 
 	 * @see LiveVariables
 	 */
-	private Set<TermVariable> computeIrrelevantVariables(final Set<BoogieVar> relevantVars, final IPredicate p) {
+	private Set<TermVariable> computeIrrelevantVariables(final Set<IProgramVar> relevantVars, final IPredicate p) {
 		final Set<TermVariable> result = new HashSet<TermVariable>();
-		for (final BoogieVar bv : p.getVars()) {
+		for (final IProgramVar bv : p.getVars()) {
 			if (!relevantVars.contains(bv)) {
 				result.add(bv.getTermVariable());
 			}

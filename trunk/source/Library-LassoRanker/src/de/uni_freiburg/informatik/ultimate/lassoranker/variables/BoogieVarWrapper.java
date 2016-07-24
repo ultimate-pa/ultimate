@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class BoogieVarWrapper extends RankVar {
 	private static final long serialVersionUID = -452101904147428474L;
 	
-	private final BoogieVar mBoogieVar;
+	private final IProgramVar mBoogieVar;
 	
-	public BoogieVarWrapper(BoogieVar boogieVar) {
+	public BoogieVarWrapper(IProgramVar boogieVar) {
 		mBoogieVar = boogieVar;
 	}
 	
@@ -64,7 +64,7 @@ public class BoogieVarWrapper extends RankVar {
 		return mBoogieVar.hashCode();
 	}
 	
-	public BoogieVar getBoogieVar() {
+	public IProgramVar getBoogieVar() {
 		return mBoogieVar;
 	}
 }

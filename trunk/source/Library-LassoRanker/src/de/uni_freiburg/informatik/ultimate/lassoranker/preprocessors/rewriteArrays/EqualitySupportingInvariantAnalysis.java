@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * at the program point between stem and loop.
  * 
  * Note that the free variables that occur in the terms must be the default
- * TermVariables of {@link BoogieVar}s. This means that you cannot directly
+ * TermVariables of {@link IProgramVar}s. This means that you cannot directly
  * (without an additional substitution) use terms of {@link TransFormulas} 
  * (where we have primed and unprimed versions of these TermVariables).
  * 
@@ -87,8 +87,8 @@ public class EqualitySupportingInvariantAnalysis {
 	
 	private final TransFormula mOriginalStem;
 	private final TransFormula mOriginalLoop;
-	private final Set<BoogieVar> mModifiableGlobalsAtStart;
-	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramVar> mModifiableGlobalsAtStart;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 	
 	/**
 	 * 
@@ -105,7 +105,7 @@ public class EqualitySupportingInvariantAnalysis {
 			final Boogie2SmtSymbolTable symbolTable, 
 			final Script script, 
 			final TransFormula originalStem,
-			final TransFormula originalLoop, final Set<BoogieVar> modifiableGlobalsAtHonda) {
+			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {
 		super();
 		mSymbolTable = symbolTable;
 		mScript = script;
@@ -157,7 +157,7 @@ public class EqualitySupportingInvariantAnalysis {
 		}
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
 		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
-		final Set<BoogieVar> emptyVarSet = Collections.emptySet();
+		final Set<IProgramVar> emptyVarSet = Collections.emptySet();
 		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.term("true"), emptyVarSet, mScript.term("true"));
 		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript, 
 				truePredicate, invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);

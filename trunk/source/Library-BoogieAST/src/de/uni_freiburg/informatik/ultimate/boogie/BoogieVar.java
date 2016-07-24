@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class BoogieVar implements Serializable, IBoogieVar {
+public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	private final String mIdentifier;
@@ -81,6 +81,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	/**
 	 * Returns the procedure in which this variable was declared. If this a global variable, then null is returned.
 	 */
+	@Override
 	public abstract String getProcedure();
 
 	@Override
@@ -88,10 +89,13 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 		return mIType;
 	}
 
+	@Override
 	public abstract boolean isGlobal();
 
+	@Override
 	public abstract boolean isOldvar();
 
+	@Override
 	public TermVariable getTermVariable() {
 		assert mTermVariable != null;
 		return mTermVariable;
@@ -102,6 +106,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 		return mDefaultConstant;
 	}
 
+	@Override
 	public ApplicationTerm getPrimedConstant() {
 		return mPrimedConstant;
 	}
@@ -110,6 +115,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	 * Returns an identifier that is globally unique. If this is global non-old we return the identifier, if this is
 	 * global oldvar we add old(.), if this is local we add the procedure name as prefix.
 	 */
+	@Override
 	public String getGloballyUniqueId() {
 		if (isGlobal()) {
 			if (isOldvar()) {
@@ -138,7 +144,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}

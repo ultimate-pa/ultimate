@@ -41,7 +41,7 @@ import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -619,8 +619,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * @return SMT term variable corresponding to the given variable name
 	 */
 	private Term getTermVar(final IBoogieVar var) {
-		if (var instanceof BoogieVar) {
-			return ((BoogieVar) var).getTermVariable();
+		if (var instanceof IProgramVar) {
+			return ((IProgramVar) var).getTermVariable();
 		} else if (var instanceof BoogieConst) {
 			return ((BoogieConst) var).getDefaultConstant();
 		}

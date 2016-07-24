@@ -38,7 +38,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -362,16 +362,16 @@ public final class AbstractInterpreter {
 	}
 
 	private static void printVPDomainDebug(final ILogger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
-		for (final Entry<BoogieVar, Set<PointerExpression>> bv : arrayIndexCollector.getPointerMap().entrySet()) {
+		for (final Entry<IProgramVar, Set<PointerExpression>> bv : arrayIndexCollector.getPointerMap().entrySet()) {
 			logger.debug("PointerMap Key: " + bv.getKey());
 			for (final PointerExpression val : bv.getValue()) {
 				logger.debug("PointerMap Value: " + val.toString());
 			}
 		}
 		logger.debug("============");
-		for (final Entry<BoogieVar, Set<BoogieVar>> bv : arrayIndexCollector.getIndexToArraysMap().entrySet()) {
+		for (final Entry<IProgramVar, Set<IProgramVar>> bv : arrayIndexCollector.getIndexToArraysMap().entrySet()) {
 			logger.debug("IndexToArraysMap Key: " + bv.getKey());
-			for (final BoogieVar val : bv.getValue()) {
+			for (final IProgramVar val : bv.getValue()) {
 				logger.debug("IndexToArraysMap Value: " + val);
 			}
 		}

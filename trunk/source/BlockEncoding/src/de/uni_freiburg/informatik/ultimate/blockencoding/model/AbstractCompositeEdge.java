@@ -37,7 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -76,7 +76,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 
 	private HashSet<IMinimizedEdge> containedEdges;
 
-	private HashSet<BoogieVar> usedVariables;
+	private HashSet<IProgramVar> usedVariables;
 
 	/**
 	 * Constructs a conjunction which is build up on left and right. <br>
@@ -103,7 +103,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 			mContainedDisjunctions += ((AbstractCompositeEdge) right)
 					.getContainedDisjunctions();
 		}
-		usedVariables = new HashSet<BoogieVar>();
+		usedVariables = new HashSet<IProgramVar>();
 		usedVariables.addAll(left.getDifferentVariables());
 		usedVariables.addAll(right.getDifferentVariables());
 		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(usedVariables
@@ -333,7 +333,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 * IMinimizedEdge#getDifferentVariables()
 	 */
 	@Override
-	public Set<BoogieVar> getDifferentVariables() {
+	public Set<IProgramVar> getDifferentVariables() {
 		return usedVariables;
 	}
 	

@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -80,8 +80,8 @@ public class BoogieUtil {
 	}
 
 	public static boolean isGlobal(IBoogieVar ibv) {
-		if (ibv instanceof BoogieVar) {
-			return ((BoogieVar) ibv).isGlobal();
+		if (ibv instanceof IProgramVar) {
+			return ((IProgramVar) ibv).isGlobal();
 		} else if (ibv instanceof BoogieConst) {
 			return true;
 		} else {

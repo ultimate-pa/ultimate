@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class BuchiPredicate extends BasicPredicate {
@@ -37,7 +37,7 @@ public class BuchiPredicate extends BasicPredicate {
 	private final Set<IPredicate> mConjuncts;
 
 	public BuchiPredicate(int serialNumber, String[] procedures, Term term,
-			Set<BoogieVar> vars, Term closedFormula, Set<IPredicate> conjuncts) {
+			Set<IProgramVar> vars, Term closedFormula, Set<IPredicate> conjuncts) {
 		super(serialNumber, procedures, term, vars, closedFormula);
 		mConjuncts = conjuncts;
 

@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -335,9 +335,9 @@ public class PredicateUnifier {
 	 * Returns true iff each free variables corresponds to a BoogieVar in vars.
 	 * Throws an Exception otherwise.
 	 */
-	private boolean varsIsSupersetOfFreeTermVariables(final Term term, final Set<BoogieVar> vars) {
+	private boolean varsIsSupersetOfFreeTermVariables(final Term term, final Set<IProgramVar> vars) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = mSymbolTable.getBoogieVar(tv);
+			final IProgramVar bv = mSymbolTable.getBoogieVar(tv);
 			if (bv == null) {
 				throw new AssertionError("Variable " + tv + " has no corresponding BoogieVar, hence seems "
 						+ "to be some auxiliary variable and may not "
@@ -582,7 +582,7 @@ public class PredicateUnifier {
 		 * be provided as an input by the Maps impliedPredicates/expliedPredicates
 		 * both maps will be modified by (new predicates added) by this method. 
 		 */
-		private PredicateComparison(final Term term, final Set<BoogieVar> vars, 
+		private PredicateComparison(final Term term, final Set<IProgramVar> vars, 
 				final HashMap<IPredicate, Validity> impliedPredicates, 
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			if (impliedPredicates == null) {

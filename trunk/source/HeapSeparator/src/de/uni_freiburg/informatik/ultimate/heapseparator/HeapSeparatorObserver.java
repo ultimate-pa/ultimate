@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -53,7 +53,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> mOldArrayToPointerToNewArray;
+	HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> mOldArrayToPointerToNewArray;
 	
 	private Script mScript;
 
@@ -103,37 +103,37 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	
 	void testSetup(RootAnnot ra) {
 		
-		final BoogieVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 		
-		final BoogieVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"p", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		final BoogieVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"q", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		final BoogieVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"#i", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		final BoogieVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"#j", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 		
-		final BoogieVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m1", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
 
-		final BoogieVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+		final IProgramVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m2", 
 				new DeclarationInformation(StorageClass.LOCAL, "p"), 
 				false);
@@ -158,7 +158,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 //				);
 	
 		mOldArrayToPointerToNewArray = new HashMap<>();
-		mOldArrayToPointerToNewArray.put(m, new HashMap<BoogieVar, BoogieVar>());
+		mOldArrayToPointerToNewArray.put(m, new HashMap<IProgramVar, IProgramVar>());
 		mOldArrayToPointerToNewArray.get(m).put(p, m1);
 		mOldArrayToPointerToNewArray.get(m).put(q, m2);
 		

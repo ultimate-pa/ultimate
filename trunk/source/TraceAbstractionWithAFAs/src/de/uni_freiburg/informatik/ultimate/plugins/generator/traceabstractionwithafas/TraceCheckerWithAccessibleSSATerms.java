@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -73,7 +73,7 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 		return mNsb.getSsa().getFormulaFromNonCallPos(position);
 	}
 	
-	public Map<Term, BoogieVar> getConstantsToBoogieVar() {
+	public Map<Term, IProgramVar> getConstantsToBoogieVar() {
 		return mNsb.getConstants2BoogieVar();
 	}
 }

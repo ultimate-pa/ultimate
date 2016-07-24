@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
+public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProgramOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 
-	private BoogieNonOldVar mNonOldVar;
+	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
 
 	public BoogieOldVar(final String identifier, final IType iType, final boolean oldvar, final TermVariable tv,
@@ -57,11 +57,15 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 		return true;
 	}
 
-	public BoogieNonOldVar getNonOldVar() {
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar_Backupt#getNonOldVar()
+	 */
+	@Override
+	public IProgramNonOldVar getNonOldVar() {
 		return mNonOldVar;
 	}
 
-	public void setNonOldVar(BoogieNonOldVar nonOldVar) {
+	public void setNonOldVar(final IProgramNonOldVar nonOldVar) {
 		mNonOldVar = nonOldVar;
 	}
 
@@ -80,7 +84,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -90,7 +94,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieVar other = (BoogieVar) obj;
+		final IProgramVar other = (IProgramVar) obj;
 		if (getIdentifier() == null) {
 			if (other.getIdentifier() != null) {
 				return false;

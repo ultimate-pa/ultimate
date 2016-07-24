@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -428,7 +428,7 @@ public class Term2Expression implements Serializable {
 			mfreeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			final BoogieVar bv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			final IProgramVar bv = mBoogie2SmtSymbolTable.getBoogieVar(term);
 			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(bv).getLocation();
 			final DeclarationInformation declInfo = 
 					mBoogie2SmtSymbolTable.getDeclarationInformation(bv);

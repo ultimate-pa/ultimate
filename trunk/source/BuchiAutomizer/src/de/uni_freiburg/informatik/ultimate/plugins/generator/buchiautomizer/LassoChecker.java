@@ -41,7 +41,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -680,7 +680,7 @@ public class LassoChecker {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 		
-		final Set<BoogieVar> modifiableGlobalsAtHonda = mModifiableGlobalVariableManager.getModifiedBoogieVars(
+		final Set<IProgramVar> modifiableGlobalsAtHonda = mModifiableGlobalVariableManager.getModifiedBoogieVars(
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
@@ -807,7 +807,7 @@ public class LassoChecker {
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
 			final List<RankingTemplate> rankingFunctionTemplates, final TransFormula stemTF, final TransFormula loopTF) throws AssertionError, IOException {
 		final String hondaProcedure = ((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
-		final Set<BoogieVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
+		final Set<IProgramVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
 		
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
@@ -877,8 +877,8 @@ public class LassoChecker {
 
 	private TransFormula getDummyTF() {
 		final Term term = mSmtManager.getScript().term("true");
-		final Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
-		final Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<IProgramVar, TermVariable>();
 		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
 		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
 		final Infeasibility infeasibility = Infeasibility.UNPROVEABLE;

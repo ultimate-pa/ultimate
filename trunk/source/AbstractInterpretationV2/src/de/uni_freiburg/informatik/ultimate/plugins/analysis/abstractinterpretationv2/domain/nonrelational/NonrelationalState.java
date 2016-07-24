@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -768,8 +768,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	private Term getTermVar(final IBoogieVar var) {
 		assert var != null : "Cannot get TermVariable from null";
-		if (var instanceof BoogieVar) {
-			final TermVariable termvar = ((BoogieVar) var).getTermVariable();
+		if (var instanceof IProgramVar) {
+			final TermVariable termvar = ((IProgramVar) var).getTermVariable();
 			assert termvar != null : "There seems to be no termvar for this BoogieVar";
 			return termvar;
 		} else if (var instanceof BoogieConst) {

@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -247,7 +247,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				} else {
 					nameEndProcedure = lastUnmatchedCall.getCallStatement().getMethodName();
 				}
-				final Set<BoogieVar> modifiableGlobalsOfEndProcedure =
+				final Set<IProgramVar> modifiableGlobalsOfEndProcedure =
 						modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
 						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,

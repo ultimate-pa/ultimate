@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
@@ -92,7 +92,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final TransFormula mOriginalStem;
 	private final TransFormula mOriginalLoop;
 	private final Set<Term> mArrayIndexSupportingInvariants;
-	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 	
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
@@ -102,7 +102,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
 	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices,
-			final TransFormula originalStem, final TransFormula originalLoop, final Set<BoogieVar> modifiableGlobalsAtHonda,
+			final TransFormula originalStem, final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants, 
 			final Boogie2SMT boogie2smt, final ReplacementVarFactory ReplacementVarFactory, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {

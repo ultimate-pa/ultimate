@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -173,7 +173,7 @@ public class Boogie2SMT {
 	 * Construct auxiliary variables only if the assertion stack of the script is at the lowest level. Auxiliary
 	 * variables are not supported in any backtranslation.
 	 */
-	public BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
+	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
 			VarList varList) {
 
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);

@@ -30,9 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -43,17 +43,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 
 public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
-	private final BoogieNonOldVar mUnseeded;
-	private final BoogieNonOldVar[] mOldRank;
-	private final BoogieOldVar mUnseededOldVar;
-	private final BoogieOldVar[] mOldRankOldVar;
+	private final IProgramNonOldVar mUnseeded;
+	private final IProgramNonOldVar[] mOldRank;
+	private final IProgramOldVar mUnseededOldVar;
+	private final IProgramOldVar[] mOldRankOldVar;
 	private final Boogie2SMT mBoogie2smt;
 	private final Script mScript;
 	
 	private final Map<String, TransFormula> mProc2OldVarsAssignment;
 	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
 
-	public BuchiModGlobalVarManager(BoogieNonOldVar unseeded, BoogieNonOldVar[] oldRank,
+	public BuchiModGlobalVarManager(IProgramNonOldVar unseeded, IProgramNonOldVar[] oldRank,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
 			Boogie2SMT boogie2Smt) {
 		super(modifiableGlobalVariableManager);
@@ -62,7 +62,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		mUnseededOldVar = unseeded.getOldVar();
 		assert mUnseededOldVar != null : "oldVar missing";
 		mOldRank = oldRank;
-		mOldRankOldVar = new BoogieOldVar[oldRank.length];
+		mOldRankOldVar = new IProgramOldVar[oldRank.length];
 		for (int i=0; i<oldRank.length; i++) {
 			mOldRankOldVar[i] = oldRank[i].getOldVar();
 			assert mOldRankOldVar[i] != null : "oldVar missing";
@@ -100,10 +100,10 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		final TransFormula without = super.getOldVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		final Map<BoogieVar, TermVariable> outVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
+		final Map<IProgramVar, TermVariable> inVars = 
+				new HashMap<IProgramVar, TermVariable>(without.getInVars());
+		final Map<IProgramVar, TermVariable> outVars = 
+				new HashMap<IProgramVar, TermVariable>(without.getOutVars());
 		final Map<TermVariable, Term> auxVars = without.getAuxVars();
 		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
@@ -131,10 +131,10 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		final TransFormula without = super.getGlobalVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		final Map<BoogieVar, TermVariable> outVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
+		final Map<IProgramVar, TermVariable> inVars = 
+				new HashMap<IProgramVar, TermVariable>(without.getInVars());
+		final Map<IProgramVar, TermVariable> outVars = 
+				new HashMap<IProgramVar, TermVariable>(without.getOutVars());
 		final Map<TermVariable, Term> auxVars = without.getAuxVars();
 		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
 		assert branchEncoders.isEmpty();
@@ -159,15 +159,15 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 
 
 	
-	public Term oldVarEquality(BoogieVar var, BoogieVar oldVar) {
+	public Term oldVarEquality(IProgramVar var, IProgramVar oldVar) {
 		return mScript.term("=", var.getTermVariable(), oldVar.getTermVariable());
 	}
 
 
 	@Override
-	public Map<String, BoogieNonOldVar> getGlobals() {
-		final HashMap<String, BoogieNonOldVar> result = 
-				new HashMap<String, BoogieNonOldVar>(super.getGlobals());
+	public Map<String, IProgramNonOldVar> getGlobals() {
+		final HashMap<String, IProgramNonOldVar> result = 
+				new HashMap<String, IProgramNonOldVar>(super.getGlobals());
 		for (int i=0; i<mOldRank.length; i++) {
 			result.put(mOldRank[i].getIdentifier(),mOldRank[i]);
 		}

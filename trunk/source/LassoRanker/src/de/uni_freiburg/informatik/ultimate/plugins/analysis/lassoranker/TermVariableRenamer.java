@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -64,19 +64,19 @@ public class TermVariableRenamer {
 	 */
 	public TransFormula renameVars(TransFormula transFormula, String prefix) {
 		Term formula = transFormula.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
-		final Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
+		final Map<IProgramVar, TermVariable> inVars = transFormula.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = transFormula.getOutVars();
 		
-		final Map<BoogieVar, TermVariable> newInVars = 
-				new LinkedHashMap<BoogieVar, TermVariable>();
-		final Map<BoogieVar, TermVariable> newOutVars = 
-				new LinkedHashMap<BoogieVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> newInVars = 
+				new LinkedHashMap<IProgramVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> newOutVars = 
+				new LinkedHashMap<IProgramVar, TermVariable>();
 		
-		final Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
-		final Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
-		final Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
+		final Collection<IProgramVar> hasInOnlyVar = new ArrayList<IProgramVar>();
+		final Collection<IProgramVar> hasOutOnlyVar = new ArrayList<IProgramVar>();
+		final Collection<IProgramVar> commonInOutVar = new ArrayList<IProgramVar>();
 		
-		for (final BoogieVar var : inVars.keySet()) {
+		for (final IProgramVar var : inVars.keySet()) {
 			final TermVariable inVar = inVars.get(var);
 			final TermVariable outVar = outVars.get(var);
 			if (inVar == outVar) {
@@ -86,7 +86,7 @@ public class TermVariableRenamer {
 				hasInOnlyVar.add(var);
 			}
 		}
-		for (final BoogieVar var : outVars.keySet()) {
+		for (final IProgramVar var : outVars.keySet()) {
 			final TermVariable outVar = outVars.get(var);
 			final TermVariable inVar = inVars.get(var);
 			if (inVar != outVar) {
@@ -114,15 +114,15 @@ public class TermVariableRenamer {
 	 * <li> add tv_new to allVars
 	 * </ul>
 	 */
-	private Term renameVars(Collection<BoogieVar> boogieVars,
+	private Term renameVars(Collection<IProgramVar> boogieVars,
 						Term formula,
-						Map<BoogieVar, TermVariable> variableMapping, 
-						Map<BoogieVar, TermVariable> newVariableMapping, 
+						Map<IProgramVar, TermVariable> variableMapping, 
+						Map<IProgramVar, TermVariable> newVariableMapping, 
 						String prefix) {
 		final TermVariable[] vars = new TermVariable[boogieVars.size()];
 		final TermVariable[] newVars= new TermVariable[boogieVars.size()];
 		int i=0;
-		for (final BoogieVar var : boogieVars) {
+		for (final IProgramVar var : boogieVars) {
 			vars[i] = variableMapping.get(var);
 			newVars[i] = getNewTermVariable(var, vars[i], prefix);
 			newVariableMapping.put(var,newVars[i]);
@@ -138,7 +138,7 @@ public class TermVariableRenamer {
 	}
 	
 	
-	private TermVariable getNewTermVariable(BoogieVar var, TermVariable tv, String prefix) {
+	private TermVariable getNewTermVariable(IProgramVar var, TermVariable tv, String prefix) {
 		TermVariable result = null;
 		try {
 			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());

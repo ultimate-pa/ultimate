@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -78,7 +78,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 		mScript = script;
 	}
 	
-	public TermVariable constructFreshTermVariable(BoogieVar bv) {
+	public TermVariable constructFreshTermVariable(IProgramVar bv) {
 		final String basename = bv.toString();
 		final Integer newIndex = mTvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();
@@ -153,7 +153,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 	 * If you use this method make sure that you do not call it twice for the
 	 * same combination of bv and suffix.
 	 */
-	public TermVariable constructTermVariableWithSuffix(BoogieVar bv, String suffix) {
+	public TermVariable constructTermVariableWithSuffix(IProgramVar bv, String suffix) {
 		final String basename = bv.toString() + SmtUtils.removeSmtQuoteCharacters(suffix);
 		final Integer newIndex = mTvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();

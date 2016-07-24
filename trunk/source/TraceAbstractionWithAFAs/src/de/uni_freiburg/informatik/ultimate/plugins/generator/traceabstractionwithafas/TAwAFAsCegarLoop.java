@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -124,19 +124,19 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			 */
 			final ArrayList<Term> termsFromDAG = new ArrayList<>();
 			final ArrayList<Integer> startsOfSubtreesFromDAG = new ArrayList<>();
-			final HashMap<BoogieVar, Term> varToSsaVar = new HashMap<>();
+			final HashMap<IProgramVar, Term> varToSsaVar = new HashMap<>();
 
-			for (final BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
+			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
 				if (varToSsaVar.get(bv) == null) {
 					varToSsaVar.put(bv, buildVersion(bv));
 				}
 			}
-			for (final BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
+			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
 				if (varToSsaVar.get(bv) == null) {
 					varToSsaVar.put(bv, buildVersion(bv));
 				}
 			}		
-			final HashMap<Term, BoogieVar> constantsToBoogieVar = new HashMap<>();
+			final HashMap<Term, IProgramVar> constantsToBoogieVar = new HashMap<>();
 
 			mSmtManager.getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
 
@@ -229,11 +229,11 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * to have unique variables)
 	 */
 	private void getTermsFromDAG(final DataflowDAG<TraceCodeBlock> dag, final ArrayList<Term> terms,
-			final ArrayList<Integer> startsOfSubtrees, final int currentSubtree, final HashMap<BoogieVar,Term> varToSsaVar,
-			final HashMap<Term,BoogieVar> constantsToBoogieVar) {
+			final ArrayList<Integer> startsOfSubtrees, final int currentSubtree, final HashMap<IProgramVar,Term> varToSsaVar,
+			final HashMap<Term,IProgramVar> constantsToBoogieVar) {
 		
-		final HashMap<BoogieVar,Term> varToSsaVarNew = new HashMap<>(varToSsaVar);//copy (nice would be immutable maps)
-		BoogieVar writtenVar = null;
+		final HashMap<IProgramVar,Term> varToSsaVarNew = new HashMap<>(varToSsaVar);//copy (nice would be immutable maps)
+		IProgramVar writtenVar = null;
 		Term writtenVarSsa = null;
 
 		/*
@@ -246,10 +246,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				? dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() 
 						: null;
 		writtenVarSsa = varToSsaVar.get(writtenVar);
-		for (final BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
+		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
 			varToSsaVarNew.put(bv, buildVersion(bv));
 		}
-		for (final BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
+		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
 			varToSsaVarNew.put(bv, buildVersion(bv));
 		}
 
@@ -278,20 +278,20 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * the ssa versions for all others are stored in varToSsaVarNew
 	 */
 	private Term computeSsaTerm(final TraceCodeBlock nodeLabel,
-			final BoogieVar writtenVar, final Term writtenVarSsa,
-			final HashMap<BoogieVar,Term> varToSsaVarNew, 
-			final HashMap<Term,BoogieVar> constantsToBoogieVar) {
+			final IProgramVar writtenVar, final Term writtenVarSsa,
+			final HashMap<IProgramVar,Term> varToSsaVarNew, 
+			final HashMap<Term,IProgramVar> constantsToBoogieVar) {
 		final TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
 
-		for (final Entry<BoogieVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
             final Term t = varToSsaVarNew.get(entry.getKey());
             assert t != null;
 			substitutionMapping.put(entry.getValue(), t);
 			constantsToBoogieVar.put(t, entry.getKey());
 		}
-		for (final Entry<BoogieVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
 			Term t = null;
 			if (writtenVar != null  
 					&& entry.getKey().equals(writtenVar)) { 
@@ -308,7 +308,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		 * the writtenVar (according to the DAG).
 		 * (otherwise we get a statement formula that is equivalent to false)
 		 */
-		for (final BoogieVar av : transFormula.getAssignedVars()) {
+		for (final IProgramVar av : transFormula.getAssignedVars()) {
 			if (!av.equals(writtenVar)) {
 				final ApplicationTerm dummyTerm = (ApplicationTerm) buildVersion(av);
 				substitutionMapping.put(transFormula.getOutVars().get(av), dummyTerm);
@@ -325,7 +325,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * Build constant bv_index that represents BoogieVar bv that obtains a new
 	 * value at position index.
 	 */
-	private Term buildVersion(final BoogieVar bv) {
+	private Term buildVersion(final IProgramVar bv) {
 		final int index = ssaIndex++;
 		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mSmtManager.getScript());
 		return constant;
@@ -365,14 +365,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * @param constants2BoogieVar
 	 * @return
 	 */
-	private IPredicate[] interpolantsToPredicates(final Term[] interpolants, final Map<Term, BoogieVar> constants2BoogieVar) {
+	private IPredicate[] interpolantsToPredicates(final Term[] interpolants, final Map<Term, IProgramVar> constants2BoogieVar) {
 		final IPredicate[] result = new IPredicate[interpolants.length];
 		final PredicateConstructionVisitor msfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 
 		SafeSubstitution const2RepTvSubst;
 
 		final HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
-		for (final Entry<Term, BoogieVar> entry : constants2BoogieVar.entrySet()) {
+		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 

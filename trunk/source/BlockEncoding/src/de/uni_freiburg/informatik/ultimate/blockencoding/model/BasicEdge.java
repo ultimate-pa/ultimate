@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -72,7 +72,7 @@ public class BasicEdge extends
 	/**
 	 * 
 	 */
-	private HashSet<BoogieVar> usedVariables;
+	private HashSet<IProgramVar> usedVariables;
 
 	/**
 	 * @param originalEdge
@@ -85,7 +85,7 @@ public class BasicEdge extends
 		this.originalEdge = originalEdge;
 		if (originalEdge.getTransitionFormula() != null
 				&& !(originalEdge instanceof Summary)) {
-			usedVariables = new HashSet<BoogieVar>();
+			usedVariables = new HashSet<IProgramVar>();
 			usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getAssignedVars());
 			usedVariables.addAll(originalEdge.getTransitionFormula()
@@ -93,7 +93,7 @@ public class BasicEdge extends
 			usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getOutVars().keySet());
 		} else {
-			usedVariables = new HashSet<BoogieVar>();
+			usedVariables = new HashSet<IProgramVar>();
 		}
 		rating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfBasicEdges();
@@ -142,8 +142,8 @@ public class BasicEdge extends
 	 *            a Set of BoogieVars
 	 * @return true if there is an OldVar
 	 */
-	private boolean checkBoogieVarSetForOldVar(Set<BoogieVar> vars) {
-		for (final BoogieVar boogieVar : vars) {
+	private boolean checkBoogieVarSetForOldVar(Set<IProgramVar> vars) {
+		for (final IProgramVar boogieVar : vars) {
 			if (boogieVar.isOldvar()) {
 				return true;
 			}
@@ -157,7 +157,7 @@ public class BasicEdge extends
 	}
 
 	@Override
-	public Set<BoogieVar> getDifferentVariables() {
+	public Set<IProgramVar> getDifferentVariables() {
 		return usedVariables;
 	}
 

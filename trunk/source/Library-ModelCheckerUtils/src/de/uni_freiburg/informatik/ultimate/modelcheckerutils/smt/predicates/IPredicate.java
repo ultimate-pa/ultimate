@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -50,6 +50,6 @@ public interface IPredicate  {
 	 * Returns a superset of the all BoogieVars whose corresponding
 	 * TermVariable occurs in the formula of this IPredicate.
 	 */
-	public Set<BoogieVar> getVars();
+	public Set<IProgramVar> getVars();
 	
 }

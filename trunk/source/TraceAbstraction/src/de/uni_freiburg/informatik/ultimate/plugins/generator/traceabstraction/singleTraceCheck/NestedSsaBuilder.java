@@ -34,9 +34,9 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -103,31 +103,31 @@ public class NestedSsaBuilder {
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the
 	 * moment.
 	 */
-	final private Map<BoogieVar, Term> currentGlobalVarVersion = new HashMap<BoogieVar, Term>();
+	final private Map<IProgramVar, Term> currentGlobalVarVersion = new HashMap<IProgramVar, Term>();
 	/**
 	 * Map local or oldVar BoogieVar bv to the constant bv_j that represents bv
 	 * at the moment.
 	 */
-	protected Map<BoogieVar, Term> currentLocalAndOldVarVersion;
+	protected Map<IProgramVar, Term> currentLocalAndOldVarVersion;
 
 	/**
 	 * Stores current versions for local or oldVar that are not visible at the
 	 * moment.
 	 */
-	protected final Stack<Map<BoogieVar, Term>> currentVersionStack = new Stack<Map<BoogieVar, Term>>();
+	protected final Stack<Map<IProgramVar, Term>> currentVersionStack = new Stack<Map<IProgramVar, Term>>();
 
 	private Integer startOfCallingContext;
 	private final Stack<Integer> startOfCallingContextStack = new Stack<Integer>();
 
-	private final Map<BoogieVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<BoogieVar, TreeMap<Integer, Term>>();
+	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<IProgramVar, TreeMap<Integer, Term>>();
 
-	public Map<BoogieVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
+	public Map<IProgramVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
 		return mIndexedVarRepresentative;
 	}
 
-	protected final Map<Term, BoogieVar> mConstants2BoogieVar = new HashMap<Term, BoogieVar>();
+	protected final Map<Term, IProgramVar> mConstants2BoogieVar = new HashMap<Term, IProgramVar>();
 
-	public Map<Term, BoogieVar> getConstants2BoogieVar() {
+	public Map<Term, IProgramVar> getConstants2BoogieVar() {
 		return mConstants2BoogieVar;
 	}
 
@@ -197,7 +197,7 @@ public class NestedSsaBuilder {
 		final int numberPendingContexts = pendingReturns.length;
 
 		startOfCallingContext = -1 - numberPendingContexts;
-		currentLocalAndOldVarVersion = new HashMap<BoogieVar, Term>();
+		currentLocalAndOldVarVersion = new HashMap<IProgramVar, Term>();
 
 		for (int i = numberPendingContexts - 1; i >= 0; i--) {
 			final int pendingReturnPosition = pendingReturns[i];
@@ -232,7 +232,7 @@ public class NestedSsaBuilder {
 			startOfCallingContext++;
 			mcurrentProcedure = calledProcedure;
 			currentVersionStack.push(currentLocalAndOldVarVersion);
-			currentLocalAndOldVarVersion = new HashMap<BoogieVar, Term>();
+			currentLocalAndOldVarVersion = new HashMap<IProgramVar, Term>();
 
 			/*
 			 * Parameters and oldVars of procedure form that the pending return
@@ -305,7 +305,7 @@ public class NestedSsaBuilder {
 				startOfCallingContext = i;
 
 				currentVersionStack.push(currentLocalAndOldVarVersion);
-				currentLocalAndOldVarVersion = new HashMap<BoogieVar, Term>();
+				currentLocalAndOldVarVersion = new HashMap<IProgramVar, Term>();
 
 				initOldVarsVV.versionAssignedVars(i);
 				mSsa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
@@ -356,8 +356,8 @@ public class NestedSsaBuilder {
 	 * procedure.
 	 */
 	protected void reVersionModifiableGlobals() {
-		final Set<BoogieVar> modifiable = mModGlobVarManager.getGlobalVarsAssignment(mcurrentProcedure).getAssignedVars();
-		for (final BoogieVar bv : modifiable) {
+		final Set<IProgramVar> modifiable = mModGlobVarManager.getGlobalVarsAssignment(mcurrentProcedure).getAssignedVars();
+		for (final IProgramVar bv : modifiable) {
 			setCurrentVarVersion(bv, startOfCallingContext);
 		}
 	}
@@ -367,8 +367,8 @@ public class NestedSsaBuilder {
 	 * procedure.
 	 */
 	protected void reVersionModifiableOldVars() {
-		final Set<BoogieVar> modifiable = mModGlobVarManager.getOldVarsAssignment(mcurrentProcedure).getAssignedVars();
-		for (final BoogieVar bv : modifiable) {
+		final Set<IProgramVar> modifiable = mModGlobVarManager.getOldVarsAssignment(mcurrentProcedure).getAssignedVars();
+		for (final IProgramVar bv : modifiable) {
 			setCurrentVarVersion(bv, startOfCallingContext);
 		}
 	}
@@ -401,7 +401,7 @@ public class NestedSsaBuilder {
 		}
 
 		public void versionInVars() {
-			for (final BoogieVar bv : mTF.getInVars().keySet()) {
+			for (final IProgramVar bv : mTF.getInVars().keySet()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
 				final Term versioneered = getCurrentVarVersion(bv);
 				mConstants2BoogieVar.put(versioneered, bv);
@@ -410,7 +410,7 @@ public class NestedSsaBuilder {
 		}
 
 		public void versionAssignedVars(int currentPos) {
-			for (final BoogieVar bv : mTF.getAssignedVars()) {
+			for (final IProgramVar bv : mTF.getAssignedVars()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
 				final Term versioneered = setCurrentVarVersion(bv, currentPos);
 				mConstants2BoogieVar.put(versioneered, bv);
@@ -439,7 +439,7 @@ public class NestedSsaBuilder {
 		}
 
 		public void versionPredicate() {
-			for (final BoogieVar bv : mPred.getVars()) {
+			for (final IProgramVar bv : mPred.getVars()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
 				final Term versioneered = getCurrentVarVersion(bv);
 				mConstants2BoogieVar.put(versioneered, bv);
@@ -464,12 +464,12 @@ public class NestedSsaBuilder {
 	 * Get the current version of BoogieVariable bv. Construct this version if
 	 * it does not exist yet.
 	 */
-	private Term getCurrentVarVersion(BoogieVar bv) {
+	private Term getCurrentVarVersion(IProgramVar bv) {
 		Term result;
 		if (bv.isGlobal()) {
-			if (bv instanceof BoogieOldVar) {
+			if (bv instanceof IProgramOldVar) {
 				assert bv.isOldvar();
-				final BoogieOldVar oldVar = (BoogieOldVar) bv;
+				final IProgramOldVar oldVar = (IProgramOldVar) bv;
 				if (mModGlobVarManager.isModifiable(oldVar, mcurrentProcedure)) {
 					result = currentLocalAndOldVarVersion.get(oldVar);
 				} else {
@@ -480,7 +480,7 @@ public class NestedSsaBuilder {
 					result = getOrSetCurrentGlobalVarVersion(oldVar.getNonOldVar());
 				}
 			} else {
-				final BoogieNonOldVar bnov = (BoogieNonOldVar) bv;
+				final IProgramNonOldVar bnov = (IProgramNonOldVar) bv;
 				result = getOrSetCurrentGlobalVarVersion(bnov);
 			}
 		} else {
@@ -497,7 +497,7 @@ public class NestedSsaBuilder {
 	 * Get current version for global variable. Set current var version if it
 	 * has not yet been set.
 	 */
-	private Term getOrSetCurrentGlobalVarVersion(BoogieNonOldVar bv) {
+	private Term getOrSetCurrentGlobalVarVersion(IProgramNonOldVar bv) {
 		Term result;
 		result = currentGlobalVarVersion.get(bv);
 		if (result == null) {
@@ -515,7 +515,7 @@ public class NestedSsaBuilder {
 	 * Set the current version of BoogieVariable bv to the constant b_index and
 	 * return b_index.
 	 */
-	private Term setCurrentVarVersion(BoogieVar bv, int index) {
+	private Term setCurrentVarVersion(IProgramVar bv, int index) {
 		final Term var = buildVersion(bv, index);
 		if (bv.isGlobal()) {
 			if (bv.isOldvar()) {
@@ -534,7 +534,7 @@ public class NestedSsaBuilder {
 	 * Build constant bv_index that represents BoogieVar bv that obtains a new
 	 * value at position index.
 	 */
-	private Term buildVersion(BoogieVar bv, int index) {
+	private Term buildVersion(IProgramVar bv, int index) {
 		TreeMap<Integer, Term> index2constant = mIndexedVarRepresentative.get(bv);
 		if (index2constant == null) {
 			index2constant = new TreeMap<Integer, Term>();
@@ -552,7 +552,7 @@ public class NestedSsaBuilder {
 	 * May the corresponding global var of the oldvar bv be modified in in the
 	 * current calling context (according to modifies clauses?)
 	 */
-	private boolean modifiedInCurrentCallingContext(BoogieVar bv) {
+	private boolean modifiedInCurrentCallingContext(IProgramVar bv) {
 		if (!bv.isGlobal()) {
 			throw new IllegalArgumentException(bv + " no global var");
 		}

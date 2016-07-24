@@ -35,7 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -110,12 +110,12 @@ public class TransFormulaLR implements Serializable {
 		final TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
 		
 		// Add existing in- and outVars
-		for (final Map.Entry<BoogieVar, TermVariable> entry
+		for (final Map.Entry<IProgramVar, TermVariable> entry
 				: transition.getInVars().entrySet()) {
 			tf.addInVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());
 		}
-		for (final Map.Entry<BoogieVar, TermVariable> entry
+		for (final Map.Entry<IProgramVar, TermVariable> entry
 				: transition.getOutVars().entrySet()) {
 			tf.addOutVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());

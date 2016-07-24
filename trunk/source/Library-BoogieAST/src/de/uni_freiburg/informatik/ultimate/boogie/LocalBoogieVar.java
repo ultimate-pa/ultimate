@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class LocalBoogieVar extends BoogieVar  implements Serializable {
+public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalProgramVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	private final String mProcedure;
@@ -50,19 +50,18 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 	private final int mHashCode;
 	
 	
-	public LocalBoogieVar(String identifier, String procedure, IType iType, 
-			TermVariable tv,
-			ApplicationTerm defaultConstant,
-			ApplicationTerm primedContant) {
+	public LocalBoogieVar(final String identifier, final String procedure, final IType iType, 
+			final TermVariable tv,
+			final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
 		mProcedure = procedure;
 		mHashCode = computeHashCode();
 	}
 	
 	
-	/**
-	 * Returns the procedure in which this variable was declared. If this a 
-	 * global variable, then null is returned.
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramLocalVar_Backpu#getProcedure()
 	 */
 	@Override
 	public String getProcedure() {
@@ -94,7 +93,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -104,7 +103,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieVar other = (BoogieVar) obj;
+		final IProgramVar other = (IProgramVar) obj;
 		if (getIdentifier() == null) {
 			if (other.getIdentifier() != null) {
 				return false;

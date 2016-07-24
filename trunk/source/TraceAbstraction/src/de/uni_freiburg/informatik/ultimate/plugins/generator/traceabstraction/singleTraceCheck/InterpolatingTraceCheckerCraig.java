@@ -35,7 +35,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -152,9 +152,9 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
 		for (int i = 0; i < mInterpolants.length; i++) {
 			final IPredicate itp = mInterpolants[i];
-			final Set<BoogieVar> vars = itp.getVars();
-			final Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
-			final Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
+			final Set<IProgramVar> vars = itp.getVars();
+			final Set<IProgramVar> frel = rv.getForwardRelevantVariables()[i + 1];
+			final Set<IProgramVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
 				mLogger.warn("forward relevant variables wrong");
 				result = false;

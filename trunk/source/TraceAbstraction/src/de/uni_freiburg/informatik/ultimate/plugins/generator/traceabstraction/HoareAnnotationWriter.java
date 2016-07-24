@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -156,7 +156,7 @@ public class HoareAnnotationWriter {
 	}
 
 	private boolean containsAnOldVar(final IPredicate p) {
-		for (final BoogieVar bv : p.getVars()) {
+		for (final IProgramVar bv : p.getVars()) {
 			if (bv.isOldvar()) {
 				return true;
 			}

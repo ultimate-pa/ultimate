@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -132,20 +132,20 @@ public class TransFormulaUtils {
 	
 	/**
 	 * Replace in term all {@link TermVariable} that are the <i>default 
-	 * {@link TermVariable}s</i> of a given {@link BoogieVar} by the default
-	 * constant for this {@link BoogieVar}.
-	 * @param rvf {@link ReplacementVarFactory} that maps {@link BoogieVar}s to 
+	 * {@link TermVariable}s</i> of a given {@link IProgramVar} by the default
+	 * constant for this {@link IProgramVar}.
+	 * @param rvf {@link ReplacementVarFactory} that maps {@link IProgramVar}s to 
 	 * the corresponding {@link RankVar}
 	 * @param symbTab {@link Boogie2SmtSymbolTable} that maps 
-	 * {@link TermVariable} to {@link BoogieVar}s (for the {@link TermVariable}s
-	 * that are default {@link TermVariable}s of {@link BoogieVar}s. 
+	 * {@link TermVariable} to {@link IProgramVar}s (for the {@link TermVariable}s
+	 * that are default {@link TermVariable}s of {@link IProgramVar}s. 
 	 * @param tf {@link TransFormulaLR} whose mapping from {@link RankVar}s to
 	 * inVars is used.
 	 */
 	public static Term renameToDefaultConstants(Script script, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getBoogieVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
@@ -157,7 +157,7 @@ public class TransFormulaUtils {
 	public static Term renameToPrimedConstants(Script script, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getBoogieVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
@@ -197,7 +197,7 @@ public class TransFormulaUtils {
 				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
 			} else if (entry.getKey() instanceof BoogieVarWrapper) {
-				final BoogieVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
+				final IProgramVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
 				substitutionMapping.put(entry.getValue(), bv.getDefaultConstant());
 			} else {
 				throw new UnsupportedOperationException("Unknown RankVar " + entry.getKey().getClass().getSimpleName());
@@ -209,7 +209,7 @@ public class TransFormulaUtils {
 				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
 			} else if (entry.getKey() instanceof BoogieVarWrapper) {
-				final BoogieVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
+				final IProgramVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
 				substitutionMapping.put(entry.getValue(), bv.getPrimedConstant());
 			} else {
 				throw new UnsupportedOperationException("Unknown RankVar " + entry.getKey().getClass().getSimpleName());
@@ -278,7 +278,7 @@ public class TransFormulaUtils {
 			final ReplacementVarFactory repVarFac) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = symbolTable.getBoogieVar(tv);
+			final IProgramVar bv = symbolTable.getBoogieVar(tv);
 			final RankVar rv = repVarFac.getOrConstuctBoogieVarWrapper(bv);
 			final Term inVar = tf.getInVars().get(rv); 
 			substitutionMapping.put(tv, inVar);
@@ -296,7 +296,7 @@ public class TransFormulaUtils {
 		for (final RankVar rv : tf.getInVars().keySet()) {
 			if (rv instanceof BoogieVarWrapper) {
 				if (inVarAndOutVarCoincide(rv, tf)) {
-					final BoogieVar bv = ((BoogieVarWrapper) rv).getBoogieVar();
+					final IProgramVar bv = ((BoogieVarWrapper) rv).getBoogieVar();
 					conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
 				}
 			}

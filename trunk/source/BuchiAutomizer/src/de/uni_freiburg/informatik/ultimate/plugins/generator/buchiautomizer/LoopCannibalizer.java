@@ -34,7 +34,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -201,12 +201,12 @@ public class LoopCannibalizer {
 	}
 
 	private boolean codeBlockContainsVarOfHondaPredicate(final CodeBlock cb) {
-		final Set<BoogieVar> hondaVars = mBspm.getHondaPredicate().getVars();
-		final Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
+		final Set<IProgramVar> hondaVars = mBspm.getHondaPredicate().getVars();
+		final Set<IProgramVar> inVars = cb.getTransitionFormula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {
 			return true;
 		}
-		final Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
+		final Set<IProgramVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
 		if (!Collections.disjoint(hondaVars, outVars)) {
 			return true;
 		}

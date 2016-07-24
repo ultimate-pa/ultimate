@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -70,7 +70,7 @@ public class PredicateFactory {
 
 	protected int mSerialNumber;
 
-	private static final Set<BoogieVar> EMPTY_VARS = Collections.emptySet();
+	private static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
 	private static final String[] NO_PROCEDURE = new String[0];
 
 	private final IUltimateServiceProvider mServices;
@@ -104,7 +104,7 @@ public class PredicateFactory {
 	 */
 	private boolean checkIfValidPredicate(final Term term, final Set<TermVariable> quantifiedVariables) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = mSymbolTable.getBoogieVar(tv);
+			final IProgramVar bv = mSymbolTable.getBoogieVar(tv);
 			if (bv == null) {
 				if (!quantifiedVariables.contains(tv)) {
 					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
@@ -170,7 +170,7 @@ public class PredicateFactory {
 	}
 	
 	public ProdState getNewProdState(final List<IPredicate> programPoints) {
-		return new ProdState(mSerialNumber++, programPoints, mScript.term("true"),new HashSet<BoogieVar>(0));
+		return new ProdState(mSerialNumber++, programPoints, mScript.term("true"),new HashSet<IProgramVar>(0));
 	}
 	
 	private TermVarsProc constructDontCare() {

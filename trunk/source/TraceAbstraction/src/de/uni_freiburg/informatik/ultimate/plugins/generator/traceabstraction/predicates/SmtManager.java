@@ -34,8 +34,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -89,7 +89,7 @@ public class SmtManager {
 	private int msatProbNumber;
 
 	private ScopedHashMap<String, Term> mIndexedConstants;
-	Set<BoogieVar> mAssignedVars;
+	Set<IProgramVar> mAssignedVars;
 
 	private final int mTrivialSatQueries = 0;
 	private int mNontrivialSatQueries = 0;
@@ -265,11 +265,11 @@ public class SmtManager {
 	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
 	public TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager) {
-		final Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
 		Term term = getScript().term("true");
-		for (final BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
+		for (final IProgramVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			final BoogieVar bvOld = ((BoogieNonOldVar) bv).getOldVar();
+			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
@@ -471,7 +471,7 @@ public class SmtManager {
 				final TermVariable[] vars = new TermVariable[ps1.getVars().size()];
 				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (final BoogieVar var : ps1.getVars()) {
+				for (final IProgramVar var : ps1.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -483,7 +483,7 @@ public class SmtManager {
 				final TermVariable[] vars = new TermVariable[ps2.getVars().size()];
 				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (final BoogieVar var : ps2.getVars()) {
+				for (final IProgramVar var : ps2.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -536,11 +536,11 @@ public class SmtManager {
 	// return result;
 	// }
 
-	public Term substituteRepresentants(final Set<BoogieVar> boogieVars, final Map<BoogieVar, TermVariable> substitution, final Term term) {
+	public Term substituteRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> substitution, final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar var : boogieVars) {
+		for (final IProgramVar var : boogieVars) {
 			final TermVariable representant = var.getTermVariable();
 			assert representant != null;
 			final Term substitute = substitution.get(var);
@@ -555,12 +555,12 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term substituteToRepresentants(final Set<BoogieVar> boogieVars, final Map<BoogieVar, TermVariable> boogieVar2TermVar,
+	public Term substituteToRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> boogieVar2TermVar,
 			final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar var : boogieVars) {
+		for (final IProgramVar var : boogieVars) {
 			final TermVariable representant = boogieVar2TermVar.get(var);
 			assert representant != null;
 			final Term substitute = var.getTermVariable();
@@ -695,20 +695,20 @@ public class SmtManager {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
 
-		final Set<BoogieVar> allVars = ps.getVars();
-		final Set<BoogieVar> varsOfRenamed = new HashSet<BoogieVar>();
+		final Set<IProgramVar> allVars = ps.getVars();
+		final Set<IProgramVar> varsOfRenamed = new HashSet<IProgramVar>();
 		varsOfRenamed.addAll(allVars);
-		final Set<BoogieVar> globalVars = new HashSet<BoogieVar>();
-		for (final BoogieVar var : allVars) {
+		final Set<IProgramVar> globalVars = new HashSet<IProgramVar>();
+		for (final IProgramVar var : allVars) {
 			if (var.isGlobal()) {
 				globalVars.add(var);
 				varsOfRenamed.remove(var);
 			}
 		}
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (final BoogieVar globalBoogieVar : globalVars) {
+		for (final IProgramVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				final BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
+				final IProgramVar oldBoogieVar = ((IProgramNonOldVar) globalBoogieVar).getOldVar();
 				varsOfRenamed.add(oldBoogieVar);
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}

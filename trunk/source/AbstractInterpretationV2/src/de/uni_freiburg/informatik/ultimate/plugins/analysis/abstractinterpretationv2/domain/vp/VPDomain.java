@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar, Expression> {
 
-	private Map<BoogieVar, Set<PointerExpression>> pointerMap;
-	private Map<BoogieVar, Set<BoogieVar>> indexToArraysMap;
+	private Map<IProgramVar, Set<PointerExpression>> pointerMap;
+	private Map<IProgramVar, Set<IProgramVar>> indexToArraysMap;
 	
 	private IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	private IEqualityProvider<VPDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
@@ -70,8 +70,8 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 		mRootAnnotation = rootAnnotation;
 	}
 
-	public VPDomain(IUltimateServiceProvider services, Map<BoogieVar, Set<PointerExpression>> pointerMap,
-			Map<BoogieVar, Set<BoogieVar>> indexToArraysMap, final RootAnnot rootAnnotation) {
+	public VPDomain(IUltimateServiceProvider services, Map<IProgramVar, Set<PointerExpression>> pointerMap,
+			Map<IProgramVar, Set<IProgramVar>> indexToArraysMap, final RootAnnot rootAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		this.pointerMap = pointerMap;
@@ -108,19 +108,19 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 		return 0;
 	}
 
-	public Map<BoogieVar, Set<PointerExpression>> getPointerMap() {
+	public Map<IProgramVar, Set<PointerExpression>> getPointerMap() {
 		return pointerMap;
 	}
 
-	public void setPointerMap(Map<BoogieVar, Set<PointerExpression>> pointerMap) {
+	public void setPointerMap(Map<IProgramVar, Set<PointerExpression>> pointerMap) {
 		this.pointerMap = pointerMap;
 	}
 
-	public Map<BoogieVar, Set<BoogieVar>> getIndexToArraysMap() {
+	public Map<IProgramVar, Set<IProgramVar>> getIndexToArraysMap() {
 		return indexToArraysMap;
 	}
 
-	public void setIndexToArraysMap(Map<BoogieVar, Set<BoogieVar>> indexToArraysMap) {
+	public void setIndexToArraysMap(Map<IProgramVar, Set<IProgramVar>> indexToArraysMap) {
 		this.indexToArraysMap = indexToArraysMap;
 	}
 

@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -45,7 +45,7 @@ public class PredicateWithHistory extends SPredicate {
 
 	protected PredicateWithHistory(ProgramPoint programPoint, int serialNumber, 
 			String[] procedures, Term formula,
-			Set<BoogieVar> vars, Term closedFormula, Map<Integer,Term> history) {
+			Set<IProgramVar> vars, Term closedFormula, Map<Integer,Term> history) {
 		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);
 		mHistory = history;
 	}

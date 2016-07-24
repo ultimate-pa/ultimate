@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -132,7 +132,7 @@ public class LassoAnalysis {
 	 * Global BoogieVars that are modifiable in the procedure where the honda 
 	 * of the lasso lies.
 	 */
-	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 
 	/**
 	 * SMT script that created the transition formulae
@@ -214,7 +214,7 @@ public class LassoAnalysis {
 	 *             if the file for dumping the script cannot be opened
 	 */
 	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final TransFormula stemtransition,
-			final TransFormula loop_transition, final Set<BoogieVar> modifiableGlobalsAtHonda, final Term[] axioms, final LassoRankerPreferences preferences,
+			final TransFormula loop_transition, final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms, final LassoRankerPreferences preferences,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		
@@ -274,7 +274,7 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final TransFormula loop, final Set<BoogieVar> modifiableGlobalsAtHonda, final Term[] axioms,
+	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final TransFormula loop, final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services, final IToolchainStorage storage, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
 			throws TermException, FileNotFoundException {

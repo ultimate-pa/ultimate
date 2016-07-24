@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -263,15 +263,15 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(TransFormula tf) {
-		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (final BoogieVar bv : tf.getAssignedVars()) {
+		final Map<IProgramVar, TermVariable> outvars = new HashMap<IProgramVar, TermVariable>();
+		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
 		}
 		
 		return new TransFormula(mBoogie2Smt.getScript().term("true"),
-				new HashMap<BoogieVar, TermVariable>(),
+				new HashMap<IProgramVar, TermVariable>(),
 				outvars,
 				Collections.emptyMap(), 
 				tf.getBranchEncoders(),
@@ -283,14 +283,14 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		final Term formula = Util.and(mBoogie2Smt.getScript(), conjunctsInUnsatCore);
 		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
-		final Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
-		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (final BoogieVar bv : tf.getInVars().keySet()) {
+		final Map<IProgramVar, TermVariable> invars = new HashMap<IProgramVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> outvars = new HashMap<IProgramVar, TermVariable>();
+		for (final IProgramVar bv : tf.getInVars().keySet()) {
 			if (freeVars.contains(tf.getInVars().get(bv))) {
 				invars.put(bv, tf.getInVars().get(bv));
 			}
 		}
-		for (final BoogieVar bv : tf.getOutVars().keySet()) {
+		for (final IProgramVar bv : tf.getOutVars().keySet()) {
 			if (tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			} else if (freeVars.contains(tf.getOutVars().get(bv))) {

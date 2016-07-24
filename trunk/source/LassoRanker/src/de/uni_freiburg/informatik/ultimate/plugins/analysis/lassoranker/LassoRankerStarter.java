@@ -40,7 +40,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
@@ -168,7 +168,7 @@ public class LassoRankerStarter {
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
-		final Set<BoogieVar> modifiableGlobalsAtHonda = mRootAnnot.getModGlobVarManager()
+		final Set<IProgramVar> modifiableGlobalsAtHonda = mRootAnnot.getModGlobVarManager()
 				.getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
@@ -369,7 +369,7 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final TransFormula stemTF, final TransFormula loopTf) {
 
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
-		final Set<BoogieVar> modifiableGlobals = mRootAnnot.getModGlobVarManager()
+		final Set<IProgramVar> modifiableGlobals = mRootAnnot.getModGlobVarManager()
 				.getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
 

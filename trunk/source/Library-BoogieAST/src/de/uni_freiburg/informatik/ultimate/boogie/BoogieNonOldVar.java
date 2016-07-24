@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
+public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable, IProgramNonOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	
@@ -47,10 +47,10 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	private final BoogieOldVar mOldVar;
 
 	
-	public BoogieNonOldVar(String identifier, IType iType,
-			TermVariable tv,
-			ApplicationTerm defaultConstant,
-	        ApplicationTerm primedConstant, BoogieOldVar oldVar) {
+	public BoogieNonOldVar(final String identifier, final IType iType,
+			final TermVariable tv,
+			final ApplicationTerm defaultConstant,
+	        final ApplicationTerm primedConstant, final BoogieOldVar oldVar) {
 		super(identifier, iType, tv, defaultConstant, primedConstant);
 		mOldVar = oldVar;
 		mHashCode = computeHashCode();
@@ -75,6 +75,10 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	}
 
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.boogie.INonOldProgramVariable_Backup#getOldVar()
+	 */
+	@Override
 	public BoogieOldVar getOldVar() {
 		return mOldVar;
 	}
@@ -97,7 +101,7 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	
 	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -107,7 +111,7 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final BoogieNonOldVar other = (BoogieNonOldVar) obj;
+		final IProgramNonOldVar other = (IProgramNonOldVar) obj;
 		if (getIdentifier() == null) {
 			if (other.getIdentifier() != null) {
 				return false;

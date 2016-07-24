@@ -46,10 +46,10 @@ public abstract class GlobalBoogieVar extends BoogieVar implements Serializable 
 
 	private static final long serialVersionUID = 103072739646531062L;
 	
-	public GlobalBoogieVar(String identifier, IType iType, 
-			TermVariable tv,
-			ApplicationTerm defaultConstant,
-			ApplicationTerm primedContant) {
+	public GlobalBoogieVar(final String identifier, final IType iType, 
+			final TermVariable tv,
+			final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
 	}
 	

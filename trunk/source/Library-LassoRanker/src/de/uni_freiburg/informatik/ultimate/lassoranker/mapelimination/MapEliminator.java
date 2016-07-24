@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
@@ -351,7 +351,7 @@ public class MapEliminator {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final Term array : mArraysToIndices.getDomain()) {
 			assert array instanceof TermVariable;
-			final BoogieVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) array);
+			final IProgramVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) array);
 			final RankVar rankVar = mReplacementVarFactory.getOrConstuctBoogieVarWrapper(boogieVar);
 			final Term inVar = transformula.getInVars().get(rankVar);
 			final Term outVar = transformula.getOutVars().get(rankVar);
@@ -600,7 +600,7 @@ public class MapEliminator {
 		if (term instanceof TermVariable || SmtUtils.isFunctionApplication(term, "select")) {
 			RankVar rankVar;
 			if (term instanceof TermVariable) {
-				final BoogieVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) term);
+				final IProgramVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) term);
 				rankVar = mReplacementVarFactory.getOrConstuctBoogieVarWrapper(boogieVar);
 			} else {
 				rankVar = mReplacementVarFactory.getOrConstuctReplacementVar(term);

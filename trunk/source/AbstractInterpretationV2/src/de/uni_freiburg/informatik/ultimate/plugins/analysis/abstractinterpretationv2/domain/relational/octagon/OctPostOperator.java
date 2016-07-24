@@ -90,7 +90,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		mAssumeProcessor = new OctAssumeProcessor(this);
 	}
 
-	public static OctDomainState join(List<OctDomainState> states) {
+	public static OctDomainState join(final List<OctDomainState> states) {
 		OctDomainState joinedState = null;
 		for (final OctDomainState result : states) {
 			if (joinedState == null) {
@@ -102,27 +102,27 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return joinedState;
 	}
 
-	public static List<OctDomainState> joinToSingleton(List<OctDomainState> states) {
+	public static List<OctDomainState> joinToSingleton(final List<OctDomainState> states) {
 		return CollectionUtil.singeltonArrayList(join(states));
 	}
 
-	public static List<OctDomainState> deepCopy(List<OctDomainState> states) {
+	public static List<OctDomainState> deepCopy(final List<OctDomainState> states) {
 		final List<OctDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
 		return copy;
 	}
 
-	public List<OctDomainState> splitF(List<OctDomainState> oldStates,
-			Function<List<OctDomainState>, List<OctDomainState>> op1,
-			Function<List<OctDomainState>, List<OctDomainState>> op2) {
+	public List<OctDomainState> splitF(final List<OctDomainState> oldStates,
+			final Function<List<OctDomainState>, List<OctDomainState>> op1,
+			final Function<List<OctDomainState>, List<OctDomainState>> op2) {
 
 		final List<OctDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
 		return joinDownToMax(newStates);
 	}
 
-	public List<OctDomainState> splitC(List<OctDomainState> oldStates, Consumer<OctDomainState> op1,
-			Consumer<OctDomainState> op2) {
+	public List<OctDomainState> splitC(final List<OctDomainState> oldStates, final Consumer<OctDomainState> op1,
+			final Consumer<OctDomainState> op2) {
 
 		final List<OctDomainState> copiedOldStates = deepCopy(oldStates);
 		oldStates.forEach(op1);
@@ -131,7 +131,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return joinDownToMax(oldStates);
 	}
 
-	public static List<OctDomainState> removeBottomStates(List<OctDomainState> states) {
+	public static List<OctDomainState> removeBottomStates(final List<OctDomainState> states) {
 		final List<OctDomainState> nonBottomStates = new ArrayList<>(states.size());
 		for (final OctDomainState state : states) {
 			if (!state.isBottom()) {
@@ -177,7 +177,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	@Override
-	public List<OctDomainState> apply(OctDomainState oldState, CodeBlock codeBlock) {
+	public List<OctDomainState> apply(final OctDomainState oldState, final CodeBlock codeBlock) {
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		final List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
 		for (final Statement statement : statements) {
@@ -187,8 +187,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	@Override
-	public List<OctDomainState> apply(OctDomainState stateBeforeTransition, OctDomainState stateAfterTransition,
-			CodeBlock transition) {
+	public List<OctDomainState> apply(final OctDomainState stateBeforeTransition, final OctDomainState stateAfterTransition,
+			final CodeBlock transition) {
 
 		List<OctDomainState> result;
 		if (transition instanceof Call) {
@@ -201,8 +201,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return result;
 	}
 
-	private List<OctDomainState> applyCall(OctDomainState stateBeforeCall, OctDomainState stateAfterCall,
-			Call callTransition) {
+	private List<OctDomainState> applyCall(final OctDomainState stateBeforeCall, final OctDomainState stateAfterCall,
+			final Call callTransition) {
 
 		if (stateAfterCall.isBottom()) {
 			return new ArrayList<>();
@@ -254,8 +254,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		// The states with temporary variables are only local variables of this method.
 	}
 
-	private List<OctDomainState> applyReturn(OctDomainState stateBeforeReturn, OctDomainState stateAfterReturn,
-			Return returnTransition) {
+	private List<OctDomainState> applyReturn(final OctDomainState stateBeforeReturn, OctDomainState stateAfterReturn,
+			final Return returnTransition) {
 
 		final ArrayList<OctDomainState> result = new ArrayList<>();
 		if (!stateAfterReturn.isBottom()) {
@@ -269,7 +269,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return result;
 	}
 
-	private Procedure calledProcedure(CallStatement call) {
+	private Procedure calledProcedure(final CallStatement call) {
 		final List<Declaration> procedureDeclarations =
 				mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
 		Procedure implementation = null;
@@ -289,8 +289,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return implementation;
 	}
 
-	private List<Pair<IBoogieVar, IBoogieVar>> generateMapCallLhsToOutParams(VariableLHS[] callLhs,
-			Procedure calledProcedure) {
+	private List<Pair<IBoogieVar, IBoogieVar>> generateMapCallLhsToOutParams(final VariableLHS[] callLhs,
+			final Procedure calledProcedure) {
 		final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut = new ArrayList<>(callLhs.length);
 		int i = 0;
 		for (final VarList outParamList : calledProcedure.getOutParams()) {
@@ -313,7 +313,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return getBoogie2SmtSymbolTable().getBoogieVar(vLhs.getIdentifier(), vLhs.getDeclarationInformation(), false);
 	}
 
-	IBoogieVar getBoogieVar(IdentifierExpression ie) {
+	IBoogieVar getBoogieVar(final IdentifierExpression ie) {
 		return getBoogie2SmtSymbolTable().getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
 	}
 
