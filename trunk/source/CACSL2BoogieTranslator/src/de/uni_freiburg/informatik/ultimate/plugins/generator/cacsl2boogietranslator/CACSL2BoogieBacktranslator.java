@@ -80,6 +80,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocat
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -420,7 +422,6 @@ public class CACSL2BoogieBacktranslator
 		for (final Expression varValue : varValues) {
 			final IASTExpression newVarValue = translateExpression(varValue, cType);
 			if (newVarValue != null) {
-				assert !(newVarValue instanceof FakeExpression) : "Values cannot be fake expressions";
 				newVarValues.add(newVarValue);
 			}
 		}
@@ -772,43 +773,13 @@ public class CACSL2BoogieBacktranslator
 				return null;
 			}
 		} else if (expression instanceof IntegerLiteral) {
-			final String value;
-			if (cType == null) {
-				value = ((IntegerLiteral) expression).getValue();
-			} else {
-				final CType newCtype;
-				if (cType.getUnderlyingType() instanceof CEnum) {
-					newCtype = new CPrimitive(PRIMITIVE.INT);
-				} else {
-					newCtype = cType;
-				}
-				final BigInteger extractedValue =
-						mExpressionTranslation.extractIntegerValue(expression, newCtype.getUnderlyingType());
-				value = String.valueOf(extractedValue);
-			}
-			final FakeExpression clit = new FakeExpression(value);
-			return clit;
+			return translateIntegerLiteral(cType, (IntegerLiteral) expression);
 		} else if (expression instanceof BooleanLiteral) {
-			// TODO: I am not sure if we should convert this to integer_constant
-			// or IASTLiteralExpression.lk_false / lk_true
-			final BooleanLiteral lit = (BooleanLiteral) expression;
-			final int value = (lit.getValue() ? 1 : 0);
-			final FakeExpression clit = new FakeExpression(Integer.toString(value));
-			return clit;
+			return translateBooleanLiteral((BooleanLiteral) expression);
 		} else if (expression instanceof RealLiteral) {
-			final RealLiteral lit = (RealLiteral) expression;
-			final FakeExpression clit = new FakeExpression(lit.getValue());
-			return clit;
+			return translateRealLiteral((RealLiteral) expression);
 		} else if (expression instanceof BitvecLiteral) {
-			final String value;
-			if (cType == null) {
-				value = naiveBitvecLiteralValueExtraction((BitvecLiteral) expression);
-			} else {
-				final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(expression, cType);
-				value = String.valueOf(extractedValue);
-			}
-			final FakeExpression clit = new FakeExpression(value);
-			return clit;
+			return translateBitvecLiteral(cType, (BitvecLiteral) expression);
 		} else {
 			// things that land here are typically synthesized contracts or
 			// things like that. Here we replace Boogie variable names with C variable names
@@ -829,7 +800,76 @@ public class CACSL2BoogieBacktranslator
 
 	}
 
-	private String naiveBitvecLiteralValueExtraction(BitvecLiteral lit) {
+	private IASTExpression translateIntegerLiteral(final CType cType, final IntegerLiteral lit) {
+		final String value;
+		if (cType == null) {
+			value = (lit).getValue();
+		} else if (cType instanceof CPointer) {
+			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+		} else if (cType instanceof CEnum) {
+			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+		} else if (cType instanceof CNamed) {
+			return translateIntegerLiteral(cType.getUnderlyingType(), lit);
+		} else {
+			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
+			value = String.valueOf(extractedValue);
+		}
+		checkLiteral(lit, value);
+		return new FakeExpression(value);
+	}
+
+	private IASTExpression translateBitvecLiteral(final CType cType, final BitvecLiteral lit) {
+		final String value;
+		if (cType == null) {
+			value = naiveBitvecLiteralValueExtraction(lit);
+		} else if (cType instanceof CNamed) {
+			if (cType.getUnderlyingType() != null) {
+				return translateBitvecLiteral(cType.getUnderlyingType(), lit);
+			}
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " cannot tranlate BitvecLiteral "
+					+ BoogiePrettyPrinter.print(lit) + " for unknown CNamed CType " + cType);
+			return null;
+		} else if (cType instanceof CPrimitive) {
+			// literal C primitives that are represented as bitvectors have to be converted back according to their
+			// translation, but it seems that AExpression is incomplete
+			CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
+			if (primitive.isIntegerType()) {
+				value = String.valueOf(mExpressionTranslation.extractIntegerValue(lit, cType));
+				// } else if (primitive.isFloatingType()) {
+				// // TODO: Do the right thing
+				// value = naiveBitvecLiteralValueExtraction(lit);
+			} else {
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " cannot tranlate BitvecLiteral "
+						+ BoogiePrettyPrinter.print(lit) + " representing " + primitive.getType());
+				return null;
+			}
+		} else {
+			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
+			value = String.valueOf(extractedValue);
+		}
+		checkLiteral(lit, value);
+		return new FakeExpression(value);
+	}
+
+	private IASTExpression translateRealLiteral(final RealLiteral lit) {
+		checkLiteral(lit, lit.getValue());
+		return new FakeExpression(lit.getValue());
+	}
+
+	private IASTExpression translateBooleanLiteral(final BooleanLiteral lit) {
+		final String value = (lit.getValue() ? "1" : "0");
+		checkLiteral(lit, value);
+		return new FakeExpression(value);
+	}
+
+	private void checkLiteral(final Expression expr, final String value) {
+		if (value == null || "null".equals(value)) {
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
+					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+		}
+	}
+
+	private String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
 		final String value = lit.getValue();
 		BigInteger decimalValue = new BigInteger(value);
 		final boolean isSigned = true;
