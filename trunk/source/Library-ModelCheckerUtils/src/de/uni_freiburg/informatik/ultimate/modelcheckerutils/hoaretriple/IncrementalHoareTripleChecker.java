@@ -64,7 +64,6 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private IPredicate mAssertedPrecond;
 	private IPredicate mAssertedHier;
 	private IAction mAssertedAction;
-//	private TransFormula mTransFormula;
 	private IPredicate mAssertedPostcond;
 	private ScopedHashMap<BoogieVar, Term> mHierConstants;
 	public final boolean mUseNamedTerms = true;
