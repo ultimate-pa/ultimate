@@ -261,7 +261,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 						determinized)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 				progress = true;
 				break;
 			}
@@ -283,7 +283,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 						nondet)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 				progress = true;
 				break;
 			}

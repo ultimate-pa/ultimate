@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
@@ -60,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
 	protected final ManagedScript mManagedScript;
-	private final Boogie2SMT mBoogie2Smt;
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	
 	private IPredicate mAssertedPrecond;
@@ -86,12 +84,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
-	public IncrementalHoareTripleChecker(ManagedScript managedScript, 
-			ModifiableGlobalVariableManager modGlobVarManager,
-			Boogie2SMT boogie2smt) {
+	public IncrementalHoareTripleChecker(final ManagedScript managedScript, 
+			final ModifiableGlobalVariableManager modGlobVarManager) {
 		mManagedScript = managedScript;
 		mModifiableGlobalVariableManager = modGlobVarManager;
-		mBoogie2Smt = boogie2smt;
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 	
@@ -102,7 +98,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate post) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
@@ -123,7 +119,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate post) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
 		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
@@ -144,8 +140,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	@Override
-	public Validity checkReturn(IPredicate linPre, IPredicate hierPre,
-			IReturnAction act, IPredicate postcond) {
+	public Validity checkReturn(final IPredicate linPre, final IPredicate hierPre,
+			final IReturnAction act, final IPredicate postcond) {
 		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
@@ -169,7 +165,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	protected LBool prepareAssertionStackAndAddTransition(IAction act) {
+	protected LBool prepareAssertionStackAndAddTransition(final IAction act) {
 		if (mAssertedAction != act) {
 			if (mAssertedAction != null) {
 				if (mAssertedPrecond != null) {
@@ -190,7 +186,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 
-	protected LBool prepareAssertionStackAndAddPrecondition(IPredicate precond) {
+	protected LBool prepareAssertionStackAndAddPrecondition(final IPredicate precond) {
 		if (mAssertedPrecond != precond) {
 			if (mAssertedPrecond != null) {
 				if (mAssertedPostcond != null) {
@@ -208,7 +204,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	protected LBool prepareAssertionStackAndAddHierpred(IPredicate hierpred) {
+	protected LBool prepareAssertionStackAndAddHierpred(final IPredicate hierpred) {
 		if (mAssertedHier != hierpred) {
 			if (mAssertedPostcond != null) {
 				unAssertPostcondition();
@@ -223,7 +219,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	protected LBool prepareAssertionStackAndAddPostcond(IPredicate postcond) {
+	protected LBool prepareAssertionStackAndAddPostcond(final IPredicate postcond) {
 		if (mAssertedPostcond != postcond) {
 			if (mAssertedPostcond != null) {
 				unAssertPostcondition();
@@ -235,7 +231,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 
-	protected LBool assertPostcond(IPredicate postcond) {
+	protected LBool assertPostcond(final IPredicate postcond) {
 		if (mAssertedAction instanceof IInternalAction) {
 			return assertPostcond_Internal(postcond);
 		} else if (mAssertedAction instanceof ICallAction) {
@@ -270,7 +266,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
-	private LBool assertPrecondition(IPredicate p) {
+	private LBool assertPrecondition(final IPredicate p) {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedAction != null : "Assert CodeBlock first";
 		assert mAssertedPrecond == null : "precond already asserted";
@@ -291,7 +287,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				getOldVarsAssignment(predProc).getAssignedVars();
 		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
 		if (!oldVarEqualities.isEmpty()) {
-			Term nonModOldVarsEquality = Util.and(mBoogie2Smt.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+			Term nonModOldVarsEquality = Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 			if (mUseNamedTerms) {
 				final Annotation annot = new Annotation(":named", s_PrecondNonModGlobalEquality);
 				nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);
@@ -309,8 +305,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * an equality (= c_g c_old(g)) where c_g is the default constant of the 
 	 * global variable g and c_old(g) is the default constant of old(g).
 	 */
-	private Collection<Term> constructNonModOldVarsEquality(Set<BoogieVar> vars,
-			Set<BoogieVar> oldVarsOfModifiableGlobals) {
+	private Collection<Term> constructNonModOldVarsEquality(final Set<BoogieVar> vars,
+			final Set<BoogieVar> oldVarsOfModifiableGlobals) {
 		final Collection<Term> conjunction = new ArrayList<>();
 		for (final BoogieVar bv : vars) {
 			if (bv instanceof BoogieOldVar && !oldVarsOfModifiableGlobals.contains(bv)) {
@@ -320,7 +316,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return conjunction;
 	}
 	
-	private Term oldVarsEquality(BoogieOldVar oldVar) {
+	private Term oldVarsEquality(final BoogieOldVar oldVar) {
 		assert oldVar.isOldvar();
 		final BoogieVar nonOldVar = oldVar.getNonOldVar();
 		final Term equality = mManagedScript.term(this, "=", oldVar.getDefaultConstant(), 
@@ -343,7 +339,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	protected LBool assertCodeBlock(IAction act) {
+	protected LBool assertCodeBlock(final IAction act) {
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
 		}
@@ -435,7 +431,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	protected LBool assertHierPred(IPredicate p) {
+	protected LBool assertHierPred(final IPredicate p) {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedAction != null : "assert Return first";
 		assert mAssertedAction instanceof IReturnAction : "assert Return first";
@@ -495,9 +491,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * c_g_hier is the constant for the nonOldVar g at the position of the
 	 * hierarchical predecessor.
 	 */
-	private Collection<Term> constructCalleeNonModOldVarsEquality(Set<BoogieVar> vars,
-			Set<BoogieVar> modifiableGlobalsCaller,
-			Set<BoogieVar> modifiableGlobalsCallee) {
+	private Collection<Term> constructCalleeNonModOldVarsEquality(final Set<BoogieVar> vars,
+			final Set<BoogieVar> modifiableGlobalsCaller,
+			final Set<BoogieVar> modifiableGlobalsCallee) {
 		if (!modifiableGlobalsCallee.containsAll(modifiableGlobalsCaller)) {
 			final boolean test = true;
 		}
@@ -513,7 +509,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				if (modifiableGlobalsCaller.contains(bnov) && 
 						!modifiableGlobalsCallee.contains(bnov)) {
 					final Term hierConst = getOrConstructHierConstant(bnov);
-					final Term conjunct = SmtUtils.binaryEquality(mBoogie2Smt.getScript(), bv.getDefaultConstant(), hierConst);
+					final Term conjunct = SmtUtils.binaryEquality(mManagedScript.getScript(), bv.getDefaultConstant(), hierConst);
 					conjunction.add(conjunct);
 				}
 			}
@@ -532,7 +528,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	private LBool assertPostcond_Internal(IPredicate p) {
+	private LBool assertPostcond_Internal(final IPredicate p) {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedPrecond != null;
 		assert mAssertedAction != null;
@@ -566,7 +562,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 
-	private LBool assertPostcond_Call(IPredicate p) {
+	private LBool assertPostcond_Call(final IPredicate p) {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedPrecond != null;
 		assert mAssertedAction != null;
@@ -599,7 +595,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 
 
-	private LBool assertPostcond_Return(IPredicate p) {
+	private LBool assertPostcond_Return(final IPredicate p) {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedPrecond != null;
 		assert (mAssertedAction instanceof IReturnAction) : "Wrong kind of action";
@@ -701,7 +697,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	
-	private Term renameVarsToDefaultConstants(Set<BoogieVar> boogieVars, Term formula) {
+	private Term renameVarsToDefaultConstants(final Set<BoogieVar> boogieVars, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {
@@ -714,7 +710,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	private Term renameVarsToDefaultConstants(Map<BoogieVar, TermVariable> bv2tv, Term formula) {
+	private Term renameVarsToDefaultConstants(final Map<BoogieVar, TermVariable> bv2tv, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : bv2tv.keySet()) {
@@ -727,7 +723,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	private Term renameVarsToPrimedConstants(Set<BoogieVar> boogieVars, Term formula) {
+	private Term renameVarsToPrimedConstants(final Set<BoogieVar> boogieVars, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {
@@ -740,7 +736,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 
-	private Term renameVarsToHierConstants(Set<BoogieVar> boogieVars, Term formula) {
+	private Term renameVarsToHierConstants(final Set<BoogieVar> boogieVars, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {
@@ -752,7 +748,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
-	private Term renameVarsToHierConstants(Map<BoogieVar, TermVariable> bv2tv, Term formula) {
+	private Term renameVarsToHierConstants(final Map<BoogieVar, TermVariable> bv2tv, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : bv2tv.keySet()) {
@@ -764,8 +760,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
-	private Term renameAuxVarsToCorrespondingConstants(Map<TermVariable, Term> auxVars,
-			Term formula) {
+	private Term renameAuxVarsToCorrespondingConstants(final Map<TermVariable, Term> auxVars,
+			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final Entry<TermVariable, Term> entry : auxVars.entrySet()) {
@@ -780,7 +776,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 
-	private Term getOrConstructHierConstant(BoogieVar bv) {
+	private Term getOrConstructHierConstant(final BoogieVar bv) {
 		Term preHierConstant = mHierConstants.get(bv);
 		if (preHierConstant == null) {
 			final String name = "c_" + bv.getTermVariable().getName() + "_Hier";
@@ -799,9 +795,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * to c_g, where c_g is the default constant for g.
 	 */
 	private Term renameNonModifiableNonOldGlobalsToDefaultConstants(
-			Set<BoogieVar> boogieVars, 
-			Set<BoogieVar> modifiableGlobals,
-			Term formula) {
+			final Set<BoogieVar> boogieVars, 
+			final Set<BoogieVar> modifiableGlobals,
+			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {
@@ -827,9 +823,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * default constants of g. 
 	 */
 	private Term renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
-			Set<BoogieVar> boogieVars, 
-			Set<BoogieVar> modifiableGlobals,
-			Term formula) {
+			final Set<BoogieVar> boogieVars, 
+			final Set<BoogieVar> modifiableGlobals,
+			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {
@@ -851,9 +847,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	private Term renameNonModifiableGlobalsToDefaultConstants(
-			Map<BoogieVar,TermVariable> boogieVars, 
-			Set<BoogieVar> modifiableGlobals,
-			Term formula) {
+			final Map<BoogieVar,TermVariable> boogieVars, 
+			final Set<BoogieVar> modifiableGlobals,
+			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars.keySet()) {
@@ -881,8 +877,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	private Term renameGlobalsAndOldVarsToNonOldDefaultConstants(
-			Set<BoogieVar> boogieVars, 
-			Term formula) {
+			final Set<BoogieVar> boogieVars, 
+			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final BoogieVar bv : boogieVars) {

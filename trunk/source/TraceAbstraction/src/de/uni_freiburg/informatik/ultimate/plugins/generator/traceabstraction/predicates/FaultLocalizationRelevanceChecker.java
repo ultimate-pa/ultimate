@@ -69,7 +69,7 @@ public class FaultLocalizationRelevanceChecker {
 		public FaultLocalizationHoareTripleChecker(ManagedScript managedScript, 
 				ModifiableGlobalVariableManager modGlobVarManager,
 				Boogie2SMT boogie2smt) {
-			super(managedScript, modGlobVarManager, boogie2smt);
+			super(managedScript, modGlobVarManager);
 		}
 		
 		@Override

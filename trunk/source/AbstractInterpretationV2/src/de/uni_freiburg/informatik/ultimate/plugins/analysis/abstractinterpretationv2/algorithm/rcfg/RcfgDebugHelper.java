@@ -56,8 +56,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock>, LOC
 		mScript = rootAnnot.getScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnot.getBoogie2SMT();
-		mHTC = new IncrementalHoareTripleChecker(rootAnnot.getManagedScript(), rootAnnot.getModGlobVarManager(),
-				mBoogie2Smt);
+		mHTC = new IncrementalHoareTripleChecker(rootAnnot.getManagedScript(), rootAnnot.getModGlobVarManager());
 	}
 
 	@Override

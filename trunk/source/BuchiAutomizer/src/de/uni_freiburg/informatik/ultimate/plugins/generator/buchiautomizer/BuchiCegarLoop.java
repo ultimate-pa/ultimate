@@ -803,7 +803,7 @@ public class BuchiCegarLoop {
 
 		final ModifiableGlobalVariableManager modGlobVarManager = mRootNode.getRootAnnot().getModGlobVarManager();
 		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(
-				mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager, mSmtManager.getBoogie2Smt());
+				mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager);
 		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager,
 				traceChecker.getPredicateUnifier(), mSmtManager);
 
@@ -840,7 +840,7 @@ public class BuchiCegarLoop {
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert (new InductivityCheck(mServices,
 				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager, mSmtManager.getBoogie2Smt())))
+						mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager)))
 								.getResult();
 		mAbstraction = diff.getResult();
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
@@ -866,7 +866,7 @@ public class BuchiCegarLoop {
 		// "Interpolant automaton broken!";
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-						mRootNode.getRootAnnot().getModGlobVarManager(), mSmtManager.getBoogie2Smt()))).getResult();
+						mRootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement, Expression> constructTAResult(

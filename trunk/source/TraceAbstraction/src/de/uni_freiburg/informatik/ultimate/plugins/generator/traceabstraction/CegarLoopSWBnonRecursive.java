@@ -330,7 +330,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 
 		assert (new InductivityCheck(mServices,
 				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
+						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
 								.getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());

@@ -451,7 +451,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		assert (accepts(mServices, mInterpolAutomaton, mCounterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(mServices,
 				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
+						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
 								.getResult();
 	}
 
@@ -594,7 +594,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						}
 						assert (new InductivityCheck(mServices, test, false, true,
 								new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-										mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+										mModGlobVarManager))).getResult();
 					}
 					break;
 				case EAGER:
@@ -630,7 +630,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					}
 					assert (new InductivityCheck(mServices, test, false, true,
 							new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-									mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+									mModGlobVarManager))).getResult();
 				}
 					break;
 				default:
@@ -749,8 +749,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			solverHtc = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager,
-					smtManager.getBoogie2Smt());
+			solverHtc = new IncrementalHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager);
 			break;
 		default:
 			throw new AssertionError("unknown value");
@@ -1011,7 +1010,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		if (mComputeHoareAnnotation) {
 			assert (new InductivityCheck(mServices, dia, false, true, new IncrementalHoareTripleChecker(
-					mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
+					mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
 							.getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
