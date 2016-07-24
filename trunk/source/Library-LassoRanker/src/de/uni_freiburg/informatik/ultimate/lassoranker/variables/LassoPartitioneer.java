@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -83,17 +82,15 @@ public class LassoPartitioneer {
 	private final Set<RankVar> mAllRankVars = new HashSet<RankVar>();
 	private final Script mScript;
 	private final List<LassoUnderConstruction> mNewLassos = new ArrayList<>();
-	private final Boogie2SMT mBoogie2Smt;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	
 	public LassoPartitioneer(final IUltimateServiceProvider services, 
-			final Boogie2SMT boogie2smt, 
+			final IFreshTermVariableConstructor freshVarConstructor, 
 			final Script script, final LassoUnderConstruction lasso, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mBoogie2Smt = boogie2smt;
-		mFreshTermVariableConstructor = boogie2smt.getVariableManager();
+		mFreshTermVariableConstructor = freshVarConstructor;
 		mScript = script;
 		mLasso = lasso;
 		this.mXnfConversionTechnique = xnfConversionTechnique;
