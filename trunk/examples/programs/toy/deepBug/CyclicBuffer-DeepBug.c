@@ -15,7 +15,7 @@ extern unsigned char getInitialPosition();
 extern int getNextValue();
 
 int main() {
-    unsigned char pos = 1;
+    unsigned char pos = getInitialPosition() % 2 + 1;
     int a[256];
     while(1) {
         a[pos] = getNextValue();
