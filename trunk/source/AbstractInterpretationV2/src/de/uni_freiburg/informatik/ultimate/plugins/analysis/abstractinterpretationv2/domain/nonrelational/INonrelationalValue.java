@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public interface INonrelationalValue<V extends INonrelationalValue<V>> {
@@ -15,13 +16,33 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	
 	boolean isBottom();
 	
-	V intersect (V other);
+	V intersect (final V other);
 	
-	V merge (V other);
+	V merge (final V other);
 	
-	boolean isEqualTo(V other);
+	boolean isEqualTo(final V other);
 	
 	Term getTerm(final Script script, final Sort sort, final Term var);
 	
-	boolean isContainedIn(V otherValue);
+	boolean isContainedIn(final V otherValue);
+	
+	V add(final V other);
+	
+	V subtract(final V other);
+	
+	V multiply(final V other);
+	
+	V integerDivide(final V other);
+	
+	V divide(final V other);
+	
+	V modulo(final V other, final boolean isInteger);
+	
+	V greaterThan(final V other);
+
+	BooleanValue isGreaterThan(final V other);
+	
+	V greaterOrEqual(final V other);
+	
+	BooleanValue isLessOrEqual(final V other);
 }
