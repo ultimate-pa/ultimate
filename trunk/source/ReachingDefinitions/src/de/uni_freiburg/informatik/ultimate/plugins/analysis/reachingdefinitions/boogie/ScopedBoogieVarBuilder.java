@@ -30,13 +30,13 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 
 public class ScopedBoogieVarBuilder {
 

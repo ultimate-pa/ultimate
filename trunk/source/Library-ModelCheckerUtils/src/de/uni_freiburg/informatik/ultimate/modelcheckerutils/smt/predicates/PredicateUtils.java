@@ -35,9 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -48,6 +45,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {

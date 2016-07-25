@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 
 /**
  * Represents a set of program states.

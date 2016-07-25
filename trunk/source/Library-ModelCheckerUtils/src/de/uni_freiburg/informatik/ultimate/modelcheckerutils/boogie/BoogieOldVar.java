@@ -3,87 +3,81 @@
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE Core.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  * 
- * The ULTIMATE Core is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE Core is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Core, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 
 /**
- * Variable in a boogie program. The procedure field of global variables is null.
- * Only global variables can be old variables. Two BoogieVars are equivalent if 
- * they have the same identifier, same procedure, same old-flag. Equivalence
- * does not depend on the IType. We expect that two equivalent BoogieVars with
- * different ITypes never occur in the same program. 
+ * See comment in GlobalBoogieVar.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalProgramVar {
+public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProgramOldVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
-	private final String mProcedure;
-	
+
+	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
-	
-	
-	public LocalBoogieVar(final String identifier, final String procedure, final IType iType, 
-			final TermVariable tv,
-			final ApplicationTerm defaultConstant,
-			final ApplicationTerm primedContant) {
+
+	public BoogieOldVar(final String identifier, final IType iType, final boolean oldvar, final TermVariable tv,
+			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
-		mProcedure = procedure;
 		mHashCode = computeHashCode();
 	}
-	
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramLocalVar_Backpu#getProcedure()
-	 */
-	@Override
-	public String getProcedure() {
-		return mProcedure;
-	}
-	@Override
-	public boolean isGlobal() {
-		return false;
-	}
+
 	@Override
 	public boolean isOldvar() {
-		return false;
+		return true;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar_Backupt#getNonOldVar()
+	 */
+	@Override
+	public IProgramNonOldVar getNonOldVar() {
+		return mNonOldVar;
+	}
+
+	public void setNonOldVar(final IProgramNonOldVar nonOldVar) {
+		mNonOldVar = nonOldVar;
+	}
+
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
+		result = prime * result + ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
 		result = prime * result + (isOldvar() ? 1231 : 1237);
-		result = prime * result
-				+ ((getProcedure() == null) ? 0 : getProcedure().hashCode());
+		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
 		return result;
 	}
 
@@ -91,7 +85,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -123,8 +117,4 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		}
 		return true;
 	}
-	
-
-	
-
 }

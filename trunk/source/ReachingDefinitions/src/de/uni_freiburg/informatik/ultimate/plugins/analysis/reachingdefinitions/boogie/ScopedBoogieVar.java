@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 
 /***
  * Represents a unique Boogie variable based on its declaration.  

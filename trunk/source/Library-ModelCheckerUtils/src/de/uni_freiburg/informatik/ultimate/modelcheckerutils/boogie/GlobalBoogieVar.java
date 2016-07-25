@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 

@@ -37,10 +37,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 
 /**
  * Basic abstract class for composite edges (Conjunction or Disjunction),

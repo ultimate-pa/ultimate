@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
