@@ -699,34 +699,42 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	@Override
 	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
 		final String smtFunctionName;
-		final String suffixedFunctionName;
 		final CPrimitive type;
-		if (name.equals("NAN") || name.equals("nan")) {
-			smtFunctionName = "NaN";
-			suffixedFunctionName = "NaN_d";
+		if (name.equals("INFINITY") || name.equals("inf")) {
+			smtFunctionName = SMT_LIB_inf;
 			type = new CPrimitive(PRIMITIVE.DOUBLE);
-		} else if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
-			smtFunctionName = "+oo";
-			suffixedFunctionName = "+oo_d";
+		} else if (name.equals("NAN") || name.equals("nan")) {
+			smtFunctionName = SMT_LIB_NAN;
 			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("nanl")){
-			smtFunctionName = "NaN";
-			suffixedFunctionName = "NaN_l";
+			smtFunctionName = SMT_LIB_NAN;
 			type = new CPrimitive(PRIMITIVE.LONGDOUBLE);
 		} else if (name.equals("nanf")){
-			smtFunctionName = "NaN";
-			suffixedFunctionName = "NaN_f";
+			smtFunctionName = SMT_LIB_NAN;
 			type = new CPrimitive(PRIMITIVE.FLOAT);
 		} else {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
+		declareFloatConstant(loc, smtFunctionName, type);
+		final FunctionApplication func = new FunctionApplication(loc,  getBoogieFunctionName(smtFunctionName, type), new Expression[]{});
+		return new ExpressionResult(new RValue(func, type));
+	}
+	
+	public static final String SMT_LIB_NAN = "NaN";
+	public static final String SMT_LIB_inf = "+oo";
+
+	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 		final Attribute[] attributes = generateAttributes(loc, smtFunctionName, new int[]{fps.getExponent(), fps.getSignificant() });
 		final ASTType asttype = mTypeHandler.ctype2asttype(loc, type);
-		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype);
-		final FunctionApplication func = new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, new Expression[]{});
-		return new ExpressionResult(new RValue(func, type));
+		getFunctionDeclarations().declareFunction(loc, getBoogieFunctionName(smtFunctionName, type), attributes, asttype);
 	}
+	
+	private static String getBoogieFunctionName(final String smtLibFunctionName, final CPrimitive type) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + type;
+	}
+	
+	
 
 	@Override
 	public Expression getRoundingMode() {

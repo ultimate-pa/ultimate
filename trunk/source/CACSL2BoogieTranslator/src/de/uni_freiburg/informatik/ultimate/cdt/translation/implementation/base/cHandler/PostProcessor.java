@@ -623,9 +623,12 @@ public class PostProcessor {
 					&& !cPrimitive0.isComplexType()) {
 				
 				if (!overapproximateFloat) {
+					final BitvectorTranslation bt = ((BitvectorTranslation) expressionTranslation);
 					// declare floating point constructors here because we might 
 					// always need them for our backtranslation
-					((BitvectorTranslation) expressionTranslation).declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+					bt.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_inf, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN, new CPrimitive(cPrimitive));
 				}
 
 				final Attribute[] attributes;
