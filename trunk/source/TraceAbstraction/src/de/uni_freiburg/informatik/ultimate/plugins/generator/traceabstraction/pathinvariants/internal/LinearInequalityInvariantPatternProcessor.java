@@ -29,6 +29,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -744,7 +746,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Script script = smtManager.getScript();
-		final Term zero = script.numeral(BigInteger.ZERO);
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -754,10 +755,12 @@ public final class LinearInequalityInvariantPatternProcessor
 				final Term affineFunctionTerm = inequality.getAffineFunction(
 						valuation).asTerm(script);
 				if (inequality.isStrict()) {
-					inequalities.add(SmtUtils.less(script, zero,
+					inequalities.add(SmtUtils.less(script, 
+							constructZero(script, affineFunctionTerm.getSort()),
 							affineFunctionTerm));
 				} else {
-					inequalities.add(SmtUtils.leq(script, zero,
+					inequalities.add(SmtUtils.leq(script,
+							constructZero(script, affineFunctionTerm.getSort()),
 							affineFunctionTerm));
 				}
 			}
@@ -765,6 +768,16 @@ public final class LinearInequalityInvariantPatternProcessor
 					.add(SmtUtils.and(smtManager.getScript(), inequalities));
 		}
 		return SmtUtils.or(smtManager.getScript(), conjunctions);
+	}
+	
+	private static Term constructZero(final Script script, final Sort sort) {
+		if (sort.getRealSort().getName().equals("Int")) {
+			return script.numeral(BigInteger.ZERO);
+		} else if (sort.getRealSort().getName().equals("Real")) {
+			return script.decimal(BigDecimal.ZERO);
+		} else {
+			throw new IllegalArgumentException("unsupported sort " + sort);
+		}
 	}
 
 	/**
