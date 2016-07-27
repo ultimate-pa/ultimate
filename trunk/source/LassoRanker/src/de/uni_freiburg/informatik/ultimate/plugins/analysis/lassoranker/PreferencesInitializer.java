@@ -162,7 +162,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						LABEL_termination_analysis,
 						termination_settings.analysis,
 						PreferenceType.Combo,
-						AnalysisType.allChoices()),
+						AnalysisType.values()),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_numstrict_invariants,
 						termination_settings.numstrict_invariants,
