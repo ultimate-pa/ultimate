@@ -76,7 +76,7 @@ class Executor {
 
 	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
-					throws IOException {
+			throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSolverCmd = solverCommand;
@@ -87,10 +87,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		// mLogger = ILogger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
-		// TODO:
-		// Let all processes terminate when the toolchain terminates
 		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		if (mProcess == null) {
