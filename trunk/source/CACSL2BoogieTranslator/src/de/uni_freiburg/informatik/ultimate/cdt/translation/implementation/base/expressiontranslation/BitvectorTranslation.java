@@ -124,32 +124,22 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			
 			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 			final Expression[] arguments;
-			final String functionName;
-			
+			final String smtFunctionName;
 			if (value.compareTo(BigDecimal.ZERO) == 0) {
+				smtFunctionName = "+zero";
 				final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
 				final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
 				final Expression[] indices = new Expression[]{eb, sb};
 				final Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-						new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-				if (type.getType() == PRIMITIVE.FLOAT) {
-					functionName = "zeroFloat";
-				} else if (type.getType() == PRIMITIVE.DOUBLE) {
-					functionName = "zeroDouble";
-				} else if (type.getType() == PRIMITIVE.LONGDOUBLE) {
-					functionName = "zeroLongDouble";
-				} else {
-					throw new IllegalArgumentException();
-				}
-				mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, type);
+						new Expression[]{new StringLiteral(loc, smtFunctionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+				mFunctionDeclarations.declareFunction(loc, getBoogieFunctionName(smtFunctionName, type), attributes, false, type);
 				arguments = new Expression[] {};
 			} else {
-				functionName = SFO.AUXILIARY_FUNCTION_PREFIX + "to_fp" + type;
+				smtFunctionName = "to_fp";
 				final Expression realValue = new RealLiteral(loc, value.toString());
 				arguments = new Expression[] {getRoundingMode(), realValue};
 			}
-			
-			return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
+			return new FunctionApplication(loc, getBoogieFunctionName(smtFunctionName, type), arguments);
 		}
 	}
 
@@ -730,8 +720,17 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		getFunctionDeclarations().declareFunction(loc, getBoogieFunctionName(smtFunctionName, type), attributes, asttype);
 	}
 	
-	private static String getBoogieFunctionName(final String smtLibFunctionName, final CPrimitive type) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + type;
+	/**
+	 * Build the name of a Boogie function for a given SMT-LIB function name
+	 * and a C type. Since SMT-LIB allows overloading of functions but
+	 * Boogie does not, we have to construct unique identifiers.
+	 * We do this by appending the C type.
+	 * By convention we use an additional prefix for each such function.
+	 * This should avoid that we have name clashes with functions that
+	 * occur in the C program.
+	 */
+	private static String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + smtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + type;
 	}
 	
 	
