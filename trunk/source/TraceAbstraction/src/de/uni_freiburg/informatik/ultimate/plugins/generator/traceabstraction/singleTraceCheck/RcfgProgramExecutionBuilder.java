@@ -151,9 +151,7 @@ public class RcfgProgramExecutionBuilder {
 		final Map<IProgramVar, Expression> result = new HashMap<IProgramVar, Expression>();
 		final Set<IProgramVar> vars = mRelevantVariables.getForwardRelevantVariables()[position + 1];
 		for (final IProgramVar bv : vars) {
-			if (bv.getTermVariable().getSort().isNumericSort()
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("Bool")
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")) {
+			if (TraceCheckerUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				final int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
 				final Expression value = mvar2pos2value.get(bv).get(assignPos);
 				assert value != null;
@@ -162,6 +160,7 @@ public class RcfgProgramExecutionBuilder {
 		}
 		return result;
 	}
+	
 
 	private RcfgProgramExecution computeRcfgProgramExecution() {
 		final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
@@ -193,7 +192,7 @@ public class RcfgProgramExecutionBuilder {
 			partialProgramStateMapping.put(i, pps);
 		}
 		return new RcfgProgramExecution(mTrace.lettersAsList(), partialProgramStateMapping, mBranchEncoders);
-
 	}
+	
 
 }
