@@ -58,13 +58,13 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	
 	V inverseEquality(final V otherValue, final V oldValue);
 	
-	V inverseLessOrEqual(final V otherValue, final V oldValue);
+	V inverseLessOrEqual(final V otherValue, final V oldValue, final boolean isLeft);
 	
-	V inverseLessThan(final V otherValue, final V oldValue);
+	V inverseLessThan(final V otherValue, final V oldValue, final boolean isLeft);
 	
-	V inverseGreaterOrEqual(final V otherValue, final V oldValue);
+	V inverseGreaterOrEqual(final V otherValue, final V oldValue, final boolean isLeft);
 	
-	V inverseGreaterThan(final V otherValue, final V oldValue);
+	V inverseGreaterThan(final V otherValue, final V oldValue, final boolean isLeft);
 	
 	V inverseNotEqual(final V otherValue, final V oldValue);
 

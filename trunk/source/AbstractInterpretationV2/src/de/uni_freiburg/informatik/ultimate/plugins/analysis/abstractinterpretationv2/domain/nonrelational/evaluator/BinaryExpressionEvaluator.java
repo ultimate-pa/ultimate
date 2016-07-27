@@ -265,25 +265,24 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case COMPGEQ:
 				case COMPLT:
 				case COMPLEQ:
-					throw new UnsupportedOperationException("Not implemented yet.");
 				case ARITHPLUS:
 				case ARITHMINUS:
 				case ARITHMUL:
 				case ARITHDIV:
 				case ARITHMOD:
-					final VALUE newArithValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(),
+					final VALUE newValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(),
 					        true);
-					final VALUE newArithValueRight = computeNewValue(referenceValue, right.getValue(), left.getValue(),
+					final VALUE newValueRight = computeNewValue(referenceValue, right.getValue(), left.getValue(),
 					        false);
 
-					final NonrelationalEvaluationResult<VALUE> inverseResultArithLeft = new NonrelationalEvaluationResult<VALUE>(
-					        newArithValueLeft, referenceBool);
-					final NonrelationalEvaluationResult<VALUE> inverseResultArithRight = new NonrelationalEvaluationResult<VALUE>(
-					        newArithValueRight, referenceBool);
+					final NonrelationalEvaluationResult<VALUE> inverseResultLeft = new NonrelationalEvaluationResult<VALUE>(
+					        newValueLeft, referenceBool);
+					final NonrelationalEvaluationResult<VALUE> inverseResultRight = new NonrelationalEvaluationResult<VALUE>(
+					        newValueRight, referenceBool);
 
-					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultArithLeft,
+					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultLeft,
 					        currentState);
-					final List<STATE> rightInverseArith = mRightSubEvaluator.inverseEvaluate(inverseResultArithRight,
+					final List<STATE> rightInverseArith = mRightSubEvaluator.inverseEvaluate(inverseResultRight,
 					        currentState);
 
 					for (final STATE le : leftInverseArith) {
@@ -362,16 +361,16 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			newValue = referenceValue.inverseEquality(otherValue, oldValue);
 			break;
 		case COMPLEQ:
-			newValue = referenceValue.inverseLessOrEqual(otherValue, oldValue);
+			newValue = referenceValue.inverseLessOrEqual(otherValue, oldValue, isLeft);
 			break;
 		case COMPLT:
-			newValue = referenceValue.inverseLessThan(otherValue, oldValue);
+			newValue = referenceValue.inverseLessThan(otherValue, oldValue, isLeft);
 			break;
 		case COMPGEQ:
-			newValue = referenceValue.inverseGreaterOrEqual(otherValue, oldValue);
+			newValue = referenceValue.inverseGreaterOrEqual(otherValue, oldValue, isLeft);
 			break;
 		case COMPGT:
-			newValue = referenceValue.inverseGreaterThan(otherValue, oldValue);
+			newValue = referenceValue.inverseGreaterThan(otherValue, oldValue, isLeft);
 			break;
 		case COMPNEQ:
 			newValue = referenceValue.inverseNotEqual(otherValue, oldValue);
