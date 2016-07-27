@@ -39,6 +39,10 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	V modulo(final V other, final boolean isInteger);
 	
 	V greaterThan(final V other);
+	
+	BooleanValue compareEquality(final V firstOther, final V secondOther);
+	
+	BooleanValue compareInequality(final V firstOther, final V secondOther);
 
 	BooleanValue isGreaterThan(final V other);
 	
@@ -56,16 +60,19 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	
 	V inverseModulo(final V referenceValue, final V oldValue, final boolean isLeft);
 	
-	V inverseEquality(final V otherValue, final V oldValue);
+	V inverseEquality(final V oldValue, final V referenceValue);
 	
-	V inverseLessOrEqual(final V otherValue, final V oldValue, final boolean isLeft);
+	V inverseLessOrEqual(final V oldValue, final boolean isLeft);
 	
-	V inverseLessThan(final V otherValue, final V oldValue, final boolean isLeft);
+	V inverseLessThan(final V oldValue, final boolean isLeft);
 	
-	V inverseGreaterOrEqual(final V otherValue, final V oldValue, final boolean isLeft);
+	V inverseGreaterOrEqual(final V oldValue, final boolean isLeft);
 	
-	V inverseGreaterThan(final V otherValue, final V oldValue, final boolean isLeft);
+	V inverseGreaterThan(final V oldValue, final boolean isLeft);
 	
-	V inverseNotEqual(final V otherValue, final V oldValue);
+	V inverseNotEqual(final V oldValue, final V referenceValue);
 
+	boolean canHandleReals();
+	
+	boolean canHandleModulo();
 }

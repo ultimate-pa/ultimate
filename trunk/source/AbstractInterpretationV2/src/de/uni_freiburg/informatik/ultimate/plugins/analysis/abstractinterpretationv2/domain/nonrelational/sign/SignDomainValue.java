@@ -248,4 +248,154 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 	public boolean isContainedIn(SignDomainValue otherValue) {
 		throw new UnsupportedOperationException("not implemented");
 	}
+
+	@Override
+	public SignDomainValue add(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue subtract(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue multiply(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue integerDivide(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue divide(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue modulo(SignDomainValue other, boolean isInteger) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue greaterThan(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BooleanValue isGreaterThan(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue greaterOrEqual(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BooleanValue isGreaterOrEqual(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue lessThan(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BooleanValue isLessThan(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue lessOrEqual(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BooleanValue isLessOrEqual(SignDomainValue other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseModulo(SignDomainValue referenceValue, SignDomainValue oldValue, boolean isLeft) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseEquality(SignDomainValue oldValue, SignDomainValue referenceValue) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseLessOrEqual(SignDomainValue oldValue, boolean isLeft) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseLessThan(SignDomainValue oldValue, boolean isLeft) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseGreaterOrEqual(SignDomainValue oldValue, boolean isLeft) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseGreaterThan(SignDomainValue oldValue, boolean isLeft) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SignDomainValue inverseNotEqual(SignDomainValue oldValue, SignDomainValue referenceValue) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean canHandleReals() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean canHandleModulo() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public BooleanValue compareEquality(SignDomainValue firstOther, SignDomainValue secondOther) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BooleanValue compareInequality(SignDomainValue firstOther, SignDomainValue secondOther) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

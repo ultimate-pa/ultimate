@@ -144,11 +144,7 @@ public class CongruenceBinaryExpressionEvaluator
 							returnBool = new BooleanValue(value1.value().equals(value2.value()));
 							break;
 						}
-						if (returnValue.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue();
-						}
+						returnBool = new BooleanValue();
 					}
 					break;
 				// !=, <, >, ... can only be computed for constants
@@ -201,8 +197,7 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {

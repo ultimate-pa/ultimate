@@ -1,3 +1,31 @@
+/*
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ * 
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
+ * containing parts covered by the terms of the Eclipse Public License, the 
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
@@ -18,6 +46,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * Standard binary expression evaluator for Abstract Interpretation for Nonrelational Domain States.
+ * 
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ * @param <VALUE>
+ *            The value type of the domain.
+ * @param <STATE>
+ *            The state type of the domain.
+ */
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
         implements INAryEvaluator<VALUE, STATE, CodeBlock> {
 
@@ -33,7 +71,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private Operator mOperator;
 
-	protected BinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type, final int maxParallelStates,
+	public BinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type, final int maxParallelStates,
 	        final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
@@ -126,18 +164,23 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						if (returnValue.isEqualTo(res1.getValue()) && returnValue.isEqualTo(res2.getValue())) {
-							returnBool = new BooleanValue(true);
-						} else {
-							returnBool = new BooleanValue();
-						}
+						returnBool = returnValue.compareEquality(res1.getValue(), res2.getValue());
 					}
 					break;
 				case COMPNEQ:
-					// TODO: Move to interface?
-					throw new UnsupportedOperationException(
-					        "Not equals expressions should have been removed during expression normalization.");
+					// Don't do anything with the return value here. Just check for inequality and return the
+					// appropriate boolean value.
+					// TODO it might be necessary to overthink this behavior for different other abstract domains!
+					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+						returnBool = returnValue.compareInequality(res1.getValue(), res2.getValue());
+					}
+					break;
 				case COMPGT:
+					if (!res1.getValue().canHandleReals()) {
+						mLogger.warn(
+						        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+					}
+
 					returnValue = res1.getValue().greaterThan(res2.getValue());
 
 					if (returnValue.isBottom()) {
@@ -146,12 +189,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 						returnBool = res1.getValue().isLessThan(res2.getValue());
 					}
 					break;
-				// TODO: create interface method for LessThan in intervals as well.
-				/*
-				 * mLogger.warn(
-				 * "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead."
-				 * );
-				 */
 				case COMPGEQ:
 					returnValue = res1.getValue().greaterOrEqual(res2.getValue());
 
@@ -159,10 +196,14 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 						returnBool = new BooleanValue(false);
 					} else {
 						returnBool = res1.getValue().isLessOrEqual(res2.getValue());
-						// TODO: Interval: Move less or equal handling from binary exp. eval. to interval domain value!
 					}
 					break;
 				case COMPLT:
+					if (!res1.getValue().canHandleReals()) {
+						mLogger.warn(
+						        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+					}
+
 					returnValue = res1.getValue().lessThan(res2.getValue());
 
 					if (returnValue.isBottom()) {
@@ -259,8 +300,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 					break;
 				case COMPNEQ:
-					throw new UnsupportedOperationException(
-					        "Inequality expressions should have been removed during expression normalization.");
 				case COMPGT:
 				case COMPGEQ:
 				case COMPLT:
@@ -270,8 +309,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case ARITHMUL:
 				case ARITHDIV:
 				case ARITHMOD:
-					final VALUE newValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(),
-					        true);
+					final VALUE newValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(), true);
 					final VALUE newValueRight = computeNewValue(referenceValue, right.getValue(), left.getValue(),
 					        false);
 
@@ -353,27 +391,34 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
-			// TODO Move mod to interval domain value
-			// TODO logger.warn!
+			if (!otherValue.canHandleModulo()) {
+				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+			}
 			newValue = otherValue.inverseModulo(referenceValue, oldValue, isLeft);
 			break;
-		case COMPEQ:
-			newValue = referenceValue.inverseEquality(otherValue, oldValue);
-			break;
 		case COMPLEQ:
-			newValue = referenceValue.inverseLessOrEqual(otherValue, oldValue, isLeft);
+			newValue = otherValue.inverseLessOrEqual(oldValue, isLeft);
 			break;
 		case COMPLT:
-			newValue = referenceValue.inverseLessThan(otherValue, oldValue, isLeft);
+			if (!otherValue.canHandleReals()) {
+				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+			}
+			newValue = otherValue.inverseLessThan(oldValue, isLeft);
 			break;
 		case COMPGEQ:
-			newValue = referenceValue.inverseGreaterOrEqual(otherValue, oldValue, isLeft);
+			newValue = otherValue.inverseGreaterOrEqual(oldValue, isLeft);
 			break;
 		case COMPGT:
-			newValue = referenceValue.inverseGreaterThan(otherValue, oldValue, isLeft);
+			if (!otherValue.canHandleReals()) {
+				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+			}
+			newValue = otherValue.inverseGreaterThan(oldValue, isLeft);
+			break;
+		case COMPEQ:
+			newValue = otherValue.inverseEquality(oldValue, referenceValue);
 			break;
 		case COMPNEQ:
-			newValue = referenceValue.inverseNotEqual(otherValue, oldValue);
+			newValue = otherValue.inverseNotEqual(oldValue, referenceValue);
 			break;
 		default:
 			throw new UnsupportedOperationException("Not implemented: " + mOperator);

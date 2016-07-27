@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.BinaryExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalEvaluatorFactory
-		implements IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> {
+        implements IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
@@ -62,7 +63,7 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> createNAryExpressionEvaluator(
-			final int arity, final EvaluatorType type) {
+	        final int arity, final EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -71,12 +72,12 @@ public class IntervalEvaluatorFactory
 			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
 			if (mSettingsEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
-				return new IntervalBinaryExpressionEvaluator(mLogger, type, mMaxParallelStates);
+				return new BinaryExpressionEvaluator<>(mLogger, type, mMaxParallelStates, new IntervalValueFactory());
 			} else if (mSettingsEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
 				throw new UnsupportedOperationException("Optimization evaluator is not implemented, yet.");
 			} else {
 				throw new UnsupportedOperationException(
-						"The evaluator type " + mSettingsEvaluatorType + " is not supported.");
+				        "The evaluator type " + mSettingsEvaluatorType + " is not supported.");
 			}
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
@@ -87,28 +88,28 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> createSingletonValueExpressionEvaluator(
-			final String value, final Class<?> valueType) {
+	        final String value, final Class<?> valueType) {
 		assert value != null;
 		return new IntervalSingletonValueExpressionEvaluator(
-				new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
+		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> createSingletonVariableExpressionEvaluator(
-			final IBoogieVar variableName) {
+	        final IBoogieVar variableName) {
 		assert variableName != null;
 		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> createSingletonLogicalValueExpressionEvaluator(
-			final BooleanValue value) {
+	        final BooleanValue value) {
 		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> createFunctionEvaluator(
-			final String functionName, final int inputParamCount) {
+	        final String functionName, final int inputParamCount) {
 		return new IntervalFunctionEvaluator(functionName, inputParamCount);
 	}
 
