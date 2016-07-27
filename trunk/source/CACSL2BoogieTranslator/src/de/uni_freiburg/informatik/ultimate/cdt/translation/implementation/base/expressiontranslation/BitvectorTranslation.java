@@ -688,7 +688,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
 		final String smtFunctionName;
 		final CPrimitive type;
-		if (name.equals("INFINITY") || name.equals("inf")) {
+		if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
 			smtFunctionName = SMT_LIB_inf;
 			type = new CPrimitive(PRIMITIVE.DOUBLE);
 		} else if (name.equals("NAN") || name.equals("nan")) {
