@@ -403,10 +403,10 @@ public class IntervalBinaryExpressionEvaluator
 					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
 				case COMPGEQ:
 					final IntervalDomainValue leftComputationResultGeq = computeNewValue(null, right.getValue(),
-					        left.getValue(), false);
+					        left.getValue(), true);
 
 					final IntervalDomainValue rightComputationResultGeq = computeNewValue(null, left.getValue(),
-					        right.getValue(), true);
+					        right.getValue(), false);
 
 					// Prepare reference evaluation results for the inverse evaluation.
 					final IntervalDomainEvaluationResult inverseResultGeqLeft = new IntervalDomainEvaluationResult(
@@ -431,10 +431,10 @@ public class IntervalBinaryExpressionEvaluator
 					        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
 				case COMPLEQ:
 					final IntervalDomainValue leftComputationResultLeq = computeNewValue(null, right.getValue(),
-					        left.getValue(), false);
+					        left.getValue(), true);
 
 					final IntervalDomainValue rightComputationResultLeq = computeNewValue(null, left.getValue(),
-					        right.getValue(), true);
+					        right.getValue(), false);
 
 					// Prepare reference evaluation result for the inverse evaluation.
 					final IntervalDomainEvaluationResult inverseResultLeqLeft = new IntervalDomainEvaluationResult(
@@ -552,9 +552,9 @@ public class IntervalBinaryExpressionEvaluator
 			mLogger.warn("Cannot handle COMPLT precisely. Using COMPLEQ over-approximation instead.");
 		case COMPLEQ:
 			if (left) {
-				newValue = new IntervalDomainValue(oldValue.getLower(), new IntervalValue());
-			} else {
 				newValue = new IntervalDomainValue(new IntervalValue(), oldValue.getUpper());
+			} else {
+				newValue = new IntervalDomainValue(oldValue.getLower(), new IntervalValue());
 			}
 			newValue = newValue.intersect(otherValue);
 			break;
@@ -562,9 +562,9 @@ public class IntervalBinaryExpressionEvaluator
 			mLogger.warn("Cannot handle COMPGT precisely. Using COMPGEQ over-approximation instead.");
 		case COMPGEQ:
 			if (left) {
-				newValue = new IntervalDomainValue(new IntervalValue(), oldValue.getUpper());
-			} else {
 				newValue = new IntervalDomainValue(oldValue.getLower(), new IntervalValue());
+			} else {
+				newValue = new IntervalDomainValue(new IntervalValue(), oldValue.getUpper());
 			}
 			newValue = newValue.intersect(otherValue);
 			break;
