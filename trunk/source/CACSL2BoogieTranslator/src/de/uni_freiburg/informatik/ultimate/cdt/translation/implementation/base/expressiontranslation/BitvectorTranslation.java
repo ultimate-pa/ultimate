@@ -377,15 +377,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	private void declareFloatingPointConstructor_FromReal(final ILocation loc, final CPrimitive type) {
-		final String smtLibIdentifier = "to_fp";
-		final String functionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibIdentifier + type;
+		final String smtFunctionName = "to_fp";
 		final ASTType[] paramASTTypes = new ASTType[2];
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
-		final Attribute[] attributes = generateAttributes(loc, smtLibIdentifier, new int[]{fps.getExponent(), fps.getSignificant()});
+		final Attribute[] attributes = generateAttributes(loc, smtFunctionName, new int[]{fps.getExponent(), fps.getSignificant()});
 		final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, type);
-		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, resultASTType, paramASTTypes);
+		mFunctionDeclarations.declareFunction(loc, getBoogieFunctionName(smtFunctionName, type), attributes, resultASTType, paramASTTypes);
 	}
 	
 	private void declareFloatingPointConstructor_FromBitvec(final ILocation loc, final CPrimitive type) {
@@ -527,7 +526,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 		
-		Expression result;
 		boolean isNegated = false;
 		final String funcname;
 		switch (nodeOperator) {
@@ -556,7 +554,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 		declareFloatingPointFunction(loc, funcname, funcname + type1.toString(), true, false, new CPrimitive(PRIMITIVE.BOOL), null, type1, type2);
 		//TODO: evaluate possiblities for boogiefunctionnames
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{exp1, exp2});
+		Expression result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + type1.toString(), new Expression[]{exp1, exp2});
 
 		if (isNegated) {
 			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -850,12 +848,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	
-	private RValue constructSmtFloatClassificationFunction(final ILocation loc, final String smtLibFunctionName , final RValue argument) {
+	private RValue constructSmtFloatClassificationFunction(final ILocation loc, final String smtFunctionName , final RValue argument) {
 		final CPrimitive argumentCType = (CPrimitive) argument.getCType();
-		final String boogieFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + smtLibFunctionName + argumentCType;
+		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, argumentCType);
 		final CPrimitive resultCType = new CPrimitive(PRIMITIVE.INT);
 		final ASTType resultBoogieType = new PrimitiveType(loc, SFO.BOOL);
-		final Attribute[] attributes = generateAttributes(loc, smtLibFunctionName, null);
+		final Attribute[] attributes = generateAttributes(loc, smtFunctionName, null);
 		final ASTType paramBoogieType = mTypeHandler.ctype2asttype(loc, argumentCType);
 		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType, paramBoogieType);
 		final Expression expr = new FunctionApplication(loc, boogieFunctionName, new Expression[]{argument.getValue()});
