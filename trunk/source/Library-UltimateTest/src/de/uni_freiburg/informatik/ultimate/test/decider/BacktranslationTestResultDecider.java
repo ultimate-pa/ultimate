@@ -41,6 +41,7 @@ import org.eclipse.core.runtime.Path;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -82,7 +83,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		final ILogger log = services.getLoggingService().getLogger(BacktranslationTestResultDecider.class);
 		final Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to not contain GenericResult \"Unhandled Backtranslation\" "
-				+ "or ExceptionOrErrorResult, "
+				+ ", ExceptionOrErrorResult or TypeErrorResult, "
 				+ "and that there is a counter example result, and that the contained error trace "
 				+ "matches the given one.");
 
@@ -93,7 +94,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		final List<IResult> results = resultService.getResults().entrySet().stream().flatMap(a -> a.getValue().stream())
 				.collect(Collectors.toList());
 		for (final IResult result : results) {
-			if (result instanceof ExceptionOrErrorResult) {
+			if (result instanceof ExceptionOrErrorResult || result instanceof TypeErrorResult<?>) {
 				setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
 				TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 				return TestResult.FAIL;
