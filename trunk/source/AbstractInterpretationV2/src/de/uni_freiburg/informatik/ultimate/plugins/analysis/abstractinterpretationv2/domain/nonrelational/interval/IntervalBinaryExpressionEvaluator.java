@@ -57,7 +57,8 @@ public class IntervalBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type,final int maxParallelStates) {
+	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type,
+	        final int maxParallelStates) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
@@ -222,8 +223,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -402,15 +402,11 @@ public class IntervalBinaryExpressionEvaluator
 					mLogger.warn(
 					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
 				case COMPGEQ:
-					// Construct interval of the form [lower, \infty) for the right hand side.
-					final IntervalDomainValue rightForLeftGeq = new IntervalDomainValue(right.getValue().getLower(),
-					        new IntervalValue());
-					final IntervalDomainValue leftComputationResultGeq = left.getValue().intersect(rightForLeftGeq);
+					final IntervalDomainValue leftComputationResultGeq = computeNewValue(null, right.getValue(),
+					        left.getValue(), false);
 
-					// Construct interval of the form (-\infty, upper] for the left hand side.
-					final IntervalDomainValue leftForRightGeq = new IntervalDomainValue(new IntervalValue(),
-					        left.getValue().getUpper());
-					final IntervalDomainValue rightComputationResultGeq = right.getValue().intersect(leftForRightGeq);
+					final IntervalDomainValue rightComputationResultGeq = computeNewValue(null, left.getValue(),
+					        right.getValue(), true);
 
 					// Prepare reference evaluation results for the inverse evaluation.
 					final IntervalDomainEvaluationResult inverseResultGeqLeft = new IntervalDomainEvaluationResult(
@@ -434,17 +430,13 @@ public class IntervalBinaryExpressionEvaluator
 					mLogger.warn(
 					        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
 				case COMPLEQ:
-					// Construct interval of the form (-\infty, upper] for the right hand side.
-					final IntervalDomainValue rightForLeftLeq = new IntervalDomainValue(new IntervalValue(),
-					        right.getValue().getUpper());
-					final IntervalDomainValue leftComputationResultLeq = left.getValue().intersect(rightForLeftLeq);
+					final IntervalDomainValue leftComputationResultLeq = computeNewValue(null, right.getValue(),
+					        left.getValue(), false);
 
-					// Construct interval of the form [lower, \infty) for the left hand side.
-					final IntervalDomainValue leftForRightLeq = new IntervalDomainValue(left.getValue().getLower(),
-					        new IntervalValue());
-					final IntervalDomainValue rightComputationResultLeq = right.getValue().intersect(leftForRightLeq);
+					final IntervalDomainValue rightComputationResultLeq = computeNewValue(null, left.getValue(),
+					        right.getValue(), true);
 
-					// Prepare reference evaluation result for the invere evaluation.
+					// Prepare reference evaluation result for the inverse evaluation.
 					final IntervalDomainEvaluationResult inverseResultLeqLeft = new IntervalDomainEvaluationResult(
 					        leftComputationResultLeq, left.getBooleanValue());
 					final IntervalDomainEvaluationResult inverseResultLeqRight = new IntervalDomainEvaluationResult(
@@ -556,17 +548,35 @@ public class IntervalBinaryExpressionEvaluator
 			mLogger.debug("Cannot handle inverse of the modulo operation precisely. Returning old value.");
 			newValue = oldValue;
 			break;
-		case COMPEQ:
-		case COMPLEQ:
 		case COMPLT:
-		case COMPGEQ:
+			mLogger.warn("Cannot handle COMPLT precisely. Using COMPLEQ over-approximation instead.");
+		case COMPLEQ:
+			if (left) {
+				newValue = new IntervalDomainValue(oldValue.getLower(), new IntervalValue());
+			} else {
+				newValue = new IntervalDomainValue(new IntervalValue(), oldValue.getUpper());
+			}
+			newValue = newValue.intersect(otherValue);
+			break;
 		case COMPGT:
+			mLogger.warn("Cannot handle COMPGT precisely. Using COMPGEQ over-approximation instead.");
+		case COMPGEQ:
+			if (left) {
+				newValue = new IntervalDomainValue(new IntervalValue(), oldValue.getUpper());
+			} else {
+				newValue = new IntervalDomainValue(oldValue.getLower(), new IntervalValue());
+			}
+			newValue = newValue.intersect(otherValue);
+			break;
+		case COMPEQ:
 		case COMPNEQ:
 			newValue = referenceValue;
 			break;
 		default:
 			throw new UnsupportedOperationException("Not implemented: " + mOperator);
 		}
+
+		assert newValue != null;
 		return newValue;
 	}
 }
