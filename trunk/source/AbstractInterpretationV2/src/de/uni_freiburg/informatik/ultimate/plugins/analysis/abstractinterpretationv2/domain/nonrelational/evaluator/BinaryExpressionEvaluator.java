@@ -5,18 +5,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, CodeBlock>>
+public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
         implements INAryEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariableSet;
@@ -54,7 +56,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				VALUE returnValue = mNonrelationalValueFactory.ceateTopValue();
+				VALUE returnValue = mNonrelationalValueFactory.createTopValue();
 				BooleanValue returnBool = new BooleanValue();
 
 				switch (mOperator) {
@@ -132,23 +134,27 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 					break;
 				case COMPNEQ:
+					// TODO: Move to interface?
 					throw new UnsupportedOperationException(
 					        "Not equals expressions should have been removed during expression normalization.");
 				case COMPGT:
 					returnValue = res1.getValue().greaterThan(res2.getValue());
-					
+
 					if (returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 					} else {
-						returnBool = res1.getValue().isGreaterThan(res2.getValue());
+						returnBool = res1.getValue().isLessThan(res2.getValue());
 					}
 					break;
-					// TODO: create interface method for LessThan in intervals as well.
-					mLogger.warn(
-					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+				// TODO: create interface method for LessThan in intervals as well.
+				/*
+				 * mLogger.warn(
+				 * "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead."
+				 * );
+				 */
 				case COMPGEQ:
 					returnValue = res1.getValue().greaterOrEqual(res2.getValue());
-					
+
 					if (returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 					} else {
@@ -157,53 +163,328 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 					break;
 				case COMPLT:
-					
+					returnValue = res1.getValue().lessThan(res2.getValue());
+
+					if (returnValue.isBottom()) {
+						returnBool = new BooleanValue(false);
+					} else {
+						returnBool = res1.getValue().isGreaterThan(res2.getValue());
+					}
+					break;
+				case COMPLEQ:
+					returnValue = res1.getValue().lessOrEqual(res2.getValue());
+
+					if (returnValue.isBottom()) {
+						returnBool = new BooleanValue(false);
+					} else {
+						returnBool = res1.getValue().isGreaterOrEqual(res2.getValue());
+					}
+					break;
+				case COMPPO:
+				default:
+					returnBool = new BooleanValue(false);
+					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
+					        + ". Returning current state.");
+					returnValue = mNonrelationalValueFactory.createTopValue();
 				}
+				returnList.add(new NonrelationalEvaluationResult<VALUE>(returnValue, returnBool));
 			}
 		}
-		return null;
+
+		assert !returnList.isEmpty();
+		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
 	}
 
 	@Override
 	public List<STATE> inverseEvaluate(IEvaluationResult<VALUE> computedValue, STATE currentState) {
-		// TODO Auto-generated method stub
-		return null;
+
+		final List<STATE> returnList = new ArrayList<>();
+
+		final VALUE referenceValue = computedValue.getValue();
+		final BooleanValue referenceBool = computedValue.getBooleanValue();
+
+		final List<IEvaluationResult<VALUE>> leftValue = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<VALUE>> rightValue = mRightSubEvaluator.evaluate(currentState);
+
+		for (final IEvaluationResult<VALUE> left : leftValue) {
+			for (final IEvaluationResult<VALUE> right : rightValue) {
+				final List<STATE> returnStates = new ArrayList<>();
+
+				switch (mOperator) {
+				case LOGICAND:
+					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(computedValue, currentState);
+					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(computedValue, currentState);
+
+					for (final STATE le : leftAnd) {
+						for (final STATE ri : rightAnd) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case LOGICOR:
+					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState)
+					        .forEach(leftOr -> returnStates.add(leftOr));
+					mRightSubEvaluator.inverseEvaluate(computedValue, currentState)
+					        .forEach(rightOr -> returnStates.add(rightOr));
+					break;
+				case LOGICIMPLIES:
+					throw new UnsupportedOperationException(
+					        "Implications should have been removed from expressions during expression normalization.");
+				case LOGICIFF:
+					throw new UnsupportedOperationException(
+					        "If and only if expressions should have been removed during expression normalization.");
+				case COMPEQ:
+					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
+					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					        && (intersectBool.getValue() == Value.TOP)) {
+						returnStates.add(currentState);
+						break;
+					}
+
+					final VALUE newLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(), true);
+					final VALUE newRight = computeNewValue(referenceValue, right.getValue(), left.getValue(), false);
+
+					final NonrelationalEvaluationResult<VALUE> leftEvalresult = new NonrelationalEvaluationResult<VALUE>(
+					        newLeft, right.getBooleanValue());
+					final NonrelationalEvaluationResult<VALUE> rightEvalresult = new NonrelationalEvaluationResult<VALUE>(
+					        newRight, left.getBooleanValue());
+
+					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult, currentState);
+					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult, currentState);
+
+					for (final STATE le : leftEq) {
+						for (final STATE ri : rightEq) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case COMPNEQ:
+					throw new UnsupportedOperationException(
+					        "Inequality expressions should have been removed during expression normalization.");
+				case COMPGT:
+				case COMPGEQ:
+				case COMPLT:
+				case COMPLEQ:
+					throw new UnsupportedOperationException("Not implemented yet.");
+				case ARITHPLUS:
+				case ARITHMINUS:
+				case ARITHMUL:
+				case ARITHDIV:
+				case ARITHMOD:
+					final VALUE newArithValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(),
+					        true);
+					final VALUE newArithValueRight = computeNewValue(referenceValue, right.getValue(), left.getValue(),
+					        false);
+
+					final NonrelationalEvaluationResult<VALUE> inverseResultArithLeft = new NonrelationalEvaluationResult<VALUE>(
+					        newArithValueLeft, referenceBool);
+					final NonrelationalEvaluationResult<VALUE> inverseResultArithRight = new NonrelationalEvaluationResult<VALUE>(
+					        newArithValueRight, referenceBool);
+
+					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultArithLeft,
+					        currentState);
+					final List<STATE> rightInverseArith = mRightSubEvaluator.inverseEvaluate(inverseResultArithRight,
+					        currentState);
+
+					for (final STATE le : leftInverseArith) {
+						for (final STATE ri : rightInverseArith) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				default:
+					mLogger.warn("Operator " + mOperator + " not supported. Returning current state");
+					returnStates.add(currentState);
+					break;
+				}
+
+				if (returnStates.isEmpty()) {
+					returnStates.add(currentState);
+				}
+
+				returnList.addAll(returnStates);
+			}
+		}
+
+		assert !returnList.isEmpty();
+		return returnList;
+	}
+
+	private VALUE computeNewValue(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
+	        final boolean isLeft) {
+		VALUE newValue;
+
+		switch (mOperator) {
+		case ARITHPLUS:
+			newValue = referenceValue.subtract(otherValue);
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMINUS:
+			if (isLeft) {
+				newValue = referenceValue.add(otherValue);
+			} else {
+				newValue = otherValue.subtract(referenceValue);
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMUL:
+			if (mEvaluatorType == EvaluatorType.INTEGER) {
+				newValue = referenceValue.integerDivide(otherValue);
+			} else if (mEvaluatorType == EvaluatorType.REAL) {
+				newValue = referenceValue.divide(otherValue);
+			} else {
+				throw new UnsupportedOperationException(
+				        "Division on types other than integers and reals is not defined.");
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHDIV:
+			if (isLeft) {
+				newValue = referenceValue.multiply(otherValue);
+			} else {
+				if (mEvaluatorType == EvaluatorType.INTEGER) {
+					newValue = otherValue.integerDivide(referenceValue);
+				} else if (mEvaluatorType == EvaluatorType.REAL) {
+					newValue = otherValue.divide(referenceValue);
+				} else {
+					throw new UnsupportedOperationException(
+					        "Division on types other than integers and reals is not defined.");
+				}
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMOD:
+			// TODO Move mod to interval domain value
+			// TODO logger.warn!
+			newValue = otherValue.inverseModulo(referenceValue, oldValue, isLeft);
+			break;
+		case COMPEQ:
+			newValue = referenceValue.inverseEquality(otherValue, oldValue);
+			break;
+		case COMPLEQ:
+			newValue = referenceValue.inverseLessOrEqual(otherValue, oldValue);
+			break;
+		case COMPLT:
+			newValue = referenceValue.inverseLessThan(otherValue, oldValue);
+			break;
+		case COMPGEQ:
+			newValue = referenceValue.inverseGreaterOrEqual(otherValue, oldValue);
+			break;
+		case COMPGT:
+			newValue = referenceValue.inverseGreaterThan(otherValue, oldValue);
+			break;
+		case COMPNEQ:
+			newValue = referenceValue.inverseNotEqual(otherValue, oldValue);
+			break;
+		default:
+			throw new UnsupportedOperationException("Not implemented: " + mOperator);
+		}
+		return newValue;
 	}
 
 	@Override
 	public void addSubEvaluator(IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
-		// TODO Auto-generated method stub
+		assert evaluator != null;
 
+		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
+			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned to.");
+		}
+
+		if (mLeftSubEvaluator == null) {
+			mLeftSubEvaluator = evaluator;
+			return;
+		}
+
+		mRightSubEvaluator = evaluator;
 	}
 
 	@Override
 	public Set<IBoogieVar> getVarIdentifiers() {
-		// TODO Auto-generated method stub
-		return null;
+		return mVariableSet;
 	}
 
 	@Override
 	public boolean hasFreeOperands() {
-		// TODO Auto-generated method stub
-		return false;
+		return (mLeftSubEvaluator == null || mRightSubEvaluator == null);
 	}
 
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		return mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool();
 	}
 
 	@Override
 	public void setOperator(Object operator) {
-		// TODO Auto-generated method stub
+		assert operator != null;
+		assert operator instanceof Operator;
 
+		mOperator = (Operator) operator;
 	}
 
 	@Override
 	public int getArity() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 2;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mLeftSubEvaluator);
+
+		switch (mOperator) {
+		case ARITHDIV:
+			sb.append(" / ");
+			break;
+		case ARITHMINUS:
+			sb.append(" - ");
+			break;
+		case ARITHMOD:
+			sb.append(" % ");
+			break;
+		case ARITHMUL:
+			sb.append(" * ");
+			break;
+		case ARITHPLUS:
+			sb.append(" + ");
+			break;
+		case COMPEQ:
+			sb.append(" == ");
+			break;
+		case COMPGEQ:
+			sb.append(" >= ");
+			break;
+		case COMPGT:
+			sb.append(" > ");
+			break;
+		case COMPLEQ:
+			sb.append(" <= ");
+			break;
+		case COMPLT:
+			sb.append(" < ");
+			break;
+		case COMPNEQ:
+			sb.append(" != ");
+			break;
+		case LOGICAND:
+			sb.append(" && ");
+			break;
+		case LOGICIFF:
+			sb.append(" <==> ");
+			break;
+		case LOGICIMPLIES:
+			sb.append(" ==> ");
+			break;
+		case LOGICOR:
+			sb.append(" || ");
+			break;
+		default:
+			mOperator.name();
+		}
+
+		sb.append(mRightSubEvaluator);
+
+		return sb.toString();
 	}
 
 }

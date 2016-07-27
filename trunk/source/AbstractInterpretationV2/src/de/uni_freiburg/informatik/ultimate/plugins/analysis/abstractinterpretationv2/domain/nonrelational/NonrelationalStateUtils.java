@@ -28,48 +28,42 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
+import java.util.Collections;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 
 /**
- * Class for evaluation results used to return both, a new abstract state and an evaluated value for evaluators.
+ * Utilitiy functions for nonrelational domains.
  * 
- * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class NonrelationalEvaluationResult<V extends INonrelationalValue<V>> implements IEvaluationResult<V> {
-
-	private final V mValue;
-	private final BooleanValue mBooleanValue;
+public class NonrelationalStateUtils {
 
 	/**
-	 * Default constructor for an {@link NonrelationalEvaluationResult}.
+	 * Merges states in a given list of {@link NonrelationalEvaluationResult}s if the number of elements in the list is
+	 * more than the given number of allowed elements.
 	 * 
-	 * @param value
-	 *            The {@link IntervalDomainValue} to set in the result.
-	 * @param booleanValue
-	 *            The {@link BooleanValue} to set in the result.
+	 * @param results
+	 *            The list of {@link NonrelationalEvaluationResult}s.
+	 * @param maxParallelStates
+	 *            The number of total allowed states to keep in the list.
+	 * @return A list that contains the reulst of merging all results.
 	 */
-	public NonrelationalEvaluationResult(final V value, final BooleanValue booleanValue) {
-		mValue = value;
-		mBooleanValue = booleanValue;
+	public static <VALUE extends INonrelationalValue<VALUE>> List<IEvaluationResult<VALUE>> mergeIfNecessary(
+	        final List<IEvaluationResult<VALUE>> results, final int maxParallelStates) {
+
+		if (results.size() > maxParallelStates) {
+			return Collections.singletonList(results.stream().reduce(NonrelationalStateUtils::merge).get());
+		}
+
+		return results;
 	}
 
-	@Override
-	public V getValue() {
-		return mValue;
-	}
-
-	@Override
-	public BooleanValue getBooleanValue() {
-		return mBooleanValue;
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Value: ").append(mValue).append(" -- Boolean Value: ").append(mBooleanValue);
-		return sb.toString();
+	private static <VALUE extends INonrelationalValue<VALUE>> IEvaluationResult<VALUE> merge(
+	        final IEvaluationResult<VALUE> a, final IEvaluationResult<VALUE> b) {
+		return new NonrelationalEvaluationResult<VALUE>(a.getValue().merge(b.getValue()),
+		        a.getBooleanValue().merge(b.getBooleanValue()));
 	}
 }

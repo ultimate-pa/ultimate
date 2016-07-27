@@ -44,5 +44,28 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	
 	V greaterOrEqual(final V other);
 	
+	BooleanValue isGreaterOrEqual(final V other);
+	
+	V lessThan(final V other);
+
+	BooleanValue isLessThan(final V other);
+	
+	V lessOrEqual(final V other);
+	
 	BooleanValue isLessOrEqual(final V other);
+	
+	V inverseModulo(final V referenceValue, final V oldValue, final boolean isLeft);
+	
+	V inverseEquality(final V otherValue, final V oldValue);
+	
+	V inverseLessOrEqual(final V otherValue, final V oldValue);
+	
+	V inverseLessThan(final V otherValue, final V oldValue);
+	
+	V inverseGreaterOrEqual(final V otherValue, final V oldValue);
+	
+	V inverseGreaterThan(final V otherValue, final V oldValue);
+	
+	V inverseNotEqual(final V otherValue, final V oldValue);
+
 }
