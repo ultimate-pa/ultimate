@@ -33,9 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Path;
 
@@ -86,49 +85,52 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				+ "or ExceptionOrErrorResult, "
 				+ "and that there is a counter example result, and that the contained error trace "
 				+ "matches the given one.");
-		boolean fail = false;
+
 		final List<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
 		final List<WitnessResult> witnesses = new ArrayList<>();
 		final IResultService resultService = services.getResultService();
-		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
-		for (final Entry<String, List<IResult>> x : resultSet) {
-			for (final IResult result : x.getValue()) {
-				if (result instanceof ExceptionOrErrorResult) {
-					setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
-					fail = true;
-					break;
-				} else if (result instanceof GenericResult) {
-					final GenericResult genRes = (GenericResult) result;
-					if (genRes.getShortDescription().equals("Unfinished Backtranslation")) {
-						setResultCategory(result.getShortDescription());
-						setResultMessage(result.getLongDescription());
-						customMessages.add(result.getShortDescription() + ": " + result.getLongDescription());
-						fail = true;
-					}
-				} else if (result instanceof CounterExampleResult<?, ?, ?>) {
-					cex.add((CounterExampleResult<?, ?, ?>) result);
-				} else if (result instanceof WitnessResult) {
-					witnesses.add((WitnessResult) result);
+
+		final List<IResult> results = resultService.getResults().entrySet().stream().flatMap(a -> a.getValue().stream())
+				.collect(Collectors.toList());
+		for (final IResult result : results) {
+			if (result instanceof ExceptionOrErrorResult) {
+				setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
+				TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+				return TestResult.FAIL;
+			} else if (result instanceof GenericResult) {
+				final GenericResult genRes = (GenericResult) result;
+				if (genRes.getShortDescription().equals("Unfinished Backtranslation")) {
+					setResultCategory(result.getShortDescription());
+					setResultMessage(result.getLongDescription());
+					customMessages.add(result.getShortDescription() + ": " + result.getLongDescription());
+					TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+					return TestResult.FAIL;
 				}
+			} else if (result instanceof CounterExampleResult<?, ?, ?>) {
+				cex.add((CounterExampleResult<?, ?, ?>) result);
+			} else if (result instanceof WitnessResult) {
+				witnesses.add((WitnessResult) result);
 			}
 		}
 
 		if (cex.size() == 0) {
 			setCategoryAndMessageAndCustomMessage("No counter example found", customMessages);
-			fail = true;
+			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+			return TestResult.FAIL;
 		}
 		if (cex.size() > 1) {
 			setResultCategory("More than one counter example found");
 			final String errorMsg = "There were " + cex.size() + " counter examples, but we expected only one";
 			setResultMessage(errorMsg);
 			customMessages.add(errorMsg);
-			fail = true;
+			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+			return TestResult.FAIL;
 		}
 
 		final List<WitnessResult> witnessesWithCex = new ArrayList<>();
 		for (final IResult result : cex) {
-			final Optional<WitnessResult> witness = witnesses.stream().filter(a -> a.getAffectedResult() == result)
-					.findAny();
+			final Optional<WitnessResult> witness =
+					witnesses.stream().filter(a -> a.getAffectedResult() == result).findAny();
 			if (witness.isPresent()) {
 				witnessesWithCex.add(witness.get());
 			}
@@ -142,93 +144,91 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 					final String errorMsg = "The witness is empty: " + witness.getShortDescription();
 					setResultMessage(errorMsg);
 					customMessages.add(errorMsg);
-					fail = true;
-					break;
+					TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+					return TestResult.FAIL;
 				} else if (witness.getExpectedVerificationStatus() == WitnessVerificationStatus.VERIFIED
 						&& witness.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 					setResultCategory("Witness failed to verify");
 					final String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
 					setResultMessage(errorMsg);
 					customMessages.add(errorMsg);
-					fail = true;
-					break;
+					TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+					return TestResult.FAIL;
 				}
 			}
 		}
 
-		if (!fail) {
-			// so far so good, now we compare the error path with the expected
-			// error path
+		// so far so good, now we compare the error path with the expected
+		// error path
+		boolean fail = false;
+		final File inputFile = new File(mInputFile);
+		final File settingsFile = new File(mSettingsFile);
+		String desiredCounterExample = null;
+		try {
+			desiredCounterExample = getDesiredCounterExample(inputFile, settingsFile);
+		} catch (final IOException e) {
+			setResultCategory(e.getMessage());
+			setResultMessage(e.toString());
+			e.printStackTrace();
+			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
+			return TestResult.FAIL;
+		}
 
-			final File inputFile = new File(mInputFile);
-			final File settingsFile = new File(mSettingsFile);
-			String desiredCounterExample = null;
-			try {
-				desiredCounterExample = getDesiredCounterExample(inputFile, settingsFile);
-			} catch (final IOException e) {
-				setResultCategory(e.getMessage());
-				setResultMessage(e.toString());
-				e.printStackTrace();
-				TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
-				return TestResult.FAIL;
-			}
+		final String actualCounterExample = cex.get(0).getProgramExecutionAsString();
+		if (desiredCounterExample == null) {
+			setResultCategory("No .errorpath file for comparison");
+			final String errorMsg = String.format("There is no .errorpath file for %s!", mInputFile);
+			tryWritingActualResultToFile(actualCounterExample);
+			setResultMessage(errorMsg);
+			customMessages.add(errorMsg);
+			fail = true;
+		} else {
 
-			final String actualCounterExample = cex.get(0).getProgramExecutionAsString();
-			if (desiredCounterExample == null) {
-				setResultCategory("No .errorpath file for comparison");
-				final String errorMsg = String.format("There is no .errorpath file for %s!", mInputFile);
-				tryWritingActualResultToFile(actualCounterExample);
-				setResultMessage(errorMsg);
-				customMessages.add(errorMsg);
+			// compare linewise
+			final String platformLineSeparator =
+					de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator();
+			final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
+			final String[] actualLines = actualCounterExample.split(platformLineSeparator);
+
+			if (desiredLines.length != actualLines.length) {
 				fail = true;
 			} else {
-
-				// compare linewise
-				final String platformLineSeparator = de.uni_freiburg.informatik.ultimate.util.CoreUtil
-						.getPlatformLineSeparator();
-				final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
-				final String[] actualLines = actualCounterExample.split(platformLineSeparator);
-
-				if (desiredLines.length != actualLines.length) {
-					fail = true;
-				} else {
-					for (int i = 0; i < desiredLines.length; ++i) {
-						final String curDes = desiredLines[i].trim();
-						final String curAct = actualLines[i].trim();
-						if (!(curDes.equals(curAct))) {
-							// ok it does not match, but we may make an
-							// exception for value lines
-							if (!isValueLineOk(curDes, curAct)) {
-								// it is either not a value line or the
-								// value lines differ too much
-								fail = true;
-								break;
-							}
+				for (int i = 0; i < desiredLines.length; ++i) {
+					final String curDes = desiredLines[i].trim();
+					final String curAct = actualLines[i].trim();
+					if (!(curDes.equals(curAct))) {
+						// ok it does not match, but we may make an
+						// exception for value lines
+						if (!isValueLineOk(curDes, curAct)) {
+							// it is either not a value line or the
+							// value lines differ too much
+							fail = true;
+							break;
 						}
 					}
 				}
+			}
 
-				if (fail) {
-					tryWritingActualResultToFile(actualCounterExample);
-					setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
-							customMessages);
-					customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
-							+ actualCounterExample.length());
-					customMessages.add("Desired error trace:");
-					int i = 0;
-					for (final String s : desiredCounterExample.split(platformLineSeparator)) {
-						customMessages.add("[L" + i + "] " + s);
-						++i;
-					}
-					i = 0;
-					customMessages.add("Actual error trace:");
-					for (final String s : actualCounterExample.split(platformLineSeparator)) {
-						customMessages.add("[L" + i + "] " + s);
-						++i;
-					}
-				} else {
-					setResultCategory("Success");
+			if (fail) {
+				tryWritingActualResultToFile(actualCounterExample);
+				setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
+						customMessages);
+				customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
+						+ actualCounterExample.length());
+				customMessages.add("Desired error trace:");
+				int i = 0;
+				for (final String s : desiredCounterExample.split(platformLineSeparator)) {
+					customMessages.add("[L" + i + "] " + s);
+					++i;
 				}
+				i = 0;
+				customMessages.add("Actual error trace:");
+				for (final String s : actualCounterExample.split(platformLineSeparator)) {
+					customMessages.add("[L" + i + "] " + s);
+					++i;
+				}
+			} else {
+				setResultCategory("Success");
 			}
 		}
 		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
@@ -306,7 +306,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return TestResult.FAIL;
 	}
 
-	private void setCategoryAndMessageAndCustomMessage(String msg, Collection<String> customMessages) {
+	private void setCategoryAndMessageAndCustomMessage(final String msg, final Collection<String> customMessages) {
 		setResultCategory(msg);
 		setResultMessage(msg);
 		customMessages.add(msg);
