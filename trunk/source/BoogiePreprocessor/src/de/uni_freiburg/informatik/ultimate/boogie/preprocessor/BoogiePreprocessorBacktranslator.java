@@ -93,7 +93,7 @@ public class BoogiePreprocessorBacktranslator
 	private final IUltimateServiceProvider mServices;
 	private BoogieSymbolTable mSymbolTable;
 
-	protected BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
+	BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -108,7 +108,7 @@ public class BoogiePreprocessorBacktranslator
 		mSymbolTable = symbolTable;
 	}
 
-	protected void addMapping(BoogieASTNode inputNode, BoogieASTNode outputNode) {
+	void addMapping(BoogieASTNode inputNode, BoogieASTNode outputNode) {
 		BoogieASTNode realInputNode = mMapping.get(inputNode);
 		if (realInputNode == null) {
 			realInputNode = inputNode;
@@ -166,14 +166,10 @@ public class BoogiePreprocessorBacktranslator
 			if (elem instanceof EnsuresSpecification) {
 				final EnsuresSpecification spec = (EnsuresSpecification) elem;
 				final Expression formula = spec.getFormula();
-				if (formula instanceof BooleanLiteral) {
-					if (((BooleanLiteral) formula).getValue()) {
-						// this
-						// EnuresSpecification was inserted by RCFG Builder and
-						// does not provide any additional information. We
-						// exclude it from the error path.
-						return null;
-					}
+				if (formula instanceof BooleanLiteral && ((BooleanLiteral) formula).getValue()) {
+					// this EnuresSpecification was inserted by RCFG Builder and
+					// does not provide any additional information. We exclude it from the error path.
+					return null;
 				}
 				reportUnfinishedBacktranslation(
 						"Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
@@ -182,9 +178,7 @@ public class BoogiePreprocessorBacktranslator
 			// if there is no mapping, we return the identity (we do not change
 			// everything, so this may be right)
 			return elem;
-		} else if (newElem instanceof Statement) {
-			return newElem;
-		} else if (newElem instanceof LoopInvariantSpecification) {
+		} else if (newElem instanceof Statement || newElem instanceof LoopInvariantSpecification) {
 			return newElem;
 		} else {
 			reportUnfinishedBacktranslation(
