@@ -111,6 +111,12 @@ public final class LinearInequalityInvariantPatternProcessor
 	private int maxRounds;
 	private final boolean mUseNonlinearConstraints; 
 	private final boolean mSimplifySatisfyingAssignment = true;
+	/**
+	 * If set to true, we always construct two copies of each invariant
+	 * pattern, one strict inequality and one non-strict inequality.
+	 * If set to false we use only one non-strict inequality.
+	 */
+	private final boolean mAlwaysStrictAndNonStrictCopies = false;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -236,7 +242,13 @@ public final class LinearInequalityInvariantPatternProcessor
 				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
 						dimensions[1]);
 				for (int j = 0; j < dimensions[1]; j++) {
-					for (final boolean strict : new boolean[] { true, false }) {
+					final boolean[] invariantPatternCopies;
+					if (mAlwaysStrictAndNonStrictCopies ) {
+						invariantPatternCopies = new boolean[] { false, true }; 
+					} else {
+						invariantPatternCopies = new boolean[] { false };
+					}
+					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase(
 								solver, patternCoefficients, newPrefix(), strict);
 						patternVariables.addAll(inequality.getVariables());
