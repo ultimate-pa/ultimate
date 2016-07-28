@@ -263,7 +263,8 @@ public final class CongruenceDomainValue
 		return createTop();
 	}
 
-	protected CongruenceDomainValue negate() {
+	@Override
+	public CongruenceDomainValue negate() {
 		if (mIsBottom) {
 			return createBottom();
 		}

@@ -43,4 +43,9 @@ public class CongruenceValueFactory implements INonrelationalValueFactory<Congru
 		return CongruenceDomainValue.createTop();
 	}
 
+	@Override
+	public CongruenceDomainValue createBottomValue() {
+		return CongruenceDomainValue.createBottom();
+	}
+	
 }

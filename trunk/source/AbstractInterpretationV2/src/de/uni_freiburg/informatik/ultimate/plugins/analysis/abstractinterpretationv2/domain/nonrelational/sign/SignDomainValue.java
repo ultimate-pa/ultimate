@@ -398,4 +398,10 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public SignDomainValue negate() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

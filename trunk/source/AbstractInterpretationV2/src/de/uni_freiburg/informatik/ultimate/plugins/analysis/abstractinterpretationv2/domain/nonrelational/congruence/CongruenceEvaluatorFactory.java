@@ -34,11 +34,17 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.BinaryExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ConditionalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.FunctionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.SingletonBooleanExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.SingletonValueExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.SingletonVariableExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.UnaryExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -60,10 +66,13 @@ public class CongruenceEvaluatorFactory
 	private final String mSettingsEvaluatorType;
 	private final int mMaxParallelStates;
 
+	private final CongruenceValueFactory mCongruenceValueFactory;
+
 	public CongruenceEvaluatorFactory(final ILogger logger, final String evaluatorType, final int maxParallelStates) {
 		mLogger = logger;
 		mSettingsEvaluatorType = evaluatorType;
 		mMaxParallelStates = maxParallelStates;
+		mCongruenceValueFactory = new CongruenceValueFactory();
 	}
 
 	@Override
@@ -74,10 +83,10 @@ public class CongruenceEvaluatorFactory
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new CongruenceUnaryExpressionEvaluator(mLogger);
+			return new UnaryExpressionEvaluator<>(mLogger, mCongruenceValueFactory);
 		case ARITY_MAX:
 			if (mSettingsEvaluatorType.equals(CongruenceDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
-				return new BinaryExpressionEvaluator<>(mLogger, type, mMaxParallelStates, new CongruenceValueFactory());
+				return new BinaryExpressionEvaluator<>(mLogger, type, mMaxParallelStates, mCongruenceValueFactory);
 			} else if (mSettingsEvaluatorType.equals(CongruenceDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
 				throw new UnsupportedOperationException("Optimization evaluator is not implemented, yet.");
 			} else {
@@ -96,8 +105,7 @@ public class CongruenceEvaluatorFactory
 	        final String value, final Class<?> valueType) {
 		assert value != null;
 		if (valueType == BigInteger.class) {
-			return new CongruenceSingletonValueExpressionEvaluator(
-			        CongruenceDomainValue.createConstant(new BigInteger(value)));
+			return new SingletonValueExpressionEvaluator<>(CongruenceDomainValue.createConstant(new BigInteger(value)));
 		} else {
 			assert valueType == BigDecimal.class;
 			return createSingletonValueTopEvaluator();
@@ -109,28 +117,28 @@ public class CongruenceEvaluatorFactory
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createSingletonVariableExpressionEvaluator(
 	        final IBoogieVar variableName) {
 		assert variableName != null;
-		return new CongruenceSingletonVariableExpressionEvaluator(variableName);
+		return new SingletonVariableExpressionEvaluator<>(variableName, mCongruenceValueFactory);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createSingletonLogicalValueExpressionEvaluator(
 	        final BooleanValue value) {
-		return new CongruenceSingletonBooleanExpressionEvaluator(value);
+		return new SingletonBooleanExpressionEvaluator<>(value, mCongruenceValueFactory);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createFunctionEvaluator(
 	        final String functionName, final int inputParamCount) {
-		return new CongruenceFunctionEvaluator(functionName, inputParamCount);
+		return new FunctionEvaluator<>(functionName, inputParamCount, mCongruenceValueFactory);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createConditionalEvaluator() {
-		return new CongruenceConditionalEvaluator();
+		return new ConditionalEvaluator<>(mCongruenceValueFactory);
 	}
 
 	@Override
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createSingletonValueTopEvaluator() {
-		return new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop());
+		return new SingletonValueExpressionEvaluator<>(CongruenceDomainValue.createTop());
 	}
 }

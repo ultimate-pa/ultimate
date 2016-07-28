@@ -767,6 +767,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The interval to negate.
 	 * @return A new interval which corresponds to the negated input interval.
 	 */
+	@Override
 	public IntervalDomainValue negate() {
 
 		if (isBottom()) {

@@ -43,4 +43,9 @@ public class IntervalValueFactory implements INonrelationalValueFactory<Interval
 		return new IntervalDomainValue();
 	}
 
+	@Override
+	public IntervalDomainValue createBottomValue() {
+		return new IntervalDomainValue(true);
+	}
+
 }
