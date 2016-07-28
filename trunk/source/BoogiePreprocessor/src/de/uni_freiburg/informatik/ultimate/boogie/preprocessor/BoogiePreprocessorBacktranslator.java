@@ -407,6 +407,11 @@ public class BoogiePreprocessorBacktranslator
 		return output.toString();
 	}
 
+	/**
+	 * Backtranslate arbitrary Boogie expressions
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
 	private class ExpressionTranslator extends BoogieTransformer {
 
 		@Override
@@ -417,43 +422,44 @@ public class BoogiePreprocessorBacktranslator
 				return expr;
 			}
 
-			if (expr instanceof IdentifierExpression) {
-				final IdentifierExpression ident = (IdentifierExpression) expr;
-				if (ident.getDeclarationInformation() == null) {
-					reportUnfinishedBacktranslation("Identifier has no declaration information, "
-							+ "using identity as back-translation of " + expr);
-					return expr;
-				}
-				if (ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED) {
-					// quantified variables do not occur in the program; we use
-					// identity
-					return expr;
-				}
-
-				final Declaration decl = mSymbolTable.getDeclaration(ident);
-
-				if (decl == null) {
-					reportUnfinishedBacktranslation(
-							"No declaration in symboltable, using identity as " + "back-translation of " + expr);
-					return expr;
-				}
-				final BoogieASTNode newDecl = getMapping(decl);
-				if (newDecl instanceof Declaration) {
-					return extractIdentifier((Declaration) newDecl, ident);
-				} else if (newDecl instanceof VarList) {
-					return extractIdentifier(newDecl.getLocation(), (VarList) newDecl, ident);
-				} else {
-					// this is ok, the expression wasnt changed during
-					// preprocessing
-					return expr;
-				}
+			if (!(expr instanceof IdentifierExpression)) {
+				// we only have to translate identifier expressions; so we just descend (using BoogieTransformer)
+				return super.processExpression(expr);
 			}
-			// descend
-			// String pretty = BoogiePrettyPrinter.print(expr);
-			return super.processExpression(expr);
+
+			final IdentifierExpression ident = (IdentifierExpression) expr;
+			if (ident.getDeclarationInformation() == null) {
+				reportUnfinishedBacktranslation("Identifier has no declaration information, "
+						+ "using identity as back-translation of " + expr);
+				return expr;
+			}
+
+			if (ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED) {
+				reportUnfinishedBacktranslation(
+						"Identifier is quantified, " + "using identity as back-translation of " + expr);
+				return expr;
+			}
+
+			final Declaration decl = mSymbolTable.getDeclaration(ident);
+			if (decl == null) {
+				reportUnfinishedBacktranslation(
+						"No declaration in symboltable, using identity as " + "back-translation of " + expr);
+				return expr;
+			}
+
+			final BoogieASTNode newDecl = getMapping(decl);
+			if (newDecl instanceof Declaration) {
+				return extractIdentifier((Declaration) newDecl, ident);
+			} else if (newDecl instanceof VarList) {
+				return extractIdentifier(newDecl.getLocation(), (VarList) newDecl, ident);
+			} else {
+				// this is ok, the expression was not changed during preprocessing
+				return expr;
+			}
+
 		}
 
-		private BoogieASTNode getMapping(BoogieASTNode decl) {
+		private BoogieASTNode getMapping(final BoogieASTNode decl) {
 			BoogieASTNode newDecl = mMapping.get(decl);
 			if (newDecl != null) {
 				return newDecl;
@@ -470,7 +476,8 @@ public class BoogiePreprocessorBacktranslator
 			return null;
 		}
 
-		private IdentifierExpression extractIdentifier(Declaration mappedDecl, IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(final Declaration mappedDecl,
+				final IdentifierExpression inputExp) {
 			IdentifierExpression rtr = inputExp;
 			if (mappedDecl instanceof VariableDeclaration) {
 				final VariableDeclaration mappedVarDecl = (VariableDeclaration) mappedDecl;
@@ -534,59 +541,74 @@ public class BoogiePreprocessorBacktranslator
 
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp,
-				BoogieType type) {
+		private IdentifierExpression extractIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp, final BoogieType type) {
 			if (type instanceof StructType) {
-				final StructType st = (StructType) type;
-				final String[] inputNames = inputExp.getIdentifier().split("\\.");
-				if (inputNames.length == 1) {
-					// its the struct itself
-					final String inputName = inputExp.getIdentifier();
-					for (final String name : list.getIdentifiers()) {
-						if (inputName.contains(name)) {
-							return new IdentifierExpression(mappedLoc, type, name,
-									inputExp.getDeclarationInformation());
-						}
-					}
-
-				} else if (inputNames.length == 2) {
-					// its a struct field access
-					// first, find the name of the struct
-					String structName = null;
-					final String inputStructName = inputNames[0];
-					for (final String name : list.getIdentifiers()) {
-						if (inputStructName.contains(name)) {
-							structName = name;
-							break;
-						}
-					}
-					if (structName != null) {
-						// if this worked, lets get the field name
-						for (final String fieldName : st.getFieldIds()) {
-							if (inputNames[1].contains(fieldName)) {
-								return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
-										inputExp.getDeclarationInformation());
-							}
-						}
-					}
-				} else {
-					// its a nested struct field access (this sucks)
-					reportUnfinishedBacktranslation("Unfinished Backtranslation: Nested struct field access of VarList "
-							+ BoogiePrettyPrinter.print(list) + " not handled");
-				}
+				return extractStructIdentifier(mappedLoc, list, inputExp, type, (StructType) type);
 			} else if (type instanceof ConstructedType) {
 				final ConstructedType ct = (ConstructedType) type;
-				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+				if (ct.equals(ct.getUnderlyingType())) {
+					// this constructed type is a named type
+					return matchIdentifier(mappedLoc, list, inputExp);
+				} else {
+					return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+				}
 			} else if (type instanceof PrimitiveType) {
+				return matchIdentifier(mappedLoc, list, inputExp);
+			} else {
+				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
+						+ BoogiePrettyPrinter.print(list) + " not handled");
+				return inputExp;
+			}
+
+		}
+
+		private IdentifierExpression matchIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp) {
+			final String inputName = inputExp.getIdentifier();
+			for (final String name : list.getIdentifiers()) {
+				if (inputName.contains(name)) {
+					return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
+							inputExp.getDeclarationInformation());
+				}
+			}
+			return inputExp;
+		}
+
+		private IdentifierExpression extractStructIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp, final BoogieType type, final StructType st) {
+			final String[] inputNames = inputExp.getIdentifier().split("\\.");
+			if (inputNames.length == 1) {
+				// its the struct itself
 				final String inputName = inputExp.getIdentifier();
 				for (final String name : list.getIdentifiers()) {
 					if (inputName.contains(name)) {
-						return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
-								inputExp.getDeclarationInformation());
+						return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
+					}
+				}
+			} else if (inputNames.length == 2) {
+				// its a struct field access
+				// first, find the name of the struct
+				String structName = null;
+				final String inputStructName = inputNames[0];
+				for (final String name : list.getIdentifiers()) {
+					if (inputStructName.contains(name)) {
+						structName = name;
+						break;
+					}
+				}
+				if (structName != null) {
+					// if this worked, lets get the field name
+					for (final String fieldName : st.getFieldIds()) {
+						if (inputNames[1].contains(fieldName)) {
+							return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
+									inputExp.getDeclarationInformation());
+						}
 					}
 				}
 			} else {
-				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
+				// its a nested struct field access (this sucks)
+				reportUnfinishedBacktranslation("Unfinished Backtranslation: Nested struct field access of VarList "
 						+ BoogiePrettyPrinter.print(list) + " not handled");
 			}
 			return inputExp;
