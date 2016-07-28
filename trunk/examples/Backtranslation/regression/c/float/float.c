@@ -1,13 +1,6 @@
 int main() {
   float x = 1.231;
-
-  if (x > 2)
-  {
-	// do nothing 
-  } 
-  else 
-  {
-	//@ assert \false;
-  }
+  //@ assert x > 2;
+  x = 2.0;
   return 0;
 }
