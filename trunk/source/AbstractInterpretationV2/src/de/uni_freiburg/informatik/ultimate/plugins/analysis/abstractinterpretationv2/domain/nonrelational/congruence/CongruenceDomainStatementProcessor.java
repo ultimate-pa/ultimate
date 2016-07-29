@@ -28,6 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -36,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,23 +53,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceDomainStatementProcessor
-		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
+        extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
 
 	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtTable, final String evaluatorType, final int maxParallelStates) {
-		super(logger, symbolTable, bpl2smtTable, evaluatorType, maxParallelStates);
+	        final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
+		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
 	}
 
 	@Override
-	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock>
-			createEvaluatorFactory(String evaluatorType, int maxParallelStates) {
-		return new CongruenceEvaluatorFactory(getLogger(), evaluatorType, maxParallelStates);
+	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createEvaluatorFactory(
+	        int maxParallelStates) {
+		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator = (
+		        value, type) -> {
+			assert value != null;
+			assert type != null;
+			if (type == BigInteger.class) {
+				return CongruenceDomainValue.createConstant(new BigInteger(value));
+			} else {
+				assert type == BigDecimal.class;
+				return CongruenceDomainValue.createTop();
+			}
+		};
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new CongruenceValueFactory(),
+		        singletonValueExpressionEvaluatorCreator);
 	}
 
 	@Override
 	protected void addEvaluators(ExpressionEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluator,
-			IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluatorFactory,
-			Expression expr) {
+	        IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock> evaluatorFactory,
+	        Expression expr) {
 		super.addEvaluators(evaluator, evaluatorFactory, expr);
 		if (expr instanceof ArrayStoreExpression) {
 			evaluator.addEvaluator(evaluatorFactory.createSingletonValueTopEvaluator());

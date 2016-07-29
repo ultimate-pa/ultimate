@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -45,14 +46,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class SignDomainStatementProcessor extends NonrelationalStatementProcessor<SignDomainState, SignDomainValue> {
 
-	protected SignDomainStatementProcessor (final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtTable, final String evaluatorType, final int maxParallelStates) {
-		super(logger, symbolTable, bpl2smtTable, evaluatorType, maxParallelStates);
+	protected SignDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
+	        final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
+		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
 	}
-	
+
 	@Override
-	protected IEvaluatorFactory<SignDomainValue, SignDomainState, CodeBlock>
-			createEvaluatorFactory(final String evaluatorType, final int maxParallelStates) {
-		return new SignEvaluatorFactory(getLogger(), evaluatorType, maxParallelStates);
+	protected IEvaluatorFactory<SignDomainValue, SignDomainState, CodeBlock> createEvaluatorFactory(
+	        final int maxParallelStates) {
+		final EvaluatorFactory.Function<String, SignDomainValue> singletonValueExpressionEvaluatorCreator = (value,
+		        type) -> {
+			// TODO: Create proper value from string here!
+			return new SignDomainValue();
+		};
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new SignValueFactory(),
+		        singletonValueExpressionEvaluatorCreator);
 	}
 }

@@ -94,12 +94,12 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final String evaluatorType, final int maxParallelStates) {
+			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mLogger = logger;
 		mLhsVariable = null;
-		mEvaluatorFactory = createEvaluatorFactory(evaluatorType, maxParallelStates);
+		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates);
 		assert mEvaluatorFactory != null;
 	}
 
@@ -163,8 +163,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		}
 	}
 
-	protected abstract IEvaluatorFactory<V, STATE, CodeBlock> createEvaluatorFactory(final String evaluatorType,
-			final int maxParallelStates);
+	protected abstract IEvaluatorFactory<V, STATE, CodeBlock> createEvaluatorFactory(final int maxParallelStates);
 
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.

@@ -53,13 +53,13 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<SignDomainValue, 
 	private static final int BUFFER_MAX = 100;
 	private final ILogger mLogger;
 
-	public SignEvaluatorFactory(ILogger logger, String evaluatorType, int maxParallelStates) {
+	public SignEvaluatorFactory(ILogger logger, int maxParallelStates) {
 		mLogger = logger;
 	}
 
 	@Override
 	public INAryEvaluator<SignDomainValue, SignDomainState, CodeBlock> createNAryExpressionEvaluator(int arity,
-			EvaluatorType type) {
+	        EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -77,7 +77,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<SignDomainValue, 
 
 	@Override
 	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonValueExpressionEvaluator(String value,
-			Class<?> valueType) {
+	        Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignSingletonIntegerExpressionEvaluator(value);
@@ -91,20 +91,20 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<SignDomainValue, 
 	}
 
 	@Override
-	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
-			createSingletonVariableExpressionEvaluator(IBoogieVar variableName) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonVariableExpressionEvaluator(
+	        IBoogieVar variableName) {
 		return new SignSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
-	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock>
-			createSingletonLogicalValueExpressionEvaluator(BooleanValue value) {
+	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createSingletonLogicalValueExpressionEvaluator(
+	        BooleanValue value) {
 		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
 	public IEvaluator<SignDomainValue, SignDomainState, CodeBlock> createFunctionEvaluator(String functionName,
-			int inputParamCount) {
+	        int inputParamCount) {
 		throw new UnsupportedOperationException("not implemented");
 	}
 
