@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -825,7 +826,7 @@ public class CACSL2BoogieBacktranslator
 			final BitvecLiteral fraction) {
 		String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
 		float f = getFloat32(bit);
-		return new FakeExpression(String.valueOf(f));
+		return new FakeExpression(new BigDecimal(f).toPlainString());
 	}
 
 	private static float getFloat32(String binary) {
@@ -834,15 +835,15 @@ public class CACSL2BoogieBacktranslator
 		return myFloat;
 	}
 
-	// Get 32-bit IEEE 754 format of the decimal value
-	private static String getBinary32(float value) {
-		int intBits = Float.floatToIntBits(value);
-		String binary = Integer.toBinaryString(intBits);
-		return binary;
-	}
-
-	private static String bitvecToString(BitvecLiteral lit) {
-		return Integer.toBinaryString(Integer.valueOf(lit.getValue()));
+	private static String bitvecToString(final BitvecLiteral lit) {
+		final String binStr = Integer.toBinaryString(Integer.valueOf(lit.getValue()));
+		assert binStr.length() <= lit.getLength() : "Binary string cannot be longer than bitvector literal length";
+		int missingZeros = lit.getLength() - binStr.length();
+		if (missingZeros > 0) {
+			final String formatStr = "%" + lit.getLength() + "s";
+			return String.format(formatStr, binStr).replace(' ', '0');
+		}
+		return binStr;
 	}
 
 	private IASTExpression translateIntegerLiteral(final CType cType, final IntegerLiteral lit) {
