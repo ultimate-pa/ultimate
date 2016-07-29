@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
  * Auxiliary class for decomposing and representing C float functions.
@@ -87,11 +87,11 @@ public class FloatFunction {
 		case "":
 			return null;
 		case "f":
-			return new CPrimitive(PRIMITIVE.FLOAT);
+			return new CPrimitive(CPrimitives.FLOAT);
 		case "d":
-			return new CPrimitive(PRIMITIVE.DOUBLE);
+			return new CPrimitive(CPrimitives.DOUBLE);
 		case "l":
-			return new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			return new CPrimitive(CPrimitives.LONGDOUBLE);
 		default:
 			throw new AssertionError("unknown type suffix " + mTypeSuffix);
 		}

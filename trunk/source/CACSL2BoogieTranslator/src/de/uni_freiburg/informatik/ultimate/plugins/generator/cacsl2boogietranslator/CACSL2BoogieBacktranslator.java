@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
@@ -801,23 +801,93 @@ public class CACSL2BoogieBacktranslator
 					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
 			return null;
 		}
-
 	}
 
 	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
-		// TODO: Unfinished
-		reportUnfinishedBacktranslation(
-				UNFINISHED_BACKTRANSLATION + " using hard-coded strings to match function " + fun.getIdentifier());
-		switch (fun.getIdentifier()) {
-		case "~fp~LONGDOUBLE":
+		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
+		if (reversed == null) {
+			reportUnfinishedBacktranslation(
+					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + fun.getIdentifier());
+			return null;
+		}
+		final String smtFunction = reversed.getFirst();
+
+		switch (smtFunction) {
+		case "fp":
+			// this function is used to construct floating points
+			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
+		case "NaN":
+			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+		default:
+			reportUnfinishedBacktranslation(
+					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+			return null;
+		}
+	}
+
+	private IASTExpression translateFloatConstConstructor(final CType cType, final FunctionApplication fun,
+			final CPrimitives floatType) {
+		switch (floatType) {
+		case LONGDOUBLE:
 			// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
 			final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
 			final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
 			final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
 			return createFakeFloat(sign, exponent, fraction);
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
 		default:
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
+			return null;
+		}
+	}
+
+	private IASTExpression translateFloatNaNConstructor(final CType cType, final FunctionApplication fun,
+			final CPrimitives floatType) {
+		switch (floatType) {
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+		case LONGDOUBLE:
+			// ~NaN~FLOAT() returns (out : C_FLOAT)
+			return new FakeExpression(String.valueOf(Float.NaN));
+		default:
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
 			return null;
 		}
 	}
@@ -851,9 +921,9 @@ public class CACSL2BoogieBacktranslator
 		if (cType == null) {
 			value = (lit).getValue();
 		} else if (cType instanceof CPointer) {
-			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit);
 		} else if (cType instanceof CEnum) {
-			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit);
 		} else if (cType instanceof CNamed) {
 			return translateIntegerLiteral(cType.getUnderlyingType(), lit);
 		} else {

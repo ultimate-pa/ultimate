@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -554,9 +554,9 @@ public class PostProcessor {
 	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc, 
 			final TypeSizes typeSizes, final TypeHandler typeHandler) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
-		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
 			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
-			if (cPrimitiveO.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
 						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
@@ -567,7 +567,7 @@ public class PostProcessor {
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
 				final String name= "bv" + bitsize;
-				final ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bytesize);
+				final ASTType astType = typeHandler.bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}
@@ -615,11 +615,11 @@ public class PostProcessor {
 		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ}, 
 				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
 		
-		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
 			
 			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
 			
-			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
+			if (cPrimitive0.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
 				
 				if (!overapproximateFloat) {

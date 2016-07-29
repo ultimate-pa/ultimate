@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -458,7 +458,7 @@ public class ACSLHandler implements IACSLHandler {
 	        	right.rexIntToBoolIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation(), memoryHandler);
 	        	final Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
-	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
+	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(CPrimitives.INT), true), decl, auxVars, overappr);
 	            //return new Result(ExpressionFactory.newBinaryExpression(loc, op, left, right));
 	        }
 		}
@@ -475,7 +475,7 @@ public class ACSLHandler implements IACSLHandler {
         			UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
         	final Expression r = ExpressionFactory.newBinaryExpression(loc,
         			Operator.LOGICAND, notLeft, right.lrVal.getValue());
-        	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
+        	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(CPrimitives.INT), true), decl, auxVars, overappr);
         	//return new Result(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r));
         case BITAND:
         case BITIFF:
@@ -550,7 +550,7 @@ public class ACSLHandler implements IACSLHandler {
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
      	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.BOOL), true));
+                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(CPrimitives.BOOL), true));
     }
 
     @Override
@@ -561,7 +561,7 @@ public class ACSLHandler implements IACSLHandler {
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
      	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.DOUBLE)));
+                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(CPrimitives.DOUBLE)));
     }
 
     @Override
@@ -744,7 +744,7 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(Dispatcher main, ACSLResultExpression node) {
-    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(PRIMITIVE.INT)));     
+    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(CPrimitives.INT)));     
         //return new Result(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
     }
 
@@ -883,7 +883,7 @@ public class ACSLHandler implements IACSLHandler {
             throw new UnsupportedSyntaxException(loc, msg);
         }
         // TODO: Ctype
-        return new ExpressionResult(stmt, new RValue(expr, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(expr, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(expr);
     }
 
@@ -934,7 +934,7 @@ public class ACSLHandler implements IACSLHandler {
         final Expression e = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.BOOL)), decl, auxVars, overappr);
         //return new Result(e);
     }
 
@@ -968,7 +968,7 @@ public class ACSLHandler implements IACSLHandler {
                 valid);
         
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
 
@@ -997,7 +997,7 @@ public class ACSLHandler implements IACSLHandler {
                 loc, it, arr, idc);
         
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
 }

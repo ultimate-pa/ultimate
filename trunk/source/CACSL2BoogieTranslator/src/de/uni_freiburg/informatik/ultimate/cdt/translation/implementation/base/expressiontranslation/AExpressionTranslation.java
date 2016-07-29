@@ -62,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -131,7 +131,7 @@ public abstract class AExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
-			final CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
@@ -142,9 +142,9 @@ public abstract class AExpressionTranslation {
 			auxVars.put(tVarDecl, loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		case IASTLiteralExpression.lk_false:
-			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
 		case IASTLiteralExpression.lk_true:
-			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(CPrimitives.INT)));
 		default:
 			final String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -154,7 +154,7 @@ public abstract class AExpressionTranslation {
 	
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		//TODO: Check that types coincide
-		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE || type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		} else {
 			return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
@@ -162,14 +162,14 @@ public abstract class AExpressionTranslation {
 	}
 	public final Expression constructBinaryBitwiseExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		//TODO: Check that types coincide
-		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE || type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		} else {
 			return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
 	}
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp, final CPrimitive type) {
-		if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			return constructUnaryFloatingPointExpression(loc, nodeOperator, exp, type);
 		} else {
 			return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
@@ -177,7 +177,7 @@ public abstract class AExpressionTranslation {
 	}
 	public final Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		//TODO: Check that types coincide
-		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE || type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			return constructArithmeticFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		} else {
 			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
@@ -327,31 +327,31 @@ public abstract class AExpressionTranslation {
 
 	private CPrimitive determineResultOfUsualArithmeticConversions(
 			final CPrimitive leftPrimitive, final CPrimitive rightPrimitive) {
-		if (leftPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
-				|| rightPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE 
-					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE) {
+		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE
+				|| rightPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
+			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE 
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE 
-					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE) {
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE 
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT 
-					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT) {
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT 
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == PRIMITIVE.LONGDOUBLE 
-					|| rightPrimitive.getType() == PRIMITIVE.LONGDOUBLE) {
-				return new CPrimitive(PRIMITIVE.LONGDOUBLE);
-			} else if (leftPrimitive.getType() == PRIMITIVE.DOUBLE 
-					|| rightPrimitive.getType() == PRIMITIVE.DOUBLE) {
-				return new CPrimitive(PRIMITIVE.DOUBLE);
-			} else if (leftPrimitive.getType() == PRIMITIVE.FLOAT 
-					|| rightPrimitive.getType() == PRIMITIVE.FLOAT) {
-				return new CPrimitive(PRIMITIVE.FLOAT);
+			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE 
+					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
+				return new CPrimitive(CPrimitives.LONGDOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE 
+					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
+				return new CPrimitive(CPrimitives.DOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.FLOAT 
+					|| rightPrimitive.getType() == CPrimitives.FLOAT) {
+				return new CPrimitive(CPrimitives.FLOAT);
 			} else {
 				throw new AssertionError("unknown FLOATTYPE " + leftPrimitive +", " + rightPrimitive);
 			}
-		} else if (leftPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE
-				&& rightPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+		} else if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
+				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
 		} else {
 			throw new AssertionError("unsupported combination of CPrimitives: " 
@@ -365,7 +365,7 @@ public abstract class AExpressionTranslation {
 	public abstract void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType);
 	
 	public final void convertIntToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		if (newType.getType() == PRIMITIVE.BOOL) {
+		if (newType.getType() == CPrimitives.BOOL) {
 			convertToBool(loc, rexp);
 		} else {
 			convertIntToInt_NonBool(loc, rexp, newType);
@@ -389,14 +389,14 @@ public abstract class AExpressionTranslation {
 	}
 	
 	private boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
-		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || 
+		if (cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR) || 
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || 
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.SCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT) || 
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.UCHAR) ||
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) || 
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT)) {
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT)) {
 			return true;
 		} else {
 			return false;
@@ -419,12 +419,12 @@ public abstract class AExpressionTranslation {
 		
 	private CPrimitive determineResultOfIntegerPromotion(final CPrimitive cPrimitive) {
 		final int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
-		final int sizeofInt = mTypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
+		final int sizeofInt = mTypeSizes.getSize(CPrimitive.CPrimitives.INT);
 		
 		if (sizeOfArgument < sizeofInt || !cPrimitive.isUnsigned()) {
-			return new CPrimitive(PRIMITIVE.INT);
+			return new CPrimitive(CPrimitives.INT);
 		} else {
-			return new CPrimitive(PRIMITIVE.UINT);
+			return new CPrimitive(CPrimitives.UINT);
 		}
 	}
 	
@@ -502,7 +502,7 @@ public abstract class AExpressionTranslation {
 
 	
 	public void convertFloatToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		if (newType.getType() == PRIMITIVE.BOOL) {
+		if (newType.getType() == CPrimitives.BOOL) {
 			convertToBool(loc, rexp);
 		} else {
 			convertFloatToInt_NonBool(loc, rexp, newType);
@@ -558,10 +558,10 @@ public abstract class AExpressionTranslation {
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
-		final Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ZERO);
-		final Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ONE);
+		final Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO);
+		final Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ONE);
 		final Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
-		final RValue rValue = new RValue(resultExpression, new CPrimitive(PRIMITIVE.BOOL), false, false);
+		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		rexp.lrVal = rValue;
 	}
 	
@@ -686,7 +686,7 @@ public abstract class AExpressionTranslation {
 		default:
 			throw new IllegalArgumentException("no number classification macro " + cId);
 		}
-		final CPrimitive type = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive type = new CPrimitive(CPrimitives.INT);
 		final Expression expr = constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
 		return new RValue(expr, type);
 	}

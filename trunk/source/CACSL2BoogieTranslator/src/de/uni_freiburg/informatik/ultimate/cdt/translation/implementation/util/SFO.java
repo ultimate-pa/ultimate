@@ -34,7 +34,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Markus Lindenmann
@@ -307,6 +310,36 @@ public final class SFO {
 	public static VariableDeclaration getTempVarVariableDeclaration(String tmpName, ASTType astType, ILocation loc) {
 		final VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+	}
+
+	/**
+	 * Build the name of a Boogie function for a given SMT-LIB function name and a C type. Since SMT-LIB allows
+	 * overloading of functions but Boogie does not, we have to construct unique identifiers. We do this by appending
+	 * the C type. By convention we use an additional prefix for each such function. This should avoid that we have name
+	 * clashes with functions that occur in the C program.
+	 * 
+	 * @param smtFunctionName
+	 *            The name of the conversion symbol.
+	 * @param type
+	 *            The type of the conversion.
+	 * @return an identifier for a Boogie function that represents some SMT function symbol used for converting or
+	 *         creating constants.
+	 */
+	public static String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + smtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + type;
+	}
+
+	public static Pair<String, CPrimitives> reverseBoogieFunctionName(final String functionName) {
+		if (functionName == null) {
+			return null;
+		}
+		final String[] splitted = functionName.split(SFO.AUXILIARY_FUNCTION_PREFIX);
+		if (splitted.length < 3) {
+			return null;
+		}
+		final String smtFunctionName = splitted[1];
+		final CPrimitives prim = Enum.valueOf(CPrimitives.class, splitted[2]);
+		return new Pair<>(smtFunctionName, prim);
 	}
 
 }

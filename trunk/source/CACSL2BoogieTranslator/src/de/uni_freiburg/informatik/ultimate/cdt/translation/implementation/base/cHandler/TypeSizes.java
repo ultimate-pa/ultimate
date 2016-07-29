@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
@@ -70,7 +70,7 @@ public class TypeSizes {
 	 */
 	private static final boolean charIsSigned = true;
 
-	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
+	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
 	
 
@@ -107,26 +107,26 @@ public class TypeSizes {
 //		this.sizeOfChar32Type = 
 //				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
 	
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.VOID, sizeOfVoidType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.BOOL, sizeOfBoolType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SCHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UCHAR, sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SHORT, sizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.USHORT, sizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.INT, sizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UINT, sizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONG, sizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONG, sizeOfLongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONGLONG, sizeOfLongLongType);		
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONGLONG, sizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.DOUBLE, sizeOfDoubleType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.FLOAT, sizeOfFloatType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONGDOUBLE, sizeOfLongDoubleType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.VOID, sizeOfVoidType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.BOOL, sizeOfBoolType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.CHAR, sizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.SCHAR, sizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.UCHAR, sizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.SHORT, sizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.USHORT, sizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.INT, sizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.UINT, sizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONG, sizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, sizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, sizeOfLongLongType);		
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, sizeOfLongLongType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, sizeOfDoubleType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, sizeOfFloatType);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, sizeOfLongDoubleType);
 		
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_FLOAT, sizeOfFloatType * 2);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, sizeOfDoubleType * 2);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, sizeOfFloatType * 2);
+		CPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, sizeOfLongDoubleType * 2);
 
 //		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR16, this.sizeOfChar16Type);
 //		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR32, this.sizeOfChar32Type);
@@ -139,7 +139,7 @@ public class TypeSizes {
 	}
 	
 	
-	public Integer getSize(PRIMITIVE cPrimitive) {
+	public Integer getSize(CPrimitives cPrimitive) {
 		final Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
 		if (result == null) {
 			throw new IllegalArgumentException("unknown type " + cPrimitive);

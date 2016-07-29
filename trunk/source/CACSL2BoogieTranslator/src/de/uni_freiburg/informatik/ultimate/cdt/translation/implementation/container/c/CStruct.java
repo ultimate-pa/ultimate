@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -221,7 +221,7 @@ public class CStruct extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == PRIMITIVE.VOID) {
+				((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
 		}
 
