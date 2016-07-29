@@ -57,7 +57,7 @@ public abstract class AMaxSatSolver<V> {
 	protected final Set<V> mUnsetVariables = new LinkedHashSet<V>();
 	/**
 	 * A clause is a propagatee if it has exactly one unset literal and is not
-	 * equivalent to true.
+	 * equivalent to true at the moment.
 	 */
 	protected final LinkedHashSet<Clause<V>> mPropagatees = new LinkedHashSet<>();
 	protected boolean mConjunctionEquivalentToFalse = false;
