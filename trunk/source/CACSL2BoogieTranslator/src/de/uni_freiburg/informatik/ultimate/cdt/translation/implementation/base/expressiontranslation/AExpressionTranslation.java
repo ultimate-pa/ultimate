@@ -196,13 +196,13 @@ public abstract class AExpressionTranslation {
 	
 	public final Expression constructBinaryEqualityExpression(final ILocation loc, final int nodeOperator, final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
-			return constructBinaryEqualityExpression_Floating(loc, nodeOperator, exp1, type1, exp2, type2);
+			return constructBinaryEqualityExpressionFloating(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
-		return constructBinaryEqualityExpression_Integer(loc, nodeOperator, exp1, type1, exp2, type2);
+		return constructBinaryEqualityExpressionInteger(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 	
-	public abstract Expression constructBinaryEqualityExpression_Floating(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);	
-	public abstract Expression constructBinaryEqualityExpression_Integer(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);
+	public abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);	
+	public abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	

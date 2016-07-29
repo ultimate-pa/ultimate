@@ -107,10 +107,6 @@ public final class SFO {
 	 * String holding "0.0".
 	 */
 	public static final String NR0F = "0.0";
-//	/**
-//	 * Identifier of malloc procedure.
-//	 */
-//	public static final String MALLOC = "~malloc";
 	/**
 	 * Identifier of free procedure.
 	 */
@@ -168,8 +164,7 @@ public final class SFO {
 	 */
 	public static final String LOOPLABEL = "Loop~";
 	/**
-	 * Prefix for all auxiliary functions that we add to the Boogie program,
-	 * e.g., bitwise and will be ~bvand.
+	 * Prefix for all auxiliary functions that we add to the Boogie program, e.g., bitwise and will be ~bvand.
 	 */
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
@@ -187,7 +182,7 @@ public final class SFO {
 
 	public static final String TO_INT = "#to_int";
 	public static final String MEMSET = "ULTIMATE.memset";
-	
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
@@ -198,8 +193,7 @@ public final class SFO {
 		LOOPCTR("loopctr"),
 
 		/**
-		 * Auxiliary variable used to store the result of a call of a function
-		 * pointer.
+		 * Auxiliary variable used to store the result of a call of a function pointer.
 		 */
 		FUNCPTRRES("funptrres"),
 
@@ -207,22 +201,21 @@ public final class SFO {
 		 * Auxiliary variable used to get some value nondeterministically.
 		 */
 		NONDET("nondet"),
-		
+
 		/**
-		 * Auxiliary variable used to represent the value after a prefix 
-		 * increment or prefix decrement (e.g., <code>++x</code>).
+		 * Auxiliary variable used to represent the value after a prefix increment or prefix decrement (e.g.,
+		 * <code>++x</code>).
 		 */
 		PRE_MOD("pre"),
 
 		/**
-		 * Auxiliary variable used to represent the value before a postfix 
-		 * increment or postfix decrement (e.g., <code>x++</code>).
+		 * Auxiliary variable used to represent the value before a postfix increment or postfix decrement (e.g.,
+		 * <code>x++</code>).
 		 */
 		POST_MOD("post"),
 
 		/**
-		 * Auxiliary variable used to store the returned value of a procedure
-		 * call.
+		 * Auxiliary variable used to store the returned value of a procedure call.
 		 */
 		RETURNED("ret"),
 
@@ -237,14 +230,13 @@ public final class SFO {
 		ARRAYINIT("init"),
 
 		/**
-		 * Auxiliary variable used for a helper array (serves the same purpose
-		 * as a struct constructor when a whole array is copied.
+		 * Auxiliary variable used for a helper array (serves the same purpose as a struct constructor when a whole
+		 * array is copied.
 		 */
 		ARRAYCOPY("arrayCopy"),
 
 		/**
-		 * Auxiliary variable used to define a pointer with constant value,
-		 * e.g., (int*) 1048.
+		 * Auxiliary variable used to define a pointer with constant value, e.g., (int*) 1048.
 		 */
 		CONSTPOINTER("const"),
 
@@ -259,20 +251,18 @@ public final class SFO {
 		MEMREAD("mem"),
 
 		/**
-		 * Auxiliary variable used to model temporary results of a short-circuit
-		 * evaluation, e.g., &&, or ||.
+		 * Auxiliary variable used to model temporary results of a short-circuit evaluation, e.g., &&, or ||.
 		 */
 		SHORTCIRCUIT("short"),
 
 		/**
-		 * Auxiliary variable used to model temporary results of the ternary
-		 * conditional expression, e.g., (x > 0) ? 23 : 42;
+		 * Auxiliary variable used to model temporary results of the ternary conditional expression, e.g., (x > 0) ? 23
+		 * : 42;
 		 */
 		ITE("ite"),
 
 		/**
-		 * Auxiliary variable used for arrow operator (field access of
-		 * dereferenced pointer.
+		 * Auxiliary variable used for arrow operator (field access of dereferenced pointer.
 		 */
 		ARROW("arrow"),
 
@@ -280,25 +270,23 @@ public final class SFO {
 		 * Auxiliary variable used for union initialisation.
 		 */
 		UNION("union"),
-		
+
 		/**
 		 * 
 		 */
 		SWITCH("switch"),
 
 		/**
-		 * Auxiliary variable used for the result of a call to the 'builtin'
-		 * memcpy function
+		 * Auxiliary variable used for the result of a call to the 'builtin' memcpy function
 		 */
 		MEMCPYRES("memcpy"),
-		
+
 		/**
-		 * Auxiliary variable used for the result of a call to the 'builtin'
-		 * memset function
+		 * Auxiliary variable used for the result of a call to the 'builtin' memset function
 		 */
 		MEMSETRES("memset");
 
-		String mId;
+		private final String mId;
 
 		AUXVAR(String id) {
 			mId = id;
@@ -314,24 +302,11 @@ public final class SFO {
 	}
 
 	/**
-	 * Return Variable Declaration for single variable with name tmpName,
-	 * InferredType tmpIType at location loc.
+	 * Return Variable Declaration for single variable with name tmpName, InferredType tmpIType at location loc.
 	 */
-	public static VariableDeclaration getTempVarVariableDeclaration(
-	// String tmpName, InferredType tmpIType, ILocation loc) {
-			String tmpName, ASTType astType, ILocation loc) {
-		// VarList tempVar;
-		// if (tmpIType.getType() == Type.Pointer) {
-		// tempVar = new VarList(loc, new String[] { tmpName },
-		// MemoryHandler.POINTER_TYPE);
-		// } else {
-		// ASTType tempType = new PrimitiveType(loc, tmpIType,
-		// tmpIType.toString());
-		// tempVar = new VarList(loc, new String[] { tmpName },
-		// pt);
-		// }
+	public static VariableDeclaration getTempVarVariableDeclaration(String tmpName, ASTType astType, ILocation loc) {
 		final VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
-	};
+	}
 
 }

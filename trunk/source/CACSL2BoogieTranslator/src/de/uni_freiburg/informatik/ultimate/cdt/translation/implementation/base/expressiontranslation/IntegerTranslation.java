@@ -773,14 +773,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Floating(final ILocation loc, final int nodeOperator, final Expression exp1,
+	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator, final Expression exp1,
 			final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Integer(final ILocation loc, final int nodeOperator,
+	public Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
