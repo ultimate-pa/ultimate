@@ -5,6 +5,7 @@ int main() {
   float d = 1.4142;
   float e = 16777217.0;
   float f = 16777216.0;
+  float g = 0.0 / 0.0;
  
   //@ assert e != f;
   return 0;
