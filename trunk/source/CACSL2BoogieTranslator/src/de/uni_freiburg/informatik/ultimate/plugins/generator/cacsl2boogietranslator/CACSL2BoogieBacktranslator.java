@@ -894,15 +894,20 @@ public class CACSL2BoogieBacktranslator
 
 	private IASTExpression createFakeFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
 			final BitvecLiteral fraction) {
-		String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
-		float f = getFloat32(bit);
-		return new FakeExpression(new BigDecimal(f).toPlainString());
+		final String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
+		final BigDecimal f = getDecimalFromBinaryString(bit);
+		return new FakeExpression(f.toPlainString());
 	}
 
-	private static float getFloat32(String binary) {
-		int intBits = Integer.parseInt(binary, 2);
-		float myFloat = Float.intBitsToFloat(intBits);
-		return myFloat;
+	private static BigDecimal getDecimalFromBinaryString(final String binary) {
+		int len = binary.length();
+		if (len == 32) {
+			int intBits = Integer.parseUnsignedInt(binary, 2);
+			float floatValue = Float.intBitsToFloat(intBits);
+			return new BigDecimal(floatValue);
+		} else {
+			throw new IllegalArgumentException("Unsupported length: " + len);
+		}
 	}
 
 	private static String bitvecToString(final BitvecLiteral lit) {
