@@ -283,11 +283,23 @@ public class MapEliminator {
 		final TransFormulaLR newTF = new TransFormulaLR(transformula);
 		final Term originalTerm = newTF.getFormula();
 		final Set<Term> assignedVars = new HashSet<>();
+		final Set<Term> assignedIndices = new HashSet<>();
+		final Set<Term> changedArrays = new HashSet<>();
 		for (final RankVar rv : transformula.getAssignedVars()) {
-			assignedVars.add(rv.getDefinition());
+			final Term term = rv.getDefinition();
+			assignedVars.add(term);
+			assignedIndices.addAll(mVariablesToIndexTerms.getImage(term));
+			if (term.getSort().isArraySort()) {
+				changedArrays.add(term);
+			}
+		}
+		for (final Term t : assignedIndices) {
+			for (final ArrayIndex index : mTermsToIndices.getImage(t)) {
+				changedArrays.addAll(mIndicesToArrays.getImage(index));
+			}
 		}
 		final HashRelation<Term, ArrayIndex> neededlocalIndices = new HashRelation<>();
-		for (final Term array : mArraysToIndices.getDomain()) {
+		for (final Term array : changedArrays) {
 			for (final ArrayIndex globalIndex : mArraysToIndices.getImage(array)) {
 				for (final ArrayIndex index : getInOutVarIndices(globalIndex, newTF, assignedVars)) {
 					neededlocalIndices.addPair(array, index);
@@ -306,10 +318,6 @@ public class MapEliminator {
 			conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(originalTerm)));
 		}
 		// Handle index assignments
-		final Set<Term> assignedIndices = new HashSet<>();
-		for (final Term t : assignedVars) {
-			assignedIndices.addAll(mVariablesToIndexTerms.getImage(t));
-		}
 		for (final Term t : assignedIndices) {
 			conjuncts.addAll(processIndexAssignment(newTF, t, assignedVars, invariants));
 		}
@@ -352,26 +360,40 @@ public class MapEliminator {
 			mAuxVarTerms.clear();
 		}
 		newTF.setFormula(SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique, mVariableManager));
-		// Remove the arrays from in-/out-vars
-		final List<RankVar> inVarArrays = new ArrayList<>();
-		final List<RankVar> outVarArrays = new ArrayList<>();
-		for (final Entry<RankVar, Term> entry : newTF.getInVars().entrySet()) {
-			if (entry.getValue().getSort().isArraySort()) {
-				inVarArrays.add(entry.getKey());
-			}
-		}
-		for (final Entry<RankVar, Term> entry : newTF.getOutVars().entrySet()) {
-			if (entry.getValue().getSort().isArraySort()) {
-				outVarArrays.add(entry.getKey());
-			}
-		}
-		for (final RankVar rv : inVarArrays) {
-			newTF.removeInVar(rv);
-		}
-		for (final RankVar rv : outVarArrays) {
-			newTF.removeOutVar(rv);
-		}
+		clearTransFormula(newTF);
 		return newTF;
+	}
+
+	/**
+	 * Remove arrays and unnecessary variables from the transformula
+	 *
+	 * @param transformula
+	 */
+	private void clearTransFormula(final TransFormulaLR transformula) {
+		final List<RankVar> inVarsToRemove = new ArrayList<>();
+		final List<RankVar> outVarsToRemove = new ArrayList<>();
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
+		for (final Entry<RankVar, Term> entry : transformula.getInVars().entrySet()) {
+			final RankVar rankVar = entry.getKey();
+			final Term inVar = entry.getValue();
+			if (inVar.getSort().isArraySort()) {
+				inVarsToRemove.add(rankVar);
+			} else if (!freeVars.contains(inVar) && transformula.getOutVars().get(rankVar) == inVar) {
+				inVarsToRemove.add(rankVar);
+				outVarsToRemove.add(rankVar);
+			}
+		}
+		for (final Entry<RankVar, Term> entry : transformula.getOutVars().entrySet()) {
+			if (entry.getValue().getSort().isArraySort()) {
+				outVarsToRemove.add(entry.getKey());
+			}
+		}
+		for (final RankVar rv : inVarsToRemove) {
+			transformula.removeInVar(rv);
+		}
+		for (final RankVar rv : outVarsToRemove) {
+			transformula.removeOutVar(rv);
+		}
 	}
 
 	private Set<Term> getHavocedArrays(final TransFormulaLR transformula) {
@@ -481,14 +503,14 @@ public class MapEliminator {
 						TransFormulaUtils.translateTermVariablesToDefinitions(mScript, transformula, index));
 				if (transformula.getInVarsReverseMapping().containsKey(array)) {
 					final ArrayIndex inVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, true);
-					final Term inVarSelect = getLocalTerm(term, transformula, assignedVars, true);
+					final Term inVarSelect = getLocalTerm(globalTerm, transformula, assignedVars, true);
 					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, inVarIndex, auxVar,
 							inVarSelect);
 					mAuxVarTerms.add(newTerm);
 				}
 				if (transformula.getOutVarsReverseMapping().containsKey(array)) {
-					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, true);
-					final Term outVarSelect = getLocalTerm(term, transformula, assignedVars, true);
+					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, false);
+					final Term outVarSelect = getLocalTerm(globalTerm, transformula, assignedVars, false);
 					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, outVarIndex, auxVar,
 							outVarSelect);
 					mAuxVarTerms.add(newTerm);
