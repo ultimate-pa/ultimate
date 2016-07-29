@@ -1,5 +1,5 @@
 int main() {
-  float x = 1.231;
+  float x = 1.0;
   //@ assert x > 2;
   x = 2.0;
   return 0;
