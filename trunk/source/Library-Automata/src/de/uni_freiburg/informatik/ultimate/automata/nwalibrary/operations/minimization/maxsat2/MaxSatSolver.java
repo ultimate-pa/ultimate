@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -41,22 +40,23 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * MAX-SAT solver for Horn clauses.
+ * MAX-SAT solver for propositional logic clauses.
  * The satisfying assignment returned by this solver is a locally optimal 
  * solution in the following sense. If you replace one false-assignment to
  * a variable by a true-assignment then the resulting mapping is not a valid
- * assignment any more.
+ * assignment anymore.
  * There is no guarantee that this locally optimal solution does not have to
  * be a globally optimal solution (which is a solution in which the number
  * of true-assigned variables is maximal).  
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  * @param <V> Kind of objects that are used as variables.
  */
-public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
+public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	/**
 	 * @param services Ultimate services
 	 */
-	public MaxHornSatSolver(final AutomataLibraryServices services) {
+	public MaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
 	}
 
@@ -71,16 +71,21 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
-		if (mDecisions > 0) {
-			throw new UnsupportedOperationException("only legal before decisions were made");
-		}
-		
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
 			positiveAtoms = (V[]) new Object[0];
 		} else {
 			positiveAtoms = (V[]) new Object[]{ positiveAtom };
 		}
+		addClause(negativeAtoms, positiveAtoms);
+	}
+
+	@Override
+	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
+		if (mDecisions > 0) {
+			throw new UnsupportedOperationException("only legal before decisions were made");
+		}
+		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
 		
 		if (clause.isEquivalentToTrue()) {
@@ -111,12 +116,6 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 			}
 			propagateAll();
 		}
-	}
-	
-	@Override
-	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
-		throw new UnsupportedOperationException(
-				"General clauses are not supported by this Horn solver.");
 	}
 	
 	@Override
@@ -178,6 +177,11 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	private void backtrack(final V var) {
+		// TODO implement correctly for several layers
+		if (true) {
+			throw new UnsupportedOperationException("not correctly implemented");
+		}
+		
 		mWrongDecisions ++;
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
