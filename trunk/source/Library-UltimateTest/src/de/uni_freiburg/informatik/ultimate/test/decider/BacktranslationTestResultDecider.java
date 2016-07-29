@@ -41,6 +41,7 @@ import org.eclipse.core.runtime.Path;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
@@ -94,7 +95,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		final List<IResult> results = resultService.getResults().entrySet().stream().flatMap(a -> a.getValue().stream())
 				.collect(Collectors.toList());
 		for (final IResult result : results) {
-			if (result instanceof ExceptionOrErrorResult || result instanceof TypeErrorResult<?>) {
+			if (result instanceof ExceptionOrErrorResult || result instanceof TypeErrorResult<?>
+					|| result instanceof SyntaxErrorResult) {
 				setCategoryAndMessageAndCustomMessage(result.getShortDescription(), customMessages);
 				TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 				return TestResult.FAIL;
