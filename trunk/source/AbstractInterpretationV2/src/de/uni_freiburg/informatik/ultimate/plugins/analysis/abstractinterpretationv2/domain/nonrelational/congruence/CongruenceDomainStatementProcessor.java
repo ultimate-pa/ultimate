@@ -92,6 +92,6 @@ public class CongruenceDomainStatementProcessor
 
 	@Override
 	protected Expression normalizeExpression(final Expression expr) {
-		return new ExpressionTransformer().transform(expr);
+		return ExpressionTransformer.transform(expr);
 	}
 }
