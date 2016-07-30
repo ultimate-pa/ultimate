@@ -211,6 +211,7 @@ terminal String IDENTIFIER;
 terminal String TYPENAME;
 terminal String STRING_LITERAL;
 terminal String CONSTANT;
+terminal String CONSTANT_FLOAT;
 terminal String CONSTANT10;
 terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
 terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT;
@@ -632,6 +633,8 @@ constant::=
  {: RESULT = new IntegerLiteral(value);setLineNumber(value$,value$,RESULT);:}  
 | CONSTANT10:value 
  {: RESULT = new IntegerLiteral(value); setLineNumber(value$,value$,RESULT);:}
+| CONSTANT_FLOAT:value 
+ {: RESULT = new RealLiteral(value); setLineNumber(value$,value$,RESULT);:}
 ;
 
 constant_option::=
@@ -1535,7 +1538,8 @@ wildcard::=
 | COLONCOLON 
 | COLONGT 
 | COMMA 
-| CONSTANT 
+| CONSTANT
+| CONSTANT_FLOAT
 | CONSTANT10 
 | DOLLAR 
 | DOT 

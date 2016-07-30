@@ -217,11 +217,11 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	{Constant10}	{ return symbol(yytext(), sym.CONSTANT10, yytext()); }
 	{Constant3}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
 	{Constant4}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
-	{Constant5}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
-	{Constant6}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
-	{Constant7}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
-	{Constant8}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
-	{Constant9}	{ return symbol(yytext(), sym.CONSTANT, yytext()); }
+	{Constant5}	{ return symbol(yytext(), sym.CONSTANT_FLOAT, yytext()); }
+	{Constant6}	{ return symbol(yytext(), sym.CONSTANT_FLOAT, yytext()); }
+	{Constant7}	{ return symbol(yytext(), sym.CONSTANT_FLOAT, yytext()); }
+	{Constant8}	{ return symbol(yytext(), sym.CONSTANT_FLOAT, yytext()); }
+	{Constant9}	{ return symbol(yytext(), sym.CONSTANT_FLOAT, yytext()); }
 	
 	/*String Literal missing */
 
