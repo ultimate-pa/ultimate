@@ -86,7 +86,7 @@ public final class ISOIEC9899TC3 {
 		HEXADECIMAL(16);
 		
 		private final int mBase;
-		IntegerConstantType(int base) {
+		IntegerConstantType(final int base) {
 			mBase = base;
 		}
 		
@@ -106,7 +106,7 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static final String handleCharConstant(String val, ILocation loc, Dispatcher dispatch) {
+	public static final String handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
 		int value;
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
@@ -182,7 +182,7 @@ public final class ISOIEC9899TC3 {
 	 * 
 	 * @return Our representation of a floating point literal
 	 */
-	public static final FloatingPointLiteral handleFloatConstant(final String value, ILocation loc) {
+	public static final FloatingPointLiteral handleFloatConstant(final String value, final ILocation loc) {
 		final String floatSuffix;
 		String suffixFreeValue;
 		{
@@ -219,11 +219,11 @@ public final class ISOIEC9899TC3 {
 				suffixLength = suffixFreeValue.substring(dotPosition + 1).length();
 				suffixFreeValue = suffixFreeValue.substring(0, dotPosition) + suffixFreeValue.substring(dotPosition + 1);
 			}
-			BigInteger hexValueToDecimalValue = new BigInteger(suffixFreeValue, 16);
+			final BigInteger hexValueToDecimalValue = new BigInteger(suffixFreeValue, 16);
 			BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
 
 			if (hexExponentValue != null) {
-				int hexExponent = Integer.valueOf(hexExponentValue);
+				final int hexExponent = Integer.valueOf(hexExponentValue);
 				if (hexExponent > 0) {
 					for (int i = 0; i < hexExponent; i++) {
 						hexValueBigDecimal = hexValueBigDecimal.multiply(new BigDecimal("2"));
@@ -332,9 +332,9 @@ public final class ISOIEC9899TC3 {
 	 *  		  primitive types.
 	 * @return the parsed value
 	 */
-	public static final RValue handleIntegerConstant(String valueWithPrefixAndSuffix, ILocation loc, 
-			boolean bitvectorTranslation, 
-			TypeSizes typeSizeConstants) {
+	public static final RValue handleIntegerConstant(final String valueWithPrefixAndSuffix, final ILocation loc, 
+			final boolean bitvectorTranslation, 
+			final TypeSizes typeSizeConstants) {
 		try {
 			final IntegerConstant ic = new IntegerConstant(valueWithPrefixAndSuffix);
 			final CPrimitive cType = determineCType(ic, typeSizeConstants);
@@ -343,14 +343,14 @@ public final class ISOIEC9899TC3 {
 					ic.getValue());
 			return new RValue(resultLiteral, cType);
 		} catch (final NumberFormatException nfe) {
-			final String msg = "Unable to translate int!";
+			final String msg = "Unable to translate int! " + nfe.getMessage();
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
 
 	public static Expression constructLiteralForCIntegerLiteral(
-			ILocation loc, boolean bitvectorTranslation,
-			TypeSizes typeSizeConstants, final CPrimitive cType,
+			final ILocation loc, final boolean bitvectorTranslation,
+			final TypeSizes typeSizeConstants, final CPrimitive cType,
 			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
@@ -370,7 +370,7 @@ public final class ISOIEC9899TC3 {
 	/**
 	 * @return the result of value % 2^bitlength
 	 */
-	public static BigInteger constructBitvectorInRange(BigInteger value, int bitlength) {
+	public static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
 		return value.mod(new BigInteger("2").pow(bitlength));
 	}
 	
@@ -379,7 +379,7 @@ public final class ISOIEC9899TC3 {
 		private final IntegerConstantType mIntegerConstantType;
 		private final String mSuffix;
 		private final BigInteger mValue;
-		public IntegerConstant(String valueWithPrefixAndSuffix) {
+		public IntegerConstant(final String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
 			for (final String s : SUFFIXES_INT) {
@@ -427,7 +427,7 @@ public final class ISOIEC9899TC3 {
 	 * Returns the types in the correct order according to 6.4.4.1.5 of the 
 	 * C11 standard.
 	 */
-	private static CPrimitives[] getPossibleTypes(IntegerConstant ic) {
+	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
 		if (ic.hasUnsignedSuffix()) {
 			if (ic.hasLongLongSuffix()) {
 				return new CPrimitives[] { CPrimitives.ULONGLONG };
@@ -459,7 +459,7 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 	
-	private static CPrimitive determineCType(IntegerConstant ic, TypeSizes typeSizes) {
+	private static CPrimitive determineCType(final IntegerConstant ic, final TypeSizes typeSizes) {
 		final CPrimitives[] primitives = getPossibleTypes(ic);
 		for (final CPrimitives primitive : primitives) {
 			final CPrimitive cPrimitive = new CPrimitive(primitive);
@@ -477,7 +477,7 @@ public final class ISOIEC9899TC3 {
 	public static class FloatingPointLiteral {
 		private final BigDecimal mDecimalRepresenation;
 		private final CPrimitive mCPrimitive;
-		public FloatingPointLiteral(BigDecimal decimalRepresenation, CPrimitive cPrimitive) {
+		public FloatingPointLiteral(final BigDecimal decimalRepresenation, final CPrimitive cPrimitive) {
 			super();
 			mDecimalRepresenation = decimalRepresenation;
 			mCPrimitive = cPrimitive;
