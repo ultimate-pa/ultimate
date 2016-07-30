@@ -284,29 +284,20 @@ public class MapEliminator {
 		final Term originalTerm = newTF.getFormula();
 		final Set<Term> assignedVars = new HashSet<>();
 		final Set<Term> assignedIndices = new HashSet<>();
-		final Set<Term> changedArrays = new HashSet<>();
 		for (final RankVar rv : transformula.getAssignedVars()) {
 			final Term term = rv.getDefinition();
 			assignedVars.add(term);
 			assignedIndices.addAll(mVariablesToIndexTerms.getImage(term));
-			if (term.getSort().isArraySort()) {
-				changedArrays.add(term);
-			}
 		}
-		for (final Term t : assignedIndices) {
-			for (final ArrayIndex index : mTermsToIndices.getImage(t)) {
-				changedArrays.addAll(mIndicesToArrays.getImage(index));
-			}
-		}
-		final HashRelation<Term, ArrayIndex> neededlocalIndices = new HashRelation<>();
-		for (final Term array : changedArrays) {
+		final HashRelation<Term, ArrayIndex> localIndices = new HashRelation<>();
+		for (final Term array : mArraysToIndices.getDomain()) {
 			for (final ArrayIndex globalIndex : mArraysToIndices.getImage(array)) {
 				for (final ArrayIndex index : getInOutVarIndices(globalIndex, newTF, assignedVars)) {
-					neededlocalIndices.addPair(array, index);
+					localIndices.addPair(array, index);
 				}
 			}
 		}
-		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, neededlocalIndices, mSymbolTable, newTF,
+		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, localIndices, mSymbolTable, newTF,
 				equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory, mVariableManager);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
 		// Handle array reads and writes
@@ -488,10 +479,10 @@ public class MapEliminator {
 			mAuxVarTerms.add(arrayRead);
 			return auxVar;
 		} else {
-			if (containsOnlyOneVarType(term, transformula, true)) {
+			if (TransFormulaUtils.allVariablesAreInVars(term, transformula)) {
 				return getLocalTerm(globalTerm, transformula, assignedVars, true);
 			}
-			if (containsOnlyOneVarType(term, transformula, false)) {
+			if (TransFormulaUtils.allVariablesAreOutVars(term, transformula)) {
 				return getLocalTerm(globalTerm, transformula, assignedVars, false);
 			}
 			// If the term contains "mixed" vars, aux-vars are introduced
@@ -712,28 +703,6 @@ public class MapEliminator {
 			return stringBuilder.toString();
 		}
 		return term.toString();
-	}
-
-	/**
-	 * Check if the given {@code term} only contains in- or out-vars
-	 *
-	 * @param term A SMT-Term to be checked
-	 * @param transformula A TransFormulaLR
-	 * @param onlyInVars Switch between in- and out-vars
-	 * @return {@code true}, iff the given {@code term} only contains one type of vars (in- or out-vars, depending on
-	 *         {@code inVar})
-	 */
-	private boolean containsOnlyOneVarType(final Term term, final TransFormulaLR transformula,
-			final boolean onlyInVars) {
-		for (final TermVariable var : term.getFreeVars()) {
-			if (onlyInVars && !transformula.getInVarsReverseMapping().containsKey(var)) {
-				return false;
-			}
-			if (!onlyInVars && !transformula.getOutVarsReverseMapping().containsKey(var)) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	private boolean containsArrays(final TransFormulaLR transformula) {
