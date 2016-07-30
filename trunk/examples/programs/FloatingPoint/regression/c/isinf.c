@@ -10,7 +10,7 @@
 #include <float.h>
 #include <math.h>
 
-extern int __isinf (double __value) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+extern int __isinfl (long double __value) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
 
 int main() {
 	long double ld = 0.1/0.0;
