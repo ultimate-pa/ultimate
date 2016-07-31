@@ -12,10 +12,10 @@
  * - while incrementing we never reach INFINITY
  *
  */
+#include <math.h>
 
-
-extern double __VERIFIER_nondet_float();
-extern double __VERIFIER_nondet_int();
+extern float __VERIFIER_nondet_float(void);
+extern int __VERIFIER_nondet_int(void);
 
 
 int main() {
