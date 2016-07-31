@@ -28,11 +28,10 @@ int main() {
         x = x + 1;
     }
     
-    if (x == INFINITY) {
+    if (x == INFINITY || !(x >= 0)) {
 		//@ assert \false;
 	}
 
-	//@ assert x >= 0;
 	//@ assert y >= 0;
 
     return 0;
