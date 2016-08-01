@@ -37,7 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
@@ -84,7 +84,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
+	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
 	 * Data structure that allows a fast access to all transitions of the buechi
 	 * automaton.<br/>
@@ -141,10 +141,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *             an empty call and return alphabet.
 	 */
 	public FairGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
-			StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> buechi,
+			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, stateFactory, buechi);
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 
 		mServices = services;
@@ -176,7 +176,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -300,7 +300,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		final long graphBuildTimeStart = System.currentTimeMillis();
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> buechi = mBuechi;
+		final INestedWordAutomaton<LETTER, STATE> buechi = mBuechi;
 
 		// Generate vertices
 		for (final STATE leftState : buechi.getStates()) {
@@ -534,9 +534,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		boolean isLetterNew = true;
 		final Map<STATE, EGameGraphChangeType> changedPreds = mChangedBuechiTransitionsInverse.get(dest, a);
 		// First iterate over original transitions
-		final Iterator<STATE> iter = mBuechi.predInternal(dest, a).iterator();
+		final Iterator<IncomingInternalTransition<LETTER, STATE>> iter =
+				mBuechi.internalPredecessors(a, dest).iterator();
 		while (iter.hasNext()) {
-			final STATE pred = iter.next();
+			final STATE pred = iter.next().getPred();
 			// Ignore transition if it was removed before
 			if (changedPreds != null) {
 				final EGameGraphChangeType change = changedPreds.get(pred);

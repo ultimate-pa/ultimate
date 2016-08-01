@@ -878,7 +878,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case RAQ_DIRECT_SIMULATION: {
 				final ReduceNwaDirectSimulation<CodeBlock, IPredicate> minimizeOp =
 						new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								predicateFactoryRefinement, newAbstraction);
+								predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstraction);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 						minimizeOp.getResult())).getResult();

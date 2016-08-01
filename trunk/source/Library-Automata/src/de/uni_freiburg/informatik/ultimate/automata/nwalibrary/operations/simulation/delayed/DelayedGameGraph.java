@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -44,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -79,7 +82,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
+	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
 	 * Time duration building the graph took in milliseconds.
 	 */
@@ -112,10 +115,10 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *             an empty call and return alphabet.
 	 */
 	public DelayedGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, stateFactory, buechi);
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 
 		mServices = services;
@@ -213,9 +216,10 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Add edges
 		for (final STATE c : mBuechi.getStates()) {
 			for (final LETTER s : mBuechi.getInternalAlphabet()) {
-				for (final STATE succ : mBuechi.succInternal(c, s)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> trans :
+						mBuechi.internalSuccessors(c, s)) {
 					final STATE newPred = oldSNames2newSNames.get(c);
-					final STATE newSucc = oldSNames2newSNames.get(succ);
+					final STATE newSucc = oldSNames2newSNames.get(trans.getSucc());
 					result.addInternalTransition(newPred, s, newSucc);
 				}
 			}
@@ -262,15 +266,19 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 			for (final STATE q1 : mBuechi.getStates()) {
 				for (final LETTER s : mBuechi.lettersInternalIncoming(q0)) {
-					if (mBuechi.predInternal(q0, s).iterator().hasNext()) {
+					if (mBuechi.internalPredecessors(s, q0).iterator().hasNext()) {
 						DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(2, false, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
-						for (final STATE q2 : mBuechi.succInternal(q1, s)) {
+						for (final OutgoingInternalTransition<LETTER, STATE> trans :
+								mBuechi.internalSuccessors(q1, s)) {
+							final STATE q2 = trans.getSucc();
 							addEdge(v0e, getSpoilerVertex(q0, q2, false));
 						}
 						// V1 -> V0 edges [paper ref 11]
-						for (final STATE q2 : mBuechi.predInternal(q0, s)) {
+						for (final IncomingInternalTransition<LETTER, STATE> trans :
+								mBuechi.internalPredecessors(s, q0)) {
+							final STATE q2 = trans.getPred();
 							if (!mBuechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
 							}
@@ -278,7 +286,9 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						v0e = new DuplicatorVertex<>(2, true, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
-						for (final STATE q2 : mBuechi.succInternal(q1, s)) {
+						for (final OutgoingInternalTransition<LETTER, STATE> trans :
+								mBuechi.internalSuccessors(q1, s)) {
+							final STATE q2 = trans.getSucc();
 							if (!mBuechi.isFinal(q2) && getAmountOfBitsForSpoilerVertices(q0, q2) > 1) {
 								addEdge(v0e, getSpoilerVertex(q0, q2, true));
 							} else {
@@ -286,7 +296,9 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 							}
 						}
 						// V1 -> V0 edges [paper ref 11]
-						for (final STATE q2 : mBuechi.predInternal(q0, s)) {
+						for (final IncomingInternalTransition<LETTER, STATE> trans :
+								mBuechi.internalPredecessors(s, q0)) {
+							final STATE q2 = trans.getPred();
 							if (getAmountOfBitsForSpoilerVertices(q2, q1) > 1) {
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);
 							}

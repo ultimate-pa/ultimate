@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
@@ -103,14 +104,13 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	@SuppressWarnings("unchecked")
 	public DirectNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
+			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> nwa,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedNwa = getAutomaton();
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
 			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
@@ -207,7 +207,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 * ultimate.automata.nwalibrary.INestedWordAutomatonOldApi)
 	 */
 	@Override
-	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// Do nothing to accept nwa automata
 	}
 

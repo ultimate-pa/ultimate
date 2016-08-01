@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractAcceptance;
@@ -63,7 +63,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	NestedWord<LETTER> mLoop;
 	
 	
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mNwa;
+	private final INestedWordAutomaton<LETTER,STATE> mNwa;
 	private boolean mAccepted;
 
 	
@@ -107,7 +107,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 *  always rejected its loop contains pending returns.  
 	 * @throws AutomataLibraryException 
 	 */
-	public BuchiAccepts(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
+	public BuchiAccepts(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
 		super(services);
 		mNwa = nwa;
 		mStem = nlw.getStem();
@@ -188,7 +188,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * the honda state.
 	 * @throws AutomataLibraryException 
 	 */
-	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws AutomataLibraryException {
+	private boolean repeatedLoopLeadsAgainToHondaState(final STATE hondaState) throws AutomataLibraryException {
 		// Store in currentConfigsVisitedAccepting / currentConfigsNotVisitedAccepting
 		// which configurations belong to a run which has already visited an
 		// accepting state.
@@ -243,7 +243,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * Remove all configurations whose topmost element is in states.
 	 */
 	private void removeAllWhoseTopmostElementIsOneOf(
-						Set<Stack<STATE>> configurations, Set<STATE> states) {
+						final Set<Stack<STATE>> configurations, final Set<STATE> states) {
 		final List<Stack<STATE>> removalCandidate = new ArrayList<Stack<STATE>>();
 		for (final Stack<STATE> config : configurations) {
 			if (states.contains(config.peek())) {
@@ -255,7 +255,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		}
 	}
 	
-	private Set<STATE> getTopMostStackElemets(Set<Stack<STATE>> configurations) {
+	private Set<STATE> getTopMostStackElemets(final Set<Stack<STATE>> configurations) {
 		final Set<STATE> result = new HashSet<STATE>();
 		for (final Stack<STATE> config : configurations) {
 			result.add(config.peek());
@@ -268,8 +268,8 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * Remove from the input all accepting configurations. Return all these
 	 * configurations which were accepting.
 	 */
-	private Set<Stack<STATE>> removeAcceptingConfigurations(Set<Stack<STATE>> configurations,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	private Set<Stack<STATE>> removeAcceptingConfigurations(final Set<Stack<STATE>> configurations,
+			final INestedWordAutomaton<LETTER,STATE> nwa) {
 		final Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
 		for (final Stack<STATE> config : configurations) {
 			final STATE state = config.peek();
@@ -286,7 +286,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

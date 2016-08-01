@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -81,8 +82,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AMinimizeNwa(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, final String name,
+	protected AMinimizeNwa(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -155,10 +156,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(mServices,
-				ResultChecker.getOldApiNwa(mServices, subset),
-				ResultChecker.getOldApiNwa(mServices, superset),
-				stateFactory) == null;
+		final boolean result = new IsIncluded<>(mServices, stateFactory, subset, superset).getResult();
+		return result;
 	}
 
 	/**
@@ -221,7 +220,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 *            expected number of elements before resizing
 	 * @return the parameter for initializing the hash structure
 	 */
-	protected final int computeHashCap(int size) {
+	protected final int computeHashCap(final int size) {
 		return (int) (size * 1.34 + 1);
 	}
 }

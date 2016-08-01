@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -178,7 +179,7 @@ public class BuchiCegarLoop {
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of of the program.
 	 */
-	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> mAbstraction;
+	protected INestedWordAutomaton<CodeBlock, IPredicate> mAbstraction;
 
 	/**
 	 * Interpolant automaton of this iteration.
@@ -588,7 +589,7 @@ public class BuchiCegarLoop {
 		final Collection<Set<IPredicate>> partition = computePartition(mAbstraction);
 		try {
 			if (mAbstraction.size() > 0) {
-				final INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimize(partition);
+				final INestedWordAutomaton<CodeBlock, IPredicate> minimized = minimize(partition);
 				mAbstraction = minimized;
 			}
 		} catch (final AutomataOperationCanceledException e) {
@@ -604,9 +605,9 @@ public class BuchiCegarLoop {
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
 
-	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimize(final Collection<Set<IPredicate>> partition)
+	private INestedWordAutomaton<CodeBlock, IPredicate> minimize(final Collection<Set<IPredicate>> partition)
 			throws AutomataOperationCanceledException, AutomataLibraryException {
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> result;
+		final INestedWordAutomaton<CodeBlock, IPredicate> result;
 		switch (mAutomataMinimization) {
 		case DelayedSimulation: {
 			final BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(
@@ -889,7 +890,7 @@ public class BuchiCegarLoop {
 		return result;
 	}
 
-	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
 		final Map<ProgramPoint, Set<IPredicate>> accepting = new HashMap<ProgramPoint, Set<IPredicate>>();

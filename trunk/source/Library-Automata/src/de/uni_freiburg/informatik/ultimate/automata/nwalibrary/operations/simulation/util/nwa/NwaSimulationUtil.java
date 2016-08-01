@@ -33,7 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -83,7 +82,7 @@ public final class NwaSimulationUtil {
 
 		// We check each supposedly simulation and validate
 		// First collect them
-		NestedMap2<STATE, STATE, Boolean> supposedlySimulations = new NestedMap2<>();
+		final NestedMap2<STATE, STATE, Boolean> supposedlySimulations = new NestedMap2<>();
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			// All the states we need are from Spoiler
 			boolean considerVertex = true;
@@ -108,25 +107,25 @@ public final class NwaSimulationUtil {
 		}
 
 		// Validate the supposedly simulations
-		for (Pair<STATE, STATE> supposedlySimulation : supposedlySimulations.keys2()) {
-			STATE leftState = supposedlySimulation.getFirst();
-			STATE rightState = supposedlySimulation.getSecond();
+		for (final Pair<STATE, STATE> supposedlySimulation : supposedlySimulations.keys2()) {
+			final STATE leftState = supposedlySimulation.getFirst();
+			final STATE rightState = supposedlySimulation.getSecond();
 
 			// Each from leftState outgoing transitions also needs an matching
 			// outgoing transition from rightState whose destination also
 			// simulates the other
 			// Internal transitions
-			for (OutgoingInternalTransition<LETTER, STATE> leftTrans : nwa.internalSuccessors(leftState)) {
-				STATE leftDest = leftTrans.getSucc();
-				LETTER letter = leftTrans.getLetter();
+			for (final OutgoingInternalTransition<LETTER, STATE> leftTrans : nwa.internalSuccessors(leftState)) {
+				final STATE leftDest = leftTrans.getSucc();
+				final LETTER letter = leftTrans.getLetter();
 
 				boolean foundMatchingTrans = false;
-				for (OutgoingInternalTransition<LETTER, STATE> rightTrans : nwa.internalSuccessors(rightState,
+				for (final OutgoingInternalTransition<LETTER, STATE> rightTrans : nwa.internalSuccessors(rightState,
 						letter)) {
-					STATE rightDest = rightTrans.getSucc();
+					final STATE rightDest = rightTrans.getSucc();
 					// If the right destination also simulates the left
 					// destination, we found a matching transition
-					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
+					final Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
 					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
 						foundMatchingTrans = true;
 						break;
@@ -145,16 +144,16 @@ public final class NwaSimulationUtil {
 			}
 
 			// Call transitions
-			for (OutgoingCallTransition<LETTER, STATE> leftTrans : nwa.callSuccessors(leftState)) {
-				STATE leftDest = leftTrans.getSucc();
-				LETTER letter = leftTrans.getLetter();
+			for (final OutgoingCallTransition<LETTER, STATE> leftTrans : nwa.callSuccessors(leftState)) {
+				final STATE leftDest = leftTrans.getSucc();
+				final LETTER letter = leftTrans.getLetter();
 
 				boolean foundMatchingTrans = false;
-				for (OutgoingCallTransition<LETTER, STATE> rightTrans : nwa.callSuccessors(rightState, letter)) {
-					STATE rightDest = rightTrans.getSucc();
+				for (final OutgoingCallTransition<LETTER, STATE> rightTrans : nwa.callSuccessors(rightState, letter)) {
+					final STATE rightDest = rightTrans.getSucc();
 					// If the right destination also simulates the left
 					// destination, we found a matching transition
-					Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
+					final Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
 					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
 						foundMatchingTrans = true;
 						break;
@@ -219,11 +218,11 @@ public final class NwaSimulationUtil {
 		}
 
 		// Collect all non simulating vertices
-		Queue<Vertex<LETTER, STATE>> workingList = new LinkedList<>();
-		int globalInfinity = gameGraph.getGlobalInfinity();
-		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = gameGraph.getSpoilerVertices();
+		final Queue<Vertex<LETTER, STATE>> workingList = new LinkedList<>();
+		final int globalInfinity = gameGraph.getGlobalInfinity();
+		final Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = gameGraph.getSpoilerVertices();
 		if (spoilerVertices != null) {
-			for (SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
+			for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 				if (spoilerVertex.getPM(null, globalInfinity) >= globalInfinity) {
 					workingList.add(spoilerVertex);
 				}
@@ -239,7 +238,7 @@ public final class NwaSimulationUtil {
 
 		// Start the simulation, beginning with all roots
 		while (!workingList.isEmpty()) {
-			Vertex<LETTER, STATE> workingVertex = workingList.poll();
+			final Vertex<LETTER, STATE> workingVertex = workingList.poll();
 
 			// Impose every predecessor, that is no call predecessor, a progress
 			// measure of infinity. If they are Duplicator vertices, do that
@@ -247,7 +246,7 @@ public final class NwaSimulationUtil {
 			if (!gameGraph.hasPredecessors(workingVertex)) {
 				continue;
 			}
-			for (Vertex<LETTER, STATE> pred : gameGraph.getPredecessors(workingVertex)) {
+			for (final Vertex<LETTER, STATE> pred : gameGraph.getPredecessors(workingVertex)) {
 				// Ignore the predecessor if he already has a progress measure
 				// of infinity
 				if (pred.getPM(null, globalInfinity) >= globalInfinity) {
@@ -255,7 +254,7 @@ public final class NwaSimulationUtil {
 				}
 				// Ignore call predecessors
 				if (pred instanceof DuplicatorNwaVertex<?, ?>) {
-					DuplicatorNwaVertex<LETTER, STATE> predAsNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
+					final DuplicatorNwaVertex<LETTER, STATE> predAsNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
 					if (predAsNwa.getTransitionType() == ETransitionType.CALL) {
 						continue;
 					}
@@ -267,7 +266,7 @@ public final class NwaSimulationUtil {
 				if (pred instanceof DuplicatorVertex<?, ?>) {
 					boolean hasAlternative = false;
 					if (gameGraph.hasSuccessors(pred)) {
-						for (Vertex<LETTER, STATE> succ : gameGraph.getSuccessors(pred)) {
+						for (final Vertex<LETTER, STATE> succ : gameGraph.getSuccessors(pred)) {
 							// We not need to explicitly ignore call and
 							// summarize successors since successors of
 							// Duplicator vertices are always Spoiler vertices.
@@ -318,9 +317,9 @@ public final class NwaSimulationUtil {
 	 *            The service object used by the framework
 	 */
 	public static <LETTER, STATE> void retrieveGeneralNwaAutomataPerformance(
-			final SimulationPerformance simulationPerformance, final INestedWordAutomatonOldApi<LETTER, STATE> input,
-			final INestedWordAutomatonOldApi<LETTER, STATE> result, final AutomataLibraryServices services) {
-		Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+			final SimulationPerformance simulationPerformance, final INestedWordAutomaton<LETTER, STATE> input,
+			final INestedWordAutomaton<LETTER, STATE> result, final AutomataLibraryServices services) {
+		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
 				inputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));
@@ -343,7 +342,7 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1_000_000));
 
-		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
+		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
 				outputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));

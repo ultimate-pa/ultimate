@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -67,8 +67,8 @@ public class ResultChecker<LETTER, STATE> {
 		return resultCheckStackHeight > 0;
 	}
 
-	public static boolean reduceBuchi(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
-			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+	public static boolean reduceBuchi(final AutomataLibraryServices services, final INestedWordAutomaton operand,
+			final INestedWordAutomaton result) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		final StateFactory stateFactory = operand.getStateFactory();
@@ -78,7 +78,14 @@ public class ResultChecker<LETTER, STATE> {
 		resultCheckStackHeight++;
 		logger.debug("Testing correctness of reduceBuchi");
 
-		final INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(services, operand)).getResult();
+		/*
+		 * TODO Christian 2016-08-01: I removed this minimization call for new
+		 *      API inclusion; also, it is not reasonable to use this old
+		 *      minimization here.
+		 */
+		final INestedWordAutomaton minimizedOperand = 
+//				(new MinimizeDfa(services, operand)).getResult();
+				operand;
 
 		boolean correct = true;
 		final NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(services, stateFactory,
@@ -119,8 +126,8 @@ public class ResultChecker<LETTER, STATE> {
 	// return correct;
 	// }
 
-	public static boolean buchiIntersect(AutomataLibraryServices services, INestedWordAutomatonOldApi operand1,
-			INestedWordAutomatonOldApi operand2, INestedWordAutomatonOldApi result) {
+	public static boolean buchiIntersect(final AutomataLibraryServices services, final INestedWordAutomaton operand1,
+			final INestedWordAutomaton operand2, final INestedWordAutomaton result) {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
@@ -137,8 +144,8 @@ public class ResultChecker<LETTER, STATE> {
 		return correct;
 	}
 
-	public static boolean buchiComplement(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
-			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+	public static boolean buchiComplement(final AutomataLibraryServices services, final INestedWordAutomatonOldApi operand,
+			final INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
 			return true;
@@ -174,8 +181,8 @@ public class ResultChecker<LETTER, STATE> {
 		return correct;
 	}
 
-	public static boolean buchiComplementSVW(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
-			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+	public static boolean buchiComplementSVW(final AutomataLibraryServices services, final INestedWordAutomatonOldApi operand,
+			final INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
@@ -223,8 +230,8 @@ public class ResultChecker<LETTER, STATE> {
 		return correct;
 	}
 
-	public static boolean petriNetJulian(AutomataLibraryServices services, INestedWordAutomatonOldApi op,
-			PetriNetJulian result) throws AutomataLibraryException {
+	public static boolean petriNetJulian(final AutomataLibraryServices services, final INestedWordAutomatonOldApi op,
+			final PetriNetJulian result) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
@@ -243,8 +250,8 @@ public class ResultChecker<LETTER, STATE> {
 		return correct;
 	}
 
-	public static boolean petriNetLanguageEquivalence(AutomataLibraryServices services, PetriNetJulian net1,
-			PetriNetJulian net2) throws AutomataLibraryException {
+	public static boolean petriNetLanguageEquivalence(final AutomataLibraryServices services, final PetriNetJulian net1,
+			final PetriNetJulian net2) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
@@ -270,7 +277,7 @@ public class ResultChecker<LETTER, STATE> {
 		return result;
 	}
 
-	public static <E> boolean isSubset(Collection<E> lhs, Collection<E> rhs) {
+	public static <E> boolean isSubset(final Collection<E> lhs, final Collection<E> rhs) {
 		for (final E elem : lhs) {
 			if (!rhs.contains(elem)) {
 				return false;
@@ -279,8 +286,8 @@ public class ResultChecker<LETTER, STATE> {
 		return true;
 	}
 
-	public static <LETTER, STATE> NestedRun nwaLanguageInclusion(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory)
+	public static <LETTER, STATE> NestedRun nwaLanguageInclusion(final AutomataLibraryServices services,
+			final INestedWordAutomatonOldApi nwa1, final INestedWordAutomatonOldApi nwa2, final StateFactory stateFactory)
 			throws AutomataLibraryException {
 		final IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(nwa2, true, stateFactory);
 		final INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(services, nwa1, nwa2, stateDeterminizer,
@@ -295,7 +302,7 @@ public class ResultChecker<LETTER, STATE> {
 	}
 
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
-			AutomataLibraryServices services, INestedWordAutomatonSimple<LETTER, STATE> nwa)
+			final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws AutomataLibraryException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
@@ -304,8 +311,8 @@ public class ResultChecker<LETTER, STATE> {
 		}
 	}
 
-	private static NestedLassoRun nwaBuchiLanguageInclusion(AutomataLibraryServices services, StateFactory stateFactory,
-			INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws AutomataLibraryException {
+	private static NestedLassoRun nwaBuchiLanguageInclusion(final AutomataLibraryServices services, final StateFactory stateFactory,
+			final INestedWordAutomaton nwa1, final INestedWordAutomaton nwa2) throws AutomataLibraryException {
 		return (new BuchiIsIncluded(services, stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 
@@ -315,15 +322,15 @@ public class ResultChecker<LETTER, STATE> {
 		return dateFormat.format(date);
 	}
 
-	public static void writeToFileIfPreferred(AutomataLibraryServices services, String filenamePrefix, String message,
-			IAutomaton... automata) {
+	public static void writeToFileIfPreferred(final AutomataLibraryServices services, final String filenamePrefix, final String message,
+			final IAutomaton... automata) {
 		final String workingDirectory = System.getProperty("user.dir");
 		final String filename = workingDirectory + File.separator + filenamePrefix + getDateTime() + ".ats";
 		new AutomatonDefinitionPrinter(services, filenamePrefix, filename, Format.ATS_NUMERATE, message, automata);
 	}
 
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
-			INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> automaton, final int size) throws AutomataLibraryException {
 		final NestedWord<LETTER> stem = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		final NestedWord<LETTER> loop = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		return new NestedLassoWord<LETTER>(stem, loop);

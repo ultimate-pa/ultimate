@@ -37,7 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
@@ -76,13 +77,13 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true);
 	}
 
@@ -96,7 +97,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -105,7 +106,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             framework.
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
@@ -121,7 +122,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -135,7 +136,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             framework.
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
@@ -158,8 +159,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		boolean correct = true;
 
 		final AutomataLibraryServices services = getServices();
-		final INestedWordAutomatonOldApi<LETTER, STATE> operand = getOperand();
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
+		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
+		final INestedWordAutomaton<LETTER, STATE> result = getResult();
 
 		// This is a semi-test, if it returns false, the result can also be
 		// correct though

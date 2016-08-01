@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
@@ -156,9 +157,9 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 		getLogger().info("Start testing correctness of " + operationName());
 		boolean correct = true;
 
-		AutomataLibraryServices services = getServices();
-		INestedWordAutomatonOldApi<LETTER, STATE> operand = getOperand();
-		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
+		final AutomataLibraryServices services = getServices();
+		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
+		final INestedWordAutomaton<LETTER, STATE> result = getResult();
 
 		// This is a semi-test, if it returns false, the result can also be
 		// correct though
@@ -167,7 +168,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 
 		// Try using some random lasso-words to prove a possible incorrectness
 		if (!correct) {
-			List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
+			final List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
 			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
 			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
 
