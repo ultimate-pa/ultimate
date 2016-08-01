@@ -127,7 +127,7 @@ public class ReachingDefinitions implements IAnalysis {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return null;
+		return new ReachingDefinitionsPreferenceInitializer();
 	}
 
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
