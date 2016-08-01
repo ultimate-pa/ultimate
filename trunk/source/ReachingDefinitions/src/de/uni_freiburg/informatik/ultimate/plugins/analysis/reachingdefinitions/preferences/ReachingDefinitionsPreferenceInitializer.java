@@ -27,14 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator;
 
 /**
- * @author dietsch
+ * @author dietsch, nutz
  * 
  */
 public class ReachingDefinitionsPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String LABEL_COMPUTE_PARRALLEL_DFG = "View every procedure as a "
+			+ "thread, and compute a parallel DFG?";
 
 	public ReachingDefinitionsPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -42,7 +46,9 @@ public class ReachingDefinitionsPreferenceInitializer extends UltimatePreference
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return null;
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(LABEL_COMPUTE_PARRALLEL_DFG, false, PreferenceType.Boolean),
+		};
 	}
 
 }

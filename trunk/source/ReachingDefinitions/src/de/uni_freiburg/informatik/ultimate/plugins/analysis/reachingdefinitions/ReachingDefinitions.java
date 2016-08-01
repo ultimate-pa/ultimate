@@ -46,7 +46,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.AssumeFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAGGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.paralleldfg.ParallelDfgGeneratorObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences.ReachingDefinitionsPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -95,8 +98,14 @@ public class ReachingDefinitions implements IAnalysis {
 			final List<IObserver> rtr = new ArrayList<>();
 			rtr.add(new ReachDefRCFG(logger, stmtProvider, edgeProvider));
 			rtr.add(finder);
-			// rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
-			// edgeProvider, finder.getEdgesWithAssumes()));
+//			 rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
+//					 edgeProvider, finder.getEdgesWithAssumes()));
+			
+			if (mServices.getPreferenceProvider(this.getPluginID())
+					.getBoolean(ReachingDefinitionsPreferenceInitializer.LABEL_COMPUTE_PARRALLEL_DFG)) {
+				rtr.add(new ParallelDfgGeneratorObserver());
+			}
+			
 			return rtr;
 		}
 		return Collections.emptyList();
