@@ -73,10 +73,10 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Complement(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> operand, 
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
-			StateFactory<STATE> sf) throws AutomataLibraryException {
+	public Complement(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand, 
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
+			final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -87,9 +87,9 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
-	public Complement(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
+	public Complement(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -113,7 +113,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return;
 			}
 		}
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, mOperand, mStateDeterminizer, mStateFactory);
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, mOperand, mStateDeterminizer, mStateFactory, null, true);
 		mComplement = new ComplementDeterministicNwa<LETTER, STATE>(mDeterminized);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplement);
 	}
@@ -147,7 +147,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());

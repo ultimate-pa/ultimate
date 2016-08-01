@@ -75,9 +75,9 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Determinize(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
+	public Determinize(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
@@ -89,16 +89,16 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
-	public Determinize(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input, Set<STATE> predefinedInitials) throws AutomataOperationCanceledException {
+	public Determinize(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input, final Set<STATE> predefinedInitials) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.mStateFactory = stateFactory;
 		this.mOperand = input;
 		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory, predefinedInitials);
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory, predefinedInitials, false);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
 		mLogger.info(exitMessage());
 	}
@@ -112,7 +112,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
