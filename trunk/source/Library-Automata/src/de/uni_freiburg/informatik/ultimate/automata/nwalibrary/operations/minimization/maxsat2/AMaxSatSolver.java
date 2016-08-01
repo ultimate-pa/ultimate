@@ -27,8 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Abstract MAX-SAT solver for propositional logic clauses.
@@ -51,22 +53,27 @@ public abstract class AMaxSatSolver<V> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	
+	// TODO remove this data structure which is only used for assertions in the long term
 	protected final Set<V> mVariables = new HashSet<V>();
-	protected final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<V, Boolean>();
-	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<V, Boolean>();
-	protected final Set<V> mUnsetVariables = new LinkedHashSet<V>();
+	
+	protected final Set<V> mUnsetVariables = new HashSet<V>();
 	/**
 	 * A clause is a propagatee if it has exactly one unset literal and is not
 	 * equivalent to true at the moment.
+	 * 
+	 * TODO Instead of storing the clauses, store the variables and respective value:
+	 *      this is exactly what happens next in the implementation, might save
+	 *      a lot of memory, and might detect inconsistencies earlier (if one
+	 *      variable gets positive and negative value at the moment of storing).
 	 */
-	protected final LinkedHashSet<Clause<V>> mPropagatees = new LinkedHashSet<>();
+	protected final Set<Clause<V>> mPropagatees = new HashSet<>();
 	protected boolean mConjunctionEquivalentToFalse = false;
-	protected LinkedHashSet<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
+	protected Set<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
 	
 	protected final HashRelation<V, Clause<V>> mOccursPositive = new HashRelation<>();
 	protected final HashRelation<V, Clause<V>> mOccursNegative = new HashRelation<>();
-	protected int mDecisions = 0;
 	
+	protected int mDecisions = 0;
 	protected int mWrongDecisions = 0;
 	protected int mClauses = 0;
 	/**
@@ -88,11 +95,17 @@ public abstract class AMaxSatSolver<V> {
 	
 	/**
 	 * Add a new variable. Variables have to be added before they can be
-	 * used in Horn clauses.
+	 * used in clauses.
 	 * 
 	 * @param var variable
 	 */
-	public abstract void addVariable(final V var);
+	public void addVariable(final V var) {
+		final boolean modified = mVariables.add(var);
+		if (!modified) {
+			throw new IllegalArgumentException("variable already added " + var);
+		}
+		mUnsetVariables.add(var);
+	}
 	
 	/**
 	 * Add a new Horn clause. We call the variables on the left-hand side
@@ -124,8 +137,27 @@ public abstract class AMaxSatSolver<V> {
 	 * Solve the given MAX-SAT problem for the given set of Horn clauses.
 	 * @return true iff the given set of Horn clauses is satisfiable.
 	 */
-	public abstract boolean solve() throws AutomataOperationCanceledException;
+	public boolean solve() throws AutomataOperationCanceledException {
+		propagateAll();
+		makeModificationsPersistent();
+		while(!mUnsetVariables.isEmpty()) {
+			decideOne();
+			if (mConjunctionEquivalentToFalse) {
+				return false;
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+		log();
+		return true;
+	}
 	
+	/**
+	 * prints the log message
+	 */
+	protected abstract void log();
+
 	/**
 	 * @return The locally optimal satisfying assignment.
 	 */
@@ -136,13 +168,159 @@ public abstract class AMaxSatSolver<V> {
 	 * @return The locally optimal satisfying assignment.
 	 */
 	public EVariableStatus getValue(final V var) {
-		final Boolean value = mVariablesIrrevocablySet.get(var);
+		final Boolean value = getPersistentAssignment(var);
 		if (value == null) {
 			return EVariableStatus.UNSET;
 		} else if (value) {
 			return EVariableStatus.TRUE;
 		} else {
 			return EVariableStatus.FALSE;
+		}
+	}
+
+	/**
+	 * assignment to the variable which is guaranteed to not be backtracked
+	 * 
+	 * @param var variable
+	 * @return <code>true</code>/<code>false</code> if assigned,
+	 *         <code>null</code> otherwise
+	 */
+	protected abstract Boolean getPersistentAssignment(V var);
+
+	/**
+	 * assignment to the variable which is not guaranteed to not be backtracked
+	 * 
+	 * @param var variable
+	 * @return <code>true</code>/<code>false</code> if assigned,
+	 *         <code>null</code> otherwise
+	 */
+	protected abstract Boolean getTemporaryAssignment(V var);
+
+	/**
+	 * backtracking mechanism
+	 * 
+	 * @param var last set variable which lead to inconsistency
+	 */
+	protected abstract void backtrack(final V var);
+	
+	/**
+	 * 
+	 */
+	protected abstract void makeModificationsPersistent();
+
+	protected void propagateAll() {
+		while (!mPropagatees.isEmpty() && !mConjunctionEquivalentToFalse) {
+			propagateOne();
+		}
+	}
+	
+	private void propagateOne() {
+		final Clause<V> clause = getPropagatee();
+		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom(this);
+		setVariable(unsetAtom.getFirst(), unsetAtom.getSecond());
+	}
+
+	/**
+	 * current policy: just return the next clause from the set
+	 * 
+	 * TODO other policies
+	 *      The only goal for optimization here is to find contradictions faster.
+	 *      If no contradiction is found, all policies should take the same time.
+	 *      One policy could be to prefer clauses with positive/negative
+	 *      variable, but it is not clear whether this makes sense.
+	 * 
+	 * @return clause with only one unset variable
+	 */
+	private Clause<V> getPropagatee() {
+		final Iterator<Clause<V>> it = mPropagatees.iterator();
+		final Clause<V> clause = it.next();
+//		Do not remove, we remove while updating clause, this will ease debugging
+//		it.remove();
+		return clause;
+	}
+	
+	/**
+	 * sets a status to a variable
+	 * 
+	 * @param var variable
+	 * @param newStatus new status
+	 */
+	protected abstract void setVariable(final V var, final boolean newStatus);
+
+	protected void reEvaluateStatusOfAllClauses(final V var) {
+		for (final Clause<V> clause : mOccursPositive.getImage(var)) {
+			reEvaluateClauseStatus(clause);
+		}
+		for (final Clause<V> clause : mOccursNegative.getImage(var)) {
+			reEvaluateClauseStatus(clause);
+		}
+	}
+
+	private void reEvaluateClauseStatus(final Clause<V> clause) {
+		final boolean wasPropagatee = clause.isPropagatee();
+		clause.updateClauseCondition(this);
+		if (clause.isEquivalentToFalse()) {
+			mConjunctionEquivalentToFalse = true;
+		} else if (clause.isEquivalentToTrue()) {
+			mClausesMarkedForRemoval.add(clause);
+		} else {
+			if (clause.getUnsetAtoms() == 1) {
+				assert clause.isPropagatee();
+				mPropagatees.add(clause);
+			} else {
+				assert !clause.isPropagatee();
+				assert clause.getUnsetAtoms() > 1;
+			}
+		}
+		if (wasPropagatee && !clause.isPropagatee()) {
+			final boolean removed = mPropagatees.remove(clause);
+			assert removed : "clause was not there";
+		} else {
+			assert clause.getUnsetAtoms() == 1 ||
+					!mPropagatees.contains(clause) : " clause illegal";
+		}
+	}
+
+	protected void decideOne() {
+		mDecisions++;
+		final V var = getUnsetVariable();
+		setVariable(var, true);
+		propagateAll();
+		if (mConjunctionEquivalentToFalse) {
+			backtrack(var);
+		} else {
+			makeModificationsPersistent();
+		}
+	}
+
+	/**
+	 * current policy: just return the next variable from the set
+	 * 
+	 * TODO other policies, e.g., prefer non-Horn clauses
+	 * 
+	 * @return unset variable
+	 */
+	private V getUnsetVariable() {
+		final Iterator<V> it = mUnsetVariables.iterator();
+		final V var = it.next();
+		it.remove();
+		return var;
+	}
+
+	protected void removeClauses(final Collection<Clause<V>> clauses) {
+		for (final Clause<V> clause : clauses) {
+			removeClause(clause);
+		}
+		mCurrentLiveClauses = mCurrentLiveClauses - clauses.size();
+	}
+
+	private void removeClause(final Clause<V> clause) {
+		mPropagatees.remove(clause);
+		for (final V var : clause.mPositiveAtoms) {
+			mOccursPositive.removePair(var, clause);
+		}
+		for (final V var : clause.mNegativeAtoms) {
+			mOccursNegative.removePair(var, clause);
 		}
 	}
 
@@ -153,7 +331,7 @@ public abstract class AMaxSatSolver<V> {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
 			final ClauseCondition condition = clause.computeClauseCondition(this);
-			if (condition.getClauseStatus().equals(clause.getClauseCondition())) {
+			if (condition.getClauseStatus().equals(clause.getClauseCondition().getClauseStatus())) {
 				consistent = false;
 				assert consistent;
 			}
@@ -162,7 +340,7 @@ public abstract class AMaxSatSolver<V> {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
 			final ClauseCondition condition = clause.computeClauseCondition(this);
-			if (condition.getClauseStatus().equals(clause.getClauseCondition())) {
+			if (condition.getClauseStatus().equals(clause.getClauseCondition().getClauseStatus())) {
 				consistent = false;
 				assert consistent;
 			}

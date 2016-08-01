@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -26,18 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT solver for propositional logic clauses.
@@ -53,6 +50,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <V> Kind of objects that are used as variables.
  */
 public class MaxSatSolver<V> extends AMaxSatSolver<V> {
+	// TODO<backtracking>
+	private final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<V, Boolean>();
+	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<V, Boolean>();
+	
 	/**
 	 * @param services Ultimate services
 	 */
@@ -60,15 +61,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		super(services);
 	}
 
-	@Override
-	public void addVariable(final V var) {
-		final boolean modified = mVariables.add(var);
-		if (!modified) {
-			throw new IllegalArgumentException("variable already added " + var);
-		}
-		mUnsetVariables.add(var);
-	}
-
+	@SuppressWarnings("unchecked")
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
 		final V[] positiveAtoms;
@@ -117,56 +110,49 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			propagateAll();
 		}
 	}
-	
-	@Override
-	public boolean solve() throws AutomataOperationCanceledException {
-		propagateAll();
-		makeModificationsPersistent();
-		while(!mUnsetVariables.isEmpty()) {
-			decideOne();
-			if (mConjunctionEquivalentToFalse) {
-				return false;
-			}
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Clauses: ").append(mClauses);
-		sb.append(" (thereof " + mTrivialClauses + " trivial clauses)");
-		sb.append(" MaxLiveClauses: ").append(mMaxLiveClauses);
-		sb.append(" Decisions : ").append(mDecisions);
-		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");
-		mLogger.info(sb.toString());
-		return true;
-	}
-	
-	
+
 	@Override
 	public Map<V, Boolean> getValues() {
+		// TODO<backtracking>
 		return Collections.unmodifiableMap(mVariablesIrrevocablySet);
 	}
+	
+	@Override
+	protected Boolean getPersistentAssignment(V var) {
+		// TODO<backtracking>
+		final Boolean result = mVariablesIrrevocablySet.get(var);
+		assert (result == null) || (! mVariablesTemporarilySet.containsKey(var)) :
+			"Unsynchronized assignment data structures.";
+		return result;
+	}
 
-	private void decideOne() {
-		mDecisions++;
-		final Iterator<V> it = mUnsetVariables.iterator();
-		final V var = it.next();
-		it.remove();
-		setVariable(var, true);
-		if (mConjunctionEquivalentToFalse) {
-			backtrack(var);
-		} else {
-			propagateAll();
-			if (mConjunctionEquivalentToFalse) {
-				backtrack(var);
-			} else {
-				makeModificationsPersistent();
-			}
-
-		}
+	@Override
+	protected Boolean getTemporaryAssignment(V var) {
+		// TODO<backtracking>
+		final Boolean result = mVariablesTemporarilySet.get(var);
+		assert (result == null) || (! mVariablesIrrevocablySet.containsKey(var)) :
+			"Unsynchronized assignment data structures.";
+		return result;
 	}
 	
-	private void makeModificationsPersistent() {
+
+	@Override
+	protected void setVariable(final V var, final boolean newStatus) {
+		// TODO<backtracking>
+		assert mVariables.contains(var) : "unknown variable";
+		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
+//		assert checkClausesConsistent() : "clauses inconsistent";
+		final Boolean oldStatus = mVariablesTemporarilySet.put(var, newStatus);
+		if (oldStatus != null) {
+			throw new IllegalArgumentException("variable already set " + var);
+		}
+		reEvaluateStatusOfAllClauses(var);
+//		assert checkClausesConsistent() : "clauses inconsistent";
+	}
+
+	@Override
+	protected void makeModificationsPersistent() {
+		// TODO<backtracking>
 		removeClauses(mClausesMarkedForRemoval);
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
 		for (final Entry<V, Boolean> entry : mVariablesTemporarilySet.entrySet()) {
@@ -176,8 +162,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		mVariablesTemporarilySet = new HashMap<>();
 	}
 
-	private void backtrack(final V var) {
-		// TODO implement correctly for several layers
+	@Override
+	protected void backtrack(final V var) {
+		// TODO<backtracking> implement correctly for several layers
 		if (true) {
 			throw new UnsupportedOperationException("not correctly implemented");
 		}
@@ -191,86 +178,17 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			reEvaluateStatusOfAllClauses(tmpVar);
 		}
 		setVariable(var, false);
-		assert (! mConjunctionEquivalentToFalse) : "resetting variable did not help";
+		assert ! mConjunctionEquivalentToFalse : "resetting variable did not help";
 	}
 
-	private void propagateAll() {
-		while (!mPropagatees.isEmpty() && !mConjunctionEquivalentToFalse) {
-			propagateOne();
-		}
+	@Override
+	protected void log() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Clauses: ").append(mClauses);
+		sb.append(" (thereof " + mTrivialClauses + " trivial clauses)");
+		sb.append(" MaxLiveClauses: ").append(mMaxLiveClauses);
+		sb.append(" Decisions : ").append(mDecisions);
+		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");
+		mLogger.info(sb.toString());
 	}
-	
-	private void propagateOne() {
-		final Iterator<Clause<V>> it = mPropagatees.iterator();
-		final Clause<V> clause = it.next();
-//		Do not remove, we remove while updating clause, this will ease debugging
-//		it.remove();
-		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom(this);
-		setVariable(unsetAtom.getFirst(), unsetAtom.getSecond());
-	}
-	
-	private void setVariable(final V var, final boolean newStatus) {
-		assert mVariables.contains(var) : "unknown variable";
-		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
-//		assert checkClausesConsistent() : "clauses inconsistent";
-		final Boolean oldStatus = mVariablesTemporarilySet.put(var, newStatus);
-		if (oldStatus != null) {
-			throw new IllegalArgumentException("variable already set " + var);
-		}
-		reEvaluateStatusOfAllClauses(var);
-//		assert checkClausesConsistent() : "clauses inconsistent";
-	}
-
-	private void reEvaluateStatusOfAllClauses(final V var) {
-		for (final Clause<V> clause : mOccursPositive.getImage(var)) {
-			reEvaluateClauseStatus(clause);
-		}
-		for (final Clause<V> clause : mOccursNegative.getImage(var)) {
-			reEvaluateClauseStatus(clause);
-		}
-	}
-
-	private void reEvaluateClauseStatus(final Clause<V> clause) {
-		final boolean wasPropagatee = clause.isPropagatee();
-		clause.updateClauseCondition(this);
-		if (clause.isEquivalentToFalse()) {
-			mConjunctionEquivalentToFalse = true;
-		} else if (clause.isEquivalentToTrue()) {
-			mClausesMarkedForRemoval.add(clause);
-		} else {
-			if (clause.getUnsetAtoms() == 1) {
-				assert clause.isPropagatee();
-				mPropagatees.add(clause);
-			} else {
-				assert !clause.isPropagatee();
-				assert clause.getUnsetAtoms() > 1;
-			}
-		}
-		if (wasPropagatee && !clause.isPropagatee()) {
-			final boolean removed = mPropagatees.remove(clause);
-			assert removed : "clause was not there";
-		} else {
-			assert clause.getUnsetAtoms() == 1 || !mPropagatees.contains(clause) : " clause illegal";
-		}
-
-	}
-	
-	private void removeClauses(final Collection<Clause<V>> clauses) {
-		for (final Clause<V> clause : clauses) {
-			removeClause(clause);
-		}
-		mCurrentLiveClauses = mCurrentLiveClauses - clauses.size();
-	}
-	
-
-	private void removeClause(final Clause<V> clause) {
-		mPropagatees.remove(clause);
-		for (final V var : clause.mPositiveAtoms) {
-			mOccursPositive.removePair(var, clause);
-		}
-		for (final V var : clause.mNegativeAtoms) {
-			mOccursNegative.removePair(var, clause);
-		}
-	}
-	
 }

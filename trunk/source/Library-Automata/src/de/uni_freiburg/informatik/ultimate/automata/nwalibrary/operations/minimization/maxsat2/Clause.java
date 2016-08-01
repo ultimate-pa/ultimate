@@ -104,16 +104,15 @@ class Clause<V> {
 	
 	private EVariableStatus getCurrentVariableStatus(final V var, AMaxSatSolver<V> solver) {
 		assert solver.mVariables.contains(var);
-		final Boolean irr = solver.mVariablesIrrevocablySet.get(var);
+		final Boolean irr = solver.getPersistentAssignment(var);
 		if (irr != null) {
-			assert !solver.mVariablesTemporarilySet.containsKey(var);
 			if (irr) {
 				return EVariableStatus.TRUE;
 			} else {
 				return EVariableStatus.FALSE;
 			}
 		}
-		final Boolean tmp = solver.mVariablesTemporarilySet.get(var);
+		final Boolean tmp = solver.getTemporaryAssignment(var);
 		if (tmp != null) {
 			if (tmp) {
 				return EVariableStatus.TRUE;
