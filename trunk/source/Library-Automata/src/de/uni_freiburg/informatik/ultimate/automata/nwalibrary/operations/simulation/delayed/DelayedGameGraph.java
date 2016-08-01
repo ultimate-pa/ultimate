@@ -157,14 +157,6 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ0());
 			}
 
-			{
-				// 2016-05-03 Matthias: we have some doubts if old
-				// implementation is correct
-				final boolean skipVertex = (mBuechi.isFinal(v.getQ0()) && mBuechi.isFinal(v.getQ1())) ^ v.isB()
-						^ mBuechi.isFinal(v.getQ0());
-				assert considerVertex != skipVertex : "old implementation incorrect";
-			}
-
 			if (considerVertex) {
 				if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
 					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
