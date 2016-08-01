@@ -34,9 +34,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
@@ -56,8 +57,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	private final boolean mConcurrentPrefixProduct;
 
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mNwa1;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mNwa2;
+	private final INestedWordAutomaton<LETTER,STATE> mNwa1;
+	private final INestedWordAutomaton<LETTER,STATE> mNwa2;
 	private final NestedWordAutomaton<LETTER,STATE> mResult;
 	
 	/**
@@ -95,8 +96,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 	 * and enqueue the pair (state1,state2). If it has to be
 	 * constructed it is an initial state iff isInitial is true. 
 	 */
-	private STATE getState(STATE state1, STATE state2,
-															boolean isInitial) {
+	private STATE getState(final STATE state1, final STATE state2,
+															final boolean isInitial) {
 		STATE state = 
 					inputPair2resultState.get(state1, state2);
 		if (state == null) {
@@ -121,7 +122,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 
 	
 	
-	private void constructOutgoingTransitions(STATE state1,	STATE state2) {
+	private void constructOutgoingTransitions(final STATE state1,	final STATE state2) {
 		final STATE state = getState(state1,state2,false);
 		final HashSet<LETTER> commonOutSymbols = 
 				new HashSet<LETTER>(mNwa1.lettersInternal(state1));
@@ -134,10 +135,12 @@ public class ConcurrentProduct<LETTER,STATE> {
 		state2OnlySymbols.removeAll(mSynchronizationAlphabet);
 		
 		for (final LETTER symbol : commonOutSymbols) {
-			final Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
-			final Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
-			for (final STATE succ1 : succ1s) {
-				for (final STATE succ2 : succ2s) {
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans1it = mNwa1.internalSuccessors(state1, symbol);
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans2it = mNwa2.internalSuccessors(state2, symbol);
+			for (final OutgoingInternalTransition<LETTER, STATE> trans1 : trans1it) {
+				final STATE succ1 = trans1.getSucc();
+				for (final OutgoingInternalTransition<LETTER, STATE> trans2 : trans2it) {
+					final STATE succ2 = trans2.getSucc();
 					final STATE succ = getState(succ1, succ2, false);
 					mResult.addInternalTransition(state, symbol, succ);
 				}
@@ -145,18 +148,22 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 		
 		for (final LETTER symbol : state1OnlySymbols) {
-			final Iterable<STATE> succ1s = mNwa1.succInternal(state1, symbol);
-			for (final STATE succ1 : succ1s) {
-					final STATE succ = getState(succ1, state2, false);
-					mResult.addInternalTransition(state, symbol, succ);
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans1it =
+				mNwa1.internalSuccessors(state1, symbol);
+			for (final OutgoingInternalTransition<LETTER, STATE> trans1 : trans1it) {
+				final STATE succ1 = trans1.getSucc();
+				final STATE succ = getState(succ1, state2, false);
+				mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
 		
 		for (final LETTER symbol : state2OnlySymbols) {
-			final Iterable<STATE> succ2s = mNwa2.succInternal(state2, symbol);
-			for (final STATE succ2 : succ2s) {
-					final STATE succ = getState(state1, succ2, false);
-					mResult.addInternalTransition(state, symbol, succ);
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans2it =
+					mNwa2.internalSuccessors(state2, symbol);
+			for (final OutgoingInternalTransition<LETTER, STATE> trans2 : trans2it) {
+				final STATE succ2 = trans2.getSucc();
+				final STATE succ = getState(state1, succ2, false);
+				mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
 
@@ -172,9 +179,9 @@ public class ConcurrentProduct<LETTER,STATE> {
 	}
 	
 	
-	public ConcurrentProduct(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
+	public ConcurrentProduct(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER,STATE> nwa1,
+			final INestedWordAutomaton<LETTER,STATE> nwa2, final boolean concurrentPrefixProduct) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mConcurrentPrefixProduct = concurrentPrefixProduct;
@@ -211,7 +218,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 	}
 
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
+	public INestedWordAutomaton<LETTER,STATE> getResult() {
 		return mResult;
 	}
 	
@@ -224,7 +231,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		Map<STATE,Map<STATE,STATE>> backingMap =
 			new HashMap<STATE, Map<STATE,STATE>>();
 		
-		public STATE get(STATE state1, STATE state2) {
+		public STATE get(final STATE state1, final STATE state2) {
 			final Map<STATE,STATE> snd2result = backingMap.get(state1);
 			if (snd2result == null) {
 				return null;
@@ -234,9 +241,9 @@ public class ConcurrentProduct<LETTER,STATE> {
 			}
 		}
 		
-		public void put(STATE state1,
-						STATE state2,
-						STATE state) {
+		public void put(final STATE state1,
+						final STATE state2,
+						final STATE state) {
 			Map<STATE,STATE> snd2result = backingMap.get(state1);
 			if (snd2result == null) {
 				snd2result = new HashMap<STATE,STATE>();
@@ -259,7 +266,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		STATE mDequeuedPairFst;
 		STATE mDequeuedPairSnd;
 		
-		public void enqueue(STATE state1, STATE state2) {
+		public void enqueue(final STATE state1, final STATE state2) {
 			Set<STATE> secondComponets = mQueue.get(state1);
 			if (secondComponets == null) {
 				secondComponets = new HashSet<STATE>();

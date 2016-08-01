@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 
 public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
 
-	public DeterminizeUnderappox(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> input,
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer)
+	public DeterminizeUnderappox(final AutomataLibraryServices services,
+			final INestedWordAutomatonOldApi<LETTER,STATE> input,
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer)
 			throws AutomataLibraryException {
 		super(services, input, stateDeterminizer);
 		}
@@ -89,7 +89,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	 * state is only accepting if all its states are accepting.
 	 */
 	@Override
-	protected STATE getResState(DeterminizedState<LETTER,STATE> detState) {
+	protected STATE getResState(final DeterminizedState<LETTER,STATE> detState) {
 		if (det2res.containsKey(detState)) {
 			return det2res.get(detState);
 		}

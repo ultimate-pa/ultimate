@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -70,8 +70,8 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Totalize(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+	public Totalize(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mStateFactory = input.getStateFactory();
@@ -85,20 +85,20 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// should recognize same language imput
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, operandOldApi, mResult, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, operandOldApi, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, operandOldApi, mResult, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, operandOldApi, sf) == null);
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}

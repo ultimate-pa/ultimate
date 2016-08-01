@@ -42,13 +42,13 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	Set<STATE> mSuccessorsConstructedCa = new HashSet<STATE>();
 //	Set<STATE> mSuccessorsConstructedRe = new HashSet<STATE>();
 	
-	public DoubleDeckerBuilder(AutomataLibraryServices services) {
+	public DoubleDeckerBuilder(final AutomataLibraryServices services) {
 		super(services);
 	}
 	
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedIn.contains(up)) {
 			final HashSet<STATE> succs = new HashSet<STATE>();
@@ -67,7 +67,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedCa.contains(up)) {
 			final HashSet<STATE> succs = new HashSet<STATE>();
@@ -88,7 +88,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 //		STATE up = doubleDecker.getUp();
 //		if (mSuccessorsConstructedRe.contains(up)) {
 //			return mTraversedNwa.succReturn(up);

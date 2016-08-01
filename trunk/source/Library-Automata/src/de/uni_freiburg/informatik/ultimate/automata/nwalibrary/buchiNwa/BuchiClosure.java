@@ -81,8 +81,8 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 
-	public BuchiClosure(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
+	public BuchiClosure(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> input) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mOperand = input;
@@ -97,7 +97,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());

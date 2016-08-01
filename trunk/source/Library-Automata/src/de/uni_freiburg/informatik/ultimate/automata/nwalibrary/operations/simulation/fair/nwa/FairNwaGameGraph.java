@@ -63,9 +63,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @author Daniel Tischner
  *
  * @param <LETTER>
- *            Letter class of nwa automaton
+ *            Letter class of nwa
  * @param <STATE>
- *            State class of nwa automaton
+ *            State class of nwa
  */
 public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE>
 		implements INwaGameGraph<LETTER, STATE> {
@@ -74,13 +74,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final NwaGameGraphGeneration<LETTER, STATE> mGeneration;
 	/**
-	 * The underlying nwa automaton, as double decker automaton, from which the
+	 * The underlying nwa, as double decker automaton, from which the
 	 * game graph gets generated.
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 
 	/**
-	 * Creates a new fair nwa game graph by using the given nwa automaton.
+	 * Creates a new fair nwa game graph by using the given nwa.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -90,7 +90,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param nwa
-	 *            The underlying nwa automaton from which the game graph gets
+	 *            The underlying nwa from which the game graph gets
 	 *            generated.
 	 * @param stateFactory
 	 *            State factory used for state creation
@@ -103,10 +103,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	@SuppressWarnings("unchecked")
-	public FairNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> nwa,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
+	public FairNwaGameGraph(final AutomataLibraryServices services,
+			final IProgressAwareTimer progressTimer,
+			final ILogger logger,
+			final INestedWordAutomaton<LETTER, STATE> nwa,
+			final StateFactory<STATE> stateFactory,
+			final Collection<Set<STATE>> possibleEquivalenceClasses)
+					throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
@@ -204,7 +207,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.AGameGraph#verifyAutomatonValidity(de.uni_freiburg.informatik.
-	 * ultimate.automata.nwalibrary.INestedWordAutomatonOldApi)
+	 * ultimate.automata.nwalibrary.INestedWordAutomaton)
 	 */
 	@Override
 	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {

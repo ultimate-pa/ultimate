@@ -404,7 +404,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     }
 
     @Override
-    public  INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
+    public  INestedWordAutomaton<LETTER,STATE> getResult() {
         return mResult;
     }
 

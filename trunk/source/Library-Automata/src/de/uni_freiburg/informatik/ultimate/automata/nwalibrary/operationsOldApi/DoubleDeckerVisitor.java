@@ -161,7 +161,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 	private Set<STATE> mDeadEnds;
 	
-	public DoubleDeckerVisitor(AutomataLibraryServices services) {
+	public DoubleDeckerVisitor(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
@@ -174,7 +174,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * True iff the DoubleDecker doubleDecker has been marked. A DoubleDecker is
 	 * marked iff it has been visited or is in the mWorklist.
 	 */
-	private final boolean wasMarked(DoubleDecker<STATE> doubleDecker) {
+	private final boolean wasMarked(final DoubleDecker<STATE> doubleDecker) {
 		final Map<STATE, ReachFinal> downState = mMarked_Up2Down.get(doubleDecker.getUp());
 		if (downState == null) {
 			return false;
@@ -183,7 +183,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		}
 	}
 
-	private final void mark(DoubleDecker<STATE> doubleDecker) {
+	private final void mark(final DoubleDecker<STATE> doubleDecker) {
 		Map<STATE, ReachFinal> downStates = mMarked_Up2Down.get(doubleDecker.getUp());
 		if (downStates == null) {
 			downStates = new HashMap<STATE, ReachFinal>();
@@ -202,7 +202,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	/**
 	 * Add doubleDecker to worklist if it has not yet been marked.
 	 */
-	private final void enqueueAndMark(DoubleDecker<STATE> doubleDecker) {
+	private final void enqueueAndMark(final DoubleDecker<STATE> doubleDecker) {
 		if (!wasMarked(doubleDecker)) {
 			mark(doubleDecker);
 			mWorklist.add(doubleDecker);
@@ -240,7 +240,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * Record that summarySucc is reachable from summaryPred via a run over a
 	 * well-matched NestedWord.
 	 */
-	private final void addSummary(STATE summaryPred, STATE summarySucc, STATE returnPred) {
+	private final void addSummary(final STATE summaryPred, final STATE summarySucc, final STATE returnPred) {
 		Map<STATE, STATE> summarySuccessors = mCallReturnSummary.get(summaryPred);
 		if (summarySuccessors == null) {
 			summarySuccessors = new HashMap<STATE, STATE>();
@@ -256,7 +256,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * that the DoubleDecker (summaryPred,returnPred) is a predecessor of
 	 * (<i>down</i>,summarySucc).
 	 */
-	private final void enqueueSummarySuccs(STATE summaryPred, STATE summarySucc, STATE returnPred) {
+	private final void enqueueSummarySuccs(final STATE summaryPred, final STATE summarySucc, final STATE returnPred) {
 		for (final STATE summaryPreDown : mMarked_Up2Down.get(summaryPred).keySet()) {
 			final DoubleDecker<STATE> doubleDecker = new DoubleDecker<STATE>(summaryPreDown, summaryPred);
 			final DoubleDecker<STATE> summarySuccDoubleDecker = new DoubleDecker<STATE>(summaryPreDown, summarySucc);
@@ -273,7 +273,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * Get all states <i>down</i> such that the DoubleDecker
 	 * (<i>down</i>,<i>up</i>) has been visited so far.
 	 */
-	private final Set<STATE> getKnownDownStates(STATE up) {
+	private final Set<STATE> getKnownDownStates(final STATE up) {
 		final Set<STATE> downStates = mMarked_Up2Down.get(up).keySet();
 		if (downStates == null) {
 			return new HashSet<STATE>(0);
@@ -436,7 +436,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 */
 	protected abstract Collection<STATE> visitAndGetReturnSuccessors(DoubleDecker<STATE> doubleDecker);
 
-	private void enqueueInternalPred(STATE up, Collection<STATE> downStates, DoubleDeckerWorkList worklist) {
+	private void enqueueInternalPred(final STATE up, final Collection<STATE> downStates, final DoubleDeckerWorkList worklist) {
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mTraversedNwa.internalPredecessors(up)) {
 			final STATE predUp = inTrans.getPred();
 			for (final STATE down : downStates) {
@@ -453,7 +453,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		}
 	}
 
-	private void enqueueCallPred(STATE up, Collection<STATE> downStates, DoubleDeckerWorkList worklist) {
+	private void enqueueCallPred(final STATE up, final Collection<STATE> downStates, final DoubleDeckerWorkList worklist) {
 		// we for call transitions we may use all of predecessors
 		// down states (use only when considering only non ret ancestors!)
 		for (final IncomingCallTransition<LETTER, STATE> inTrans : mTraversedNwa.callPredecessors(up)) {
@@ -472,8 +472,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		}
 	}
 
-	private void enqueueReturnPred(STATE up, Collection<STATE> downStates, DoubleDeckerWorkList summaryWorklist,
-			DoubleDeckerWorkList linPredworklist) {
+	private void enqueueReturnPred(final STATE up, final Collection<STATE> downStates, final DoubleDeckerWorkList summaryWorklist,
+			final DoubleDeckerWorkList linPredworklist) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mTraversedNwa.returnPredecessors(up)) {
 			final STATE hier = inTrans.getHierPred();
 			// We have to check if there is some double decker (hier,down) with
@@ -794,7 +794,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	/**
 	 * Compute call successors for a given set of states.
 	 */
-	private Set<STATE> computeState2CallSuccs(STATE state) {
+	private Set<STATE> computeState2CallSuccs(final STATE state) {
 		final Set<STATE> callSuccs = new HashSet<STATE>();
 		if (state != mTraversedNwa.getEmptyStackState()) {
 			for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
@@ -809,7 +809,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	/**
 	 * Return true iff state has successors
 	 */
-	private boolean hasSuccessors(STATE state) {
+	private boolean hasSuccessors(final STATE state) {
 		for (final LETTER symbol : mTraversedNwa.lettersInternal(state)) {
 			if (mTraversedNwa.succInternal(state, symbol).iterator().hasNext()) {
 				return true;
@@ -882,7 +882,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	private class DoubleDeckerSet {
 		private final Map<STATE, Set<STATE>> mup2down = new HashMap<STATE, Set<STATE>>();
 
-		public void add(STATE up, STATE down) {
+		public void add(final STATE up, final STATE down) {
 			Set<STATE> downStates = mup2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
@@ -891,7 +891,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 			downStates.add(down);
 		}
 
-		public void addAll(Collection<DoubleDecker<STATE>> collection) {
+		public void addAll(final Collection<DoubleDecker<STATE>> collection) {
 			for (final DoubleDecker<STATE> dd : collection) {
 				this.add(dd.getUp(), dd.getDown());
 			}
@@ -905,7 +905,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	private class DoubleDeckerWorkList {
 		private final Map<STATE, Set<STATE>> mup2down = new HashMap<STATE, Set<STATE>>();
 
-		public void add(STATE up, STATE down) {
+		public void add(final STATE up, final STATE down) {
 			Set<STATE> downStates = mup2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
@@ -914,7 +914,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 			downStates.add(down);
 		}
 
-		public void add(STATE up, Collection<STATE> downs) {
+		public void add(final STATE up, final Collection<STATE> downs) {
 			Set<STATE> downStates = mup2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
@@ -1027,7 +1027,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 			/**
 			 * Compute call successors for a given set of states.
 			 */
-			private Set<STATE> computeState2CallSuccs(STATE state) {
+			private Set<STATE> computeState2CallSuccs(final STATE state) {
 				final Set<STATE> callSuccs = new HashSet<STATE>();
 				if (state != mTraversedNwa.getEmptyStackState()) {
 					for (final LETTER letter : mTraversedNwa.lettersCall(state)) {

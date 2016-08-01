@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
@@ -83,7 +82,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 *             framework.
 	 */
 	public CompareReduceNwaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -104,7 +103,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.performance.CompareReduceBuchiSimulation#
 	 * verifyAutomatonValidity(de.uni_freiburg.informatik.ultimate.automata.
-	 * nwalibrary.INestedWordAutomatonOldApi)
+	 * nwalibrary.INestedWordAutomaton)
 	 */
 	@Override
 	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
@@ -123,9 +122,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * long,
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory,
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.
-	 * INestedWordAutomatonOldApi)
+	 * INestedWordAutomaton)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,

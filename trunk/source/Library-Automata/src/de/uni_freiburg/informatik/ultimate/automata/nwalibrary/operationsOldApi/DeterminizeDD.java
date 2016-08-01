@@ -92,9 +92,9 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	
 	
-	public DeterminizeDD(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER,STATE> input, 
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
+	public DeterminizeDD(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> input, 
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
 											throws AutomataOperationCanceledException {
 		super(services);
 		this.contentFactory = input.getStateFactory();
@@ -113,9 +113,9 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		mLogger.debug(exitMessage());
 	}
 	
-	public DeterminizeDD(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonOldApi<LETTER,STATE> input) 
+	public DeterminizeDD(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomaton<LETTER,STATE> input) 
 											throws AutomataLibraryException {
 		super(services);
 		this.contentFactory = input.getStateFactory();
@@ -157,7 +157,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final List<STATE> resInternalSuccessors = new LinkedList<STATE>();
 		final STATE resState = doubleDecker.getUp();
 		
@@ -176,7 +176,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	@Override
 	protected Collection<STATE> buildCallSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final List<STATE> resCallSuccessors = new LinkedList<STATE>();
 		final STATE resState = doubleDecker.getUp();
 		
@@ -195,7 +195,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 
 	@Override
 	protected Collection<STATE> buildReturnSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final List<STATE> resReturnSuccessors = new LinkedList<STATE>();
 		final STATE resState = doubleDecker.getUp();
 		final STATE resLinPred = doubleDecker.getDown();
@@ -222,7 +222,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	 * DeterminizedState. If this state in the resulting automaton does not exist
 	 * yet, construct it.
 	 */
-	protected STATE getResState(DeterminizedState<LETTER,STATE> detState) {
+	protected STATE getResState(final DeterminizedState<LETTER,STATE> detState) {
 		if (det2res.containsKey(detState)) {
 			return det2res.get(detState);
 		}
@@ -244,7 +244,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
@@ -58,7 +59,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mResult;
+	private final INestedWordAutomaton<LETTER,STATE> mResult;
 
 	private final ILogger mLogger;
 
@@ -73,8 +74,8 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	 * @param nwa
 	 * @throws AutomataOperationCanceledException
 	 */
-	public RemoveNonLiveStates(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveNonLiveStates(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -108,18 +109,18 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mResult;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
-		INestedWordAutomatonOldApi<LETTER, STATE> input;
+		INestedWordAutomaton<LETTER, STATE> input;
 		if (mInput instanceof INestedWordAutomatonOldApi) {
 			input = (INestedWordAutomatonOldApi<LETTER, STATE>) mInput;
 		} else {
@@ -221,8 +222,8 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		return correct;
 	}
 	
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		final boolean correct = (op == res);

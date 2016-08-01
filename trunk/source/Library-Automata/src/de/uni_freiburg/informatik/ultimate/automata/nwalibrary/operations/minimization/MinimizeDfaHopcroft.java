@@ -32,58 +32,45 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Björn Hagemeister
  */
-public class MinimizeDfaHopcroft<LETTER, STATE> implements
-		IOperation<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	// ILogger for debug - information.
-	private final ILogger mLogger;
+public class MinimizeDfaHopcroft<LETTER, STATE>
+		extends AMinimizeNwa<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	// Result automaton.
-	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
-	// Input automaton.
-	private final INestedWordAutomatonOldApi<LETTER, STATE> moperand;
+	private INestedWordAutomaton<LETTER, STATE> mResult;
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
-	private ArrayList<STATE> mint2state;
-	private HashMap<STATE, Integer> mstate2int;
+	private ArrayList<STATE> mInt2state;
+	private HashMap<STATE, Integer> mState2int;
 	// ArrayList and HashMap for mapping LETTER to int and vice versa.
-	private ArrayList<LETTER> mint2letter;
-	private HashMap<LETTER, Integer> mletter2int;
+	private ArrayList<LETTER> mInt2letter;
+	private HashMap<LETTER, Integer> mLetter2int;
 	// Structure for transitions.
-	private int[] mlabels;
-	private int[] mlabelTails;
-	private int[] mlabelHeads;
-	private int mnOfTransitions;
+	private int[] mLabels;
+	private int[] mLabelTails;
+	private int[] mLabelHeads;
+	private int mNumberOfTransitions;
 
 	// Constructor.
-	public MinimizeDfaHopcroft(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.moperand = operand;
-
-		// Start minimization.
-		System.out.println(startMessage());
+	public MinimizeDfaHopcroft(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand) {
+		super(services, operand.getStateFactory(), "minimizeDfaHopcroft", operand);
 		minimizeDfaHopcroft();
-		System.out.println(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	private void minimizeDfaHopcroft() {
 		initializeData();
 
 		// initialize partition.
-		final Partition partition = createInitialPartition();
+		createInitialPartition();
 	}
 
 	/**
@@ -103,8 +90,8 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * initializeLables.
 	 */
 	private void initializeData() {
-		final int nOfStates = moperand.getStates().size();
-		final int nOfLables = moperand.getInternalAlphabet().size();	
+		final int nOfStates = mOperand.getStates().size();
+		final int nOfLables = mOperand.getInternalAlphabet().size();	
 		initializeMappings(nOfStates, nOfLables);
 		initializeLables();
 	}
@@ -112,24 +99,22 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	/**
 	 * Method for mapping STATE/LETTER to int and vice versa.
 	 */
-	private void initializeMappings(int nOfStates, int nOfLables) {
+	private void initializeMappings(final int nOfStates, final int nOfLables) {
 		// Allocate the finite space in ArrayList and HashMap.
-		mint2state = new ArrayList<STATE>(nOfStates);
-		mstate2int = new HashMap<STATE, Integer>(
-				computeHashMapCapacity(nOfStates));
-		mint2letter = new ArrayList<LETTER>(nOfLables);
-		mletter2int = new HashMap<LETTER, Integer>(
-				computeHashMapCapacity(nOfLables));
+		mInt2state = new ArrayList<STATE>(nOfStates);
+		mState2int = new HashMap<STATE, Integer>(computeHashCap(nOfStates));
+		mInt2letter = new ArrayList<LETTER>(nOfLables);
+		mLetter2int = new HashMap<LETTER, Integer>(computeHashCap(nOfLables));
 
 		int index = -1;
-		for (final STATE state : moperand.getStates()) {
-			mint2state.add(state);
-			mstate2int.put(state, ++index);
+		for (final STATE state : mOperand.getStates()) {
+			mInt2state.add(state);
+			mState2int.put(state, ++index);
 		}
 		index = -1;
-		for (final LETTER letter : moperand.getAlphabet()) {
-			mint2letter.add(letter);
-			mletter2int.put(letter, ++index);
+		for (final LETTER letter : mOperand.getAlphabet()) {
+			mInt2letter.add(letter);
+			mLetter2int.put(letter, ++index);
 		}
 	}
 
@@ -139,32 +124,32 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * for storing nOfLabel, headOfLabel and tailOfLabel.
 	 */
 	private void initializeLables() {
-		mlabels = new int[Integer.MAX_VALUE];
-		mlabelTails = new int[Integer.MAX_VALUE];
-		mlabelHeads = new int[Integer.MAX_VALUE];
+		mLabels = new int[Integer.MAX_VALUE];
+		mLabelTails = new int[Integer.MAX_VALUE];
+		mLabelHeads = new int[Integer.MAX_VALUE];
 		
 		// Iterate over all states in mint2state.
 		int index = 0;
-		for (int i = 0; i < mint2state.size(); ++i) {
-			final STATE st = mint2state.get(i);
+		for (int i = 0; i < mInt2state.size(); ++i) {
+			final STATE st = mInt2state.get(i);
 			// Get outgoing transition.
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
-					moperand.internalSuccessors(st).iterator();
+					mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			while (it.hasNext()) {
 				final OutgoingInternalTransition< LETTER, STATE> oit = it.next();
-				mlabels[index] = mletter2int.get(oit.getLetter());
-				mlabelTails[index] = mstate2int.get(st);
-				mlabelHeads[index] = mstate2int.get(oit.getSucc());
+				mLabels[index] = mLetter2int.get(oit.getLetter());
+				mLabelTails[index] = mState2int.get(st);
+				mLabelHeads[index] = mState2int.get(oit.getSucc());
 				index++;
 			}
 		}
-		mnOfTransitions = index;
+		mNumberOfTransitions = index;
 		// resize arrays to used size for saving memory
 		// Maybe too much computing time?
-		mlabels = Arrays.copyOf(mlabels, mnOfTransitions);
-		mlabelTails = Arrays.copyOf(mlabelTails, mnOfTransitions);
-		mlabelHeads = Arrays.copyOf(mlabelHeads, mnOfTransitions);
+		mLabels = Arrays.copyOf(mLabels, mNumberOfTransitions);
+		mLabelTails = Arrays.copyOf(mLabelTails, mNumberOfTransitions);
+		mLabelHeads = Arrays.copyOf(mLabelHeads, mNumberOfTransitions);
 	}
 	
 	/**
@@ -174,10 +159,10 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * @param letter
 	 * @return if incoming transition labeled with letter exists.
 	 */
-	private boolean hasIncomingTransitionWithLetter(int state, int letter) {
-		final STATE st = mint2state.get(state);
-		final LETTER let = mint2letter.get(letter);
-		return moperand.internalPredecessors(let, st).iterator().hasNext();
+	private boolean hasIncomingTransitionWithLetter(final int state, final int letter) {
+		final STATE st = mInt2state.get(state);
+		final LETTER let = mInt2letter.get(letter);
+		return mOperand.internalPredecessors(let, st).iterator().hasNext();
 	}
 	
 	/**
@@ -187,10 +172,10 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * @param letter
 	 * @return if outgoing transition labeled with <letter> exists.
 	 */
-	private boolean hasOutgoingTransitionWithLetter(int state, int letter) {
-		final STATE st = mint2state.get(state);
-		final LETTER let = mint2letter.get(letter);
-		return moperand.internalSuccessors(st, let).iterator().hasNext();
+	private boolean hasOutgoingTransitionWithLetter(final int state, final int letter) {
+		final STATE st = mInt2state.get(state);
+		final LETTER let = mInt2letter.get(letter);
+		return mOperand.internalSuccessors(st, let).iterator().hasNext();
 	}
 	
 	/**
@@ -200,11 +185,11 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * @param letter
 	 * @return Number of predecessor state.
 	 */
-	private int getPredecessor(int state, int letter) {
-		final STATE st = mint2state.get(state);
-		final LETTER let = mint2letter.get(letter);
-		final STATE pred = moperand.internalPredecessors(let, st).iterator().next().getPred();
-		return mstate2int.get(pred);
+	private int getPredecessor(final int state, final int letter) {
+		final STATE st = mInt2state.get(state);
+		final LETTER let = mInt2letter.get(letter);
+		final STATE pred = mOperand.internalPredecessors(let, st).iterator().next().getPred();
+		return mState2int.get(pred);
 	}
 	
 	/**
@@ -214,25 +199,13 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * @param letter
 	 * @return Number of successor state.
 	 */
-	private int getSuccessor(int state, int letter) {
-		final STATE st = mint2state.get(state);
-		final LETTER let = mint2letter.get(letter);
-		final STATE succ = moperand.internalSuccessors(st, let).iterator().next().getSucc();
-		return mstate2int.get(succ);
+	private int getSuccessor(final int state, final int letter) {
+		final STATE st = mInt2state.get(state);
+		final LETTER let = mInt2letter.get(letter);
+		final STATE succ = mOperand.internalSuccessors(st, let).iterator().next().getSucc();
+		return mState2int.get(succ);
 	}
 	
-	/**
-	 * computes the size of a hash Map to avoid rehashing this is only sensible
-	 * if the maximum size is already known Java standard sets the load factor
-	 * to 0.75
-	 * 
-	 * @param size
-	 * @return hash map size
-	 */
-	private int computeHashMapCapacity(int size) {
-		return (int) (size / 0.75 + 1);
-	}
-
 	/**
 	 * Class for representing a partition. A partition P contains blocks of
 	 * states Y_1 ... Y_n. As initial blocks a partition P should contain P =
@@ -243,14 +216,14 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 */
 	public class Partition {
 		// ArrayList, to represent the sets in partition.
-		private ArrayList<int[]> msetsOfPartition;
-		private int msize;
+		private ArrayList<int[]> mSetsOfPartition;
+		private int mSize;
 		// All final states.
-		private int[] mfinalStates;
+		private int[] mFinalStates;
 		// All non - final states.
-		private int[] mnonfinalStates;
+		private int[] mNonfinalStates;
 		// WorkList of partition.
-		private Worklist mworkList;
+		private Worklist mWorkList;
 
 		/**
 		 * Constructor. Initialize arrays finalStates and nonfinalStates.
@@ -259,7 +232,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		 * @param nOfFinalStates
 		 */
 		public Partition() {
-			msize = 0;
+			mSize = 0;
 		}
 
 		/**
@@ -271,15 +244,15 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		 * @param states
 		 */
 		public void init() {
-			final Collection<STATE> finalStates = moperand.getFinalStates();
-			final Collection<STATE> states = moperand.getStates();
+			final Collection<STATE> finalStates = mOperand.getFinalStates();
+			final Collection<STATE> states = mOperand.getStates();
 			
 			final int nOfFinalStates = finalStates.size();
 			final int nOfStates = states.size();
 			
-			mfinalStates = new int[nOfFinalStates];
-			mnonfinalStates = new int[nOfStates - nOfFinalStates];
-			msetsOfPartition = new ArrayList<int[]>(nOfStates);
+			mFinalStates = new int[nOfFinalStates];
+			mNonfinalStates = new int[nOfStates - nOfFinalStates];
+			mSetsOfPartition = new ArrayList<int[]>(nOfStates);
 			
 			int fStatesInd = -1;
 			int nfStatesInd = -1;
@@ -287,17 +260,17 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 			while (it.hasNext()) {
 				final STATE st = it.next();
 				if (finalStates.contains(st)) {
-					mfinalStates[++fStatesInd] = mstate2int.get(st);
+					mFinalStates[++fStatesInd] = mState2int.get(st);
 				} else {
-					mnonfinalStates[++nfStatesInd] = mstate2int.get(st);
+					mNonfinalStates[++nfStatesInd] = mState2int.get(st);
 				}
-				msize++;
+				mSize++;
 			}
-			msetsOfPartition.add(mfinalStates);
-			msetsOfPartition.add(mnonfinalStates);
+			mSetsOfPartition.add(mFinalStates);
+			mSetsOfPartition.add(mNonfinalStates);
 			// initialize workList with finalStates.
-			mworkList = new Worklist(states.size());
-			mworkList.addToWorklist(mfinalStates);
+			mWorkList = new Worklist(states.size());
+			mWorkList.addToWorklist(mFinalStates);
 		}
 
 		/**
@@ -306,17 +279,17 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		 * @return number of containing sets.
 		 */
 		public int size() {
-			return msize;
+			return mSize;
 		}
 
 		/**
 		 * Replaces one set by another two sets.
 		 */
-		public void replaceSetBy2Sets(int setToReplace, int[] a, int[] b) {
-			msetsOfPartition.remove(setToReplace);
-			msetsOfPartition.add(a);
-			msetsOfPartition.add(b);
-			msize++;
+		public void replaceSetBy2Sets(final int setToReplace, final int[] a, final int[] b) {
+			mSetsOfPartition.remove(setToReplace);
+			mSetsOfPartition.add(a);
+			mSetsOfPartition.add(b);
+			mSize++;
 		}
 	}
 
@@ -326,88 +299,58 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	 * @author bjoern
 	 */
 	public class Worklist {
-		private final ArrayList<int[]> msetsOfStates;
-		private int msize;
+		private final ArrayList<int[]> mSetsOfStates;
+		private int mSize;
 
 		/**
 		 * Constructor. Initialize ArrayList<int[]> with maxSize = nOfStates.
 		 */
-		public Worklist(int maxSize) {
-			msetsOfStates = new ArrayList<int[]>(maxSize);
-			msize = msetsOfStates.size();
+		public Worklist(final int maxSize) {
+			mSetsOfStates = new ArrayList<int[]>(maxSize);
+			mSize = mSetsOfStates.size();
 		}
 
 		/**
 		 * Pop last element of worklist.
 		 */
 		public int[] popFromWorklist() {
-			if (msetsOfStates.isEmpty()) {
+			if (mSetsOfStates.isEmpty()) {
 				return null;
 			}
-			final int[] ret = msetsOfStates.remove(msize - 1);
-			msize--;
+			final int[] ret = mSetsOfStates.remove(mSize - 1);
+			mSize--;
 			return ret;
 		}
 
 		/**
 		 * Add collection of states to worklist.
 		 */
-		public void addToWorklist(int[] set) {
-			msetsOfStates.add(set);
-			msize++;
+		public void addToWorklist(final int[] set) {
+			mSetsOfStates.add(set);
+			mSize++;
 		}
 
 		/**
 		 * Replace specific Set by two other sets.
 		 */
-		public boolean replaceSetBy2Sets(int setToReplace, int[] a, int[] b) {
-			msetsOfStates.remove(setToReplace);
-			final boolean a_added = msetsOfStates.add(a);
-			final boolean b_added = msetsOfStates.add(b);
-			msize++;
-			return (a_added && b_added);
+		public boolean replaceSetBy2Sets(final int setToReplace, final int[] a, final int[] b) {
+			mSetsOfStates.remove(setToReplace);
+			final boolean aAdded = mSetsOfStates.add(a);
+			final boolean bAdded = mSetsOfStates.add(b);
+			mSize++;
+			return (aAdded && bAdded);
 		}
 
 		/**
 		 * Returns true, if and only if worklist is empty.
 		 */
 		public boolean isEmpty() {
-			return msetsOfStates.isEmpty();
+			return mSetsOfStates.isEmpty();
 		}
 	}
-	
-	@Override
-	public String operationName() {
-		return "minimizeDfaHopcroft";
-	}
 
 	@Override
-	public String startMessage() {
-		return "Starting minimization";
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished minimization";
-	}
-
-	@Override
-	public Object getResult() throws AutomataLibraryException {
+	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
 		return mResult;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public final boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, moperand, mResult, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, moperand, stateFactory) == null);
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", moperand);
-		}
-		mLogger.info("Finished testing correctness of " + operationName());
-		return correct;
 	}
 }
