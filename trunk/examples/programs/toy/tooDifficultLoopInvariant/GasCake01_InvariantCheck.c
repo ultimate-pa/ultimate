@@ -29,7 +29,7 @@ void holdsInitially(void) {
 	float32 input_f32;
 	float32 output_f32 = 0;
 	float32 internal_f32 = 0;
- 	//@ assert ((internal_f32 * 0.9 + output_f32 >= -0.00001) && (internal_f32 * 0.9 + output_f32 <= 100.00001) && (output_f32 >= -0.00001) && (output_f32 <= 100.00001) && (internal_f32 >= -56.0));
+ 	//@ assert ((internal_f32 * 0.9 + outputOld_f32 >= -1.0) && (internal_f32 * 0.9 + outputOld_f32 <= 101.0) && (outputOld_f32 >= -1.0) && (outputOld_f32 <= 101.0) && (internal_f32 >= -57.0));
 }
 
 void isInductive(void) {
@@ -57,7 +57,7 @@ void isSafe(void) {
 	float32 input_f32;
 	float32 output_f32 = 0;
 	float32 internal_f32 = 0;
- 	if (((internal_f32 * 0.9 + output_f32 >= -0.00001) && (internal_f32 * 0.9 + output_f32 <= 100.00001) && (output_f32 >= -0.00001) && (output_f32 <= 100.00001) && (internal_f32 >= -56.0))) {
-		//@ assert (output_f32 >= -0.00001 && output_f32 <= 100.00001);
+ 	if (((internal_f32 * 0.9 + outputOld_f32 >= -1.0) && (internal_f32 * 0.9 + outputOld_f32 <= 101.0) && (outputOld_f32 >= -1.0) && (outputOld_f32 <= 101.0) && (internal_f32 >= -57.0))) {
+		//@ assert (output_f32 >= -1.0 && output_f32 <= 101.0);
 	}
 }
