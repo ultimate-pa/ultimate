@@ -1,0 +1,22 @@
+  // author nutz@informatik.uni-freiburg.de
+// prototype file for tree automata in AutomataScript
+// (and simple test file at the same time)
+// contains comments concerning the layout of the description of TreeAutomata
+
+
+TreeAutomaton ta1 = { //We call a bottom-up tree automaton "TreeAutomaton"
+  rankedAlphabet = {
+    (0, {a , b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {q1, q2},
+  //initialState = {q0}, // we have 0-ary symbols --> don't need initial states
+  finalStates = {q2},
+  transitions = {
+    (() a q1)
+    (() b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+}
