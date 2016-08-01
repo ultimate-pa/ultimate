@@ -36,5 +36,5 @@ procedure isSafe() returns () {
 	var internal : real;
 	
 	assume (internal * 0.9 + output >= -0.00001) && (internal * 0.9 + output <= 100.00001) && (output >= -0.00001) && (output <= 100.00001) && (internal >= -56.0);
-	assert output <= 100.00001;
+	assert output <= -0.00001 && output <= 100.00001;
 }
