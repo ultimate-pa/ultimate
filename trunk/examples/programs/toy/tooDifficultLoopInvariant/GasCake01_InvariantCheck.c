@@ -34,11 +34,11 @@ void holdsInitially(void) {
 
 void isInductive(void) {
 	float32 input_f32;
-	float32 output_f32 = 0;
-	float32 internal_f32 = 0;
-	float32 outputOld_f32 = 0;
+	float32 output_f32;
+	float32 internal_f32;
+	float32 outputOld_f32;
 	
-	if (((internal_f32 * 0.9 + output_f32 >= -0.00001) && (internal_f32 * 0.9 + output_f32 <= 100.00001) && (output_f32 >= -0.00001) && (output_f32 <= 100.00001) && (internal_f32 >= -56.0))) {
+	if (((internal_f32 * 0.9 + outputOld_f32 >= -1.0) && (internal_f32 * 0.9 + outputOld_f32 <= 101.0) && (outputOld_f32 >= -1.0) && (outputOld_f32 <= 101.0) && (internal_f32 >= -57.0))) {
 		
 		input_f32 = tclRange_f32(0.0, 100.0);
 		output_f32 = outputOld_f32 + (internal_f32 * 0.02F);
@@ -47,7 +47,7 @@ void isInductive(void) {
 		+ internal_f32 * 0.9555555556F);
 		outputOld_f32 = output_f32;
 		
-		//@ assert ((internal_f32 * 0.9 + output_f32 >= -0.00001) && (internal_f32 * 0.9 + output_f32 <= 100.00001) && (output_f32 >= -0.00001) && (output_f32 <= 100.00001) && (internal_f32 >= -56.0));
+		//@ assert ((internal_f32 * 0.9 + outputOld_f32 >= -1.0) && (internal_f32 * 0.9 + outputOld_f32 <= 101.0) && (outputOld_f32 >= -1.0) && (outputOld_f32 <= 101.0) && (internal_f32 >= -57.0));
 	}
 }
 
