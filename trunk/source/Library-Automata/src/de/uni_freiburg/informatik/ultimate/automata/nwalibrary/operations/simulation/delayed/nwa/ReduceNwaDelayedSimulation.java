@@ -81,8 +81,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true);
 	}
 
@@ -104,8 +104,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
@@ -134,8 +134,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),

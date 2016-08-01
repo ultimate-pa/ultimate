@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
@@ -52,7 +53,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mResult;
+	private final IDoubleDeckerAutomaton<LETTER,STATE> mResult;
 
 	private final ILogger mLogger;
 
@@ -67,8 +68,8 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param nwa
 	 * @throws AutomataOperationCanceledException
 	 */
-	public RemoveDeadEnds(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveDeadEnds(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -106,12 +107,12 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mResult;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);

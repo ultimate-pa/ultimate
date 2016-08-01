@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
@@ -121,7 +122,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final StateFactory<STATE> factory) throws Throwable {
 		return new ReduceNwaDelayedSimulation<LETTER, STATE>(
 				new AutomataLibraryServices(mServices), factory,
-				new RemoveDeadEnds<LETTER, STATE>(
+				(INestedWordAutomatonOldApi<LETTER, STATE>) new RemoveDeadEnds<LETTER, STATE>(
 						new AutomataLibraryServices(mServices), automaton)
 								.getResult(),
 				false);

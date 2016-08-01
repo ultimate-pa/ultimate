@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  */
 public class TransitionConsitenceCheck<LETTER, STATE> {
 	
-	INestedWordAutomatonOldApi<LETTER, STATE> mNwa;
+	IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	
-	public TransitionConsitenceCheck(INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
+	public TransitionConsitenceCheck(final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
 		mNwa = nwa;
 	}
 	
@@ -56,7 +56,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return result;
 	}
 	
-	private boolean consistentForState(STATE state) {
+	private boolean consistentForState(final STATE state) {
 		boolean result = true;
 		for (final OutgoingInternalTransition<LETTER, STATE> t : mNwa.internalSuccessors(state)) {
 			result &= internalIn(state, t.getLetter(), t.getSucc());
@@ -97,7 +97,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return result;
 	}
 	
-	private boolean internalOut(STATE state, LETTER letter, STATE succ) {
+	private boolean internalOut(final STATE state, final LETTER letter, final STATE succ) {
 		for (final OutgoingInternalTransition<LETTER, STATE> t : mNwa.internalSuccessors(state)) {
 			final boolean contains = letter.equals(t.getLetter()) && succ.equals(t.getSucc());
 			if (contains) {
@@ -107,7 +107,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	private boolean internalIn(STATE pred, LETTER letter, STATE succ) {
+	private boolean internalIn(final STATE pred, final LETTER letter, final STATE succ) {
 		for (final IncomingInternalTransition<LETTER, STATE> t : mNwa.internalPredecessors(succ)) {
 			final boolean contains = pred.equals(t.getPred()) && letter.equals(t.getLetter());
 			if (contains) {
@@ -117,7 +117,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	private boolean callOut(STATE state, LETTER letter, STATE succ) {
+	private boolean callOut(final STATE state, final LETTER letter, final STATE succ) {
 		for (final OutgoingCallTransition<LETTER, STATE> t : mNwa.callSuccessors(state)) {
 			final boolean contains = letter.equals(t.getLetter()) && succ.equals(t.getSucc());
 			if (contains) {
@@ -127,7 +127,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	private boolean callIn(STATE pred, LETTER letter, STATE succ) {
+	private boolean callIn(final STATE pred, final LETTER letter, final STATE succ) {
 		for (final IncomingCallTransition<LETTER, STATE> t : mNwa.callPredecessors(succ)) {
 			final boolean contains = pred.equals(t.getPred()) && letter.equals(t.getLetter());
 			if (contains) {
@@ -138,7 +138,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 	}
 	
 	
-	private boolean returnOut(STATE state, STATE hier, LETTER letter, STATE succ) {
+	private boolean returnOut(final STATE state, final STATE hier, final LETTER letter, final STATE succ) {
 		for (final OutgoingReturnTransition<LETTER, STATE> t : mNwa.returnSuccessors(state)) {
 			final boolean contains = hier.equals(t.getHierPred()) && letter.equals(t.getLetter()) && succ.equals(t.getSucc());
 			if (contains) {
@@ -148,7 +148,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	private boolean returnIn(STATE state, STATE hier, LETTER letter, STATE succ) {
+	private boolean returnIn(final STATE state, final STATE hier, final LETTER letter, final STATE succ) {
 		for (final IncomingReturnTransition<LETTER, STATE> t : mNwa.returnPredecessors(succ)) {
 			final boolean contains = state.equals(t.getLinPred()) && hier.equals(t.getHierPred()) && letter.equals(t.getLetter());
 			if (contains) {
@@ -158,7 +158,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	private boolean returnSummary(STATE state, STATE hier, LETTER letter, STATE succ) {
+	private boolean returnSummary(final STATE state, final STATE hier, final LETTER letter, final STATE succ) {
 		for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.returnSummarySuccessor(letter, hier)) {
 			final boolean contains = state.equals(t.getLinPred()) && succ.equals(t.getSucc());
 			if (contains) {
