@@ -87,10 +87,9 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			Boogie2SmtSymbolTable bpl2smtTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
-			String evaluatorType = "";
 			int maxParallelStates = 2;
 			final SignDomainStatementProcessor stmtProcessor = new SignDomainStatementProcessor(mLogger, mSymbolTable,
-					bpl2smtTable, evaluatorType, maxParallelStates);
+					bpl2smtTable, maxParallelStates);
 			mPostOperator = new SignPostOperator(mLogger, stmtProcessor);
 		}
 		return mPostOperator;

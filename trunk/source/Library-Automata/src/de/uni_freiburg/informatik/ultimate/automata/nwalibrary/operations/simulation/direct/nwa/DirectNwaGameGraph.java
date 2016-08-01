@@ -134,7 +134,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph(true);
 
 		// Log performance
 		if (performance != null) {

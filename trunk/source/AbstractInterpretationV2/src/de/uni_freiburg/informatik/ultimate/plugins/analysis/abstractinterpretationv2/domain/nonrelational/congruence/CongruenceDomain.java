@@ -37,7 +37,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private IEqualityProvider<CongruenceDomainState, CodeBlock, IBoogieVar, Expression> mEqualityProvider;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
-			final BoogieSymbolTable symbolTable, final RootAnnot rootAnnotation) {
+	        final BoogieSymbolTable symbolTable, final RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mServices = services;
@@ -70,14 +70,12 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	public IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-			final String evaluatorType = prefs.getString(CongruenceDomainPreferences.LABEL_EVALUATOR_TYPE);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			final CongruenceDomainStatementProcessor stmtProcessor = new CongruenceDomainStatementProcessor(mLogger,
-					mSymbolTable, mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable(), evaluatorType,
-					maxParallelStates);
+			        mSymbolTable, mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable(), maxParallelStates);
 			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, stmtProcessor, bpl2SmtSymbolTable,
-					maxParallelStates);
+			        maxParallelStates);
 		}
 		return mPostOperator;
 	}

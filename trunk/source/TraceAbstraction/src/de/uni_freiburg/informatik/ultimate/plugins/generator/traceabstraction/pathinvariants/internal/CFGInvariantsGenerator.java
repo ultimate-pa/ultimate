@@ -91,6 +91,7 @@ public final class CFGInvariantsGenerator {
 				postcondition);
 
 		final Collection<Location> locations = cfg.getLocations();
+		logService.info("(Path)program has " + locations.size() + " locations");
 		final Map<Location, IPT> patterns = new HashMap<Location, IPT>(locations.size());
 		final Collection<Transition> transitions = cfg.getTransitions();
 		final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(

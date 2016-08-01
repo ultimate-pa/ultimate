@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-		implements IAbstractState<STATE, CodeBlock> {
+		implements INonrelationalAbstractState<STATE, CodeBlock> {
 
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
@@ -709,6 +709,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
 	 */
+	@Override
 	public STATE intersect(final STATE other) {
 		assert other != null;
 		assert hasSameVariables(other);

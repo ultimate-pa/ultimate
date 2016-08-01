@@ -134,7 +134,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph(false);
 
 		// Log performance
 		if (performance != null) {

@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -200,51 +200,51 @@ public class SvComp14CHandler extends CHandler {
 				switch (t) {
 				case "_Bool":
 				case "bool":
-					cType = new CPrimitive(PRIMITIVE.BOOL);
+					cType = new CPrimitive(CPrimitives.BOOL);
 					break;
 				case "char":
-					cType = new CPrimitive(PRIMITIVE.CHAR);
+					cType = new CPrimitive(CPrimitives.CHAR);
 					break;
 				case "float":
-					cType = new CPrimitive(PRIMITIVE.FLOAT);
+					cType = new CPrimitive(CPrimitives.FLOAT);
 //					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 					break;
 				case "double":
-					cType = new CPrimitive(PRIMITIVE.DOUBLE);
+					cType = new CPrimitive(CPrimitives.DOUBLE);
 //					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 					break;
 				case "size_t":
 				case "int":
-					cType = new CPrimitive(PRIMITIVE.INT);
+					cType = new CPrimitive(CPrimitives.INT);
 					break;
 				case "loff_t":
 				case "long":
-					cType = new CPrimitive(PRIMITIVE.LONG);
+					cType = new CPrimitive(CPrimitives.LONG);
 					break;
 				case "short":
-					cType = new CPrimitive(PRIMITIVE.SHORT);
+					cType = new CPrimitive(CPrimitives.SHORT);
 					break;
 				case "pchar":
-					cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+					cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 					break;
 				case "pointer":
 //					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
 //							new ASTType[0]);
 //					type = boogiePointerType;
-					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+					cType = new CPointer(new CPrimitive(CPrimitives.VOID));
 					break;
 				case "uchar":
-					cType = new CPrimitive(PRIMITIVE.UCHAR);
+					cType = new CPrimitive(CPrimitives.UCHAR);
 					break;
 				case "unsigned":
 				case "uint":
-					cType = new CPrimitive(PRIMITIVE.UINT);
+					cType = new CPrimitive(CPrimitives.UINT);
 					break;
 				case "ulong":
-					cType = new CPrimitive(PRIMITIVE.ULONG);
+					cType = new CPrimitive(CPrimitives.ULONG);
 					break;
 				case "ushort":
-					cType = new CPrimitive(PRIMITIVE.USHORT);
+					cType = new CPrimitive(CPrimitives.USHORT);
 					break;
 				default:
 					throw new AssertionError("unknown type " + t);
@@ -269,7 +269,7 @@ public class SvComp14CHandler extends CHandler {
 				return new SkipResult();
 			}
 			// 2015-11-05 Matthias: TODO check if int is reasonable here
-			final CType returnType = new CPrimitive(PRIMITIVE.INT);
+			final CType returnType = new CPrimitive(CPrimitives.INT);
 			final ASTType tempType = mTypeHandler.ctype2asttype(loc, returnType);
 			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
@@ -291,10 +291,10 @@ public class SvComp14CHandler extends CHandler {
 			assert node.getArguments().length == 3 : "wrong number of arguments";
 			ExpressionResult dest = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 			dest = dest.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 			src = src.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
 			size = size.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
 			main.mCHandler.convert(loc, size, mTypeSizeComputer.getSize_T());
@@ -311,7 +311,7 @@ public class SvComp14CHandler extends CHandler {
 					src.lrVal.getValue(), size.lrVal.getValue(), tId);
 			result.stmt.add(call);
 			result.lrVal = new RValue(new IdentifierExpression(loc, tId), 
-					new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 			// add required information to function handler.
 			if (!getFunctionHandler().getCallGraph().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
@@ -327,7 +327,7 @@ public class SvComp14CHandler extends CHandler {
 		
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			final CPrimitive cType = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
 			return new ExpressionResult(new RValue(zero, cType));
 		}
@@ -371,11 +371,11 @@ public class SvComp14CHandler extends CHandler {
 		if (node.getName().toString().equals("null")) {
 			return new ExpressionResult(
 					new RValue(mExpressionTranslation.constructNullPointer(loc),
-					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+					new CPointer(new CPrimitive(CPrimitives.VOID))));
 		}
 		if (node.getName().toString().equals("__PRETTY_FUNCTION__")
 				|| node.getName().toString().equals("__FUNCTION__")){
-			final CType returnType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });

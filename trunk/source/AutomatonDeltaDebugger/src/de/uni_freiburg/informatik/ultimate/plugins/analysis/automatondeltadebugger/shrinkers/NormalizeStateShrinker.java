@@ -86,6 +86,7 @@ public class NormalizeStateShrinker<LETTER, STATE>
 		final ArrayDeque<STATE> stack = new ArrayDeque<STATE>();
 		final HashSet<STATE> remaining =
 				filterStates(list, noninitialStates, stack);
+		final Set<STATE> oldStates = mAutomaton.getStates();
 		
 		final HashMap<STATE, STATE> old2new = new HashMap<STATE, STATE>();
 		final HashSet<STATE> onStackOrVisited = new HashSet<STATE>(stack);
@@ -117,26 +118,36 @@ public class NormalizeStateShrinker<LETTER, STATE>
 			// create new state if not already present
 			final STATE newState;
 			if (remaining.remove(oldState)) {
-				// do not reassign this state name
+				// do not reassign this state name (was not in the list)
 				newState = oldState;
 			} else {
-				// assign new name
+				/*
+				 * assign new name
+				 * Make sure that the new state name does not exist.
+				 */
 				assert (oldState instanceof String) : "The state was a " +
 						"string during list creation.";
-				final String name;
+				STATE newStateCandidate = null;
 				if (isInitial) {
-					++initials;
-					name = "q0_" + initials;
+					do {
+						++initials;
+						newStateCandidate = (STATE) ("qI_" + initials);
+					} while (oldStates.contains(newStateCandidate));
 				} else if (isFinal) {
-					++finals;
-					name = "qf_" + finals;
+					do {
+						++finals;
+						newStateCandidate = (STATE) ("qF_" + finals);
+					} while (oldStates.contains(newStateCandidate));
 				} else {
-					++normals;
-					name = "q_" + normals;
+					do {
+						++normals;
+						newStateCandidate = (STATE) ("q_" + normals);
+					} while (oldStates.contains(newStateCandidate));
 				}
-				newState = (STATE) name;
+				newState = newStateCandidate;
 			}
-			old2new.put(oldState, newState);
+			final STATE oldMapping = old2new.put(oldState, newState);
+			assert (oldMapping == null);
 			mFactory.addState(automaton, newState, isInitial, isFinal);
 			
 			// push successors which have not been visited
@@ -163,7 +174,8 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				new HashSet<STATE>(mAutomaton.getStates());
 		
 		for (final STATE state : list) {
-			remaining.remove(state);
+			final boolean wasPresent = remaining.remove(state);
+			assert wasPresent;
 			if (mAutomaton.isInitial(state)) {
 				initialStates.add(state);
 			} else {
@@ -180,8 +192,8 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	 * 
 	 * @param noninitialStates non-initial states
 	 * @param stack stack of states (empty when this method is called)
-	 * @param remaining
-	 * @param onStackOrVisited
+	 * @param remaining states not visited yet
+	 * @param onStackOrVisited states on stack or visited
 	 */
 	private void addMissingStates(final HashSet<STATE> noninitialStates,
 			final ArrayDeque<STATE> stack, final HashSet<STATE> remaining,
@@ -191,15 +203,18 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				stack.push(state);
 			}
 		}
-		stack.addAll(remaining);
-		onStackOrVisited.addAll(remaining);
+		for (final STATE state : remaining) {
+			final boolean wasNotPresent = onStackOrVisited.add(state);
+			assert wasNotPresent;
+			stack.add(state);
+		}
 	}
 	
 	/**
 	 * adds all successor states which have not been visited
 	 * 
 	 * @param stack stack of states
-	 * @param onStackOrVisited set of states
+	 * @param onStackOrVisited states on stack or visited
 	 * @param oldState state in the old automaton
 	 */
 	private void considerSuccessors(final ArrayDeque<STATE> stack,

@@ -31,7 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -83,7 +83,7 @@ public class CPointer extends CType {
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPointer &&
 				((CPointer) o).pointsToType instanceof CPrimitive
-				&& ((CPrimitive) ((CPointer) o).pointsToType).getType() == PRIMITIVE.VOID) {
+				&& ((CPrimitive) ((CPointer) o).pointsToType).getType() == CPrimitives.VOID) {
 			return true;
 		}
 

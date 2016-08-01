@@ -35,6 +35,7 @@ import java.math.RoundingMode;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
@@ -766,6 +767,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The interval to negate.
 	 * @return A new interval which corresponds to the negated input interval.
 	 */
+	@Override
 	public IntervalDomainValue negate() {
 
 		if (isBottom()) {
@@ -1234,18 +1236,18 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			}
 		}
 
-//			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
-//			        new IntervalValue(new BigDecimal(-1)));
-//			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
-//			        other.getUpper());
-//
-//			final IntervalDomainValue resultNeg = divideInternally(negZero);
-//			final IntervalDomainValue resultPos = divideInternally(posZero);
-//
-//			result = resultNeg.merge(resultPos);
-//		} else {
-			result = divideInternally(other);
-//		}
+		// final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
+		// new IntervalValue(new BigDecimal(-1)));
+		// final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
+		// other.getUpper());
+		//
+		// final IntervalDomainValue resultNeg = divideInternally(negZero);
+		// final IntervalDomainValue resultPos = divideInternally(posZero);
+		//
+		// result = resultNeg.merge(resultPos);
+		// } else {
+		result = divideInternally(other);
+		// }
 
 		if (result.isBottom() || result.isInfinity()) {
 			return result;
@@ -1289,13 +1291,13 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		if (other.containsZero()) {
 			return new IntervalDomainValue();
-		}// else {
+		} // else {
 
-			final IntervalValue lowerBound = computeMinDiv(other);
-			final IntervalValue upperBound = computeMaxDiv(other);
+		final IntervalValue lowerBound = computeMinDiv(other);
+		final IntervalValue upperBound = computeMaxDiv(other);
 
-			return new IntervalDomainValue(lowerBound, upperBound);
-//		}
+		return new IntervalDomainValue(lowerBound, upperBound);
+		// }
 	}
 
 	/**
@@ -1322,7 +1324,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		final IntervalValue b = getUpper();
 		final IntervalValue c = other.getLower();
 		final IntervalValue d = other.getUpper();
-		
+
 		// If the other interval contains infinity, we need 0 as a lower bound.
 		if (c.isInfinity() || d.isInfinity()) {
 			returnValue = updateIfSmaller(returnValue, BigDecimal.ZERO, valuePresent);
@@ -1479,7 +1481,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		if (other.containsZero()) {
 			return new IntervalValue();
 		}
-		
+
 		// Compute a / c
 		if (a.isInfinity()) {
 			// -\infty / -\infty = \infty
@@ -1592,5 +1594,117 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		assert valuePresent;
 		return returnValue;
+	}
+
+	@Override
+	public IntervalDomainValue greaterThan(IntervalDomainValue other) {
+		return greaterOrEqual(other);
+	}
+
+	@Override
+	public BooleanValue isGreaterThan(IntervalDomainValue other) {
+		return isGreaterOrEqual(other);
+	}
+
+	@Override
+	public BooleanValue isGreaterOrEqual(IntervalDomainValue other) {
+		final IntervalDomainValue geq = greaterOrEqual(other);
+		if (geq.isBottom() || geq.isPointInterval()) {
+			return new BooleanValue(true);
+		} else {
+			return new BooleanValue();
+		}
+	}
+
+	@Override
+	public IntervalDomainValue lessThan(IntervalDomainValue other) {
+		return lessOrEqual(other);
+	}
+
+	@Override
+	public BooleanValue isLessThan(IntervalDomainValue other) {
+		return isLessOrEqual(other);
+	}
+
+	@Override
+	public BooleanValue isLessOrEqual(IntervalDomainValue other) {
+		final IntervalDomainValue leq = lessOrEqual(other);
+		if (leq.isBottom() || leq.isPointInterval()) {
+			return new BooleanValue(true);
+		} else {
+			return new BooleanValue();
+		}
+	}
+
+	@Override
+	public IntervalDomainValue inverseModulo(IntervalDomainValue referenceValue, IntervalDomainValue oldValue,
+	        boolean isLeft) {
+		return oldValue;
+	}
+
+	@Override
+	public IntervalDomainValue inverseEquality(IntervalDomainValue oldValue, IntervalDomainValue referenceValue) {
+		return referenceValue;
+	}
+
+	@Override
+	public IntervalDomainValue inverseLessOrEqual(IntervalDomainValue oldValue, boolean isLeft) {
+		final IntervalDomainValue newValue;
+		if (isLeft) {
+			newValue = new IntervalDomainValue(new IntervalValue(), getUpper());
+		} else {
+			newValue = new IntervalDomainValue(getLower(), new IntervalValue());
+		}
+		return newValue.intersect(oldValue);
+	}
+
+	@Override
+	public IntervalDomainValue inverseLessThan(IntervalDomainValue oldValue, boolean isLeft) {
+		return inverseLessOrEqual(oldValue, isLeft);
+	}
+
+	@Override
+	public IntervalDomainValue inverseGreaterOrEqual(IntervalDomainValue oldValue, boolean isLeft) {
+		final IntervalDomainValue newValue;
+		if (isLeft) {
+			newValue = new IntervalDomainValue(getLower(), new IntervalValue());
+		} else {
+			newValue = new IntervalDomainValue(new IntervalValue(), getUpper());
+		}
+		return newValue.intersect(oldValue);
+	}
+
+	@Override
+	public IntervalDomainValue inverseGreaterThan(IntervalDomainValue oldValue, boolean isLeft) {
+		return inverseGreaterOrEqual(oldValue, isLeft);
+	}
+
+	@Override
+	public IntervalDomainValue inverseNotEqual(IntervalDomainValue oldValue, IntervalDomainValue referenceValue) {
+		return referenceValue;
+	}
+
+	@Override
+	public boolean canHandleReals() {
+		return false;
+	}
+
+	@Override
+	public boolean canHandleModulo() {
+		return false;
+	}
+
+	@Override
+	public BooleanValue compareEquality(IntervalDomainValue firstOther, IntervalDomainValue secondOther) {
+		if (isEqualTo(firstOther) && isEqualTo(secondOther)) {
+			return new BooleanValue(true);
+		}
+		return new BooleanValue();
+	}
+
+	@Override
+	public BooleanValue compareInequality(IntervalDomainValue firstOther, IntervalDomainValue secondOther) {
+		throw new UnsupportedOperationException(
+		        "Not equals expressions should have been removed during expression normalization.");
 	}
 }

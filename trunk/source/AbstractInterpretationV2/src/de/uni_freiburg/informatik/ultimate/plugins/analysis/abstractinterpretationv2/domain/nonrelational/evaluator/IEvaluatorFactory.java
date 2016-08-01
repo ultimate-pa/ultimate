@@ -58,7 +58,7 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The type of the evaluator.
 	 * @return A new {@link INAryEvaluator}.
 	 */
-	INAryEvaluator<VALUE, STATE, ACTION> createNAryExpressionEvaluator(int arity, EvaluatorType type);
+	INAryEvaluator<VALUE, STATE, ACTION> createNAryExpressionEvaluator(final int arity, final EvaluatorType type);
 
 	/**
 	 * Creates a function evaluator for expressions that contain functions.
@@ -69,7 +69,7 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The number of input parameters of the function.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION> createFunctionEvaluator(String functionName, int inputParamCount);
+	IEvaluator<VALUE, STATE, ACTION> createFunctionEvaluator(final String functionName, final int inputParamCount);
 
 	/**
 	 * @return A new conditional evaluator.
@@ -92,7 +92,8 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The type of the value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonValueExpressionEvaluator(final String value,
+	        final Class<?> valueType);
 
 	/**
 	 * Creates an evaluator for single variables that are occurring in expressions.
@@ -101,7 +102,7 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The name of the variable.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION> createSingletonVariableExpressionEvaluator(IBoogieVar variableName);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonVariableExpressionEvaluator(final IBoogieVar variableName);
 
 	/**
 	 * Creates an evaluator for single boolean values that are occurring in expressions.
@@ -110,5 +111,5 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The boolean value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value);
 }

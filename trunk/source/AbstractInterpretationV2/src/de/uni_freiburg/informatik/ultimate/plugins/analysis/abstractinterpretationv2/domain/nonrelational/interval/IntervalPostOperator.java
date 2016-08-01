@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class IntervalPostOperator extends NonrelationalPostOperator<IntervalDomainState, IntervalDomainValue> {
 
 	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtSymbolTable, final String evaluatorType, final int maxParallelStates) {
+			final Boogie2SmtSymbolTable bpl2smtSymbolTable, final int maxParallelStates) {
 		super(logger, symbolTable, bpl2smtSymbolTable, new IntervalDomainStatementProcessor(logger, symbolTable,
-				bpl2smtSymbolTable, evaluatorType, maxParallelStates), maxParallelStates);
+				bpl2smtSymbolTable, maxParallelStates), maxParallelStates);
 	}
 
 }

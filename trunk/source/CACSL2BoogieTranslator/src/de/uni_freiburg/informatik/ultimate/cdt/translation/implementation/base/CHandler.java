@@ -169,8 +169,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -992,7 +992,7 @@ public class CHandler implements ICHandler {
 			for (int i = 0; i < paramDecls.length; i++) {
 				final DeclaratorResult decl = (DeclaratorResult) main.dispatch(paramDecls[i]);
 				if (decl.getDeclaration().getName() == "" && decl.getDeclaration().getType() instanceof CPrimitive
-						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(PRIMITIVE.VOID)) {
+						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(CPrimitives.VOID)) {
 					assert paramDecls.length == 1;
 					paramsParsed = new CDeclaration[0];
 					break;
@@ -1037,7 +1037,7 @@ public class CHandler implements ICHandler {
 		// deal with builtin constants
 		if (cId.equals("NULL")) {
 			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
-					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+					new CPointer(new CPrimitive(CPrimitives.VOID))));
 		} else if (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf")) {
 			final ExpressionResult result = mExpressionTranslation.createNanOrInfinity(loc, cId);
 			return result;
@@ -1045,7 +1045,7 @@ public class CHandler implements ICHandler {
 			final RValue rvalue = mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
 			return new ExpressionResult(rvalue);
 		} else if (node.getName().toString().equals("__func__")) {
-			final CType cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			final CType cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
@@ -1132,7 +1132,7 @@ public class CHandler implements ICHandler {
 			final Map<VariableDeclaration, ILocation> emptyAuxVars =
 					new LinkedHashMap<VariableDeclaration, ILocation>(0);
 			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, oType), new CPrimitive(PRIMITIVE.INT)),
+					new RValue(mMemoryHandler.calculateSizeOf(loc, oType), new CPrimitive(CPrimitives.INT)),
 					emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
 			return handleIndirectionOperator(main, o, loc);
@@ -1372,7 +1372,7 @@ public class CHandler implements ICHandler {
 				if (inputType instanceof CPointer) {
 					rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
 				} else if (inputType instanceof CEnum) {
-					final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
 				} else if (inputType instanceof CPrimitive) {
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, inputType);
@@ -1385,7 +1385,7 @@ public class CHandler implements ICHandler {
 			}
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(operand);
 			// C11 6.5.3.3.5 The result has type int.
-			final CPrimitive resultType = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 			// type of Operator.COMPEQ expression is bool
 			final boolean isBoogieBool = true;
 			final RValue rval = new RValue(negated, resultType, isBoogieBool);
@@ -1507,12 +1507,12 @@ public class CHandler implements ICHandler {
 				final RValue newRVal = new RValue(
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 								rl.lrVal.getValue(), rr.lrVal.getValue()),
-						new CPrimitive(CPrimitive.PRIMITIVE.INT), true);
+						new CPrimitive(CPrimitive.CPrimitives.INT), true);
 
 				return new ExpressionResult(stmt, newRVal, decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~AND~UID
-			final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
 			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
 			final VariableDeclaration tmpVar =
@@ -1566,11 +1566,11 @@ public class CHandler implements ICHandler {
 						new RValue(
 								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
 										rl.lrVal.getValue(), rr.lrVal.getValue()),
-								new CPrimitive(CPrimitive.PRIMITIVE.INT), true),
+								new CPrimitive(CPrimitive.CPrimitives.INT), true),
 						decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~OR~UID
-			final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
 			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
 			final VariableDeclaration tmpVar =
@@ -1716,7 +1716,7 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 		}
 		// The result has type int (C11 6.5.8.6)
-		final CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive typeOfResult = new CPrimitive(CPrimitives.INT);
 		final RValue rval = new RValue(expr, typeOfResult, true, false);
 		result.lrVal = rval;
 		return result;
@@ -2020,7 +2020,7 @@ public class CHandler implements ICHandler {
 				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
 				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
-		final CPrimitive typesizeType = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive typesizeType = new CPrimitive(CPrimitives.INT);
 		// TODO: typesizeType and .getCTypeOfPointerComponents() might be
 		// different then one expression has to be converted into the type of
 		// the other
@@ -2077,12 +2077,12 @@ public class CHandler implements ICHandler {
 				if (!(lType instanceof CPointer)) {
 					// throw new AssertionError("illegal case");
 					// FIXME: the following is a workaround for the null pointer
-					convert(loc, left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					convert(loc, left, new CPointer(new CPrimitive(CPrimitives.VOID)));
 				}
 				if (!(rType instanceof CPointer)) {
 					// throw new AssertionError("illegal case");
 					// FIXME: the following is a workaround for the null pointer
-					convert(loc, right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					convert(loc, right, new CPointer(new CPrimitive(CPrimitives.VOID)));
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
@@ -2091,7 +2091,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 		// The result has type int (C11 6.5.9.1)
-		final CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive typeOfResult = new CPrimitive(CPrimitives.INT);
 		final Expression expr = mExpressionTranslation.constructBinaryEqualityExpression(loc, op, left.lrVal.getValue(),
 				left.lrVal.getCType(), right.lrVal.getValue(), right.lrVal.getCType());
 		final RValue rval = new RValue(expr, typeOfResult, true, false);
@@ -2489,7 +2489,7 @@ public class CHandler implements ICHandler {
 		overappr.addAll(l.overappr);
 		final Expression switchArg = l.lrVal.getValue();
 
-		final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String breakLabelName = mNameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 		final String switchFlag = mNameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
 		final ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
@@ -2637,7 +2637,7 @@ public class CHandler implements ICHandler {
 		final ILocation loc = LocationFactory.createCLocation(node);
 		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
 		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
-		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(PRIMITIVE.INT));
+		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(CPrimitives.INT));
 		return c;
 	}
 
@@ -2648,7 +2648,7 @@ public class CHandler implements ICHandler {
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		final List<Overapprox> overappr = new ArrayList<Overapprox>();
 		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true),
-				new CPrimitive(PRIMITIVE.INT)), decl, emptyAuxVars, overappr);
+				new CPrimitive(CPrimitives.INT)), decl, emptyAuxVars, overappr);
 	}
 
 	@Override
@@ -2735,8 +2735,8 @@ public class CHandler implements ICHandler {
 			final CType newPointsToType = ((CPointer) newCType).pointsToType;
 			final CType exprPointsToType = ((CPointer) expr.lrVal.getCType()).pointsToType;
 			if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
-				if (((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+						&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
 					if ((((CPrimitive) newPointsToType).isUnsigned() && !((CPrimitive) exprPointsToType).isUnsigned())
 							|| !(((CPrimitive) newPointsToType).isUnsigned()
 									&& ((CPrimitive) exprPointsToType).isUnsigned())) {
@@ -2744,10 +2744,10 @@ public class CHandler implements ICHandler {
 								+ " pointer  to " + newPointsToType + " pointer");
 					}
 
-				} else if (((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.VOID
-						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-						|| ((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-								&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.VOID) {
+				} else if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.VOID
+						&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+						|| ((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
+								&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.VOID) {
 					throw new UnsupportedSyntaxException(loc,
 							"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
 				}
@@ -2813,7 +2813,7 @@ public class CHandler implements ICHandler {
 		stmt.addAll(reLocCond.stmt);
 		overappr.addAll(reLocCond.overappr);
 
-		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(PRIMITIVE.INT));
+		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
 		final ASTType tmpType = mTypeHandler.ctype2asttype(loc, rePositive.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
@@ -2947,7 +2947,7 @@ public class CHandler implements ICHandler {
 			// rt, false);
 
 			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType()),
-					new CPrimitive(PRIMITIVE.INT)));
+					new CPrimitive(CPrimitives.INT)));
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -3396,7 +3396,7 @@ public class CHandler implements ICHandler {
 				condResult = (ExpressionResult) main.dispatch(cCondExpr);
 			} else {
 				condResult = new ExpressionResult(
-						new RValue((new BooleanLiteral(loc, true)), new CPrimitive(PRIMITIVE.BOOL), true),
+						new RValue((new BooleanLiteral(loc, true)), new CPrimitive(CPrimitives.BOOL), true),
 						new LinkedHashMap<VariableDeclaration, ILocation>(0));
 			}
 
@@ -3567,7 +3567,7 @@ public class CHandler implements ICHandler {
 		assert rt.cType instanceof CEnum;
 		final CEnum cEnum = (CEnum) rt.cType;
 		final ILocation loc = LocationFactory.createCLocation(node);
-		final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final ASTType at = mTypeHandler.ctype2asttype(loc, intType);
 		final String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
@@ -3575,7 +3575,7 @@ public class CHandler implements ICHandler {
 
 		// C standard says: "The identifiers in an enumerator list are declared
 		// as constants that have type int ..."
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.PRIMITIVE.INT);
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
 
 		// ResultDeclaration result = new ResultDeclaration();
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
@@ -3746,7 +3746,7 @@ public class CHandler implements ICHandler {
 				convertToIntegerType(loc, rexp, (CPrimitive) newType);
 			} else if (cPrimitive.isRealFloatingType()) {
 				convertToFloatingType(loc, rexp, (CPrimitive) newType);
-			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				convertToVoid(loc, rexp, (CPrimitive) newType);
 			} else {
 				throw new AssertionError("unknown type " + newType);
@@ -3756,7 +3756,7 @@ public class CHandler implements ICHandler {
 		} else if (newType instanceof CEnum) {
 			// C standard 6.4.4.3.2
 			// An identifier declared as an enumeration constant has type int.
-			convertToIntegerType(loc, rexp, new CPrimitive(PRIMITIVE.INT));
+			convertToIntegerType(loc, rexp, new CPrimitive(CPrimitives.INT));
 		} else if (newType instanceof CArray) {
 			throw new AssertionError("cannot convert to CArray");
 		} else if (newType instanceof CFunction) {
@@ -3777,7 +3777,7 @@ public class CHandler implements ICHandler {
 				mExpressionTranslation.convertIntToInt(loc, rexp, newType);
 			} else if (cPrimitive.isRealFloatingType()) {
 				mExpressionTranslation.convertFloatToInt(loc, rexp, newType);
-			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			} else {
 				throw new AssertionError("unknown type " + newType);
@@ -3806,7 +3806,7 @@ public class CHandler implements ICHandler {
 				mExpressionTranslation.convertIntToFloat(loc, rexp, newType);
 			} else if (cPrimitive.isRealFloatingType()) {
 				mExpressionTranslation.convertFloatToFloat(loc, rexp, newType);
-			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			} else {
 				throw new AssertionError("unknown type " + newType);
@@ -3859,7 +3859,7 @@ public class CHandler implements ICHandler {
 				mExpressionTranslation.convertIntToPointer(loc, rexp, newType);
 			} else if (cPrimitive.isRealFloatingType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
-			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
+			} else if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			} else {
 				throw new AssertionError("unknown type " + newType);

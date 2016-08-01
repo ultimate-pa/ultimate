@@ -41,107 +41,103 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @date 13.07.2012
  */
 public class CPrimitive extends CType {
-    /**
-     * @author Markus Lindenmann
-     * @date 18.09.2012 Describing primitive C types.
-     * (updated 10.12.2013 by nutz)
-     */
-    public static enum PRIMITIVE {
+	/**
+	 * @author Markus Lindenmann
+	 * @date 18.09.2012 Describing primitive C types. (updated 10.12.2013 by nutz)
+	 */
+	public static enum CPrimitives {
 
-    	/* Integer Types*/
-    	/* char */
-    	CHAR(GENERALPRIMITIVE.INTTYPE),
-    	/* signed char */
-    	SCHAR(GENERALPRIMITIVE.INTTYPE),
-    	/* unsigned char */
-    	UCHAR(GENERALPRIMITIVE.INTTYPE),
-    	/* ?? */
-//        WCHAR,
-    	/* ?? */
-//        CHAR32,
-    	/* ?? */
-//        CHAR16,
-    	/* short, short int, signed short, signed short int */
-        SHORT(GENERALPRIMITIVE.INTTYPE),
-        /* unsigned short, unsigned short int */
-        USHORT(GENERALPRIMITIVE.INTTYPE),
-    	/* int, signed int */
-        INT(GENERALPRIMITIVE.INTTYPE),
-    	/* unsigned, unsigned int */
-        UINT(GENERALPRIMITIVE.INTTYPE),
-        /* long, long int, signed long, signed long int */
-        LONG(GENERALPRIMITIVE.INTTYPE),
-        /* unsigned long, unsigned long int */
-        ULONG(GENERALPRIMITIVE.INTTYPE),
-        /* long long, long long int, signed long long, signed long long int */
-        LONGLONG(GENERALPRIMITIVE.INTTYPE),
-        /* unsigned long long, unsigned long long int */
-        ULONGLONG(GENERALPRIMITIVE.INTTYPE),
-        /* _Bool */
-        BOOL(GENERALPRIMITIVE.INTTYPE),
-    	/* Floating Types*/
-        /* float */
-        FLOAT(GENERALPRIMITIVE.FLOATTYPE),
-        /* _Complex float */
-        COMPLEX_FLOAT(GENERALPRIMITIVE.FLOATTYPE),
-        /* double */
-        DOUBLE(GENERALPRIMITIVE.FLOATTYPE),
-        /* _Complex double */
-        COMPLEX_DOUBLE(GENERALPRIMITIVE.FLOATTYPE),
-        /* long double */
-        LONGDOUBLE(GENERALPRIMITIVE.FLOATTYPE),
-         /* _Complex long double */
-        COMPLEX_LONGDOUBLE(GENERALPRIMITIVE.FLOATTYPE),
-        //TODO: something with "_imaginary"??
-        /*other type(s)*/
-        /**
-         * C type : void.
-         */
-        VOID(GENERALPRIMITIVE.VOID);
-        
-        PRIMITIVE(GENERALPRIMITIVE generalprimitive) {
-    		mGeneralprimitive = generalprimitive;
-    	}
-        
-    	private final GENERALPRIMITIVE mGeneralprimitive;
-    	
-    	public boolean isIntegertype() {
-    		return mGeneralprimitive == GENERALPRIMITIVE.INTTYPE;
-    	}
-    	
-    	public boolean isFloatingtype() {
-    		return mGeneralprimitive == GENERALPRIMITIVE.FLOATTYPE;
-    	}
-    }
-    
-    public enum GENERALPRIMITIVE {
-    	INTTYPE,
-    	FLOATTYPE,
-    	VOID
-    }
-    
-    private final boolean isUnsigned;
+		/* Integer Types */
+		/* char */
+		CHAR(CPrimitiveCategory.INTTYPE),
+		/* signed char */
+		SCHAR(CPrimitiveCategory.INTTYPE),
+		/* unsigned char */
+		UCHAR(CPrimitiveCategory.INTTYPE),
+		/* ?? */
+		// WCHAR,
+		/* ?? */
+		// CHAR32,
+		/* ?? */
+		// CHAR16,
+		/* short, short int, signed short, signed short int */
+		SHORT(CPrimitiveCategory.INTTYPE),
+		/* unsigned short, unsigned short int */
+		USHORT(CPrimitiveCategory.INTTYPE),
+		/* int, signed int */
+		INT(CPrimitiveCategory.INTTYPE),
+		/* unsigned, unsigned int */
+		UINT(CPrimitiveCategory.INTTYPE),
+		/* long, long int, signed long, signed long int */
+		LONG(CPrimitiveCategory.INTTYPE),
+		/* unsigned long, unsigned long int */
+		ULONG(CPrimitiveCategory.INTTYPE),
+		/* long long, long long int, signed long long, signed long long int */
+		LONGLONG(CPrimitiveCategory.INTTYPE),
+		/* unsigned long long, unsigned long long int */
+		ULONGLONG(CPrimitiveCategory.INTTYPE),
+		/* _Bool */
+		BOOL(CPrimitiveCategory.INTTYPE),
+		/* Floating Types */
+		/* float */
+		FLOAT(CPrimitiveCategory.FLOATTYPE),
+		/* _Complex float */
+		COMPLEX_FLOAT(CPrimitiveCategory.FLOATTYPE),
+		/* double */
+		DOUBLE(CPrimitiveCategory.FLOATTYPE),
+		/* _Complex double */
+		COMPLEX_DOUBLE(CPrimitiveCategory.FLOATTYPE),
+		/* long double */
+		LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
+		/* _Complex long double */
+		COMPLEX_LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
+		// TODO: something with "_imaginary"??
+		/* other type(s) */
+		/**
+		 * C type : void.
+		 */
+		VOID(CPrimitiveCategory.VOID);
 
-    /**
-     * The C type of the variable.
-     */
-    private final PRIMITIVE type;
-    
-    /**
-     * more general type, i.e. inttype, floattype, void -- is derived from
-     * type
-     */
-    private final GENERALPRIMITIVE generalType;
-    
-    public CPrimitive(PRIMITIVE type) {
-        super(false, false, false, false); //FIXME: integrate those flags
-    	this.type = type;
-    	generalType = getGeneralType(type);
-    	isUnsigned = isUnsigned(type);
-    }
+		CPrimitives(CPrimitiveCategory generalprimitive) {
+			mGeneralprimitive = generalprimitive;
+		}
 
-	private GENERALPRIMITIVE getGeneralType(PRIMITIVE type) throws AssertionError {
-		final GENERALPRIMITIVE generalType;
+		private final CPrimitiveCategory mGeneralprimitive;
+
+		public boolean isIntegertype() {
+			return mGeneralprimitive == CPrimitiveCategory.INTTYPE;
+		}
+
+		public boolean isFloatingtype() {
+			return mGeneralprimitive == CPrimitiveCategory.FLOATTYPE;
+		}
+	}
+
+	public enum CPrimitiveCategory {
+		INTTYPE, FLOATTYPE, VOID
+	}
+
+	private final boolean isUnsigned;
+
+	/**
+	 * The C type of the variable.
+	 */
+	private final CPrimitives mType;
+
+	/**
+	 * more general type, i.e. inttype, floattype, void -- is derived from type
+	 */
+	private final CPrimitiveCategory mGeneralType;
+
+	public CPrimitive(CPrimitives type) {
+		super(false, false, false, false); // FIXME: integrate those flags
+		mType = type;
+		mGeneralType = getGeneralType(type);
+		isUnsigned = isUnsigned(type);
+	}
+
+	private CPrimitiveCategory getGeneralType(CPrimitives type) throws AssertionError {
+		final CPrimitiveCategory generalType;
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -149,8 +145,9 @@ public class CPrimitive extends CType {
 		case FLOAT:
 		case DOUBLE:
 		case LONGDOUBLE:
-			generalType = GENERALPRIMITIVE.FLOATTYPE;
-//			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+			generalType = CPrimitiveCategory.FLOATTYPE;
+			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
+			// floats");
 			break;
 		case BOOL:
 		case UCHAR:
@@ -159,26 +156,26 @@ public class CPrimitive extends CType {
 		case ULONGLONG:
 		case USHORT:
 		case CHAR:
-//		case CHAR16:
-//		case CHAR32:
+			// case CHAR16:
+			// case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-//		case WCHAR:
-			generalType = GENERALPRIMITIVE.INTTYPE;
+			// case WCHAR:
+			generalType = CPrimitiveCategory.INTTYPE;
 			break;
 		case VOID:
-			generalType = GENERALPRIMITIVE.VOID;
+			generalType = CPrimitiveCategory.VOID;
 			break;
 		default:
 			throw new AssertionError("case missing");
-    	}
+		}
 		return generalType;
 	}
-	
-	private boolean isUnsigned(PRIMITIVE type) throws AssertionError {
+
+	private boolean isUnsigned(CPrimitives type) throws AssertionError {
 		switch (type) {
 		case BOOL:
 		case UCHAR:
@@ -187,7 +184,7 @@ public class CPrimitive extends CType {
 		case ULONGLONG:
 		case USHORT:
 			return true;
-		case CHAR :
+		case CHAR:
 			return !TypeSizes.isCharSigned();
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -195,198 +192,193 @@ public class CPrimitive extends CType {
 		case FLOAT:
 		case DOUBLE:
 		case LONGDOUBLE:
-//		case CHAR16:
-//		case CHAR32:
+			// case CHAR16:
+			// case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-//		case WCHAR:
+			// case WCHAR:
 		case VOID:
 			return false;
 		default:
 			throw new AssertionError("case missing");
-    	}
+		}
 	}
-	
-	private boolean isComplex(PRIMITIVE type) {
-		switch(type) {
+
+	private boolean isComplex(CPrimitives type) {
+		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
 			return true;
-		default: 
+		default:
 			return false;
 		}
 	}
 
-    /**
-     * Constructor.
-     * 
-     * @param cDeclSpec
-     *            the C declaration specifier.
-     */
-    public CPrimitive(IASTDeclSpecifier cDeclSpec) {
-        super(false, false, false, false); //FIXME: integrate those flags
-        if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
-            final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
-            switch (sds.getType()) {
-                case IASTSimpleDeclSpecifier.t_bool:
-                    type = PRIMITIVE.BOOL;
-                    break;
-                case IASTSimpleDeclSpecifier.t_char:
-                	if (sds.isSigned()) {
-						type = PRIMITIVE.SCHAR;
-					} else if (sds.isUnsigned()) {
-						type = PRIMITIVE.UCHAR;
+	/**
+	 * Constructor.
+	 * 
+	 * @param cDeclSpec
+	 *            the C declaration specifier.
+	 */
+	public CPrimitive(IASTDeclSpecifier cDeclSpec) {
+		super(false, false, false, false); // FIXME: integrate those flags
+		if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
+			final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
+			switch (sds.getType()) {
+			case IASTSimpleDeclSpecifier.t_bool:
+				mType = CPrimitives.BOOL;
+				break;
+			case IASTSimpleDeclSpecifier.t_char:
+				if (sds.isSigned()) {
+					mType = CPrimitives.SCHAR;
+				} else if (sds.isUnsigned()) {
+					mType = CPrimitives.UCHAR;
+				} else {
+					mType = CPrimitives.CHAR;
+				}
+				break;
+			// case IASTSimpleDeclSpecifier.t_char16_t:
+			// this.type = PRIMITIVE.CHAR16;
+			// break;
+			// case IASTSimpleDeclSpecifier.t_char32_t:
+			// this.type = PRIMITIVE.CHAR32;
+			// break;
+			case IASTSimpleDeclSpecifier.t_double:
+				if (sds.isComplex()) {
+					if (sds.isLong()) {
+						mType = CPrimitives.COMPLEX_LONGDOUBLE;
 					} else {
-						type = PRIMITIVE.CHAR;
+						mType = CPrimitives.COMPLEX_DOUBLE;
 					}
-                    break;
-//                case IASTSimpleDeclSpecifier.t_char16_t:
-//                    this.type = PRIMITIVE.CHAR16;
-//                    break;
-//                case IASTSimpleDeclSpecifier.t_char32_t:
-//                    this.type = PRIMITIVE.CHAR32;
-//                    break;
-                case IASTSimpleDeclSpecifier.t_double:
-                	if (sds.isComplex()) {
-                		if (sds.isLong()) {
-                			type = PRIMITIVE.COMPLEX_LONGDOUBLE;
-                		} else {
-                			type = PRIMITIVE.COMPLEX_DOUBLE;
-                		}
-                	} else {
-                		if (sds.isLong()) {
-                			type = PRIMITIVE.LONGDOUBLE;
-                		} else {
-                			type = PRIMITIVE.DOUBLE;
-                		}
-                	}
-                    break;
-                case IASTSimpleDeclSpecifier.t_float:
-                 	if (sds.isComplex()) {
-						type = PRIMITIVE.COMPLEX_FLOAT;
+				} else {
+					if (sds.isLong()) {
+						mType = CPrimitives.LONGDOUBLE;
 					} else {
-						type = PRIMITIVE.FLOAT;
+						mType = CPrimitives.DOUBLE;
 					}
-                    break;
-                case IASTSimpleDeclSpecifier.t_int:
-                	if (sds.isUnsigned()) {
-						if (sds.isLong()) {
-							type = PRIMITIVE.ULONG;
-						} else if (sds.isLongLong()) {
-							type = PRIMITIVE.ULONGLONG;
-						} else if (sds.isShort()) {
-							type = PRIMITIVE.USHORT;
-						} else {
-							type = PRIMITIVE.UINT;
-						}
-					} else                 		
-                		if (sds.isLong()) {
-							type = PRIMITIVE.LONG;
-						} else if (sds.isLongLong()) {
-							type = PRIMITIVE.LONGLONG;
-						} else if (sds.isShort()) {
-							type = PRIMITIVE.SHORT;
-						} else {
-							type = PRIMITIVE.INT;
-						}
-                    break;
-                case IASTSimpleDeclSpecifier.t_unspecified:
-                	if (sds.isUnsigned()) {
-						if (sds.isLong()) {
-							type = PRIMITIVE.ULONG;
-						} else if (sds.isLongLong()) {
-							type = PRIMITIVE.ULONGLONG;
-						} else if (sds.isShort()) {
-							type = PRIMITIVE.USHORT;
-						} else {
-							type = PRIMITIVE.UINT;
-						}
-					} else                 		
-                		if (sds.isLong()) {
-							type = PRIMITIVE.LONG;
-						} else if (sds.isLongLong()) {
-							type = PRIMITIVE.LONGLONG;
-						} else if (sds.isShort()) {
-							type = PRIMITIVE.SHORT;
-						} else {
-							type = PRIMITIVE.INT;
-						}
-                    break;
-                case IASTSimpleDeclSpecifier.t_void:
-                    type = PRIMITIVE.VOID;
-                    break;
-//                case IASTSimpleDeclSpecifier.t_wchar_t:
-//                    this.type = PRIMITIVE.WCHAR;
-//                    break;
-                default:
-                    throw new IllegalArgumentException(
-                            "Unknown C Declaration!");
-            }
-        } else {
-            throw new IllegalArgumentException("Unknown C Declaration!");
-        }
-    	generalType = getGeneralType(type);
-    	isUnsigned = isUnsigned(type);
-    }
-    
-    public boolean isUnsigned() {
-    	return isUnsigned;
-    }
+				}
+				break;
+			case IASTSimpleDeclSpecifier.t_float:
+				if (sds.isComplex()) {
+					mType = CPrimitives.COMPLEX_FLOAT;
+				} else {
+					mType = CPrimitives.FLOAT;
+				}
+				break;
+			case IASTSimpleDeclSpecifier.t_int:
+				if (sds.isUnsigned()) {
+					if (sds.isLong()) {
+						mType = CPrimitives.ULONG;
+					} else if (sds.isLongLong()) {
+						mType = CPrimitives.ULONGLONG;
+					} else if (sds.isShort()) {
+						mType = CPrimitives.USHORT;
+					} else {
+						mType = CPrimitives.UINT;
+					}
+				} else if (sds.isLong()) {
+					mType = CPrimitives.LONG;
+				} else if (sds.isLongLong()) {
+					mType = CPrimitives.LONGLONG;
+				} else if (sds.isShort()) {
+					mType = CPrimitives.SHORT;
+				} else {
+					mType = CPrimitives.INT;
+				}
+				break;
+			case IASTSimpleDeclSpecifier.t_unspecified:
+				if (sds.isUnsigned()) {
+					if (sds.isLong()) {
+						mType = CPrimitives.ULONG;
+					} else if (sds.isLongLong()) {
+						mType = CPrimitives.ULONGLONG;
+					} else if (sds.isShort()) {
+						mType = CPrimitives.USHORT;
+					} else {
+						mType = CPrimitives.UINT;
+					}
+				} else if (sds.isLong()) {
+					mType = CPrimitives.LONG;
+				} else if (sds.isLongLong()) {
+					mType = CPrimitives.LONGLONG;
+				} else if (sds.isShort()) {
+					mType = CPrimitives.SHORT;
+				} else {
+					mType = CPrimitives.INT;
+				}
+				break;
+			case IASTSimpleDeclSpecifier.t_void:
+				mType = CPrimitives.VOID;
+				break;
+			// case IASTSimpleDeclSpecifier.t_wchar_t:
+			// this.type = PRIMITIVE.WCHAR;
+			// break;
+			default:
+				throw new IllegalArgumentException("Unknown C Declaration!");
+			}
+		} else {
+			throw new IllegalArgumentException("Unknown C Declaration!");
+		}
+		mGeneralType = getGeneralType(mType);
+		isUnsigned = isUnsigned(mType);
+	}
 
-    public PRIMITIVE getType() {
-        return type;
-    }
-    
-    public GENERALPRIMITIVE getGeneralType() {
-    	return generalType;
-    }
+	public boolean isUnsigned() {
+		return isUnsigned;
+	}
 
-    @Override
-    public String toString() {
-        return type.toString();
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof CType)) {
-            return false;
-        }
-        final CType oType = ((CType)o).getUnderlyingType();
-        if (oType instanceof CPrimitive) {
-            return type == ((CPrimitive)oType).type;
-        }
-        else {
-            return false;
-        }
-    }
-    
-    @Override
-    public int hashCode() {
-    	return HashUtils.hashJenkins(31, type);
-    }
+	public CPrimitives getType() {
+		return mType;
+	}
+
+	public CPrimitiveCategory getGeneralType() {
+		return mGeneralType;
+	}
+
+	@Override
+	public String toString() {
+		return mType.toString();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof CType)) {
+			return false;
+		}
+		final CType oType = ((CType) o).getUnderlyingType();
+		if (oType instanceof CPrimitive) {
+			return mType == ((CPrimitive) oType).mType;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return HashUtils.hashJenkins(31, mType);
+	}
 
 	@Override
 	public boolean isCompatibleWith(CType o) {
-//		if (this.type == PRIMITIVE.VOID)
-//			return true;
-        final CType oType = o.getUnderlyingType();
-        
-        if (oType instanceof CEnum 
-        		&& generalType == GENERALPRIMITIVE.INTTYPE) {
+		// if (this.type == PRIMITIVE.VOID)
+		// return true;
+		final CType oType = o.getUnderlyingType();
+
+		if (oType instanceof CEnum && mGeneralType == CPrimitiveCategory.INTTYPE) {
 			return true;
 		}
-        
-        if (oType instanceof CPrimitive) {
-            return type == ((CPrimitive)oType).type;
-        } else {
-            return false;
-        }
+
+		if (oType instanceof CPrimitive) {
+			return mType == ((CPrimitive) oType).mType;
+		} else {
+			return false;
+		}
 	}
-	
+
 	public CPrimitive getCorrespondingUnsignedType() {
 		if (!isIntegerType()) {
 			throw new IllegalArgumentException("no integer type " + this);
@@ -397,24 +389,23 @@ public class CPrimitive extends CType {
 		switch (getType()) {
 		case CHAR:
 			if (TypeSizes.isCharSigned()) {
-				return new CPrimitive(PRIMITIVE.UCHAR);
+				return new CPrimitive(CPrimitives.UCHAR);
 			} else {
-				throw new UnsupportedOperationException(
-						"according to your settings, char is already unsigned");
+				throw new UnsupportedOperationException("according to your settings, char is already unsigned");
 			}
 		case INT:
-			return new CPrimitive(PRIMITIVE.UINT);
+			return new CPrimitive(CPrimitives.UINT);
 		case LONG:
-			return new CPrimitive(PRIMITIVE.ULONG);
+			return new CPrimitive(CPrimitives.ULONG);
 		case LONGLONG:
-			return new CPrimitive(PRIMITIVE.ULONGLONG);
+			return new CPrimitive(CPrimitives.ULONGLONG);
 		case SCHAR:
-			return new CPrimitive(PRIMITIVE.UCHAR);
+			return new CPrimitive(CPrimitives.UCHAR);
 		case SHORT:
-			return new CPrimitive(PRIMITIVE.USHORT);
+			return new CPrimitive(CPrimitives.USHORT);
 		default:
 			throw new IllegalArgumentException("unsupported type " + this);
 		}
-		
+
 	}
 }

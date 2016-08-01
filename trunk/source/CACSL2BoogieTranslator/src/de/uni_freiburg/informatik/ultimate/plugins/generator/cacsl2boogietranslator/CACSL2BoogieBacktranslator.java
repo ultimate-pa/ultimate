@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -83,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
@@ -780,6 +782,8 @@ public class CACSL2BoogieBacktranslator
 			return translateRealLiteral((RealLiteral) expression);
 		} else if (expression instanceof BitvecLiteral) {
 			return translateBitvecLiteral(cType, (BitvecLiteral) expression);
+		} else if (expression instanceof FunctionApplication) {
+			return translateFunctionApplication(cType, (FunctionApplication) expression);
 		} else {
 			// things that land here are typically synthesized contracts or
 			// things like that. Here we replace Boogie variable names with C variable names
@@ -797,7 +801,124 @@ public class CACSL2BoogieBacktranslator
 					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
 			return null;
 		}
+	}
 
+	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun) {
+		final Pair<String, CPrimitives> reversed = SFO.reverseBoogieFunctionName(fun.getIdentifier());
+		if (reversed == null) {
+			reportUnfinishedBacktranslation(
+					UNFINISHED_BACKTRANSLATION + " cannot identify Boogie2SMT function " + fun.getIdentifier());
+			return null;
+		}
+		final String smtFunction = reversed.getFirst();
+
+		switch (smtFunction) {
+		case "fp":
+			// this function is used to construct floating points
+			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
+		case "NaN":
+			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+		default:
+			reportUnfinishedBacktranslation(
+					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+			return null;
+		}
+	}
+
+	private IASTExpression translateFloatConstConstructor(final CType cType, final FunctionApplication fun,
+			final CPrimitives floatType) {
+		switch (floatType) {
+		case LONGDOUBLE:
+			// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
+			final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
+			final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
+			final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
+			return createFakeFloat(sign, exponent, fraction);
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+		default:
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
+			return null;
+		}
+	}
+
+	private IASTExpression translateFloatNaNConstructor(final CType cType, final FunctionApplication fun,
+			final CPrimitives floatType) {
+		switch (floatType) {
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+		case LONGDOUBLE:
+			// ~NaN~FLOAT() returns (out : C_FLOAT)
+			return new FakeExpression(String.valueOf(Float.NaN));
+		default:
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
+			return null;
+		}
+	}
+
+	private IASTExpression createFakeFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
+			final BitvecLiteral fraction) {
+		final String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
+		final BigDecimal f = getDecimalFromBinaryString(bit);
+		return new FakeExpression(f.toPlainString());
+	}
+
+	private static BigDecimal getDecimalFromBinaryString(final String binary) {
+		int len = binary.length();
+		if (len == 32) {
+			int intBits = Integer.parseUnsignedInt(binary, 2);
+			float floatValue = Float.intBitsToFloat(intBits);
+			return new BigDecimal(floatValue);
+		} else {
+			throw new IllegalArgumentException("Unsupported length: " + len);
+		}
+	}
+
+	private static String bitvecToString(final BitvecLiteral lit) {
+		final String binStr = Integer.toBinaryString(Integer.valueOf(lit.getValue()));
+		assert binStr.length() <= lit.getLength() : "Binary string cannot be longer than bitvector literal length";
+		int missingZeros = lit.getLength() - binStr.length();
+		if (missingZeros > 0) {
+			final String formatStr = "%" + lit.getLength() + "s";
+			return String.format(formatStr, binStr).replace(' ', '0');
+		}
+		return binStr;
 	}
 
 	private IASTExpression translateIntegerLiteral(final CType cType, final IntegerLiteral lit) {
@@ -805,9 +926,9 @@ public class CACSL2BoogieBacktranslator
 		if (cType == null) {
 			value = (lit).getValue();
 		} else if (cType instanceof CPointer) {
-			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit);
 		} else if (cType instanceof CEnum) {
-			return translateIntegerLiteral(new CPrimitive(PRIMITIVE.INT), lit);
+			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit);
 		} else if (cType instanceof CNamed) {
 			return translateIntegerLiteral(cType.getUnderlyingType(), lit);
 		} else {
@@ -835,9 +956,11 @@ public class CACSL2BoogieBacktranslator
 			CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
 			if (primitive.isIntegerType()) {
 				value = String.valueOf(mExpressionTranslation.extractIntegerValue(lit, cType));
-				// } else if (primitive.isFloatingType()) {
-				// // TODO: Do the right thing
-				// value = naiveBitvecLiteralValueExtraction(lit);
+			} else if (primitive.isFloatingType()) {
+				value = naiveBitvecLiteralValueExtraction(lit);
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
+						+ " using integer-interpretation for bitvector literal with floating type because of unification failure: "
+						+ BoogiePrettyPrinter.print(lit) + "=" + value);
 			} else {
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " cannot tranlate BitvecLiteral "
 						+ BoogiePrettyPrinter.print(lit) + " representing " + primitive.getType());
@@ -863,6 +986,11 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void checkLiteral(final Expression expr, final String value) {
+		if (value.contains("~fp~LONGDOUBLE")) {
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
+					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+
+		}
 		if (value == null || "null".equals(value)) {
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
 					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
@@ -872,13 +1000,12 @@ public class CACSL2BoogieBacktranslator
 	private String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
 		final String value = lit.getValue();
 		BigInteger decimalValue = new BigInteger(value);
-		final boolean isSigned = true;
-		if (isSigned) {
-			final BigInteger maxRepresentablePositiveValuePlusOne = (new BigInteger("2")).pow(lit.getLength() - 1);
-			if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
-				final BigInteger numberOfValues = (new BigInteger("2")).pow(lit.getLength());
-				decimalValue = decimalValue.subtract(numberOfValues);
-			}
+
+		// this is only the isSigned case
+		final BigInteger maxRepresentablePositiveValuePlusOne = (new BigInteger("2")).pow(lit.getLength() - 1);
+		if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
+			final BigInteger numberOfValues = (new BigInteger("2")).pow(lit.getLength());
+			decimalValue = decimalValue.subtract(numberOfValues);
 		}
 		return String.valueOf(decimalValue);
 	}
@@ -993,6 +1120,16 @@ public class CACSL2BoogieBacktranslator
 		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
+	private IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
+		if (relInfos == null || relInfos.length == 0) {
+			return null;
+		}
+		if (relInfos.length == 1) {
+			return relInfos[0];
+		}
+		return Arrays.stream(relInfos).filter(a -> a != null).reduce(null, (a, b) -> (a == null ? b : a.merge(b)));
+	}
+
 	/**
 	 * A subtree check that sacrifices memory consumption for speed. It is about 20x faster, but uses a lookup table.
 	 * 
@@ -1082,16 +1219,6 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
-		if (relInfos == null || relInfos.length == 0) {
-			return null;
-		}
-		if (relInfos.length == 1) {
-			return relInfos[0];
-		}
-		return Arrays.stream(relInfos).filter(a -> a != null).reduce(null, (a, b) -> (a == null ? b : a.merge(b)));
-	}
-
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
 
 		@Override
@@ -1150,7 +1277,7 @@ public class CACSL2BoogieBacktranslator
 	 * @author heizmann@informatik.uni-freiburg.de
 	 * 
 	 */
-	private static class Boogie2C {
+	private static final class Boogie2C {
 
 		private final Map<String, Pair<String, CType>> mInVar2CVar;
 		private final Map<String, Pair<String, CType>> mVar2CVar;
@@ -1176,10 +1303,6 @@ public class CACSL2BoogieBacktranslator
 			return mTempVar2Obj;
 		}
 
-		// private Map<String, String> getFunctionId2Operator() {
-		// return mFunctionId2Operator;
-		// }
-
 		private void putFunction(String boogieId, String cId) {
 			mFunctionId2Operator.put(boogieId, cId);
 		}
@@ -1199,6 +1322,10 @@ public class CACSL2BoogieBacktranslator
 
 	private class TemporaryPointerExpression extends Expression {
 
+		private static final long serialVersionUID = 1L;
+		private Expression mBase;
+		private Expression mOffset;
+
 		public TemporaryPointerExpression(ILocation loc) {
 			super(loc);
 		}
@@ -1215,10 +1342,6 @@ public class CACSL2BoogieBacktranslator
 						null);
 			}
 		}
-
-		private static final long serialVersionUID = 1L;
-		private Expression mBase;
-		private Expression mOffset;
 
 		public void setBase(Expression expr) {
 			mBase = expr;

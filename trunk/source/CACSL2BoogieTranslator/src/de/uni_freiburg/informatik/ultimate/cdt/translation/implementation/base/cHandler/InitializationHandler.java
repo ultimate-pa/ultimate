@@ -58,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -202,11 +202,11 @@ public class InitializationHandler {
 			case FLOATTYPE:
 				if (mExpressionTranslation instanceof BitvectorTranslation) {
 					if (initializer == null) {
-						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
+						if (((CPrimitive) lCType).getType().equals(CPrimitives.FLOAT)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.DOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.LONGDOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
 						}
 						
@@ -240,7 +240,7 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
+						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger pointerOffsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (pointerOffsetValue == null) {
 						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
@@ -296,7 +296,7 @@ public class InitializationHandler {
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
-						new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
+						new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
@@ -360,11 +360,11 @@ public class InitializationHandler {
 			case FLOATTYPE:
 				if (mExpressionTranslation instanceof BitvectorTranslation) {
 					if (initializer == null) {
-						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
+						if (((CPrimitive) lCType).getType().equals(CPrimitives.FLOAT)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.DOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.LONGDOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
 						} else {
 							throw new UnsupportedOperationException("UNsopported Floating Type");
@@ -407,7 +407,7 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
+						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
 						rhs = mExpressionTranslation.constructNullPointer(loc);
@@ -519,7 +519,7 @@ public class InitializationHandler {
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
-						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
+						new CPrimitive(CPrimitive.CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
@@ -593,7 +593,7 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
 				if (valueType instanceof CEnum) {
-					valueType = new CPrimitive(PRIMITIVE.INT);
+					valueType = new CPrimitive(CPrimitives.INT);
 				}
 				
 				final Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
@@ -779,7 +779,7 @@ public class InitializationHandler {
 				
 				// 2015-10-24 Matthias: I don't understand where I can take the
 				// type of the index from. As a workaround I take signed int.
-				final CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+				final CPrimitive indexType = new CPrimitive(CPrimitives.INT);
 				final Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					final ArrayList<Expression> innerIndices = 

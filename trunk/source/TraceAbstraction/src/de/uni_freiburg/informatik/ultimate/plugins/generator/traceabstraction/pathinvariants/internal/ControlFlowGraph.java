@@ -74,6 +74,13 @@ public final class ControlFlowGraph {
 		public ProgramPoint getProgramPoint() {
 			return programPoint;
 		}
+
+		@Override
+		public String toString() {
+			return programPoint.toString();
+		}
+		
+		
 	}
 
 	/**
@@ -128,6 +135,13 @@ public final class ControlFlowGraph {
 		public Location getEnd() {
 			return end;
 		}
+
+		@Override
+		public String toString() {
+			return "Transition from=" + start + " to=" + end + ", transFormula=" + transFormula;
+		}
+		
+		
 	}
 
 	/**

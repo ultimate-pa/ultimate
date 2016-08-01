@@ -119,7 +119,7 @@ public class IntervalProjection {
 			return new IntervalDomainValue(pointInterval, pointInterval);
 
 		} else if (expr instanceof RealLiteral) {
-			final IntervalValue pointInterval = new IntervalValue(((IntegerLiteral) expr).getValue());
+			final IntervalValue pointInterval = new IntervalValue(((RealLiteral) expr).getValue());
 			return new IntervalDomainValue(pointInterval, pointInterval);
 
 		} else if (expr instanceof IdentifierExpression) {

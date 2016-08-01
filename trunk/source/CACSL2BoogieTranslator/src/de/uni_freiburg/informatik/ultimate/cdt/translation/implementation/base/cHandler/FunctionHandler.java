@@ -90,8 +90,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -233,7 +233,7 @@ public class FunctionHandler {
 		final String methodName = cDec.getName();
 		final CType returnCType = ((CFunction) cDec.getType()).getResultType();
 		final boolean returnTypeIsVoid =
-				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
+				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
 		updateCFunction(methodName, returnCType, null, null, false);
 
@@ -246,7 +246,7 @@ public class FunctionHandler {
 			out = new VarList[0];
 		} else if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			// TODO: defaulting to int -- but does this work on all examples?
-			final CPrimitive cPrimitive = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
 		} else { // "normal case"
 			assert type != null;
@@ -749,7 +749,7 @@ public class FunctionHandler {
 						mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
 					in.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
@@ -811,7 +811,7 @@ public class FunctionHandler {
 			exprRes = exprRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			main.mCHandler.convert(loc, exprRes, mTypeSizeComputer.getSize_T());
 
-			final CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
 			final VariableDeclaration tmpVarDecl =
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
@@ -857,7 +857,7 @@ public class FunctionHandler {
 					size.lrVal.getValue(), mTypeSizeComputer.getSize_T());
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
 
-			final CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
 			final VariableDeclaration tmpVarDecl =
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
@@ -886,7 +886,7 @@ public class FunctionHandler {
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			final ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[1]))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			mExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
+			mExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(CPrimitives.INT));
 			final ExpressionResult arg_n = ((ExpressionResult) main.dispatch(arguments[2]))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			mExpressionTranslation.convertIntToInt(loc, arg_n, mTypeSizeComputer.getSize_T());
@@ -897,7 +897,7 @@ public class FunctionHandler {
 			result.addAll(arg_n);
 
 			final String tId =
-					main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
 					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
 			result.decl.add(tVarDecl);
@@ -1254,7 +1254,7 @@ public class FunctionHandler {
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
 
 		if (funcType.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) funcType.getResultType()).getType() == PRIMITIVE.VOID
+				&& ((CPrimitive) funcType.getResultType()).getType() == CPrimitives.VOID
 				&& !(funcType.getResultType() instanceof CPointer)) {
 			if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
@@ -1374,7 +1374,7 @@ public class FunctionHandler {
 		for (int i = 0; i < newCDecs.length - 1; i++) {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
 		}
-		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(PRIMITIVE.VOID)), "#fp"); // FIXME
+		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp"); // FIXME
 																												// string
 																												// to
 																												// SFO..?
@@ -1570,7 +1570,7 @@ public class FunctionHandler {
 
 			// we don't know the CType of the returned value
 			// we we INT
-			final CPrimitive cPrimitive = new CPrimitive(PRIMITIVE.INT);
+			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			final VarList tempVar =
 					new VarList(loc, new String[] { ident }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
 			final VariableDeclaration tmpVar =
@@ -1582,7 +1582,7 @@ public class FunctionHandler {
 					args.toArray(new Expression[0]));
 		}
 		stmt.add(call);
-		final CType returnCType = mMethodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
+		final CType returnCType = mMethodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(CPrimitives.INT)
 				: mProcedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
 		assert (CHandler.isAuxVarMapcomplete(main.mNameHandler, decl, auxVars));

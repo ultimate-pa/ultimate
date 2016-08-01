@@ -627,12 +627,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * the game graph that may hold information, usable for reduction, generated
 	 * by an {@link ASimulation}.
 	 * 
+	 * @param useFinalStateConstraints true iff accepting states should not be
+	 *        merged with non-accepting states
 	 * @return A possible reduced nwa automaton
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph(
+			final boolean useFinalStateConstraints)
 			throws AutomataOperationCanceledException {
 		// At this point we may validate the correctness of the simulation
 		// results
@@ -714,8 +717,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
-			MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa, false,
-					false, equivalenceClassesAsCollection);
+			MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(
+					mServices, stateFactory, mNwa, useFinalStateConstraints, equivalenceClassesAsCollection);
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<LETTER, STATE>(mServices, minimizer.getResult()).getResult();
 		} else {

@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -104,7 +104,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_char_constant:
 			final String valChar = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			return new ExpressionResult(new RValue(new IntegerLiteral(loc, valChar), new CPrimitive(PRIMITIVE.CHAR)));
+			return new ExpressionResult(new RValue(new IntegerLiteral(loc, valChar), new CPrimitive(CPrimitives.CHAR)));
 		case IASTLiteralExpression.lk_integer_constant:
 			final String valInt = new String(node.getValue());
 			final RValue rVal = translateIntegerLiteral(loc, valInt);
@@ -172,7 +172,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	public static Expression applyWraparound(final ILocation loc, final TypeSizes typeSizes, final CPrimitive cPrimitive,
 			final Expression operand) {
-		if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			if (cPrimitive.isUnsigned()) {
 				final BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
 				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
@@ -240,9 +240,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	private Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr, final CPrimitive type) {
-		if (type.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
-		} else if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+		} else if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			// TODO: having boogie deal with negative real literals would be the nice solution..
 			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"),
 					expr);
@@ -265,8 +265,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression constructArithmeticIntegerExpression(final ILocation loc, final int nodeOperator,
 			final Expression leftExp, final CPrimitive leftType, final Expression rightExp,
 			final CPrimitive rightType) {
-		assert leftType.getGeneralType() == GENERALPRIMITIVE.INTTYPE;
-		assert rightType.getGeneralType() == GENERALPRIMITIVE.INTTYPE;
+		assert leftType.getGeneralType() == CPrimitiveCategory.INTTYPE;
+		assert rightType.getGeneralType() == CPrimitiveCategory.INTTYPE;
 
 		Expression leftExpr = leftExp;
 		Expression rightExpr = rightExp;
@@ -608,7 +608,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
-		return new CPrimitive(PRIMITIVE.LONG);
+		return new CPrimitive(CPrimitives.LONG);
 	}
 
 	@Override
@@ -773,14 +773,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Floating(final ILocation loc, final int nodeOperator, final Expression exp1,
+	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator, final Expression exp1,
 			final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
 	}
 
 	@Override
-	public Expression constructBinaryEqualityExpression_Integer(final ILocation loc, final int nodeOperator,
+	public Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -55,16 +56,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalDomainStatementProcessor
-		extends NonrelationalStatementProcessor<IntervalDomainState, IntervalDomainValue> {
+        extends NonrelationalStatementProcessor<IntervalDomainState, IntervalDomainValue> {
 
 	protected IntervalDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final String evaluatorType, final int maxParallelStates) {
-		super(logger, boogieSymbolTable, bpl2SmtTable, evaluatorType, maxParallelStates);
+	        final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
+		super(logger, boogieSymbolTable, bpl2SmtTable, maxParallelStates);
 	}
 
 	@Override
 	protected void addEvaluators(ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluator,
-			IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluatorFactory, Expression expr) {
+	        IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> evaluatorFactory, Expression expr) {
 		super.addEvaluators(evaluator, evaluatorFactory, expr);
 
 		if (expr instanceof ArrayStoreExpression) {
@@ -75,9 +76,13 @@ public class IntervalDomainStatementProcessor
 	}
 
 	@Override
-	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock>
-			createEvaluatorFactory(final String evaluatorType, final int maxParallelStates) {
-		return new IntervalEvaluatorFactory(getLogger(), evaluatorType, maxParallelStates);
+	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> createEvaluatorFactory(
+	        final int maxParallelStates) {
+		EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator = (value, type) -> {
+			return new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value));
+		};
+		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new IntervalValueFactory(),
+		        valueExpressionEvaluatorCreator);
 	}
 
 	@Override
@@ -96,33 +101,33 @@ public class IntervalDomainStatementProcessor
 
 		if (operator == Operator.COMPNEQ) {
 			if (expr.getType() instanceof PrimitiveType && expr.getLeft().getType() instanceof PrimitiveType
-					&& expr.getRight().getType() instanceof PrimitiveType) {
+			        && expr.getRight().getType() instanceof PrimitiveType) {
 				final PrimitiveType prim = (PrimitiveType) expr.getType();
 				final PrimitiveType leftPrim = (PrimitiveType) expr.getLeft().getType();
 				final PrimitiveType rightPrim = (PrimitiveType) expr.getRight().getType();
 				if (prim.getTypeCode() == PrimitiveType.BOOL && leftPrim.getTypeCode() == PrimitiveType.BOOL
-						&& rightPrim.getTypeCode() == PrimitiveType.BOOL) {
+				        && rightPrim.getTypeCode() == PrimitiveType.BOOL) {
 					final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(),
-							expr.getRight().getType(), UnaryExpression.Operator.LOGICNEG, expr.getRight());
+					        expr.getRight().getType(), UnaryExpression.Operator.LOGICNEG, expr.getRight());
 					final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(),
-							Operator.COMPEQ, expr.getLeft(), negatedRight);
+					        Operator.COMPEQ, expr.getLeft(), negatedRight);
 
 					return newExp;
 				}
 			}
 
 			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), expr.getType(),
-					Operator.COMPLT, expr.getLeft(), expr.getRight());
+			        Operator.COMPLT, expr.getLeft(), expr.getRight());
 			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), expr.getType(),
-					Operator.COMPGT, expr.getLeft(), expr.getRight());
+			        Operator.COMPGT, expr.getLeft(), expr.getRight());
 
 			final Expression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
-					negativeCase, positiveCase);
+			        negativeCase, positiveCase);
 
 			return newExp;
 		} else if (operator == Operator.COMPGT || operator == Operator.COMPLT) {
 			if (expr.getLeft().getType() instanceof PrimitiveType
-					&& expr.getRight().getType() instanceof PrimitiveType) {
+			        && expr.getRight().getType() instanceof PrimitiveType) {
 				final PrimitiveType primLeft = (PrimitiveType) expr.getLeft().getType();
 				final PrimitiveType primRight = (PrimitiveType) expr.getRight().getType();
 
@@ -132,19 +137,19 @@ public class IntervalDomainStatementProcessor
 					switch (operator) {
 					case COMPGT:
 						final BinaryExpression newRightGt = new BinaryExpression(expr.getRight().getLocation(),
-								expr.getRight().getType(), Operator.ARITHPLUS, expr.getRight(),
-								new IntegerLiteral(expr.getRight().getLocation(), "1"));
+						        expr.getRight().getType(), Operator.ARITHPLUS, expr.getRight(),
+						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
 
 						newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.COMPGEQ,
-								expr.getLeft(), newRightGt);
+						        expr.getLeft(), newRightGt);
 						break;
 					case COMPLT:
 						final BinaryExpression newRightLt = new BinaryExpression(expr.getRight().getLocation(),
-								expr.getRight().getType(), Operator.ARITHMINUS, expr.getRight(),
-								new IntegerLiteral(expr.getRight().getLocation(), "1"));
+						        expr.getRight().getType(), Operator.ARITHMINUS, expr.getRight(),
+						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
 
 						newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.COMPLEQ,
-								expr.getLeft(), newRightLt);
+						        expr.getLeft(), newRightLt);
 						break;
 					default:
 						throw new UnsupportedOperationException("Unexpected operator: " + operator);
@@ -155,24 +160,24 @@ public class IntervalDomainStatementProcessor
 			}
 		} else if (operator == Operator.LOGICIMPLIES) {
 			final UnaryExpression newLeft = new UnaryExpression(expr.getLocation(), expr.getLeft().getType(),
-					UnaryExpression.Operator.LOGICNEG, expr.getLeft());
+			        UnaryExpression.Operator.LOGICNEG, expr.getLeft());
 
 			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
-					newLeft, expr.getRight());
+			        newLeft, expr.getRight());
 			return newExp;
 		} else if (operator == Operator.LOGICIFF) {
 			final BinaryExpression newTrueExpression = new BinaryExpression(expr.getLocation(), expr.getType(),
-					Operator.LOGICAND, expr.getLeft(), expr.getRight());
+			        Operator.LOGICAND, expr.getLeft(), expr.getRight());
 
 			final UnaryExpression negatedLeft = new UnaryExpression(expr.getLocation(), expr.getLeft().getType(),
-					UnaryExpression.Operator.LOGICNEG, expr.getLeft());
+			        UnaryExpression.Operator.LOGICNEG, expr.getLeft());
 			final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(), expr.getRight().getType(),
-					UnaryExpression.Operator.LOGICNEG, expr.getRight());
+			        UnaryExpression.Operator.LOGICNEG, expr.getRight());
 			final BinaryExpression newFalseExpression = new BinaryExpression(expr.getLocation(), expr.getType(),
-					Operator.LOGICAND, negatedLeft, negatedRight);
+			        Operator.LOGICAND, negatedLeft, negatedRight);
 
 			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
-					newTrueExpression, newFalseExpression);
+			        newTrueExpression, newFalseExpression);
 			return newExp;
 		} else if (operator == Operator.ARITHPLUS || operator == Operator.ARITHMINUS) {
 
@@ -192,15 +197,15 @@ public class IntervalDomainStatementProcessor
 					}
 
 					return new BinaryExpression(expr.getLocation(), newOperator, expr.getLeft(),
-							rightHandExpression.getExpr());
+					        rightHandExpression.getExpr());
 				}
 			}
 
 			// -x + y ==> y - x
 			if (operator == Operator.ARITHPLUS && expr.getLeft() instanceof UnaryExpression
-					&& ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
+			        && ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
 				return new BinaryExpression(expr.getLocation(), Operator.ARITHMINUS, expr.getRight(),
-						((UnaryExpression) expr.getLeft()).getExpr());
+				        ((UnaryExpression) expr.getLeft()).getExpr());
 			}
 
 			// x - x ==> 0
@@ -211,24 +216,24 @@ public class IntervalDomainStatementProcessor
 
 				if (left.getIdentifier().equals(right.getIdentifier())) {
 					return (operator == Operator.ARITHPLUS
-							? new BinaryExpression(expr.getLocation(), Operator.ARITHMUL,
-									new IntegerLiteral(expr.getLocation(), "2"), left)
-							: new IntegerLiteral(expr.getLocation(), "0"));
+					        ? new BinaryExpression(expr.getLocation(), Operator.ARITHMUL,
+					                new IntegerLiteral(expr.getLocation(), "2"), left)
+					        : new IntegerLiteral(expr.getLocation(), "0"));
 				}
 			}
 
 			// -x - x ==> -2x
 			if (expr.getLeft() instanceof UnaryExpression
-					&& ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE
-					&& expr.getRight() instanceof IdentifierExpression) {
+			        && ((UnaryExpression) expr.getLeft()).getOperator() == UnaryExpression.Operator.ARITHNEGATIVE
+			        && expr.getRight() instanceof IdentifierExpression) {
 				final UnaryExpression leftUnary = (UnaryExpression) expr.getLeft();
 				final IdentifierExpression rightIdentifier = (IdentifierExpression) expr.getRight();
 				if (leftUnary.getExpr() instanceof IdentifierExpression && ((IdentifierExpression) leftUnary.getExpr())
-						.getIdentifier().equals(rightIdentifier.getIdentifier())) {
+				        .getIdentifier().equals(rightIdentifier.getIdentifier())) {
 					return new BinaryExpression(expr.getLocation(), Operator.ARITHMUL,
-							new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.ARITHNEGATIVE,
-									new IntegerLiteral(expr.getLocation(), "2")),
-							rightIdentifier);
+					        new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.ARITHNEGATIVE,
+					                new IntegerLiteral(expr.getLocation(), "2")),
+					        rightIdentifier);
 				}
 			}
 		}
@@ -270,16 +275,16 @@ public class IntervalDomainStatementProcessor
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
 					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
-							newLeft);
+					        newLeft);
 					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
-							newRight);
+					        newRight);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
 					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
-							newLeft);
+					        newLeft);
 					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
-							newRight);
+					        newRight);
 					break;
 				case COMPPO:
 					getLogger().warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
@@ -288,8 +293,8 @@ public class IntervalDomainStatementProcessor
 					throw new UnsupportedOperationException("Fix me: " + binexp.getOperator());
 				}
 
-				final BinaryExpression newExp =
-						new BinaryExpression(binexp.getLocation(), expr.getType(), newOp, newLeft, newRight);
+				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), expr.getType(), newOp,
+				        newLeft, newRight);
 
 				return newExp;
 			} else if (expr.getExpr() instanceof UnaryExpression) {

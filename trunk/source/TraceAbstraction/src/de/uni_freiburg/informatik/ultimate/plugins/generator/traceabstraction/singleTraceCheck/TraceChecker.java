@@ -573,10 +573,7 @@ public class TraceChecker {
 			}
 		}
 		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
-			if (bv.getTermVariable().getSort().isNumericSort()
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("Bool")
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")
-					|| bv.getTermVariable().getSort().getRealSort().getName().equals("FloatingPoint")) {
+			if (TraceCheckerUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);

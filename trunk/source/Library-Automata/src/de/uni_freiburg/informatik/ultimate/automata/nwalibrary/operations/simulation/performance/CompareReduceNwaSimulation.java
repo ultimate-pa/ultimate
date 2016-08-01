@@ -183,7 +183,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
 				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa,
-						possibleEquivalenceClasses);
+						true, possibleEquivalenceClasses);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

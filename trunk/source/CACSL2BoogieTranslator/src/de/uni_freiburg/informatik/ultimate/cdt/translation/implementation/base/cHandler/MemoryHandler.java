@@ -92,7 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -391,7 +391,7 @@ public class MemoryHandler {
 		decl.add(loopCtrDec);
 
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
-				new CPrimitive(PRIMITIVE.UCHAR), BigInteger.ZERO);
+				new CPrimitive(CPrimitives.UCHAR), BigInteger.ZERO);
 		final List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, zero);
 
 		final IdentifierExpression inParamProductExpr = new IdentifierExpression(ignoreLoc, inParamProduct);
@@ -630,10 +630,10 @@ public class MemoryHandler {
 
 		final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destPtrExpr,
 				new RValue(loopCtrExpr, mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(PRIMITIVE.VOID));
+				new CPrimitive(CPrimitives.VOID));
 		final Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcPtrExpr,
 				new RValue(loopCtrExpr, mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(PRIMITIVE.VOID));
+				new CPrimitive(CPrimitives.VOID));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final String memArrayName = hda.getVariableName();
 			final ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc,
@@ -657,11 +657,11 @@ public class MemoryHandler {
 
 		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
 				new RValue(loopCtrExpr, mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(PRIMITIVE.VOID));
+				new CPrimitive(CPrimitives.VOID));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final Expression convertedValue;
 			final ExpressionResult exprRes = new ExpressionResult(
-					new RValue(valueExpr, new CPrimitive(PRIMITIVE.UCHAR)));
+					new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));
 			if (hda.getName().equals(SFO.POINTER)) {
 				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
@@ -673,7 +673,7 @@ public class MemoryHandler {
 				final List<ReadWriteDefinition> rwds = mMemoryModel.getReadWriteDefinitionForHeapDataArray(hda,
 						getRequiredMemoryModelFeatures());
 				// PRIMITIVE primitive = getCprimitiveThatFitsBest(rwds);
-				final PRIMITIVE primitive = getCprimitiveThatFitsBest(hda.getSize());
+				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
 				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
 				convertedValue = exprRes.lrVal.getValue();
 			}
@@ -690,7 +690,7 @@ public class MemoryHandler {
 	/**
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
-	private PRIMITIVE getCprimitiveThatFitsBest(List<ReadWriteDefinition> test) {
+	private CPrimitives getCprimitiveThatFitsBest(List<ReadWriteDefinition> test) {
 		int smallestBytesize = Integer.MAX_VALUE;
 		for (final ReadWriteDefinition rwd : test) {
 			if (rwd.getBytesize() < smallestBytesize) {
@@ -699,10 +699,10 @@ public class MemoryHandler {
 		}
 		if (smallestBytesize == 0) {
 			// we only have unbounded data types
-			return PRIMITIVE.UCHAR;
+			return CPrimitives.UCHAR;
 		}
-		for (final PRIMITIVE primitive : new PRIMITIVE[] { PRIMITIVE.UCHAR, PRIMITIVE.USHORT, PRIMITIVE.UINT, PRIMITIVE.ULONG,
-				PRIMITIVE.ULONGLONG }) {
+		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT, CPrimitives.ULONG,
+				CPrimitives.ULONGLONG }) {
 			if (mTypeSizes.getSize(primitive) == smallestBytesize) {
 				return primitive;
 			}
@@ -713,13 +713,13 @@ public class MemoryHandler {
 	/**
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
-	private PRIMITIVE getCprimitiveThatFitsBest(int byteSize) {
+	private CPrimitives getCprimitiveThatFitsBest(int byteSize) {
 		if (byteSize == 0) {
 			// we only have unbounded data types
-			return PRIMITIVE.UCHAR;
+			return CPrimitives.UCHAR;
 		}
-		for (final PRIMITIVE primitive : new PRIMITIVE[] { PRIMITIVE.UCHAR, PRIMITIVE.USHORT, PRIMITIVE.UINT, PRIMITIVE.ULONG,
-				PRIMITIVE.ULONGLONG }) {
+		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UCHAR, CPrimitives.USHORT, CPrimitives.UINT, CPrimitives.ULONG,
+				CPrimitives.ULONGLONG }) {
 			if (mTypeSizes.getSize(primitive) == byteSize) {
 				return primitive;
 			}
@@ -748,7 +748,7 @@ public class MemoryHandler {
 		final VarList inParamPtrVl = new VarList(ignoreLoc, new String[] { inParamPtr },
 				mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inParamValueVl = new VarList(ignoreLoc, new String[] { inParamValue },
-				mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(PRIMITIVE.INT)));
+				mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(CPrimitives.INT)));
 		final VarList inParamAmountVl = new VarList(ignoreLoc, new String[] { inParamAmount },
 				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 		final VarList outParamResultVl = new VarList(ignoreLoc, new String[] { outParamResult },
@@ -767,8 +767,8 @@ public class MemoryHandler {
 
 		// converted value to unsigned char
 		final IdentifierExpression inParamValueExpr = new IdentifierExpression(ignoreLoc, inParamValue);
-		final ExpressionResult exprRes = new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(PRIMITIVE.INT)));
-		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(PRIMITIVE.UCHAR));
+		final ExpressionResult exprRes = new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
+		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
 		final Expression convertedValue = exprRes.lrVal.getValue();
 
 		final List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, convertedValue);
@@ -1550,8 +1550,8 @@ public class MemoryHandler {
 				readCallProcedureName = mMemoryModel.getReadPointerProcedureName();
 			} else if (ut instanceof CEnum) {
 				// enum is treated like an int
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-				readCallProcedureName = mMemoryModel.getReadProcedureName(PRIMITIVE.INT);
+				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
+				readCallProcedureName = mMemoryModel.getReadProcedureName(CPrimitives.INT);
 			} else {
 				throw new UnsupportedOperationException("unsupported type " + ut);
 			}
@@ -1647,9 +1647,9 @@ public class MemoryHandler {
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CEnum) {
 			// treat like INT
-			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(PRIMITIVE.INT);
-			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(PRIMITIVE.INT);
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
+			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(CPrimitives.INT);
+			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.INT);
 			mFunctionHandler.getModifiedGlobals().get(mFunctionHandler.getCurrentProcedureID())
 					.add(dhp.getVariableName());
 			stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
@@ -1973,7 +1973,7 @@ public class MemoryHandler {
 
 	public static final class RequiredMemoryModelFeatures {
 
-		private final Set<PRIMITIVE> mDataOnHeapRequired = new HashSet<>();
+		private final Set<CPrimitives> mDataOnHeapRequired = new HashSet<>();
 		private boolean mPointerOnHeapRequired;
 		private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations = new HashSet<>();
 
@@ -1981,7 +1981,7 @@ public class MemoryHandler {
 			mPointerOnHeapRequired = true;
 		}
 
-		public void reportDataOnHeapRequired(PRIMITIVE primitive) {
+		public void reportDataOnHeapRequired(CPrimitives primitive) {
 			mDataOnHeapRequired.add(primitive);
 		}
 
@@ -1989,7 +1989,7 @@ public class MemoryHandler {
 			return mPointerOnHeapRequired;
 		}
 
-		public Set<PRIMITIVE> getDataOnHeapRequired() {
+		public Set<CPrimitives> getDataOnHeapRequired() {
 			return mDataOnHeapRequired;
 		}
 

@@ -51,7 +51,7 @@ public class NonrelationalEvaluationResult<V extends INonrelationalValue<V>> imp
 	 * @param booleanValue
 	 *            The {@link BooleanValue} to set in the result.
 	 */
-	protected NonrelationalEvaluationResult(final V value, final BooleanValue booleanValue) {
+	public NonrelationalEvaluationResult(final V value, final BooleanValue booleanValue) {
 		mValue = value;
 		mBooleanValue = booleanValue;
 	}
