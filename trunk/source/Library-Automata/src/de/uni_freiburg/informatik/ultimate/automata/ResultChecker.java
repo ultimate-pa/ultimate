@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
@@ -299,6 +300,15 @@ public class ResultChecker<LETTER, STATE> {
 		// inNwa1ButNotInNwa2.getWord());
 		// correct = false;
 		// }
+	}
+	
+	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusionNew(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> nwa1,
+			final INestedWordAutomaton<LETTER, STATE> nwa2,
+			final StateFactory stateFactory)
+					throws AutomataLibraryException {
+		return new IsIncluded<>(services, stateFactory, nwa1, nwa2).getCounterexample();
 	}
 
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(

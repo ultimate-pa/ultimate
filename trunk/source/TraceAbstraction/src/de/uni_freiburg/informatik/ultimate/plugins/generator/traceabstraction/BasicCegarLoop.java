@@ -656,11 +656,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			} else {// complement and intersection instead of difference
 
-				final INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia =
+				final INestedWordAutomaton<CodeBlock, IPredicate> dia =
 						determinizeInterpolantAutomaton(interpolAutomaton);
 
 				mLogger.debug("Start complementation");
-				final INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia =
+				final INestedWordAutomaton<CodeBlock, IPredicate> nia =
 						(new ComplementDD<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 								mPredicateFactoryInterpolantAutomata, dia)).getResult();
 				assert (!accepts(mServices, nia, mCounterexample.getWord()));
