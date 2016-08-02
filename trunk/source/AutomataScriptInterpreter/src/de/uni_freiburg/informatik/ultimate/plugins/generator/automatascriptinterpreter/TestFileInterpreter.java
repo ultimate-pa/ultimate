@@ -1601,12 +1601,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
 		final String[] packages = {
-//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
-//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
-//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
 				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
-//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
-//				"de.uni_freiburg.informatik.ultimate.automata.petrinet" 
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
+				"de.uni_freiburg.informatik.ultimate.automata.petrinet" 
 				};
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
