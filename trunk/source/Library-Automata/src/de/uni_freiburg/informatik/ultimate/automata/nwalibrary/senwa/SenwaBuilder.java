@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -82,7 +82,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	
 	public SenwaBuilder(final AutomataLibraryServices services, 
-			final INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;
@@ -198,8 +198,8 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 			throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mNwa, mSenwa, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mSenwa, mNwa, stateFactory) == null);
+		correct &= new IsIncluded<>(mServices, stateFactory, mNwa, mSenwa).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, mSenwa, mNwa).getResult();
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
 		}

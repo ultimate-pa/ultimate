@@ -42,9 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -83,7 +85,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	 */
 	private final boolean msubtrahendSigmaStarClosed;
 	
-	private final INestedWordAutomaton<LETTER,STATE> minuend;
+	private final INestedWordAutomatonSimple<LETTER,STATE> minuend;
 	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
@@ -256,7 +258,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	
 	public DifferenceDD(
 			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
 			final INestedWordAutomaton<LETTER,STATE> subtrahend,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			final StateFactory<STATE> stateFactory,
@@ -303,7 +305,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	
 	public DifferenceDD(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER,STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
 			final INestedWordAutomaton<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		super(services);
 		this.msubtrahendSigmaStarClosed = false;
@@ -602,10 +604,12 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
+			final INestedWordAutomaton<LETTER, STATE> minuendOldApi =
+					ResultChecker.getNormalNwa(mServices, minuend);
 			final INestedWordAutomaton<LETTER,STATE> resultSadd = 
-					(new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultSadd, mTraversedNwa, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mTraversedNwa, resultSadd, stateFactory) == null);
+					(new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, minuendOldApi, subtrahend)).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName()
 						+ "Failed", "", minuend,subtrahend);
@@ -617,14 +621,4 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		return correct;
 	}
 
-
-	
-	
-
-
-
-
-
-
-	
 }

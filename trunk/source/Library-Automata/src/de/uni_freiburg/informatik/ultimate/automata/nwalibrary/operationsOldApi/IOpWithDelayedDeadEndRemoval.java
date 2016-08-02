@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import java.text.MessageFormat;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
@@ -37,7 +37,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	public boolean removeDeadEnds() throws AutomataOperationCanceledException;
 	
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
+	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
 	
 	public long getDeadEndRemovalTime();
 	
@@ -47,7 +47,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		private final STATE mDown;
 		private final STATE mEntry;
 		
-		public UpDownEntry(STATE up, STATE down, STATE entry) {
+		public UpDownEntry(final STATE up, final STATE down, final STATE entry) {
 			mUp = up;
 			mDown = down;
 			mEntry = entry;
@@ -79,7 +79,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			return result;
 		}
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}

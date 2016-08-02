@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
@@ -57,7 +57,7 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 
 	
 	public HasUnreachableStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER,STATE> operand) throws AutomataLibraryException {
 		super(services);
 		mTraversedNwa = operand;
 		mLogger.info(startMessage());

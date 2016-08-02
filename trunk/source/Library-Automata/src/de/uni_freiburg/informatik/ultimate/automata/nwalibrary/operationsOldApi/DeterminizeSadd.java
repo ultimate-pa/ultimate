@@ -39,9 +39,13 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
@@ -56,7 +60,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final Map<STATE,Set<STATE>> summary = 
 		new HashMap<STATE, Set<STATE>>();
 	private final STATE auxilliaryEmptyStackState;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomaton<LETTER,STATE> result;
 	
 	private final List<StatePair> queue = new LinkedList<StatePair>();
@@ -89,7 +93,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public DeterminizeSadd(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = nwa;
@@ -106,7 +110,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return result;
 	}
 	
@@ -270,7 +274,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private Macrostate internalSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
-			for (final STATE succ : mOperand.succInternal(state, symbol)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans :
+					mOperand.internalSuccessors(state, symbol)) {
+				final STATE succ = trans.getSucc();
 				final Set<STATE> callerStates = macrostate.getCallerStates(state);
 				succMacrostate.addPairs(succ,callerStates);
 			}
@@ -285,7 +291,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private Macrostate callSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
-			for (final STATE succ : mOperand.succCall(state, symbol)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mOperand.callSuccessors(state, symbol)) {
+				final STATE succ = trans.getSucc();
 				succMacrostate.addPair(succ,state);
 			}
 		}
@@ -302,7 +310,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
 			for (final STATE linPred : macrostate.getCallerStates(state)) {
-				for (final STATE succ : mOperand.succReturn(state, linPred, symbol)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> trans :
+						mOperand.returnSuccessors(state, linPred, symbol)) {
+					final STATE succ = trans.getSucc();
 					final Set<STATE> callerStates = 
 						linPredMacrostate.getCallerStates(linPred);
 					if (callerStates != null) {
@@ -474,9 +484,13 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of determinization");
 		boolean correct = true;
-		final INestedWordAutomaton<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(mServices, stateFactory, mOperand)).getResult();
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD,result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, result,resultDD, stateFactory) == null);
+		
+		final INestedWordAutomaton<LETTER, STATE> operandOldApi =
+				ResultChecker.getNormalNwa(mServices, mOperand);
+		final INestedWordAutomaton<LETTER,STATE> resultDD =
+				(new DeterminizeDD<LETTER,STATE>(mServices, stateFactory, operandOldApi)).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, resultDD, result).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, result, resultDD).getResult();
 		mLogger.info("Finished testing correctness of determinization");
 		return correct;
 	}

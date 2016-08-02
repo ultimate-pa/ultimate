@@ -32,7 +32,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
 
 	public DeterminizeUnderappox(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> input,
+			final INestedWordAutomaton<LETTER,STATE> input,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer)
 			throws AutomataLibraryException {
 		super(services, input, stateDeterminizer);
@@ -70,11 +70,11 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	protected Collection<STATE> getInitialStates() {
 		final ArrayList<STATE> resInitials = 
 			new ArrayList<STATE>(mOperand.getInitialStates().size());
-		final DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
-		final STATE resState = stateDeterminizer.getState(detState);
+		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
+		final STATE resState = mStateDeterminizer.getState(detState);
 		((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(true, detState.allFinal(mOperand), resState);
-		det2res.put(detState,resState);
-		res2det.put(resState, detState);
+		mDet2res.put(detState,resState);
+		mRes2det.put(resState, detState);
 		resInitials.add(resState);
 
 		return resInitials;
@@ -90,20 +90,20 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	 */
 	@Override
 	protected STATE getResState(final DeterminizedState<LETTER,STATE> detState) {
-		if (det2res.containsKey(detState)) {
-			return det2res.get(detState);
+		if (mDet2res.containsKey(detState)) {
+			return mDet2res.get(detState);
 		}
 		else {
-			final STATE resState = stateDeterminizer.getState(detState);
+			final STATE resState = mStateDeterminizer.getState(detState);
 			((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
-			det2res.put(detState,resState);
-			res2det.put(resState,detState);
+			mDet2res.put(detState,resState);
+			mRes2det.put(resState,detState);
 			return resState;
 		}
 	}
 	
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}

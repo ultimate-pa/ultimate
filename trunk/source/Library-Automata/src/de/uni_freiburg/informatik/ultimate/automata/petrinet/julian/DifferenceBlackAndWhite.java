@@ -37,11 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
@@ -384,12 +383,16 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of differenceBlackAndWhite");
 
-		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		final INestedWordAutomaton rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
+		final INestedWordAutomaton<S, C> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult();
+		final INestedWordAutomaton<S, C> rcResult =
+				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomaton<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
+		
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultAsNwa,rcResult,stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, rcResult,resultAsNwa,stateFactory) == null);
+		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, rcResult, resultAsNwa).getResult();
 
 		mLogger.info("Finished testing correctness of differenceBlackAndWhite");
 		return correct;

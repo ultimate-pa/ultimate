@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -79,9 +79,9 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 				mResult.sizeInformation();
 	}
 	
-	public BuchiComplementNCSB(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+	public BuchiComplementNCSB(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mOperand = input;
@@ -94,13 +94,13 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(mServices, mOperand);
+		final INestedWordAutomaton<LETTER, STATE> operandOldApi = 
+				ResultChecker.getNormalNwa(mServices, mOperand);
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
 		final boolean operandEmpty = operandEmptiness.getResult();
@@ -169,9 +169,9 @@ public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 	}
 	
 	
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand , 
-			boolean underApproximationOfComplement) throws AutomataLibraryException {
+	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
+			final INestedWordAutomaton<LETTER, STATE> operand , 
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		boolean correct;

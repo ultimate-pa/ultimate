@@ -66,9 +66,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -201,7 +201,7 @@ public class RefineBuchi {
 		return mBci;
 	}
 
-	INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(
+	INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final RefinementSetting setting,
 			final BinaryStatePredicateManager bspm, final BuchiModGlobalVarManager buchiModGlobalVarManager,
@@ -324,7 +324,7 @@ public class RefineBuchi {
 		}
 		final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
+		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		if (mDifference) {
 			if (complementationConstruction == BComplementationConstruction.Ncsb) {
 				if (setting.isAlwaysSemiDeterministic()) {
@@ -453,10 +453,10 @@ public class RefineBuchi {
 		return newAbstraction;
 	}
 	
-	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> nsbcDifference(
+	private INestedWordAutomaton<CodeBlock, IPredicate> nsbcDifference(
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
+		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		final BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 				mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
@@ -466,12 +466,12 @@ public class RefineBuchi {
 		return newAbstraction;
 	}
 
-	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> rankBasedOptimization(
+	private INestedWordAutomaton<CodeBlock, IPredicate> rankBasedOptimization(
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 					throws AutomataLibraryException {
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
+		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		final BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 				abstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer, mStateFactoryForRefinement,
 				optimization.toString(),

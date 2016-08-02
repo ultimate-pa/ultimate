@@ -976,11 +976,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// return result;
 	// }
 
-	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate>
+	protected INestedWordAutomaton<CodeBlock, IPredicate>
 			determinizeInterpolantAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException {
 		mLogger.debug("Start determinization");
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
+		INestedWordAutomaton<CodeBlock, IPredicate> dia;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(

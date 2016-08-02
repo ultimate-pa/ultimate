@@ -138,9 +138,9 @@ public final class ResultChecker {
 	 */
 	public static <LETTER, STATE> boolean buchiIntersect(
 			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand1,
-			final INestedWordAutomaton<LETTER, STATE> operand2,
-			final INestedWordAutomaton<LETTER, STATE> result) {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand2,
+			final INestedWordAutomatonSimple<LETTER, STATE> result) {
 		final ILogger logger =
 				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
@@ -280,8 +280,8 @@ public final class ResultChecker {
 		final INestedWordAutomaton<LETTER, STATE> resultAutomata =
 				(new PetriNet2FiniteAutomaton<LETTER, STATE>(services, result)).getResult();
 		boolean correct = true;
-		correct &= (nwaLanguageInclusionNew(services, resultAutomata, op, op.getStateFactory()) == null);
-		correct &= (nwaLanguageInclusionNew(services, op, resultAutomata, op.getStateFactory()) == null);
+		correct &= new IsIncluded<>(services, op.getStateFactory(), resultAutomata, op).getResult();
+		correct &= new IsIncluded<>(services, op.getStateFactory(), op, resultAutomata).getResult();
 
 		logger.info("Finished testing correctness of PetriNetJulian constructor");
 		sResultCheckStackHeight--;
@@ -306,13 +306,13 @@ public final class ResultChecker {
 		final INestedWordAutomaton<LETTER, STATE> finAuto2 =
 				(new PetriNet2FiniteAutomaton<LETTER, STATE>(services, net2)).getResult();
 		final NestedRun<LETTER, STATE> subsetCounterex =
-				nwaLanguageInclusionNew(services, finAuto1, finAuto2, net1.getStateFactory());
+				new IsIncluded<>(services, net1.getStateFactory(), finAuto1, finAuto2).getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset) {
 			logger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
 		final NestedRun<LETTER, STATE> supersetCounterex =
-				nwaLanguageInclusionNew(services, finAuto2, finAuto1, net1.getStateFactory());
+				new IsIncluded<>(services, net1.getStateFactory(), finAuto2, finAuto1).getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset) {
 			logger.error("Only accepted by second: " + supersetCounterex.getWord());
@@ -333,10 +333,12 @@ public final class ResultChecker {
 	}
 
 	/**
-	 * @deprecated unused legacy code
+	 * @deprecated unused legacy code; use
+	 * {@link #nwaLanguageInclusion(AutomataLibraryServices, INestedWordAutomaton, INestedWordAutomaton, StateFactory)}
+	 * if possible
 	 */
 	@Deprecated
-	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusion(
+	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusionOldApi(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			final INestedWordAutomatonOldApi<LETTER, STATE> nwa2,
@@ -356,8 +358,14 @@ public final class ResultChecker {
 		// correct = false;
 		// }
 	}
-	
-	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusionNew(
+
+	/**
+	 * @deprecated unused legacy code; use
+	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded}
+	 * directly if possible
+	 */
+	@Deprecated
+	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusion(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa1,
 			final INestedWordAutomaton<LETTER, STATE> nwa2,
@@ -366,12 +374,29 @@ public final class ResultChecker {
 		return new IsIncluded<>(services, stateFactory, nwa1, nwa2).getCounterexample();
 	}
 
+	/**
+	 * @deprecated unused legacy code; use
+	 * {@link #getNormalNwa(AutomataLibraryServices, INestedWordAutomatonSimple)}
+	 * if possible
+	 */
+	@Deprecated
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws AutomataLibraryException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
+		} else {
+			return (new RemoveUnreachable<LETTER, STATE>(services, nwa)).getResult();
+		}
+	}
+
+	public static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> getNormalNwa(
+			final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
+		if (nwa instanceof INestedWordAutomaton) {
+			return (INestedWordAutomaton<LETTER, STATE>) nwa;
 		} else {
 			return (new RemoveUnreachable<LETTER, STATE>(services, nwa)).getResult();
 		}

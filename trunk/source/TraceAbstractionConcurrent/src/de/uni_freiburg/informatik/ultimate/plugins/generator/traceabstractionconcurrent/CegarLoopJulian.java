@@ -148,7 +148,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INestedWordAutomaton<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
 		final INestedWordAutomaton<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(

@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -96,7 +95,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			throws AutomataLibraryException {
 		mLogger.debug("Testing correctness of complement");
 		boolean correct = true;
-		final INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
+		final INestedWordAutomaton intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
 		correct &=  ((new IsEmpty(mServices, intersectionOperandResult)).getResult() == true);
 		mLogger.debug("Finished testing correctness of complement");
 		return correct;

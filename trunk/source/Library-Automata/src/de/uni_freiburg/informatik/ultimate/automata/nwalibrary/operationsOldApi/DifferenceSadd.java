@@ -39,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -73,8 +74,8 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private final INestedWordAutomaton<LETTER,STATE> minuend;
-	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
+	private final INestedWordAutomatonSimple<LETTER,STATE> minuend;
+	private final INestedWordAutomatonSimple<LETTER,STATE> subtrahend;
 	private final NestedWordAutomaton<LETTER,STATE> difference;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
@@ -141,14 +142,14 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
+	public INestedWordAutomaton<LETTER,STATE> getResult() {
 		return difference;
 	}
 	
 	public DifferenceSadd(
 			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> minuend,
-			final INestedWordAutomaton<LETTER,STATE> subtrahend,
+			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER,STATE> subtrahend,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -564,10 +565,12 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
+			final INestedWordAutomaton<LETTER, STATE> minuendOldApi = ResultChecker.getNormalNwa(mServices, minuend);
+			final INestedWordAutomaton<LETTER, STATE> subtrahendOldApi = ResultChecker.getNormalNwa(mServices, subtrahend);
 			final INestedWordAutomaton<LETTER,STATE> resultDD = 
-					(new DifferenceDD<LETTER,STATE>(mServices, stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD, difference, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, difference, resultDD, stateFactory) == null);
+					(new DifferenceDD<LETTER,STATE>(mServices, stateFactory, minuendOldApi, subtrahendOldApi)).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, resultDD, difference).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, difference, resultDD).getResult();
 			if (!correct) {
 			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", minuend,subtrahend);
 			}

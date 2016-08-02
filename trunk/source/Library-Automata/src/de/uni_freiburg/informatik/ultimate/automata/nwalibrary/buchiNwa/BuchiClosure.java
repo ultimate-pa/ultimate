@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -101,8 +100,8 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(mServices, mOperand);
+		final INestedWordAutomaton<LETTER, STATE> operandOldApi = 
+				ResultChecker.getNormalNwa(mServices, mOperand);
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
 		final boolean operandEmpty = operandEmptiness.getResult();

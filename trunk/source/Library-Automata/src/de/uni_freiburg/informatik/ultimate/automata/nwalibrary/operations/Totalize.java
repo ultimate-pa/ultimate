@@ -94,11 +94,11 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 
 			// should recognize same language imput
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, operandOldApi, mResult, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, operandOldApi, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, operandOldApi, mResult).getResult();
+			correct &= new IsIncluded<>(mServices, sf, mResult, operandOldApi).getResult();
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}

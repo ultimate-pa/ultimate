@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
@@ -117,13 +116,13 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 
 			final INestedWordAutomaton<LETTER, STATE> resultDD = 
 					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD, mResult, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, resultDD, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
+			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}

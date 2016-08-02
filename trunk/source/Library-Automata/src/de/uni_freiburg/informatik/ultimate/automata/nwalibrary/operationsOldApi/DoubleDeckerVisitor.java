@@ -43,12 +43,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -72,7 +73,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		UNKNOWN, AT_LEAST_ONCE
 	}
 
-	protected INestedWordAutomatonOldApi<LETTER, STATE> mTraversedNwa;
+	protected INestedWordAutomaton<LETTER, STATE> mTraversedNwa;
 
 	/**
 	 * We call a DoubleDecker marked if it has been visited or is contained in
@@ -797,10 +798,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	private Set<STATE> computeState2CallSuccs(final STATE state) {
 		final Set<STATE> callSuccs = new HashSet<STATE>();
 		if (state != mTraversedNwa.getEmptyStackState()) {
-			for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
-				for (final STATE succ : mTraversedNwa.succCall(state, letter)) {
-					callSuccs.add(succ);
-				}
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mTraversedNwa.callSuccessors(state)) {
+				callSuccs.add(trans.getSucc());
 			}
 		}
 		return callSuccs;
@@ -811,18 +811,18 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 */
 	private boolean hasSuccessors(final STATE state) {
 		for (final LETTER symbol : mTraversedNwa.lettersInternal(state)) {
-			if (mTraversedNwa.succInternal(state, symbol).iterator().hasNext()) {
+			if (mTraversedNwa.internalSuccessors(state, symbol).iterator().hasNext()) {
 				return true;
 			}
 		}
 		for (final LETTER symbol : mTraversedNwa.lettersCall(state)) {
-			if (mTraversedNwa.succCall(state, symbol).iterator().hasNext()) {
+			if (mTraversedNwa.callSuccessors(state, symbol).iterator().hasNext()) {
 				return true;
 			}
 		}
 		for (final LETTER symbol : mTraversedNwa.lettersReturn(state)) {
 			for (final STATE hier : mTraversedNwa.hierPred(state, symbol)) {
-				if (mTraversedNwa.succReturn(state, hier, symbol).iterator().hasNext()) {
+				if (mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
 					return true;
 				}
 			}
@@ -1030,10 +1030,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 			private Set<STATE> computeState2CallSuccs(final STATE state) {
 				final Set<STATE> callSuccs = new HashSet<STATE>();
 				if (state != mTraversedNwa.getEmptyStackState()) {
-					for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
-						for (final STATE succ : mTraversedNwa.succCall(state, letter)) {
-							callSuccs.add(succ);
-						}
+					for (final OutgoingCallTransition<LETTER, STATE> trans :
+							mTraversedNwa.callSuccessors(state)) {
+						callSuccs.add(trans.getSucc());
 					}
 				}
 				return callSuccs;

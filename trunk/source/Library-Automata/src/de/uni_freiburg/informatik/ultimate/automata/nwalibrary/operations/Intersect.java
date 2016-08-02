@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
@@ -76,8 +75,8 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public Intersect(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> fstOperand,
-			final INestedWordAutomaton<LETTER,STATE> sndOperand
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -107,15 +106,15 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+		final INestedWordAutomaton<LETTER, STATE> fstOperandOldApi = ResultChecker.getNormalNwa(mServices, mFstOperand);
+		final INestedWordAutomaton<LETTER, STATE> sndOperandOldApi = ResultChecker.getNormalNwa(mServices, mSndOperand);
 		final INestedWordAutomaton<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
 		correct &= (resultDD.size() == mResult.size());
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD, mResult, sf) == null);
+		correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, resultDD, sf) == null);
+		correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 		assert correct;
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);

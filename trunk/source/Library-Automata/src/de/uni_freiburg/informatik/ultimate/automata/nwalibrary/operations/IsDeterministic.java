@@ -110,11 +110,11 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (mResult) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, operandOldApi, mReach, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, operandOldApi, mReach).getResult();
 			assert correct;
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mReach, operandOldApi, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, mReach, operandOldApi).getResult();
 			assert correct;
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);

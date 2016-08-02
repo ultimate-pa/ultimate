@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -91,10 +91,10 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 	
 	
-	public BuchiDifferenceFKV(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
+	public BuchiDifferenceFKV(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -108,11 +108,11 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 	
 	
-	public BuchiDifferenceFKV(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
-			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			StateFactory<STATE> sf, String optimization, int userDefinedMaxRank) throws AutomataLibraryException {
+	public BuchiDifferenceFKV(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final StateFactory<STATE> sf, final String optimization, final int userDefinedMaxRank) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mFstOperand = fstOperand;
@@ -128,7 +128,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		mLogger.info(exitMessage());
 	}
 	
-	private void constructDifference(int userDefinedMaxRank, FkvOptimization optimization) throws AutomataLibraryException {
+	private void constructDifference(final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
 		mSndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, mSndOperand, mStateDeterminizer, mStateFactory, optimization, userDefinedMaxRank);
 		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(mFstOperand, mSndComplemented, mStateFactory);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
@@ -141,7 +141,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
@@ -155,13 +155,13 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-			final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+			final INestedWordAutomaton<LETTER, STATE> fstOperandOldApi = ResultChecker.getNormalNwa(mServices, mFstOperand);
+			final INestedWordAutomaton<LETTER, STATE> sndOperandOldApi = ResultChecker.getNormalNwa(mServices, mSndOperand);
 			final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
 			final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
 			final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
@@ -198,10 +198,10 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		return correct;
 	}
 	
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand1, 
-			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
-			boolean underApproximationOfComplement) throws AutomataLibraryException {
+	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
+			final INestedWordAutomaton<LETTER, STATE> operand1, 
+			final INestedWordAutomaton<LETTER, STATE> operand2,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
 		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();

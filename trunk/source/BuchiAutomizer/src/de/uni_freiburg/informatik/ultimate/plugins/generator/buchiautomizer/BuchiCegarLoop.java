@@ -459,7 +459,7 @@ public class BuchiCegarLoop {
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 
@@ -490,7 +490,7 @@ public class BuchiCegarLoop {
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 					break;
@@ -675,7 +675,7 @@ public class BuchiCegarLoop {
 		return result;
 	}
 
-	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(final LassoChecker lassoChecker)
+	private INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(final LassoChecker lassoChecker)
 			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
@@ -684,7 +684,7 @@ public class BuchiCegarLoop {
 				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 				mRootNode.getRootAnnot().getModGlobVarManager(), mRootNode.getRootAnnot().getBoogie2SMT());
 		for (final RefinementSetting rs : mBuchiRefinementSettingSequence) {
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = null;
+			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, mInterpolation, mBenchmarkGenerator,

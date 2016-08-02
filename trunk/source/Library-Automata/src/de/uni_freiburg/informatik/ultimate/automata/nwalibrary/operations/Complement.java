@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
@@ -152,7 +151,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
+			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 
 			// intersection of operand and result should be empty
 			final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult = 
@@ -164,8 +163,8 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD, mResult, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, resultDD, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
+			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}

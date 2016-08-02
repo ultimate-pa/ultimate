@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -152,7 +151,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataOperationCanceledException {
 		if (mResultWOdeadEnds == null) {
 			return mResult;
@@ -166,17 +165,17 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
+		final INestedWordAutomaton<LETTER, STATE> fstOperandOldApi = ResultChecker.getNormalNwa(mServices, mFstOperand);
+		final INestedWordAutomaton<LETTER, STATE> sndOperandOldApi = ResultChecker.getNormalNwa(mServices, mSndOperand);
 		final INestedWordAutomaton<LETTER, STATE> resultDD = 
 				(new DifferenceDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi, 
 						new PowersetDeterminizer<LETTER, STATE>(sndOperandOldApi,true, sf),sf,false,false)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() == mResult.size());
 //		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultDD, mResult, sf) == null);
+		correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mResult, resultDD, sf) == null);
+		correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 		assert correct;
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);

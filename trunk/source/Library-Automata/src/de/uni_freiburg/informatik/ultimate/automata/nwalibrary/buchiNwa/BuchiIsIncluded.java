@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -67,9 +66,9 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		mOperand2 = nwa2;
 		mLogger.info(startMessage());
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
+		final INestedWordAutomaton<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
 				mServices, stateFactory, mOperand2)).getResult();
-		final INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
+		final INestedWordAutomaton<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
 				mServices, mOperand1, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
 				mServices, difference);

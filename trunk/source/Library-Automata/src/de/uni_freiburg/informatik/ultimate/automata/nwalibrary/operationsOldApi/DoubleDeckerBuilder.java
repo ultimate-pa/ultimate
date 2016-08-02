@@ -33,7 +33,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
 public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE> 
 														implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
@@ -53,8 +55,9 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 		if (mSuccessorsConstructedIn.contains(up)) {
 			final HashSet<STATE> succs = new HashSet<STATE>();
 			for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
-				for (final STATE succ : mTraversedNwa.succInternal(up, letter)) {
-					succs.add(succ);
+				for (final OutgoingInternalTransition<LETTER, STATE> trans :
+						mTraversedNwa.internalSuccessors(up, letter)) {
+					succs.add(trans.getSucc());
 				}
 			}
 			return succs;
@@ -72,8 +75,9 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 		if (mSuccessorsConstructedCa.contains(up)) {
 			final HashSet<STATE> succs = new HashSet<STATE>();
 			for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
-				for (final STATE succ : mTraversedNwa.succCall(up, letter)) {
-					succs.add(succ);
+				for (final OutgoingCallTransition<LETTER, STATE> trans :
+						mTraversedNwa.callSuccessors(up, letter)) {
+					succs.add(trans.getSucc());
 				}
 			}
 			return succs;
@@ -110,7 +114,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 			DoubleDecker<STATE> doubleDecker);
 	
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}
 

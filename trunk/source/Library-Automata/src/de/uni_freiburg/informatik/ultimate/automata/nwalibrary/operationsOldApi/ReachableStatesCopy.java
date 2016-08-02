@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -95,7 +95,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	
 	
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> nwa)
+			final INestedWordAutomaton<LETTER,STATE> nwa)
 			throws AutomataLibraryException {
 		super(services);
 		mInput = nwa;
@@ -122,18 +122,18 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		
 		for (final STATE state : mTraversedNwa.getStates()) {
 			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {				
-				if (!mTraversedNwa.succInternal(state,letter).iterator().hasNext()) {
+				if (!mTraversedNwa.internalSuccessors(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(state, letter, sinkState);
 				}
 			}
 			for (final LETTER letter : mTraversedNwa.getCallAlphabet()) {				
-				if (!mTraversedNwa.succCall(state,letter).iterator().hasNext()) {
+				if (!mTraversedNwa.callSuccessors(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(state, letter, sinkState);
 				}
 			}
 			for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
 				for (final STATE hier : mTraversedNwa.getStates()) {
-					if (!mTraversedNwa.succReturn(state,hier,symbol).iterator().hasNext()) {
+					if (!mTraversedNwa.returnSuccessors(state,hier,symbol).iterator().hasNext()) {
 						((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(state, hier, symbol, sinkState);
 					}
 				}
@@ -240,7 +240,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	
 	
 	@Override
-	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
+	public final INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}
 
@@ -253,9 +253,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		if (!mRemoveNonLiveStates) {
 			mLogger.info("Start testing correctness of " + operationName());
 			if (!mComplement) {
-				
-				correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mInput, mTraversedNwa, stateFactory) == null);
-				correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mTraversedNwa, mInput, stateFactory) == null);
+				correct &= new IsIncluded<>(mServices, stateFactory, mInput, mTraversedNwa).getResult();
+				correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, mInput).getResult();
 				if (!correct) {
 					ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mTraversedNwa);
 				}
@@ -267,8 +266,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 				final INestedWordAutomaton<LETTER, STATE> resultSadd = 
 						(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mInput)).getResult();
 				// should recognize same language as old computation
-				correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultSadd, mTraversedNwa, stateFactory) == null);
-				correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mTraversedNwa, resultSadd, stateFactory) == null);
+				correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
+				correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
 				if (!correct) {
 					ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mTraversedNwa);
 				}
