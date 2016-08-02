@@ -709,6 +709,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} catch (final Exception e) {
 			reportToLogger(LoggerSeverity.INFO, "Error during interpreting automata definitions.");
 			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
+			if (e instanceof InterpreterException) {
+				reportToLogger(LoggerSeverity.INFO, "Error: " + ((InterpreterException) e).getShortDescription());
+			}
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
@@ -724,6 +727,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 				mTypeChecker.checkTestFile(ats.getStatementList());
 			} catch (final InterpreterException e) {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
+				if (e instanceof InterpreterException) {
+					reportToLogger(LoggerSeverity.INFO, "Error: " + ((InterpreterException) e).getShortDescription());
+				}
 				reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 				String shortDescription = e.getShortDescription();
 				if (shortDescription == null) {
@@ -1595,11 +1601,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
 		final String[] packages = {
-				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
-				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
-				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
-				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
-				"de.uni_freiburg.informatik.ultimate.automata.petrinet" };
+//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
+//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
+//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
+				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
+//				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
+//				"de.uni_freiburg.informatik.ultimate.automata.petrinet" 
+				};
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
 

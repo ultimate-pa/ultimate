@@ -6,16 +6,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class TreeAutomatonAST extends AutomatonAST {
 	
-	String mId;
+//	String mId;
 	List<RankedAlphabetEntryAST> mRankedAlphabet;
 	List<String> mStates;
 	List<String> mFinalStates;
 	List<TreeAutomatonTransitionAST> mTransitions;
 	
 	public TreeAutomatonAST(ILocation loc, String id) {
-		super(loc);
-		mId = id;
+		super(loc, id);
 	}
+	
 
 	public void setAlphabet(List<RankedAlphabetEntryAST> entryList) {
 		mRankedAlphabet = entryList;
@@ -33,9 +33,9 @@ public class TreeAutomatonAST extends AutomatonAST {
 		mTransitions = transitions;
 	}
 
-	public String getmId() {
-		return mId;
-	}
+//	public String getmId() {
+//		return mId;
+//	}
 
 	public List<RankedAlphabetEntryAST> getRankedAlphabet() {
 		return mRankedAlphabet;

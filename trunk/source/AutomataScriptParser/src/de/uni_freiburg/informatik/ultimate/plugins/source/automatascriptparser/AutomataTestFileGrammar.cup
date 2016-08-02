@@ -1212,7 +1212,7 @@ ta_definition ::=  variable_identifier:id EQ
                           ta.setStates(states.getIdentifierList());
                           ta.setFinalStates(fin_states.getIdentifierList());
                           ta.setTransitions(transitions.getTransitions());
-                          m_varDeclarations.put(id, AlternatingAutomatonAST.class);
+                          m_varDeclarations.put(id, TreeAutomatonAST.class);
                           RESULT = ta;
                          :} ;
  

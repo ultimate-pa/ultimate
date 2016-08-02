@@ -46,7 +46,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	@Override
 	public String operationName() {
-		return "Intersect";
+		return "ta_intersect";
 	}
 
 	@Override
@@ -124,7 +124,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return res;
 	}
 	@Override
-	public Object getResult() throws AutomataLibraryException {
+	public TreeAutomatonBU getResult() throws AutomataLibraryException {
 		return res;
 	}
 

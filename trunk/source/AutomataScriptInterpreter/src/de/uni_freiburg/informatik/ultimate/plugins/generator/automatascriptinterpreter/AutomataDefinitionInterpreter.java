@@ -124,17 +124,17 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((AlternatingAutomatonAST) n);
 				} catch (final Exception e) {
-//					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-//							+ System.getProperty("line.separator") + e.getStackTrace(), 
-//							"Exception thrown", n.getLocation());
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
 				}
 			} else if (n instanceof TreeAutomatonAST){
 				try {
 					interpret((TreeAutomatonAST) n);
 				} catch (final Exception e) {
-//					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-//							+ System.getProperty("line.separator") + e.getStackTrace(), 
-//							"Exception thrown", n.getLocation());
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
 				}
 			}
 		}
@@ -211,6 +211,7 @@ public class AutomataDefinitionInterpreter {
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);
 	}
+
 	private static LinkedList<BooleanExpression> parseBooleanExpressions(AlternatingAutomaton<String, String> alternatingAutomaton, String expression){
 		final LinkedList<BooleanExpression> booleanExpressions = new LinkedList<BooleanExpression>();
 		if(expression.equals("true")){
