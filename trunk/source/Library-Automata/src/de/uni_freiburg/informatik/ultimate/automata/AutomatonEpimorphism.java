@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -54,7 +54,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	private final HashMap<STATE, STATE> mepimorphism;
 
-	public AutomatonEpimorphism(AutomataLibraryServices services) {
+	public AutomatonEpimorphism(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mepimorphism = new HashMap<STATE, STATE>();
@@ -73,10 +73,10 @@ public class AutomatonEpimorphism<STATE> {
 	 * @return an epimorphism structure from a1 to a2
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
-			AutomataLibraryServices services,
+			final AutomataLibraryServices services,
 			
-			INestedWordAutomatonOldApi<String, String> a1,
-			INestedWordAutomatonOldApi<String, String> a2) {
+			final INestedWordAutomaton<String, String> a1,
+			final INestedWordAutomaton<String, String> a2) {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
@@ -123,12 +123,12 @@ public class AutomatonEpimorphism<STATE> {
 	 * Returns the state, where the epimorphism points to
 	 * @param s
 	 */
-	public STATE getMapping(STATE s)
+	public STATE getMapping(final STATE s)
 	{
 		return mepimorphism.get(s);
 	}
 	
-	public void insert(STATE from, STATE to)
+	public void insert(final STATE from, final STATE to)
 	{
 		mepimorphism.put(from, to);
 	}

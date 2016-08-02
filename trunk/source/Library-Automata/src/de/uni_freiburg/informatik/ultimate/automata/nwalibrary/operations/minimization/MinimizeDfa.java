@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
@@ -81,7 +80,7 @@ public class MinimizeDfa<LETTER,STATE>
 	 *            the input automaton
 	 * @throws AutomataOperationCanceledException 
 	 */
-    public MinimizeDfa(final AutomataLibraryServices services, final INestedWordAutomatonOldApi<LETTER,STATE> operand)
+    public MinimizeDfa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER,STATE> operand)
             throws AutomataLibraryException {
     	super(services, operand.getStateFactory(), "minimizeDFA", operand);
     	

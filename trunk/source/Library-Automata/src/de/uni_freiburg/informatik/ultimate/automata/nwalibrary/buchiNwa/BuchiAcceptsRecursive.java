@@ -111,8 +111,8 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
 	 */
-	public BuchiAcceptsRecursive(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
+	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
+			final INestedWordAutomatonOldApi<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw){
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;
@@ -191,9 +191,9 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 */	
 	
 	Set<STATE> getReachableStates(
-			int currentPosition,
-			STATE currentState,
-			List<STATE> callStack) {
+			final int currentPosition,
+			final STATE currentState,
+			final List<STATE> callStack) {
 		if (currentPosition >= mStem.length()) {
 			final Set<STATE> result = new HashSet<STATE>();
 			result.add(currentState);
@@ -282,10 +282,10 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 *  visited.
 	 */
 	boolean isCompleteableToAcceptingRun(
-			Map<STATE,Boolean> hondaCandidates2visitedFinal,
+			final Map<STATE,Boolean> hondaCandidates2visitedFinal,
 			int currentPosition,
-			STATE currentState,
-			List<STATE> callStack) {
+			final STATE currentState,
+			final List<STATE> callStack) {
 		assert ( currentPosition <= mLoop.length());
 		if (currentPosition == mLoop.length()) {
 			currentPosition = 0;
@@ -365,7 +365,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

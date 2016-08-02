@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
@@ -294,12 +293,15 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 
-		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
-		final INestedWordAutomaton nwaResult = (new ConcurrentProduct(mServices, op1AsNwa, mNwa, true)).getResult();
+		final INestedWordAutomaton<S, C> op1AsNwa = 
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult();
+		final INestedWordAutomaton<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
+		final INestedWordAutomaton<S, C> nwaResult =
+				(new ConcurrentProduct<S, C>(mServices, op1AsNwa, mNwa, true)).getResult();
 		boolean correct = true;
-		correct &= (new IsIncluded(mServices, stateFactory, resultAsNwa,nwaResult)).getResult();
-		correct &= (new IsIncluded(mServices, stateFactory, nwaResult,resultAsNwa)).getResult();
+		correct &= (new IsIncluded<>(mServices, stateFactory, resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded<>(mServices, stateFactory, nwaResult,resultAsNwa)).getResult();
 
 		mLogger.info("Finished testing correctness of prefixProduct");
 		return correct;

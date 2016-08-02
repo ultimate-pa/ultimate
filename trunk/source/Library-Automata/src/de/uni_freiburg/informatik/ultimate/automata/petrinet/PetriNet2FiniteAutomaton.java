@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -80,8 +80,8 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	}
 	
 	
-	public PetriNet2FiniteAutomaton(AutomataLibraryServices services, 
-			IPetriNet<S,C> net) {
+	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, 
+			final IPetriNet<S,C> net) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -127,7 +127,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	 * yet constructed, construct it and enqueue the marking. If it has to be
 	 * constructed it is an initial state iff isInitial is true. 
 	 */
-	private C getState(Marking<S,C> marking, boolean isInitial) {
+	private C getState(final Marking<S,C> marking, final boolean isInitial) {
 		C state = mMarking2State.get(marking);
 		if (state == null) {
 //			boolean isFinal = mNet.getAcceptingMarkings().contains(marking);
@@ -140,7 +140,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 		return state;
 	}
 	
-	private Collection<C> getMarkingContents(Set<Place<S,C>> marking) {
+	private Collection<C> getMarkingContents(final Set<Place<S,C>> marking) {
 		final ArrayList<C> result = new ArrayList<C>(marking.size());
 		for (final Place<S,C> place : marking) {
 			result.add(place.getContent());
@@ -155,7 +155,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	 * possible outgoing automaton transitions to state. Construct (and
 	 * enqueue to worklist) successor states if necessary.
 	 */
-	private void constructOutgoingTransitions(Marking<S,C> marking) {
+	private void constructOutgoingTransitions(final Marking<S,C> marking) {
 		final C state = getState(marking, false);
 		final Set<ITransition<S,C>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<S,C> transition : outgoing) {
@@ -181,7 +181,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	
 	
 	private Set<ITransition<S, C>> getOutgoingNetTransitions(
-													Marking<S,C> marking) {
+													final Marking<S,C> marking) {
 		final Set<ITransition<S,C>> transitions = new HashSet<ITransition<S,C>>();
 		for (final Place<S,C> place : marking) {
 			transitions.addAll(place.getSuccessors());
@@ -194,12 +194,12 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 
 	
 	@Override
-	public INestedWordAutomatonOldApi<S,C> getResult() {
+	public INestedWordAutomaton<S,C> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

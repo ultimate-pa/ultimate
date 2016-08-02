@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -60,7 +60,7 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 
 	public HoareAnnotationExtractor(
 			final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction,
+			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final HoareAnnotationFragments haf) {
 		super(new AutomataLibraryServices(services));
 		mTraversedNwa = abstraction;

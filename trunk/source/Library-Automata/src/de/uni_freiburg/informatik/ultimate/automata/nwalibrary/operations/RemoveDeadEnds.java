@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -120,8 +119,8 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
 		INestedWordAutomaton<LETTER, STATE> input;
-		if (mInput instanceof INestedWordAutomatonOldApi) {
-			input = (INestedWordAutomatonOldApi<LETTER, STATE>) mInput;
+		if (mInput instanceof INestedWordAutomaton) {
+			input = (INestedWordAutomaton<LETTER, STATE>) mInput;
 		} else {
 			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mInput)).getResult(); 
 		}

@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -197,7 +196,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	private static boolean acceptsPetriViaFA(final IUltimateServiceProvider services, final IAutomaton<CodeBlock, IPredicate> automaton, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
 		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
+		final INestedWordAutomaton<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(services), (IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
 		return BasicCegarLoop.accepts(services, petriNetAsFA, nw);
 
