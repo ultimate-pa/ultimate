@@ -9,14 +9,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 public class TreeAutomatonTransitionListAST extends AtsASTNode {
 
 	
-	List<TreeAutomatonTransition> mList;
+	List<TreeAutomatonTransitionAST> mList;
 	
 	public TreeAutomatonTransitionListAST(ILocation loc) {
 		super(loc);
 		mList = new ArrayList<>();
 	}
 
-	public void addTransition(TreeAutomatonTransition tat) {
+	public void addTransition(TreeAutomatonTransitionAST tat) {
 		mList.add(tat);
+	}
+
+	public List<TreeAutomatonTransitionAST> getTransitions() {
+		return mList;
 	}
 }

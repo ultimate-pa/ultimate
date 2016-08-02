@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
@@ -263,7 +264,7 @@ non terminal Object nested_word_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON;
+ terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET, RANKED_ALPHABET;
 // 3. States & Places
@@ -300,7 +301,7 @@ non terminal RankedAlphabetEntryListAST ta_ranked_alphabet,
                               ta_ranked_alphabet_entry_list;
 non terminal RankedAlphabetEntryAST ta_ranked_alphabet_entry;
 non terminal TreeAutomatonTransitionListAST ta_transitions,ta_transition_list_opt,ta_transition_list;
-non terminal TreeAutomationTransitionAST ta_transition;
+non terminal TreeAutomatonTransitionAST ta_transition;
 
 
 
@@ -428,12 +429,12 @@ variable_declaration ::=
                 RESULT = null;:}
          | type:t ta_definition:ta
                 {:
-                 if (t.equals(TreeAutomaton.class)) {
+                 if (t.equals(TreeAutomatonBU.class)) {
                  		ta.setType(t);
                         m_automataDefinitions.addAutomaton(ta);
                  } else {
                         reportError(true, "AutomataDefiniton: Type error \"" + 
-                        t.getSimpleName() + "\" is not compatible with \"TreeAutomaton\""); 
+                        t.getSimpleName() + "\" is not compatible with \"TreeAutomatonBU\""); 
                  }
                 RESULT = null;:}
 	;
@@ -1206,7 +1207,7 @@ ta_definition ::=  variable_identifier:id EQ
                                ta_transitions:transitions 
                         RPAREN:r
                         {: TreeAutomatonAST ta = new TreeAutomatonAST(getLocation(l$, r$), id);
-                          ta.setAlphabet(alpha.getIdentifierList());
+                          ta.setAlphabet(alpha.getEntryList());
                           ta.setStates(states.getIdentifierList());
                           ta.setFinalStates(fin_states.getIdentifierList());
                           ta.setTransitions(transitions.getTransitions());
@@ -1242,13 +1243,13 @@ ta_ranked_alphabet_entry_list ::=
                         :} ;
                         
 ta_ranked_alphabet_entry ::= 
-                       LPAREN:l                         
+                       LPAREN:l1                         
                          identifier:rank COMMA
-                         LBRACE:l 
+                         LBRACE:l2
                            identifier_list_opt:alph 
-                         RBRACE:r
-                       RPAREN:r                         
-                       {: RESULT = new RankedAlphabetEntryAST(rank, alph); :};
+                         RBRACE:r2
+                       RPAREN:r1
+                       {: RESULT = new RankedAlphabetEntryAST(getLocation(rank$,rank$), rank, alph); :};
                         
 ta_transitions ::=  TRANSITION_TABLE EQ
                          LBRACE:l
@@ -1267,8 +1268,8 @@ ta_transition_list_opt ::=
 ta_transition_list ::=
                     ta_transition:tat
                     {: //java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
-                       TreeAutomatonTransitionListAST tatlist = 
-                              new TreeAutomatonTransitionListAST(getLocation(tat$,tat$)):
+                       TreeAutomatonTransitionListAST tatList = 
+                              new TreeAutomatonTransitionListAST(getLocation(tat$,tat$));
                        tatList.addTransition(tat);
                        RESULT = tatList;
                      :} 
@@ -1279,13 +1280,13 @@ ta_transition_list ::=
                        RESULT = tatList;
                      :} ;
 
-ta_transition ::= LPAREN:l
-                   LPAREN:l
+ta_transition ::= LPAREN:l1
+                   LPAREN:l2
                     identifier_list_opt:sourceStates
-                   RPAREN:r
+                   RPAREN:r2
                    identifier:symbol
                    identifier:targetState
-                  RPAREN:r
+                  RPAREN:r1
                   {:
-                    RESULT = new TreeAutomatonTransition(sourceStates, symbol, targetState);
+                    RESULT = new TreeAutomatonTransitionAST(getLocation(l1$,l1$), sourceStates, symbol, targetState);
                    :} ;  

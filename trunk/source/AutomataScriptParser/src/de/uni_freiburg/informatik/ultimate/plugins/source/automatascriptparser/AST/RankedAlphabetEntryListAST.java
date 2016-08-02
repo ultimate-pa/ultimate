@@ -18,4 +18,8 @@ public class RankedAlphabetEntryListAST extends AtsASTNode {
 	public void addEntry(RankedAlphabetEntryAST rae) {
 		mList.add(rae);
 	}
+
+	public List<RankedAlphabetEntryAST> getEntryList() {
+		return mList;
+	}
 }
