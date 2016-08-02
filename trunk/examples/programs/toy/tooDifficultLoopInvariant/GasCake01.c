@@ -1,3 +1,12 @@
+/*
+ * GasCake01 is an example for a PDT1-style filter. 
+ * 
+ * Author: heizmann@informatik.uni-freiburg.de, dietsch@informatik.uni-freiburg.de 
+ * Date: 2016-07-25
+ * 
+ * 
+ */
+
 typedef unsigned char boolean;
 typedef unsigned char uint8;
 typedef signed char sint8;
@@ -73,7 +82,6 @@ void NStablePDT1Float(void)
  }
 // tclSinkf32_v(output_f32);
 }
-
 
 boolean tclRange_b(boolean min, boolean max) {
 	boolean result;
