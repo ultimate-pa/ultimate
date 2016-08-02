@@ -3,8 +3,6 @@
  * 
  * Author: heizmann@informatik.uni-freiburg.de, dietsch@informatik.uni-freiburg.de 
  * Date: 2016-07-25
- * 
- * 
  */
 
 typedef unsigned char boolean;
@@ -19,7 +17,7 @@ typedef unsigned long long uint64;
 typedef signed long long sint64;
 typedef float float32;
 typedef double float64;
-extern void NStablePDT1Float(void);
+
 extern void tclSinkb_v(const boolean _value_b);
 extern void tclSinkc8_v(const char8 _value_c8);
 extern void tclSinks8_v(const sint8 _value_s8);
@@ -56,32 +54,6 @@ extern uint16 tclRange_u16(uint16 _min_u16, uint16 _max_u16);
 extern uint32 tclRange_u32(uint32 _min_u32, uint32 _max_u32);
 extern float32 tclRange_f32(float32 _min_f32, float32 _max_f32);
 extern float64 tclRange_f64(float64 _min_f64, float64 _max_f64);
-void NStablePDT1Float(void)
-{
- float32 input_f32;
- float32 output_f32;
- boolean reset_b;
- static float32 outputOld_f32 = 0;
- static float32 internal_f32 = 0;
- reset_b = tclRange_b(0, 1);
- input_f32 = tclRange_f32(0.0, 100.0);
- if (reset_b) {
-  output_f32 = input_f32;
-  internal_f32 = 0.F;
- }
- else {
-  output_f32 = outputOld_f32 + (internal_f32 * 0.02F);
-  internal_f32 = (input_f32 * 0.02469135802F)
-      + ((outputOld_f32 * 0.02469135802F * -1.F)
-      + internal_f32 * 0.9555555556F);
- }
- outputOld_f32 = output_f32;
- if (output_f32 >= -100000000000.0) {
- } else {
-	//@assert \false;
- }
-// tclSinkf32_v(output_f32);
-}
 
 boolean tclRange_b(boolean min, boolean max) {
 	boolean result;
@@ -98,5 +70,39 @@ float32 tclRange_f32(float32 min, float32 max) {
 		return result;
 	} else {
 		while (1) {}
+	}
+}
+
+float32 NStablePDT1Float(float32 input_f32)
+{
+	float32 output_f32;
+	boolean reset_b;
+	static float32 outputOld_f32 = 0;
+	static float32 internal_f32 = 0;
+	reset_b = tclRange_b(0, 1);
+	if (reset_b) 
+	{
+		output_f32 = input_f32;
+		internal_f32 = 0.F;
+	}
+	else 
+	{
+		output_f32 = outputOld_f32 + (internal_f32 * 0.02F);
+		internal_f32 = (input_f32 * 0.02469135802F)
+		  + ((outputOld_f32 * 0.02469135802F * -1.F)
+		  + internal_f32 * 0.9555555556F);
+	}
+	outputOld_f32 = output_f32;
+	return output_f32;
+}
+
+void main(){
+	
+	while(1){
+		float32 input_f32;
+		float32 output_f32;
+		input_f32 = tclRange_f32(0.0, 100.0);
+		output_f32 = NStablePDT1Float(input_f32);
+		 // @assert 0.0 <= output_f32 && output_f32 <= 100.0;
 	}
 }
