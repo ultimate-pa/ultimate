@@ -94,37 +94,36 @@ uint8 debounce_u8_csd(uint8 _signal_u8, uint8 _debounceThresh_u8,
 			   uint8 _lastOutput_u8)
 {
 	uint8 output_u8 = _lastOutput_u8;
-
-		if (_signal_u8 != _lastOutput_u8)
+	if (_signal_u8 != _lastOutput_u8)
+	{
+		comparisonDelay_u8++;
+		if (comparisonDelay_u8 >= _debounceThresh_u8)
 		{
-			comparisonDelay_u8++;
-			if (comparisonDelay_u8 >= _debounceThresh_u8)
-			{
-				comparisonDelay_u8 = 0;
-				output_u8 = _signal_u8;
-			}
-		} else {
 			comparisonDelay_u8 = 0;
+			output_u8 = _signal_u8;
 		}
-		return output_u8;
+	} else {
+		comparisonDelay_u8 = 0;
+	}
+	return output_u8;
 } 
  
 uint8 debounce_u8_psd(uint8 _signal_u8, uint8 _debounceThresh_u8,
 			   uint8 _lastOutput_u8)
 {
 	uint8 output_u8 = _lastOutput_u8;
-		if (_signal_u8 != _lastOutput_u8)
+	if (_signal_u8 != _lastOutput_u8)
+	{
+		plausiSignalDelay_u8++;
+		if (plausiSignalDelay_u8 >= _debounceThresh_u8)
 		{
-			plausiSignalDelay_u8++;
-			if (plausiSignalDelay_u8 >= _debounceThresh_u8)
-			{
-				plausiSignalDelay_u8 = 0;
-				output_u8 = _signal_u8;
-			}
-		} else {
 			plausiSignalDelay_u8 = 0;
+			output_u8 = _signal_u8;
 		}
-		return output_u8;
+	} else {
+		plausiSignalDelay_u8 = 0;
+	}
+	return output_u8;
 }
 
  
@@ -132,18 +131,18 @@ uint8 debounce_u8_sd(uint8 _signal_u8, uint8 _debounceThresh_u8,
 			   uint8 _lastOutput_u8)
 {
 	uint8 output_u8 = _lastOutput_u8;
-		if (_signal_u8 != _lastOutput_u8)
+	if (_signal_u8 != _lastOutput_u8)
+	{
+		signalDelay_u8++;
+		if (signalDelay_u8 >= _debounceThresh_u8)
 		{
-			signalDelay_u8++;
-			if (signalDelay_u8 >= _debounceThresh_u8)
-			{
-				signalDelay_u8 = 0;
-				output_u8 = _signal_u8;
-			}
-		} else {
 			signalDelay_u8 = 0;
+			output_u8 = _signal_u8;
 		}
-		return output_u8;
+	} else {
+		signalDelay_u8 = 0;
+	}
+	return output_u8;
 }
 
 void PDebounceValidation(void)
