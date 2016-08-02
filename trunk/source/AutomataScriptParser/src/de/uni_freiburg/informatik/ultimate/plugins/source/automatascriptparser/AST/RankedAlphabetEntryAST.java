@@ -10,10 +10,18 @@ public class RankedAlphabetEntryAST extends AtsASTNode {
 	String mRank;
 	List<String> mAlphabet;
 
-	public RankedAlphabetEntryAST(ILocation loc, String rank, IdentifierListAST alphabet) {
+	public RankedAlphabetEntryAST(ILocation loc, AtsASTNode rank, IdentifierListAST alphabet) {
 		super(loc);
-		mRank = rank;
+		mRank = rank.getAsString();
 		mAlphabet = alphabet.getIdentifierList();
+	}
+
+	public String getRank() {
+		return mRank;
+	}
+
+	public List<String> getAlphabet() {
+		return mAlphabet;
 	}
 
 }

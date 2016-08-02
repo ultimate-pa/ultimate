@@ -4,19 +4,18 @@
 // contains comments concerning the layout of the description of TreeAutomata
 
 
-TreeAutomaton ta1 = { //We call a bottom-up tree automaton "TreeAutomaton"
+TreeAutomaton ta1 = ( //We call a bottom-up tree automaton "TreeAutomaton"
   rankedAlphabet = { //ranked alphabet entries are of the form "(<rank>, <alphabet as a set>)"
     (0, {a b})
     (1, {f})
     (2, {g})
   },
   states = {q1 q2},
-  //initialState = {q0}, // we have 0-ary symbols --> don't need initial states
   finalStates = {q2},
-  transitions = { // transitions are of the form "((<list of source states>) <symbol> <target state>)"
+  transitionTable = {
     (() a q1)
     (() b q1)
     ((q1) f q1)
     ((q1 q1) g q2)
   }
-}
+);

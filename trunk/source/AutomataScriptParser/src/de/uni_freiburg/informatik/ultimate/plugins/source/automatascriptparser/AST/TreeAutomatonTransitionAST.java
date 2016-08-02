@@ -18,4 +18,18 @@ public class TreeAutomatonTransitionAST extends AtsASTNode {
 		mTargetState = targetState;
 	}
 
+	public List<String> getSourceStates() {
+		return mSourceStates;
+	}
+
+	public String getSymbol() {
+		return mSymbol;
+	}
+
+	public String getTargetState() {
+		return mTargetState;
+	}
+	
+	
+
 }

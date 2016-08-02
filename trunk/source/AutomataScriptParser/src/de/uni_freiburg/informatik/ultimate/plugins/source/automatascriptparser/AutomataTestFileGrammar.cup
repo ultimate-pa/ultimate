@@ -392,7 +392,8 @@ type	::=     INT
                 {: RESULT = BranchingProcess.class; :}
         |       ALTERNATING_AUTOMATON         
                 {: RESULT = AlternatingAutomaton.class; :}
-                
+        |       TREE_AUTOMATON         
+                {: RESULT = TreeAutomatonBU.class; :}
         ;
 
 // 5. Variable Declarations
@@ -1185,7 +1186,7 @@ aa_identifier_dnf_expression ::=
 aa_identifier_dnf_expression_conjunction ::= 
 					  identifier:id
                       {: RESULT = id; :} 
-					| EXPR_STATE_NEGATE identifier:id
+			| EXPR_STATE_NEGATE identifier:id
                       {: RESULT = "~" + id; :} 
                     | aa_identifier_dnf_expression_conjunction:conjunction EXPR_STATE_AND identifier:id
                       {: RESULT = conjunction + "&" + id; :}
@@ -1199,12 +1200,12 @@ aa_is_reversed ::= IS_REVERSED EQ BOOLEAN_LITERAL:bool
                 {: RESULT = bool; :} ; 
 
 /* rules specific to tree automata */
-ta_definition ::=  variable_identifier:id EQ
-                        LPAREN:l 
-                               ta_ranked_alphabet:alpha COMMA
-                               states:states COMMA
-                               final_states:fin_states COMMA
-                               ta_transitions:transitions 
+ta_definition ::=  variable_identifier:id EQ 
+                       LPAREN:l
+                          ta_ranked_alphabet:alpha COMMA
+                          states:states COMMA
+                          final_states:fin_states COMMA
+                          ta_transitions:transitions 
                         RPAREN:r
                         {: TreeAutomatonAST ta = new TreeAutomatonAST(getLocation(l$, r$), id);
                           ta.setAlphabet(alpha.getEntryList());
@@ -1212,12 +1213,13 @@ ta_definition ::=  variable_identifier:id EQ
                           ta.setFinalStates(fin_states.getIdentifierList());
                           ta.setTransitions(transitions.getTransitions());
                           m_varDeclarations.put(id, AlternatingAutomatonAST.class);
-                          RESULT = ta; :} ;
+                          RESULT = ta;
+                         :} ;
  
 ta_ranked_alphabet ::= RANKED_ALPHABET EQ 
-                        LPAREN:l
+                        LBRACE:l
                          ta_ranked_alphabet_entry_list_opt:raeList
-                        RPAREN:r
+                        RBRACE:r
                         {:
                          RESULT = raeList;
                          :} ;
@@ -1244,17 +1246,14 @@ ta_ranked_alphabet_entry_list ::=
                         
 ta_ranked_alphabet_entry ::= 
                        LPAREN:l1                         
-                         identifier:rank COMMA
+                         literal:rank COMMA
                          LBRACE:l2
                            identifier_list_opt:alph 
                          RBRACE:r2
                        RPAREN:r1
                        {: RESULT = new RankedAlphabetEntryAST(getLocation(rank$,rank$), rank, alph); :};
                         
-ta_transitions ::=  TRANSITION_TABLE EQ
-                         LBRACE:l
-                           ta_transition_list_opt:tatList
-                         LBRACE:r
+ta_transitions ::=  TRANSITION_TABLE EQ LBRACE:l ta_transition_list_opt:tatList RBRACE:r
                        {: RESULT = tatList; :} ;
                        
 ta_transition_list_opt ::=

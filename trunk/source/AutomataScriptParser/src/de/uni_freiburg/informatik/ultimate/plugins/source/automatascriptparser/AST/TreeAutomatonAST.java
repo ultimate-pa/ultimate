@@ -5,9 +5,12 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class TreeAutomatonAST extends AutomatonAST {
-
 	
 	String mId;
+	List<RankedAlphabetEntryAST> mRankedAlphabet;
+	List<String> mStates;
+	List<String> mFinalStates;
+	List<TreeAutomatonTransitionAST> mTransitions;
 	
 	public TreeAutomatonAST(ILocation loc, String id) {
 		super(loc);
@@ -15,22 +18,41 @@ public class TreeAutomatonAST extends AutomatonAST {
 	}
 
 	public void setAlphabet(List<RankedAlphabetEntryAST> entryList) {
-		// TODO Auto-generated method stub
+		mRankedAlphabet = entryList;
 	}
 
 	public void setStates(List<String> identifierList) {
-		// TODO Auto-generated method stub
-		
+		mStates = identifierList;
 	}
 
 	public void setFinalStates(List<String> identifierList) {
-		// TODO Auto-generated method stub
-		
+		mFinalStates = identifierList;
 	}
 
 	public void setTransitions(List<TreeAutomatonTransitionAST> transitions) {
-		// TODO Auto-generated method stub
-		
+		mTransitions = transitions;
 	}
 
+	public String getmId() {
+		return mId;
+	}
+
+	public List<RankedAlphabetEntryAST> getRankedAlphabet() {
+		return mRankedAlphabet;
+	}
+
+	public List<String> getStates() {
+		return mStates;
+	}
+
+	public List<String> getFinalStates() {
+		return mFinalStates;
+	}
+
+	public List<TreeAutomatonTransitionAST> getTransitions() {
+		return mTransitions;
+	}
+
+
+	
 }
